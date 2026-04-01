@@ -19,6 +19,7 @@ npx skills add whizzzkid/skills -s skill-name
 | Skill | Description |
 |-------|-------------|
 | [pr-review](skills/pr-review/) | Thorough, critical code review with playground experiments and pending GitHub review comments |
+| [worktree-cleanup](skills/worktree-cleanup/) | Clean up merged git worktrees and report unmerged ones |
 
 ## Adding a New Skill
 
