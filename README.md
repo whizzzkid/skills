@@ -18,7 +18,7 @@ npx skills add whizzzkid/skills -s skill-name
 
 | Skill | Description |
 |-------|-------------|
-| *Coming soon* | New skills will be listed here as they're added |
+| [pr-review](skills/pr-review/) | Thorough, critical code review with playground experiments and pending GitHub review comments |
 
 ## Adding a New Skill
 
