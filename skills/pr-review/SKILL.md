@@ -1,5 +1,5 @@
 ---
-name: pr-review
+name: wk:pr-review
 description: >-
   Thorough, critical code review of a GitHub pull request. Use when asked to
   review a PR, review code changes, help review this PR, create review comments,

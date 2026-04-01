@@ -8,7 +8,8 @@
 
 ## Naming Rules
 
-- Skill directories: `kebab-case` (e.g., `my-cool-skill`)
+- Skill names: always prefixed with `wk:` (e.g., `wk:my-cool-skill`)
+- Skill directories: `kebab-case` (e.g., `my-cool-skill`) — no prefix in directory name
 - Definition file: always `SKILL.md` (uppercase)
 - Scripts: `kebab-case.sh` with executable permissions
 
@@ -16,7 +17,7 @@
 
 ```yaml
 ---
-name: skill-name
+name: wk:skill-name
 description: When and why to use this skill
 license: MIT
 metadata:

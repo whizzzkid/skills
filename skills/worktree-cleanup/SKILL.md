@@ -1,5 +1,5 @@
 ---
-name: worktree-cleanup
+name: wk:worktree-cleanup
 description: >-
   Clean up git worktrees whose branches have been merged. Use when asked to
   clean up worktrees, remove merged worktrees, tidy up branches, or prune

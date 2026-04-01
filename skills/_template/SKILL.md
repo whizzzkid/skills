@@ -1,5 +1,5 @@
 ---
-name: skill-name
+name: wk:skill-name
 description: >-
   Describe when this skill should activate. Be specific — agents use this
   to decide whether to apply the skill. Include trigger phrases and use cases.

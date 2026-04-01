@@ -19,7 +19,7 @@ Use `kebab-case` for the directory name.
 
 ```yaml
 ---
-name: your-skill-name
+name: wk:your-skill-name
 description: >-
   Describe when agents should activate this skill. Be specific about
   trigger phrases, use cases, and the problem it solves.
@@ -34,7 +34,7 @@ metadata:
 
 | Field | Description |
 |-------|-------------|
-| `name` | Unique identifier, lowercase with hyphens |
+| `name` | Unique identifier with `wk:` prefix, e.g. `wk:my-skill` |
 | `description` | When and why to use this skill — agents match on this |
 
 **Optional fields:**
@@ -86,4 +86,4 @@ This validates that your skill is discoverable and the frontmatter is correct.
 
 - Write descriptions that help agents decide when to activate — vague descriptions lead to false activations
 - Prefer scripts over inline code in skill instructions to reduce token consumption
-- Test with `npx skills add . -s your-skill-name` to verify local installation
+- Test with `npx skills add . -s wk:your-skill-name` to verify local installation
