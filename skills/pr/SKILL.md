@@ -132,11 +132,17 @@ gh pr ready
 Confirm to the user:
 > "PR #{number} is marked ready for review: {url}"
 
+## Step 6: Session Retro
+
+After the PR is marked ready, invoke `wk:retro` to capture session learnings.
+This retrospective reviews what went well, what was corrected, and promotes
+actionable lessons to the appropriate project files.
+
 ## Quick Reference
 
 | Trigger | Behavior |
 |---------|----------|
-| "create a PR" | Full workflow: draft → CI → self-review → ready |
+| "create a PR" | Full workflow: draft → CI → self-review → ready → retro |
 | "stack this PR" | Stacked PR with `[Part X/Y]` and `--base` |
 | "mark PR ready" | Skip to step 5 |
 | New commits pushed | Re-run from step 3 (update description, re-poll CI) |
