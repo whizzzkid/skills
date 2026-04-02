@@ -160,8 +160,14 @@ After promoting, note in the retro entry which lessons were promoted and where.
 
 ## Optional: Stop Hook
 
-To auto-trigger a retro at the end of every session, add a Stop hook to your
-settings. This is optional — the skill works fine as a manual invocation.
+A Stop hook can remind you to run a retro at the end of every session. This is
+optional — the skill works fine as a manual invocation.
+
+### Install
+
+Add the following to your `~/.claude/settings.json` (or project
+`.claude/settings.local.json`), replacing `{SKILL_DIR}` with the absolute path
+to this skill's directory:
 
 ```json
 {
@@ -172,7 +178,7 @@ settings. This is optional — the skill works fine as a manual invocation.
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Run /wk:session-retro to capture session learnings'"
+            "command": "{SKILL_DIR}/scripts/suggest-retro.sh"
           }
         ]
       }
@@ -181,8 +187,8 @@ settings. This is optional — the skill works fine as a manual invocation.
 }
 ```
 
-This prints a reminder rather than auto-running the retro, keeping control with
-the user.
+The script prints a reminder message at session end. It does not auto-run the
+retro — control stays with the user.
 
 ## Quick Reference
 
