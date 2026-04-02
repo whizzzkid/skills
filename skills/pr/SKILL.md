@@ -50,7 +50,47 @@ git diff "${DEFAULT_BRANCH:-main}...HEAD" --shortstat
 **Always create PRs in draft mode** (`--draft` flag). Never create a non-draft
 PR unless the user explicitly asks.
 
-### Simple PR
+### Resolve PR Body Template
+
+Before composing the PR body, check the target repository for a GitHub PR
+template. Search these paths in order and use the first match:
+
+```bash
+TEMPLATE_FILE=""
+for tpl in \
+  .github/pull_request_template.md \
+  .github/PULL_REQUEST_TEMPLATE.md \
+  pull_request_template.md \
+  PULL_REQUEST_TEMPLATE.md; do
+  [ -f "$tpl" ] && TEMPLATE_FILE="$tpl" && break
+done
+
+# If no single file matched, check the multi-template directory
+if [ -z "$TEMPLATE_FILE" ]; then
+  for d in .github/PULL_REQUEST_TEMPLATE .github/pull_request_template; do
+    [ -d "$d" ] && ls "$d"/*.md && break
+  done
+fi
+```
+
+| Scenario | Action |
+|----------|--------|
+| Single template file found | Read it and use as the PR body structure |
+| Template directory found | List the `.md` files, ask the user which to use, then read it |
+| No template found | Fall back to the hardcoded templates below |
+
+When using a repo template:
+
+- **Populate every section** with real content derived from the diff and commit
+  history. Do not leave placeholder text or unfilled sections.
+- **Preserve the template's structure** — keep its headings, order, and any
+  boilerplate (checkboxes, legal text, etc.) intact.
+- **For stacked PRs**, append a `## Stack` section after the summary (or first
+  heading) if the template does not already include one.
+- If the template contains sections irrelevant to the current changes, fill
+  them with "N/A" or a brief note explaining why they don't apply.
+
+### Simple PR (fallback — no repo template found)
 
 ```bash
 gh pr create --draft --title "feat(scope): ✨ description" --body "$(cat <<'EOF'
@@ -66,7 +106,7 @@ EOF
 
 PR titles use the same conventional commit + emoji scheme as commit messages.
 
-### Stacked PR
+### Stacked PR (fallback — no repo template found)
 
 When splitting work into stacked PRs:
 
@@ -93,6 +133,10 @@ gh pr create --draft --base previous-branch \
 EOF
 )"
 ```
+
+When a repo template is used for a stacked PR, use the template as the body
+structure and inject the `## Stack` section listing all parts with PR numbers
+and status, following the same format shown above.
 
 ## Step 3: Post-Creation Workflow
 
