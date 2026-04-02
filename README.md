@@ -18,8 +18,12 @@ npx skills add whizzzkid/skills -s skill-name
 
 | Skill | Description |
 |-------|-------------|
+| [commit](skills/commit/) | Conventional commits with emoji, signing, and safe push behavior |
+| [docs](skills/docs/) | Check for and update documentation affected by code changes |
+| [pr](skills/pr/) | Create draft PRs with stacking support and post-PR workflow |
 | [pr-review](skills/pr-review/) | Thorough, critical code review with playground experiments and pending GitHub review comments |
 | [retro](skills/retro/) | Session retrospective that captures learnings and promotes them to project files |
+| [self-review](skills/self-review/) | Post design-decision comments on your own PR for human reviewers |
 | [worktree-cleanup](skills/worktree-cleanup/) | Clean up merged git worktrees and report unmerged ones |
 
 ## Adding a New Skill
