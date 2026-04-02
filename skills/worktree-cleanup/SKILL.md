@@ -5,10 +5,23 @@ description: >-
   clean up worktrees, remove merged worktrees, tidy up branches, or prune
   stale worktrees. Lists all worktrees, checks merge status, removes merged
   ones, and reports unmerged ones for the user to decide.
+allowed-tools:
+  - Bash
+  - AskUserQuestion
+model:
+  anthropic: sonnet
+  openai: gpt-4.1-mini
+  google: gemini-2.5-flash
+  meta: llama-4-scout
+  kimi: k2
+  qwen: qwen3-30b
+  cursor: composer-1.5
+disable-model-invocation: true
 license: MIT
 metadata:
   author: whizzzkid
   version: '1.0.0'
+  effort: low
 ---
 
 # Worktree Cleanup

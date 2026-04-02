@@ -5,10 +5,30 @@ description: >-
   review a PR, review code changes, help review this PR, create review comments,
   or investigate a pull request. Builds a playground to validate assumptions,
   runs experiments, and creates pending review comments via GitHub API.
+argument-hint: '[PR number or URL]'
+allowed-tools:
+  - Bash
+  - Read
+  - Grep
+  - Glob
+  - Write
+  - Edit
+  - Agent
+  - AskUserQuestion
+model:
+  anthropic: opus
+  openai: o3
+  google: gemini-2.5-pro
+  meta: llama-4-maverick
+  kimi: k2
+  qwen: qwen3-235b
+  cursor: composer-2
+disable-model-invocation: true
 license: MIT
 metadata:
   author: whizzzkid
   version: '1.0.0'
+  effort: high
 ---
 
 # PR Review
@@ -146,9 +166,6 @@ Each comment body should follow this structure:
 **{severity}:** {The observation or concern}
 
 {Optional: context, evidence from playground experiments, or suggested fix}
-
----
-*AI-assisted review*
 ```
 
 ### Present for approval
@@ -202,7 +219,7 @@ gh api repos/{owner}/{repo}/pulls/{number}/reviews \
       "path": "src/file.ts",
       "line": 42,
       "side": "RIGHT",
-      "body": "**suggestion:** Consider extracting this into a helper — good candidate for a follow-up.\n\n---\n*AI-assisted review*"
+      "body": "**suggestion:** Consider extracting this into a helper — good candidate for a follow-up."
     }
   ]
 }
