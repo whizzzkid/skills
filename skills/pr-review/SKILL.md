@@ -15,20 +15,21 @@ allowed-tools:
   - Edit
   - Agent
   - AskUserQuestion
-model:
-  anthropic: opus
-  openai: o3
-  google: gemini-2.5-pro
-  meta: llama-4-maverick
-  kimi: k2
-  qwen: qwen3-235b
-  cursor: composer-2
+model: opus
+effort: high
 disable-model-invocation: true
+user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
   version: '1.0.0'
-  effort: high
+  model:
+    openai: o3
+    google: gemini-2.5-pro
+    meta: llama-4-maverick
+    kimi: k2
+    qwen: qwen3-235b
+    cursor: composer-2
 ---
 
 # PR Review

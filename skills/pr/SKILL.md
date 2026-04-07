@@ -10,20 +10,21 @@ allowed-tools:
   - Bash
   - Read
   - AskUserQuestion
-model:
-  anthropic: sonnet
-  openai: gpt-4.1-mini
-  google: gemini-2.5-flash
-  meta: llama-4-scout
-  kimi: k2
-  qwen: qwen3-30b
-  cursor: composer-1.5
+model: sonnet
+effort: medium
 disable-model-invocation: true
+user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
   version: '1.0.0'
-  effort: medium
+  model:
+    openai: gpt-4.1-mini
+    google: gemini-2.5-flash
+    meta: llama-4-scout
+    kimi: k2
+    qwen: qwen3-30b
+    cursor: composer-1.5
 ---
 
 # PR

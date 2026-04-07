@@ -10,26 +10,30 @@ allowed-tools:
   - Bash
   - Read
   - AskUserQuestion
-# Agent-agnostic model recommendations per provider
-# High tier (complex reasoning): opus, o3, gemini-2.5-pro, llama-4-maverick, k2, qwen3-235b, composer-2
-# Low tier (procedural tasks): sonnet, gpt-4.1-mini, gemini-2.5-flash, llama-4-scout, k2, qwen3-30b, composer-1.5
-model:
-  anthropic: sonnet
-  openai: gpt-4.1-mini
-  google: gemini-2.5-flash
-  meta: llama-4-scout
-  kimi: k2
-  qwen: qwen3-30b
-  cursor: composer-1.5
+# Claude Code model: sonnet | opus
+# High tier (complex reasoning): opus
+# Low tier (procedural tasks): sonnet
+model: sonnet
+# effort: low | medium | high
+effort: medium
 # When true, only the user can invoke this skill (not the model automatically)
 disable-model-invocation: false
+user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
   version: '1.0.0'
-  # effort: low | medium | high
-  effort: medium
   internal: true
+  # Cross-platform model recommendations
+  # High tier: o3, gemini-2.5-pro, llama-4-maverick, k2, qwen3-235b, composer-2
+  # Low tier: gpt-4.1-mini, gemini-2.5-flash, llama-4-scout, k2, qwen3-30b, composer-1.5
+  model:
+    openai: gpt-4.1-mini
+    google: gemini-2.5-flash
+    meta: llama-4-scout
+    kimi: k2
+    qwen: qwen3-30b
+    cursor: composer-1.5
 ---
 
 # Skill Name
