@@ -40,6 +40,9 @@ Required fields: `name`, `description`
 - Keep `SKILL.md` under 500 lines
 - Write specific descriptions so agents activate the skill only when relevant
 - Use `metadata.internal: true` for skills that should be hidden from discovery
+- Skills are model-invocable by default — use `model-invocable: true` to
+  explicitly enable, or `disable-model-invocation: true` to opt out.
+  `disable-model-invocation: false` is a no-op and should not be used.
 
 ## Workflow
 

@@ -24,7 +24,7 @@ allowed-tools:
   - AskUserQuestion
 model: opus
 effort: high
-disable-model-invocation: false
+model-invocable: true
 user-invocable: true
 license: MIT
 metadata:
