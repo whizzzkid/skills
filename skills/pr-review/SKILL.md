@@ -3,14 +3,16 @@ name: wk:pr-review
 description: >-
   Thorough, critical code review of a GitHub pull request. Use when asked to
   review a PR, review code changes, help review this PR, create review comments,
-  or investigate a pull request. Builds a playground to validate assumptions,
-  runs experiments, and creates pending review comments via GitHub API.
+  or investigate a pull request. Reads existing review comments, resolves stale
+  threads, builds a playground to validate assumptions, runs experiments, and
+  creates pending review comments via GitHub API.
 argument-hint: '[PR number or URL]'
 allowed-tools:
   - "Bash(gh pr view:*)"
   - "Bash(gh pr diff:*)"
   - "Bash(gh pr checkout:*)"
   - "Bash(gh api repos:*)"
+  - "Bash(gh api graphql:*)"
   - "Bash(grep:*)"
   - "Bash(.review-playground/:*)"
   - Read
@@ -27,7 +29,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.0'
+  version: '1.1.0'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -70,10 +72,114 @@ Collect and internalize:
 Before moving on, announce what you found:
 > "Reviewing PR #N: *title* — X files changed, Y commits. Base: `main`. Let me dig in."
 
-## Phase 2: Investigation
+## Phase 2: Existing Review Comments
+
+Fetch all existing review comments on the PR, identify stale threads, and
+optionally resolve them before beginning investigation.
+
+### Fetch comments
+
+Retrieve all inline review comments from every reviewer:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{number}/comments \
+  --jq '.[] | {id, node_id, path, line, original_line, position, body, user: .user.login, updated_at, in_reply_to_id}'
+```
+
+Skip comments where `in_reply_to_id` is set — those are reply chains, not
+top-level threads. Focus on root comments that anchor each conversation.
+
+### Identify stale comments
+
+A comment is **stale** when any of these are true:
+
+- `position` is `null` — GitHub marks the diff position as outdated
+- The file at `path` was modified in commits after the comment's `updated_at`
+- The referenced line content no longer matches the current code
+
+Read the current file and compare the line to confirm. Categorize each comment:
+
+- **Stale (fixed):** The underlying issue is clearly resolved in the current code.
+- **Stale (unclear):** The position is outdated but it is not obvious whether the
+  issue was addressed. Leave these for the author or reviewer to handle.
+- **Active:** Still applies to the current code.
+
+### Present and ask before resolving
+
+**HARD RULE: Never resolve review threads without explicit user consent.**
+Present the categorized list and wait for confirmation.
+
+```
+Stale comments (resolved in code):
+1. [stale] src/auth.ts:42 by @reviewer — "Session token not invalidated" → Fixed in abc123
+2. [stale] src/utils.ts:18 by @reviewer — "Rename processData" → Renamed to transformPayload
+
+Stale comments (unclear):
+3. [stale?] src/api.ts:33 by @reviewer — "Is this timeout intentional?"
+
+Active comments:
+4. [active] src/cache.ts:91 by @reviewer — "LRU size should be configurable"
+
+Would you like me to resolve threads 1 and 2?
+(Thread 3 will be left for manual review.)
+```
+
+### Resolve confirmed threads
+
+After the user confirms, query for thread node IDs via GraphQL:
+
+```bash
+gh api graphql -f query='
+  query($owner: String!, $repo: String!, $number: Int!) {
+    repository(owner: $owner, name: $repo) {
+      pullRequest(number: $number) {
+        reviewThreads(first: 100) {
+          nodes {
+            id
+            isResolved
+            comments(first: 1) {
+              nodes { body path line }
+            }
+          }
+        }
+      }
+    }
+  }
+' -f owner="{owner}" -f repo="{repo}" -F number={number}
+```
+
+Match each confirmed stale comment to its thread by `path` + `line` + `body`,
+then resolve:
+
+```bash
+gh api graphql -f query='
+  mutation($threadId: ID!) {
+    resolveReviewThread(input: {threadId: $threadId}) {
+      thread { isResolved }
+    }
+  }
+' -f threadId="THREAD_NODE_ID"
+```
+
+### Summarize
+
+Announce what was found before moving on:
+
+> "Found X existing review comments (Y active, Z resolved as stale). Carrying
+> N active comments forward into investigation."
+
+The list of active unresolved comments becomes context for the next phase.
+
+## Phase 3: Investigation
 
 Read every changed file in full — not just the diff hunks. Understand the
 surrounding code, call sites, downstream consumers, and existing test coverage.
+
+**Carry forward existing comments.** Be aware of active unresolved review
+comments from Phase 2. Do not duplicate comments that already exist. If you
+find an issue that relates to an existing comment thread, reference it rather
+than creating a separate observation. Focus on finding **new** issues that no
+existing reviewer has raised.
 
 **Be adversarial.** Your job is to find what the author missed:
 - Bugs and logic errors
@@ -100,7 +206,7 @@ outside of `.review-playground/`. Never commit playground files.**
 
 Read, Glob, and Grep may access any path (read-only) for code investigation.
 
-## Phase 3: Playground
+## Phase 4: Playground
 
 Create a `.review-playground/` directory at the repository root. This is your
 workspace for experiments — **never commit these files**.
@@ -145,7 +251,7 @@ After running experiments, summarize what you discovered:
 
 > "Playground built at `.review-playground/`. Here's what I found: ..."
 
-## Phase 4: Review Comments
+## Phase 5: Review Comments
 
 Formulate inline review comments anchored to specific lines in the diff.
 
@@ -196,7 +302,7 @@ Show a numbered summary of all proposed comments:
 Wait for the user to review. They may approve all, edit some, or skip
 individual comments.
 
-## Phase 5: Post Review
+## Phase 6: Post Review
 
 **HARD RULE: Never post the review on your own.** The user must always either:
 1. Post the review themselves from GitHub, or
@@ -261,8 +367,8 @@ Remind the user:
 
 | Trigger | Behavior |
 |---------|----------|
-| "review this PR" | Full 5-phase review, always asks before posting |
-| "just investigate this PR" | Phases 1-3 only, no comments posted |
+| "review this PR" | Full 6-phase review, always asks before posting |
+| "just investigate this PR" | Phases 1-4 only, no comments posted |
 
 ## Requirements
 
