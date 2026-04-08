@@ -5,7 +5,13 @@ description: >-
   with emoji, commit signing, and safe push behavior. Use for all git commit
   and push operations.
 allowed-tools:
-  - Bash
+  - "Bash(git add:*)"
+  - "Bash(git commit:*)"
+  - "Bash(git push:*)"
+  - "Bash(git stash:*)"
+  - "Bash(git status:*)"
+  - "Bash(git diff:*)"
+  - "Bash(git log:*)"
   - AskUserQuestion
 model: sonnet
 effort: low

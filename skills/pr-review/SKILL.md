@@ -7,7 +7,12 @@ description: >-
   runs experiments, and creates pending review comments via GitHub API.
 argument-hint: '[PR number or URL]'
 allowed-tools:
-  - Bash
+  - "Bash(gh pr view:*)"
+  - "Bash(gh pr diff:*)"
+  - "Bash(gh pr checkout:*)"
+  - "Bash(gh api repos:*)"
+  - "Bash(grep:*)"
+  - "Bash(.review-playground/:*)"
   - Read
   - Grep
   - Glob
@@ -86,6 +91,14 @@ places, read all 5. If a new dependency is added, evaluate it.
 
 Take notes as you go. You'll use these findings to build the playground and
 formulate comments.
+
+## File Access Rules
+
+**HARD RULE: Write and Edit tools may ONLY target files under
+`.review-playground/` in the project root. Never write or edit files
+outside of `.review-playground/`. Never commit playground files.**
+
+Read, Glob, and Grep may access any path (read-only) for code investigation.
 
 ## Phase 3: Playground
 

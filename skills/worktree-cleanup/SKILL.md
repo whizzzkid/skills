@@ -6,7 +6,12 @@ description: >-
   stale worktrees. Lists all worktrees, checks merge status, removes merged
   ones, and reports unmerged ones for the user to decide.
 allowed-tools:
-  - Bash
+  - "Bash(git wtl:*)"
+  - "Bash(git wtr:*)"
+  - "Bash(git symbolic-ref:*)"
+  - "Bash(git branch:*)"
+  - "Bash(git worktree:*)"
+  - "Bash(gh pr list:*)"
   - AskUserQuestion
 model: sonnet
 effort: low

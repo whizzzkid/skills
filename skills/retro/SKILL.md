@@ -7,7 +7,12 @@ description: >-
   preserving.
 argument-hint: '[optional: topic or session focus]'
 allowed-tools:
-  - Bash
+  - "Bash(git log:*)"
+  - "Bash(git diff:*)"
+  - "Bash(git status:*)"
+  - "Bash(cat ~/.claude:*)"
+  - "Bash(find ~/.claude:*)"
+  - "Bash(ls ~/.claude:*)"
   - Read
   - Glob
   - Grep
@@ -92,6 +97,14 @@ useful. If a lens has no meaningful findings, skip it entirely.
 - What did the agent get right without correction?
 - Which parts of the process felt smooth?
 - Good patterns worth reinforcing?
+
+## File Access Rules
+
+**HARD RULE: Write and Edit tools may ONLY target files under `~/.claude/`
+(memory files, retro logs, MEMORY.md). Never write or edit files in the
+project working directory or anywhere else on the filesystem.**
+
+Read, Glob, and Grep may access any path (read-only).
 
 ## Step 3: Write Retro Notes
 

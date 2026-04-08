@@ -7,7 +7,16 @@ description: >-
   marking ready.
 argument-hint: '[optional: base branch for stacking]'
 allowed-tools:
-  - Bash
+  - "Bash(git symbolic-ref:*)"
+  - "Bash(git diff:*)"
+  - "Bash(git log:*)"
+  - "Bash(gh pr create:*)"
+  - "Bash(gh pr edit:*)"
+  - "Bash(gh pr view:*)"
+  - "Bash(gh pr ready:*)"
+  - "Bash(gh pr diff:*)"
+  - "Bash(gh pr reviews:*)"
+  - "Bash(gh api repos:*)"
   - Read
   - AskUserQuestion
 model: sonnet

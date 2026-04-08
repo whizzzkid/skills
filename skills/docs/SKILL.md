@@ -5,7 +5,8 @@ description: >-
   code changes, adding features, modifying APIs, or when docs may be stale.
   Bootstraps a docs structure if the project doesn't have one.
 allowed-tools:
-  - Bash
+  - "Bash(find docs/:*)"
+  - "Bash(mkdir docs/:*)"
   - Read
   - Glob
   - Grep
@@ -33,6 +34,13 @@ metadata:
 
 Check for and update documentation affected by code changes. Bootstraps a
 docs structure if the project doesn't have one.
+
+## File Access Rules
+
+**HARD RULE: Write and Edit tools may ONLY target files under `docs/` in
+the project root. Never write or edit files outside of `docs/`.**
+
+Read, Glob, and Grep may access any path (read-only) to understand code changes.
 
 ## Step 1: Check for Affected Docs
 

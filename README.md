@@ -18,8 +18,10 @@ npx skills add whizzzkid/skills -s skill-name
 
 | Skill | Description |
 |-------|-------------|
+| [buildkite](skills/buildkite/) | Check build status, investigate failures, and view logs via `bk` CLI |
 | [commit](skills/commit/) | Conventional commits with emoji, signing, and safe push behavior |
 | [datadog](skills/datadog/) | Create and manage Datadog dashboards, monitors, SLOs, and notebooks via REST API |
+| [docker](skills/docker/) | Image tag verification, build debugging, ENTRYPOINT checks, and daemon troubleshooting |
 | [docs](skills/docs/) | Check for and update documentation affected by code changes |
 | [pr](skills/pr/) | Create draft PRs with stacking support and post-PR workflow |
 | [pr-review](skills/pr-review/) | Thorough, critical code review with playground experiments and pending GitHub review comments |

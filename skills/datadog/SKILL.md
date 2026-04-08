@@ -6,7 +6,6 @@ description: >-
   monitor, define an SLO, manage notebooks, or interact with Datadog resources.
 argument-hint: '[action: list|create|get|update|delete] [resource: dashboard|monitor|slo|notebook]'
 allowed-tools:
-  - Bash
   - Read
   - Write
   - AskUserQuestion
@@ -63,6 +62,15 @@ All requests use these headers:
 ```bash
 DD_HEADERS=(-H "DD-API-KEY: ${DATADOG_API_KEY}" -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}" -H "Content-Type: application/json")
 ```
+
+## File Access Rules
+
+**HARD RULE: Write tool may ONLY create temporary JSON payload files
+(e.g., `dashboard.json`, `monitor.json`, `slo.json`, `notebook.json`)
+in the current directory for API requests. Never write to project source
+files, configuration, or any other location.**
+
+Read may access any path (read-only) to understand existing configurations.
 
 ## Step 2: Identify the Operation
 

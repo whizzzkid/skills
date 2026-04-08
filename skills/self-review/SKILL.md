@@ -5,7 +5,9 @@ description: >-
   non-obvious choices, and critical context for human reviewers. Use when a PR
   is ready for self-review, after CI passes, or when wk:pr invokes this skill.
 allowed-tools:
-  - Bash
+  - "Bash(gh pr view:*)"
+  - "Bash(gh pr diff:*)"
+  - "Bash(gh api repos:*)"
   - Read
   - Grep
   - Glob
