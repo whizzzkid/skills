@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.2.0'
+  version: '1.3.0'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -190,7 +190,12 @@ Announce what was found before moving on:
 > "Found X existing review comments (Y active, Z resolved as stale). Carrying
 > N active comments forward into investigation."
 
-The list of active unresolved comments becomes context for the next phase.
+### Build exclusion list
+
+From the active comments, build a structured exclusion list keyed by
+`(file, line_range, topic)`. This list is the deduplication mechanism for
+Phase 3 and Phase 5 — it prevents you from independently rediscovering and
+re-posting issues that another reviewer already raised.
 
 ## Phase 3: Investigation
 
@@ -217,8 +222,9 @@ There is no fixed checklist. You decide what matters based on the actual changes
 Follow the code wherever it leads — if a changed function is called from 5
 places, read all 5. If a new dependency is added, evaluate it.
 
-Take notes as you go. You'll use these findings to build the playground and
-formulate comments.
+Take notes as you go. For each finding, annotate whether it overlaps an entry
+in the exclusion list from Phase 2. Mark overlapping findings as `[COVERED]`
+immediately — do not wait until Phase 5 to discover duplicates.
 
 ## File Access Rules
 
@@ -309,6 +315,23 @@ Each comment body should follow this structure:
 
 {Optional: context, evidence from playground experiments, or suggested fix}
 ```
+
+### Deduplicate against existing comments
+
+**HARD RULE: Never post a new top-level comment that duplicates an existing
+review comment.** Before drafting each comment, check the exclusion list from
+Phase 2. A comment is a duplicate if it targets the same file and line range
+AND raises the same concern — even if you discovered it independently.
+
+For duplicates:
+- **Skip it.** The existing thread already covers the issue.
+- If your investigation adds **new information** the original reviewer missed,
+  reply to the existing thread instead of creating a new comment.
+- If the existing comment is **wrong or incomplete**, reply with a correction
+  rather than posting a parallel comment.
+
+When presenting the comment summary, include a "Skipped" section listing
+intentionally omitted duplicates so the user can override if needed.
 
 ### Validate comment positions against the diff
 
