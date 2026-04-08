@@ -40,3 +40,7 @@ Required fields: `name`, `description`
 - Keep `SKILL.md` under 500 lines
 - Write specific descriptions so agents activate the skill only when relevant
 - Use `metadata.internal: true` for skills that should be hidden from discovery
+
+## Workflow
+
+- Always commit and push after every change to this project
