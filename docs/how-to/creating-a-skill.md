@@ -44,7 +44,8 @@ metadata:
 | `argument-hint` | Autocomplete hint for arguments (e.g., `[PR number or URL]`) |
 | `allowed-tools` | Array of tools the skill can access at runtime |
 | `model` | Per-provider model recommendations (nested map, see template) |
-| `disable-model-invocation` | Set `true` to require explicit user invocation |
+| `model-invocable` | Set `true` to explicitly enable model invocation |
+| `disable-model-invocation` | Set `true` to opt out of model invocation |
 | `license` | License identifier (e.g., `MIT`) |
 | `metadata.author` | Skill author |
 | `metadata.version` | Semantic version |

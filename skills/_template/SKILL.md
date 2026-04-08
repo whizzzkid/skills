@@ -16,8 +16,8 @@ allowed-tools:
 model: sonnet
 # effort: low | medium | high
 effort: medium
-# When true, only the user can invoke this skill (not the model automatically)
-disable-model-invocation: false
+# Explicitly enable model invocation (skills are model-invocable by default)
+model-invocable: true
 user-invocable: true
 license: MIT
 metadata:
