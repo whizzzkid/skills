@@ -27,6 +27,7 @@ npx skills add whizzzkid/skills -s skill-name
 | [pr-review](skills/pr-review/) | Thorough, critical code review with playground experiments and pending GitHub review comments |
 | [retro](skills/retro/) | Session retrospective that captures learnings and promotes them to project files |
 | [self-review](skills/self-review/) | Post design-decision comments on your own PR for human reviewers |
+| [sharpen](skills/sharpen/) | Improve skills based on field reports by extracting principles without overfitting on examples |
 | [worktree-cleanup](skills/worktree-cleanup/) | Clean up merged git worktrees and report unmerged ones |
 
 ## Adding a New Skill
