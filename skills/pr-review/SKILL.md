@@ -13,6 +13,8 @@ allowed-tools:
   - "Bash(gh pr checkout:*)"
   - "Bash(gh api repos:*)"
   - "Bash(gh api graphql:*)"
+  - "Bash(git rev-parse:*)"
+  - "Bash(git pull:*)"
   - "Bash(grep:*)"
   - "Bash(.review-playground/:*)"
   - Read
@@ -29,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.1.0'
+  version: '1.2.0'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -61,6 +63,26 @@ then check out the branch:
 ```bash
 gh pr checkout <number>
 ```
+
+### Verify local HEAD matches PR HEAD
+
+Before reading any files, confirm the local worktree is at the PR's HEAD:
+
+```bash
+LOCAL_HEAD=$(git rev-parse HEAD)
+PR_HEAD=$(gh pr view --json headRefOid --jq '.headRefOid')
+if [ "$LOCAL_HEAD" != "$PR_HEAD" ]; then
+  echo "⚠ Local HEAD ($LOCAL_HEAD) ≠ PR HEAD ($PR_HEAD). Pulling..."
+  git pull --ff-only || echo "Fast-forward failed — will use gh pr diff as source of truth"
+fi
+```
+
+If the pull fails, use `gh pr diff` as the authoritative source for what
+changed and `gh api repos/{owner}/{repo}/contents/{path}?ref={pr_head_sha}`
+to read file contents at the PR HEAD instead of local `Read`. Note the desync
+in the review summary so the user is aware.
+
+### Collect context
 
 Collect and internalize:
 - PR title, description, and linked issues
@@ -288,6 +310,32 @@ Each comment body should follow this structure:
 {Optional: context, evidence from playground experiments, or suggested fix}
 ```
 
+### Validate comment positions against the diff
+
+**HARD RULE: Every inline comment must target a line that exists in the diff.**
+Lines not in the diff (unchanged code, code from merge commits) will cause a
+422 "Line could not be resolved" error from the GitHub API.
+
+Before presenting comments, parse `gh pr diff` to build the set of commentable
+lines:
+
+```bash
+gh pr diff {number} > /tmp/pr-diff.txt
+```
+
+Walk the diff output to extract every `(file_path, new_file_line_number)` pair
+that appears in a hunk — both `+` (added) and ` ` (context) lines are valid
+targets. `-` (removed) lines are not commentable on the `RIGHT` side.
+
+For each proposed comment, check that `(path, line)` is in the commentable set:
+
+- **Match found:** keep the comment as-is.
+- **No match, nearby line (±5) in the same hunk matches:** move the comment to
+  the nearest matching line.
+- **No match at all:** convert to a file-level comment using
+  `"subject_type": "file"` (omit `line` and `side`), or move the observation
+  into the review body with a `file:line` reference.
+
 ### Present for approval
 
 Show a numbered summary of all proposed comments:
@@ -327,13 +375,16 @@ Wait for the user's explicit response before taking any action.
 
 Build the review payload and post via `gh api`:
 
+**Important:** Do NOT include `"event": "PENDING"` in the payload — the REST
+API rejects `PENDING` as an event value (422 error). Omitting `event` entirely
+creates a pending (draft) review by default.
+
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --method POST \
   --input - <<'EOF'
 {
   "body": "Reviewing with the help of {agent-name}, please let me know if it's annoying or noisy or not useful.",
-  "event": "PENDING",
   "comments": [
     {
       "path": "src/file.ts",
