@@ -21,7 +21,7 @@ allowed-tools:
   - AskUserQuestion
 model: sonnet
 effort: medium
-disable-model-invocation: true
+model-invocable: true
 user-invocable: true
 license: MIT
 metadata:
