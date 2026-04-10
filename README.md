@@ -24,6 +24,7 @@ npx skills add whizzzkid/skills -s skill-name
 | [docker](skills/docker/) | Image tag verification, build debugging, ENTRYPOINT checks, and daemon troubleshooting |
 | [docs](skills/docs/) | Check for and update documentation affected by code changes |
 | [pr](skills/pr/) | Create draft PRs with stacking support and post-PR workflow |
+| [pr-resolve](skills/pr-resolve/) | Interactively address PR review comments — implement fixes, draft responses, and resolve threads |
 | [pr-review](skills/pr-review/) | Thorough, critical code review with playground experiments and pending GitHub review comments |
 | [retro](skills/retro/) | Session retrospective that captures learnings and promotes them to project files |
 | [self-review](skills/self-review/) | Post design-decision comments on your own PR for human reviewers |
