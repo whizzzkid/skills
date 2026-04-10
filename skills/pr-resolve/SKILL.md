@@ -28,8 +28,8 @@ allowed-tools:
   - Edit
   - Write
   - AskUserQuestion
-model: opus
-effort: high
+model: sonnet
+effort: medium
 model-invocable: true
 user-invocable: true
 license: MIT
@@ -37,12 +37,12 @@ metadata:
   author: whizzzkid
   version: '1.0.0'
   model:
-    openai: o3
-    google: gemini-2.5-pro
-    meta: llama-4-maverick
+    openai: gpt-4.1-mini
+    google: gemini-2.5-flash
+    meta: llama-4-scout
     kimi: k2
-    qwen: qwen3-235b
-    cursor: composer-2
+    qwen: qwen3-30b
+    cursor: composer-1.5
 ---
 
 # PR Resolve
