@@ -49,12 +49,18 @@ Run these sequentially — they're fast and everything else depends on them.
 ```bash
 TODAY=$(date +%Y-%m-%d)
 YESTERDAY=$(date -v-1d +%Y-%m-%d 2>/dev/null || date -d "yesterday" +%Y-%m-%d)
-mkdir -p "$PWD/$TODAY"
+
+# Today:     sitrep/<YYYY>/<MM>/<DD>/
+# Yesterday: sitrep/<YYYY>/<MM>/<DD>/  (computed from yesterday's date)
+TODAY_DIR="$PWD/sitrep/$(date +%Y)/$(date +%m)/$(date +%d)"
+YESTERDAY_DIR="$PWD/sitrep/$(date -v-1d +%Y 2>/dev/null || date -d yesterday +%Y)/$(date -v-1d +%m 2>/dev/null || date -d yesterday +%m)/$(date -v-1d +%d 2>/dev/null || date -d yesterday +%d)"
+
+mkdir -p "$TODAY_DIR"
 ```
 
 ### Read yesterday's evening summary
 
-If `<pwd>/<YYYY-MM-DD-1>/evening.md` exists, read it and extract:
+If `<yesterday_dir>/evening.md` exists, read it and extract:
 
 - Action items marked for today
 - Carry-over items not completed
@@ -312,7 +318,7 @@ both.
 
 ### 2a. morning.md
 
-Write to `<pwd>/<YYYY-MM-DD>/morning.md`:
+Write to `<today_dir>/morning.md`:
 
 ```markdown
 # Morning Brief — {YYYY-MM-DD}
@@ -370,7 +376,7 @@ _Space for anything that comes up during the day._
 
 ### 2b. morning.html
 
-Write to `<pwd>/<YYYY-MM-DD>/morning.html`. Self-contained interactive
+Write to `<today_dir>/morning.html`. Self-contained interactive
 dashboard — **no CDN dependencies**, all CSS and JS embedded.
 
 **Required features:**
@@ -403,8 +409,8 @@ hierarchy, sections default expanded, progress bar updates in real-time.
 After writing both files:
 
 > "Your morning brief is ready:
-> - `{date}/morning.md` — structured reference
-> - `{date}/morning.html` — open in your browser
+> - `sitrep/{YYYY}/{MM}/{DD}/morning.md` — structured reference
+> - `sitrep/{YYYY}/{MM}/{DD}/morning.html` — open in your browser
 >
 > You have X items needing action, Y follow-ups, and Z meetings today.
 >

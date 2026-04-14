@@ -43,7 +43,9 @@ Bootstrap ──► Parallel Fetch ──► Compile Everything ──► One Pr
 
 ```bash
 TODAY=$(date +%Y-%m-%d)
-TODAY_DIR="$PWD/$TODAY"
+
+# Today: sitrep/<YYYY>/<MM>/<DD>/
+TODAY_DIR="$PWD/sitrep/$(date +%Y)/$(date +%m)/$(date +%d)"
 MORNING_FILE="$TODAY_DIR/morning.md"
 ```
 
@@ -524,7 +526,7 @@ drafts together in a second prompt for approval before sending.
 
 ## Stage 4: Generate evening.md
 
-Write to `<pwd>/<YYYY-MM-DD>/evening.md`. This file is consumed by
+Write to `<today_dir>/evening.md`. This file is consumed by
 tomorrow's `wk:goodmorning` — structure it for machine readability.
 
 ```markdown
@@ -579,7 +581,7 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 ### Announce
 
 > "Your evening wrap-up is complete:
-> - `{date}/evening.md` — tomorrow's carry-over reference
+> - `sitrep/{YYYY}/{MM}/{DD}/evening.md` — tomorrow's carry-over reference
 >
 > Today: {completed} items done, {remaining} carried forward,
 > {issues_created} issues created, {meetings} meetings documented.
