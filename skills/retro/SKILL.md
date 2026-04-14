@@ -10,9 +10,10 @@ allowed-tools:
   - "Bash(git log:*)"
   - "Bash(git diff:*)"
   - "Bash(git status:*)"
-  - "Bash(cat ~/.claude:*)"
-  - "Bash(find ~/.claude:*)"
-  - "Bash(ls ~/.claude:*)"
+  - "Bash(cat ~/.claude*:*)"
+  - "Bash(find ~/.claude*:*)"
+  - "Bash(ls ~/.claude*:*)"
+  - "Bash(mkdir -p ~/.claude*:*)"
   - Read
   - Glob
   - Grep
@@ -26,7 +27,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.0'
+  version: '2.0.0'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -38,9 +39,19 @@ metadata:
 
 # Session Retro
 
-Structured retrospective that captures session learnings and promotes them to
-the right files so future sessions benefit. Run at the end of a work session or
-after completing a significant task.
+Structured retrospective that captures session learnings and promotes them
+globally so ALL future sessions benefit — regardless of which project they run
+in. Run at the end of a work session or after completing a significant task.
+
+## Global Paths
+
+All retro artifacts are written to the **user-level** memory directory, never to
+a project-specific path. This ensures learnings travel across projects.
+
+```
+GLOBAL_MEMORY="$HOME/.claude/memory"
+GLOBAL_CLAUDE="$HOME/.claude/CLAUDE.md"
+```
 
 ## Step 1: Review Session Context
 
@@ -51,12 +62,10 @@ git log --oneline -15
 git diff HEAD~5..HEAD --stat 2>/dev/null || git diff --stat
 ```
 
-Locate and read the project's MEMORY.md to understand prior context:
+Read the global MEMORY.md to understand prior context:
 
 ```bash
-MEMORY_DIR=$(echo "$PWD" | sed 's|^/||' | sed 's|/|-|g')
-MEMORY_PATH="$HOME/.claude/projects/-${MEMORY_DIR}/memory/MEMORY.md"
-cat "$MEMORY_PATH" 2>/dev/null || echo "No MEMORY.md found at $MEMORY_PATH"
+cat "$HOME/.claude/memory/MEMORY.md" 2>/dev/null || echo "No global MEMORY.md found"
 ```
 
 Also check the conversation history for corrections, redirects, and decisions.
@@ -108,17 +117,16 @@ Read, Glob, and Grep may access any path (read-only).
 
 ## Step 3: Write Retro Notes
 
-Derive the project memory path and append a dated entry to `retro-log.md`.
+Write a dated entry to the **global** retro log:
 
-```bash
-MEMORY_DIR=$(echo "$PWD" | sed 's|^/||' | sed 's|/|-|g')
-RETRO_PATH="$HOME/.claude/projects/-${MEMORY_DIR}/memory/retro-log.md"
+```
+~/.claude/memory/retro-log.md
 ```
 
 Use this format — omit sections with no meaningful findings:
 
 ```markdown
-## Retro -- {YYYY-MM-DD}
+## Retro -- {YYYY-MM-DD} — {project name or topic}
 
 ### Corrections (Claude <- User)
 - [specific thing Claude got wrong and how it was corrected]
@@ -136,39 +144,68 @@ Use this format — omit sections with no meaningful findings:
 - [thing that worked well]
 ```
 
-## Step 4: Promote -- Route Lessons to Where They'll Be Used
+## Step 4: Promote — Distill and Route Globally
 
-This is the step that actually improves future sessions. Every finding from the
-retro must be classified and promoted to the file where it will be used.
+This is the step that actually improves future sessions. Every finding must be
+**distilled** into a concise, actionable rule and promoted **globally** so it
+applies across all projects and sessions.
 
-### Discover promotion targets
+### Distillation rules
 
-```bash
-find . -maxdepth 3 \( -name 'CLAUDE.md' -o -name 'MEMORY.md' -o -name 'AGENTS.md' \) 2>/dev/null
-MEMORY_DIR=$(echo "$PWD" | sed 's|^/||' | sed 's|/|-|g')
-ls "$HOME/.claude/projects/-${MEMORY_DIR}/memory/MEMORY.md" 2>/dev/null
-```
+Before writing anything, distill each finding:
 
-### Routing table
+1. **Strip the narrative.** "During the auth refactor Claude assumed the middleware
+   used Express but it was Koa" becomes: "Verify the framework before assuming
+   middleware patterns."
+2. **Generalize.** Remove project-specific details unless the lesson only applies
+   to one project. Prefer universal principles.
+3. **Make it actionable.** Each promoted item must be a rule someone can follow,
+   not a story about what happened.
+4. **One sentence per rule.** If it needs more, it's two rules.
+
+### Promotion targets
+
+All targets are **global** (user-level), not project-scoped:
 
 | Lesson type | Target |
 |-------------|--------|
-| Workflow rules, process conventions | `MEMORY.md` (project memory) |
-| Code conventions, repo-specific rules | `CLAUDE.md` (project root) |
-| Agent behavior rules | `AGENTS.md` |
-| Skill gaps or missing steps | The specific skill's `SKILL.md` |
-| Standing decisions (what was rejected) | `MEMORY.md` |
+| Workflow rules, process preferences | `~/.claude/memory/MEMORY.md` (global memory index) + individual memory file |
+| Agent behavior, approach corrections | `~/.claude/memory/` (as a `feedback` type memory file) |
+| Standing decisions (what was rejected) | `~/.claude/memory/` (as a `feedback` type memory file) |
+| User preferences, collaboration style | `~/.claude/memory/` (as a `user` type memory file) |
+| Skill gaps or missing steps | The specific skill's `SKILL.md` (only exception to global-only) |
+
+### Memory file format
+
+When creating memory files under `~/.claude/memory/`, use the standard
+frontmatter format:
+
+```markdown
+---
+name: {descriptive name}
+description: {one-line description for relevance matching}
+type: {user | feedback | project | reference}
+---
+
+{distilled rule}
+
+**Why:** {one-line reason}
+**How to apply:** {when/where this kicks in}
+```
+
+Then add a one-line pointer to `~/.claude/memory/MEMORY.md`.
 
 ### For each lesson
 
-1. **Check** if it's already captured in the target file
-2. **If not captured:** add it — write it as a rule, not a narrative
-3. **If already captured:** verify accuracy; update if stale
-4. **For skill file edits:** propose the specific edit and ask the user to
+1. **Distill** the finding into an actionable rule (see distillation rules above)
+2. **Check** if it's already captured in a global memory file or MEMORY.md
+3. **If not captured:** create a memory file and add to MEMORY.md index
+4. **If already captured:** verify accuracy; update if stale
+5. **For skill file edits:** propose the specific edit and ask the user to
    approve before making changes (use AskUserQuestion)
 
-**Key rule:** The retro-log holds the story. Target files need only the
-actionable rule. Do not add narrative to CLAUDE.md, MEMORY.md, or AGENTS.md.
+**Key rule:** The retro-log holds the story. Global memory files hold only the
+distilled, actionable rule. Never write narrative to memory files.
 
 After promoting, note in the retro entry which lessons were promoted and where.
 
