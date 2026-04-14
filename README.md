@@ -23,6 +23,8 @@ npx skills add whizzzkid/skills -s skill-name
 | [datadog](skills/datadog/) | Create and manage Datadog dashboards, monitors, SLOs, and notebooks via REST API |
 | [docker](skills/docker/) | Image tag verification, build debugging, ENTRYPOINT checks, and daemon troubleshooting |
 | [docs](skills/docs/) | Check for and update documentation affected by code changes |
+| [goodevening](skills/goodevening/) | End-of-day wrap-up — brag doc, meeting notes, action item tracking, communication audit, evening.md |
+| [goodmorning](skills/goodmorning/) | Morning prep — Slack, Gmail, Calendar, Granola, GitHub, and interactive HTML dashboard |
 | [pr](skills/pr/) | Create draft PRs with stacking support and post-PR workflow |
 | [pr-resolve](skills/pr-resolve/) | Interactively address PR review comments — implement fixes, draft responses, and resolve threads |
 | [pr-review](skills/pr-review/) | Thorough, critical code review with playground experiments and pending GitHub review comments |
