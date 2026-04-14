@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.0'
+  version: '2.0.0'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -26,29 +26,32 @@ metadata:
 
 # Good Morning
 
-Daily preparation skill that connects to all your work tools, gathers what
-needs your attention, and produces an actionable dashboard for the day.
+Daily preparation skill that connects to all your work tools in parallel,
+gathers what needs your attention, and produces an actionable dashboard.
+
+```
+Bootstrap ──► Parallel Fetch (4 agents) ──► Compile Outputs
+                │  Slack agent
+                │  Gmail agent
+                │  Calendar+Granola+Drive agent
+                │  GitHub agent
+```
 
 ---
 
-## Phase 1: Initialize
+## Stage 0: Bootstrap
+
+Run these sequentially — they're fast and everything else depends on them.
 
 ### Determine dates and paths
 
 ```bash
 TODAY=$(date +%Y-%m-%d)
 YESTERDAY=$(date -v-1d +%Y-%m-%d 2>/dev/null || date -d "yesterday" +%Y-%m-%d)
-MORNING_DIR="$PWD/$TODAY"
-EVENING_FILE="$PWD/$YESTERDAY/evening.md"
+mkdir -p "$PWD/$TODAY"
 ```
 
-Create today's output directory:
-
-```bash
-mkdir -p "$MORNING_DIR"
-```
-
-### Check for yesterday's evening summary
+### Read yesterday's evening summary
 
 If `<pwd>/<YYYY-MM-DD-1>/evening.md` exists, read it and extract:
 
@@ -56,117 +59,115 @@ If `<pwd>/<YYYY-MM-DD-1>/evening.md` exists, read it and extract:
 - Carry-over items not completed
 - Notes or context for today
 
-If it does not exist, note this and continue — it is not an error.
+If it does not exist, note this and continue — it is not an error. Store
+the extracted items as the `carry_over` dataset for Stage 2.
 
 ---
 
-## Phase 2: Connect to Services
+## Stage 1: Parallel Data Gathering
 
-For each service below, follow this connection pattern:
+**Launch 4 agents in parallel** using the Agent tool. Each agent handles
+its own MCP authentication and data fetching independently. If any agent
+fails to authenticate, it returns a skip notice — it does not block the
+others.
 
-1. **Discover** — use `ToolSearch` to find MCP tools for the service
-2. **Authenticate** — call the authenticate tool to start OAuth
-3. **Wait** — after auth completes, operational tools become available
-4. **If auth fails** — inform the user clearly:
-   > "{Service} authentication failed. Please complete the OAuth flow at
-   > the URL above, then tell me to continue."
-5. **If no MCP tools exist** — skip the service and note it in the output:
-   > "Skipped {service} — no MCP tools configured."
+### MCP Connection Pattern (shared by all agents)
 
-**Process services in order.** Each service builds on context from the
-previous ones (e.g., calendar agenda docs need Drive access).
+Each agent follows this pattern for its service:
 
-### Fallback for GitHub
+1. `ToolSearch` to find MCP tools for the service
+2. Call the authenticate tool to start OAuth
+3. After auth completes, use the operational tools
+4. **If auth fails** → **STOP the agent** and return an error:
+   `"BLOCKED: {Service} authentication failed. User must complete OAuth at: {url}"`
+5. **If no MCP tools found** → **STOP the agent** and return an error:
+   `"BLOCKED: {Service} MCP tools not configured. User must install the MCP server."`
 
-If GitHub MCP tools are unavailable, fall back to the `gh` CLI:
+**No service is optional.** If any agent returns a BLOCKED error, pause
+output generation and present ALL blocked services to the user at once:
 
-```bash
-gh api notifications --jq '.[] | {title: .subject.title, type: .subject.type, reason: .reason, url: .subject.url}'
-```
+> "The following services need your attention before I can continue:
+>
+> 1. {Service}: {reason and action needed}
+> 2. {Service}: {reason and action needed}
+>
+> Please fix these and tell me to continue."
+
+**Do not proceed to Stage 2 until all agents succeed.** After the user
+fixes access, re-run only the failed agents.
 
 ---
 
-## Phase 3: Slack
+### Agent 1: Slack
 
-Use ToolSearch to find Slack MCP tools (search: `"slack"`). Authenticate
-if needed.
+**ToolSearch query:** `"slack"`
 
-### 3a. Unread notifications needing your input
+Fetch all three datasets and return them as structured results:
 
-Fetch unread messages and notifications. Filter for items that **require a
-response or decision** from you:
+**1a. Unread notifications needing your input**
+
+Items that **require a response or decision** from you:
 
 - Direct messages you haven't replied to
 - Mentions in channels where someone is waiting for your input
 - Threads you're participating in with new replies
 - Channel messages that explicitly ask you a question or tag you
 
-**Exclude**: bot notifications, automated alerts, messages you've already
-responded to.
+**Exclude**: bot notifications, automated alerts, already-responded messages.
 
-### 3b. Follow-ups on your sent messages (last 7 days)
+**1b. Follow-ups on your sent messages (last 7 days)**
 
-Search for messages **you** posted in the last 7 days that may need
-follow-up:
+Messages **you** posted that may need follow-up:
 
-- Messages you sent that received no reply (potential dropped threads)
-- Questions you asked that got partial or unclear answers
-- Threads you started that have new unread activity
+- Messages you sent that received no reply (dropped threads)
+- Questions you asked with partial or no answers
+- Threads you started with new unread activity
 - Action items you assigned to others — check if they responded
 
-### 3c. Important announcements and share-outs
-
-Search for messages from the last 24-48 hours that are likely important
-announcements:
+**1c. Important announcements and share-outs (last 24-48h)**
 
 - Messages in announcement or general channels
 - Messages with high reaction counts (> 5 reactions)
 - Messages from leadership, team leads, or org-wide channels
-- Share-outs, FYIs, and company-wide updates
-- Messages linking to docs, slides, or recordings you should review
+- Share-outs, FYIs, company-wide updates
+- Messages linking to docs, slides, or recordings
 
-**For each item found, record:**
-- Channel name and link to the message
+**Return format per item:**
+- Channel name and message link
 - Sender
 - Brief summary (1-2 sentences)
 - Urgency: `action-required` | `follow-up` | `fyi`
 
 ---
 
-## Phase 4: Gmail
+### Agent 2: Gmail
 
-Use ToolSearch to find Gmail MCP tools (search: `"gmail"`). Authenticate
-if needed.
+**ToolSearch query:** `"gmail"`
 
-### 4a. Unread emails needing your input
+Fetch all three datasets and return them as structured results:
 
-Fetch unread emails from the inbox. Filter for items requiring action:
+**2a. Unread emails needing your input**
 
 - Emails addressed directly to you (not just CC'd)
 - Emails with questions or requests
 - Emails from your manager, direct reports, or key stakeholders
 - Calendar-related emails (meeting changes, RSVPs needed)
 
-**Exclude**: newsletters, automated notifications, marketing, and emails
-where you're just CC'd on a thread that doesn't need your input.
+**Exclude**: newsletters, automated notifications, marketing, CC-only.
 
-### 4b. Sent emails needing follow-up
-
-Search sent mail from the last 7 days:
+**2b. Sent emails needing follow-up (last 7 days)**
 
 - Emails you sent that haven't been replied to
 - Questions you asked that are still unanswered
-- Requests you made where the deadline is approaching
+- Requests where the deadline is approaching
 
-### 4c. Important announcements
-
-Search for emails from the last 24-48 hours that look like announcements:
+**2c. Important announcements (last 24-48h)**
 
 - All-hands emails, org-wide updates
 - Policy changes, HR announcements
 - Emails from senior leadership
 
-**For each item found, record:**
+**Return format per item:**
 - Subject, sender, date
 - Brief summary
 - Urgency: `action-required` | `follow-up` | `fyi`
@@ -174,134 +175,113 @@ Search for emails from the last 24-48 hours that look like announcements:
 
 ---
 
-## Phase 5: Calendar
+### Agent 3: Calendar + Granola + Google Drive
 
-Use ToolSearch to find Calendar MCP tools (search: `"gcal"` or
-`"calendar"`). Authenticate if needed.
+This agent handles three services because they have internal dependencies:
+calendar results drive Granola and Drive lookups.
 
-### 5a. Fetch today's meetings
+**Step 1: Fetch today's meetings**
 
-Get all calendar events for today. For each meeting, extract:
+ToolSearch query: `"gcal"` or `"calendar"`
 
+For each event, extract:
 - Title, time, duration
-- Attendees (and who organized it)
+- Attendees (and organizer)
 - Location or video link
 - Description/notes field
 - Whether it's a recurring meeting
+- Any linked document URLs in the description
 
-### 5b. Recurring meetings — fetch past notes from Granola
+**Step 2: Enrich recurring meetings with Granola (parallel per meeting)**
 
-For each **recurring** meeting:
+ToolSearch query: `"granola"`
 
-1. Use ToolSearch to find Granola MCP tools (search: `"granola"`)
-2. Authenticate if needed
-3. Search for notes from previous instances of this meeting (match by
-   title or attendees)
-4. Extract key points, decisions, and open action items from the most
-   recent 1-2 instances
-5. Summarize what was discussed last time and what's likely to come up
+For each **recurring** meeting, search Granola for notes from previous
+instances (match by title or attendees). Extract from the most recent 1-2
+instances:
+- Key points and decisions
+- Open action items
+- What was discussed last time
 
-If Granola is unavailable, note it and continue.
+If Granola is unavailable, return BLOCKED error — do not continue without it.
 
-### 5c. Agenda docs — fetch from Google Drive/Docs
+**Step 3: Enrich meetings with agenda docs (parallel per meeting)**
 
-For each meeting that has a linked document (URL in the description,
-attached agenda, or referenced Google Doc):
+ToolSearch query: `"gdrive"` or `"gdocs"`
 
-1. Use ToolSearch to find Google Drive or Docs MCP tools (search:
-   `"gdrive"` or `"gdocs"`)
-2. Authenticate if needed
-3. Fetch the document content
-4. Extract the agenda items, discussion points, and any pre-reads
-5. Summarize the key points you need to prepare for
+For each meeting with a linked document URL in its description:
+- Fetch the document content
+- Extract agenda items, discussion points, and pre-reads
+- Summarize key points to prepare for
 
-If the doc is not accessible, note the URL for manual review.
+If Google Drive/Docs is unavailable, return BLOCKED error. If a
+specific doc is inaccessible (permissions), note the URL for manual review
+but do not block on individual docs.
 
-### 5d. Distill meeting prep
-
-For each meeting, produce a prep block:
+**Return format per meeting:**
 
 ```
-### {time} — {title} ({duration})
-**Type**: recurring | one-off
-**Attendees**: {list}
-**Last time**: {summary from Granola, if recurring}
-**Agenda**: {distilled points from doc, or "no agenda found"}
-**Your prep**: {what you should review or prepare before this meeting}
+{time} — {title} ({duration})
+Type: recurring | one-off
+Attendees: {list}
+Last time: {Granola summary, or "N/A"}
+Agenda: {doc summary, or "no agenda found"}
+Prep: {what to review or prepare}
 ```
 
 ---
 
-## Phase 6: GitHub
+### Agent 4: GitHub
 
-Use ToolSearch to find GitHub MCP tools (search: `"github"`). If
-unavailable, fall back to the `gh` CLI.
+**ToolSearch query:** `"github"` — if unavailable, use `gh` CLI.
 
-### 6a. PRs needing your review
+Run all four queries (in parallel where the tool supports it):
 
+**4a. PRs needing your review**
 ```bash
-gh search prs --review-requested=@me --state=open --json title,url,repository,author,createdAt
+gh search prs --review-requested=@me --state=open \
+  --json title,url,repository,author,createdAt
 ```
 
-Or use MCP tools to fetch PRs where your review is requested.
-
-### 6b. Your PRs needing attention
-
+**4b. Your PRs needing attention**
 ```bash
-gh search prs --author=@me --state=open --json title,url,repository,reviews,checks
+gh search prs --author=@me --state=open \
+  --json title,url,repository,reviews,checks
+```
+Flag: new review comments, failing CI, open > 3 days, merge conflicts.
+
+**4c. Assigned issues**
+```bash
+gh search issues --assignee=@me --state=open \
+  --json title,url,repository,labels,createdAt
 ```
 
-Flag PRs that have:
-- New review comments you haven't addressed
-- Failing CI checks
-- Been open for more than 3 days without review
-- Merge conflicts
-
-### 6c. Assigned issues
-
-```bash
-gh search issues --assignee=@me --state=open --json title,url,repository,labels,createdAt
-```
-
-### 6d. Mentioned in issues/PRs
-
+**4d. Mentions**
 ```bash
 gh api notifications --jq '.[] | select(.reason == "mention" or .reason == "review_requested") | {title: .subject.title, type: .subject.type, url: .subject.url}'
 ```
 
-**For each item, record:**
+**Return format per item:**
 - Title, repo, URL
 - Type: `pr-review` | `pr-authored` | `issue` | `mention`
 - Age and urgency
 
 ---
 
-## Phase 7: Previous Day Follow-ups
+## Stage 2: Compile Outputs
 
-If yesterday's `evening.md` was found in Phase 1, present the action items
-as a carry-over section:
+**Wait for all 4 agents to complete.** Merge their results with the
+`carry_over` dataset from Stage 0.
 
-- Items marked as incomplete
-- Items deferred to today
-- Blockers that were identified
+### 2a. morning.md
 
-If no evening.md exists, skip this section.
-
----
-
-## Phase 8: Generate Outputs
-
-### 8a. morning.md
-
-Write to `<pwd>/<YYYY-MM-DD>/morning.md`. This is the structured reference
-for the agent (and for `wk:goodevening` to review later).
+Write to `<pwd>/<YYYY-MM-DD>/morning.md`:
 
 ```markdown
 # Morning Brief — {YYYY-MM-DD}
 
 ## Yesterday's Carry-Over
 - [ ] {action item from evening.md}
-- ...
 
 ## Calendar
 ### {time} — {title}
@@ -339,10 +319,10 @@ for the agent (and for `wk:goodevening` to review later).
 _Space for anything that comes up during the day._
 ```
 
-### 8b. morning.html
+### 2b. morning.html
 
-Write to `<pwd>/<YYYY-MM-DD>/morning.html`. This is a **self-contained**
-interactive dashboard with embedded CSS and JS (no CDN dependencies).
+Write to `<pwd>/<YYYY-MM-DD>/morning.html`. Self-contained interactive
+dashboard — **no CDN dependencies**, all CSS and JS embedded.
 
 **Required features:**
 
@@ -357,43 +337,39 @@ interactive dashboard with embedded CSS and JS (no CDN dependencies).
 4. **Persistence** — checkbox state saves to `localStorage` keyed by date
 5. **Priority badges** — `action-required` (red), `follow-up` (amber),
    `fyi` (blue)
-6. **Links** — every item links to its source (Slack message, email,
-   PR, calendar event)
-7. **Meeting cards** — show time, title, attendees, Granola summary,
-   agenda highlights, and a "prep notes" area
-8. **Dark mode** — respect `prefers-color-scheme` media query
+6. **Links** — every item links to its source
+7. **Meeting cards** — time, title, attendees, Granola summary, agenda
+   highlights, prep notes area
+8. **Dark mode** — respect `prefers-color-scheme`
 9. **Responsive** — works on desktop and mobile
 10. **Print-friendly** — `@media print` hides interactive elements
 
-**Design guidelines:**
-- Clean, minimal, modern aesthetic
-- System font stack (no external fonts)
-- Subtle colors, clear hierarchy
-- Sections default to expanded; user can collapse
-- Progress bar updates in real-time as checkboxes are toggled
+**Design:** clean, minimal, system font stack, subtle colors, clear
+hierarchy, sections default expanded, progress bar updates in real-time.
 
-After writing both files, inform the user:
+### Announce
+
+After writing both files:
 
 > "Your morning brief is ready:
 > - `{date}/morning.md` — structured reference
-> - `{date}/morning.html` — open in your browser for the interactive
->   dashboard
+> - `{date}/morning.html` — open in your browser
 >
-> You have X items needing action, Y follow-ups, and Z meetings today."
+> You have X items needing action, Y follow-ups, and Z meetings today.
+> {list any skipped services}"
 
 ---
 
 ## Service Connection Summary
 
-| Service | ToolSearch query | Auth tool pattern | Fallback |
-|---------|-----------------|-------------------|----------|
-| Slack | `"slack"` | `mcp__*slack*__authenticate` | None — skip |
-| Gmail | `"gmail"` | `mcp__*gmail*__authenticate` | None — skip |
-| Calendar | `"gcal"` | `mcp__*gcal*__authenticate` | None — skip |
-| Granola | `"granola"` | `mcp__*granola*__authenticate` | None — skip |
-| Google Drive | `"gdrive"` | `mcp__*gdrive*__authenticate` | None — skip |
-| Google Docs | `"gdocs"` | `mcp__*gdocs*__authenticate` | None — skip |
-| GitHub | `"github"` | `mcp__*github*__authenticate` | `gh` CLI |
+| Service | ToolSearch | Agent | Fallback |
+|---------|-----------|-------|----------|
+| Slack | `"slack"` | 1 | **BLOCKED** — require MCP |
+| Gmail | `"gmail"` | 2 | **BLOCKED** — require MCP |
+| Calendar | `"gcal"` | 3 | **BLOCKED** — require MCP |
+| Granola | `"granola"` | 3 | **BLOCKED** — require MCP |
+| Google Drive/Docs | `"gdrive"` / `"gdocs"` | 3 | **BLOCKED** — require MCP |
+| GitHub | `"github"` | 4 | `gh` CLI (always available) |
 
 ---
 
@@ -401,6 +377,6 @@ After writing both files, inform the user:
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk:goodmorning` | Full morning prep with all services |
-| Service auth fails | Prompt user, continue with remaining services |
+| `/wk:goodmorning` | Full morning prep — 4 parallel agents |
+| Service auth fails | Block and prompt user to fix, re-run failed agents |
 | No evening.md | Skip carry-over section, note in output |
