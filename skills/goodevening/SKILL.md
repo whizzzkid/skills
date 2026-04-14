@@ -2,10 +2,11 @@
 name: wk:goodevening
 description: >-
   Wrap up your workday — review morning progress, write a brag document of
-  the day's achievements, capture meeting learnings from Granola, track
-  unfinished action items as GitHub/Jira issues, audit unanswered Slack
-  and email messages, and create an evening.md for tomorrow's morning brief.
-  Use at the end of your workday.
+  the day's achievements, capture meeting learnings from Granola, check
+  Lattice for pending feedback requests, surface peer feedback opportunities
+  from today's interactions, track unfinished action items as GitHub/Jira
+  issues, audit unanswered Slack and email messages, and create an
+  evening.md for tomorrow's morning brief. Use at the end of your workday.
 model-invocable: false
 user-invocable: true
 model: sonnet
@@ -30,11 +31,12 @@ meeting insights, ensures nothing falls through the cracks, and prepares
 context for tomorrow.
 
 ```
-Bootstrap ──► Parallel Fetch (4 agents) ──► Synthesize ──► Interactive ──► evening.md
+Bootstrap ──► Parallel Fetch (5 agents) ──► Synthesize ──► Interactive ──► evening.md
                 │  Code+GitHub agent                         │
                 │  Calendar+Granola agent                    │  Untracked items
                 │  Slack agent                               │  Unanswered comms
-                │  Gmail agent                               │
+                │  Gmail agent                               │  Lattice feedback
+                │  Lattice agent                             │  Peer feedback opps
 ```
 
 ---
@@ -61,7 +63,7 @@ without a morning brief — Stage 1 gathers fresh context.
 
 ## Stage 1: Parallel Data Gathering
 
-**Launch 4 agents in parallel** using the Agent tool. Each agent handles
+**Launch 5 agents in parallel** using the Agent tool. Each agent handles
 its own MCP authentication independently. If any agent fails to
 authenticate, it returns a skip notice — it does not block the others.
 
@@ -209,9 +211,38 @@ Notable emails you sent today:
 
 ---
 
+### Agent 5: Lattice Feedback
+
+**ToolSearch query:** `"lattice"`
+
+Fetch two datasets:
+
+**5a. Pending feedback requests**
+
+Feedback requests assigned to you that are awaiting your response:
+- Peer reviews, 360 reviews, manager feedback cycles
+- Any feedback request with an upcoming or past deadline
+- Requests you've started but not submitted
+
+For each, extract:
+- Who requested it (or who it's about)
+- Type of feedback (peer, upward, 360, etc.)
+- Deadline (if any)
+- Whether you've started a draft
+
+**5b. Recent feedback received**
+
+Any new feedback you've received that you haven't viewed:
+- Praise, recognition, or constructive feedback
+- Review cycle results
+
+**Return:** both datasets structured with person, type, deadline, status.
+
+---
+
 ## Stage 2: Synthesize
 
-**Wait for all 4 agents to complete.** Merge their results with
+**Wait for all 5 agents to complete.** Merge their results with
 `morning_baseline`.
 
 ### 2a. Review morning progress
@@ -241,6 +272,7 @@ Pull from all agent results:
 | Meetings attended, decisions | Agent 2 |
 | Slack contributions | Agent 3 |
 | Email contributions | Agent 4 |
+| Feedback given/received | Agent 5 |
 
 Structure:
 
@@ -275,6 +307,28 @@ Merge action items from all sources:
 | Email promises | Agent 4 — emails where you promised follow-up |
 
 Deduplicate across sources (same action from different channels = one item).
+
+### 2d. Identify peer feedback opportunities
+
+Mine today's interactions across all agents to find moments where you
+could share meaningful feedback with coworkers. Look for:
+
+| Signal | Source | Feedback type |
+|--------|--------|--------------|
+| Someone gave a great PR review | Agent 1 (PRs reviewed) | Praise — thorough review |
+| Someone unblocked you in Slack | Agent 3 (Slack threads) | Praise — responsiveness |
+| A meeting was well-facilitated | Agent 2 (meetings) | Praise — leadership |
+| Someone presented or demo'd | Agent 2 (meetings) | Praise — communication |
+| A coworker shipped something notable | Agent 1 (PRs merged by others) | Praise — delivery |
+| Collaborative debugging or pairing | Agent 3 (Slack threads) | Praise — collaboration |
+| Someone shared a useful resource | Agent 3 / Agent 4 | Praise — knowledge sharing |
+| A decision was made with good tradeoff analysis | Agent 2 (meetings) | Praise — judgment |
+
+For each opportunity, record:
+- **Who**: the coworker's name
+- **What**: the specific interaction (with link/reference)
+- **Why it matters**: what made it feedback-worthy
+- **Suggested feedback**: a 1-2 sentence draft the user can refine
 
 ---
 
@@ -339,6 +393,56 @@ If there are outstanding items:
 **If all comms are answered:**
 > "All Slack messages and emails from today are responded to. Clean inbox!"
 
+### 3c. Lattice feedback and peer recognition
+
+**Part 1: Pending Lattice feedback requests**
+
+Present any pending requests from Agent 5:
+
+> "You have {N} pending Lattice feedback requests:
+>
+> 1. Peer feedback for @{person} — due {date} ({status})
+> 2. 360 review for @{person} — due {date} ({status})
+>
+> For each:
+> **(a)** Draft feedback now (I'll help compose it based on today's
+>     interactions and what I know about your work together)
+> **(b)** Remind me tomorrow
+> **(c)** Skip — I'll handle it on Lattice directly"
+
+For **(a)**: use context from today's meetings, Slack interactions, PR
+reviews, and any prior collaboration signals to help draft thoughtful,
+specific feedback. Present the draft for the user to refine before
+submitting via Lattice MCP tools.
+
+For **(b)**: add to evening.md carry-over with the deadline.
+
+**Part 2: Peer feedback opportunities**
+
+Present the feedback opportunities identified in Stage 2d:
+
+> "I noticed {N} opportunities to share feedback with coworkers today:
+>
+> 1. @{person} — {what they did} ({source})
+>    Suggested: "{draft feedback}"
+>
+> 2. @{person} — {what they did} ({source})
+>    Suggested: "{draft feedback}"
+>
+> For each:
+> **(a)** Send as Lattice feedback (I'll submit via Lattice)
+> **(b)** Send as a Slack message (quick praise in channel or DM)
+> **(c)** Edit and send
+> **(d)** Skip"
+
+For **(a)**: submit structured feedback via Lattice MCP tools.
+For **(b)**: send a Slack message via Slack MCP tools.
+For **(c)**: let the user edit, then send via their chosen channel.
+For **(d)**: skip silently.
+
+**If no feedback items exist:**
+> "No pending Lattice requests and no standout feedback moments today."
+
 ---
 
 ## Stage 4: Generate evening.md
@@ -365,6 +469,12 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 ## Deferred Communications
 - [ ] Reply to @{sender} in #{channel}: {summary} [link]
 - [ ] Reply to {email subject} from {sender} [link]
+
+## Feedback
+### Lattice Requests Pending
+- [ ] {type} for @{person} — due {date}
+### Feedback Sent Today
+- @{person}: {summary} (via {Lattice|Slack})
 
 ## Issues Created Today
 - {repo}#{number}: {title} [link]
@@ -402,6 +512,7 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 | Granola | `"granola"` | 2 | **BLOCKED** — require MCP |
 | Slack | `"slack"` | 3 | **BLOCKED** — require MCP |
 | Gmail | `"gmail"` | 4 | **BLOCKED** — require MCP |
+| Lattice | `"lattice"` | 5 | **BLOCKED** — require MCP |
 | Jira | `"jira"` | Stage 3 | **BLOCKED** — require MCP |
 
 ---
@@ -410,7 +521,7 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk:goodevening` | Full evening wrap-up — 4 parallel agents, then interactive |
+| `/wk:goodevening` | Full evening wrap-up — 5 parallel agents, then interactive |
 | No morning.md | Gathers fresh context, still produces evening.md |
 | Service unavailable | Block and prompt user to fix, re-run failed agents |
 | All comms answered | Celebrates clean inbox |
