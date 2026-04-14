@@ -356,7 +356,8 @@ After writing both files:
 > - `{date}/morning.html` — open in your browser
 >
 > You have X items needing action, Y follow-ups, and Z meetings today.
-> {list any skipped services}"
+>
+> Would you like to commit and push these files?"
 
 ---
 

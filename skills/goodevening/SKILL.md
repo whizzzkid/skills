@@ -31,12 +31,8 @@ meeting insights, ensures nothing falls through the cracks, and prepares
 context for tomorrow.
 
 ```
-Bootstrap ──► Parallel Fetch (5 agents) ──► Synthesize ──► Interactive ──► evening.md
-                │  Code+GitHub agent                         │
-                │  Calendar+Granola agent                    │  Untracked items
-                │  Slack agent                               │  Unanswered comms
-                │  Gmail agent                               │  Lattice feedback
-                │  Lattice agent                             │  Peer feedback opps
+Bootstrap ──► Parallel Fetch ──► Compile Everything ──► One Prompt ──► evening.md
+               (5 agents)        (no user input)        (all Qs)
 ```
 
 ---
@@ -295,7 +291,7 @@ Structure:
 **Tone**: factual, concise, strong verbs. "Led", "shipped", "unblocked",
 "decided", "reviewed" — not "worked on" or "helped with."
 
-### 2c. Collect untracked action items
+### 2c. Collect and pre-check untracked action items
 
 Merge action items from all sources:
 
@@ -308,7 +304,28 @@ Merge action items from all sources:
 
 Deduplicate across sources (same action from different channels = one item).
 
-### 2d. Identify peer feedback opportunities
+**Pre-check tracking status** for each action item (do this now, not in
+Stage 3 — no user input needed):
+
+```bash
+gh search issues --assignee=@me --state=open "{keywords}"
+```
+
+Also search Jira if available (ToolSearch: `"jira"`). Mark each item as
+`tracked` (existing issue/ticket found) or `untracked`.
+
+### 2d. Compile unanswered communications
+
+Merge unanswered items from Agent 3 (Slack) and Agent 4 (Gmail) into a
+single list. If all comms are answered, note `comms_clean = true`.
+
+### 2e. Compile Lattice feedback
+
+From Agent 5, collect:
+- Pending feedback requests (with deadlines and draft status)
+- New feedback received
+
+### 2f. Identify peer feedback opportunities
 
 Mine today's interactions across all agents to find moments where you
 could share meaningful feedback with coworkers. Look for:
@@ -334,114 +351,78 @@ For each opportunity, record:
 
 ## Stage 3: Interactive Resolution
 
-This stage requires user input and runs sequentially.
+**Present everything at once.** Compile all items that need user input
+into a single numbered prompt. The user answers all questions in one pass.
+Do NOT ask section by section.
 
-### 3a. Track untracked action items
+Present the full list:
 
-For each action item from Stage 2c, check if it's already tracked:
-
-```bash
-gh search issues --assignee=@me --state=open "{keywords}"
-```
-
-Also search Jira if available (ToolSearch: `"jira"`).
-
-For items **without** an existing issue/ticket, present them:
-
-> "These action items from today don't have tracking issues:
+> "Here's your evening wrap-up. I need your input on {N} items:
+>
+> ---
+>
+> **Untracked Action Items** ({count})
+> _These don't have GitHub issues or Jira tickets yet:_
 >
 > 1. {action from standup} — from {meeting name}
+>    **(a)** GitHub issue  **(b)** Jira ticket  **(c)** Carry forward  **(d)** Skip
+>
 > 2. {follow-up promised in Slack} — #{channel}
-> 3. {incomplete morning brief item}
+>    **(a)** GitHub issue  **(b)** Jira ticket  **(c)** Carry forward  **(d)** Skip
 >
-> For each, would you like me to:
-> **(a)** Create a GitHub issue
-> **(b)** Create a Jira ticket
-> **(c)** Carry forward to tomorrow (evening.md only)
-> **(d)** Skip — handled or no longer needed"
-
-Process each choice:
-
-- **(a):** `gh issue create --title "{action}" --body "{context}" --assignee @me`
-- **(b):** Use Jira MCP tools to create a ticket
-- **(c):** Add to evening.md carry-over section
-- **(d):** Mark as resolved
-
-### 3b. Audit unanswered communications
-
-Merge unanswered items from Agent 3 (Slack) and Agent 4 (Gmail).
-
-If there are outstanding items:
-
-> "You have {N} unanswered communications:
+> ---
 >
-> **Slack:**
-> 1. @{sender} in #{channel}: {summary} [link]
+> **Unanswered Communications** ({count})
 >
-> **Email:**
-> 2. {subject} from {sender} — received {time} [link]
+> 3. Slack: @{sender} in #{channel}: {summary} [link]
+>    **(a)** Draft response  **(b)** Snooze to tomorrow  **(c)** Skip
 >
-> For each:
-> **(a)** Draft a response now (I'll help compose it)
-> **(b)** Snooze to tomorrow
-> **(c)** Skip — no response needed"
-
-- **(a):** Draft response, present for approval, send via MCP
-- **(b):** Add to evening.md carry-over with context
-- **(c):** Mark as resolved
-
-**If all comms are answered:**
-> "All Slack messages and emails from today are responded to. Clean inbox!"
-
-### 3c. Lattice feedback and peer recognition
-
-**Part 1: Pending Lattice feedback requests**
-
-Present any pending requests from Agent 5:
-
-> "You have {N} pending Lattice feedback requests:
+> 4. Email: {subject} from {sender} — received {time} [link]
+>    **(a)** Draft response  **(b)** Snooze to tomorrow  **(c)** Skip
 >
-> 1. Peer feedback for @{person} — due {date} ({status})
-> 2. 360 review for @{person} — due {date} ({status})
+> ---
 >
-> For each:
-> **(a)** Draft feedback now (I'll help compose it based on today's
->     interactions and what I know about your work together)
-> **(b)** Remind me tomorrow
-> **(c)** Skip — I'll handle it on Lattice directly"
-
-For **(a)**: use context from today's meetings, Slack interactions, PR
-reviews, and any prior collaboration signals to help draft thoughtful,
-specific feedback. Present the draft for the user to refine before
-submitting via Lattice MCP tools.
-
-For **(b)**: add to evening.md carry-over with the deadline.
-
-**Part 2: Peer feedback opportunities**
-
-Present the feedback opportunities identified in Stage 2d:
-
-> "I noticed {N} opportunities to share feedback with coworkers today:
+> **Lattice Feedback Requests** ({count})
 >
-> 1. @{person} — {what they did} ({source})
+> 5. Peer feedback for @{person} — due {date} ({status})
+>    **(a)** Draft now  **(b)** Remind tomorrow  **(c)** Skip
+>
+> ---
+>
+> **Peer Feedback Opportunities** ({count})
+>
+> 6. @{person} — {what they did} ({source})
 >    Suggested: "{draft feedback}"
+>    **(a)** Lattice  **(b)** Slack DM  **(c)** Edit & send  **(d)** Skip
 >
-> 2. @{person} — {what they did} ({source})
->    Suggested: "{draft feedback}"
+> ---
 >
-> For each:
-> **(a)** Send as Lattice feedback (I'll submit via Lattice)
-> **(b)** Send as a Slack message (quick praise in channel or DM)
-> **(c)** Edit and send
-> **(d)** Skip"
+> Reply with your choices, e.g.: `1a 2c 3b 4a 5b 6a`"
 
-For **(a)**: submit structured feedback via Lattice MCP tools.
-For **(b)**: send a Slack message via Slack MCP tools.
-For **(c)**: let the user edit, then send via their chosen channel.
-For **(d)**: skip silently.
+**If a section has zero items, omit it entirely.** If ALL sections are
+empty, skip Stage 3:
+> "Nothing needs your input — all items are tracked and all comms answered!"
 
-**If no feedback items exist:**
-> "No pending Lattice requests and no standout feedback moments today."
+### Process responses
+
+After receiving the user's answers, process all choices in parallel where
+possible:
+
+- **Action items → GitHub:** `gh issue create --title "{action}" --body "{context}" --assignee @me`
+- **Action items → Jira:** Use Jira MCP tools to create a ticket
+- **Action items → Carry forward:** Add to evening.md carry-over
+- **Comms → Draft response:** Draft all responses, then present them
+  together for approval before sending via MCP
+- **Comms → Snooze:** Add to evening.md carry-over with context
+- **Lattice → Draft:** Draft feedback using context from today's
+  interactions, present for refinement, submit via Lattice MCP
+- **Lattice → Remind:** Add to evening.md carry-over with deadline
+- **Peer feedback → Lattice:** Submit via Lattice MCP tools
+- **Peer feedback → Slack:** Send via Slack MCP tools
+- **Peer feedback → Edit:** Let user edit, then send via chosen channel
+
+If any drafts were requested (comms or Lattice feedback), present all
+drafts together in a second prompt for approval before sending.
 
 ---
 
@@ -499,7 +480,9 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 > Today: {completed} items done, {remaining} carried forward,
 > {issues_created} issues created, {meetings} meetings documented.
 >
-> {brag_highlight — the single most impactful thing you did today}"
+> {brag_highlight — the single most impactful thing you did today}
+>
+> Would you like to commit and push these files?"
 
 ---
 
