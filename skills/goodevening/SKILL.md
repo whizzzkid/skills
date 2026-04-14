@@ -32,7 +32,7 @@ context for tomorrow.
 
 ```
 Bootstrap ──► Parallel Fetch ──► Compile Everything ──► One Prompt ──► evening.md
-               (5 agents)        (no user input)        (all Qs)
+               (7 agents)        (no user input)        (all Qs)
 ```
 
 ---
@@ -59,7 +59,7 @@ without a morning brief — Stage 1 gathers fresh context.
 
 ## Stage 1: Parallel Data Gathering
 
-**Launch 5 agents in parallel** using the Agent tool. Each agent handles
+**Launch 7 agents in parallel** using the Agent tool. Each agent handles
 its own MCP authentication independently. If any agent fails to
 authenticate, it returns a skip notice — it does not block the others.
 
@@ -236,9 +236,68 @@ Any new feedback you've received that you haven't viewed:
 
 ---
 
+### Agent 6: Jira + Confluence Audit
+
+**ToolSearch query:** `"jira"` or `"confluence"`
+
+Jira and Confluence share a single MCP server — one authentication covers
+both.
+
+**6a. Jira activity today (for brag document + audit)**
+
+- Tickets you updated, commented on, or transitioned today
+- Tickets assigned to you with new comments you haven't responded to
+- Mentions in Jira comments awaiting your input
+
+**6b. Confluence activity today (for announcements + audit)**
+
+- Pages or comments where you were mentioned today
+- New blog posts or announcements in team/org spaces
+- Decision pages or meeting notes published today
+- Pages shared with you that you haven't viewed
+
+**Return:** both datasets structured with title, project/space, URL,
+type (`jira-activity` | `jira-unanswered` | `confluence-mention` |
+`confluence-announcement`), summary.
+
+---
+
+### Agent 7: DX (Developer Experience Metrics)
+
+**ToolSearch query:** `"DX"`
+
+Fetch your engineering metrics and standing across team, org, and company:
+
+**7a. Your contributions and metrics**
+
+- Code review turnaround time (how fast you review others' PRs)
+- PR cycle time (open → merge for your PRs)
+- Deploy frequency and lead time
+- Lines of code / commits / PRs (relative to your baseline)
+- Any DX-specific health scores or developer satisfaction signals
+
+**7b. Standing relative to team, org, and company**
+
+- How your metrics compare to team averages
+- How your metrics compare to org and company benchmarks
+- Trends — are you improving, declining, or steady this week/month?
+- Any flags or alerts (e.g., review backlog growing, cycle time spiking)
+
+**7c. Improvement areas**
+
+Identify the top 2-3 areas where improvement would have the most impact:
+- Metrics that are below team/org average
+- Metrics that have been declining recently
+- Quick wins (e.g., "you have 3 PRs awaiting your review that are > 24h old")
+
+**Return:** structured metrics data with current values, comparisons,
+trends, and suggested improvement areas.
+
+---
+
 ## Stage 2: Synthesize
 
-**Wait for all 5 agents to complete.** Merge their results with
+**Wait for all 7 agents to complete.** Merge their results with
 `morning_baseline`.
 
 ### 2a. Review morning progress
@@ -269,6 +328,8 @@ Pull from all agent results:
 | Slack contributions | Agent 3 |
 | Email contributions | Agent 4 |
 | Feedback given/received | Agent 5 |
+| Jira tickets, Confluence activity | Agent 6 |
+| DX engineering metrics | Agent 7 |
 
 Structure:
 
@@ -316,8 +377,9 @@ Also search Jira if available (ToolSearch: `"jira"`). Mark each item as
 
 ### 2d. Compile unanswered communications
 
-Merge unanswered items from Agent 3 (Slack) and Agent 4 (Gmail) into a
-single list. If all comms are answered, note `comms_clean = true`.
+Merge unanswered items from Agent 3 (Slack), Agent 4 (Gmail), and
+Agent 6 (Jira comments and Confluence mentions) into a single list.
+If all comms are answered, note `comms_clean = true`.
 
 ### 2e. Compile Lattice feedback
 
@@ -346,6 +408,34 @@ For each opportunity, record:
 - **What**: the specific interaction (with link/reference)
 - **Why it matters**: what made it feedback-worthy
 - **Suggested feedback**: a 1-2 sentence draft the user can refine
+
+### 2g. DX metrics and improvement actions
+
+From Agent 7, compile:
+
+**Current standing:**
+
+```
+| Metric | You | Team Avg | Org Avg | Trend |
+|--------|-----|----------|---------|-------|
+| Review turnaround | Xh | Yh | Zh | ↑/↓/→ |
+| PR cycle time | Xh | Yh | Zh | ↑/↓/→ |
+| Deploy frequency | X/wk | Y/wk | Z/wk | ↑/↓/→ |
+```
+
+**Proposed improvement actions for tomorrow:**
+
+For each area below team/org average or declining, propose a specific,
+actionable item for the next day:
+
+- If review turnaround is high → "Review the 3 pending PRs first thing
+  tomorrow morning (before standup)"
+- If PR cycle time is high → "Break the large open PR into smaller PRs
+  or address blocking review comments"
+- If deploy frequency is low → "Ship the feature branch that's been
+  ready but unmerged"
+
+These become action items in evening.md for tomorrow's morning brief.
 
 ---
 
@@ -378,6 +468,12 @@ Present the full list:
 >    **(a)** Draft response  **(b)** Snooze to tomorrow  **(c)** Skip
 >
 > 4. Email: {subject} from {sender} — received {time} [link]
+>    **(a)** Draft response  **(b)** Snooze to tomorrow  **(c)** Skip
+>
+> 5. Jira: {JIRA-KEY} — @{commenter}: {summary} [link]
+>    **(a)** Draft response  **(b)** Snooze to tomorrow  **(c)** Skip
+>
+> 6. Confluence: {page title} — @{author} mentioned you [link]
 >    **(a)** Draft response  **(b)** Snooze to tomorrow  **(c)** Skip
 >
 > ---
@@ -464,6 +560,14 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 ## Open Questions
 - {question from meeting}: {context}
 
+## DX Metrics
+| Metric | You | Team Avg | Org Avg | Trend |
+|--------|-----|----------|---------|-------|
+| {metric} | {value} | {team} | {org} | {trend} |
+
+### Improvement Actions for Tomorrow
+- [ ] {specific action}: {rationale from DX data}
+
 ## Day Stats
 - Morning brief items: {total} ({completed} done, {remaining} remaining)
 - Meetings attended: {count}
@@ -496,7 +600,8 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 | Slack | `"slack"` | 3 | **BLOCKED** — require MCP |
 | Gmail | `"gmail"` | 4 | **BLOCKED** — require MCP |
 | Lattice | `"lattice"` | 5 | **BLOCKED** — require MCP |
-| Jira | `"jira"` | Stage 3 | **BLOCKED** — require MCP |
+| Jira + Confluence | `"jira"` / `"confluence"` | 6 | **BLOCKED** — require MCP |
+| DX | `"DX"` | 7 | **BLOCKED** — require MCP |
 
 ---
 
@@ -504,7 +609,7 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk:goodevening` | Full evening wrap-up — 5 parallel agents, then interactive |
+| `/wk:goodevening` | Full evening wrap-up — 7 parallel agents, then interactive |
 | No morning.md | Gathers fresh context, still produces evening.md |
 | Service unavailable | Block and prompt user to fix, re-run failed agents |
 | All comms answered | Celebrates clean inbox |

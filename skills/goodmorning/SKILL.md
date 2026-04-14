@@ -30,11 +30,12 @@ Daily preparation skill that connects to all your work tools in parallel,
 gathers what needs your attention, and produces an actionable dashboard.
 
 ```
-Bootstrap ──► Parallel Fetch (4 agents) ──► Compile Outputs
+Bootstrap ──► Parallel Fetch (5 agents) ──► Compile Outputs
                 │  Slack agent
                 │  Gmail agent
                 │  Calendar+Granola+Drive agent
                 │  GitHub agent
+                │  Jira+Confluence agent
 ```
 
 ---
@@ -66,7 +67,7 @@ the extracted items as the `carry_over` dataset for Stage 2.
 
 ## Stage 1: Parallel Data Gathering
 
-**Launch 4 agents in parallel** using the Agent tool. Each agent handles
+**Launch 5 agents in parallel** using the Agent tool. Each agent handles
 its own MCP authentication and data fetching independently. If any agent
 fails to authenticate, it returns a skip notice — it does not block the
 others.
@@ -268,9 +269,45 @@ gh api notifications --jq '.[] | select(.reason == "mention" or .reason == "revi
 
 ---
 
+### Agent 5: Jira + Confluence
+
+**ToolSearch query:** `"jira"` or `"confluence"`
+
+Jira and Confluence share a single MCP server — one authentication covers
+both.
+
+**5a. Jira tickets needing your attention**
+
+- Tickets assigned to you that are open or in progress
+- Tickets where you were mentioned in a comment
+- Tickets you're watching that have new activity
+- Tickets with approaching or overdue due dates
+
+**5b. Jira notifications and mentions**
+
+- Comments on tickets that mention you or request your input
+- Status changes on tickets you're involved with
+- New tickets assigned to you since yesterday
+
+**5c. Confluence mentions and announcements**
+
+- Pages or comments where you were mentioned
+- Recently updated pages in spaces you follow
+- New blog posts or announcements in team/org spaces
+- Pages shared directly with you
+- Meeting notes or decision pages that reference you
+
+**For each item found, record:**
+- Title, space/project, URL
+- Type: `jira-ticket` | `jira-mention` | `confluence-mention` | `confluence-announcement`
+- Brief summary
+- Urgency: `action-required` | `follow-up` | `fyi`
+
+---
+
 ## Stage 2: Compile Outputs
 
-**Wait for all 4 agents to complete.** Merge their results with the
+**Wait for all 5 agents to complete.** Merge their results with the
 `carry_over` dataset from Stage 0.
 
 ### 2a. morning.md
@@ -315,6 +352,18 @@ Write to `<pwd>/<YYYY-MM-DD>/morning.md`:
 ### Issues
 - [ ] {repo}#{number} — {title} [link]
 
+## Jira
+### Assigned Tickets
+- [ ] {JIRA-KEY}: {title} ({status}) [link]
+### Mentions
+- [ ] {JIRA-KEY}: {commenter} mentioned you — {summary} [link]
+
+## Confluence
+### Mentions
+- [ ] {page title} — @{author} mentioned you [link]
+### Announcements
+- {page title} — {space} [link]
+
 ## Notes
 _Space for anything that comes up during the day._
 ```
@@ -333,6 +382,8 @@ dashboard — **no CDN dependencies**, all CSS and JS embedded.
    - Slack (tabs: Needs Response | Follow-ups | Announcements)
    - Email (tabs: Needs Response | Follow-ups | Announcements)
    - GitHub (tabs: PRs to Review | Your PRs | Issues)
+   - Jira (tabs: Assigned | Mentions)
+   - Confluence (tabs: Mentions | Announcements)
 3. **Checkboxes** — every actionable item has a checkbox
 4. **Persistence** — checkbox state saves to `localStorage` keyed by date
 5. **Priority badges** — `action-required` (red), `follow-up` (amber),
@@ -371,6 +422,7 @@ After writing both files:
 | Granola | `"granola"` | 3 | **BLOCKED** — require MCP |
 | Google Drive/Docs | `"gdrive"` / `"gdocs"` | 3 | **BLOCKED** — require MCP |
 | GitHub | `"github"` | 4 | `gh` CLI (always available) |
+| Jira + Confluence | `"jira"` / `"confluence"` | 5 | **BLOCKED** — require MCP |
 
 ---
 
@@ -378,6 +430,6 @@ After writing both files:
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk:goodmorning` | Full morning prep — 4 parallel agents |
+| `/wk:goodmorning` | Full morning prep — 5 parallel agents |
 | Service auth fails | Block and prompt user to fix, re-run failed agents |
 | No evening.md | Skip carry-over section, note in output |
