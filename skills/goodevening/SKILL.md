@@ -97,25 +97,29 @@ uses git and `gh` CLI directly.
 
 **Run all in parallel:**
 
+**IMPORTANT:** Before running any `gh` command, check that `$GITHUB_ORG`
+is set (see `wk:gh`). All search commands MUST include
+`--owner="$GITHUB_ORG"`.
+
 ```bash
 # Today's commits (all repos in cwd)
 git log --all --author="$(git config user.email)" --since="$TODAY 00:00" \
   --format="%h %s"
 
 # PRs merged today
-gh search prs --author=@me --merged --updated=">=$TODAY" \
+gh search prs --owner="$GITHUB_ORG" --author=@me --merged --updated=">=$TODAY" \
   --json title,url,repository,mergedAt
 
 # PRs created today
-gh search prs --author=@me --created=">=$TODAY" \
+gh search prs --owner="$GITHUB_ORG" --author=@me --created=">=$TODAY" \
   --json title,url,repository
 
 # PRs reviewed today
-gh search prs --reviewed-by=@me --updated=">=$TODAY" \
+gh search prs --owner="$GITHUB_ORG" --reviewed-by=@me --updated=">=$TODAY" \
   --json title,url,repository,author
 
 # Issues closed today
-gh search issues --author=@me --state=closed --updated=">=$TODAY" \
+gh search issues --owner="$GITHUB_ORG" --author=@me --state=closed --updated=">=$TODAY" \
   --json title,url,repository
 ```
 
@@ -371,7 +375,7 @@ Deduplicate across sources (same action from different channels = one item).
 Stage 3 — no user input needed):
 
 ```bash
-gh search issues --assignee=@me --state=open "{keywords}"
+gh search issues --owner="$GITHUB_ORG" --assignee=@me --state=open "{keywords}"
 ```
 
 Also search Jira if available (ToolSearch: `"jira"`). Mark each item as
@@ -506,7 +510,7 @@ empty, skip Stage 3:
 After receiving the user's answers, process all choices in parallel where
 possible:
 
-- **Action items → GitHub:** `gh issue create --title "{action}" --body "{context}" --assignee @me`
+- **Action items → GitHub:** `gh issue create --title "{action}" --body "{context}" --assignee @me` (in current repo — verify it's in `$GITHUB_ORG` first per `wk:gh`)
 - **Action items → Jira:** Use Jira MCP tools to create a ticket
 - **Action items → Carry forward:** Add to evening.md carry-over
 - **Comms → Draft response:** Draft all responses, then present them
@@ -578,9 +582,17 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 - Commits: {count}
 ```
 
-### Announce
+### Open for review
 
-> "Your evening wrap-up is complete:
+After writing the file, open it for review:
+
+```bash
+open "$TODAY_DIR/evening.md"
+```
+
+Then announce:
+
+> "Your evening wrap-up is complete and opened for review:
 > - `sitrep/{YYYY}/{MM}/{DD}/evening.md` — tomorrow's carry-over reference
 >
 > Today: {completed} items done, {remaining} carried forward,

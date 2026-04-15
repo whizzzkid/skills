@@ -242,30 +242,34 @@ Prep: {what to review or prepare}
 
 **ToolSearch query:** `"github"` — if unavailable, use `gh` CLI.
 
+**IMPORTANT:** Before running any `gh` command, check that `$GITHUB_ORG`
+is set (see `wk:gh`). All search commands MUST include
+`--owner="$GITHUB_ORG"` to scope results to the user's organization.
+
 Run all four queries (in parallel where the tool supports it):
 
 **4a. PRs needing your review**
 ```bash
-gh search prs --review-requested=@me --state=open \
+gh search prs --owner="$GITHUB_ORG" --review-requested=@me --state=open \
   --json title,url,repository,author,createdAt
 ```
 
 **4b. Your PRs needing attention**
 ```bash
-gh search prs --author=@me --state=open \
+gh search prs --owner="$GITHUB_ORG" --author=@me --state=open \
   --json title,url,repository,reviews,checks
 ```
 Flag: new review comments, failing CI, open > 3 days, merge conflicts.
 
 **4c. Assigned issues**
 ```bash
-gh search issues --assignee=@me --state=open \
+gh search issues --owner="$GITHUB_ORG" --assignee=@me --state=open \
   --json title,url,repository,labels,createdAt
 ```
 
 **4d. Mentions**
 ```bash
-gh api notifications --jq '.[] | select(.reason == "mention" or .reason == "review_requested") | {title: .subject.title, type: .subject.type, url: .subject.url}'
+gh api notifications --jq ".[] | select(.repository.owner.login == \"$GITHUB_ORG\") | select(.reason == \"mention\" or .reason == \"review_requested\") | {title: .subject.title, type: .subject.type, url: .subject.url}"
 ```
 
 **Return format per item:**
@@ -382,7 +386,13 @@ dashboard — **no CDN dependencies**, all CSS and JS embedded.
 **Required features:**
 
 1. **Header** — date, greeting, overall progress bar (X of Y items done)
-2. **Sections** — collapsible panels for each category:
+2. **Multi-column dashboard layout** — use CSS grid to fill the screen:
+   - **3-column grid** on wide screens (>1200px), **2-column** on medium
+     (768-1200px), **single column** on mobile (<768px)
+   - Each section is a card that flows into the grid
+   - Taller sections (Calendar, Carry-Over) may span 2 rows
+   - Layout: `grid-template-columns: repeat(auto-fit, minmax(380px, 1fr))`
+3. **Section cards** — collapsible panels for each category:
    - Yesterday's Carry-Over
    - Calendar (meeting cards with prep notes)
    - Slack (tabs: Needs Response | Follow-ups | Announcements)
@@ -390,27 +400,36 @@ dashboard — **no CDN dependencies**, all CSS and JS embedded.
    - GitHub (tabs: PRs to Review | Your PRs | Issues)
    - Jira (tabs: Assigned | Mentions)
    - Confluence (tabs: Mentions | Announcements)
-3. **Checkboxes** — every actionable item has a checkbox
-4. **Persistence** — checkbox state saves to `localStorage` keyed by date
-5. **Priority badges** — `action-required` (red), `follow-up` (amber),
+4. **Checkboxes** — every actionable item has a checkbox
+5. **Persistence** — checkbox state saves to `localStorage` keyed by date
+6. **Priority badges** — `action-required` (red), `follow-up` (amber),
    `fyi` (blue)
-6. **Links** — every item links to its source
-7. **Meeting cards** — time, title, attendees, Granola summary, agenda
+7. **Links** — every item links to its source. **All links MUST use
+   `target="_blank" rel="noopener noreferrer"`** to open in a new tab
+8. **Meeting cards** — time, title, attendees, Granola summary, agenda
    highlights, prep notes area
-8. **Dark mode** — respect `prefers-color-scheme`
-9. **Responsive** — works on desktop and mobile
-10. **Print-friendly** — `@media print` hides interactive elements
+9. **Dark mode** — respect `prefers-color-scheme`
+10. **Responsive** — 3-col / 2-col / 1-col grid breakpoints
+11. **Print-friendly** — `@media print` hides interactive elements,
+    switches to single-column flow
 
 **Design:** clean, minimal, system font stack, subtle colors, clear
 hierarchy, sections default expanded, progress bar updates in real-time.
+Cards have subtle border/shadow, consistent padding, and rounded corners.
 
-### Announce
+### Open for review
 
-After writing both files:
+After writing both files, open the HTML dashboard automatically:
 
-> "Your morning brief is ready:
+```bash
+open "$TODAY_DIR/morning.html"
+```
+
+Then announce:
+
+> "Your morning brief is ready and opened in your browser:
 > - `sitrep/{YYYY}/{MM}/{DD}/morning.md` — structured reference
-> - `sitrep/{YYYY}/{MM}/{DD}/morning.html` — open in your browser
+> - `sitrep/{YYYY}/{MM}/{DD}/morning.html` — interactive dashboard
 >
 > You have X items needing action, Y follow-ups, and Z meetings today.
 >
