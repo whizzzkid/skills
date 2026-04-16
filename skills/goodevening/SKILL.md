@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2.0.0'
+  version: '2.4.0'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -28,11 +28,13 @@ metadata:
 
 Daily wrap-up skill that reviews your day, documents achievements, captures
 meeting insights, ensures nothing falls through the cracks, and prepares
-context for tomorrow.
+context for tomorrow. Every surfaced item offers clear triage options
+including skip and mark-as-done.
 
 ```
-Bootstrap ──► Parallel Fetch ──► Compile Everything ──► One Prompt ──► evening.md
-               (7 agents)        (no user input)        (all Qs)
+Bootstrap ──► Parallel Fetch ──► Compile + Auto-resolve ──► Group-by-group ──► evening.md
+               (7 agents)        (use morning.md to           (≤5 items/prompt,
+                                  pre-answer repeats)          one group at a time)
 ```
 
 ---
@@ -47,6 +49,11 @@ TODAY=$(date +%Y-%m-%d)
 # Today: sitrep/<YYYY>/<MM>/<DD>/
 TODAY_DIR="$PWD/sitrep/$(date +%Y)/$(date +%m)/$(date +%d)"
 MORNING_FILE="$TODAY_DIR/morning.md"
+
+# Weekly memory: sitrep/<YYYY>/<MM>/week-<WW>-memory.md
+WEEK_NUM=$(date +%V)
+MONTH_DIR="$PWD/sitrep/$(date +%Y)/$(date +%m)"
+WEEK_MEMORY="$MONTH_DIR/week-${WEEK_NUM}-memory.md"
 ```
 
 ### Read the morning brief
@@ -54,8 +61,30 @@ MORNING_FILE="$TODAY_DIR/morning.md"
 If `morning.md` exists, read it in full. This is the baseline — the items
 planned for today. Store it as the `morning_baseline` dataset.
 
+Also extract the **triage decisions** from the morning session — which
+items were marked "Will do" (unchecked `[ ]`), "Already done"
+(checked `[x]`), and which were omitted (skipped). Store these as the
+`morning_decisions` map keyed by item summary/identifier. These are used
+in Stage 3 to auto-resolve repeat items.
+
 If it does not exist, note this. The evening summary is still valuable
 without a morning brief — Stage 1 gathers fresh context.
+
+### Load weekly memory
+
+Read `$WEEK_MEMORY` if it exists. This file contains **recurring triage
+rules** — items the user has consistently skipped or marked done across
+multiple days this week. Weekly memory rules take priority over daily
+`morning_decisions` during auto-resolution in Stage 3.
+
+Store the parsed rules as the `week_rules` dataset (list of
+`{pattern, source, action, reason, since}` entries).
+
+If the file does not exist, `week_rules` is empty — this is not an error.
+
+**Note:** Unlike goodmorning, goodevening does NOT perform new-week
+rollover. That happens in the morning session when the user is fresh.
+Goodevening only reads the weekly memory; goodmorning owns the rollover.
 
 ---
 
@@ -447,84 +476,203 @@ These become action items in evening.md for tomorrow's morning brief.
 
 ## Stage 3: Interactive Resolution
 
-**Present everything at once.** Compile all items that need user input
-into a single numbered prompt. The user answers all questions in one pass.
-Do NOT ask section by section.
+Present items **one group at a time**, with a maximum of **5 items per
+prompt**. Groups with more than 5 items are paginated across multiple
+prompts. Process each group's responses before moving to the next.
 
-Present the full list:
+### Auto-resolution (weekly memory + morning brief)
 
-> "Here's your evening wrap-up. I need your input on {N} items:
->
-> ---
->
-> **Untracked Action Items** ({count})
-> _These don't have GitHub issues or Jira tickets yet:_
->
-> 1. {action from standup} — from {meeting name}
->    **(a)** GitHub issue  **(b)** Jira ticket  **(c)** Carry forward  **(d)** Skip
->
-> 2. {follow-up promised in Slack} — #{channel}
->    **(a)** GitHub issue  **(b)** Jira ticket  **(c)** Carry forward  **(d)** Skip
->
-> ---
->
-> **Unanswered Communications** ({count})
->
-> 3. Slack: @{sender} in #{channel}: {summary} [link]
->    **(a)** Draft response  **(b)** Snooze to tomorrow  **(c)** Skip
->
-> 4. Email: {subject} from {sender} — received {time} [link]
->    **(a)** Draft response  **(b)** Snooze to tomorrow  **(c)** Skip
->
-> 5. Jira: {JIRA-KEY} — @{commenter}: {summary} [link]
->    **(a)** Draft response  **(b)** Snooze to tomorrow  **(c)** Skip
->
-> 6. Confluence: {page title} — @{author} mentioned you [link]
->    **(a)** Draft response  **(b)** Snooze to tomorrow  **(c)** Skip
->
-> ---
->
-> **Lattice Feedback Requests** ({count})
->
-> 5. Peer feedback for @{person} — due {date} ({status})
->    **(a)** Draft now  **(b)** Remind tomorrow  **(c)** Skip
->
-> ---
->
-> **Peer Feedback Opportunities** ({count})
->
-> 6. @{person} — {what they did} ({source})
->    Suggested: "{draft feedback}"
->    **(a)** Lattice  **(b)** Slack DM  **(c)** Edit & send  **(d)** Skip
->
-> ---
->
-> Reply with your choices, e.g.: `1a 2c 3b 4a 5b 6a`"
+Before presenting any group, auto-resolve items using two sources in
+priority order:
 
-**If a section has zero items, omit it entirely.** If ALL sections are
-empty, skip Stage 3:
+**Priority 1: Weekly memory rules** (`week_rules`)
+
+Check each item against the `week_rules` patterns. Match by item
+identifier, source group, or content pattern. If a rule matches:
+
+| Rule type | Auto-answer | Rationale |
+|-----------|-------------|-----------|
+| Auto-skip | **Skip** | User consistently skips this pattern |
+| Auto-done | **Already done** | User says this is always handled |
+
+**Priority 2: Morning brief decisions** (`morning_decisions`)
+
+For items not matched by weekly rules, check against today's morning.md
+triage. An item is a **repeat** if it matches a morning item by key
+identifiers (same Slack thread URL, same PR number, same Jira key,
+same email subject+sender).
+
+| Morning decision | Evening auto-answer | Rationale |
+|-----------------|---------------------|-----------|
+| `[x]` (Already done) | **Already done** | User confirmed completion this morning |
+| `[ ]` (Will do) + evidence of completion (from agents) | **Already done** | Agent data shows it was handled |
+| `[ ]` (Will do) + no evidence | Keep in triage | Still needs user decision |
+| Skipped (omitted) | **Skip** | User chose to ignore this morning |
+
+**Announce auto-resolved items** at the start of each group. Distinguish
+weekly-memory resolutions from morning resolutions:
+
+> "Auto-resolved {N} items ({W} from weekly rules, {M} from morning
+> decisions). Review the remaining items below."
+
+If all items in a group are auto-resolved, announce and move to the next
+group — do not prompt.
+
+### Resolution groups (in order)
+
+Process groups in this order. Skip any group with 0 items:
+
+1. **Untracked Action Items** — from meetings, Slack commitments, email promises
+2. **Unanswered Slack Messages**
+3. **Unanswered Emails**
+4. **Unanswered Jira Comments**
+5. **Unanswered Confluence Mentions**
+6. **Lattice Feedback Requests**
+7. **Peer Feedback Opportunities**
+
+If ALL groups are empty after auto-resolution, skip Stage 3:
 > "Nothing needs your input — all items are tracked and all comms answered!"
 
-### Process responses
+### Presentation format
 
-After receiving the user's answers, process all choices in parallel where
+For each group, present up to 5 items at a time. Each batch includes
+**batch-level actions** that apply to all items, and individual per-item
+options:
+
+> "**{Group Name}** ({current}/{total} items, {auto_resolved} auto-resolved)
+>
+> **Batch actions:** `all:a` (will do all) | `all:b` (all done) |
+> `all:c` (skip all) | `all:c+m` (skip all + remember for the week)
+>
+> 1. {item summary} [link]
+>    **(a)** Will do  **(b)** Already done  **(c)** Skip  {group-specific options}
+>
+> 2. {item summary} [link]
+>    **(a)** Will do  **(b)** Already done  **(c)** Skip  {group-specific options}
+>
+> ...up to 5...
+>
+> Append **+m** to any choice to save it as a weekly rule.
+> e.g.: `1a 2c+m 3d` — skip item 2 and remember that choice.
+>
+> Reply with your choices."
+
+Wait for the user's response, then process that batch immediately. Present
+the next batch (if the group has more items) or move to the next group.
+
+### The `+m` (remember) modifier
+
+Any per-item or batch-level choice can have `+m` appended to save it as
+a weekly memory rule. This works with any option:
+
+| Input | Effect |
+|-------|--------|
+| `2c+m` | Skip item 2 AND add an auto-skip rule to weekly memory |
+| `3a+m` | Will do item 3 AND add an auto-will-do rule to weekly memory |
+| `all:c+m` | Skip entire batch AND add auto-skip rules for all items |
+
+When `+m` is used, extract the **pattern** (not the specific instance):
+
+| Item type | Pattern extracted |
+|-----------|-----------------|
+| Slack message | Channel name (e.g., "skip all from #alerts") |
+| Email | Sender or subject pattern (e.g., "skip newsletters from noreply@") |
+| GitHub PR/Issue | Repository name (e.g., "always will-do PRs from repo-x") |
+| Jira ticket | Project key (e.g., "skip mentions from PROJECT-Y") |
+| Confluence | Space name (e.g., "skip announcements from Engineering space") |
+| Action item | Source meeting or thread (e.g., "always carry-forward from standup") |
+
+Confirm inline:
+
+> "Saving weekly rule: **auto-skip items from #{channel}**.
+> This will apply to all future items matching this pattern this week."
+
+If the user says "no" or "cancel", apply the action but don't save
+the rule.
+
+### Group-specific options
+
+Every item always has the 3 base options **(a) Will do (b) Already done
+(c) Skip**. Groups add extras:
+
+| Group | Extra options |
+|-------|-------------|
+| Untracked Action Items | **(d)** GitHub issue  **(e)** Jira ticket  **(f)** Carry forward |
+| Unanswered Slack | **(d)** Draft response  **(e)** Snooze to tomorrow |
+| Unanswered Emails | **(d)** Draft response  **(e)** Snooze to tomorrow |
+| Unanswered Jira | **(d)** Draft response  **(e)** Snooze to tomorrow |
+| Unanswered Confluence | **(d)** Draft response  **(e)** Snooze to tomorrow |
+| Lattice Feedback | **(d)** Draft now  **(e)** Remind tomorrow |
+| Peer Feedback Opportunities | **(d)** Lattice  **(e)** Slack DM  **(f)** Edit & send |
+
+All options support the `+m` modifier.
+
+### Process responses (per batch)
+
+After each batch of responses, process immediately in parallel where
 possible:
 
-- **Action items → GitHub:** `gh issue create --title "{action}" --body "{context}" --assignee @me` (in current repo — verify it's in `$GITHUB_ORG` first per `wk:gh`)
-- **Action items → Jira:** Use Jira MCP tools to create a ticket
-- **Action items → Carry forward:** Add to evening.md carry-over
-- **Comms → Draft response:** Draft all responses, then present them
-  together for approval before sending via MCP
-- **Comms → Snooze:** Add to evening.md carry-over with context
-- **Lattice → Draft:** Draft feedback using context from today's
-  interactions, present for refinement, submit via Lattice MCP
-- **Lattice → Remind:** Add to evening.md carry-over with deadline
-- **Peer feedback → Lattice:** Submit via Lattice MCP tools
-- **Peer feedback → Slack:** Send via Slack MCP tools
-- **Peer feedback → Edit:** Let user edit, then send via chosen channel
+- **(a) Will do** → Carry forward to evening.md action items
+- **(b) Already done** → Record as completed in evening.md achievements.
+  Do not create an issue, carry forward, or draft anything.
+- **(c) Skip** → Omit entirely from evening.md — not carried forward,
+  not recorded as done.
+- **(d) GitHub issue** → `gh issue create --title "{action}" --body "{context}" --assignee @me` (verify `$GITHUB_ORG` per `wk:gh`)
+- **(d/e) Draft response** → Queue for draft review (present all drafts
+  together after all groups are done)
+- **(e) Jira ticket** → Create via Jira MCP tools
+- **(e/f) Snooze / Carry forward** → Add to evening.md carry-over with context
+- **(e) Remind tomorrow** → Add to evening.md carry-over with deadline
+- **(d) Draft now (Lattice)** → Queue for draft review
+- **(d) Lattice / (e) Slack DM / (f) Edit & send** → Queue for draft review
+- **Any + `+m`** → also write the pattern to `$WEEK_MEMORY` as an
+  auto-rule (auto-skip, auto-done, or auto-will-do depending on the
+  base option chosen)
 
-If any drafts were requested (comms or Lattice feedback), present all
-drafts together in a second prompt for approval before sending.
+### Draft review pass
+
+After all groups are processed, if any drafts were queued (comms or
+feedback), present all drafts together in a single review prompt:
+
+> "I have {N} drafts ready for your review:
+>
+> 1. **Reply to @{sender}** in #{channel}:
+>    > {draft text}
+>    **(a)** Send  **(b)** Edit  **(c)** Discard
+>
+> ...
+>
+> Reply with your choices."
+
+Send approved drafts via MCP. Edits get a follow-up prompt. Discarded
+drafts are dropped.
+
+### Update weekly memory
+
+After all groups are processed, scan today's decisions (combined with
+this morning's triage decisions) for patterns worth remembering.
+
+An item becomes a **weekly rule candidate** when:
+
+- The user chose **Skip** for an item that was also skipped this morning
+  AND on at least one prior day this week (consistent skip pattern)
+- The user chose **Already done** for an item that was also marked done
+  this morning AND on a prior day (consistently pre-handled)
+- The user explicitly says "always skip this" or "remember this" during
+  triage
+
+For each candidate not already in `week_rules`, ask:
+
+> "You've consistently {skipped/marked-done} `{pattern}` this week.
+> Should I auto-{skip/done} it for the rest of the week?
+> **(a)** Yes, remember  **(b)** No, ask each time"
+
+If the user confirms, add the rule to `$WEEK_MEMORY`. If the file
+doesn't exist yet, create it with the standard weekly memory format
+(see goodmorning Stage 0 for the template).
+
+This step is **quick** — only fires when new patterns are detected.
+If no candidates, skip silently.
 
 ---
 
@@ -627,3 +775,5 @@ Then announce:
 | No morning.md | Gathers fresh context, still produces evening.md |
 | Service unavailable | Block and prompt user to fix, re-run failed agents |
 | All comms answered | Celebrates clean inbox |
+| Item skipped consistently | Offer to add auto-skip rule to weekly memory |
+| No weekly memory | No auto-rules — all items triaged manually |

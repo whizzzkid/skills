@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.3.0'
+  version: '1.6.0'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -197,6 +197,63 @@ From the active comments, build a structured exclusion list keyed by
 Phase 3 and Phase 5 — it prevents you from independently rediscovering and
 re-posting issues that another reviewer already raised.
 
+### Re-review follow-up
+
+Detect if the current user has previously posted review comments on this
+PR. If so, this is a **re-review** — the agent must close the loop on
+existing discussions before investigating new issues.
+
+**Identify the user's own prior comments:**
+
+Filter the fetched comments for those where `user` matches the current
+GitHub user (from `gh api user --jq '.login'`). For each, fetch the full
+reply chain — all comments with `in_reply_to_id` pointing to the root.
+
+**Classify each thread the user participated in:**
+
+| Status | How to detect | Action |
+|--------|--------------|--------|
+| **Fix applied** | The file was modified after the comment, AND the concern raised in the comment is no longer present in the current code | Draft a follow-up: "Looks good — thanks for addressing this." |
+| **Fix attempted, still wrong** | The file was modified but the concern persists or was only partially addressed | Draft a follow-up explaining what's still off, referencing the current code |
+| **Author asked a question** | The last reply in the thread is from the PR author (not the user), AND it contains a question or request for clarification | Draft a response answering the question based on investigation of the current code |
+| **Author pushed back** | The last reply is from the author disagreeing or proposing an alternative | Draft a response acknowledging the pushback and either agreeing with reasoning or reiterating the concern with evidence |
+| **No response** | No replies from the author, no code changes addressing it | Leave as-is — the comment still stands |
+| **Already resolved** | Thread is marked resolved | Skip — no action needed |
+
+**Present follow-ups for approval:**
+
+```
+Re-review: You have {N} prior comment threads with updates:
+
+1. [fix applied] src/auth.ts:42 — "Session token not invalidated"
+   → Author fixed in commit abc123. Drafting acknowledgment.
+
+2. [question from author] src/api.ts:33 — "Is this timeout intentional?"
+   → Author replied: "We need 30s for the upstream call. Is that OK?"
+   → Drafting response based on current code analysis.
+
+3. [fix attempted] src/utils.ts:18 — "Rename processData"
+   → Author renamed to `process` but the suggestion was a more specific name.
+   → Drafting follow-up with clarification.
+
+4. [no response] src/cache.ts:91 — "LRU size should be configurable"
+   → No changes or replies. Comment still stands.
+```
+
+Wait for user approval, then post approved follow-up replies sequentially
+using the same reply API as `wk:pr-resolve`:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
+  --method POST -f body="{follow_up_text}"
+```
+
+Resolve threads where fixes were acknowledged (with user consent per the
+existing hard rule). Leave all other threads open.
+
+**After follow-ups are posted, proceed to Phase 3** to investigate new
+issues. The follow-up replies count toward the 6-comment cap in Phase 5.
+
 ## Phase 3: Investigation
 
 Read every changed file in full — not just the diff hunks. Understand the
@@ -207,6 +264,12 @@ comments from Phase 2. Do not duplicate comments that already exist. If you
 find an issue that relates to an existing comment thread, reference it rather
 than creating a separate observation. Focus on finding **new** issues that no
 existing reviewer has raised.
+
+**Identify new methods and functions.** Scan the diff for newly introduced
+functions, methods, classes, and public APIs. These are the primary attack
+surface — code that didn't exist before has had the least scrutiny. Build
+a list of `{name, file, line, signature, parameters}` for each. These
+become the targets for adversarial playground testing in Phase 4.
 
 **Be adversarial.** Your job is to find what the author missed:
 - Bugs and logic errors
@@ -221,6 +284,35 @@ existing reviewer has raised.
 There is no fixed checklist. You decide what matters based on the actual changes.
 Follow the code wherever it leads — if a changed function is called from 5
 places, read all 5. If a new dependency is added, evaluate it.
+
+**Audit test quality.** If the PR includes test files, verify they actually
+test the change surface — not just pad coverage numbers. For each test file
+in the diff, check for these red flags:
+
+- **No failure path:** Tests only cover the happy path. No tests for
+  invalid input, error conditions, or edge cases the implementation
+  handles.
+- **Unfailable assertions:** Tests that assert on mocked return values,
+  trivial getters/setters, or constants — they pass regardless of whether
+  the implementation is correct.
+- **Missing assertions:** Test functions that call code but never assert
+  on the result (`expect`/`assert` count is zero or suspiciously low).
+- **Incomplete surface:** New functions or branches introduced in the PR
+  that have no corresponding test at all. Cross-reference the list of
+  new methods from above — every new public function should have at
+  least one test exercising it.
+- **Tautological tests:** Tests that verify the mock was called rather
+  than verifying behavior. Tests where the setup guarantees the
+  assertion (e.g., inserting a value and asserting it exists without
+  testing deletion, update, or conflict).
+- **Copy-paste tests:** Multiple tests with identical structure and only
+  trivially different inputs, suggesting the author generated tests
+  mechanically without thinking about meaningful scenarios.
+
+For each gap found, note **what's missing** and **what a useful test
+would look like** — this feeds into the playground (Phase 4) and review
+comments (Phase 5). A comment about missing test coverage is more
+actionable when it includes a concrete example of what to test.
 
 Take notes as you go. For each finding, annotate whether it overlaps an entry
 in the exclusion list from Phase 2. Mark overlapping findings as `[COVERED]`
@@ -255,6 +347,33 @@ Executable scripts that exercise changed code paths. Run them and observe
 behavior. Example: a script that calls the modified function with various inputs
 to see how it behaves at boundaries.
 
+### Adversarial testing of new functions
+
+For every new method/function identified in Phase 3, **launch parallel
+experiments** that try to break it. Use the Agent tool to run these
+concurrently — each agent writes its own script under `.review-playground/`
+and reports back.
+
+**Edge cases:** Boundary values, empty inputs, null/undefined, zero,
+negative numbers, max-size collections, single-element vs many, unicode,
+special characters.
+
+**Input mutation:** Take valid inputs and mutate one field at a time —
+wrong type, missing field, extra field, swapped arguments, out-of-range
+values. Confirm the function fails gracefully rather than silently
+producing wrong output.
+
+**Fuzz testing:** Generate randomized inputs (random strings, numbers,
+nested objects, deeply nested structures) and call the function in a loop.
+Look for crashes, hangs, uncaught exceptions, or inconsistent results.
+
+**Output validation:** Verify return values match expected types and
+contracts. Mutate the function's output in downstream consumers to see
+if callers validate what they receive.
+
+Keep each experiment script short and focused — one script per function,
+one concern per script. Log failures clearly with input/output pairs.
+
 ### Test cases
 
 Runnable tests (in the project's test framework) that verify the PR's behavior.
@@ -282,6 +401,18 @@ After running experiments, summarize what you discovered:
 ## Phase 5: Review Comments
 
 Formulate inline review comments anchored to specific lines in the diff.
+
+### Comment cap
+
+**HARD RULE: Limit each review pass to a maximum of 6 comments.** If
+investigation and playground testing surface more than 6 distinct issues,
+stop experimenting. Rank findings by severity (blockers first, then
+suggestions, then questions) and post only the top 6. Mention in the
+review body that additional issues were found and will be covered in a
+follow-up review after this round is addressed.
+
+This prevents overwhelming the author. Short, focused reviews get faster
+turnaround. Multiple passes are better than one massive dump.
 
 ### Tone
 
@@ -442,6 +573,7 @@ Remind the user:
 | Trigger | Behavior |
 |---------|----------|
 | "review this PR" | Full 6-phase review, always asks before posting |
+| "re-review this PR" | Detects prior comments, follows up on threads, then reviews new issues |
 | "just investigate this PR" | Phases 1-4 only, no comments posted |
 
 ## Requirements

@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.0'
+  version: '1.2.0'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -54,15 +54,26 @@ and manage the full resolution cycle from sync to summary.
 
 1. **Never push without explicit user confirmation.**
 2. **Never post reply comments without explicit user confirmation.**
-3. **Never resolve threads marked for follow-up questions.** Only resolve
-   threads where a fix was applied and the user confirmed the response.
+3. **Only resolve threads you actually worked on.** A thread is resolvable
+   only if a fix was applied (option a/b) or a bot comment was explicitly
+   dismissed (option d). Never resolve follow-up questions (c), skipped
+   threads (e), or self-review threads.
 4. **Never force-push.** Use regular `git push` only.
 5. **Never commit without attempting verification** (build/lint/test). If
    verification is unavailable or fails, inform the user before proceeding.
 6. **Commits follow `wk:commit` conventions** — conventional format with
    emoji, signed commits, HEREDOC for messages. Never use `--no-gpg-sign`.
-7. **One logical fix per commit.** Group related comments into a single
-   commit when they address the same concern. Never bundle unrelated fixes.
+7. **One commit per resolved comment.** Each triaged comment gets its own
+   commit so reviewers can trace exactly which commit addresses which
+   comment. Never bundle multiple comments into one commit. Push only
+   once at the end (Step 8) to avoid triggering multiple CI builds.
+8. **Exclude self-review comments.** Never triage, suggest fixes for, or
+   resolve threads where the root comment was authored by the PR owner.
+   These are the author's own notes and are not reviewer feedback.
+9. **Include bot reviews.** Treat comments from bot accounts (Copilot,
+   GitHub Actions, custom bots) as first-class review feedback. Triage
+   them alongside human reviewer comments — evaluate each for correctness
+   before accepting or dismissing.
 
 ## Step 1: Identify the PR
 
@@ -100,6 +111,12 @@ If already up to date, confirm:
 Combine GraphQL (for thread resolution status) and REST (for full comment
 data) to build a map of active, unresolved review threads.
 
+### Identify the PR author
+
+Extract the PR author login from the `gh pr view` output (Step 1). This is
+used to **exclude self-review comments** — threads where the root comment
+was authored by the PR owner are skipped entirely.
+
 ### GraphQL — thread resolution status and IDs
 
 ```bash
@@ -107,6 +124,7 @@ gh api graphql -f query='
   query($owner: String!, $repo: String!, $number: Int!) {
     repository(owner: $owner, name: $repo) {
       pullRequest(number: $number) {
+        author { login }
         reviewThreads(first: 100) {
           nodes {
             id
@@ -127,21 +145,39 @@ gh api graphql -f query='
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate \
-  --jq '.[] | {id, node_id, path, line, original_line, position, body, user: .user.login, updated_at, in_reply_to_id}'
+  --jq '.[] | {id, node_id, path, line, original_line, position, body, user: .user.login, user_type: .user.type, author_association: .author_association, updated_at, in_reply_to_id}'
 ```
+
+Note: `user_type` distinguishes humans (`User`) from bots (`Bot`).
+`author_association` shows the commenter's relationship to the repo.
+
+### Classify comment authors
+
+For each comment, classify the author:
+
+| `user_type` | Pattern | Classification |
+|-------------|---------|----------------|
+| `Bot` | `*[bot]` suffix (e.g., `copilot[bot]`, `github-actions[bot]`) | **Bot review** |
+| `Bot` | Custom bot names without `[bot]` suffix | **Bot review** |
+| `User` | Matches PR author login | **Self-review** (skip) |
+| `User` | Any other login | **Reviewer** |
 
 ### Build the comment map
 
 For each GraphQL thread node:
 - **Skip** if `isResolved == true`
+- **Skip** if the root comment author matches the PR author login
+  (self-review) — do not include self-review comments in the triage
 - Match thread comments to REST comments by `databaseId == id`
 - Extract root comment (no `in_reply_to_id`) and its reply chain
-- Record: `{threadId, commentId, path, line, body, user, replies[], isOutdated}`
+- Record: `{threadId, commentId, path, line, body, user, userType, replies[], isOutdated}`
+- Tag threads where the root comment author is a bot (`isBot: true`)
 
 ### Filter active comments
 
 A comment is **active** if:
 - Thread is NOT resolved (`isResolved == false`)
+- Root comment is NOT from the PR author (not self-review)
 - Thread is NOT outdated (`isOutdated == false`), OR if outdated, the
   underlying concern is still present in the current code (verify by reading
   the file at the referenced path and line)
@@ -152,15 +188,24 @@ concern no longer applies. Note these as "auto-skipped" in the summary.
 ### Group by file
 
 Sort active comments by file path, then by line number within each file.
-Present a summary:
+Separate bot comments from human reviewer comments in the summary:
 
-> "Found X unresolved comments across Y files (Z auto-skipped as outdated)."
+> "Found X unresolved comments across Y files (Z auto-skipped as outdated,
+> S skipped as self-review)."
 >
-> **src/auth.ts** (3 comments)
-> **src/api.ts** (1 comment)
-> **src/utils.ts** (2 comments)
+> **Bot reviews:**
+> **src/auth.ts** (2 comments from copilot[bot])
+>
+> **Reviewer comments:**
+> **src/auth.ts** (1 comment from @reviewer1)
+> **src/api.ts** (1 comment from @reviewer2)
+> **src/utils.ts** (2 comments from @reviewer1)
 
 ## Step 4: Generate Suggestions
+
+Process bot reviews first (they often flag actionable issues like style
+violations, security concerns, or code suggestions), then human reviewer
+comments.
 
 For each active comment, in file-grouped order:
 
@@ -169,13 +214,27 @@ For each active comment, in file-grouped order:
 3. Analyze what the reviewer is asking for
 4. Generate a concrete suggested fix — actual code changes, not vague advice
 
+### Bot review handling
+
+Bot comments (Copilot, custom bots, CI bots) often include:
+- **Code suggestions** (Copilot): Extract the suggested diff and present it
+  as a concrete fix. Evaluate whether the suggestion is correct before
+  recommending it — bots can be wrong.
+- **Lint / style violations**: Map the violation to a specific fix.
+- **Security warnings**: Treat seriously — read the flagged code and verify
+  the concern. If valid, propose a fix. If a false positive, draft a
+  dismissal reply explaining why.
+- **Automated analysis**: Summarize the bot's finding and propose an action.
+
+Do NOT blindly accept bot suggestions. Evaluate each one for correctness.
+
 ### Suggestion format
 
 Present each suggestion as:
 
 ```
 ### Comment {n}/{total}: {path}:{line}
-**Reviewer:** @{user}
+**Reviewer:** @{user} {bot_badge}
 **Comment:** {body}
 **Reply chain:** {summary of any replies, or "none"}
 
@@ -185,6 +244,9 @@ Present each suggestion as:
 {Code diff or snippet showing the proposed change}
 ```
 
+Where `{bot_badge}` is `🤖 (bot)` if the commenter is a bot, omitted
+otherwise.
+
 ## Step 5: Present and Collect Decisions
 
 Present suggestions **one at a time**. For each, ask the user:
@@ -193,6 +255,8 @@ Present suggestions **one at a time**. For each, ask the user:
 > **(a)** Apply the suggested fix
 > **(b)** Do something different (describe what you want)
 > **(c)** Ask the reviewer a follow-up question
+> **(d)** Dismiss — not applicable / false positive (bot reviews only)
+> **(e)** Skip — leave as-is without resolving
 
 ### Handle each response type
 
@@ -213,6 +277,17 @@ Present suggestions **one at a time**. For each, ask the user:
 - Ask: "What would you like to ask the reviewer?"
 - Draft the question as a reply comment
 - Track in `reply_only` list — **do NOT add to resolve list**
+
+**(d) Dismiss (bot reviews only):**
+- Draft a reply explaining why the suggestion was dismissed
+  (e.g., "False positive — {reason}" or "Not applicable — {reason}")
+- Track in `resolve_after_push` list (dismissed bot comments should be
+  resolved to reduce noise)
+
+**(e) Skip:**
+- Do not apply any fix, post any reply, or resolve the thread
+- Track in `skipped` list — the thread stays open and untouched
+- Use this for comments the user wants to handle later or outside this session
 
 After each decision, move to the next comment. Do not batch decisions.
 
@@ -239,16 +314,18 @@ If no build system is detected, warn:
 > "No build/lint command detected — skipping verification. Please verify
 > manually after we finish."
 
-### Commit
+### Commit (one per resolved comment)
 
-Stage and commit using `wk:commit` conventions:
+After each individual comment is resolved (option a, b, or d), immediately
+stage and commit the fix. This creates a 1:1 mapping between commits and
+review comments, making it easy for reviewers to trace each fix.
 
 ```bash
 git add {files}
 git commit -m "$(cat <<'EOF'
-fix(scope): 🐛 address review feedback — {brief description}
+fix(scope): 🐛 {brief description of what this comment asked for}
 
-{Optional body listing what was fixed and which comments it addresses}
+Addresses review comment by @{reviewer} on {path}:{line}
 
 Co-Authored-By: {agent-name} <noreply@example.com>
 EOF
@@ -259,8 +336,12 @@ Use the commit type that matches the nature of the change: `fix` for bug
 fixes, `refactor` for restructuring, `feat` for new behavior. Always
 include the emoji per `wk:commit` conventions.
 
-Group related fixes into one commit. Unrelated fixes across different files
-get separate commits.
+Record the commit SHA for each fix — it will be referenced in the reply
+comment (e.g., "Fixed in `abc1234`"). Draft the reply with the real SHA
+now, not a placeholder.
+
+**Do NOT push after each commit.** All commits are pushed together in
+Step 8 as a single `git push`, so only one CI build is triggered.
 
 ## Step 7: Confirm Everything
 
@@ -274,21 +355,36 @@ After ALL comments are processed, present a full summary:
    - Addresses: @reviewer src/auth.ts:42, src/auth.ts:58
 
 2. def5678 — refactor(api): ♻️ extract timeout config
-   - Addresses: @reviewer src/api.ts:33
+   - Addresses: @reviewer2 src/api.ts:33
+
+### Bot reviews addressed ({count})
+3. src/auth.ts:15 — copilot[bot]: applied suggested null check
+4. src/api.ts:22 — copilot[bot]: dismissed (false positive)
 
 ### Reply comments to post ({count})
 1. src/auth.ts:42 → "Fixed in abc1234 — session now invalidated on logout"
 2. src/api.ts:33 → "Extracted to config — timeout is now configurable"
+3. src/auth.ts:15 → "Applied — added null check as suggested"
+4. src/api.ts:22 → "False positive — value is guaranteed non-null by L18"
 
 ### Follow-up questions ({count})
-3. src/utils.ts:18 → "Could you clarify whether you mean..."
+5. src/utils.ts:18 → "Could you clarify whether you mean..."
 
 ### Threads to resolve ({count})
-- src/auth.ts:42, src/auth.ts:58, src/api.ts:33
+- src/auth.ts:42, src/auth.ts:58, src/api.ts:33, src/auth.ts:15, src/api.ts:22
 
 ### Threads left open ({count})
 - src/utils.ts:18 (follow-up question)
+- src/models.ts:9 (skipped)
+
+### Self-review threads excluded ({count})
+- src/config.ts:5, src/config.ts:12 (PR author's own comments — not touched)
 ```
+
+**Resolution rule:** Only threads in `resolve_after_push` are resolved.
+A thread lands in that list **only** when a fix was applied (a/b) or a bot
+comment was explicitly dismissed (d). Threads with follow-up questions (c),
+skipped threads (e), and self-review threads are **never** resolved.
 
 Ask:
 > "Does this look correct? I will push {N} commits, post {M} reply comments,
@@ -310,14 +406,35 @@ git push
 
 If push is rejected, tell the user and ask how to proceed. Never force-push.
 
-### Post reply comments
+### Force-push warning
 
-For each drafted reply, post as a reply to the original review comment:
+If the branch was force-pushed earlier in this session (e.g., after a
+rebase in Step 2), GitHub may have invalidated existing review comment
+threads. Replies to invalidated threads will return **404 Not Found**.
+This is expected and non-fatal — log the failure and continue with the
+remaining replies.
+
+### Post reply comments (sequentially)
+
+Post replies **one at a time, in order**. Do NOT post in parallel — a
+404 on one reply must not cancel the remaining replies.
+
+For each drafted reply:
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
   --method POST -f body="{reply_text}"
 ```
+
+If the API returns **404**:
+- Log: "Reply to comment {comment_id} on {path}:{line} returned 404
+  (thread likely invalidated by force-push). Skipping."
+- Remove the corresponding thread from `resolve_after_push` (cannot
+  resolve a thread that no longer exists)
+- Continue with the next reply
+
+If the API returns any other error, report it to the user and ask how
+to proceed.
 
 ### Resolve threads
 
@@ -332,6 +449,8 @@ gh api graphql -f query='
   }
 ' -f threadId="{thread_id}"
 ```
+
+If resolution returns an error (thread invalidated), log and continue.
 
 **HARD RULE: Never resolve threads in the `reply_only` list.** Those have
 follow-up questions and must stay open for the reviewer to respond.
@@ -373,10 +492,13 @@ Present a concise summary of everything done:
 
 **Branch synced:** ✓ Up to date with `{base_branch}`
 **Comments processed:** {total} of {total_found}
+**Self-review excluded:** {count} (PR author's own comments)
+**Bot reviews handled:** {count} ({applied} applied, {dismissed} dismissed)
+**Reviewer fixes:** {count}
 **Commits pushed:** {count} ({commit_list})
 **Replies posted:** {count}
-**Threads resolved:** {count}
-**Threads left open:** {count} (follow-up questions)
+**Threads resolved:** {count} (only threads with applied fixes or dismissed bots)
+**Threads left open:** {count} (follow-ups: {f}, skipped: {s})
 **Merge conflicts:** None / {details}
 
 PR URL: {url}
