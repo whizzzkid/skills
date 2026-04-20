@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.6.0'
+  version: '1.7.0'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -265,11 +265,20 @@ find an issue that relates to an existing comment thread, reference it rather
 than creating a separate observation. Focus on finding **new** issues that no
 existing reviewer has raised.
 
-**Identify new methods and functions.** Scan the diff for newly introduced
-functions, methods, classes, and public APIs. These are the primary attack
-surface — code that didn't exist before has had the least scrutiny. Build
-a list of `{name, file, line, signature, parameters}` for each. These
-become the targets for adversarial playground testing in Phase 4.
+**Identify new and modified surface area.** Scan the diff for:
+
+- **New** functions, methods, classes, interfaces, and public APIs — code
+  that didn't exist before has had the least scrutiny.
+- **Modified** functions and methods — changed signatures, altered logic
+  branches, updated return types. Existing callers may silently accept
+  wrong results.
+- **Changed interfaces, types, and contracts** — any modification to a
+  type definition, protocol, abstract class, or API response shape.
+  Downstream consumers that weren't updated are a high-severity risk.
+
+Build a list of `{name, file, line, signature, parameters, status}` where
+status is `new` or `modified` for each. These become the targets for
+adversarial playground testing in Phase 4.
 
 **Be adversarial.** Your job is to find what the author missed:
 - Bugs and logic errors
@@ -308,6 +317,11 @@ in the diff, check for these red flags:
 - **Copy-paste tests:** Multiple tests with identical structure and only
   trivially different inputs, suggesting the author generated tests
   mechanically without thinking about meaningful scenarios.
+- **Mutation-surviving tests:** Tests that still pass when the
+  implementation is intentionally broken (e.g., flipping a conditional,
+  returning a hardcoded value, removing a validation check). If breaking
+  the code doesn't break the test, the test is not testing behavior —
+  it's testing setup. Flag these for playground verification in Phase 4.
 
 For each gap found, note **what's missing** and **what a useful test
 would look like** — this feeds into the playground (Phase 4) and review
@@ -347,32 +361,83 @@ Executable scripts that exercise changed code paths. Run them and observe
 behavior. Example: a script that calls the modified function with various inputs
 to see how it behaves at boundaries.
 
-### Adversarial testing of new functions
+### Adversarial testing of new and modified functions
 
-For every new method/function identified in Phase 3, **launch parallel
-experiments** that try to break it. Use the Agent tool to run these
-concurrently — each agent writes its own script under `.review-playground/`
-and reports back.
+For every new or modified method/function identified in Phase 3, **launch
+parallel experiments** that try to break it. Use the Agent tool to run
+these concurrently — each agent writes its own script under
+`.review-playground/` and reports back.
 
-**Edge cases:** Boundary values, empty inputs, null/undefined, zero,
+**Edge cases:** Boundary values, empty inputs, null/undefined/nil, zero,
 negative numbers, max-size collections, single-element vs many, unicode,
-special characters.
+special characters, whitespace-only strings, very long strings.
+
+**Boundary arithmetic:** Off-by-one errors, fence-post problems, integer
+overflow/underflow, floating-point precision loss, array index bounds
+(first, last, one-past-end), loop termination conditions, pagination
+boundaries (page 0 vs page 1, last page, beyond last page).
+
+**Type confusion and coercion:** Pass wrong types to every parameter —
+string where number expected, array where object expected, number where
+boolean expected, null where non-nullable expected. Test implicit
+coercion traps: `"0"` vs `0` vs `false`, empty string vs null, `[]` vs
+`{}`. For typed languages, test with values that satisfy the type but
+violate semantic constraints (e.g., negative age, future birth date,
+email without `@`).
 
 **Input mutation:** Take valid inputs and mutate one field at a time —
 wrong type, missing field, extra field, swapped arguments, out-of-range
 values. Confirm the function fails gracefully rather than silently
 producing wrong output.
 
+**State and ordering:** For stateful code (classes, modules with
+initialization, connection pools, caches), call methods in wrong order —
+use before init, double-init, use after close, concurrent access from
+multiple callers. For async code, test interleaving and cancellation.
+
 **Fuzz testing:** Generate randomized inputs (random strings, numbers,
 nested objects, deeply nested structures) and call the function in a loop.
 Look for crashes, hangs, uncaught exceptions, or inconsistent results.
+Vary the volume — 1 call, 10 calls, 1000 calls — to expose resource
+leaks or accumulation bugs.
 
 **Output validation:** Verify return values match expected types and
 contracts. Mutate the function's output in downstream consumers to see
-if callers validate what they receive.
+if callers validate what they receive. For modified functions, verify
+that existing callers still receive the shape they expect.
 
 Keep each experiment script short and focused — one script per function,
 one concern per script. Log failures clearly with input/output pairs.
+
+### Validate PR tests via mutation
+
+For each test file in the PR, verify the tests actually detect breakage:
+
+1. **Copy** the implementation file to `.review-playground/`.
+2. **Mutate** the copy — flip a conditional, hardcode a return value,
+   remove a validation check, swap two arguments in a function call.
+3. **Run the PR's tests** against the mutated copy. If the tests still
+   pass, they are not testing the behavior they claim to test.
+4. **Report** which tests survived mutation. These are candidates for
+   review comments — a test that can't detect a broken implementation
+   is worse than no test (it provides false confidence).
+
+Focus mutations on the code paths the tests claim to cover. One mutation
+per experiment script. Log the mutation, the test result, and whether the
+test correctly failed.
+
+### Interface contract violations
+
+When the PR modifies a type, interface, or API contract:
+
+1. **Identify all consumers** of the changed contract (callers, importers,
+   downstream services).
+2. **Build a script** that instantiates the old contract shape and passes
+   it through the new code path. Does it fail fast, or silently corrupt?
+3. **Build a script** that uses the new contract shape in old consumer
+   code. Does the consumer handle it, or does it break at runtime?
+4. **Report** any consumer that doesn't validate its inputs — these are
+   latent bugs waiting for a deployment mismatch.
 
 ### Test cases
 
