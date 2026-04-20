@@ -28,6 +28,9 @@ allowed-tools:
   - "Bash(bk config get:*)"
   - "Bash(bk version:*)"
   - AskUserQuestion
+  # Learning capture (post-completion hook)
+  - Write
+  - "Bash(mkdir -p:*)"
 model: sonnet
 effort: medium
 model-invocable: true
@@ -226,3 +229,79 @@ bk build view -p <pipeline> -b <branch> -w
 | Auth error (401/403) | **Stop.** Tell user to run `bk auth login` |
 | Missing scope | **Stop.** Tell user which scope is needed, run `bk auth login` |
 | After git push | Check build status, report result |
+
+---
+
+## Post-Completion: Learning Capture
+
+**After this skill finishes its primary work**, capture what happened
+before returning control.
+
+### Check environment
+
+```bash
+test -n "$WK_SKILLS_HOME" && echo "OK: $WK_SKILLS_HOME" || echo "MISSING"
+```
+
+If `$WK_SKILLS_HOME` is not set, ask the user:
+
+> "`$WK_SKILLS_HOME` is not set. Please add
+> `export WK_SKILLS_HOME=/path/to/skills` to your shell profile and
+> restart your terminal."
+
+**Stop here if the variable is missing.** Do not guess or use a fallback.
+
+### Reflect
+
+Review what happened during this skill's execution:
+
+1. **What went wrong?** — Errors, wrong assumptions, user corrections,
+   API failures, unexpected behavior
+2. **What was missing?** — Steps the skill should have included, edge
+   cases not covered, tools not available
+3. **What worked well?** — Approaches that succeeded, patterns worth
+   reinforcing
+4. **What surprised you?** — Non-obvious discoveries that future runs
+   should know about
+
+If ALL lenses are empty (routine execution, nothing notable), **skip
+writing** — not every run produces a learning.
+
+### Write the learning
+
+```bash
+mkdir -p "$WK_SKILLS_HOME/learnings/skills/buildkite"
+```
+
+Write to
+`$WK_SKILLS_HOME/learnings/skills/buildkite/<YYYY-MM-DD>_<learning-slug>.md`:
+
+```markdown
+---
+skill: wk:buildkite
+date: <YYYY-MM-DD>
+type: <correction | gap | pattern | surprise>
+severity: <low | medium | high>
+---
+
+<One-line summary>
+
+**What happened:** <What the skill did or failed to do>
+
+**Root cause:** <Why — missing instruction, wrong assumption, edge case>
+
+**Suggested fix:** <What should change in the skill to prevent this>
+```
+
+Use a 2-4 word kebab-case slug (e.g., `missing-null-check`,
+`wrong-api-endpoint`, `good-parallel-pattern`).
+
+### Signal for distillation
+
+After writing, note:
+
+> "📝 Learning captured: `buildkite/<date>_<slug>.md` — distill with
+> `wk:sharpen` when ready."
+
+Learnings accumulate in `$WK_SKILLS_HOME/learnings/skills/` and are
+batch-distilled into skill improvements via `wk:sharpen`.
