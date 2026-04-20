@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2.4.0'
+  version: '2.6.0'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -165,6 +165,21 @@ ToolSearch query: `"gcal"` or `"calendar"`
 
 Get all events for today — title, time, attendees, whether attended.
 
+**Step 1b: Fetch tomorrow's calendar events**
+
+Also fetch events for the next business day. For each event, extract:
+- Title, time, duration, attendees, organizer
+- Description/notes field and any linked document URLs
+- Whether it's a recurring meeting
+- Whether the user is a presenter, organizer, or has an active role
+
+Flag meetings that likely need prep:
+- Meetings where the user is the organizer or presenter
+- 1:1s with manager or direct reports
+- Meetings with external stakeholders
+- Planning, review, or decision meetings (match by title keywords)
+- Meetings with linked agenda docs the user hasn't viewed
+
 **Step 2: Fetch Granola notes for each meeting (parallel per meeting)**
 
 ToolSearch query: `"granola"`
@@ -176,10 +191,14 @@ For each meeting, search Granola for today's notes. Extract per meeting:
 - **Open questions** — unresolved items needing follow-up
 - **Insights** — non-obvious learnings worth remembering
 
+For each **tomorrow's recurring meeting**, also search Granola for past
+notes to provide context for prep (what was discussed last time, open
+items from prior sessions).
+
 If Granola is unavailable, return BLOCKED error — do not continue
 without it.
 
-**Return format per meeting:**
+**Return format per today's meeting:**
 
 ```
 {time} — {title}
@@ -444,7 +463,36 @@ For each opportunity, record:
 - **Why it matters**: what made it feedback-worthy
 - **Suggested feedback**: a 1-2 sentence draft the user can refine
 
-### 2g. DX metrics and improvement actions
+### 2g. Tomorrow's meeting prep
+
+From Agent 2's tomorrow calendar data, identify meetings that need
+preparation and surface them as action items.
+
+For each tomorrow meeting flagged as needing prep, determine what's
+needed:
+
+| Signal | Prep action |
+|--------|------------|
+| User is organizer | Review/create agenda, prepare talking points |
+| Linked agenda doc exists | Read the doc, note discussion points |
+| Recurring meeting with open action items from last time | Review prior action items, prepare status updates |
+| 1:1 with manager | Prepare updates, blockers, asks |
+| 1:1 with direct report | Review their recent work, prepare feedback |
+| External stakeholders attending | Review context, prepare any deliverables |
+| Planning/review/retro meeting | Gather metrics, prepare proposals |
+| Presentation or demo | Prepare materials, test demos |
+
+For each, record:
+- **Meeting**: title, time, attendees
+- **Prep needed**: specific actions (e.g., "read agenda doc", "prepare demo")
+- **Time estimate**: rough estimate of prep effort (5min / 15min / 30min+)
+- **Priority**: `must-prep` (you're presenting or it's high-stakes) vs
+  `nice-to-prep` (recurring with context from Granola)
+
+These become triage items in Stage 3 under a dedicated "Tomorrow's Meeting
+Prep" group.
+
+### 2h. DX metrics and improvement actions
 
 From Agent 7, compile:
 
@@ -522,13 +570,14 @@ group — do not prompt.
 
 Process groups in this order. Skip any group with 0 items:
 
-1. **Untracked Action Items** — from meetings, Slack commitments, email promises
-2. **Unanswered Slack Messages**
-3. **Unanswered Emails**
-4. **Unanswered Jira Comments**
-5. **Unanswered Confluence Mentions**
-6. **Lattice Feedback Requests**
-7. **Peer Feedback Opportunities**
+1. **Tomorrow's Meeting Prep** — prep actions for important meetings
+2. **Untracked Action Items** — from meetings, Slack commitments, email promises
+3. **Unanswered Slack Messages**
+4. **Unanswered Emails**
+5. **Unanswered Jira Comments**
+6. **Unanswered Confluence Mentions**
+7. **Lattice Feedback Requests**
+8. **Peer Feedback Opportunities**
 
 If ALL groups are empty after auto-resolution, skip Stage 3:
 > "Nothing needs your input — all items are tracked and all comms answered!"
@@ -597,6 +646,7 @@ Every item always has the 3 base options **(a) Will do (b) Already done
 
 | Group | Extra options |
 |-------|-------------|
+| Tomorrow's Meeting Prep | **(d)** Prep now (open doc/draft notes)  **(e)** Add to morning brief |
 | Untracked Action Items | **(d)** GitHub issue  **(e)** Jira ticket  **(f)** Carry forward |
 | Unanswered Slack | **(d)** Draft response  **(e)** Snooze to tomorrow |
 | Unanswered Emails | **(d)** Draft response  **(e)** Snooze to tomorrow |
@@ -690,8 +740,15 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 ## Meeting Notes
 {compiled meeting summaries from Agent 2}
 
+## Tomorrow's Meeting Prep
+- [ ] {time} — {meeting title}: {prep action} ({priority})
+- [ ] {time} — {meeting title}: {prep action} ({priority})
+
 ## Action Items for Tomorrow
 - [ ] {item}: {context and source}
+
+## Yesterday's Meeting Follow-Through
+- [ ] {meeting}: {action item or share-out from Granola notes}
 
 ## Carry-Over Items
 - [ ] {morning brief item not completed}: {status and context}
@@ -730,17 +787,69 @@ tomorrow's `wk:goodmorning` — structure it for machine readability.
 - Commits: {count}
 ```
 
+### Generate evening.html — Achievements Dashboard
+
+Write to `<today_dir>/evening.html`. Self-contained, cheerful HTML report
+celebrating the day's accomplishments — **no CDN dependencies**, all CSS
+and JS embedded.
+
+**Tone:** Warm, celebratory, positive. This is the reward for a day's
+work. Use encouraging language, highlight impact, and make achievements
+feel substantial. End-of-day energy should be "look what you did today"
+not "here's what's left."
+
+**Required features:**
+
+1. **Header** — date, cheerful greeting ("Great day, {name}!" or
+   "You crushed it today!"), overall stats bar (items completed,
+   PRs shipped, meetings attended)
+2. **Hero section** — the single most impactful achievement of the day,
+   displayed prominently with a large emoji and a one-line summary
+3. **Achievements grid** — card layout for each category:
+   - Code & PRs (commits, PRs created/merged/reviewed, issues closed)
+   - Meetings & Collaboration (decisions made, discussions led)
+   - Communication (threads unblocked, people helped)
+   - Feedback (given and received)
+   - Each card has a count badge and expandable details
+4. **DX Metrics snapshot** — compact table with trend arrows and
+   color-coded cells (green = above average, amber = near average,
+   red = below). Improvement actions as callouts.
+5. **Meeting highlights** — timeline view of today's meetings with
+   key decisions and action items. Collapsible per meeting.
+6. **Tomorrow preview** — compact list of prep items and carry-overs,
+   visually distinct from achievements (muted colors, smaller type).
+   This is informational, not the focus.
+7. **Day stats footer** — total commits, PRs, issues, meetings,
+   messages sent, feedback given. Rendered as a clean stat row.
+8. **Confetti or celebration animation** — subtle CSS animation on
+   page load (e.g., confetti particles, a brief bounce on the hero
+   card, or a gradient sweep). Keep it tasteful — one animation, not
+   a circus.
+9. **Dark mode** — respect `prefers-color-scheme`
+10. **Responsive** — 2-col grid on wide screens, single column on mobile
+11. **Print-friendly** — `@media print` hides animations, switches to
+    single column, uses dark text on white
+
+**Design:** Warm color palette (soft greens, blues, amber accents),
+system font stack, generous whitespace, rounded cards with subtle
+shadows. Achievements should feel like trophies, not a spreadsheet.
+The overall vibe is "end of a good day."
+
+**Links:** All links to PRs, issues, Slack threads, Jira tickets, and
+Confluence pages MUST use `target="_blank" rel="noopener noreferrer"`.
+
 ### Open for review
 
-After writing the file, open it for review:
+After writing both files, open the HTML dashboard:
 
 ```bash
-open "$TODAY_DIR/evening.md"
+open "$TODAY_DIR/evening.html"
 ```
 
 Then announce:
 
-> "Your evening wrap-up is complete and opened for review:
+> "Your evening wrap-up is ready:
+> - `sitrep/{YYYY}/{MM}/{DD}/evening.html` — your achievements dashboard
 > - `sitrep/{YYYY}/{MM}/{DD}/evening.md` — tomorrow's carry-over reference
 >
 > Today: {completed} items done, {remaining} carried forward,

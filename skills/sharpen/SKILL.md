@@ -21,7 +21,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.0'
+  version: '1.1.0'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -78,15 +78,24 @@ Extract:
 - What specific artifacts failed (file names, line numbers, API responses)
 - Root cause (why it failed)
 
-## Step 2: Identify the Skill to Improve
+## Step 2: Read the Full Skill
 
 Determine which skill needs updating. If ambiguous, ask the user.
 
-Read the current skill file:
+**Read the entire skill file** — not just the section you plan to edit.
+You need the full picture to avoid introducing overlaps or contradictions.
 
 ```bash
 cat skills/{skill-name}/SKILL.md
 ```
+
+As you read, build a mental map of:
+- Every hard rule and where it's stated
+- Every phase/step and what it covers
+- Recurring themes or instructions that appear in multiple places
+- Tool usage patterns (API calls, CLI commands, query formats)
+
+This map is essential for Step 4 (drafting) and Step 5 (audit).
 
 ## Step 3: Distill the Lesson
 
@@ -128,19 +137,51 @@ Locate where in the skill the lesson belongs:
 [How to do it — concrete commands or checks]
 ```
 
-## Step 5: Present for Review
+## Step 5: Audit the Full Skill
+
+**Before presenting changes**, re-read the entire skill with your
+proposed edit mentally applied. Check for:
+
+**Overlapping instructions:** Two sections that teach the same behavior
+in different words. Merge them — keep the clearer version, delete the
+other. If they're in different phases, keep the one closest to where the
+agent needs it.
+
+**Contradictory rules:** An edit in one section that conflicts with an
+existing rule elsewhere. Resolve the conflict — update or remove the
+stale instruction.
+
+**Redundant tool usage:** The same API call or CLI command shown in
+multiple places with slightly different flags or jq filters. Consolidate
+to one canonical form, or extract to a shared pattern referenced by name.
+
+**Bloated sections:** Steps that have grown beyond what the executing
+agent needs. If a section has more than 3-4 paragraphs of prose for a
+single action, tighten it. Instructions should be imperative and
+scannable — not essays.
+
+**Stale references:** Sections that reference steps, phases, or
+variables that have been renamed or removed in prior edits.
+
+If the audit surfaces cleanup beyond your original edit, bundle the
+cleanup into the same change. Do not leave known debt for a future pass.
+
+## Step 6: Present for Review
 
 Show the user:
 1. The distilled principle (what you learned)
 2. The specific edit location (which phase/section)
 3. The proposed diff
+4. **Any cleanup found during audit** — list what you consolidated,
+   removed, or tightened and why
 
 Wait for approval before editing the skill file.
 
-## Step 6: Apply the Update
+## Step 7: Apply the Update
 
 After approval:
-- Edit the skill file
+- Edit the skill file — both the new content and any audit cleanup
+- Re-read the final file to confirm coherence
 - Bump the `metadata.version` (patch for fixes, minor for new steps)
 - Commit with a message describing the improvement
 
@@ -184,8 +225,11 @@ specific incident.
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk:sharpen pr-review incident.md` | Read incident, distill lesson, propose skill update |
-| `/wk:sharpen commit "agent skipped signing"` | Distill verbal report into skill improvement |
+| `/wk:sharpen pr-review incident.md` | Read incident, distill lesson, audit full skill, propose update |
+| `/wk:sharpen commit "agent skipped signing"` | Distill verbal report, audit, propose skill improvement |
+
+**Steps:** Read report → Read full skill → Distill lesson → Draft edit →
+Audit full skill for overlap/bloat → Present with cleanup → Apply
 
 ## Requirements
 

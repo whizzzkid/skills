@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2.4.0'
+  version: '2.5.0'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -79,6 +79,12 @@ If `<yesterday_dir>/evening.md` exists, read it and extract:
 - Action items marked for today
 - Carry-over items not completed
 - Notes or context for today
+- **Tomorrow's Meeting Prep** items — prep work the user flagged for
+  today's meetings during last night's wrap-up
+- **Yesterday's Meeting Follow-Through** — action items, tickets to
+  file, share-outs to post, and decisions to communicate that came out
+  of yesterday's meetings (from Granola notes). These become triage
+  items in Stage 2.
 - **Decision history** — what the user chose for each item yesterday
   (e.g., "carry forward", "skip", "GitHub issue created", "already done").
   Store these as the `prior_decisions` map keyed by item summary/identifier.
@@ -462,17 +468,23 @@ group — do not prompt.
 
 Process groups in this order. Skip any group with 0 items:
 
-1. **Yesterday's Carry-Over**
-2. **Slack — Needs Response**
-3. **Slack — Follow-ups**
-4. **Email — Needs Response**
-5. **Email — Follow-ups**
-6. **GitHub — PRs to Review**
-7. **GitHub — Your PRs**
-8. **GitHub — Issues**
-9. **Jira — Tickets**
-10. **Jira — Mentions**
-11. **Confluence — Mentions**
+1. **Today's Meeting Prep** — prep actions flagged in last night's
+   evening.md (agenda docs to read, demos to prepare, updates to gather)
+2. **Yesterday's Meeting Follow-Through** — action items from
+   yesterday's meetings that need follow-up today (tickets to file,
+   share-outs to post, decisions to communicate, open questions to
+   chase). Extracted from evening.md's Granola meeting notes.
+3. **Yesterday's Carry-Over**
+4. **Slack — Needs Response**
+5. **Slack — Follow-ups**
+6. **Email — Needs Response**
+7. **Email — Follow-ups**
+8. **GitHub — PRs to Review**
+9. **GitHub — Your PRs**
+10. **GitHub — Issues**
+11. **Jira — Tickets**
+12. **Jira — Mentions**
+13. **Confluence — Mentions**
 
 **FYI items** (announcements, Confluence updates, Slack share-outs) are
 NOT triaged — they always appear in the dashboard as read-only entries.
@@ -542,6 +554,8 @@ Every item always has the 3 base options. Groups may add extras:
 
 | Group | Extra options |
 |-------|-------------|
+| Today's Meeting Prep | **(d)** Open doc now  **(e)** Defer to before meeting |
+| Meeting Follow-Through | **(d)** Create GitHub issue  **(e)** Create Jira ticket  **(f)** Post share-out now |
 | Carry-Over | **(d)** Delegate (describe to whom) |
 | Slack — Needs Response | **(d)** Reply now (draft inline) |
 | Email — Needs Response | **(d)** Reply now (draft inline) |
@@ -594,6 +608,13 @@ Write to `<today_dir>/morning.md`:
 
 ```markdown
 # Morning Brief — {YYYY-MM-DD}
+
+## Today's Meeting Prep
+- [ ] {time} — {meeting title}: {prep action}
+- [x] {time} — {meeting title}: {prep done yesterday evening}
+
+## Yesterday's Meeting Follow-Through
+- [ ] {meeting}: {action item — file ticket / post share-out / chase answer}
 
 ## Yesterday's Carry-Over
 - [x] {item marked "already done" in triage}

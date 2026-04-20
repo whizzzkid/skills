@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.0'
+  version: '1.1.0'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -33,6 +33,51 @@ Plan -> Implement (commit per step + docs) -> Test (happy/sad/edge)
   -> Review (adversarial agent) -> PR (wk:pr) -> CI Fix Loop
   -> Self-Review -> Docs Audit -> Retro
 ```
+
+---
+
+## Mandatory Activation
+
+**This workflow fires on EVERY task that will produce code changes, a
+commit, or a pull request.** There are no exceptions. The agent does not
+get to decide whether a task is "too small" or "just a quick fix."
+
+If the task will result in any of these, this workflow is active:
+- A new or modified file in the repository
+- A git commit
+- A push to a remote branch
+- A pull request (new or updated)
+- A CI build triggered by a code change
+
+**There is no opt-out.** The agent follows the phases in order. Skipping
+phases, reordering phases, or substituting ad-hoc commands for prescribed
+skills is a violation.
+
+## Autonomy Rules
+
+**Execute the workflow without asking permission at each step.** The user
+has already approved the workflow by using it. Minimize interruptions:
+
+| Situation | Do this | Do NOT do this |
+|-----------|---------|----------------|
+| Ready to commit | Invoke `wk:commit` | Ask "shall I commit?" |
+| Tests pass, review clean | Invoke `wk:pr` | Ask "would you like a PR?" |
+| CI fails | Enter fix loop automatically | Ask "should I investigate?" |
+| Review surfaces issues | Fix them and re-review | Ask "should I fix these?" |
+| Docs need updating | Invoke `wk:docs` | Ask "should I update docs?" |
+| Session ending | Invoke `wk:retro` | Ask "should I do a retro?" |
+
+**Only stop and ask the user when:**
+- The plan is ambiguous and multiple valid approaches exist
+- A CI failure persists after 3 fix attempts
+- A code review finding requires a design decision (not just a fix)
+- The user explicitly said to pause or check in at a specific point
+- Destructive or shared-state actions (force push, production deploy)
+
+**Skill invocation is mandatory.** When this workflow says "invoke
+`wk:commit`" or "invoke `wk:pr`", the agent MUST use the Skill tool to
+call the skill — not approximate the behavior by running raw commands.
+The skills contain rules, guards, and conventions that raw commands skip.
 
 ---
 
@@ -204,12 +249,9 @@ If the review surfaces issues:
 
 ## Phase 5: PR
 
-After code review passes, ask the user:
-
-> "Would you like me to create a PR for this work?"
-
-If accepted, invoke `wk:pr`. **Never use raw `gh pr create` or any other
-method.** This is non-negotiable. `wk:pr` handles:
+After code review passes, invoke `wk:pr` automatically. Do not ask for
+permission — the workflow prescribes it. **Never use raw `gh pr create`
+or any other method.** This is non-negotiable. `wk:pr` handles:
 
 - Draft creation (always starts as draft)
 - Stacked PRs when the diff exceeds ~30 lines
