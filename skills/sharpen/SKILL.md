@@ -23,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.1.0'
+  version: '1.2.0'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -229,14 +229,130 @@ specific incident.
 |---------|----------|
 | `/wk:sharpen pr-review incident.md` | Read incident, distill lesson, audit full skill, propose update |
 | `/wk:sharpen commit "agent skipped signing"` | Distill verbal report, audit, propose skill improvement |
+| `/wk:sharpen` (no args) | Batch mode — scan learnings + memories, distill all |
+| `/wk:sharpen --scan --force` | Batch mode — reprocess everything, ignore log |
 
-**Steps:** Read report → Read full skill → Distill lesson → Draft edit →
-Audit full skill for overlap/bloat → Present with cleanup → Apply
+**Single mode:** Read report → Read full skill → Distill → Draft →
+Audit for overlap/bloat → Present with cleanup → Apply
+
+**Batch mode:** Scan learnings + memories → Filter by log → Process each
+via single mode → Rename learnings to `.learned.md` → Update log
+
+## Batch Mode: Scan Learnings and Memories
+
+When invoked without a specific incident (e.g., `/wk:sharpen` with no
+arguments, or `/wk:sharpen --scan`), sharpen enters batch mode — scanning
+two sources for distillable material.
+
+### Source 1: Learnings directory
+
+Scan `$WK_SKILLS_HOME/learnings/skills/` for unprocessed files:
+
+```bash
+find "$WK_SKILLS_HOME/learnings/skills" -name "*.md" \
+  ! -name "*.learned.md" -type f 2>/dev/null
+```
+
+For each unprocessed learning:
+1. Read the file — extract skill name, type, severity, suggested fix
+2. Run the normal sharpen workflow (Steps 2-7) using the learning as input
+3. After the skill is updated, rename to `.learned.md`:
+   ```bash
+   mv "$file" "${file%.md}.learned.md"
+   ```
+
+Process highest-severity learnings first. If more than 5 exist, process
+5 and report the rest for the next run.
+
+### Source 2: Global memory files
+
+Scan `~/.claude/memory/` for memory files that contain skill-applicable
+feedback or corrections:
+
+```bash
+find ~/.claude/memory -name "*.md" -type f 2>/dev/null
+```
+
+**Only process memories of type `feedback`.** Read each file's frontmatter
+— if `type: feedback`, the memory likely contains a behavioral correction
+or confirmed approach that could improve a skill.
+
+For each feedback memory:
+1. Check if it's already been processed (see tracking below)
+2. Read the content — extract the rule, the "Why" line, and the
+   "How to apply" line
+3. Determine which skill (if any) the feedback applies to — match by
+   topic, tool name, or workflow phase mentioned
+4. If a matching skill is found, run the normal sharpen workflow to
+   distill the feedback into the skill
+5. If no skill matches (the feedback is about general behavior, not a
+   specific skill), skip it — global memory already covers general rules
+
+**Only process `user` or `project` type memories if they contain
+explicit instructions about how a skill should behave** (e.g., "when
+reviewing PRs, always check..." or "the morning brief should...").
+Skip memories that are purely informational context.
+
+### Tracking: `.distilled-sources.log`
+
+Maintain a log at `$WK_SKILLS_HOME/.distilled-sources.log` to track
+which sources have been processed. This prevents re-reading the same
+memory files on every run.
+
+**Format:** one line per processed source, tab-separated:
+
+```
+<date>\t<source-path>\t<action>\t<target-skill>
+2026-04-21\t~/.claude/memory/feedback_testing.md\tdistilled\twk:workflow
+2026-04-21\t~/.claude/memory/user_role.md\tskipped\t—
+2026-04-21\tlearnings/skills/pr-review/2026-04-21_stale-diff.md\tdistilled\twk:pr-review
+```
+
+**Before processing any source**, check if its path appears in the log.
+If it does AND the file's modification time is not newer than the log
+entry date, skip it. If the file was modified after the log entry, it
+has new content — reprocess it.
+
+```bash
+# Create log if it doesn't exist
+touch "$WK_SKILLS_HOME/.distilled-sources.log"
+
+# Check if a source was already processed
+grep -qF "$source_path" "$WK_SKILLS_HOME/.distilled-sources.log"
+```
+
+**After processing**, append an entry to the log.
+
+**Force reprocessing:** If the user explicitly asks to revisit memories
+(e.g., `/wk:sharpen --scan --force` or "rescan all memories"), ignore
+the log and process everything.
+
+### Batch mode presentation
+
+Present a summary before processing:
+
+> "Scanning for distillable material...
+>
+> **Learnings:** {N} unprocessed files found
+> **Memories:** {M} feedback memories found ({P} new, {Q} already processed)
+>
+> Processing {total} items..."
+
+After processing, report results:
+
+> "Batch distillation complete:
+> - {count} skills updated
+> - {count} learnings absorbed (.learned.md)
+> - {count} memories distilled (logged)
+> - {count} skipped (already processed / no matching skill)"
 
 ## Requirements
 
 - Read access to the skill file being improved
 - Edit access to `skills/{skill-name}/SKILL.md`
+- Read access to `~/.claude/memory/` (for batch mode)
+- Read/write access to `$WK_SKILLS_HOME/learnings/` (for batch mode)
+- Read/write access to `$WK_SKILLS_HOME/.distilled-sources.log`
 
 ---
 

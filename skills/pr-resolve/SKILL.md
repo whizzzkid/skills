@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.2.0'
+  version: '1.3.0'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -164,6 +164,34 @@ For each comment, classify the author:
 | `User` | Matches PR author login | **Self-review** (skip) |
 | `User` | Any other login | **Reviewer** |
 
+### Pre-check: pending self-reviews
+
+Before processing comments, check if the current user has a pending (draft)
+review on this PR. A pending review blocks all reply-comment posting with
+HTTP 422 (`user_id can only have one pending review per pull request`).
+
+```bash
+CURRENT_USER=$(gh api user --jq '.login')
+PENDING_REVIEW_ID=$(gh api repos/{owner}/{repo}/pulls/{number}/reviews \
+  --jq --arg u "$CURRENT_USER" \
+  '.[] | select(.state == "PENDING" and .user.login == $u) | .id')
+```
+
+If a pending review exists, ask the user:
+
+> "You have a pending (draft) self-review on this PR. Reply comments cannot
+> be posted until it is submitted or dismissed. (a) Submit as COMMENT and
+> continue, (b) Abort."
+
+If (a), submit it:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{number}/reviews/$PENDING_REVIEW_ID/events \
+  --method POST -f event=COMMENT
+```
+
+Do not proceed to comment processing until this is resolved.
+
 ### Build the comment map
 
 For each GraphQL thread node:
@@ -186,6 +214,16 @@ A comment is **active** if:
 
 Skip truly outdated comments where the code has been rewritten and the
 concern no longer applies. Note these as "auto-skipped" in the summary.
+
+### Surface feedback hidden in self-review threads
+
+When skipping a self-review thread (root comment by the PR author), scan its
+replies for comments from other users. If any exist, collect them for the
+final summary — do NOT triage, fix, or resolve them; just surface them so
+the user knows they exist and can address them out-of-band.
+
+Track as `self_review_with_external_replies`:
+`{user, path, line, one-line body preview}`.
 
 ### Group by file
 
@@ -408,6 +446,22 @@ git push
 
 If push is rejected, tell the user and ask how to proceed. Never force-push.
 
+### Update PR description
+
+After pushing, sync the PR description to reflect all commits pushed in this
+session — correct any stale counts, mention fixes applied, and ensure the body
+matches the current branch state:
+
+```bash
+gh pr edit {number} --body "$(cat <<'EOF'
+{updated description}
+EOF
+)"
+```
+
+This mirrors the `wk:pr` rule: after every push to a branch with an existing
+PR, the description must be updated.
+
 ### Force-push warning
 
 If the branch was force-pushed earlier in this session (e.g., after a
@@ -495,6 +549,7 @@ Present a concise summary of everything done:
 **Branch synced:** ✓ Up to date with `{base_branch}`
 **Comments processed:** {total} of {total_found}
 **Self-review excluded:** {count} (PR author's own comments)
+**Feedback in self-review threads:** {count} ({user}, {path}:{line} — {body preview} — not triaged, address out-of-band)
 **Bot reviews handled:** {count} ({applied} applied, {dismissed} dismissed)
 **Reviewer fixes:** {count}
 **Commits pushed:** {count} ({commit_list})
@@ -506,14 +561,20 @@ Present a concise summary of everything done:
 PR URL: {url}
 ```
 
+## Step 11: Session Retro
+
+After the final summary, invoke `wk:retro` to capture session learnings.
+This is mandatory — do not skip even if the session was short or routine.
+
 ## Quick Reference
 
 | Trigger | Behavior |
 |---------|----------|
-| "resolve PR comments" | Full 10-step workflow |
-| "address review feedback" | Full 10-step workflow |
+| "resolve PR comments" | Full workflow |
+| "address review feedback" | Full workflow |
 | "fix PR #{number}" | Full workflow for specific PR |
 | "respond to reviewers" | Full workflow with focus on replies |
+| Session ends | Invoke `wk:retro` |
 
 ## Requirements
 

@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2.6.0'
+  version: '2.7.0'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -861,6 +861,72 @@ Then announce:
 
 ---
 
+## Stage 5: Distill Accumulated Learnings
+
+After generating the evening files, check for unprocessed learnings from
+skill executions during the day. These accumulate via the Post-Completion
+Learning Capture hooks on each skill.
+
+### Scan for unprocessed learnings
+
+```bash
+test -n "$WK_SKILLS_HOME" && \
+  find "$WK_SKILLS_HOME/learnings/skills" -name "*.md" \
+    ! -name "*.learned.md" -type f 2>/dev/null | head -20
+```
+
+If `$WK_SKILLS_HOME` is not set or the directory doesn't exist, skip
+this stage silently — learnings are optional.
+
+If no unprocessed files are found (all are `.learned.md` or none exist),
+skip this stage:
+> "No new learnings to distill today."
+
+### Process each learning
+
+For each unprocessed `.md` file found:
+
+1. **Read the learning** — extract the skill name, what happened, root
+   cause, and suggested fix
+2. **Invoke `wk:sharpen`** via the Skill tool with the learning file as
+   input — this distills the principle and applies it to the target skill
+3. **After `wk:sharpen` completes**, rename the file to mark it absorbed:
+
+```bash
+mv "$learning_file" "${learning_file%.md}.learned.md"
+```
+
+The `.learned.md` extension signals that the learning has been distilled
+into the skill and should not be processed again.
+
+### Batch presentation
+
+If multiple learnings exist, present a summary before processing:
+
+> "Found {N} unprocessed learnings across {M} skills:
+>
+> 1. `goodmorning/2026-04-21_missing-auth-retry.md` — gap (medium)
+> 2. `pr-review/2026-04-21_stale-diff-cache.md` — correction (high)
+> 3. `workflow/2026-04-20_skipped-docs-step.md` — pattern (low)
+>
+> Distilling into skill improvements..."
+
+Process all learnings, then report results:
+
+> "Distilled {N} learnings:
+> - {count} skills updated
+> - {count} learnings absorbed (renamed to .learned.md)
+> - {count} skipped (routine, nothing to distill)"
+
+### Rate limiting
+
+If more than 5 unprocessed learnings exist, process the 5 with the
+highest severity first (high > medium > low). Carry the rest to
+tomorrow — they won't be lost since only `.learned.md` files are
+excluded from the scan.
+
+---
+
 ## Service Connection Summary
 
 | Service | ToolSearch | Agent | Fallback |
@@ -886,6 +952,9 @@ Then announce:
 | All comms answered | Celebrates clean inbox |
 | Item skipped consistently | Offer to add auto-skip rule to weekly memory |
 | No weekly memory | No auto-rules — all items triaged manually |
+| Unprocessed learnings found | Distill via `wk:sharpen`, rename to `.learned.md` |
+| No learnings | Skip distillation silently |
+| >5 learnings pending | Process top 5 by severity, carry rest to tomorrow |
 
 ---
 

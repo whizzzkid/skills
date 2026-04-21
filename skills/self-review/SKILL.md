@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.0'
+  version: '1.0.1'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -92,7 +92,7 @@ gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --method POST \
   --input - <<'EOF'
 {
-  "event": "PENDING",
+  "commit_id": "{head_sha}",
   "comments": [
     {
       "path": "src/file.ts",
@@ -104,6 +104,11 @@ gh api repos/{owner}/{repo}/pulls/{number}/reviews \
 }
 EOF
 ```
+
+Omit the `event` field to create a pending (draft) review — `"event": "PENDING"`
+is not a valid enum value and returns HTTP 422. Valid event values (`APPROVE`,
+`REQUEST_CHANGES`, `COMMENT`) are for *submitting* a review, not creating one.
+Include `commit_id` set to the PR's HEAD SHA to anchor the review.
 
 The review stays **pending** (draft) until the user submits it on GitHub.
 
