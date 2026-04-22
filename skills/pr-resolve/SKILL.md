@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.3.1'
+  version: '1.4.0'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -454,11 +454,16 @@ If push is rejected, tell the user and ask how to proceed. Never force-push.
 
 After pushing, sync the PR description to reflect all commits pushed in this
 session — correct any stale counts, mention fixes applied, and ensure the body
-matches the current branch state:
+matches the current branch state.
+
+**Before overwriting**, read the current body and carry forward metadata lines:
+`Closes #N` / `Fixes #N` / `Resolves #N`, `Co-authored-by:` lines, and any
+automation-generated blocks (`**Build:**`, `<details>` context). These are
+metadata, not prose — dropping them silently breaks issue auto-closing.
 
 ```bash
 gh pr edit {number} --body "$(cat <<'EOF'
-{updated description}
+{updated description with metadata preserved}
 EOF
 )"
 ```
