@@ -61,6 +61,8 @@ export GITHUB_ORG="your-org"
 
 ## Documentation
 
+- [Architecture](docs/architecture.md) — how skills work, the retro→sharpen self-improvement loop, and model routing
+- [Architecture (HTML)](docs/architecture.html) — interactive team-shareable version with diagrams and tips
 - [Creating a Skill](docs/how-to/creating-a-skill.md)
 - [Installing Skills](docs/how-to/installing-skills.md)
 

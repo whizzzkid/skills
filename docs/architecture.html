@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>wk:skills — Architecture</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #23263a;
+    --border: #2e3250;
+    --accent: #7c6af7;
+    --accent2: #4ade80;
+    --accent3: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --code-bg: #12151f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    line-height: 1.6;
+  }
+
+  /* Nav */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,17,23,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 32px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  nav .logo { font-weight: 700; font-size: 1rem; color: var(--accent); letter-spacing: -0.5px; }
+  nav .logo span { color: var(--text); }
+  nav a {
+    color: var(--muted); text-decoration: none; font-size: 0.85rem;
+    transition: color 0.15s;
+  }
+  nav a:hover, nav a.active { color: var(--text); }
+  nav .spacer { flex: 1; }
+  nav .pill {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 12px; font-size: 0.75rem; color: var(--muted);
+  }
+
+  /* Hero */
+  .hero {
+    padding: 64px 32px 48px;
+    max-width: 860px; margin: 0 auto;
+  }
+  .hero h1 {
+    font-size: 2.4rem; font-weight: 800; letter-spacing: -1.5px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+  }
+  .hero p { color: var(--muted); font-size: 1.05rem; max-width: 600px; }
+
+  /* Badges */
+  .badges { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+    border: 1px solid;
+  }
+  .badge-purple { background: rgba(124,106,247,0.15); border-color: rgba(124,106,247,0.4); color: #a79fff; }
+  .badge-green  { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.4); color: #86efac; }
+  .badge-amber  { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.4); color: #fcd34d; }
+
+  /* Layout */
+  main { max-width: 960px; margin: 0 auto; padding: 0 32px 80px; }
+  section { margin-bottom: 64px; }
+  h2 {
+    font-size: 1.3rem; font-weight: 700; margin-bottom: 20px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    color: #fff;
+  }
+  h3 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .card h3 { font-size: 0.9rem; color: var(--accent); margin-bottom: 6px; }
+  .card p { font-size: 0.82rem; color: var(--muted); }
+  .card .tag {
+    display: inline-block; margin-top: 10px;
+    padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;
+  }
+  .tag-opus { background: rgba(124,106,247,0.2); color: #a79fff; }
+  .tag-sonnet { background: rgba(74,222,128,0.15); color: #86efac; }
+
+  /* Diagram panels */
+  .diagram-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; margin-bottom: 20px;
+  }
+  .diagram-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .diagram-tab {
+    padding: 10px 20px; font-size: 0.82rem; cursor: pointer;
+    color: var(--muted); border: none; background: none;
+    border-bottom: 2px solid transparent; transition: all 0.15s;
+  }
+  .diagram-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .diagram-content { padding: 24px; }
+  .diagram-pane { display: none; }
+  .diagram-pane.active { display: block; }
+
+  /* Mermaid override */
+  .mermaid {
+    background: transparent !important;
+    display: flex; justify-content: center;
+  }
+  .mermaid svg { max-width: 100%; height: auto; }
+
+  /* Code */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; overflow-x: auto;
+    font-size: 0.8rem; line-height: 1.6;
+  }
+  code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+  pre code { color: #cbd5e1; }
+  .hlk { color: var(--accent); }   /* keyword */
+  .hls { color: var(--accent2); }  /* string */
+  .hlc { color: var(--muted); }    /* comment */
+  .hln { color: var(--accent3); }  /* number/name */
+
+  /* Tips */
+  .tip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 14px; }
+  .tip {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px;
+  }
+  .tip .tip-icon { font-size: 1.4rem; margin-bottom: 8px; }
+  .tip h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #fff; }
+  .tip p { font-size: 0.8rem; color: var(--muted); }
+  .tip code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.75rem; color: var(--accent2); }
+
+  /* Flow steps */
+  .flow {
+    display: flex; gap: 0; flex-wrap: wrap;
+    counter-reset: flow;
+  }
+  .flow-step {
+    flex: 1; min-width: 140px;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 16px; position: relative;
+    counter-increment: flow;
+  }
+  .flow-step:first-child { border-radius: 10px 0 0 10px; }
+  .flow-step:last-child { border-radius: 0 10px 10px 0; }
+  .flow-step:not(:last-child)::after {
+    content: '→';
+    position: absolute; right: -14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent); font-size: 1.1rem; z-index: 1;
+  }
+  .flow-step .num {
+    font-size: 0.65rem; font-weight: 700; color: var(--accent);
+    margin-bottom: 4px; letter-spacing: 1px;
+  }
+  .flow-step h4 { font-size: 0.78rem; font-weight: 600; color: #fff; margin-bottom: 3px; }
+  .flow-step p { font-size: 0.72rem; color: var(--muted); }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  th {
+    text-align: left; padding: 10px 14px;
+    background: var(--surface2); color: var(--muted); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border); padding: 24px 32px;
+    text-align: center; color: var(--muted); font-size: 0.8rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">wk<span>:skills</span></span>
+  <a href="#overview" class="active">Overview</a>
+  <a href="#lifecycle">Lifecycle</a>
+  <a href="#self-improvement">Self-Improvement</a>
+  <a href="#model-routing">Model Routing</a>
+  <a href="#skills">Skills</a>
+  <a href="#tips">Tips</a>
+  <span class="spacer"></span>
+  <span class="pill">whizzzkid/skills</span>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Skills Architecture</h1>
+  <p>
+    A self-improving agent skill system. Agents follow skill instructions, write
+    retrospective notes when they finish, and those notes get distilled back into
+    the skills — so every future run benefits from every past mistake.
+  </p>
+  <div class="badges">
+    <span class="badge badge-purple">Agent-agnostic</span>
+    <span class="badge badge-green">Self-improving</span>
+    <span class="badge badge-amber">Cost-aware model routing</span>
+  </div>
+</div>
+
+<main>
+
+<!-- Overview -->
+<section id="overview">
+  <h2>How a Skill Works</h2>
+  <p style="color:var(--muted); margin-bottom:20px; font-size:0.9rem;">
+    Each skill is a single <code style="background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:0.8rem;">SKILL.md</code>
+    file with YAML frontmatter and markdown instructions. The frontmatter is the contract between the skill and the agent runtime.
+  </p>
+  <div class="card" style="margin-bottom:16px;">
+    <h3 style="color:var(--text); margin-bottom:12px;">Skill Anatomy</h3>
+    <pre><code><span class="hlc">---</span>
+<span class="hlk">name:</span> <span class="hls">wk:pr-resolve</span>
+<span class="hlk">description:</span> <span class="hls">|</span>            <span class="hlc"># ← agent reads this to decide activation</span>
+  <span class="hls">Address PR review comments interactively ...</span>
+<span class="hlk">model:</span> <span class="hls">opus</span>               <span class="hlc"># ← default tier: opus or sonnet</span>
+<span class="hlk">allowed-tools:</span>             <span class="hlc"># ← capability sandbox</span>
+  - <span class="hls">Bash</span>
+  - <span class="hls">Read</span>
+  - <span class="hls">Edit</span>
+  - <span class="hls">Write</span>
+<span class="hlk">metadata:</span>
+  <span class="hlk">version:</span> <span class="hls">'2026.04.22-070656'</span>  <span class="hlc"># ← CalVer (not semver)</span>
+  <span class="hlk">model:</span>
+    <span class="hlk">openai:</span>  <span class="hls">o3</span>               <span class="hlc"># ← per-provider model overrides</span>
+    <span class="hlk">google:</span>  <span class="hls">gemini-2.5-pro</span>
+    <span class="hlk">meta:</span>    <span class="hls">llama-4-maverick</span>
+    <span class="hlk">cursor:</span>  <span class="hls">composer-2</span>
+<span class="hlc">---</span>
+
+<span class="hlc"># Instructions follow as markdown ...</span></code></pre>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+    <div class="card">
+      <h3>File Layout</h3>
+      <pre style="margin-top:8px;"><code><span class="hls">skills/</span>
+└── <span class="hln">pr-resolve/</span>
+    └── SKILL.md
+
+<span class="hls">learnings/skills/</span>
+└── <span class="hln">pr-resolve/</span>
+    ├── 2026-04-21_slug.md
+    └── 2026-04-21_slug<span class="hlk">.learned</span>.md
+
+<span class="hls">.distilled-sources.log</span></code></pre>
+    </div>
+    <div class="card">
+      <h3>Installation</h3>
+      <pre style="margin-top:8px;"><code><span class="hlc"># Install all skills globally</span>
+npx skills add whizzzkid/skills
+
+<span class="hlc"># Install one skill</span>
+npx skills add whizzzkid/skills \
+  -s pr-resolve
+
+<span class="hlc"># After local edits, reinstall</span>
+npx skills add . -g -y -a=claude</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- Lifecycle -->
+<section id="lifecycle">
+  <h2>Lifecycle: One Skill Execution</h2>
+
+  <div class="flow" style="margin-bottom:28px;">
+    <div class="flow-step">
+      <div class="num">01</div>
+      <h4>Trigger</h4>
+      <p>User types <code>/wk:name</code> or agent auto-detects via description match</p>
+    </div>
+    <div class="flow-step">
+      <div class="num">02</div>
+      <h4>Load</h4>
+      <p>Runtime reads SKILL.md, applies tool allowlist and model selection</p>
+    </div>
+    <div class="flow-step">
+      <div class="num">03</div>
+      <h4>Execute</h4>
+      <p>Agent follows markdown instructions step by step</p>
+    </div>
+    <div class="flow-step">
+      <div class="num">04</div>
+      <h4>Reflect</h4>
+      <p>Post-completion hook: agent reviews what went wrong, what was missing</p>
+    </div>
+    <div class="flow-step">
+      <div class="num">05</div>
+      <h4>Capture</h4>
+      <p>If notable: write <code>learnings/.../date_slug.md</code></p>
+    </div>
+  </div>
+
+  <div class="diagram-panel">
+    <div class="diagram-tabs">
+      <button class="diagram-tab active" onclick="showTab('seq','seq-tab',this)">Sequence</button>
+      <button class="diagram-tab" onclick="showTab('flow','flow-tab',this)">Flow</button>
+    </div>
+    <div class="diagram-content">
+      <div id="seq-tab" class="diagram-pane active">
+        <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant A as Agent
+    participant SK as SKILL.md
+    participant L as learnings/
+    participant SH as wk:sharpen
+
+    U->>A: Trigger (slash or auto-detect)
+    A->>SK: Load SKILL.md
+    SK-->>A: Instructions + tool sandbox + model hint
+    A->>A: Execute skill steps
+    Note over A: Post-completion hook fires
+    A->>L: Write date_slug.md (if notable)
+    A-->>U: Result
+    Note over L: Accumulates until sharpen
+    U->>SH: /wk:sharpen (manual or scheduled)
+    SH->>L: Scan *.md, skip *.learned.md
+    SH->>SK: Distill principle → patch SKILL.md
+    SH->>L: Rename → *.learned.md
+        </div>
+      </div>
+      <div id="flow-tab" class="diagram-pane">
+        <div class="mermaid">
+flowchart TD
+    T([User trigger]) --> L[Load SKILL.md]
+    L --> E[Execute instructions]
+    E --> R{Anything notable?}
+    R -- No --> Z([Done — no learning])
+    R -- Yes --> W[Write learning file\nlearnings/skills/name/date_slug.md]
+    W --> AC[Accumulate]
+    AC --> SH[/wk:sharpen/]
+    SH --> D[Distill → patch SKILL.md]
+    D --> RN[Rename *.learned.md]
+    RN --> LOG[Log to .distilled-sources.log]
+    LOG --> NK([Next agent run uses\nimproved skill])
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Self-Improvement -->
+<section id="self-improvement">
+  <h2>The Self-Improvement Loop</h2>
+  <p style="color:var(--muted); margin-bottom:20px; font-size:0.9rem;">
+    <code style="background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:0.8rem;">wk:sharpen</code>
+    pulls from two sources and applies one critical rule: extract the <em>principle</em>, never the specific example.
+  </p>
+
+  <div class="diagram-panel" style="margin-bottom:24px;">
+    <div class="diagram-content">
+      <div class="mermaid">
+flowchart LR
+    subgraph src [Input Sources]
+        direction TB
+        LS[learnings/skills/**/*.md\nField reports from agent runs]
+        GM[~/.claude/memory/feedback_*.md\nGlobal feedback from any project]
+    end
+    subgraph filter [De-duplication]
+        LOG[.distilled-sources.log\nSkip already-processed sources]
+    end
+    subgraph action [Distillation]
+        SH[wk:sharpen\nExtract principle\nNot the specific example]
+        PATCH[Patch SKILL.md]
+    end
+    src --> filter
+    filter --> SH
+    SH --> PATCH
+    PATCH -->|rename *.learned.md| LS
+    PATCH -->|append entry| LOG
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+    <div class="card" style="border-color:rgba(239,68,68,0.3);">
+      <h3 style="color:#f87171;">Anti-pattern — Too Specific</h3>
+      <pre style="margin-top:10px; border-color:rgba(239,68,68,0.2);"><code><span style="color:#f87171;"># BAD: embeds the incident</span>
+<span class="hlc">Check lines 232 and 60 in</span>
+<span class="hlc">trust-boundaries.md and model.md.</span>
+<span class="hlc">If the PB3 anchor is broken,</span>
+<span class="hlc">skip the comment.</span></code></pre>
+    </div>
+    <div class="card" style="border-color:rgba(74,222,128,0.3);">
+      <h3 style="color:#86efac;">Correct — Principle-based</h3>
+      <pre style="margin-top:10px; border-color:rgba(74,222,128,0.2);"><code><span style="color:#86efac;"># GOOD: teaches the mechanism</span>
+<span class="hlc">Confirm each comment's target</span>
+<span class="hlc">line exists in the diff. Lines</span>
+<span class="hlc">not in the diff return 422</span>
+<span class="hlc">from the GitHub API.</span></code></pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Learning File Format</h3>
+    <pre style="margin-top:10px;"><code><span class="hlc">---</span>
+<span class="hlk">skill:</span>    <span class="hls">wk:pr-resolve</span>
+<span class="hlk">date:</span>     <span class="hls">2026-04-21</span>
+<span class="hlk">type:</span>     <span class="hls">gap</span>            <span class="hlc"># correction | gap | pattern | surprise</span>
+<span class="hlk">severity:</span> <span class="hls">medium</span>        <span class="hlc"># low | medium | high</span>
+<span class="hlc">---</span>
+
+A pending self-review blocks reply-comment posting with HTTP 422.
+
+<span class="hlk">**What happened:**</span> wk:pr-resolve tried to post replies; GitHub rejected
+every reply because the user already had a PENDING review open.
+
+<span class="hlk">**Root cause:**</span> No pre-flight check for pending reviews before posting.
+
+<span class="hlk">**Suggested fix:**</span> Add a check in Step 3: if a PENDING review exists,
+submit it as COMMENT first, then proceed with replies.</code></pre>
+  </div>
+</section>
+
+<!-- Model Routing -->
+<section id="model-routing">
+  <h2>Agent-Agnostic Model Routing</h2>
+  <p style="color:var(--muted); margin-bottom:20px; font-size:0.9rem;">
+    Every skill declares a default tier and a per-provider override table.
+    Complex reasoning tasks get high-tier models. Procedural tasks get cheaper models.
+    No code changes needed to switch providers.
+  </p>
+
+  <div class="diagram-panel" style="margin-bottom:20px;">
+    <div class="diagram-content">
+      <div class="mermaid">
+flowchart LR
+    SK1["SKILL.md · model: opus\nHigh-complexity skills\nwk:sharpen, wk:pr-review,\nwk:workflow"]
+    SK1 --> CC1["Claude Code\nclaude-opus-4-7"]
+    SK1 --> OA1["OpenAI · o3"]
+    SK1 --> GG1["Google · gemini-2.5-pro"]
+    SK1 --> ME1["Meta · llama-4-maverick"]
+    SK1 --> CU1["Cursor · composer-2"]
+
+    SK2["SKILL.md · model: sonnet\nProcedural skills\nwk:retro, wk:commit,\nwk:calver"]
+    SK2 --> CC2["Claude Code\nclaude-sonnet-4-6"]
+    SK2 --> OA2["OpenAI · gpt-4.1-mini"]
+    SK2 --> GG2["Google · gemini-2.5-flash"]
+    SK2 --> ME2["Meta · llama-4-scout"]
+    SK2 --> CU2["Cursor · composer-1.5"]
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+    <div class="card">
+      <h3>High-tier skills (opus)</h3>
+      <p style="font-size:0.82rem; color:var(--muted); margin-bottom:10px;">Complex reasoning, adversarial critique, distillation</p>
+      <table>
+        <tr><th>Skill</th><th>Why</th></tr>
+        <tr><td><code>wk:sharpen</code></td><td>Extracts principles, edits skills</td></tr>
+        <tr><td><code>wk:pr-review</code></td><td>Adversarial code review</td></tr>
+        <tr><td><code>wk:workflow</code></td><td>Master orchestration</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Low-tier skills (sonnet)</h3>
+      <p style="font-size:0.82rem; color:var(--muted); margin-bottom:10px;">Procedural tasks, templated output, simple checks</p>
+      <table>
+        <tr><th>Skill</th><th>Why</th></tr>
+        <tr><td><code>wk:retro</code></td><td>Structured note-taking</td></tr>
+        <tr><td><code>wk:commit</code></td><td>Format and run git commands</td></tr>
+        <tr><td><code>wk:calver</code></td><td>Generate timestamp string</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Skills -->
+<section id="skills">
+  <h2>Skill Inventory</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>wk:workflow</h3>
+      <p>Master orchestration — plan, implement, test, review, PR, CI loop, retro. Invokes all other skills at the right moment.</p>
+      <span class="tag tag-opus">opus</span>
+    </div>
+    <div class="card">
+      <h3>wk:sharpen</h3>
+      <p>Scan learnings + global memory, distill principles, patch skill files. The engine of self-improvement.</p>
+      <span class="tag tag-opus">opus</span>
+    </div>
+    <div class="card">
+      <h3>wk:pr-review</h3>
+      <p>Adversarial code review with playground experiments and pending GitHub review comments via API.</p>
+      <span class="tag tag-opus">opus</span>
+    </div>
+    <div class="card">
+      <h3>wk:retro</h3>
+      <p>Session retrospective across 5 lenses. Promotes learnings to global memory so all future sessions benefit.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:pr</h3>
+      <p>Create draft PRs with stacking support. Handles CI polling, self-review, and marking ready.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:pr-resolve</h3>
+      <p>Interactively address PR reviewer feedback — implement fixes, draft responses, resolve threads.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:commit</h3>
+      <p>Conventional commits with emoji, GPG signing, and safe push behavior. Never skips hooks.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:self-review</h3>
+      <p>Post design-decision inline comments on your own PR to surface critical context for reviewers.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:goodmorning</h3>
+      <p>Daily brief — Slack, Gmail, Calendar, Granola, GitHub. Produces interactive morning.html dashboard.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:goodevening</h3>
+      <p>End-of-day wrap-up: brag doc, meeting notes, action items, unanswered messages, evening.md.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:buildkite</h3>
+      <p>Check build status, investigate CI failures, read job logs via bk CLI. Never guesses at failures.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:docs</h3>
+      <p>Check for and update documentation affected by code changes. Bootstraps docs/ if missing.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:mise</h3>
+      <p>Polyglot runtime version manager — install tools, manage configs, handle "command not found" for mise-managed tools.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:datadog</h3>
+      <p>Create dashboards, monitors, SLOs, and notebooks via the Datadog REST API.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:docker</h3>
+      <p>Image tag verification, build debugging, ENTRYPOINT checks, daemon troubleshooting.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+    <div class="card">
+      <h3>wk:calver</h3>
+      <p>Generate CalVer version strings in YYYY.MM.DD-HHMMSS format. Auto-invoked whenever a version is needed.</p>
+      <span class="tag tag-sonnet">sonnet</span>
+    </div>
+  </div>
+</section>
+
+<!-- Tips -->
+<section id="tips">
+  <h2>How It's Wired Up — Tips</h2>
+  <div class="tip-grid">
+    <div class="tip">
+      <div class="tip-icon">🔁</div>
+      <h4>Post-completion hook — baked into every skill</h4>
+      <p>The last section of every SKILL.md instructs the agent to reflect and write a learning. There's no separate hook system — the skill itself carries the instruction, so it works on any agent and any platform.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">🌍</div>
+      <h4>WK_SKILLS_HOME points to this repo</h4>
+      <p>Add <code>export WK_SKILLS_HOME=$HOME/gitc/skills</code> to <code>~/.zshrc</code>. Every skill's learning hook writes relative to this path. Without it, the hook silently fails.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">⚡</div>
+      <h4>wk:sharpen runs in two modes</h4>
+      <p>Single: <code>/wk:sharpen pr-resolve incident.md</code> — targeted fix. Batch: <code>/wk:sharpen</code> — scans all unprocessed learnings and global memory feedback files, processes up to 5, logs results.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">🏷️</div>
+      <h4>Versions are CalVer, never semver</h4>
+      <p>Every skill version is a UTC timestamp: <code>2026.04.22-070656</code>. Run <code>/wk:calver</code> before bumping any version field. Semver is explicitly forbidden in this repo.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">🛡️</div>
+      <h4>allowed-tools is a capability sandbox</h4>
+      <p>Each skill declares exactly which tools it needs. The runtime enforces this allowlist. A retro skill can't accidentally run destructive bash commands because those tools aren't in its list.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">💰</div>
+      <h4>Model routing controls costs</h4>
+      <p>Procedural skills (retro, commit, calver) declare <code>model: sonnet</code> and map to cheap models per provider. Reasoning skills use <code>model: opus</code>. The agent runtime picks the right model — you never hard-code it.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">📦</div>
+      <h4>After editing, reinstall globally</h4>
+      <p>Run <code>npx skills add . -g -y -a=claude</code> from the repo root after any skill change. This syncs changes to <code>~/.claude/skills/</code> where the agent reads them at session start.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">🔍</div>
+      <h4>The description field is the trigger</h4>
+      <p>Agents read the <code>description:</code> frontmatter to decide when to activate a skill. Write it like a search query: specific trigger phrases, use cases, and what NOT to trigger on. Vague descriptions cause false positives.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">🌐</div>
+      <h4>Works across 40+ agents</h4>
+      <p>Skills follow the open <a href="https://github.com/vercel-labs/skills">Agent Skills spec</a>. The same SKILL.md works in Claude Code, Cursor, Copilot CLI, Gemini CLI, and others. Platform differences are handled by the frontmatter model overrides.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>
+    <a href="https://github.com/whizzzkid/skills">whizzzkid/skills</a> ·
+    MIT License ·
+    Built with the <a href="https://github.com/vercel-labs/skills">Agent Skills spec</a>
+  </p>
+</footer>
+
+<script>
+  // Tab switching
+  function showTab(paneId, tabId, btn) {
+    const panel = btn.closest('.diagram-panel');
+    panel.querySelectorAll('.diagram-pane').forEach(p => p.classList.remove('active'));
+    panel.querySelectorAll('.diagram-tab').forEach(t => t.classList.remove('active'));
+    panel.querySelector('#' + tabId).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // Nav active state on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.4 });
+  sections.forEach(s => observer.observe(s));
+
+  // Smooth scroll
+  navLinks.forEach(a => {
+    a.addEventListener('click', e => {
+      const href = a.getAttribute('href');
+      if (href.startsWith('#')) {
+        e.preventDefault();
+        document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Mermaid
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      background: '#1a1d27',
+      primaryColor: '#23263a',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#2e3250',
+      lineColor: '#7c6af7',
+      secondaryColor: '#23263a',
+      tertiaryColor: '#12151f',
+      edgeLabelBackground: '#1a1d27',
+      clusterBkg: '#1a1d27',
+      titleColor: '#e2e8f0',
+      nodeBorder: '#2e3250',
+      nodeTextColor: '#e2e8f0',
+      fontFamily: 'Inter, -apple-system, sans-serif',
+      fontSize: '13px',
+    },
+    flowchart: { curve: 'basis', useMaxWidth: true },
+    sequence: { useMaxWidth: true, actorMargin: 40 },
+  });
+</script>
+</body>
+</html>
