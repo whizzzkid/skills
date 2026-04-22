@@ -26,6 +26,7 @@ npx skills add whizzzkid/skills -s skill-name
 | [gh](skills/gh/) | Scope all GitHub CLI operations to `$GITHUB_ORG` (model-invocable only) |
 | [goodevening](skills/goodevening/) | End-of-day wrap-up — brag doc, meeting notes, action item tracking, communication audit, evening.md |
 | [goodmorning](skills/goodmorning/) | Morning prep — Slack, Gmail, Calendar, Granola, GitHub, and interactive HTML dashboard |
+| [mise](skills/mise/) | Polyglot runtime version manager — tool installation, `mise exec --` for missing tools, git hook activation |
 | [pr](skills/pr/) | Create draft PRs with stacking support and post-PR workflow |
 | [pr-resolve](skills/pr-resolve/) | Interactively address PR review comments — implement fixes, draft responses, and resolve threads |
 | [pr-review](skills/pr-review/) | Thorough, critical code review with playground experiments and pending GitHub review comments |
@@ -34,6 +35,23 @@ npx skills add whizzzkid/skills -s skill-name
 | [sharpen](skills/sharpen/) | Improve skills based on field reports by extracting principles without overfitting on examples |
 | [workflow](skills/workflow/) | Master orchestration for development tasks — incremental commits, testing, review, PR lifecycle, and retro (model-invocable only) |
 | [worktree-cleanup](skills/worktree-cleanup/) | Clean up merged git worktrees and report unmerged ones |
+
+## Environment Variables
+
+| Variable | Required by | Description |
+|----------|-------------|-------------|
+| `WK_SKILLS_HOME` | All skills (learning capture) | Path to this skills repo (e.g., `~/gitc/skills`). Used by the post-completion learning hook on every skill and by `wk:sharpen` batch mode. |
+| `GITHUB_ORG` | gh, goodmorning, goodevening | GitHub organization to scope `gh` CLI queries (PRs, issues, notifications). |
+| `DATADOG_API_KEY` | datadog | Datadog API key for dashboard/monitor/SLO management. |
+| `DATADOG_APP_KEY` | datadog | Datadog application key (read/write access). |
+| `DATADOG_SITE` | datadog | Datadog site (optional, defaults to `datadoghq.com`). |
+
+Add these to your shell profile (`~/.zshrc`, `~/.bashrc`):
+
+```bash
+export WK_SKILLS_HOME="$HOME/gitc/skills"
+export GITHUB_ORG="your-org"
+```
 
 ## Adding a New Skill
 
