@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.3.0'
+  version: '1.3.1'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -173,9 +173,13 @@ HTTP 422 (`user_id can only have one pending review per pull request`).
 ```bash
 CURRENT_USER=$(gh api user --jq '.login')
 PENDING_REVIEW_ID=$(gh api repos/{owner}/{repo}/pulls/{number}/reviews \
-  --jq --arg u "$CURRENT_USER" \
+  | jq --arg u "$CURRENT_USER" -r \
   '.[] | select(.state == "PENDING" and .user.login == $u) | .id')
 ```
+
+**Note:** `gh api --jq` does not support jq CLI flags like `--arg`. When
+you need `--arg`, pipe `gh api` output to `jq` directly. Using `--arg`
+with `gh api` fails silently and returns empty results.
 
 If a pending review exists, ask the user:
 

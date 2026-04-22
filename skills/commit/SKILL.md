@@ -23,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.0'
+  version: '1.1.0'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -88,6 +88,22 @@ unless:
 
 - The user explicitly asks for a force push
 - Commits were rewritten (rebase/amend) and the branch was already pushed
+
+### Mise-managed repos
+
+If the project uses mise (has `.mise.toml` or `.tool-versions`), activate
+mise before pushing so that git hooks (lefthook, husky, etc.) can find
+mise-managed binaries:
+
+```bash
+eval "$(mise activate bash)" && git push
+```
+
+Without activation, Bash tool sessions don't inherit the user's interactive
+shell, and hooks fail with "command not found" (exit 127) for tools like
+`lychee`, `shellcheck`, `bats`, etc.
+
+### Hook and verify rules
 
 Never use `--no-verify` when committing or pushing. If a hook is failing,
 stop and ask the user to run the command manually.

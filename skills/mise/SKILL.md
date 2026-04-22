@@ -33,7 +33,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.0'
+  version: '1.1.0'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -211,6 +211,24 @@ mise doctor
 
 Reports: PATH configuration, shims status, plugin health, and any
 configuration conflicts. Run this first when mise behaves unexpectedly.
+
+## Git Hooks and Mise
+
+Bash tool sessions do not inherit the user's interactive shell environment,
+so `mise activate` has not run. When a repo uses git hooks (lefthook, husky,
+pre-commit) that call mise-managed binaries, hooks fail with "command not
+found" (exit 127).
+
+**Before `git push` or `git commit` in a mise-managed repo:**
+
+```bash
+eval "$(mise activate bash)" && git push
+```
+
+This loads mise's tool paths into the current shell before the hook runs.
+
+**How to detect:** If a git hook fails with exit 127 and the missing tool
+is in `mise ls`, this is the cause. Activate mise and retry.
 
 ## Quick Reference
 
