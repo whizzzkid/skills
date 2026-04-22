@@ -3,1103 +3,811 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>wk:skills — Architecture</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<title>wk:skills — Self-Improving Skills</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #23263a;
-    --border: #2e3250;
-    --accent: #7c6af7;
-    --accent2: #4ade80;
-    --accent3: #f59e0b;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --code-bg: #12151f;
+    --paper:      #fef6e4;
+    --paper-2:    #f8e9c8;
+    --ink:        #1a1a2e;
+    --ink-soft:   #4a4a63;
+    --muted:      #8a8aa0;
+    --purple:     #8b5cf6;
+    --green:      #22c55e;
+    --amber:      #f59e0b;
+    --pink:       #ec4899;
+    --sky:        #0ea5e9;
+    --shadow:     4px 4px 0 var(--ink);
+    --shadow-sm:  2px 2px 0 var(--ink);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
   body {
-    background: var(--bg);
-    color: var(--text);
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(139,92,246,0.08), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(34,197,94,0.08), transparent 40%);
+    color: var(--ink);
     font-family: 'Inter', -apple-system, sans-serif;
-    line-height: 1.6;
+    font-size: 14px;
+    line-height: 1.5;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
   }
 
-  /* Nav */
-  nav {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(15,17,23,0.95);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 32px;
-    display: flex; align-items: center; gap: 24px;
+  /* ============ HEADER ============ */
+  header {
+    display: flex; align-items: center; gap: 20px;
+    padding: 10px 24px;
+    border-bottom: 3px solid var(--ink);
+    background: var(--paper-2);
   }
-  nav .logo { font-weight: 700; font-size: 1rem; color: var(--accent); letter-spacing: -0.5px; }
-  nav .logo span { color: var(--text); }
-  nav a {
-    color: var(--muted); text-decoration: none; font-size: 0.85rem;
-    transition: color 0.15s;
-  }
-  nav a:hover, nav a.active { color: var(--text); }
-  nav .spacer { flex: 1; }
-  nav .pill {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 20px; padding: 4px 12px; font-size: 0.75rem; color: var(--muted);
-  }
-
-  /* Hero */
-  .hero {
-    padding: 64px 32px 48px;
-    max-width: 860px; margin: 0 auto;
-  }
-  .hero h1 {
-    font-size: 2.4rem; font-weight: 800; letter-spacing: -1.5px;
-    background: linear-gradient(135deg, #fff 30%, var(--accent));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: 16px;
-  }
-  .hero p { color: var(--muted); font-size: 1.05rem; max-width: 600px; }
-
-  /* Badges */
-  .badges { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
-  .badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
-    border: 1px solid;
-  }
-  .badge-purple { background: rgba(124,106,247,0.15); border-color: rgba(124,106,247,0.4); color: #a79fff; }
-  .badge-green  { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.4); color: #86efac; }
-  .badge-amber  { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.4); color: #fcd34d; }
-
-  /* Layout */
-  main { max-width: 960px; margin: 0 auto; padding: 0 32px 80px; }
-  section { margin-bottom: 64px; }
-  h2 {
-    font-size: 1.3rem; font-weight: 700; margin-bottom: 20px;
-    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  .brand {
+    font-family: 'Caveat', cursive;
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+    transform: rotate(-2deg);
+    padding: 4px 12px;
+    background: var(--purple);
     color: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
   }
-  h3 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+  .tagline {
+    font-family: 'Caveat', cursive;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+  header .spacer { flex: 1; }
+  .stats-row { display: flex; gap: 10px; }
+  .stat {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: #fff;
+    border: 2.5px solid var(--ink);
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s;
+  }
+  .stat.pop { animation: pop 0.5s ease-out; }
+  @keyframes pop { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12) rotate(-2deg);} }
+  .stat .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1.5px solid var(--ink);
+  }
+  .stat b { color: var(--ink); font-weight: 700; }
+  .stat-cycles .dot      { background: var(--purple); }
+  .stat-learnings .dot   { background: var(--amber); }
+  .stat-improvements .dot{ background: var(--green); }
 
-  /* Cards */
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 24px;
-    transition: border-color 0.2s, transform 0.2s;
+  /* ============ MAIN GRID ============ */
+  main {
+    display: grid;
+    grid-template-columns: 1fr minmax(500px, 720px) 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 14px;
+    padding: 18px;
+    min-height: 0;
+    align-items: stretch;
   }
-  .card:hover { border-color: var(--accent); transform: translateY(-1px); }
-  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-  .card h3 { font-size: 0.9rem; color: var(--accent); margin-bottom: 6px; }
-  .card p { font-size: 0.82rem; color: var(--muted); }
-  .card .tag {
-    display: inline-block; margin-top: 10px;
-    padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;
-  }
-  .tag-opus { background: rgba(124,106,247,0.2); color: #a79fff; }
-  .tag-sonnet { background: rgba(74,222,128,0.15); color: #86efac; }
-
-  /* Diagram panels */
-  .diagram-panel {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; overflow: hidden; margin-bottom: 20px;
-  }
-  .diagram-tabs {
-    display: flex; border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-  }
-  .diagram-tab {
-    padding: 10px 20px; font-size: 0.82rem; cursor: pointer;
-    color: var(--muted); border: none; background: none;
-    border-bottom: 2px solid transparent; transition: all 0.15s;
-  }
-  .diagram-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-  .diagram-content { padding: 24px; }
-  .diagram-pane { display: none; }
-  .diagram-pane.active { display: block; }
-
-  /* Mermaid override */
-  .mermaid {
-    background: transparent !important;
-    display: flex; justify-content: center;
-  }
-  .mermaid svg { max-width: 100%; height: auto; }
-
-  /* Code */
-  pre {
-    background: var(--code-bg); border: 1px solid var(--border);
-    border-radius: 8px; padding: 16px; overflow-x: auto;
-    font-size: 0.8rem; line-height: 1.6;
-  }
-  code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
-  pre code { color: #cbd5e1; }
-  .hlk { color: var(--accent); }   /* keyword */
-  .hls { color: var(--accent2); }  /* string */
-  .hlc { color: var(--muted); }    /* comment */
-  .hln { color: var(--accent3); }  /* number/name */
-
-  /* Tips */
-  .tip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 14px; }
-  .tip {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 18px;
-  }
-  .tip .tip-icon { font-size: 1.4rem; margin-bottom: 8px; }
-  .tip h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #fff; }
-  .tip p { font-size: 0.8rem; color: var(--muted); }
-  .tip code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.75rem; color: var(--accent2); }
-
-  /* Flow steps */
-  .flow {
-    display: flex; gap: 0; flex-wrap: wrap;
-    counter-reset: flow;
-  }
-  .flow-step {
-    flex: 1; min-width: 140px;
-    background: var(--surface); border: 1px solid var(--border);
-    padding: 16px; position: relative;
-    counter-increment: flow;
-  }
-  .flow-step:first-child { border-radius: 10px 0 0 10px; }
-  .flow-step:last-child { border-radius: 0 10px 10px 0; }
-  .flow-step:not(:last-child)::after {
-    content: '→';
-    position: absolute; right: -14px; top: 50%;
-    transform: translateY(-50%);
-    color: var(--accent); font-size: 1.1rem; z-index: 1;
-  }
-  .flow-step .num {
-    font-size: 0.65rem; font-weight: 700; color: var(--accent);
-    margin-bottom: 4px; letter-spacing: 1px;
-  }
-  .flow-step h4 { font-size: 0.78rem; font-weight: 600; color: #fff; margin-bottom: 3px; }
-  .flow-step p { font-size: 0.72rem; color: var(--muted); }
-
-  /* Table */
-  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
-  th {
-    text-align: left; padding: 10px 14px;
-    background: var(--surface2); color: var(--muted); font-weight: 600;
-    border-bottom: 1px solid var(--border);
-  }
-  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
-
-  /* Footer */
-  footer {
-    border-top: 1px solid var(--border); padding: 24px 32px;
-    text-align: center; color: var(--muted); font-size: 0.8rem;
-  }
-  footer a { color: var(--accent); text-decoration: none; }
-
-  /* ---------- Animated Loop ---------- */
-  .loop-section {
-    margin: 0 auto 64px;
-    max-width: 960px;
-    padding: 0 32px;
-  }
-  .loop-stage {
+  .stage {
+    grid-column: 2; grid-row: 1 / span 2;
     position: relative;
-    background: radial-gradient(ellipse at center, rgba(124,106,247,0.12), transparent 60%), var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 32px 24px 24px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ============ SATELLITE PANELS ============ */
+  .panel {
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex; flex-direction: column; gap: 6px;
+    min-height: 0;
+    position: relative;
     overflow: hidden;
   }
-  .loop-stage::before {
-    content: '';
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(circle at 20% 20%, rgba(124,106,247,0.06), transparent 30%),
-      radial-gradient(circle at 80% 80%, rgba(74,222,128,0.06), transparent 30%);
-    pointer-events: none;
+  .panel:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+  .panel.active {
+    transform: translate(-2px, -2px) scale(1.015);
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .panel .tape {
+    position: absolute; top: -8px; left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    width: 70px; height: 18px;
+    background: rgba(255,230,128,0.85);
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    opacity: 0.85;
+  }
+  .panel-head { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+  .panel-emoji {
+    font-size: 2.2rem; line-height: 1;
+    filter: drop-shadow(1px 1px 0 var(--ink));
+  }
+  .panel-title {
+    font-family: 'Caveat', cursive;
+    font-size: 1.55rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .panel-sub {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .panel-body {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+  }
+  .panel-body code {
+    background: var(--paper-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.76rem;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+  .panel-body pre {
+    background: var(--ink);
+    color: #f1f5f9;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    line-height: 1.45;
+    overflow: hidden;
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .panel-body ul { margin: 4px 0 0 16px; padding: 0; }
+  .panel-body li { margin-bottom: 2px; font-size: 0.78rem; }
+
+  /* Placement + caricature rotations */
+  .p-agent    { grid-column: 1; grid-row: 1; transform: rotate(-1.5deg); }
+  .p-skill    { grid-column: 3; grid-row: 1; transform: rotate(1.5deg); }
+  .p-sharpen  { grid-column: 1; grid-row: 2; transform: rotate(1deg); }
+  .p-learning { grid-column: 3; grid-row: 2; transform: rotate(-1deg); }
+  .p-agent:hover, .p-agent.active       { transform: rotate(-1.5deg) translate(-2px,-2px); }
+  .p-skill:hover, .p-skill.active       { transform: rotate(1.5deg) translate(-2px,-2px); }
+  .p-sharpen:hover, .p-sharpen.active   { transform: rotate(1deg) translate(-2px,-2px); }
+  .p-learning:hover, .p-learning.active { transform: rotate(-1deg) translate(-2px,-2px); }
+
+  /* Color bars by node */
+  .p-agent    { border-left: 8px solid var(--sky); }
+  .p-skill    { border-left: 8px solid var(--purple); }
+  .p-sharpen  { border-left: 8px solid var(--green); }
+  .p-learning { border-left: 8px solid var(--amber); }
+
+  .panel.active::after {
+    content: 'LIVE';
+    position: absolute; top: 10px; right: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: var(--pink);
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 10px;
+    border: 2px solid var(--ink);
+    animation: live-pulse 1s ease-in-out infinite;
+  }
+  @keyframes live-pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
+
+  /* ============ CENTER LOOP ============ */
+  .loop-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 680px;
+    aspect-ratio: 1 / 1;
+    max-height: 100%;
   }
   .loop-svg {
-    width: 100%;
-    max-width: 760px;
-    height: auto;
-    display: block;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
+    width: 100%; height: 100%;
+    overflow: visible;
   }
-  .loop-node rect {
-    transition: filter 0.3s, stroke-width 0.3s;
-  }
-  .loop-node.active rect {
-    filter: drop-shadow(0 0 14px var(--accent));
-    stroke-width: 2.5;
-  }
-  .loop-node.active-green rect {
-    filter: drop-shadow(0 0 14px var(--accent2));
-    stroke: var(--accent2);
-  }
-  .loop-node.active-amber rect {
-    filter: drop-shadow(0 0 14px var(--accent3));
-    stroke: var(--accent3);
-  }
-  .loop-edge {
-    stroke: #2e3250;
-    stroke-width: 2;
-    stroke-dasharray: 6 6;
-    fill: none;
-    animation: dash-drift 1.8s linear infinite;
-  }
-  @keyframes dash-drift {
-    to { stroke-dashoffset: -12; }
-  }
-  .loop-label {
-    fill: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-  }
-  .loop-node-title {
-    fill: #fff;
-    font-size: 15px;
+
+  /* Hand-drawn wobble filter */
+  .wobble { filter: url(#rough); }
+
+  /* Node circles */
+  .node-group text.node-title {
+    font-family: 'Caveat', cursive;
+    font-size: 24px;
     font-weight: 700;
-    font-family: 'Inter', sans-serif;
+    fill: var(--ink);
+    pointer-events: none;
   }
-  .loop-node-sub {
-    fill: var(--muted);
-    font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
+  .node-group text.node-emoji {
+    font-size: 48px;
+    pointer-events: none;
+    dominant-baseline: central;
+    text-anchor: middle;
   }
-  .pulse-dot { filter: drop-shadow(0 0 8px var(--accent)); }
-  .pulse-dot-green { filter: drop-shadow(0 0 8px var(--accent2)); }
-  .pulse-dot-amber { filter: drop-shadow(0 0 8px var(--accent3)); }
-
-  /* Sparkles on improvement */
-  .sparkle {
-    opacity: 0;
+  .node-group circle {
+    transition: filter 0.3s, transform 0.3s;
+    cursor: pointer;
     transform-origin: center;
+    transform-box: fill-box;
   }
-  .sparkle.fire {
-    animation: sparkle-burst 1.2s ease-out forwards;
+  .node-group.hot circle {
+    filter: drop-shadow(0 0 18px currentColor);
   }
-  @keyframes sparkle-burst {
-    0%   { opacity: 0; transform: scale(0.4); }
-    40%  { opacity: 1; transform: scale(1.1); }
-    100% { opacity: 0; transform: scale(1.6) translateY(-14px); }
+  .node-group.hot {
+    animation: node-bounce 0.55s ease-out;
+  }
+  @keyframes node-bounce {
+    0%,100% { transform: translate(0,0); }
+    40%     { transform: translate(0,-6px) scale(1.05); }
+  }
+  .node-group:hover circle {
+    filter: drop-shadow(0 0 14px currentColor);
   }
 
-  /* Counter badges */
-  .loop-stats {
-    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
-    margin-top: 20px; position: relative; z-index: 1;
+  /* Edge labels */
+  .edge-label {
+    font-family: 'Caveat', cursive;
+    font-size: 20px;
+    font-weight: 700;
+    fill: var(--ink);
+    pointer-events: none;
   }
-  .stat-pill {
-    background: var(--surface2);
-    border: 1px solid var(--border);
+  .edge-label tspan.small { font-size: 14px; fill: var(--ink-soft); }
+
+  /* Loop path visible stroke */
+  .loop-path-visible {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-dasharray: 10 6;
+    animation: dash-march 3s linear infinite;
+  }
+  @keyframes dash-march { to { stroke-dashoffset: -48; } }
+
+  /* The traveling packet lives inside the SVG (animateMotion) — scales with viewBox */
+  .packet-core-svg {
+    transition: fill 0.6s linear;
+  }
+
+  /* Speech bubble for current action */
+  .bubble {
+    position: absolute;
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    padding: 8px 14px;
+    font-family: 'Caveat', cursive;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-2deg);
+    white-space: nowrap;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 3;
+    pointer-events: none;
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -10px; left: 24px;
+    width: 16px; height: 16px;
+    background: #fff;
+    border-right: 3px solid var(--ink);
+    border-bottom: 3px solid var(--ink);
+    transform: rotate(45deg);
+  }
+
+  /* Sparkle burst layer on Skill */
+  .sparkle {
+    position: absolute;
+    font-size: 1.4rem;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
+  .sparkle.go { animation: spark 1.1s ease-out; }
+  @keyframes spark {
+    0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.4); }
+    40%  { opacity: 1; transform: translate(-50%,-50%) scale(1.15) rotate(18deg); }
+    100% { opacity: 0; transform: translate(calc(-50% + 26px),calc(-50% - 30px)) scale(1.6) rotate(40deg); }
+  }
+
+  /* ============ FOOTER ============ */
+  footer {
+    display: flex; gap: 16px; align-items: center;
+    padding: 10px 24px;
+    border-top: 3px solid var(--ink);
+    background: var(--paper-2);
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  footer .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: #fff;
+    border: 2px solid var(--ink);
     border-radius: 20px;
-    padding: 8px 16px;
-    font-size: 0.8rem;
-    color: var(--muted);
     font-family: 'JetBrains Mono', monospace;
-    display: inline-flex; align-items: center; gap: 8px;
-    transition: border-color 0.3s, color 0.3s;
+    font-size: 0.72rem;
   }
-  .stat-pill .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--accent); box-shadow: 0 0 8px var(--accent);
-  }
-  .stat-pill b { color: var(--text); font-weight: 700; }
-  .stat-pill.bump {
-    border-color: var(--accent2);
-    color: var(--accent2);
-    animation: pill-bump 0.6s ease-out;
-  }
-  @keyframes pill-bump {
-    0%   { transform: scale(1); }
-    40%  { transform: scale(1.08); }
-    100% { transform: scale(1); }
-  }
+  footer .chip b { font-weight: 700; }
+  footer .arrow { font-family: 'Caveat', cursive; font-weight: 700; font-size: 1.1rem; color: var(--ink); }
+  footer .spacer { flex: 1; }
+  footer a { color: var(--purple); font-weight: 600; text-decoration: none; border-bottom: 1.5px dashed var(--purple); }
 
-  .loop-caption {
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.85rem;
-    margin-top: 14px;
-    position: relative; z-index: 1;
+  /* Responsive: compact on small screens */
+  @media (max-width: 1100px) {
+    main { grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr 1fr auto; }
+    .stage { grid-column: 1 / span 2; grid-row: 1; aspect-ratio: 2 / 1; }
+    .p-agent    { grid-column: 1; grid-row: 2; }
+    .p-skill    { grid-column: 2; grid-row: 2; }
+    .p-sharpen  { grid-column: 1; grid-row: 3; }
+    .p-learning { grid-column: 2; grid-row: 3; }
   }
-  .loop-caption b { color: var(--accent); font-weight: 600; }
+  @media (max-height: 700px) {
+    html, body { overflow: auto; height: auto; }
+  }
 </style>
 </head>
-<body>
+<body style="--cycle: 16s;">
 
-<nav>
-  <span class="logo">wk<span>:skills</span></span>
-  <a href="#loop" class="active">Loop</a>
-  <a href="#overview">Overview</a>
-  <a href="#lifecycle">Lifecycle</a>
-  <a href="#self-improvement">Self-Improvement</a>
-  <a href="#model-routing">Model Routing</a>
-  <a href="#skills">Skills</a>
-  <a href="#tips">Tips</a>
-  <span class="spacer"></span>
-  <span class="pill">whizzzkid/skills</span>
-</nav>
-
-<!-- Hero -->
-<div class="hero">
-  <h1>Skills Architecture</h1>
-  <p>
-    A self-improving agent skill system. Agents follow skill instructions, write
-    retrospective notes when they finish, and those notes get distilled back into
-    the skills — so every future run benefits from every past mistake.
-  </p>
-  <div class="badges">
-    <span class="badge badge-purple">Agent-agnostic</span>
-    <span class="badge badge-green">Self-improving</span>
-    <span class="badge badge-amber">Cost-aware model routing</span>
-  </div>
-</div>
-
-<!-- Animated Self-Improvement Loop -->
-<section id="loop" class="loop-section">
-  <div class="loop-stage">
-    <svg class="loop-svg" viewBox="0 0 760 460" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <!-- Arrow marker -->
-        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
-                markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c6af7"/>
-        </marker>
-        <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5"
-                markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="#4ade80"/>
-        </marker>
-
-        <!-- Invisible motion paths for traveling dots -->
-        <!-- Agent → Skill -->
-        <path id="path-agent-skill" d="M 100,230 C 180,230 220,150 300,150" fill="none"/>
-        <!-- Skill → Learning -->
-        <path id="path-skill-learning" d="M 430,195 C 520,230 560,280 600,340" fill="none"/>
-        <!-- Learning → Sharpen -->
-        <path id="path-learning-sharpen" d="M 540,380 C 440,420 320,420 220,380" fill="none"/>
-        <!-- Sharpen → Skill (the improvement) -->
-        <path id="path-sharpen-skill" d="M 160,340 C 200,260 240,210 300,195" fill="none"/>
-
-        <!-- Glow filters -->
-        <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3"/>
-        </filter>
-      </defs>
-
-      <!-- ===== Visible edges ===== -->
-      <path class="loop-edge" d="M 100,230 C 180,230 220,150 300,150" marker-end="url(#arrow)"/>
-      <path class="loop-edge" d="M 430,195 C 520,230 560,280 600,340" marker-end="url(#arrow)"/>
-      <path class="loop-edge" d="M 540,380 C 440,420 320,420 220,380" marker-end="url(#arrow)"/>
-      <path class="loop-edge" d="M 160,340 C 200,260 240,210 300,195"
-            marker-end="url(#arrow-green)" stroke="#4ade80" opacity="0.7"/>
-
-      <!-- Edge labels -->
-      <text class="loop-label" x="195" y="175">invokes</text>
-      <text class="loop-label" x="540" y="250">reflects</text>
-      <text class="loop-label" x="355" y="425">feeds</text>
-      <text class="loop-label" x="170" y="245" fill="#4ade80">improves</text>
-
-      <!-- ===== Nodes ===== -->
-      <!-- Agent -->
-      <g id="node-agent" class="loop-node">
-        <rect x="20" y="190" width="160" height="80" rx="12"
-              fill="#1a1d27" stroke="#7c6af7" stroke-width="1.5"/>
-        <text class="loop-node-title" x="100" y="220" text-anchor="middle">🤖 Agent</text>
-        <text class="loop-node-sub" x="100" y="245" text-anchor="middle">any provider</text>
-      </g>
-
-      <!-- Skill -->
-      <g id="node-skill" class="loop-node">
-        <rect x="300" y="110" width="170" height="90" rx="12"
-              fill="#1a1d27" stroke="#7c6af7" stroke-width="1.5"/>
-        <text class="loop-node-title" x="385" y="140" text-anchor="middle">📜 SKILL.md</text>
-        <text class="loop-node-sub" x="385" y="162" text-anchor="middle">
-          version <tspan id="skill-version" fill="#86efac" font-weight="700">v1</tspan>
-        </text>
-        <text class="loop-node-sub" x="385" y="182" text-anchor="middle" opacity="0.6">
-          <tspan id="skill-state">fresh install</tspan>
-        </text>
-
-        <!-- Sparkle on improvement -->
-        <g id="sparkles" transform="translate(385, 125)">
-          <g class="sparkle" id="spark1">
-            <text x="-28" y="-18" font-size="16">✨</text>
-          </g>
-          <g class="sparkle" id="spark2">
-            <text x="20" y="-20" font-size="14">⭐</text>
-          </g>
-          <g class="sparkle" id="spark3">
-            <text x="-4" y="-30" font-size="18">💎</text>
-          </g>
-        </g>
-      </g>
-
-      <!-- Learning -->
-      <g id="node-learning" class="loop-node">
-        <rect x="540" y="340" width="190" height="80" rx="12"
-              fill="#1a1d27" stroke="#f59e0b" stroke-width="1.5"/>
-        <text class="loop-node-title" x="635" y="370" text-anchor="middle">📝 Learning</text>
-        <text class="loop-node-sub" x="635" y="395" text-anchor="middle">
-          <tspan id="learning-count">0</tspan> field reports
-        </text>
-      </g>
-
-      <!-- Sharpen -->
-      <g id="node-sharpen" class="loop-node">
-        <rect x="30" y="340" width="190" height="80" rx="12"
-              fill="#1a1d27" stroke="#4ade80" stroke-width="1.5"/>
-        <text class="loop-node-title" x="125" y="370" text-anchor="middle">⚙️ wk:sharpen</text>
-        <text class="loop-node-sub" x="125" y="395" text-anchor="middle">
-          distilled <tspan id="distilled-count">0</tspan>
-        </text>
-      </g>
-
-      <!-- ===== Traveling pulse dots ===== -->
-      <circle r="7" fill="#7c6af7" class="pulse-dot">
-        <animateMotion dur="2.2s" begin="0s" repeatCount="indefinite" rotate="auto">
-          <mpath href="#path-agent-skill"/>
-        </animateMotion>
-      </circle>
-
-      <circle r="7" fill="#f59e0b" class="pulse-dot-amber">
-        <animateMotion dur="2.2s" begin="2.2s" repeatCount="indefinite" rotate="auto">
-          <mpath href="#path-skill-learning"/>
-        </animateMotion>
-      </circle>
-
-      <circle r="7" fill="#f59e0b" class="pulse-dot-amber">
-        <animateMotion dur="2.2s" begin="4.4s" repeatCount="indefinite" rotate="auto">
-          <mpath href="#path-learning-sharpen"/>
-        </animateMotion>
-      </circle>
-
-      <circle r="8" fill="#4ade80" class="pulse-dot-green">
-        <animateMotion dur="2.2s" begin="6.6s" repeatCount="indefinite" rotate="auto">
-          <mpath href="#path-sharpen-skill"/>
-        </animateMotion>
-      </circle>
-
-      <!-- Small second-order packets for "busy" feel -->
-      <circle r="4" fill="#7c6af7" opacity="0.5">
-        <animateMotion dur="2.2s" begin="1.1s" repeatCount="indefinite">
-          <mpath href="#path-agent-skill"/>
-        </animateMotion>
-      </circle>
-    </svg>
-
-    <div class="loop-stats">
-      <div class="stat-pill" id="stat-cycles">
-        <span class="dot"></span> cycles: <b id="cycle-count">0</b>
-      </div>
-      <div class="stat-pill" id="stat-learnings">
-        <span class="dot" style="background:#f59e0b; box-shadow:0 0 8px #f59e0b;"></span>
-        learnings captured: <b id="learn-count">0</b>
-      </div>
-      <div class="stat-pill" id="stat-improvements">
-        <span class="dot" style="background:#4ade80; box-shadow:0 0 8px #4ade80;"></span>
-        skill improvements: <b id="improve-count">0</b>
-      </div>
+<!-- ============== HEADER ============== -->
+<header>
+  <div class="brand">wk:skills</div>
+  <div class="tagline">skills that sharpen themselves, forever</div>
+  <div class="spacer"></div>
+  <div class="stats-row">
+    <div class="stat stat-cycles" id="stat-cycles">
+      <span class="dot"></span> cycles <b id="cycle-count">0</b>
     </div>
-
-    <p class="loop-caption">
-      A <b>pulse</b> = one agent run · An <b>amber packet</b> = a learning written ·
-      A <b>green packet</b> = <code style="background:var(--code-bg);padding:1px 6px;border-radius:3px;font-size:0.75rem;color:var(--accent2);">wk:sharpen</code> patching the skill ·
-      The loop never stops.
-    </p>
+    <div class="stat stat-learnings" id="stat-learnings">
+      <span class="dot"></span> learnings <b id="learn-count">0</b>
+    </div>
+    <div class="stat stat-improvements" id="stat-improvements">
+      <span class="dot"></span> improvements <b id="improve-count">0</b>
+    </div>
   </div>
-</section>
+</header>
 
+<!-- ============== MAIN ============== -->
 <main>
 
-<!-- Overview -->
-<section id="overview">
-  <h2>How a Skill Works</h2>
-  <p style="color:var(--muted); margin-bottom:20px; font-size:0.9rem;">
-    Each skill is a single <code style="background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:0.8rem;">SKILL.md</code>
-    file with YAML frontmatter and markdown instructions. The frontmatter is the contract between the skill and the agent runtime.
-  </p>
-  <div class="card" style="margin-bottom:16px;">
-    <h3 style="color:var(--text); margin-bottom:12px;">Skill Anatomy</h3>
-    <pre><code><span class="hlc">---</span>
-<span class="hlk">name:</span> <span class="hls">wk:pr-resolve</span>
-<span class="hlk">description:</span> <span class="hls">|</span>            <span class="hlc"># ← agent reads this to decide activation</span>
-  <span class="hls">Address PR review comments interactively ...</span>
-<span class="hlk">model:</span> <span class="hls">opus</span>               <span class="hlc"># ← default tier: opus or sonnet</span>
-<span class="hlk">allowed-tools:</span>             <span class="hlc"># ← capability sandbox</span>
-  - <span class="hls">Bash</span>
-  - <span class="hls">Read</span>
-  - <span class="hls">Edit</span>
-  - <span class="hls">Write</span>
-<span class="hlk">metadata:</span>
-  <span class="hlk">version:</span> <span class="hls">'2026.04.22-070656'</span>  <span class="hlc"># ← CalVer (not semver)</span>
-  <span class="hlk">model:</span>
-    <span class="hlk">openai:</span>  <span class="hls">o3</span>               <span class="hlc"># ← per-provider model overrides</span>
-    <span class="hlk">google:</span>  <span class="hls">gemini-2.5-pro</span>
-    <span class="hlk">meta:</span>    <span class="hls">llama-4-maverick</span>
-    <span class="hlk">cursor:</span>  <span class="hls">composer-2</span>
-<span class="hlc">---</span>
-
-<span class="hlc"># Instructions follow as markdown ...</span></code></pre>
-  </div>
-
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-    <div class="card">
-      <h3>File Layout</h3>
-      <pre style="margin-top:8px;"><code><span class="hls">skills/</span>
-└── <span class="hln">pr-resolve/</span>
-    └── SKILL.md
-
-<span class="hls">learnings/skills/</span>
-└── <span class="hln">pr-resolve/</span>
-    ├── 2026-04-21_slug.md
-    └── 2026-04-21_slug<span class="hlk">.learned</span>.md
-
-<span class="hls">.distilled-sources.log</span></code></pre>
-    </div>
-    <div class="card">
-      <h3>Installation</h3>
-      <pre style="margin-top:8px;"><code><span class="hlc"># Install all skills globally</span>
-npx skills add whizzzkid/skills
-
-<span class="hlc"># Install one skill</span>
-npx skills add whizzzkid/skills \
-  -s pr-resolve
-
-<span class="hlc"># After local edits, reinstall</span>
-npx skills add . -g -y -a=claude</code></pre>
-    </div>
-  </div>
-</section>
-
-<!-- Lifecycle -->
-<section id="lifecycle">
-  <h2>Lifecycle: One Skill Execution</h2>
-
-  <div class="flow" style="margin-bottom:28px;">
-    <div class="flow-step">
-      <div class="num">01</div>
-      <h4>Trigger</h4>
-      <p>User types <code>/wk:name</code> or agent auto-detects via description match</p>
-    </div>
-    <div class="flow-step">
-      <div class="num">02</div>
-      <h4>Load</h4>
-      <p>Runtime reads SKILL.md, applies tool allowlist and model selection</p>
-    </div>
-    <div class="flow-step">
-      <div class="num">03</div>
-      <h4>Execute</h4>
-      <p>Agent follows markdown instructions step by step</p>
-    </div>
-    <div class="flow-step">
-      <div class="num">04</div>
-      <h4>Reflect</h4>
-      <p>Post-completion hook: agent reviews what went wrong, what was missing</p>
-    </div>
-    <div class="flow-step">
-      <div class="num">05</div>
-      <h4>Capture</h4>
-      <p>If notable: write <code>learnings/.../date_slug.md</code></p>
-    </div>
-  </div>
-
-  <div class="diagram-panel">
-    <div class="diagram-tabs">
-      <button class="diagram-tab active" onclick="showTab('seq','seq-tab',this)">Sequence</button>
-      <button class="diagram-tab" onclick="showTab('flow','flow-tab',this)">Flow</button>
-    </div>
-    <div class="diagram-content">
-      <div id="seq-tab" class="diagram-pane active">
-        <div class="mermaid">
-sequenceDiagram
-    participant U as User
-    participant A as Agent
-    participant SK as SKILL.md
-    participant L as learnings/
-    participant SH as wk:sharpen
-
-    U->>A: Trigger (slash or auto-detect)
-    A->>SK: Load SKILL.md
-    SK-->>A: Instructions + tool sandbox + model hint
-    A->>A: Execute skill steps
-    Note over A: Post-completion hook fires
-    A->>L: Write date_slug.md (if notable)
-    A-->>U: Result
-    Note over L: Accumulates until sharpen
-    U->>SH: /wk:sharpen (manual or scheduled)
-    SH->>L: Scan *.md, skip *.learned.md
-    SH->>SK: Distill principle → patch SKILL.md
-    SH->>L: Rename → *.learned.md
-        </div>
-      </div>
-      <div id="flow-tab" class="diagram-pane">
-        <div class="mermaid">
-flowchart TD
-    T([User trigger]) --> L[Load SKILL.md]
-    L --> E[Execute instructions]
-    E --> R{Anything notable?}
-    R -- No --> Z([Done — no learning])
-    R -- Yes --> W[Write learning file\nlearnings/skills/name/date_slug.md]
-    W --> AC[Accumulate]
-    AC --> SH[/wk:sharpen/]
-    SH --> D[Distill → patch SKILL.md]
-    D --> RN[Rename *.learned.md]
-    RN --> LOG[Log to .distilled-sources.log]
-    LOG --> NK([Next agent run uses\nimproved skill])
-        </div>
+  <!-- ┌────────────────  Satellites  ────────────────┐ -->
+  <div class="panel p-agent" data-node="agent">
+    <div class="tape"></div>
+    <div class="panel-head">
+      <div class="panel-emoji">🤖</div>
+      <div>
+        <div class="panel-title">Agent</div>
+        <div class="panel-sub">any model · any platform</div>
       </div>
     </div>
+    <div class="panel-body">
+      Skills are model-invocable. The same <code>SKILL.md</code> runs in
+      Claude Code, Cursor, Copilot CLI, Gemini CLI. Per-provider overrides
+      pick the right model at runtime.
+      <pre>model: opus           # default tier
+metadata.model:
+  openai: o3
+  google: gemini-2.5-pro
+  cursor: composer-2</pre>
+    </div>
   </div>
-</section>
 
-<!-- Self-Improvement -->
-<section id="self-improvement">
-  <h2>The Self-Improvement Loop</h2>
-  <p style="color:var(--muted); margin-bottom:20px; font-size:0.9rem;">
-    <code style="background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:0.8rem;">wk:sharpen</code>
-    pulls from two sources and applies one critical rule: extract the <em>principle</em>, never the specific example.
-  </p>
-
-  <div class="diagram-panel" style="margin-bottom:24px;">
-    <div class="diagram-content">
-      <div class="mermaid">
-flowchart LR
-    subgraph src [Input Sources]
-        direction TB
-        LS[learnings/skills/**/*.md\nField reports from agent runs]
-        GM[~/.claude/memory/feedback_*.md\nGlobal feedback from any project]
-    end
-    subgraph filter [De-duplication]
-        LOG[.distilled-sources.log\nSkip already-processed sources]
-    end
-    subgraph action [Distillation]
-        SH[wk:sharpen\nExtract principle\nNot the specific example]
-        PATCH[Patch SKILL.md]
-    end
-    src --> filter
-    filter --> SH
-    SH --> PATCH
-    PATCH -->|rename *.learned.md| LS
-    PATCH -->|append entry| LOG
+  <div class="panel p-skill" data-node="skill">
+    <div class="tape"></div>
+    <div class="panel-head">
+      <div class="panel-emoji">📜</div>
+      <div>
+        <div class="panel-title">SKILL.md</div>
+        <div class="panel-sub">one file · yaml + markdown</div>
       </div>
     </div>
-  </div>
-
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
-    <div class="card" style="border-color:rgba(239,68,68,0.3);">
-      <h3 style="color:#f87171;">Anti-pattern — Too Specific</h3>
-      <pre style="margin-top:10px; border-color:rgba(239,68,68,0.2);"><code><span style="color:#f87171;"># BAD: embeds the incident</span>
-<span class="hlc">Check lines 232 and 60 in</span>
-<span class="hlc">trust-boundaries.md and model.md.</span>
-<span class="hlc">If the PB3 anchor is broken,</span>
-<span class="hlc">skip the comment.</span></code></pre>
-    </div>
-    <div class="card" style="border-color:rgba(74,222,128,0.3);">
-      <h3 style="color:#86efac;">Correct — Principle-based</h3>
-      <pre style="margin-top:10px; border-color:rgba(74,222,128,0.2);"><code><span style="color:#86efac;"># GOOD: teaches the mechanism</span>
-<span class="hlc">Confirm each comment's target</span>
-<span class="hlc">line exists in the diff. Lines</span>
-<span class="hlc">not in the diff return 422</span>
-<span class="hlc">from the GitHub API.</span></code></pre>
+    <div class="panel-body">
+      Frontmatter is the contract: <code>name</code>, <code>description</code>,
+      <code>allowed-tools</code>, <code>model</code>, CalVer
+      <code>version</code>. Body is imperative instructions.
+      <pre>name: wk:pr-resolve
+allowed-tools: [Bash, Read, Edit]
+version: '2026.04.22-070656'</pre>
     </div>
   </div>
 
-  <div class="card">
-    <h3>Learning File Format</h3>
-    <pre style="margin-top:10px;"><code><span class="hlc">---</span>
-<span class="hlk">skill:</span>    <span class="hls">wk:pr-resolve</span>
-<span class="hlk">date:</span>     <span class="hls">2026-04-21</span>
-<span class="hlk">type:</span>     <span class="hls">gap</span>            <span class="hlc"># correction | gap | pattern | surprise</span>
-<span class="hlk">severity:</span> <span class="hls">medium</span>        <span class="hlc"># low | medium | high</span>
-<span class="hlc">---</span>
-
-A pending self-review blocks reply-comment posting with HTTP 422.
-
-<span class="hlk">**What happened:**</span> wk:pr-resolve tried to post replies; GitHub rejected
-every reply because the user already had a PENDING review open.
-
-<span class="hlk">**Root cause:**</span> No pre-flight check for pending reviews before posting.
-
-<span class="hlk">**Suggested fix:**</span> Add a check in Step 3: if a PENDING review exists,
-submit it as COMMENT first, then proceed with replies.</code></pre>
+  <div class="panel p-sharpen" data-node="sharpen">
+    <div class="tape"></div>
+    <div class="panel-head">
+      <div class="panel-emoji">⚙️</div>
+      <div>
+        <div class="panel-title">wk:sharpen</div>
+        <div class="panel-sub">distiller · the engine</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      Scans learnings + global memory. Extracts the <em>principle</em>,
+      never the specific example. Patches <code>SKILL.md</code>, renames
+      learning → <code>*.learned.md</code>, logs to
+      <code>.distilled-sources.log</code>.
+      <ul>
+        <li>❌ "check lines 232 and 60 in trust-boundaries.md"</li>
+        <li>✅ "confirm each comment's target line exists in the diff"</li>
+      </ul>
+    </div>
   </div>
-</section>
 
-<!-- Model Routing -->
-<section id="model-routing">
-  <h2>Agent-Agnostic Model Routing</h2>
-  <p style="color:var(--muted); margin-bottom:20px; font-size:0.9rem;">
-    Every skill declares a default tier and a per-provider override table.
-    Complex reasoning tasks get high-tier models. Procedural tasks get cheaper models.
-    No code changes needed to switch providers.
-  </p>
+  <div class="panel p-learning" data-node="learning">
+    <div class="tape"></div>
+    <div class="panel-head">
+      <div class="panel-emoji">📝</div>
+      <div>
+        <div class="panel-title">Learning</div>
+        <div class="panel-sub">field report · one per run</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      The post-completion hook at the end of every skill asks 4 questions
+      and writes a dated file under <code>learnings/skills/&lt;name&gt;/</code>.
+      <pre>type: gap | correction | pattern | surprise
+severity: low | medium | high
+what happened / root cause / suggested fix</pre>
+    </div>
+  </div>
 
-  <div class="diagram-panel" style="margin-bottom:20px;">
-    <div class="diagram-content">
-      <div class="mermaid">
-flowchart LR
-    SK1["SKILL.md · model: opus\nHigh-complexity skills\nwk:sharpen, wk:pr-review,\nwk:workflow"]
-    SK1 --> CC1["Claude Code\nclaude-opus-4-7"]
-    SK1 --> OA1["OpenAI · o3"]
-    SK1 --> GG1["Google · gemini-2.5-pro"]
-    SK1 --> ME1["Meta · llama-4-maverick"]
-    SK1 --> CU1["Cursor · composer-2"]
+  <!-- ┌────────────────  Center Stage  ────────────────┐ -->
+  <div class="stage">
+    <div class="loop-wrap" id="loop-wrap">
 
-    SK2["SKILL.md · model: sonnet\nProcedural skills\nwk:retro, wk:commit,\nwk:calver"]
-    SK2 --> CC2["Claude Code\nclaude-sonnet-4-6"]
-    SK2 --> OA2["OpenAI · gpt-4.1-mini"]
-    SK2 --> GG2["Google · gemini-2.5-flash"]
-    SK2 --> ME2["Meta · llama-4-scout"]
-    SK2 --> CU2["Cursor · composer-1.5"]
+      <svg class="loop-svg" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- hand-drawn wobble -->
+          <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="3" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5"/>
+          </filter>
+
+          <!-- arrow marker -->
+          <marker id="arw" viewBox="0 0 12 12" refX="10" refY="6"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 12 6 L 0 12 z" fill="var(--ink, #1a1a2e)"/>
+          </marker>
+
+          <!-- pulse filter for active nodes -->
+          <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="8"/>
+          </filter>
+        </defs>
+
+        <!-- Motion path (invisible) used by animateMotion — avoids stroke-dash animation artifacts -->
+        <path id="loop-motion" fill="none" stroke="none"
+              d="M 395,120 C 495,150 545,230 545,350 C 545,470 445,540 340,540 C 235,540 135,470 135,350 C 135,230 185,150 285,120 C 320,108 360,108 395,120 Z"/>
+
+        <!-- Main loop path: rounded quadrilateral, single continuous curve -->
+        <path class="loop-path-visible wobble"
+              d="M 395,120 C 495,150 545,230 545,350 C 545,470 445,540 340,540 C 235,540 135,470 135,350 C 135,230 185,150 285,120 C 320,108 360,108 395,120 Z"/>
+
+        <!-- Edge labels on curves -->
+        <text class="edge-label" x="340" y="95" text-anchor="middle">invokes ✨</text>
+        <text class="edge-label" x="600" y="350" text-anchor="middle">reflects 💭</text>
+        <text class="edge-label" x="340" y="585" text-anchor="middle">feeds 🍽️</text>
+        <text class="edge-label" x="82"  y="350" text-anchor="middle" transform="rotate(-90 82 350)">patches 🔧</text>
+
+        <!-- AGENT node (TOP) -->
+        <g class="node-group" id="n-agent" style="color: #0ea5e9;" data-node="agent">
+          <circle cx="340" cy="110" r="60" fill="#e0f2fe" stroke="#1a1a2e" stroke-width="4"
+                  class="wobble"/>
+          <text class="node-emoji" x="340" y="100">🤖</text>
+          <text class="node-title" x="340" y="158" text-anchor="middle">agent</text>
+        </g>
+
+        <!-- SKILL node (RIGHT) -->
+        <g class="node-group" id="n-skill" style="color: #8b5cf6;" data-node="skill">
+          <circle cx="558" cy="350" r="64" fill="#ede9fe" stroke="#1a1a2e" stroke-width="4"
+                  class="wobble"/>
+          <text class="node-emoji" x="558" y="340">📜</text>
+          <text class="node-title" x="558" y="400" text-anchor="middle">skill</text>
+          <text class="node-title" x="558" y="423" text-anchor="middle" style="font-size:16px;" id="skill-version-svg">v1</text>
+        </g>
+
+        <!-- LEARNING node (BOTTOM) -->
+        <g class="node-group" id="n-learning" style="color: #f59e0b;" data-node="learning">
+          <circle cx="340" cy="550" r="60" fill="#fef3c7" stroke="#1a1a2e" stroke-width="4"
+                  class="wobble"/>
+          <text class="node-emoji" x="340" y="540">📝</text>
+          <text class="node-title" x="340" y="598" text-anchor="middle">learning</text>
+        </g>
+
+        <!-- SHARPEN node (LEFT) -->
+        <g class="node-group" id="n-sharpen" style="color: #22c55e;" data-node="sharpen">
+          <circle cx="122" cy="350" r="60" fill="#dcfce7" stroke="#1a1a2e" stroke-width="4"
+                  class="wobble"/>
+          <text class="node-emoji" x="122" y="340">⚙️</text>
+          <text class="node-title" x="122" y="398" text-anchor="middle">sharpen</text>
+        </g>
+
+        <!-- ========== Traveling packets (SMIL animateMotion, scales with viewBox) ========== -->
+
+        <!-- Trailing dot — runs the same loop, lagging ~0.6s behind the main packet -->
+        <circle id="packet-trail" r="7" fill="#8b5cf6" opacity="0.35" stroke="#1a1a2e" stroke-width="1.5">
+          <animateMotion id="motion-trail" dur="16s" repeatCount="indefinite" rotate="0" begin="-15.4s">
+            <mpath href="#loop-motion"/>
+          </animateMotion>
+        </circle>
+
+        <!-- Main packet -->
+        <circle id="packet" class="packet-core-svg" r="14"
+                fill="#0ea5e9" stroke="#1a1a2e" stroke-width="3.5">
+          <animateMotion id="motion-main" dur="16s" repeatCount="indefinite" rotate="0">
+            <mpath href="#loop-motion"/>
+          </animateMotion>
+          <!-- Color shifts as the packet passes different node quarters.
+               This animation is driven off the same timeline as motion,
+               so dot-position and color stay locked. -->
+          <animate attributeName="fill" dur="16s" repeatCount="indefinite"
+                   values="#0ea5e9; #0ea5e9; #8b5cf6; #8b5cf6; #f59e0b; #f59e0b; #22c55e; #22c55e; #0ea5e9"
+                   keyTimes="0; 0.22; 0.28; 0.47; 0.53; 0.72; 0.78; 0.97; 1"/>
+        </circle>
+
+        <!-- Soft halo behind main packet -->
+        <circle r="22" fill="#8b5cf6" opacity="0.15" pointer-events="none">
+          <animateMotion dur="16s" repeatCount="indefinite">
+            <mpath href="#loop-motion"/>
+          </animateMotion>
+          <animate attributeName="fill" dur="16s" repeatCount="indefinite"
+                   values="#0ea5e9; #0ea5e9; #8b5cf6; #8b5cf6; #f59e0b; #f59e0b; #22c55e; #22c55e; #0ea5e9"
+                   keyTimes="0; 0.22; 0.28; 0.47; 0.53; 0.72; 0.78; 0.97; 1"/>
+        </circle>
+      </svg>
+
+      <!-- Speech bubble -->
+      <div class="bubble" id="bubble">agent boots up…</div>
+
+      <!-- Sparkle layer, positioned near Skill node (~82% x, 51% y) -->
+      <div id="sparkle-layer" style="position:absolute; left:82%; top:51%; pointer-events:none;">
+        <span class="sparkle" style="top: -20px; left: -30px;">✨</span>
+        <span class="sparkle" style="top: -30px; left:   6px;">⭐</span>
+        <span class="sparkle" style="top: -14px; left:  22px;">💎</span>
+        <span class="sparkle" style="top:  -4px; left: -24px;">🌟</span>
       </div>
     </div>
   </div>
-
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-    <div class="card">
-      <h3>High-tier skills (opus)</h3>
-      <p style="font-size:0.82rem; color:var(--muted); margin-bottom:10px;">Complex reasoning, adversarial critique, distillation</p>
-      <table>
-        <tr><th>Skill</th><th>Why</th></tr>
-        <tr><td><code>wk:sharpen</code></td><td>Extracts principles, edits skills</td></tr>
-        <tr><td><code>wk:pr-review</code></td><td>Adversarial code review</td></tr>
-        <tr><td><code>wk:workflow</code></td><td>Master orchestration</td></tr>
-      </table>
-    </div>
-    <div class="card">
-      <h3>Low-tier skills (sonnet)</h3>
-      <p style="font-size:0.82rem; color:var(--muted); margin-bottom:10px;">Procedural tasks, templated output, simple checks</p>
-      <table>
-        <tr><th>Skill</th><th>Why</th></tr>
-        <tr><td><code>wk:retro</code></td><td>Structured note-taking</td></tr>
-        <tr><td><code>wk:commit</code></td><td>Format and run git commands</td></tr>
-        <tr><td><code>wk:calver</code></td><td>Generate timestamp string</td></tr>
-      </table>
-    </div>
-  </div>
-</section>
-
-<!-- Skills -->
-<section id="skills">
-  <h2>Skill Inventory</h2>
-  <div class="card-grid">
-    <div class="card">
-      <h3>wk:workflow</h3>
-      <p>Master orchestration — plan, implement, test, review, PR, CI loop, retro. Invokes all other skills at the right moment.</p>
-      <span class="tag tag-opus">opus</span>
-    </div>
-    <div class="card">
-      <h3>wk:sharpen</h3>
-      <p>Scan learnings + global memory, distill principles, patch skill files. The engine of self-improvement.</p>
-      <span class="tag tag-opus">opus</span>
-    </div>
-    <div class="card">
-      <h3>wk:pr-review</h3>
-      <p>Adversarial code review with playground experiments and pending GitHub review comments via API.</p>
-      <span class="tag tag-opus">opus</span>
-    </div>
-    <div class="card">
-      <h3>wk:retro</h3>
-      <p>Session retrospective across 5 lenses. Promotes learnings to global memory so all future sessions benefit.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:pr</h3>
-      <p>Create draft PRs with stacking support. Handles CI polling, self-review, and marking ready.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:pr-resolve</h3>
-      <p>Interactively address PR reviewer feedback — implement fixes, draft responses, resolve threads.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:commit</h3>
-      <p>Conventional commits with emoji, GPG signing, and safe push behavior. Never skips hooks.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:self-review</h3>
-      <p>Post design-decision inline comments on your own PR to surface critical context for reviewers.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:goodmorning</h3>
-      <p>Daily brief — Slack, Gmail, Calendar, Granola, GitHub. Produces interactive morning.html dashboard.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:goodevening</h3>
-      <p>End-of-day wrap-up: brag doc, meeting notes, action items, unanswered messages, evening.md.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:buildkite</h3>
-      <p>Check build status, investigate CI failures, read job logs via bk CLI. Never guesses at failures.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:docs</h3>
-      <p>Check for and update documentation affected by code changes. Bootstraps docs/ if missing.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:mise</h3>
-      <p>Polyglot runtime version manager — install tools, manage configs, handle "command not found" for mise-managed tools.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:datadog</h3>
-      <p>Create dashboards, monitors, SLOs, and notebooks via the Datadog REST API.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:docker</h3>
-      <p>Image tag verification, build debugging, ENTRYPOINT checks, daemon troubleshooting.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-    <div class="card">
-      <h3>wk:calver</h3>
-      <p>Generate CalVer version strings in YYYY.MM.DD-HHMMSS format. Auto-invoked whenever a version is needed.</p>
-      <span class="tag tag-sonnet">sonnet</span>
-    </div>
-  </div>
-</section>
-
-<!-- Tips -->
-<section id="tips">
-  <h2>How It's Wired Up — Tips</h2>
-  <div class="tip-grid">
-    <div class="tip">
-      <div class="tip-icon">🔁</div>
-      <h4>Post-completion hook — baked into every skill</h4>
-      <p>The last section of every SKILL.md instructs the agent to reflect and write a learning. There's no separate hook system — the skill itself carries the instruction, so it works on any agent and any platform.</p>
-    </div>
-    <div class="tip">
-      <div class="tip-icon">🌍</div>
-      <h4>WK_SKILLS_HOME points to this repo</h4>
-      <p>Add <code>export WK_SKILLS_HOME=$HOME/gitc/skills</code> to <code>~/.zshrc</code>. Every skill's learning hook writes relative to this path. Without it, the hook silently fails.</p>
-    </div>
-    <div class="tip">
-      <div class="tip-icon">⚡</div>
-      <h4>wk:sharpen runs in two modes</h4>
-      <p>Single: <code>/wk:sharpen pr-resolve incident.md</code> — targeted fix. Batch: <code>/wk:sharpen</code> — scans all unprocessed learnings and global memory feedback files, processes up to 5, logs results.</p>
-    </div>
-    <div class="tip">
-      <div class="tip-icon">🏷️</div>
-      <h4>Versions are CalVer, never semver</h4>
-      <p>Every skill version is a UTC timestamp: <code>2026.04.22-070656</code>. Run <code>/wk:calver</code> before bumping any version field. Semver is explicitly forbidden in this repo.</p>
-    </div>
-    <div class="tip">
-      <div class="tip-icon">🛡️</div>
-      <h4>allowed-tools is a capability sandbox</h4>
-      <p>Each skill declares exactly which tools it needs. The runtime enforces this allowlist. A retro skill can't accidentally run destructive bash commands because those tools aren't in its list.</p>
-    </div>
-    <div class="tip">
-      <div class="tip-icon">💰</div>
-      <h4>Model routing controls costs</h4>
-      <p>Procedural skills (retro, commit, calver) declare <code>model: sonnet</code> and map to cheap models per provider. Reasoning skills use <code>model: opus</code>. The agent runtime picks the right model — you never hard-code it.</p>
-    </div>
-    <div class="tip">
-      <div class="tip-icon">📦</div>
-      <h4>After editing, reinstall globally</h4>
-      <p>Run <code>npx skills add . -g -y -a=claude</code> from the repo root after any skill change. This syncs changes to <code>~/.claude/skills/</code> where the agent reads them at session start.</p>
-    </div>
-    <div class="tip">
-      <div class="tip-icon">🔍</div>
-      <h4>The description field is the trigger</h4>
-      <p>Agents read the <code>description:</code> frontmatter to decide when to activate a skill. Write it like a search query: specific trigger phrases, use cases, and what NOT to trigger on. Vague descriptions cause false positives.</p>
-    </div>
-    <div class="tip">
-      <div class="tip-icon">🌐</div>
-      <h4>Works across 40+ agents</h4>
-      <p>Skills follow the open <a href="https://github.com/vercel-labs/skills">Agent Skills spec</a>. The same SKILL.md works in Claude Code, Cursor, Copilot CLI, Gemini CLI, and others. Platform differences are handled by the frontmatter model overrides.</p>
-    </div>
-  </div>
-</section>
 
 </main>
 
+<!-- ============== FOOTER ============== -->
 <footer>
-  <p>
-    <a href="https://github.com/whizzzkid/skills">whizzzkid/skills</a> ·
-    MIT License ·
-    Built with the <a href="https://github.com/vercel-labs/skills">Agent Skills spec</a>
-  </p>
+  <span class="chip"><b style="color:var(--sky);">●</b>&nbsp;agent</span>
+  <span class="arrow">→</span>
+  <span class="chip"><b style="color:var(--purple);">●</b>&nbsp;skill</span>
+  <span class="arrow">→</span>
+  <span class="chip"><b style="color:var(--amber);">●</b>&nbsp;learning</span>
+  <span class="arrow">→</span>
+  <span class="chip"><b style="color:var(--green);">●</b>&nbsp;sharpen</span>
+  <span class="arrow">↩</span>
+  <span class="chip">patches <b>SKILL.md</b>, version++</span>
+  <div class="spacer"></div>
+  <span>click a node or panel to pin it ·</span>
+  <a href="https://github.com/whizzzkid/skills" target="_blank">whizzzkid/skills</a>
 </footer>
 
+<!-- ============== SCRIPT ============== -->
 <script>
-  // Tab switching
-  function showTab(paneId, tabId, btn) {
-    const panel = btn.closest('.diagram-panel');
-    panel.querySelectorAll('.diagram-pane').forEach(p => p.classList.remove('active'));
-    panel.querySelectorAll('.diagram-tab').forEach(t => t.classList.remove('active'));
-    panel.querySelector('#' + tabId).classList.add('active');
-    btn.classList.add('active');
+(() => {
+  // Read --cycle from :root (body style attr)
+  const cycleMs = (() => {
+    const v = getComputedStyle(document.body).getPropertyValue('--cycle').trim();
+    return v.endsWith('ms') ? parseFloat(v) : parseFloat(v) * 1000;
+  })();
+  const HOP = cycleMs / 4;
+
+  // DOM handles
+  const bubble       = document.getElementById('bubble');
+  const skillVerSvg  = document.getElementById('skill-version-svg');
+  const cycleCtEl    = document.getElementById('cycle-count');
+  const learnCtEl    = document.getElementById('learn-count');
+  const improveCtEl  = document.getElementById('improve-count');
+  const sparkles     = document.querySelectorAll('.sparkle');
+
+  const nodes = {
+    agent:    document.getElementById('n-agent'),
+    skill:    document.getElementById('n-skill'),
+    learning: document.getElementById('n-learning'),
+    sharpen:  document.getElementById('n-sharpen'),
+  };
+  const panels = {
+    agent:    document.querySelector('.p-agent'),
+    skill:    document.querySelector('.p-skill'),
+    learning: document.querySelector('.p-learning'),
+    sharpen:  document.querySelector('.p-sharpen'),
+  };
+  const statEls = {
+    cycles:       document.getElementById('stat-cycles'),
+    learnings:    document.getElementById('stat-learnings'),
+    improvements: document.getElementById('stat-improvements'),
+  };
+
+  // Approx loop-center positions in the 680x680 SVG, used to place bubble
+  const loopWrap = document.getElementById('loop-wrap');
+  const bubblePos = {
+    agent:    { x: 0.50, y: 0.25, tilt: -3 },
+    skill:    { x: 0.82, y: 0.51, tilt:  2 },
+    learning: { x: 0.50, y: 0.78, tilt: -2 },
+    sharpen:  { x: 0.18, y: 0.51, tilt:  3 },
+  };
+
+  const messages = {
+    agent:    ['agent boots up…',       'loads SKILL.md',          'reads the manual',    'invokes the skill'],
+    skill:    ['executing step 1…',     'following instructions',  'doing the work',      'almost done…'],
+    learning: ['wait, that was weird',  'writing field report',    'dating the slug',     'filed under gap/med'],
+    sharpen: ['scanning learnings…',    'extracting principle',    'patching SKILL.md',   'version++  ✨'],
+  };
+  const improvementStates = [
+    'hardened — edge case',
+    'preflight check added',
+    'validation tightened',
+    'failure mode learned',
+    'anti-pattern removed',
+    'principle extracted',
+    'cross-agent tested',
+    'footgun defused',
+  ];
+
+  // State
+  let cycle = 0, learnCount = 0, improveCount = 0;
+  let lastQuarter = -1;
+  let lastStep = -1;
+  let pinned = null; // if a panel/node is clicked, freeze descriptions
+
+  // Spark helper
+  function fireSparkles() {
+    sparkles.forEach((s, i) => {
+      s.classList.remove('go');
+      void s.getBoundingClientRect();
+      setTimeout(() => s.classList.add('go'), i * 80);
+    });
+  }
+  function popStat(el) {
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+  function setActiveNode(name) {
+    Object.values(nodes).forEach(n => n.classList.remove('hot'));
+    Object.values(panels).forEach(p => p.classList.remove('active'));
+    if (!name) return;
+    nodes[name].classList.add('hot');
+    panels[name].classList.add('active');
+  }
+  function setBubble(text, nodeName) {
+    bubble.textContent = text;
+    if (nodeName && bubblePos[nodeName]) {
+      const pos = bubblePos[nodeName];
+      bubble.style.left = `${pos.x * 100}%`;
+      bubble.style.top  = `${pos.y * 100}%`;
+      bubble.style.transform = `translate(-50%,-50%) rotate(${pos.tilt}deg)`;
+    }
   }
 
-  // Nav active state on scroll
-  const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('nav a');
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        navLinks.forEach(l => l.classList.remove('active'));
-        const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
-        if (link) link.classList.add('active');
+  // The master clock — read the SVG's OWN timeline (what SMIL animateMotion uses).
+  // Counters, highlights and the visual packet all sample the same clock, so they
+  // can never drift. svg.getCurrentTime() returns seconds since SVG load.
+  const svgEl = document.querySelector('.loop-svg');
+  function getAnimTime() {
+    if (!svgEl || !svgEl.getCurrentTime) return performance.now();
+    return svgEl.getCurrentTime() * 1000;
+  }
+
+  // Phase schedule within one cycle (0–1):
+  // 0.00–0.25 Agent → Skill      (invoke)
+  // 0.25–0.50 Skill → Learning   (reflect)
+  // 0.50–0.75 Learning → Sharpen (feed)
+  // 0.75–1.00 Sharpen → Skill    (patch)
+  const quarters = ['agent', 'skill', 'learning', 'sharpen'];
+
+  // Sub-steps (0, 1, 2, 3 within each quarter) for bubble variety
+  function tick() {
+    const t = getAnimTime();
+    if (t === null) { requestAnimationFrame(tick); return; }
+    const totalT = t; // ms
+    const phase = (totalT % cycleMs) / cycleMs; // 0..1
+    const q = Math.min(3, Math.floor(phase * 4));
+    const subPhase = (phase * 4) % 1; // 0..1 within current quarter
+    const step = Math.min(3, Math.floor(subPhase * 4));
+    const current = quarters[q];
+
+    // Cycle counter (one tick per full cycle)
+    const thisCycle = Math.floor(totalT / cycleMs);
+    if (thisCycle !== cycle) {
+      cycle = thisCycle;
+      cycleCtEl.textContent = cycle;
+      popStat(statEls.cycles);
+    }
+
+    // Quarter transitions
+    if (q !== lastQuarter) {
+      lastQuarter = q;
+      if (!pinned) setActiveNode(current);
+
+      if (current === 'learning') {
+        learnCount++;
+        learnCtEl.textContent = learnCount;
+        popStat(statEls.learnings);
       }
-    });
-  }, { threshold: 0.4 });
-  sections.forEach(s => observer.observe(s));
-
-  // Smooth scroll
-  navLinks.forEach(a => {
-    a.addEventListener('click', e => {
-      const href = a.getAttribute('href');
-      if (href.startsWith('#')) {
-        e.preventDefault();
-        document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' });
+      if (current === 'sharpen') {
+        // Sharpen arrives — skill is about to be patched next cycle's start,
+        // but we can preview the fact that a patch is imminent here.
       }
-    });
-  });
-
-  // ===== Animated loop driver =====
-  // One full cycle = 8.8s (4 hops × 2.2s). Script just syncs counters + highlights.
-  (function drivenLoop() {
-    const HOP = 2200;           // ms per hop
-    const CYCLE = HOP * 4;      // ms for full loop
-    const states = [
-      'fresh install',
-      'hardened — edge case',
-      'principle extracted',
-      'anti-pattern removed',
-      'cross-agent tested',
-      'preflight check added',
-      'failure mode learned',
-      'validation tightened',
-    ];
-
-    const nodes = {
-      agent:    document.getElementById('node-agent'),
-      skill:    document.getElementById('node-skill'),
-      learning: document.getElementById('node-learning'),
-      sharpen:  document.getElementById('node-sharpen'),
-    };
-    const version     = document.getElementById('skill-version');
-    const skillState  = document.getElementById('skill-state');
-    const learnCount  = document.getElementById('learn-count');
-    const improveCt   = document.getElementById('improve-count');
-    const cycleCt     = document.getElementById('cycle-count');
-    const learnInner  = document.getElementById('learning-count');
-    const distilled   = document.getElementById('distilled-count');
-
-    let cycle = 0, captured = 0, improved = 0;
-    let learningAccum = 0, distilledAccum = 0;
-
-    function highlight(name, variant) {
-      Object.values(nodes).forEach(n => n.classList.remove('active','active-green','active-amber'));
-      const cls = variant === 'green' ? 'active-green'
-                : variant === 'amber' ? 'active-amber'
-                : 'active';
-      nodes[name].classList.add(cls);
-    }
-
-    function bumpStat(id) {
-      const el = document.getElementById(id);
-      el.classList.remove('bump');
-      void el.offsetWidth; // restart anim
-      el.classList.add('bump');
-    }
-
-    function fireSparkles() {
-      ['spark1','spark2','spark3'].forEach(id => {
-        const el = document.getElementById(id);
-        el.classList.remove('fire');
-        void el.getBoundingClientRect();
-        el.classList.add('fire');
-      });
-    }
-
-    // Hop 1: Agent → Skill
-    function hop1() {
-      highlight('agent');
-      setTimeout(() => highlight('skill'), HOP * 0.9);
-    }
-    // Hop 2: Skill reflects → writes Learning
-    function hop2() {
-      highlight('skill');
-      setTimeout(() => {
-        highlight('learning', 'amber');
-        learningAccum++;
-        learnInner.textContent = learningAccum;
-        captured++;
-        learnCount.textContent = captured;
-        bumpStat('stat-learnings');
-      }, HOP * 0.9);
-    }
-    // Hop 3: Learning → Sharpen
-    function hop3() {
-      highlight('learning', 'amber');
-      setTimeout(() => {
-        highlight('sharpen', 'green');
-        distilledAccum++;
-        distilled.textContent = distilledAccum;
-      }, HOP * 0.9);
-    }
-    // Hop 4: Sharpen patches Skill (version bump + sparkles)
-    function hop4() {
-      highlight('sharpen', 'green');
-      setTimeout(() => {
-        highlight('skill', 'green');
-        improved++;
-        improveCt.textContent = improved;
-        version.textContent = 'v' + (improved + 1);
-        skillState.textContent = states[improved % states.length];
+      if (current === 'agent' && cycle > 0) {
+        // When we return to agent after sharpen, the skill is already patched
+        improveCount++;
+        improveCtEl.textContent = improveCount;
+        popStat(statEls.improvements);
+        skillVerSvg.textContent = 'v' + (improveCount + 1);
         fireSparkles();
-        bumpStat('stat-improvements');
-      }, HOP * 0.9);
+      }
     }
 
-    function runCycle() {
-      cycle++;
-      cycleCt.textContent = cycle;
-      bumpStat('stat-cycles');
-      hop1();
-      setTimeout(hop2, HOP);
-      setTimeout(hop3, HOP * 2);
-      setTimeout(hop4, HOP * 3);
+    // Sub-step messages (every HOP/4)
+    const stepId = q * 4 + step;
+    if (stepId !== lastStep) {
+      lastStep = stepId;
+      if (!pinned) {
+        const msgs = messages[current];
+        let text = msgs[step % msgs.length];
+        if (current === 'sharpen' && step === 2) {
+          text = `patches: "${improvementStates[improveCount % improvementStates.length]}"`;
+        }
+        setBubble(text, current);
+      }
     }
 
-    // Start immediately, then repeat
-    runCycle();
-    setInterval(runCycle, CYCLE);
-  })();
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
 
-  // Mermaid
-  mermaid.initialize({
-    startOnLoad: true,
-    theme: 'dark',
-    themeVariables: {
-      background: '#1a1d27',
-      primaryColor: '#23263a',
-      primaryTextColor: '#e2e8f0',
-      primaryBorderColor: '#2e3250',
-      lineColor: '#7c6af7',
-      secondaryColor: '#23263a',
-      tertiaryColor: '#12151f',
-      edgeLabelBackground: '#1a1d27',
-      clusterBkg: '#1a1d27',
-      titleColor: '#e2e8f0',
-      nodeBorder: '#2e3250',
-      nodeTextColor: '#e2e8f0',
-      fontFamily: 'Inter, -apple-system, sans-serif',
-      fontSize: '13px',
-    },
-    flowchart: { curve: 'basis', useMaxWidth: true },
-    sequence: { useMaxWidth: true, actorMargin: 40 },
+  // Interactivity — click any node or panel to pin
+  function pin(name) {
+    if (pinned === name) {
+      pinned = null;
+      return;
+    }
+    pinned = name;
+    setActiveNode(name);
+    const pinMsgs = {
+      agent:    'any model, any platform',
+      skill:    'one SKILL.md, many lives',
+      learning: 'field report from the trenches',
+      sharpen:  'principle extractor · the engine',
+    };
+    setBubble(pinMsgs[name], name);
+  }
+
+  document.querySelectorAll('[data-node]').forEach(el => {
+    el.addEventListener('click', () => pin(el.dataset.node));
   });
+  // Click outside to unpin
+  document.body.addEventListener('click', e => {
+    if (!e.target.closest('[data-node]')) pinned = null;
+  }, true);
+})();
 </script>
 </body>
 </html>
