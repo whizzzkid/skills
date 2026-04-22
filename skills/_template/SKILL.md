@@ -25,7 +25,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.0'
+  version: '2026.04.22-070656'
   internal: true
   # Cross-platform model recommendations
   # High tier: o3, gemini-2.5-pro, llama-4-maverick, k2, qwen3-235b, composer-2

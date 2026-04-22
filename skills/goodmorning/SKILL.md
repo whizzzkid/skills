@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2.5.0'
+  version: '2026.04.22-070656'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro

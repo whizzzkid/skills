@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.0.1'
+  version: '2026.04.22-070656'
   model:
     openai: o3
     google: gemini-2.5-pro

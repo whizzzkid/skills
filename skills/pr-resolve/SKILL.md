@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.4.1'
+  version: '2026.04.22-070656'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
