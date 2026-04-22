@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '1.4.0'
+  version: '1.4.1'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -93,10 +93,40 @@ Announce:
 
 ## Step 2: Sync Branch
 
-Ensure the branch is up to date with the base branch:
+Ensure the local branch is up to date with **both** the base branch and
+the remote PR branch. The remote PR branch can move independently of
+local (e.g., GitHub's "Update branch" button, another session, or a
+teammate pushing). If local has commits not on the remote PR branch AND
+the remote PR branch has commits not on local, merging only the base
+branch creates divergent histories and `git push` will be rejected as
+non-fast-forward.
 
 ```bash
 git fetch origin
+```
+
+### Reconcile with the remote PR branch first
+
+Before merging the base branch, check whether the remote PR branch is
+ahead of local:
+
+```bash
+git log --oneline HEAD..origin/{head_branch}
+```
+
+If the output is non-empty, rebase local commits onto the remote PR
+branch to absorb the upstream changes:
+
+```bash
+git rebase origin/{head_branch}
+```
+
+This keeps push as fast-forward and avoids creating a second merge
+commit that diverges from the remote.
+
+### Merge the base branch
+
+```bash
 git merge origin/{base_branch} --no-edit
 ```
 
@@ -105,8 +135,8 @@ If the merge produces conflicts:
 2. Present to the user and ask how to resolve
 3. Do not proceed until the working tree is clean
 
-If already up to date, confirm:
-> "Branch is up to date with `{base_branch}`."
+If already up to date on both fronts, confirm:
+> "Branch is up to date with `{base_branch}` and `origin/{head_branch}`."
 
 ## Step 3: Fetch Unresolved Comments
 
@@ -448,7 +478,11 @@ stop without pushing or posting anything.
 git push
 ```
 
-If push is rejected, tell the user and ask how to proceed. Never force-push.
+If push is rejected as non-fast-forward, the remote PR branch moved
+during this session. Re-run the Step 2 reconcile (`git fetch origin`
+then `git rebase origin/{head_branch}`) and push again. Never
+force-push. If the rejection is for any other reason, tell the user
+and ask how to proceed.
 
 ### Update PR description
 
