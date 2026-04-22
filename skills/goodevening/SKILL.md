@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.22-185022'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -130,6 +130,13 @@ uses git and `gh` CLI directly.
 is set (see `wk:gh`). All search commands MUST include
 `--owner="$GITHUB_ORG"`.
 
+Draft/WIP PRs are fine to include in the **brag document** (creating a
+draft is still a day's work), but must be excluded from any **action
+items** derived from GitHub — a draft is not ready for review, so it
+doesn't belong in tomorrow's triage. When carrying a PR forward as an
+action item (e.g., unfinished morning carry-over), confirm the PR is
+not a draft before re-surfacing it.
+
 ```bash
 # Today's commits (all repos in cwd)
 git log --all --author="$(git config user.email)" --since="$TODAY 00:00" \
@@ -139,14 +146,16 @@ git log --all --author="$(git config user.email)" --since="$TODAY 00:00" \
 gh search prs --owner="$GITHUB_ORG" --author=@me --merged --updated=">=$TODAY" \
   --json title,url,repository,mergedAt
 
-# PRs created today
+# PRs created today (brag doc — include drafts, flag them)
 gh search prs --owner="$GITHUB_ORG" --author=@me --created=">=$TODAY" \
-  --json title,url,repository
+  --json title,url,repository,isDraft
 
 # PRs reviewed today
 gh search prs --owner="$GITHUB_ORG" --reviewed-by=@me --updated=">=$TODAY" \
   --json title,url,repository,author
+```
 
+```bash
 # Issues closed today
 gh search issues --owner="$GITHUB_ORG" --author=@me --state=closed --updated=">=$TODAY" \
   --json title,url,repository

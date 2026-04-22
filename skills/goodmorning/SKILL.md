@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.22-185022'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -346,16 +346,25 @@ is set (see `wk:gh`). All search commands MUST include
 
 Run all four queries (in parallel where the tool supports it):
 
+**Exclude Draft/WIP PRs from action items.** A PR is an action item only
+when it is ready for review. Drafts signal "not ready" and must not
+surface in 4a or 4b. Use `--draft=false` on every `gh search prs` call
+below. If a fallback tool does not support `--draft`, filter the result
+set by `isDraft == false` (and drop any title prefixed with `[WIP]`,
+`WIP:`, or `Draft:`) before returning items.
+
 **4a. PRs needing your review**
 ```bash
 gh search prs --owner="$GITHUB_ORG" --review-requested=@me --state=open \
-  --json title,url,repository,author,createdAt
+  --draft=false \
+  --json title,url,repository,author,createdAt,isDraft
 ```
 
 **4b. Your PRs needing attention**
 ```bash
 gh search prs --owner="$GITHUB_ORG" --author=@me --state=open \
-  --json title,url,repository,reviews,checks
+  --draft=false \
+  --json title,url,repository,reviews,checks,isDraft
 ```
 Flag: new review comments, failing CI, open > 3 days, merge conflicts.
 
