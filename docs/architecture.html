@@ -6,7 +6,7 @@
 <title>wk:skills — Self-Improving Skills</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fredoka:wght@400;500;600;700&family=Permanent+Marker&family=Architects+Daughter&family=Bungee&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --paper:      #fef6e4;
@@ -139,46 +139,269 @@
     filter: drop-shadow(1px 1px 0 var(--ink));
   }
   .panel-title {
-    font-family: 'Caveat', cursive;
-    font-size: 1.55rem;
+    font-family: 'Bungee', 'Fredoka', cursive;
+    font-size: 1.05rem;
     font-weight: 700;
     line-height: 1;
+    letter-spacing: -0.5px;
+    text-transform: lowercase;
   }
   .panel-sub {
-    font-size: 0.7rem;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    font-family: 'Architects Daughter', cursive;
+    letter-spacing: 0.4px;
   }
   .panel-body {
+    font-family: 'Fredoka', sans-serif;
     font-size: 0.82rem;
-    color: var(--ink-soft);
+    font-weight: 500;
+    color: var(--ink);
     overflow: hidden;
     flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
   .panel-body code {
     background: var(--paper-2);
-    padding: 1px 5px;
-    border-radius: 3px;
+    padding: 1px 6px;
+    border-radius: 4px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.76rem;
-    border: 1px solid rgba(0,0,0,0.1);
+    font-size: 0.74rem;
+    border: 1.5px solid var(--ink);
+    font-weight: 600;
   }
-  .panel-body pre {
-    background: var(--ink);
-    color: #f1f5f9;
+  .panel-body strong, .pop-word {
+    font-family: 'Permanent Marker', cursive;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: 0.2px;
+  }
+  .pop-purple { color: var(--purple); }
+  .pop-green  { color: var(--green); }
+  .pop-amber  { color: var(--amber); }
+  .pop-sky    { color: var(--sky); }
+  .pop-pink   { color: var(--pink); }
+
+  /* ============ CARD MINI-DIAGRAMS ============ */
+  .mini {
+    background: var(--paper-2);
+    border: 2.5px solid var(--ink);
+    border-radius: 10px;
     padding: 8px 10px;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    line-height: 1.45;
+    position: relative;
     overflow: hidden;
-    margin-top: 4px;
-    font-family: 'JetBrains Mono', monospace;
+    box-shadow: inset 0 0 0 0 transparent;
   }
-  .panel-body ul { margin: 4px 0 0 16px; padding: 0; }
-  .panel-body li { margin-bottom: 2px; font-size: 0.78rem; }
+  .mini-caption {
+    font-family: 'Architects Daughter', cursive;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    margin-top: 3px;
+    text-align: center;
+  }
+
+  /* Agent card: provider carousel */
+  .provider-row {
+    display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;
+    padding: 4px 0;
+  }
+  .provider-chip {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 0.68rem;
+    padding: 3px 9px;
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 1.5px 1.5px 0 var(--ink);
+    animation: prov-pulse 5s ease-in-out infinite;
+    transform-origin: center;
+  }
+  .provider-chip:nth-child(1) { animation-delay: 0.0s; }
+  .provider-chip:nth-child(2) { animation-delay: 1.0s; }
+  .provider-chip:nth-child(3) { animation-delay: 2.0s; }
+  .provider-chip:nth-child(4) { animation-delay: 3.0s; }
+  .provider-chip:nth-child(5) { animation-delay: 4.0s; }
+  @keyframes prov-pulse {
+    0%, 80%, 100% { transform: scale(1) rotate(0); background: #fff; color: var(--ink); }
+    8%, 16%       { transform: scale(1.12) rotate(-3deg); background: var(--purple); color: #fff; box-shadow: 2.5px 2.5px 0 var(--ink); }
+  }
+  .model-map {
+    display: grid; grid-template-columns: auto 1fr; gap: 3px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; line-height: 1.4;
+  }
+  .model-map .lbl { color: var(--muted); text-align: right; }
+  .model-map .val { color: var(--ink); font-weight: 600; }
+  .model-map .val .tag {
+    display: inline-block; padding: 0 5px; border-radius: 3px;
+    background: var(--paper); border: 1.5px solid var(--ink);
+    margin-right: 3px;
+  }
+  .tag-opus   { background: rgba(139,92,246,0.18) !important; }
+  .tag-sonnet { background: rgba(34,197,94,0.18) !important; }
+
+  /* Skill card: animated SKILL.md file */
+  .skill-file {
+    position: relative; padding: 6px 8px;
+    background: #fff; border: 2.5px solid var(--ink); border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; line-height: 1.5;
+    box-shadow: 2px 2px 0 var(--ink);
+    white-space: pre;
+    overflow: hidden;
+  }
+  .skill-file .frontmatter,
+  .skill-file .body-sec { white-space: pre; }
+  .skill-file .frontmatter {
+    background: rgba(139,92,246,0.12);
+    margin: -6px -8px 4px;
+    padding: 4px 8px;
+    border-bottom: 2px dashed var(--ink);
+    animation: section-glow 4s ease-in-out infinite;
+  }
+  .skill-file .body-sec {
+    animation: section-glow 4s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+  @keyframes section-glow {
+    0%,40%,100% { box-shadow: inset 0 0 0 0 transparent; }
+    12%,28%     { box-shadow: inset 0 0 0 2px var(--purple); }
+  }
+  .skill-file .k { color: var(--purple); font-weight: 700; }
+  .skill-file .s { color: var(--green); }
+  .skill-file .c { color: var(--muted); }
+  .skill-file .ver {
+    display: inline-block; font-weight: 700; color: var(--pink);
+    animation: tick 2s linear infinite;
+  }
+  @keyframes tick {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-1px); }
+  }
+
+  /* Learning card: stacked notes + type pills */
+  .stack-area {
+    position: relative; height: 50px;
+    display: flex; justify-content: center; align-items: flex-end;
+  }
+  .note {
+    position: absolute;
+    width: 52px; height: 40px;
+    background: #fff9c4;
+    border: 2px solid var(--ink);
+    border-radius: 4px 4px 2px 2px;
+    box-shadow: 2px 2px 0 var(--ink);
+    transform-origin: bottom center;
+    animation: note-land 8s ease-out infinite;
+    font-family: 'Architects Daughter', cursive;
+    font-size: 0.55rem;
+    padding: 3px;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .note { animation-fill-mode: backwards; }
+  .note:nth-child(1) { left: calc(50% - 58px); animation-delay: 0.0s; background: #fef3c7; --r: -6deg; }
+  .note:nth-child(2) { left: calc(50% - 25px); animation-delay: 2.6s; background: #fff9c4; --r:  2deg; }
+  .note:nth-child(3) { left: calc(50% + 8px);  animation-delay: 5.3s; background: #fde68a; --r: -3deg; }
+  .note::before {
+    content: ''; position: absolute; top: -3px; left: 50%;
+    transform: translateX(-50%) rotate(-5deg);
+    width: 18px; height: 6px; background: rgba(239,68,68,0.55);
+    border: 1px solid var(--ink);
+  }
+  @keyframes note-land {
+    0%   { transform: translateY(-60px) rotate(30deg); opacity: 0; }
+    8%   { transform: translateY(0)    rotate(var(--r)); opacity: 1; }
+    94%  { transform: translateY(-1px) rotate(var(--r)); opacity: 1; }
+    100% { transform: translateY(0)    rotate(var(--r)); opacity: 1; }
+  }
+
+  .type-pills { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+  .type-pill {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 1.5px 1.5px 0 var(--ink);
+  }
+  .type-pill.correction { background: #fecaca; }
+  .type-pill.gap        { background: #fef3c7; }
+  .type-pill.pattern    { background: #dcfce7; }
+  .type-pill.surprise   { background: #e0e7ff; }
+
+  /* Sharpen card: before/after transformation */
+  .transform-box {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 6px;
+  }
+  .transform-side {
+    background: #fff;
+    border: 2.5px solid var(--ink);
+    border-radius: 8px;
+    padding: 5px 7px;
+    font-family: 'Architects Daughter', cursive;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    position: relative;
+    box-shadow: 1.5px 1.5px 0 var(--ink);
+  }
+  .transform-side.bad {
+    background: #fef2f2;
+    text-decoration: line-through;
+    text-decoration-color: rgba(239,68,68,0.6);
+    text-decoration-thickness: 2px;
+    color: var(--ink-soft);
+  }
+  .transform-side.good {
+    background: #ecfdf5;
+    animation: good-glow 3s ease-in-out infinite;
+  }
+  .transform-side.good::after {
+    content: '✓';
+    position: absolute; top: -8px; right: -8px;
+    width: 18px; height: 18px;
+    background: var(--green); color: #fff;
+    border: 2px solid var(--ink); border-radius: 50%;
+    font-family: 'Fredoka', sans-serif; font-weight: 700;
+    font-size: 0.7rem;
+    display: grid; place-items: center;
+    box-shadow: 1.5px 1.5px 0 var(--ink);
+  }
+  @keyframes good-glow {
+    0%,100% { box-shadow: 1.5px 1.5px 0 var(--ink); }
+    50%     { box-shadow: 1.5px 1.5px 0 var(--ink), 0 0 0 3px rgba(34,197,94,0.3); }
+  }
+  .transform-arrow {
+    font-family: 'Bungee', sans-serif;
+    font-size: 1.2rem;
+    color: var(--green);
+    animation: arrow-wiggle 1.5s ease-in-out infinite;
+  }
+  @keyframes arrow-wiggle {
+    0%,100% { transform: translateX(0); }
+    50%     { transform: translateX(3px); }
+  }
+  .flow-chain {
+    display: flex; gap: 4px; align-items: center; justify-content: center;
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 0.68rem;
+  }
+  .flow-step-chip {
+    padding: 2px 7px;
+    background: #fff; border: 2px solid var(--ink); border-radius: 10px;
+    box-shadow: 1.5px 1.5px 0 var(--ink);
+  }
+  .flow-chain .arr { color: var(--green); font-weight: 700; }
 
   /* Placement + caricature rotations */
   .p-agent    { grid-column: 1; grid-row: 1; transform: rotate(-1.5deg); }
@@ -398,19 +621,28 @@
     <div class="panel-head">
       <div class="panel-emoji">🤖</div>
       <div>
-        <div class="panel-title">Agent</div>
-        <div class="panel-sub">any model · any platform</div>
+        <div class="panel-title">agent</div>
+        <div class="panel-sub">one skill · ∞ models</div>
       </div>
     </div>
     <div class="panel-body">
-      Skills are model-invocable. The same <code>SKILL.md</code> runs in
-      Claude Code, Cursor, Copilot CLI, Gemini CLI. Per-provider overrides
-      pick the right model at runtime.
-      <pre>model: opus           # default tier
-metadata.model:
-  openai: o3
-  google: gemini-2.5-pro
-  cursor: composer-2</pre>
+      <div><strong class="pop-sky">Any</strong> agent, <strong class="pop-purple">any</strong> provider. Skills declare per-provider overrides — runtime picks the right model.</div>
+
+      <div class="mini">
+        <div class="provider-row">
+          <span class="provider-chip">🟣 Claude</span>
+          <span class="provider-chip">🔵 OpenAI</span>
+          <span class="provider-chip">🟢 Gemini</span>
+          <span class="provider-chip">🟡 Cursor</span>
+          <span class="provider-chip">🔴 Meta</span>
+        </div>
+        <div class="model-map" style="margin-top:6px;">
+          <span class="lbl">opus →</span>
+          <span class="val"><span class="tag tag-opus">o3</span><span class="tag tag-opus">composer-2</span><span class="tag tag-opus">pro</span></span>
+          <span class="lbl">sonnet →</span>
+          <span class="val"><span class="tag tag-sonnet">4.1-mini</span><span class="tag tag-sonnet">flash</span><span class="tag tag-sonnet">scout</span></span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -419,17 +651,28 @@ metadata.model:
     <div class="panel-head">
       <div class="panel-emoji">📜</div>
       <div>
-        <div class="panel-title">SKILL.md</div>
+        <div class="panel-title">skill.md</div>
         <div class="panel-sub">one file · yaml + markdown</div>
       </div>
     </div>
     <div class="panel-body">
-      Frontmatter is the contract: <code>name</code>, <code>description</code>,
-      <code>allowed-tools</code>, <code>model</code>, CalVer
-      <code>version</code>. Body is imperative instructions.
-      <pre>name: wk:pr-resolve
-allowed-tools: [Bash, Read, Edit]
-version: '2026.04.22-070656'</pre>
+      <div><strong class="pop-purple">Frontmatter</strong> = the contract. <strong class="pop-green">Body</strong> = the playbook.</div>
+
+      <div class="skill-file">
+        <div class="frontmatter">
+<span class="c">---</span>
+<span class="k">name:</span> <span class="s">wk:pr-resolve</span>
+<span class="k">model:</span> <span class="s">opus</span>
+<span class="k">tools:</span> <span class="s">[Bash, Read, Edit]</span>
+<span class="k">version:</span> <span class="ver">2026.04.22-070656</span>
+<span class="c">---</span>
+        </div>
+        <div class="body-sec">
+<span class="c"># Step 1 · Check for pending reviews</span>
+<span class="c"># Step 2 · Address each comment...</span>
+        </div>
+      </div>
+      <div class="mini-caption">calver timestamp · never semver</div>
     </div>
   </div>
 
@@ -439,18 +682,29 @@ version: '2026.04.22-070656'</pre>
       <div class="panel-emoji">⚙️</div>
       <div>
         <div class="panel-title">wk:sharpen</div>
-        <div class="panel-sub">distiller · the engine</div>
+        <div class="panel-sub">the principle extractor</div>
       </div>
     </div>
     <div class="panel-body">
-      Scans learnings + global memory. Extracts the <em>principle</em>,
-      never the specific example. Patches <code>SKILL.md</code>, renames
-      learning → <code>*.learned.md</code>, logs to
-      <code>.distilled-sources.log</code>.
-      <ul>
-        <li>❌ "check lines 232 and 60 in trust-boundaries.md"</li>
-        <li>✅ "confirm each comment's target line exists in the diff"</li>
-      </ul>
+      <div>Distills <strong class="pop-amber">incidents</strong> into <strong class="pop-green">principles</strong>. Never the specific example.</div>
+
+      <div class="mini">
+        <div class="transform-box">
+          <div class="transform-side bad">check lines 232+60 in&nbsp;trust-boundaries.md</div>
+          <div class="transform-arrow">▶</div>
+          <div class="transform-side good">confirm each comment's target line exists in the diff</div>
+        </div>
+      </div>
+
+      <div class="flow-chain">
+        <span class="flow-step-chip">📂 scan</span>
+        <span class="arr">▸</span>
+        <span class="flow-step-chip">🧪 distill</span>
+        <span class="arr">▸</span>
+        <span class="flow-step-chip">🔧 patch</span>
+        <span class="arr">▸</span>
+        <span class="flow-step-chip">🏷 .learned</span>
+      </div>
     </div>
   </div>
 
@@ -459,16 +713,27 @@ version: '2026.04.22-070656'</pre>
     <div class="panel-head">
       <div class="panel-emoji">📝</div>
       <div>
-        <div class="panel-title">Learning</div>
+        <div class="panel-title">learning</div>
         <div class="panel-sub">field report · one per run</div>
       </div>
     </div>
     <div class="panel-body">
-      The post-completion hook at the end of every skill asks 4 questions
-      and writes a dated file under <code>learnings/skills/&lt;name&gt;/</code>.
-      <pre>type: gap | correction | pattern | surprise
-severity: low | medium | high
-what happened / root cause / suggested fix</pre>
+      <div>Every skill ends with <strong class="pop-pink">4 questions</strong>. If anything's notable, a dated note drops into <code>learnings/</code>.</div>
+
+      <div class="mini" style="padding: 6px 8px 4px;">
+        <div class="stack-area">
+          <div class="note"><b>gap</b><br>pending review blocks…</div>
+          <div class="note"><b>fix</b><br>preflight check added</div>
+          <div class="note"><b>surp</b><br>api returns 422 on…</div>
+        </div>
+      </div>
+
+      <div class="type-pills">
+        <span class="type-pill correction">❌ correction</span>
+        <span class="type-pill gap">⚠️ gap</span>
+        <span class="type-pill pattern">✅ pattern</span>
+        <span class="type-pill surprise">💡 surprise</span>
+      </div>
     </div>
   </div>
 
