@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.23-054649'
+  version: '2026.04.23-181113'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -70,9 +70,15 @@ and manage the full resolution cycle from sync to summary.
    comment. Never bundle multiple comments into one commit. Push only
    once at the end (Step 8) to avoid triggering multiple CI builds.
 8. **Exclude self-review comments.** Never triage, suggest fixes for, or
-   resolve threads where the root comment was authored by the PR owner.
-   These are the author's own notes and are not reviewer feedback.
-9. **Include bot reviews.** Treat comments from bot accounts (Copilot,
+   resolve threads where the root comment was authored by the PR owner
+   OR the current user. Both are "self" — the PR author's own notes are
+   not reviewer feedback, and the current user's prior comments are their
+   own observations being acted on, not external review.
+9. **Co-author attribution.** When the current user is not the PR author,
+   include a `Co-authored-by:` trailer for the PR author in every commit.
+   The user is resolving on behalf of the author — attribution must reflect
+   both contributors.
+10. **Include bot reviews.** Treat comments from bot accounts (Copilot,
    GitHub Actions, custom bots) as first-class review feedback. Triage
    them alongside human reviewer comments — evaluate each for correctness
    before accepting or dismissing.
@@ -88,8 +94,26 @@ gh pr view --json number,title,body,baseRefName,headRefName,url,headRefOid
 If on main/master or no PR is detected, ask the user for a PR number or URL.
 Extract `{owner}`, `{repo}`, `{number}`, `{base_branch}`, and `{head_sha}`.
 
+### Detect co-author scenario
+
+```bash
+PR_AUTHOR=$(gh pr view --json author --jq '.author.login')
+CURRENT_USER=$(gh api user --jq '.login')
+```
+
+If `$PR_AUTHOR != $CURRENT_USER`, this is a **co-author session** — the
+current user is resolving comments on someone else's PR. Record both
+logins. Both are treated as "self" for comment exclusion (Hard Rule 8),
+and the PR author gets `Co-authored-by:` attribution on every commit
+(Hard Rule 9).
+
 Announce:
 > "Resolving review comments on PR #{number}: *title*. Base: `{base_branch}`."
+
+If co-author session:
+> "Note: PR authored by @{pr_author}. Commits will include co-author
+> attribution. Comments from both you and @{pr_author} are excluded
+> from triage."
 
 ## Step 2: Sync Branch
 
@@ -192,6 +216,7 @@ For each comment, classify the author:
 | `Bot` | `*[bot]` suffix (e.g., `copilot[bot]`, `github-actions[bot]`) | **Bot review** |
 | `Bot` | Custom bot names without `[bot]` suffix | **Bot review** |
 | `User` | Matches PR author login | **Self-review** (skip) |
+| `User` | Matches current user login (co-author session) | **Self-review** (skip) |
 | `User` | Any other login | **Reviewer** |
 
 ### Pre-check: pending self-reviews
@@ -304,7 +329,8 @@ Do NOT blindly accept bot suggestions. Evaluate each one for correctness.
 
 ### Suggestion format
 
-Present each suggestion as:
+For each comment, prepare a structured suggestion. Every suggestion MUST
+include reasoning for both applying and discarding:
 
 ```
 ### Comment {n}/{total}: {path}:{line}
@@ -312,107 +338,142 @@ Present each suggestion as:
 **Comment:** {body}
 **Reply chain:** {summary of any replies, or "none"}
 
-**Suggested fix:**
-{Description of what to change and why}
+**Suggested fix:** {What to change — concrete code diff or snippet}
 
-{Code diff or snippet showing the proposed change}
+**Why this fix:** {What problem it solves, what the reviewer is concerned
+about, and why this approach addresses it}
+
+**Why this could be skipped:** {Valid reason to discard — e.g., false
+positive, stylistic preference not enforced by the project, already
+handled elsewhere, out of scope for this PR, or "No valid reason to
+skip — this is a real issue that should be fixed"}
 ```
 
 Where `{bot_badge}` is `🤖 (bot)` if the commenter is a bot, omitted
 otherwise.
 
-## Step 5: Present and Collect Decisions
+Be honest in the skip rationale. If there is no good reason to skip,
+say so explicitly — do not fabricate a dismissal justification.
 
-Present suggestions **one at a time**. For each, ask the user:
+## Step 5: Consult — Collect All Decisions First
 
-> How would you like to handle this?
+**HARD RULE: Do NOT touch code during this step.** This is a
+consultation-only phase. Present each comment one at a time, collect the
+user's decision, then move to the next. No edits, no commits, no
+replies — just decisions.
+
+### Present one at a time
+
+For each suggestion (prepared in Step 4), present it using the full
+suggestion format including "Why this fix" and "Why this could be
+skipped" reasoning. Then ask:
+
+> **Comment {n}/{total}:** How would you like to handle this?
 > **(a)** Apply the suggested fix
 > **(b)** Do something different (describe what you want)
 > **(c)** Ask the reviewer a follow-up question
 > **(d)** Dismiss — not applicable / false positive (bot reviews only)
 > **(e)** Skip — leave as-is without resolving
 
-### Handle each response type
+Wait for the user's response before presenting the next comment.
+
+### Record each decision (do not execute yet)
 
 **(a) Apply suggested fix:**
-- Apply the edit using the `Edit` tool
-- Track in `fixes_to_commit` list: `{path, line, description, threadId, commentId}`
-- Draft a reply: "Fixed in {commit_ref} — {brief explanation}"
-- Track in `resolve_after_push` list
+- Record in `fixes_to_apply` list: `{path, line, description, code_change, threadId, commentId}`
+- Draft reply: "Fixed — {brief explanation}" (commit ref added in Step 6)
+- Mark for `resolve_after_push`
 
 **(b) Different fix:**
 - Ask: "What would you like to do instead?"
-- Apply the user's approach
-- Track in `fixes_to_commit` list
-- Draft a reply based on the actual fix applied
-- Track in `resolve_after_push` list
+- Record the user's approach in `fixes_to_apply` with their description
+- Draft reply based on the user's described fix
+- Mark for `resolve_after_push`
 
 **(c) Follow-up question:**
 - Ask: "What would you like to ask the reviewer?"
-- Draft the question as a reply comment
-- Track in `reply_only` list — **do NOT add to resolve list**
+- Record the question in `reply_only` list — **do NOT mark for resolve**
 
 **(d) Dismiss (bot reviews only):**
-- Draft a reply explaining why the suggestion was dismissed
-  (e.g., "False positive — {reason}" or "Not applicable — {reason}")
-- Track in `resolve_after_push` list (dismissed bot comments should be
-  resolved to reduce noise)
+- Record dismissal reason in `dismissals` list
+- Draft reply: "False positive — {reason}" or "Not applicable — {reason}"
+- Mark for `resolve_after_push`
 
 **(e) Skip:**
-- Do not apply any fix, post any reply, or resolve the thread
-- Track in `skipped` list — the thread stays open and untouched
-- Use this for comments the user wants to handle later or outside this session
+- Record in `skipped` list — no fix, no reply, no resolution
+- The thread stays open and untouched
 
-After each decision, move to the next comment. Do not batch decisions.
+### After all decisions collected
 
-## Step 6: Verify and Commit
+Announce the transition to execution:
 
-After all comments in a file (or logical group) are processed:
+> "All {total} comments reviewed. Decisions collected:
+> - {a_count} fixes to apply
+> - {c_count} follow-up questions to post
+> - {d_count} dismissals
+> - {e_count} skipped
+>
+> Moving to implementation — I'll apply fixes, verify, and commit each one."
 
-### Verify the fix
+## Step 6: Execute — Apply Fixes, Verify, and Commit
 
-Detect the project's verification command and run a quick check:
+**Now** apply all decisions collected in Step 5. Process each entry in
+`fixes_to_apply` and `dismissals` in order.
 
-```bash
-# Try common build/lint commands (use first found)
-[ -f package.json ] && npm run lint --if-present 2>&1 | tail -20
-[ -f Makefile ] && make check 2>&1 | tail -20
-[ -f Cargo.toml ] && cargo check 2>&1 | tail -20
-```
+### For each fix (option a or b)
 
-If verification fails, present the error and ask:
-> "Verification failed. Would you like to (a) fix the issue, (b) commit
-> anyway, or (c) skip this fix?"
+1. **Apply the code change** using the Edit tool
+2. **Verify** — detect the project's verification command and run a check:
 
-If no build system is detected, warn:
-> "No build/lint command detected — skipping verification. Please verify
-> manually after we finish."
+   ```bash
+   # Try common build/lint commands (use first found)
+   [ -f package.json ] && npm run lint --if-present 2>&1 | tail -20
+   [ -f Makefile ] && make check 2>&1 | tail -20
+   [ -f Cargo.toml ] && cargo check 2>&1 | tail -20
+   ```
 
-### Commit (one per resolved comment)
+   If verification fails, present the error and ask:
+   > "Verification failed for fix {n}. (a) Fix the issue, (b) commit
+   > anyway, (c) skip this fix?"
 
-After each individual comment is resolved (option a, b, or d), immediately
-stage and commit the fix. This creates a 1:1 mapping between commits and
-review comments, making it easy for reviewers to trace each fix.
+   If no build system is detected, warn once:
+   > "No build/lint command detected — skipping verification."
 
-```bash
-git add {files}
-git commit -m "$(cat <<'EOF'
-fix(scope): 🐛 {brief description of what this comment asked for}
+3. **Commit** — one commit per resolved comment:
 
-Addresses review comment by @{reviewer} on {path}:{line}
+   ```bash
+   git add {files}
+   git commit -m "$(cat <<'EOF'
+   fix(scope): 🐛 {brief description of what this comment asked for}
 
-Co-Authored-By: {agent-name} <noreply@example.com>
-EOF
-)"
-```
+   Addresses review comment by @{reviewer} on {path}:{line}
+
+   Co-Authored-By: {agent-name} <noreply@example.com>
+   EOF
+   )"
+   ```
+
+   **Co-author session:** When the current user is not the PR author,
+   add a `Co-authored-by:` trailer for the PR author:
+
+   ```
+   Co-authored-by: {pr_author_name} <{pr_author_email}>
+   Co-Authored-By: {agent-name} <noreply@example.com>
+   ```
+
+   Fetch the PR author's name and email from the PR or git log. If
+   unavailable, use their GitHub login and `{login}@users.noreply.github.com`.
+
+4. **Record the commit SHA** and update the drafted reply to include the
+   real ref (e.g., "Fixed in `abc1234` — {explanation}").
 
 Use the commit type that matches the nature of the change: `fix` for bug
 fixes, `refactor` for restructuring, `feat` for new behavior. Always
 include the emoji per `wk:commit` conventions.
 
-Record the commit SHA for each fix — it will be referenced in the reply
-comment (e.g., "Fixed in `abc1234`"). Draft the reply with the real SHA
-now, not a placeholder.
+### For each dismissal (option d)
+
+No code change needed. The drafted reply was already prepared in Step 5.
 
 **Do NOT push after each commit.** All commits are pushed together in
 Step 8 as a single `git push`, so only one CI build is triggered.
