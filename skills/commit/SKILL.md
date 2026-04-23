@@ -23,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.23-054649'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -82,6 +82,15 @@ All commits MUST be signed. Never use `--no-gpg-sign`, `-n`, or
 3. Do not attempt any workaround that disables signing.
 
 ## Pushing
+
+**Push after every commit unless the user has explicitly said not to.**
+A commit without a push leaves work invisible to the rest of the team
+and easy to lose. The push is not a separate step the user must
+request — it is the tail of the commit sequence.
+
+If something would block the push (branch protection, no upstream
+branch, rejection), report it explicitly to the user. Never silently
+skip the push.
 
 Always use regular `git push`. Never use `--force` or `--force-with-lease`
 unless:

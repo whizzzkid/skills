@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.23-054649'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -461,9 +461,29 @@ comment was explicitly dismissed (d). Threads with follow-up questions (c),
 skipped threads (e), and self-review threads are **never** resolved.
 
 Ask:
-> "Does this look correct? I will push {N} commits, post {M} reply comments,
+> "Does this look correct? I will push {N} commits, post {M} **threaded
+> replies to individual review comments** (not a formal PR Review),
 > resolve {R} threads, and leave {L} threads open for follow-up.
 > Proceed? (yes / edit / abort)"
+
+Be explicit about the difference between **threaded replies** (posted via
+`/comments/{id}/replies`, one per reviewer comment) and a **formal PR
+Review** (an aggregate review object posted via `/reviews`). This skill
+only posts the former; it never submits a formal PR Review.
+
+### Disambiguate "review" objections
+
+If the user responds with language that could refer to either kind of
+posting — e.g., "don't post the self-review", "skip the review", "no
+review" — **do not** silently skip all reply comments. Ask a clarifying
+question first:
+
+> "To confirm: do you mean (a) skip posting a formal PR Review
+> submission (this skill doesn't do that anyway), or (b) skip the {M}
+> threaded replies to individual review comments?"
+
+Default interpretation when ambiguous: the user means (a). Proceed with
+threaded replies unless they explicitly confirm (b).
 
 Wait for explicit confirmation. If "edit," ask what to change. If "abort,"
 stop without pushing or posting anything.
