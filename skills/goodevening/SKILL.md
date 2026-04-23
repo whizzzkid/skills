@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-185022'
+  version: '2026.04.23-055340'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -93,6 +93,31 @@ Goodevening only reads the weekly memory; goodmorning owns the rollover.
 **Launch 7 agents in parallel** using the Agent tool. Each agent handles
 its own MCP authentication independently. If any agent fails to
 authenticate, it returns a skip notice — it does not block the others.
+
+### Subagent contract (mandatory — include in every Stage 1 prompt)
+
+Every agent dispatched in this stage is a **data-gathering subagent**,
+not a co-orchestrator. When the subagent reads this skill's instructions
+as part of its context, it may mistake itself for the orchestrator and
+run the entire skill — writing evening.md/evening.html, committing,
+pushing, or starting its own interactive triage. Prevent this by
+prepending the following contract to every Stage 1 agent prompt
+verbatim:
+
+```
+SUBAGENT CONTRACT (mandatory):
+- Return STRUCTURED DATA ONLY — do not write files, run git commands, or commit
+- Do NOT invoke /skills or act as the wk:goodevening orchestrator
+- Do NOT prompt the user for input — the orchestrator handles all triage
+- Do NOT open files in browsers or call `open`
+- Your output is markdown text the orchestrator pastes into a section
+```
+
+Before compiling outputs in Stage 2, the orchestrator must verify git
+state (no unexpected commits, no uncommitted files outside the session's
+intended sitrep paths) — a subagent that overran its scope will show up
+here. If any subagent wrote files or committed, discard its output and
+re-dispatch with the contract emphasized.
 
 ### MCP Connection Pattern (shared by all agents)
 
