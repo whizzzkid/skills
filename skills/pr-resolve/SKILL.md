@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.23-181113'
+  version: '2026.04.23-182745'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -164,8 +164,19 @@ If already up to date on both fronts, confirm:
 
 ## Step 3: Fetch Unresolved Comments
 
-Combine GraphQL (for thread resolution status) and REST (for full comment
-data) to build a map of active, unresolved review threads.
+PR feedback lives on **three distinct GitHub surfaces**. Fetching only
+inline review comments misses callouts that reviewers (and bots) place
+in the other two surfaces. Fetch all three every run.
+
+| Surface | Endpoint | What it holds |
+|---------|----------|---------------|
+| Inline review comments | `/pulls/{n}/comments` | Line-attached feedback (has `path` + `line`) |
+| Review summary bodies | `/pulls/{n}/reviews` | Overall review text left alongside inline comments (no line anchor) |
+| PR conversation (issue) comments | `/issues/{n}/comments` | Root-level discussion — top-of-PR callouts, bot summaries, ad-hoc requests |
+
+Inline comments and their threads come from GraphQL + REST (below).
+Review summary bodies and issue comments must be fetched separately —
+they do not appear in `reviewThreads` or `/pulls/{n}/comments`.
 
 ### Identify the PR author
 
@@ -206,6 +217,49 @@ gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate \
 
 Note: `user_type` distinguishes humans (`User`) from bots (`Bot`).
 `author_association` shows the commenter's relationship to the repo.
+
+### REST — review summary bodies
+
+Reviewers often leave a summary body alongside (or instead of) inline
+comments. These bodies do not appear in `/pulls/{n}/comments`. Fetch
+them separately:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{number}/reviews --paginate \
+  --jq '.[] | select(.body != null and .body != "") | {id, state, body, user: .user.login, user_type: .user.type, submitted_at}'
+```
+
+Skip reviews with empty/null bodies (they carried only inline comments)
+and reviews in state `PENDING` authored by the current user (see
+pending self-review handling below). Include states `COMMENTED`,
+`APPROVED`, and `CHANGES_REQUESTED` when the body is non-empty.
+
+Replies to a review body are posted as **issue comments** (below), not
+review-comment replies.
+
+### REST — PR conversation (issue) comments
+
+Top-of-PR callouts, bot summary comments (e.g., Copilot PR summary,
+CI bots), and ad-hoc requests live in the issue-comments surface:
+
+```bash
+gh api repos/{owner}/{repo}/issues/{number}/comments --paginate \
+  --jq '.[] | {id, node_id, body, user: .user.login, user_type: .user.type, author_association: .author_association, created_at, updated_at}'
+```
+
+Issue comments have **no `path` or `line`** and cannot be resolved as
+threads (there's no thread-resolution concept for them in GraphQL).
+Replies are new issue comments posted to:
+
+```
+POST /repos/{owner}/{repo}/issues/{number}/comments
+```
+
+Treat each issue comment as a standalone item in triage — apply the
+same author classification (bot / self / reviewer), the same
+include/exclude rules, and the same triage options — but mark it as
+`surface: conversation` so the resolution phase knows to post replies
+via the issue-comments endpoint and to skip thread resolution.
 
 ### Classify comment authors
 
@@ -599,21 +653,43 @@ remaining replies.
 Post replies **one at a time, in order**. Do NOT post in parallel — a
 404 on one reply must not cancel the remaining replies.
 
-For each drafted reply:
+Route each reply by its comment's `surface`:
+
+**`surface: inline`** (review comments, has `path` + `line`):
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
   --method POST -f body="{reply_text}"
 ```
 
-If the API returns **404**:
+**`surface: review_body`** (reply to a review summary body) and
+**`surface: conversation`** (reply to a top-of-PR / issue comment) both
+post to the issue-comments endpoint — GitHub has no threaded-reply
+endpoint for these surfaces:
+
+```bash
+gh api repos/{owner}/{repo}/issues/{number}/comments \
+  --method POST -f body="{reply_text}"
+```
+
+When posting to the issue-comments endpoint, prefix the reply body with
+a quote referencing the original comment so the thread remains readable
+(GitHub does not render these as threaded replies). Example:
+
+```
+> @{original_author} wrote: {one-line excerpt}
+
+{your reply text}
+```
+
+If the inline API returns **404**:
 - Log: "Reply to comment {comment_id} on {path}:{line} returned 404
   (thread likely invalidated by force-push). Skipping."
 - Remove the corresponding thread from `resolve_after_push` (cannot
   resolve a thread that no longer exists)
 - Continue with the next reply
 
-If the API returns any other error, report it to the user and ask how
+If any API returns another error, report it to the user and ask how
 to proceed.
 
 ### Resolve threads
