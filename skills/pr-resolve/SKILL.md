@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.23-182745'
+  version: '2026.04.23-184818'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -57,9 +57,10 @@ and manage the full resolution cycle from sync to summary.
 1. **Never push without explicit user confirmation.**
 2. **Never post reply comments without explicit user confirmation.**
 3. **Only resolve threads you actually worked on.** A thread is resolvable
-   only if a fix was applied (option a/b) or a bot comment was explicitly
-   dismissed (option d). Never resolve follow-up questions (c), skipped
-   threads (e), or self-review threads.
+   only if a fix was applied (option `a`/`e`) or a comment was explicitly
+   dismissed (option `d`). Never resolve follow-up questions (non-reserved
+   letters like `f`), skipped threads (`s`), rethink-pending items (`r`),
+   or self-review threads.
 4. **Never force-push.** Use regular `git push` only.
 5. **Never commit without attempting verification** (build/lint/test). If
    verification is unavailable or fails, inform the user before proceeding.
@@ -424,10 +425,17 @@ skipped" reasoning. Then ask:
 
 > **Comment {n}/{total}:** How would you like to handle this?
 > **(a)** Apply the suggested fix
-> **(b)** Do something different (describe what you want)
-> **(c)** Ask the reviewer a follow-up question
-> **(d)** Dismiss — not applicable / false positive (bot reviews only)
-> **(e)** Skip — leave as-is without resolving
+> **(e)** Edit the suggested fix (describe how to adjust it)
+> **(d)** Dismiss — not applicable / false positive (explain why)
+> **(s)** Skip — leave as-is without resolving
+> **(r)** Rethink — re-analyze this comment more thoroughly before deciding
+> {additional context-specific options using non-reserved letters}
+
+The letters `a`, `e`, `d`, `s`, `r` are **reserved** and must always mean
+the same thing across every comment. If the agent adds extra options
+based on the comment's content (e.g., "(f) Ask the reviewer a follow-up
+question", "(o) Open the file to investigate"), those MUST use letters
+outside the reserved set. Never redefine a reserved letter.
 
 Wait for the user's response before presenting the next comment.
 
@@ -435,37 +443,50 @@ Wait for the user's response before presenting the next comment.
 
 **(a) Apply suggested fix:**
 - Record in `fixes_to_apply` list: `{path, line, description, code_change, threadId, commentId}`
-- Draft reply: "Fixed — {brief explanation}" (commit ref added in Step 6)
+- Draft reply: "Fixed — {brief explanation}" (commit link added in Step 6)
 - Mark for `resolve_after_push`
 
-**(b) Different fix:**
-- Ask: "What would you like to do instead?"
-- Record the user's approach in `fixes_to_apply` with their description
-- Draft reply based on the user's described fix
+**(e) Edit the suggested fix:**
+- Ask: "How would you like to adjust the fix?"
+- Record the user's refinement in `fixes_to_apply` with the adjusted
+  approach
+- Draft reply based on the adjusted fix
 - Mark for `resolve_after_push`
 
-**(c) Follow-up question:**
-- Ask: "What would you like to ask the reviewer?"
-- Record the question in `reply_only` list — **do NOT mark for resolve**
-
-**(d) Dismiss (bot reviews only):**
+**(d) Dismiss (bot or human reviews):**
+- Ask: "Why are you dismissing this comment?" — require an explanation
 - Record dismissal reason in `dismissals` list
-- Draft reply: "False positive — {reason}" or "Not applicable — {reason}"
+- Draft reply: "Dismissed — {reason}" (do not soften to "false positive"
+  unless the user said so)
 - Mark for `resolve_after_push`
 
-**(e) Skip:**
+**(s) Skip:**
 - Record in `skipped` list — no fix, no reply, no resolution
 - The thread stays open and untouched
+
+**(r) Rethink:**
+- Re-read the comment, the surrounding code, and any referenced
+  context. Produce a fresh, deeper analysis of the suggestion,
+  including: the reviewer's likely concern, alternative fixes, risks of
+  each, and a stronger recommendation. Then re-present the comment
+  with the revised analysis and the same reserved options. `r` is not
+  itself a decision — it returns to the prompt.
+
+**Additional options (non-reserved letters):** The agent may add extras
+when the comment warrants them — e.g., "(f) Ask the reviewer a
+follow-up question", "(o) Open the referenced file", "(b) Create a
+follow-up issue/ticket instead of fixing now". Record these in the
+matching list (`reply_only`, etc.) and document the letter used.
 
 ### After all decisions collected
 
 Announce the transition to execution:
 
 > "All {total} comments reviewed. Decisions collected:
-> - {a_count} fixes to apply
-> - {c_count} follow-up questions to post
-> - {d_count} dismissals
-> - {e_count} skipped
+> - {apply_count} fixes to apply (option `a`/`e`)
+> - {followup_count} follow-up questions to post (non-reserved options)
+> - {dismiss_count} dismissals (option `d`)
+> - {skip_count} skipped (option `s`)
 >
 > Moving to implementation — I'll apply fixes, verify, and commit each one."
 
@@ -474,7 +495,7 @@ Announce the transition to execution:
 **Now** apply all decisions collected in Step 5. Process each entry in
 `fixes_to_apply` and `dismissals` in order.
 
-### For each fix (option a or b)
+### For each fix (option `a` or `e`)
 
 1. **Apply the code change** using the Edit tool
 2. **Verify** — detect the project's verification command and run a check:
@@ -519,13 +540,24 @@ Announce the transition to execution:
    unavailable, use their GitHub login and `{login}@users.noreply.github.com`.
 
 4. **Record the commit SHA** and update the drafted reply to include the
-   real ref (e.g., "Fixed in `abc1234` — {explanation}").
+   commit as a **markdown link** to the commit URL — bare short SHAs do
+   not render as clickable links in the GitHub PR UI, forcing reviewers
+   to hunt for the commit manually. Always link:
+
+   ```markdown
+   Fixed in [`abc1234`](https://github.com/{owner}/{repo}/commit/{full_sha}) — {explanation}
+   ```
+
+   Use the full 40-char SHA in the URL and the 7-char short SHA in the
+   link text. This rule applies to **every** reply comment that
+   references a commit, not only the first — if a single reply mentions
+   multiple commits, link each one.
 
 Use the commit type that matches the nature of the change: `fix` for bug
 fixes, `refactor` for restructuring, `feat` for new behavior. Always
 include the emoji per `wk:commit` conventions.
 
-### For each dismissal (option d)
+### For each dismissal (option `d`)
 
 No code change needed. The drafted reply was already prepared in Step 5.
 
@@ -551,7 +583,7 @@ After ALL comments are processed, present a full summary:
 4. src/api.ts:22 — copilot[bot]: dismissed (false positive)
 
 ### Reply comments to post ({count})
-1. src/auth.ts:42 → "Fixed in abc1234 — session now invalidated on logout"
+1. src/auth.ts:42 → "Fixed in [`abc1234`](https://github.com/{owner}/{repo}/commit/{full_sha}) — session now invalidated on logout"
 2. src/api.ts:33 → "Extracted to config — timeout is now configurable"
 3. src/auth.ts:15 → "Applied — added null check as suggested"
 4. src/api.ts:22 → "False positive — value is guaranteed non-null by L18"
@@ -571,9 +603,10 @@ After ALL comments are processed, present a full summary:
 ```
 
 **Resolution rule:** Only threads in `resolve_after_push` are resolved.
-A thread lands in that list **only** when a fix was applied (a/b) or a bot
-comment was explicitly dismissed (d). Threads with follow-up questions (c),
-skipped threads (e), and self-review threads are **never** resolved.
+A thread lands in that list **only** when a fix was applied (`a`/`e`) or
+a comment was explicitly dismissed (`d`). Threads with follow-up
+questions (non-reserved letters), skipped threads (`s`), rethink-pending
+items (`r`), and self-review threads are **never** resolved.
 
 Ask:
 > "Does this look correct? I will push {N} commits, post {M} **threaded
@@ -621,9 +654,17 @@ and ask how to proceed.
 
 ### Update PR description
 
-After pushing, sync the PR description to reflect all commits pushed in this
-session — correct any stale counts, mention fixes applied, and ensure the body
-matches the current branch state.
+**HARD RULE: after every push in this skill, sync the PR description.**
+Fixes applied and changes pushed during a resolve session invalidate
+prior claims in the body (commit counts, file lists, "remaining work"
+sections, linked commits). An out-of-date description misleads
+reviewers and future readers. This step is non-optional even when the
+body looks "roughly correct."
+
+Sync the body to reflect all commits pushed in this session — correct
+any stale counts, mention fixes applied, link the new commits as
+markdown URLs (not bare SHAs), and ensure the body matches the current
+branch state.
 
 **Before overwriting**, read the current body and carry forward metadata lines:
 `Closes #N` / `Fixes #N` / `Resolves #N`, `Co-authored-by:` lines, and any
