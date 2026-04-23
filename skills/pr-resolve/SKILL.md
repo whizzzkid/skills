@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.23-184818'
+  version: '2026.04.23-185321'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -438,6 +438,21 @@ question", "(o) Open the file to investigate"), those MUST use letters
 outside the reserved set. Never redefine a reserved letter.
 
 Wait for the user's response before presenting the next comment.
+
+**HARD RULE: one comment per message — never batch.** Emit exactly one
+`Comment {n}/{total}` block per message, then stop and wait for the
+reply. Only after receiving the reply may the next comment be
+presented. Do not combine 2+ comments into a single message, even when
+they look related, are all likely dismissals, or auto mode is active.
+
+Auto mode does **not** suspend this rule. Auto mode means executing
+without pausing for permission on low-risk work; it does not mean
+collapsing the one-at-a-time consultation pattern. Single-letter
+replies are ambiguous across batches — the user cannot signal
+per-comment decisions when multiple prompts share one response slot.
+
+If you feel pulled to batch ("to save round-trips", "they're all the
+same category"), do not — one per message, always.
 
 ### Record each decision (do not execute yet)
 
