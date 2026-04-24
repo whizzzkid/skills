@@ -7,12 +7,14 @@ description: >-
   asked to "be brief", "less words", "reduce tokens", or "compress context".
   Also provides /concise:compress to rewrite verbose docs/memory files using
   the same rules — no binary dependencies required.
-argument-hint: '[brief|dense|off|compress <target>]'
+argument-hint: '[brief|dense|off|compress <target>|setup]'
 allowed-tools:
   - Read
   - Write
+  - Edit
   - Bash
   - AskUserQuestion
+  - Skill
   # Learning capture (post-completion hook)
   - "Bash(mkdir -p:*)"
 model: sonnet
@@ -22,7 +24,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.24-221713'
+  version: '2026.04.24-222329'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -50,6 +52,7 @@ Three modes: **brief** (default), **dense**, **off**.
 | `/concise dense` | Enable dense mode |
 | `/concise off` | Disable — remove `~/.claude/.concise-mode` and touch `~/.claude/.concise-off` |
 | `/concise:compress <path or paste>` | Rewrite a file or block using active mode rules |
+| `/concise:setup` | Re-run first-run setup flow (detect + offer to install hook and CLAUDE.md snippet) |
 
 Natural language triggers: "be brief", "less words", "reduce tokens",
 "shorter responses", "compress context", "stop being verbose".
@@ -120,6 +123,83 @@ Regardless of mode, always write these at full verbosity:
    Resume concise mode only when the user's next message is clearly a new
    task, not a follow-up clarification. Never auto-resume mid-clarification
    thread.
+
+---
+
+## First-Run Setup (self-installing)
+
+Hooks live in `~/.claude/settings.json` — the harness config, not a skill
+file. `npx skills add` writes skill files but cannot touch `settings.json`.
+To close the gap, this skill **self-installs on first invocation**.
+
+### Detect
+
+On every `/concise`, `/concise brief`, `/concise dense`, or natural-language
+activation, before confirming the mode, run:
+
+```bash
+SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
+HOOK_PATH="$HOME/.agents/skills/wk-concise/hooks/concise-reminder.sh"
+
+# Is the hook already wired up?
+grep -Fq "concise-reminder.sh" "$SETTINGS" 2>/dev/null && HOOK_INSTALLED=1 || HOOK_INSTALLED=0
+
+# Is the CLAUDE.md snippet already present?
+grep -Fq "Concise by default" "$HOME/.claude/CLAUDE.md" 2>/dev/null && SNIPPET_INSTALLED=1 || SNIPPET_INSTALLED=0
+```
+
+### Offer
+
+If `HOOK_INSTALLED=0` **or** `SNIPPET_INSTALLED=0`, emit a one-time offer
+(and mark offered in `~/.claude/.concise-setup-offered` so later invocations
+don't re-ask):
+
+> `wk:concise — first-run setup`
+>
+> To make brief mode the default for every session, I can wire up:
+> - [{snippet_state}] `~/.claude/CLAUDE.md` — opt-in-by-default across all agents
+> - [{hook_state}] `~/.claude/settings.json` — per-turn reinforcement hook (Claude Code)
+>
+> Apply both? `(y)es / (n)o / (s)nippet only / (h)ook only`
+
+`{snippet_state}` and `{hook_state}` are `✓ already installed` or ` ` (pending).
+
+### Apply
+
+On the user's answer, invoke `wk:update-config` (for the `settings.json`
+edit) and write the CLAUDE.md snippet from
+`templates/claude-md-snippet.md` appended to `~/.claude/CLAUDE.md`.
+
+The `settings.json` addition:
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.agents/skills/wk-concise/hooks/concise-reminder.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+`wk:update-config` handles the merge — preserves existing hooks, adds this
+one, validates JSON, reports the result.
+
+After applying, write `~/.claude/.concise-setup-offered` (empty file) so the
+offer is one-time. User can re-trigger via `/concise:setup`.
+
+### `/concise:setup` — manual trigger
+
+Forces the detection + offer flow regardless of the one-time marker. Use
+when: re-installing the skill, changing harness, or troubleshooting.
 
 ---
 
