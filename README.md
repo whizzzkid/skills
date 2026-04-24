@@ -20,6 +20,7 @@ npx skills add whizzzkid/skills -s skill-name
 |-------|-------------|
 | [buildkite](skills/buildkite/) | Check build status, investigate failures, and view logs via `bk` CLI |
 | [commit](skills/commit/) | Conventional commits with emoji, signing, and safe push behavior |
+| [concise](skills/concise/) | Reduce response verbosity and token usage — brief/dense modes, on-demand context compression, no dependencies |
 | [datadog](skills/datadog/) | Create and manage Datadog dashboards, monitors, SLOs, and notebooks via REST API |
 | [docker](skills/docker/) | Image tag verification, build debugging, ENTRYPOINT checks, and daemon troubleshooting |
 | [docs](skills/docs/) | Check for and update documentation affected by code changes |
