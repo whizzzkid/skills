@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.23-055340'
+  version: '2026.04.24-215834'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -673,6 +673,101 @@ doesn't exist yet, create it with the standard format.
 
 This step is **quick** — only fires when new patterns are detected
 (usually 0-2 items). If no candidates, skip silently.
+
+### Source-link rule for summary/priorities lists
+
+Whenever the brief renders a consolidated "Today's Priorities", "Today's
+Focus", or any other top-level summary list derived from items that
+already appear in a downstream section (Slack, Email, GitHub, Jira,
+Calendar, Google Docs, Buildkite, Datadog, etc.), **every priority item
+MUST carry inline source link(s)** in the same format it would have in
+its home section. The summary is the highest-traffic view — users scan
+it first and return to it throughout the day — so paraphrased-only
+entries force extra clicks exactly where they hurt most.
+
+Rules:
+
+- If a priority maps to one upstream artifact, inline a single
+  `[label](url)` (markdown) or `<a>` chip (html) link.
+- If it maps to multiple (e.g., a PR + the Slack thread requesting
+  review + a design doc), include all of them separated by ` · `.
+- Synthesized or purely internal priorities with no external artifact
+  (e.g., "Adjust system prompt") are exempt.
+- Apply to both markdown (2b) and html (2c) output. Never render a
+  priority list without origin links when the upstream section has them.
+
+Categories to surface when present: Slack threads/DMs, GitHub PRs/issues,
+Jira tickets, Calendar Zoom URLs (for time-blocked priorities), Google
+Doc/Drive URLs, Buildkite/Datadog/external tool URLs.
+
+### 2.0. Template discovery (run before 2b and 2c)
+
+The brief's structure is **owned by the user**, not the skill. Before
+rendering either output file, look for a user-maintained template in
+the repo and use the first one found. The built-in template embedded
+in this skill is a fallback only.
+
+**Discovery cascade:**
+
+| Output | Lookup order |
+|--------|--------------|
+| `morning.html` | `<repo_root>/_templates/morning/brief.html` → built-in |
+| `morning.md`   | `<repo_root>/_templates/morning/brief.md` → built-in |
+
+**Template contract.** A template is a static skeleton plus two kinds
+of placeholders:
+
+- **Scalar tokens** as `{{KEY}}` — e.g., `{{DATE_ISO}}`, `{{DATE_LONG}}`,
+  `{{STORAGE_KEY}}`. Replaced by string substitution.
+- **Block slots** as `<!-- SLOT:name -->` — replaced with the rendered
+  HTML/markdown fragment for that section. Use the same comment marker
+  in markdown templates (it survives as a literal text marker the
+  renderer can find).
+
+Standard slot names: `resolved_badges`, `priorities`, `calendar`,
+`meeting_followthrough`, `carryover`, `slack_response`, `slack_followup`,
+`slack_announce`, `email_response`, `email_followup`, `email_announce`,
+`github_review`, `github_yours`, `github_issues`, `jira_assigned`,
+`jira_mentions`, `confluence`, `lattice`, `peer_feedback`, plus
+matching `{slot}_count` scalars for badge totals.
+
+**Render flow:**
+
+1. Resolve template path via the cascade above.
+2. Load template as a string.
+3. Substitute every `{{KEY}}` scalar.
+4. For each slot, build the section fragment from the triaged data and
+   replace the slot marker (or the entire line containing it, to keep
+   indentation tidy).
+5. If a slot has no items, inject an empty-state placeholder
+   (`<div class="empty">…</div>` for HTML, an italicized "Nothing for
+   this section" for markdown). Never leave a naked `<!-- SLOT:name -->`
+   in the rendered output.
+6. Write the result to the date-stamped output path.
+
+**Source-link enforcement at render time.** The `priorities` slot
+builder MUST emit inline source links (`slack ↗ · doc ↗ · zoom ↗` for
+HTML, `[label](url) · …` for markdown) for every priority that maps to
+an external artifact. This rule is structural — embed it in the slot
+builder so it cannot be forgotten on a per-run basis. Synthesized
+priorities with no upstream artifact are exempt.
+
+**Bootstrap.** If neither template exists, optionally offer to seed
+`<repo_root>/_templates/morning/brief.html` and `…/brief.md` from the
+built-in skeleton on first run, so the user can evolve the design from
+there. After bootstrapping, switch to the user-maintained template on
+the next run.
+
+**Why this matters.** The data the brief surfaces changes daily; the
+shape it appears in should not. Loading the skeleton from disk
+guarantees that user style edits persist day-over-day, the skill's job
+shrinks to "gather + triage + emit fragments", and other sitrep skills
+(e.g., `wk:goodevening`, evening.md/.html) adopt the same convention
+under `<repo_root>/_templates/<skill>/`.
+
+The built-in templates described in 2b and 2c below are the **fallback
+only** — they document the slot/scalar contract that any custom
+template must satisfy.
 
 ### 2b. morning.md
 

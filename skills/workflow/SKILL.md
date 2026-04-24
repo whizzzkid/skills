@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.24-215834'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -78,6 +78,39 @@ has already approved the workflow by using it. Minimize interruptions:
 `wk:commit`" or "invoke `wk:pr`", the agent MUST use the Skill tool to
 call the skill — not approximate the behavior by running raw commands.
 The skills contain rules, guards, and conventions that raw commands skip.
+
+## Continuity Rules
+
+The plan presented in Phase 1 is the contract for the session. Two
+recurring failure modes corrode that contract — handle both explicitly.
+
+### On user interruption mid-plan
+
+When the user interrupts to add, redirect, or reprioritize:
+
+1. **Stop** before executing the new ask.
+2. **Update the active plan/TodoWrite list** — insert the new work, keep
+   every unfinished prior item visible. The new ask adds to the plan; it
+   does not replace the remaining steps.
+3. **Re-state** the new top of the plan in one line.
+4. **Resume** from the earliest incomplete item — which may be the new
+   ask, but only if it is genuinely the next step.
+
+The natural drift after an interruption is to execute the new ask and
+then continue from "whatever was last on screen" — which is the new
+ask, not the original plan. The update-first rule prevents that drift.
+
+### Final completeness gate
+
+Before declaring the task complete, re-read the full plan and confirm
+that **every numbered step** is either (a) finished or (b) explicitly
+deferred or removed by the user. "The code shipped" is not the same as
+"the plan is done." Polish steps — `wk:self-review`, `wk:docs`,
+`wk:retro`, the CI verification — are part of the contract; silently
+skipping them is a violation even when they feel optional after a
+successful merge.
+
+If any step is ambiguous, ask the user before claiming completion.
 
 ---
 
@@ -186,6 +219,53 @@ When making a significant architectural decision (new dependency, pattern
 change, technology choice, trade-off acceptance), create an ADR in
 `docs/adr/` using the format: title, status, context, decision, consequences.
 
+### Reuse hygiene
+
+Patterns lifted from neighboring files are not portable by default.
+Before copying a fallback chain, default, or conditional from one file
+into another, trace each variable involved:
+
+1. **Where is it set?** — secrets manager, pipeline env, bootstrap
+   script, calling tool, operator workflow.
+2. **What code path sets it?** — and does that same path reach the new
+   location?
+3. **Does the value mean the same thing in the new context?** — same
+   PR, same env, same caller? If not, the pattern needs to be adapted,
+   not copied verbatim.
+
+Cross-script copies (one `bin/` script to another) are especially
+hazardous because each script tends to have a different invocation
+environment. When a variable's provenance differs between source and
+destination, ask or grep for setters before reusing the pattern.
+
+### Two-sided flow survey
+
+Before designing a new gate, filter, or guardrail, survey the codebase
+and docs for related caller-side conditions on the same concept
+(labels, flags, opt-in markers, conditions). Gates often have two
+sides: a caller condition (who is allowed to trigger) and a callee
+enforcement (what the callee accepts). The two sides must tell a
+coherent story — which is authoritative, which is advisory, what
+happens when they disagree. Surfacing the caller side late forces a
+redesign mid-implementation; surfacing it first folds it into the
+original design.
+
+### Environment-variable provenance in docs
+
+Whenever code or docs introduce or reference an environment variable,
+the documentation must answer:
+
+1. **Where is it stored?** — secrets manager path, pipeline config,
+   shell profile, deploy manifest.
+2. **Who can edit that store?**
+3. **How does a change propagate?** — next build, runtime reload,
+   redeploy.
+4. **What is the default if unset?**
+
+Operators reading the doc need to know how to change the value without
+a code deploy. If any of these are unclear at write time, ask the user
+before publishing the doc or the code path that consumes the variable.
+
 ---
 
 ## Phase 3: Test
@@ -209,6 +289,39 @@ Every task MUST have tests covering:
 - Each commit on the branch should pass tests independently — run the suite
   after each commit to confirm
 - If the project has a linter or type checker, those must also pass
+
+### Shell-script structure tests (awk/grep pitfalls)
+
+When writing bats or grep/awk assertions against a shell script's source
+(e.g., "does this branch contain a call to `X`?"), awk range patterns
+(`/start/,/end/`) are **substring matches, not token matches**. Two
+failure modes recur:
+
+1. **End-range terminated inside a string literal.** Bare shell keywords
+   like `fi`, `done`, or `esac` as end-range patterns will match any line
+   containing that substring — including `"All CI checks passed after N
+   fix retries"`. Always anchor end-ranges to a full line:
+
+   ```bash
+   awk '/RETRY_NOUN=/,/^[[:space:]]*fi[[:space:]]*$/'
+   ```
+
+2. **Duplicate branch labels match the wrong block.** When a script has
+   multiple `case` statements with identical branch labels (e.g.,
+   `failed)` in both an emoji-mapping case and a PR-comment case),
+   single-stage awk matches the first occurrence. Use two-stage awk —
+   outer stage scopes to the correct block via a unique anchor, inner
+   stage scopes to the branch:
+
+   ```bash
+   awk '/Unique anchor comment/,/esac/' "$SCRIPT" \
+       | awk '/failed\)/,/;;/' | grep -q 'THING'
+   ```
+
+Before writing any range-based assertion, scan the target script for
+(a) string literals that contain the planned end-range keyword as a
+substring, and (b) duplicate branch labels across case blocks. Anchor
+or two-stage accordingly.
 
 ---
 
@@ -258,7 +371,10 @@ or any other method.** This is non-negotiable. `wk:pr` handles:
 - CI polling (waits for green before proceeding)
 - Self-review via `wk:self-review` — posts inline comments on **critical
   changes only**: design decisions, non-obvious logic, security-sensitive
-  paths, behavioral changes. No noise, no trivial comments
+  paths, behavioral changes. No noise, no trivial comments. Self-review
+  is a **pending review** even when there is only one comment to make —
+  never substitute raw `gh api .../comments` calls (those publish
+  immediately and skip the human-in-the-loop checkpoint)
 - Automated review feedback triage
 - Marking ready for review
 
@@ -319,8 +435,15 @@ gh pr checks --watch --fail-fast
 # Use wk:buildkite to check build status
 ```
 
-Wait for all required checks to report. Do not proceed while checks are
-pending.
+**Run watch commands in the background.** Any CI poll that may block for
+more than ~30 seconds (`gh pr checks --watch`, `bk build watch`, similar
+loops) MUST be issued as a backgrounded Bash tool call
+(`run_in_background: true`). The orchestrator continues with other plan
+steps — self-review preparation, docs audit, retro setup — in parallel.
+The runtime sends a completion notification when the watch exits. Only
+foreground a status check when the next step genuinely depends on the
+result (e.g., immediately before `gh pr ready`). Do not stall the rest
+of the workflow on a foregrounded watch.
 
 ### Step 2: Diagnose Failures
 
@@ -481,6 +604,7 @@ Use this as a final gate before claiming work is complete:
 - [ ] Regex uses named capture groups
 - [ ] ADRs created for significant architectural decisions
 - [ ] Session retro completed via `wk:retro`
+- [ ] Every numbered plan step is finished or explicitly deferred — not "most" or "the important ones"
 
 ---
 

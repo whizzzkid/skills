@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.24-215834'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -37,6 +37,26 @@ metadata:
 Post inline review comments on your own PR to help human reviewers understand
 design decisions, non-obvious logic, and critical context. This is not an
 adversarial bug hunt — it's documentation for reviewers.
+
+## HARD RULE: Pending review only
+
+**Self-review is always a pending review** — multiple inline comments
+batched under a single GitHub review that the user submits manually
+after inspection. Never approximate this with direct
+`gh api repos/.../pulls/{n}/comments` calls. The raw comments endpoint
+publishes immediately and skips the human-in-the-loop checkpoint that
+is the entire point of this skill.
+
+This rule holds even when there is only one note to make. A single
+design-note comment still goes through the pending-review flow. If you
+catch yourself reaching for `gh api .../comments` (or any equivalent
+that creates a published comment), stop — invoke this skill from the
+top and let it stage the review via the `/pulls/{n}/reviews` endpoint
+with the `event` field omitted (pending state).
+
+A request phrased as "make a note in self-review" or "leave a quick
+comment on the PR" is still a self-review and still goes through this
+flow.
 
 ## Step 1: Gather Context
 

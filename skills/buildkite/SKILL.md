@@ -38,7 +38,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.24-215834'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -219,6 +219,31 @@ bk build view -p <pipeline> --json 2>&1 | jq '{number: .number, state: .state, b
 bk build view -p <pipeline> -b <branch> -w
 ```
 
+## Canonical download path
+
+When saving any Buildkite artifact to disk — build JSON, job logs,
+artifact files — write to a structured, namespaced path rather than an
+ad-hoc `/tmp/<name>`.
+
+```
+/tmp/agent/buildkite/<build_number>/<job_id>/<filename>
+```
+
+| Resource | Example path |
+|---|---|
+| Build JSON | `/tmp/agent/buildkite/<build>/build.json` |
+| Job log | `/tmp/agent/buildkite/<build>/<job_id>/log.txt` |
+| Artifact | `/tmp/agent/buildkite/<build>/<job_id>/artifacts/<file>` |
+
+Run `mkdir -p` on the directory before writing. The structure namespaces
+parallel investigations across multiple builds, prevents cross-session
+overwrites of identically-named scratch files (e.g., two `/tmp/rubocop.log`
+files clobbering each other), and provides a greppable audit trail
+(`ls /tmp/agent/buildkite/`).
+
+This convention is shared across every skill that downloads from an
+external system — see `wk:gh` for the matching path.
+
 ## Quick Reference
 
 | Trigger | Behavior |
@@ -229,6 +254,7 @@ bk build view -p <pipeline> -b <branch> -w
 | Auth error (401/403) | **Stop.** Tell user to run `bk auth login` |
 | Missing scope | **Stop.** Tell user which scope is needed, run `bk auth login` |
 | After git push | Check build status, report result |
+| Saving any `bk` payload to disk | Use `/tmp/agent/buildkite/<build>/...` |
 
 ---
 

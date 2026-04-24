@@ -12,7 +12,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.24-215834'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -103,6 +103,31 @@ The org scope is **not applied** when:
 
 In all other cases, default to `$GITHUB_ORG`.
 
+## Canonical download path
+
+When saving any GitHub artifact to disk — API response bodies, PR body
+drafts, review payloads, workflow run logs, issue comment dumps — write
+to a structured, namespaced path rather than an ad-hoc `/tmp/<name>`.
+
+```
+/tmp/agent/gh/<owner>/<repo>/<resource_type>/<resource_id>/<filename>
+```
+
+| Resource | Example path |
+|---|---|
+| PR body draft | `/tmp/agent/gh/<owner>/<repo>/pulls/<n>/body.md` |
+| Self-review payload | `/tmp/agent/gh/<owner>/<repo>/pulls/<n>/self_review.json` |
+| Issue comments | `/tmp/agent/gh/<owner>/<repo>/issues/<n>/comments.json` |
+| Workflow run log | `/tmp/agent/gh/<owner>/<repo>/runs/<run_id>/log.txt` |
+
+Run `mkdir -p` on the directory before writing. The structure namespaces
+parallel work across multiple PRs/repos, prevents cross-session
+overwrites of identically-named scratch files, and provides a
+greppable audit trail (`ls /tmp/agent/gh/<owner>/<repo>/pulls/`).
+
+This convention is shared across every skill that downloads from an
+external system — see `wk:buildkite` for the matching path.
+
 ## Quick Reference
 
 | Scenario | Behavior |
@@ -112,6 +137,7 @@ In all other cases, default to `$GITHUB_ORG`.
 | User names a different org | Use that org instead |
 | User says "all orgs" | Skip org filter |
 | Current-repo commands | No filter needed |
+| Saving any `gh` payload to disk | Use `/tmp/agent/gh/<owner>/<repo>/...` |
 
 ---
 
