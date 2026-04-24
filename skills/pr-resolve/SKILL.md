@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.23-185321'
+  version: '2026.04.24-231603'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -57,10 +57,11 @@ and manage the full resolution cycle from sync to summary.
 1. **Never push without explicit user confirmation.**
 2. **Never post reply comments without explicit user confirmation.**
 3. **Only resolve threads you actually worked on.** A thread is resolvable
-   only if a fix was applied (option `a`/`e`) or a comment was explicitly
-   dismissed (option `d`). Never resolve follow-up questions (non-reserved
-   letters like `f`), skipped threads (`s`), rethink-pending items (`r`),
-   or self-review threads.
+   only if a fix was applied (option `a`/`e`), a comment was explicitly
+   dismissed (option `d`), or a finding was deferred to a tracked ticket
+   (option `t`). Never resolve follow-up questions (non-reserved letters
+   like `f`), skipped threads (`s`), rethink-pending items (`r`), or
+   self-review threads.
 4. **Never force-push.** Use regular `git push` only.
 5. **Never commit without attempting verification** (build/lint/test). If
    verification is unavailable or fails, inform the user before proceeding.
@@ -427,12 +428,13 @@ skipped" reasoning. Then ask:
 > **(a)** Apply the suggested fix
 > **(e)** Edit the suggested fix (describe how to adjust it)
 > **(d)** Dismiss — not applicable / false positive (explain why)
+> **(t)** Defer to ticket — track in a follow-up issue/ticket instead of fixing in-PR
 > **(s)** Skip — leave as-is without resolving
 > **(r)** Rethink — re-analyze this comment more thoroughly before deciding
 > {additional context-specific options using non-reserved letters}
 
-The letters `a`, `e`, `d`, `s`, `r` are **reserved** and must always mean
-the same thing across every comment. If the agent adds extra options
+The letters `a`, `e`, `d`, `t`, `s`, `r` are **reserved** and must always
+mean the same thing across every comment. If the agent adds extra options
 based on the comment's content (e.g., "(f) Ask the reviewer a follow-up
 question", "(o) Open the file to investigate"), those MUST use letters
 outside the reserved set. Never redefine a reserved letter.
@@ -475,6 +477,16 @@ same category"), do not — one per message, always.
   unless the user said so)
 - Mark for `resolve_after_push`
 
+**(t) Defer to ticket:**
+- Ask: "What's the ticket URL or key tracking this work?" — require a
+  reference (Jira key, GitHub issue URL, or similar). If the user has
+  not yet filed one, offer to draft it but do not create the ticket
+  inside this skill — defer ticket creation to the user.
+- Record in `deferrals` list: `{path, line, ticket_url, ticket_key, threadId, commentId}`
+- Draft reply: "Tracked in [{ticket_key}]({ticket_url}) — will address
+  in a follow-up." (substitute the URL/key the user provided)
+- Mark for `resolve_after_push`
+
 **(s) Skip:**
 - Record in `skipped` list — no fix, no reply, no resolution
 - The thread stays open and untouched
@@ -489,9 +501,10 @@ same category"), do not — one per message, always.
 
 **Additional options (non-reserved letters):** The agent may add extras
 when the comment warrants them — e.g., "(f) Ask the reviewer a
-follow-up question", "(o) Open the referenced file", "(b) Create a
-follow-up issue/ticket instead of fixing now". Record these in the
-matching list (`reply_only`, etc.) and document the letter used.
+follow-up question", "(o) Open the referenced file". Record these in
+the matching list (`reply_only`, etc.) and document the letter used.
+For deferring to a follow-up ticket, use the reserved `(t)` option —
+do not invent a non-reserved letter for that path.
 
 ### After all decisions collected
 
@@ -501,6 +514,7 @@ Announce the transition to execution:
 > - {apply_count} fixes to apply (option `a`/`e`)
 > - {followup_count} follow-up questions to post (non-reserved options)
 > - {dismiss_count} dismissals (option `d`)
+> - {defer_count} deferrals to follow-up tickets (option `t`)
 > - {skip_count} skipped (option `s`)
 >
 > Moving to implementation — I'll apply fixes, verify, and commit each one."
@@ -576,6 +590,14 @@ include the emoji per `wk:commit` conventions.
 
 No code change needed. The drafted reply was already prepared in Step 5.
 
+### For each deferral (option `t`)
+
+No code change needed. The drafted reply (referencing the tracked
+ticket) was already prepared in Step 5. The reply will be posted in
+Step 8 along with all other replies, and the thread will be resolved.
+Do not file the ticket inside this skill — that is the user's
+responsibility.
+
 **Do NOT push after each commit.** All commits are pushed together in
 Step 8 as a single `git push`, so only one CI build is triggered.
 
@@ -618,10 +640,11 @@ After ALL comments are processed, present a full summary:
 ```
 
 **Resolution rule:** Only threads in `resolve_after_push` are resolved.
-A thread lands in that list **only** when a fix was applied (`a`/`e`) or
-a comment was explicitly dismissed (`d`). Threads with follow-up
-questions (non-reserved letters), skipped threads (`s`), rethink-pending
-items (`r`), and self-review threads are **never** resolved.
+A thread lands in that list **only** when a fix was applied (`a`/`e`),
+a comment was explicitly dismissed (`d`), or a finding was deferred to
+a tracked ticket (`t`). Threads with follow-up questions (non-reserved
+letters), skipped threads (`s`), rethink-pending items (`r`), and
+self-review threads are **never** resolved.
 
 Ask:
 > "Does this look correct? I will push {N} commits, post {M} **threaded
@@ -696,13 +719,26 @@ EOF
 This mirrors the `wk:pr` rule: after every push to a branch with an existing
 PR, the description must be updated.
 
-### Force-push warning
+### Causes of 404 on reply posting
 
-If the branch was force-pushed earlier in this session (e.g., after a
-rebase in Step 2), GitHub may have invalidated existing review comment
-threads. Replies to invalidated threads will return **404 Not Found**.
-This is expected and non-fatal — log the failure and continue with the
-remaining replies.
+REST inline-reply posting (`POST /pulls/{n}/comments/{id}/replies`) can
+return **404 Not Found** for the comment ID even when the underlying
+review thread still exists. Two known causes:
+
+1. **Force-push during this session** (e.g., after a rebase in Step 2)
+   may invalidate existing review comment threads.
+2. **Bot review replacement** — bots like `{bot}`,
+   `copilot[bot]`, and similar review automation often replace their
+   entire review object on each push, which destroys the previous
+   comment IDs even though the thread node ID (`PRRT_...`) survives.
+
+REST comment IDs are unstable; GraphQL thread node IDs are stable.
+When a 404 is returned, the thread itself may still be valid for
+resolution via GraphQL (`resolveReviewThread`).
+
+This is expected and non-fatal — log the failure, but try to resolve
+the thread by node ID before giving up (see "Post reply comments"
+below). Continue with the remaining replies regardless.
 
 ### Post reply comments (sequentially)
 
@@ -740,9 +776,15 @@ a quote referencing the original comment so the thread remains readable
 
 If the inline API returns **404**:
 - Log: "Reply to comment {comment_id} on {path}:{line} returned 404
-  (thread likely invalidated by force-push). Skipping."
-- Remove the corresponding thread from `resolve_after_push` (cannot
-  resolve a thread that no longer exists)
+  (thread likely invalidated by force-push or bot review replacement)."
+- The reply text is lost, but the **thread itself may still exist**
+  via its GraphQL node ID. Keep the thread in `resolve_after_push` —
+  the GraphQL `resolveReviewThread` mutation in the next phase uses
+  the thread node ID (`PRRT_...`), which is stable across review
+  replacement and force-push, and will succeed even when the REST
+  comment ID is dead.
+- If the GraphQL resolve also returns an error, only then drop the
+  thread from `resolve_after_push` and continue.
 - Continue with the next reply
 
 If any API returns another error, report it to the user and ask how
@@ -808,9 +850,10 @@ Present a concise summary of everything done:
 **Feedback in self-review threads:** {count} ({user}, {path}:{line} — {body preview} — not triaged, address out-of-band)
 **Bot reviews handled:** {count} ({applied} applied, {dismissed} dismissed)
 **Reviewer fixes:** {count}
+**Deferred to tickets:** {count} ({ticket_list})
 **Commits pushed:** {count} ({commit_list})
 **Replies posted:** {count}
-**Threads resolved:** {count} (only threads with applied fixes or dismissed bots)
+**Threads resolved:** {count} (fixes applied, dismissals, or deferrals)
 **Threads left open:** {count} (follow-ups: {f}, skipped: {s})
 **Merge conflicts:** None / {details}
 
