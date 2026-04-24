@@ -82,17 +82,33 @@ for output token reduction; consistent rules produce consistent results.
 Three is enough for practical use. Users who want `ultra` can invoke `dense`
 and prompt-add "abbreviate common terms".
 
-### D3: No persistent hook by default
+### D3: Opt-in by default via three stackable mechanisms
 
-The skill works without any hook. Invoke `/concise` or `/concise dense` at
-session start and the rules are in effect. Deactivate with `/concise off`.
+The skill supports "always-on by default, opt-out on demand" without any
+single required mechanism. Three layers, each usable independently:
 
-An optional shell hook (`hooks/concise-reminder.sh`) is provided for users
-who want per-turn reinforcement. It writes to a flag file and emits a 1-line
-system message. No npm, no Python — pure `sh`.
+1. **CLAUDE.md / AGENTS.md snippet** — `templates/claude-md-snippet.md`.
+   Pure prose, works for every agent that reads a memory file (Claude Code,
+   Cursor, Gemini CLI, Copilot, Codex). Declares brief mode active and
+   documents opt-out paths.
 
-Rationale: hooks add complexity; the skill must work without them. Users who
-want full caveman-style persistence can enable the hook separately.
+2. **UserPromptSubmit hook** — `hooks/concise-reminder.sh`. Pure POSIX sh.
+   Reads `~/.claude/.concise-mode` (default `brief`), emits a 1-line
+   reminder into Claude Code's per-turn context. Silent-fail on I/O error.
+
+3. **Mode file** — `~/.claude/.concise-mode` is the single source of truth
+   shared by the hook and the `/concise` commands.
+
+**Opt-out precedence** (both hook and CLAUDE.md snippet honor this):
+
+1. `$CONCISE_OFF=1` environment variable
+2. `~/.claude/.concise-off` flag file exists
+3. `~/.claude/.concise-mode` contents = "off"
+
+Rationale: users pick the level that matches their setup. CLAUDE.md alone
+is enough for 90% of agents. Hook adds per-turn reinforcement for agents
+where memory files drift out of active context. Flag-file opt-out is a
+one-command escape hatch that works regardless of which mechanism is on.
 
 ### D4: The compress sub-command
 

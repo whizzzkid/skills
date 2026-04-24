@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.24-220901'
+  version: '2026.04.24-221713'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -45,17 +45,21 @@ Three modes: **brief** (default), **dense**, **off**.
 
 | Invocation | Effect |
 |-----------|--------|
-| `/concise` | Enable brief mode |
+| `/concise` | Enable brief mode for this session + write `~/.claude/.concise-mode` |
 | `/concise brief` | Enable brief mode (explicit) |
 | `/concise dense` | Enable dense mode |
-| `/concise off` | Disable — return to normal prose |
+| `/concise off` | Disable — remove `~/.claude/.concise-mode` and touch `~/.claude/.concise-off` |
 | `/concise:compress <path or paste>` | Rewrite a file or block using active mode rules |
 
 Natural language triggers: "be brief", "less words", "reduce tokens",
 "shorter responses", "compress context", "stop being verbose".
 
-On activation, confirm in one line:
-> `Concise mode: brief. Active for this session.`
+On activation, the skill writes the mode to `~/.claude/.concise-mode` and
+confirms in one line:
+> `Concise mode: brief. Active for this session (and future, via mode file).`
+
+For how to make the skill active by default across all sessions and
+agents, see **Default Activation** below.
 
 ---
 
@@ -119,12 +123,87 @@ Regardless of mode, always write these at full verbosity:
 
 ---
 
-## Persistence
+## Default Activation (opt-in by default)
 
-Mode is active for the current session only. Re-invoke at session start to
-restore. No flag files, no hooks required.
+Concise mode can be enabled globally so every session across every agent
+(Claude Code, Cursor, Gemini CLI, Copilot, Codex) starts in `brief` mode.
+Three mechanisms, stackable:
 
-For hook-based persistence (optional): see `docs/spec.md` — shell hook section.
+### Mechanism 1: CLAUDE.md / AGENTS.md snippet (works everywhere)
+
+The most portable approach — works for every agent that reads a memory
+file. Paste `templates/claude-md-snippet.md` into one of:
+
+- `~/.claude/CLAUDE.md` — global, all Claude Code sessions
+- `~/.agents/AGENTS.md` — cross-agent global
+- `<repo>/CLAUDE.md` or `<repo>/AGENTS.md` — per-project
+- `~/.gemini/GEMINI.md`, `.cursor/rules/concise.md`, etc. — agent-specific
+
+The snippet declares brief mode active plus the opt-out instructions.
+No hook, no code — just prose the model reads at session start.
+
+### Mechanism 2: UserPromptSubmit hook (Claude Code, per-turn)
+
+Enables per-turn reinforcement in Claude Code. Pure POSIX shell, no deps.
+
+Install: add to `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.agents/skills/wk-concise/hooks/concise-reminder.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The hook reads the mode from `~/.claude/.concise-mode` (default: `brief`)
+and emits a 1-line reminder into the agent's context. Silent-fail on any
+I/O error — never blocks a session.
+
+### Mechanism 3: Mode file (single source of truth)
+
+Both the hook and `/concise` commands read/write `~/.claude/.concise-mode`:
+
+```bash
+# Start in dense mode globally
+echo "dense" > ~/.claude/.concise-mode
+
+# Revert to brief (the default)
+echo "brief" > ~/.claude/.concise-mode
+```
+
+## Opt-Out
+
+Any of these disables concise mode without removing the skill:
+
+| Action | Scope |
+|--------|-------|
+| `/concise off` | Current session |
+| `touch ~/.claude/.concise-off` | All future sessions until removed |
+| `export CONCISE_OFF=1` | Current shell's sessions |
+| Remove the snippet from `CLAUDE.md` | Permanent |
+
+Opt-out precedence (hook evaluates top-to-bottom): `$CONCISE_OFF=1` →
+`~/.claude/.concise-off` exists → `~/.claude/.concise-mode` = "off".
+
+## Session Persistence Summary
+
+| Setup | Default at session start | Survives restart? |
+|-------|-------------------------|-------------------|
+| Skill installed, nothing else | `off` (must invoke) | No |
+| CLAUDE.md snippet added | `brief` | Yes |
+| CLAUDE.md + hook + `.concise-mode=dense` | `dense` | Yes |
+| `.concise-off` flag touched | `off` | Yes (until removed) |
 
 ---
 
@@ -189,12 +268,15 @@ Bad targets — **refuse with error, do not compress**:
 
 ## Deactivation
 
-- `/concise off` — explicit
+- `/concise off` — explicit; writes `~/.claude/.concise-off` flag so future
+  sessions also start disabled (until the flag is removed)
 - "stop being brief" / "normal mode" / "full responses please" — natural language
-- End of session (mode does not persist by default)
+- `touch ~/.claude/.concise-off` — manual, persistent opt-out
+- `export CONCISE_OFF=1` — current shell only
+- Remove the CLAUDE.md snippet — permanent
 
 Confirm deactivation:
-> `Normal mode restored.`
+> `Normal mode restored. Opt back in with /concise (or remove ~/.claude/.concise-off).`
 
 ---
 
