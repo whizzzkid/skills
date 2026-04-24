@@ -11,7 +11,6 @@ argument-hint: '[brief|dense|off|compress <target>]'
 allowed-tools:
   - Read
   - Write
-  - Edit
   - Bash
   - AskUserQuestion
   # Learning capture (post-completion hook)
@@ -24,6 +23,7 @@ license: MIT
 metadata:
   author: whizzzkid
   version: '2026.04.24-220901'
+  internal: false
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -112,9 +112,10 @@ Regardless of mode, always write these at full verbosity:
 3. **Irreversible action confirmations** — destructive git ops, production deploys, file deletions
 4. **Technical terms** — library names, API names, flags, env vars, version numbers, file paths, URLs
 5. **Error messages** — reproduce exact error text; never paraphrase
-6. **When the user asks to clarify** — drop mode temporarily, explain fully, resume after
-
-Resume concise mode after the safe-context sentence is complete.
+6. **When the user asks to clarify** — drop mode temporarily, explain fully.
+   Resume concise mode only when the user's next message is clearly a new
+   task, not a follow-up clarification. Never auto-resume mid-clarification
+   thread.
 
 ---
 
@@ -138,6 +139,11 @@ no Python — the LLM applies the rules and returns a diff for review.
 /concise:compress                    # paste text after invocation
 /concise:compress path/to/file.md    # reads file, rewrites in-place after approval
 ```
+
+### Default mode for compress
+
+If no mode is active when `/concise:compress` is invoked, default to `brief`
+and state it: `No mode active — using brief for compression.`
 
 ### Process
 
@@ -170,9 +176,14 @@ Good targets for `/concise:compress`:
 - Skill `SKILL.md` files (non-procedural sections only)
 - Meeting notes, spec docs with heavy prose
 
-Bad targets (skip or warn):
-- Files with >50% code content (`.py`, `.ts`, `.rb`, etc.)
-- Files under `.ssh/`, `.aws/`, `.env`, `credentials*`, `secrets*` — refuse with error
+Bad targets — **refuse with error, do not compress**:
+- Files with >50% code content (`.py`, `.ts`, `.rb`, `.go`, `.rs`, etc.)
+- Files matching: `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.env`, `.env*`
+- Files whose name matches: `credentials*`, `secrets*`, `*password*`, `*apikey*`, `*token*`
+- Files under any of these path components: `.ssh/`, `.aws/`, `.gnupg/`,
+  `.kube/`, `.config/gcloud/`, `.docker/`
+- Symlinks (resolve and check before reading; refuse if target is outside
+  the working directory or home directory prose files)
 
 ---
 
@@ -196,7 +207,7 @@ Confirm deactivation:
 | `/concise off` | off | Full verbose responses |
 | `/concise:compress <target>` | active mode | Rewrite file/text, show diff, confirm |
 | Security / destructive action | any | Auto-switch to full prose for that line |
-| "clarify" / repeat question | any | Full prose, resume after |
+| "clarify" / repeat question | any | Full prose; resume on next unrelated task |
 
 ---
 
