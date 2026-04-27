@@ -48,10 +48,10 @@ MODE_FILE="$CONFIG_DIR/.concise-mode"
 
   case "$MODE" in
     brief)
-      printf 'CONCISE MODE: brief. Drop filler, hedging, pleasantries. Keep grammar. Code blocks and safety warnings stay verbose.\n'
+      printf 'CONCISE MODE: brief. HARD CAPS — answer ≤3 sentences unless code/diff/safety. No tables for ≤3 items (use a sentence). No section headers for single-section answers. No trailing summary or "let me know if". Drop filler, hedging, pleasantries. Keep grammar. Code blocks and safety warnings stay verbose.\n'
       ;;
     dense)
-      printf 'CONCISE MODE: dense. Fragments OK. Drop articles. Use → for causality. Short synonyms. Code blocks and safety warnings stay verbose.\n'
+      printf 'CONCISE MODE: dense. HARD CAPS — answer ≤2 sentences (or fragments) unless code/diff/safety. No tables for ≤4 items. No headers. Drop articles. Use → for causality. Short synonyms. Code blocks and safety warnings stay verbose.\n'
       ;;
   esac
 ) 2>/dev/null || true

@@ -24,7 +24,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.24-222329'
+  version: '2026.04.27-184708'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -78,6 +78,22 @@ agents, see **Default Activation** below.
 - Fluff connectors: "However,", "Furthermore,", "Additionally," (at line start — cut or use "Also")
 
 **Keep:** Full sentences, articles (a/an/the), normal grammar. Professional but tight.
+
+**Hard caps (brief):**
+
+- **≤3 sentences** per answer unless the answer is code, a diff, or a
+  safety warning. Multi-step procedures still need ≤3 sentences of
+  prose around the code; the code itself is exempt.
+- **No tables for ≤3 items** — write a sentence ("X (foo), Y (bar),
+  Z (baz)"). Tables are for ≥4 row × ≥2 column comparisons.
+- **No section headers for single-section answers.** Headers are for
+  navigation; if there's nothing to navigate to, drop them.
+- **No trailing summary, no recap, no "let me know if".** End on the
+  result.
+
+These caps are surfaced per-turn by the `concise-reminder.sh` hook so
+they stay top of mind even when the agent's defaults pull toward
+chattiness.
 
 **Format:** Prefer bullets over paragraphs for multi-part answers.
 
