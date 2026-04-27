@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-171618'
+  version: '2026.04.27-190851'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -716,6 +716,29 @@ doesn't exist yet, create it with the standard format.
 This step is **quick** — only fires when new patterns are detected
 (usually 0-2 items). If no candidates, skip silently.
 
+### Checkbox rule for summary/priorities lists
+
+**Every item in the "Today's Priorities" / "Today's Focus" list MUST
+render as a checkable item** — never plain bullets. The priorities
+list is the user's working surface throughout the day; without
+checkboxes there's no place to mark progress, and the user is forced
+to scroll to the downstream section to tick items off.
+
+- **markdown** (`morning.md`): `- [ ] {priority text} [link]` for
+  unstarted, `- [x] {priority text} [link]` for items already
+  completed (carry-over marked done in triage).
+- **html** (`morning.html`): real `<input type="checkbox">` elements
+  with `localStorage` persistence keyed by date — same mechanism the
+  downstream section cards use. Tick state in the priorities list
+  must round-trip through `localStorage` (so a refresh preserves
+  what's been marked).
+- **Synthesized priorities** with no upstream artifact (e.g., "Adjust
+  system prompt") still get a checkbox — the user wants to mark them
+  done too.
+
+Empty priorities list: render an italicized "Nothing flagged for
+today" placeholder, not a missing slot.
+
 ### Source-link rule for summary/priorities lists
 
 Whenever the brief renders a consolidated "Today's Priorities", "Today's
@@ -793,6 +816,13 @@ HTML, `[label](url) · …` for markdown) for every priority that maps to
 an external artifact. This rule is structural — embed it in the slot
 builder so it cannot be forgotten on a per-run basis. Synthesized
 priorities with no upstream artifact are exempt.
+
+**Checkbox enforcement at render time.** The `priorities` slot
+builder MUST also emit a checkbox for every priority — `- [ ]` /
+`- [x]` in markdown, `<input type="checkbox">` with
+`localStorage`-backed state in HTML. Apply to synthesized priorities
+too. Pair with the source links above: `- [ ] Ship review for {pr}
+[pr ↗] · [thread ↗]`.
 
 **Bootstrap.** If neither template exists, optionally offer to seed
 `<repo_root>/_templates/morning/brief.html` and `…/brief.md` from the
