@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-171618'
+  version: '2026.04.27-184708'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -533,6 +533,18 @@ of the system the user did not explicitly choose. Order candidates from
 4. **Same-tool backend/option change.** Switch backend, installer
    flag, or runner option within the user's chosen tool.
 5. **Tool-stack change.** Removing or replacing a tool the user named.
+
+**Coupled config travels with version changes.** When a fix changes a
+tool's version (bump or downgrade), list the config files that tool
+reads (`.lychee.toml`, `.rubocop.yml`, `tsconfig.json`, `mise.toml`,
+package-manager lockfiles, etc.) and treat them as a coupled set. A
+version change without a coupled-config check often produces a fix that
+ships fine in isolation but breaks the next run. When **reverting** a
+version, also revert any config changes that were made for the
+abandoned version — unless the new syntax is forwards-compatible. A
+one-line check ("did I change config files for this version?") at
+version-revert time catches this; treat it as part of the fix, not as
+follow-up work.
 
 **Hard rule: do not bypass a user-named tool without explicit
 confirmation.** When the user has explicitly named the tool stack they
