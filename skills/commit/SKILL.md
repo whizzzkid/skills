@@ -12,6 +12,9 @@ allowed-tools:
   - "Bash(git status:*)"
   - "Bash(git diff:*)"
   - "Bash(git log:*)"
+  - "Bash(gh pr view:*)"
+  - "Bash(gh pr edit:*)"
+  - "Bash(gh pr list:*)"
   - AskUserQuestion
   # Learning capture (post-completion hook)
   - Write
@@ -23,7 +26,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.23-054649'
+  version: '2026.04.27-184112'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -44,6 +47,10 @@ Use conventional commits with an emoji after the colon. The emoji is REQUIRED.
 
 **Format:** `<action>(optional scope): <emoji> work-done`
 
+### Primary action emojis
+
+Pick the emoji that matches the conventional-commit action:
+
 | Action | Emoji | Example |
 |--------|-------|---------|
 | `feat` | ✨ | `feat(auth): ✨ add OAuth2 login` |
@@ -51,9 +58,49 @@ Use conventional commits with an emoji after the colon. The emoji is REQUIRED.
 | `refactor` | ♻️ | `refactor(api): ♻️ extract middleware` |
 | `docs` | 📝 | `docs(readme): 📝 update install guide` |
 | `test` | 🧪 | `test(auth): 🧪 add token expiry tests` |
-| `chore` | 🔧 | `chore(deps): 🔧 bump dependencies` |
+| `chore` | 🔧 | `chore(config): 🔧 tune lefthook timeouts` |
 | `chore` | 🗑️ | `chore: 🗑️ remove dead code` |
-| `ci` | 🏗️ | `ci(deploy): 🏗️ add staging pipeline` |
+| `ci` | 👷 | `ci(deploy): 👷 add staging pipeline` |
+| `revert` | ⏪ | `revert(api): ⏪ revert middleware extraction` |
+| `perf` | ⚡ | `perf(query): ⚡ index hot lookup column` |
+| `style` | 🎨 | `style(ui): 🎨 align card padding` |
+| `build` | 🏗️ | `build(deps): 🏗️ lock new dep tree` |
+
+### Classifier / modifier emojis
+
+When an action emoji alone underspecifies the intent, append one or more
+classifier emojis after it. Classifiers carry signal that future readers
+(and `git log`-grep) can scan without parsing the message body.
+
+| Emoji | Meaning | Example |
+|-------|---------|---------|
+| 🔧 | Tuning configs (in-tool knobs, thresholds) | `chore(ci): 🔧 raise lychee timeout to 60s` |
+| 📌 | Version pinned (was unpinned / floating) | `chore(deps): 📌 pin lychee to 0.23.0` |
+| ⬆️ | Version bump (upgrade) | `chore(deps): ⬆️ bump rust 1.93 → 1.94` |
+| ⬇️ | Version downgrade | `fix(ci): ⬇️ downgrade lychee 0.24 → 0.23` |
+| 🦾 | Agentic tool strengthening (skill / hook / agent capability) | `feat(skill): 🦾 add idempotency gate to wk:goodmorning` |
+| 🛡️ | Adding guardrails (validation, gate, policy enforcement) | `feat(commit): 🛡️ enforce PR sync after push` |
+| 🔒 | Security fix or hardening | `fix(auth): 🔒 reject unsigned tokens` |
+| 🔥 | Removed code / files / features | `refactor: 🔥 drop deprecated v1 routes` |
+| 🚨 | Fix lint / type / static-analysis warning | `fix(lint): 🚨 resolve clippy warnings` |
+| 💚 | Fix failing CI | `fix(ci): 💚 install lychee directly` |
+| 🚧 | Work-in-progress (use sparingly; prefer drafts) | `feat(parser): 🚧 partial AST walker` |
+| 🩹 | Small non-critical fix | `fix(ui): 🩹 trim trailing whitespace` |
+| ♿ | Accessibility improvement | `feat(ui): ♿ add ARIA labels to nav` |
+| 🌐 | Internationalization / localization | `feat(i18n): 🌐 add fr-CA translations` |
+| 🚸 | UX improvement | `feat(ux): 🚸 friendlier error copy on form submit` |
+| 🚀 | Deploy / release-related | `chore(release): 🚀 cut v2026.04.27` |
+| ⏱️ | Performance — latency-specific | `perf(api): ⚡⏱️ cache hot endpoint` |
+
+**Stacking.** Append classifiers after the action emoji, no separator:
+`fix(ci): ⬇️📌 downgrade and pin lychee to 0.23.0`. Two classifiers max
+in the subject line; if more apply, move the rest into the body.
+
+**Pick the most specific classifier that fits.** `🔧` (config tuning) and
+`📌` (pinning) are both `chore` flavors — pick the one a future reader
+would search for. When unsure, prefer the emoji that names the
+*observable change* (pinned, downgraded, security-hardened) over the
+generic action emoji.
 
 Always pass commit messages via HEREDOC for correct formatting:
 
@@ -120,6 +167,90 @@ stop and ask the user to run the command manually.
 If a regular push is rejected, tell the user and ask how to proceed rather
 than automatically force-pushing.
 
+## Post-Push: PR Sync (HARD RULE)
+
+**After every successful push to a branch that has an open PR, the PR
+title and description MUST be re-checked against the post-push branch
+state and updated if they have drifted.** No exceptions.
+
+Drift signals to a reviewer that the agent shipped without re-reading
+its own work. The PR is the source of truth for everyone except the
+author — leaving it stale silently changes what reviewers approve.
+
+### Step 1: Detect whether a PR exists
+
+After `git push` returns success:
+
+```bash
+gh pr view --json number,title,body,headRefName,state 2>/dev/null
+```
+
+- Exit code non-zero or `state != OPEN` → no open PR; skip the rest of
+  this section.
+- Otherwise capture `number`, `title`, `body` for comparison.
+
+### Step 2: Check for drift
+
+Compare the PR's current title and body against the branch's
+post-push state. Drift is present when **any** of these is true:
+
+- The PR title no longer matches the branch's primary intent (e.g.,
+  the branch was originally "add feature X" but now also fixes Y, or
+  the scope flipped from feat to fix, or a version pin landed but the
+  title still says "upgrade").
+- The PR body lists commits, files, or behaviors that no longer match
+  the branch (removed commits via amend/rebase, added commits the body
+  doesn't mention, reverted decisions still described as live).
+- A "Test plan" / "Summary" / "Closes #N" section is now wrong (test
+  steps reference removed code, summary bullets contradict the diff,
+  linked issue was actually closed by a different PR).
+- The PR body lists a version, dependency, or config value that the
+  latest push has changed.
+
+A clean push that only adds tests/docs aligned with the existing
+description is **not** drift.
+
+### Step 3: Update on drift
+
+If drift is detected, update the PR before returning control:
+
+```bash
+gh pr edit <number> --title "<new-title>" \
+  --body "$(cat <<'EOF'
+<refreshed body>
+EOF
+)"
+```
+
+Rules for the refresh:
+
+- Preserve any `Closes #N` / `Fixes #N` / `Refs #N` annotations unless
+  they are now wrong.
+- Preserve human-authored sections (reviewer notes, test plan checks
+  the user added). Do not overwrite review checkboxes a human ticked.
+- Reflect the **current** set of commits and the **current** behavior —
+  not the historical narrative of how the branch evolved.
+- Keep the title under ~70 chars; details belong in the body.
+
+If unsure whether a section is human-authored vs agent-authored, ask
+the user before overwriting it. Better to ask once than to clobber a
+hand-edited test plan.
+
+### Step 4: Report
+
+Tell the user explicitly that the PR was synced (or that no drift was
+found):
+
+> "Pushed to `<branch>`. PR #<N> title/body updated to reflect the new
+> commits."
+
+Or:
+
+> "Pushed to `<branch>`. PR #<N> already in sync — no edit needed."
+
+Silence after a push that touched an open PR is itself a violation of
+this rule.
+
 ## Quick Reference
 
 | Trigger | Behavior |
@@ -128,6 +259,8 @@ than automatically force-pushing.
 | "push" | Regular push, ask on rejection |
 | Signing failure | Stop, tell user to fix GPG/SSH config |
 | Hook failure | Stop, ask user to run manually |
+| Push succeeded + open PR exists | Run PR Sync — diff title/body vs branch, `gh pr edit` if drifted |
+| Push succeeded + no PR | Skip PR Sync silently |
 
 ---
 
