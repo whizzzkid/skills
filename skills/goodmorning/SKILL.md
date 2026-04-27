@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-190851'
+  version: '2026.04.27-192211'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -81,22 +81,33 @@ artifacts already exist:
 test -f "$TODAY_DIR/morning.md" || test -f "$TODAY_DIR/morning.html"
 ```
 
-If either file exists, **stop and require explicit user confirmation**
-before continuing. Re-running is expensive (parallel agents, MCP auth,
-interactive triage) and a regeneration will overwrite any hand-edits the
-user made to `morning.md` or checkbox state persisted in
-`morning.html`'s localStorage view.
+If either exists, read its **generator version** from the frontmatter
+(see "Brief versioning" below — markdown has `generated_with:` in YAML
+frontmatter; HTML has `<meta name="generated-with-version" ...>`).
+Compare against this skill's current `metadata.version`:
 
-Read the existing `morning.md` and surface a short summary:
+| Stored version | Action |
+|----------------|--------|
+| Missing (legacy brief, no annotation) | Treat as older — prompt to regenerate. |
+| **Older** than current | **Auto-regenerate** without prompting. The skill has improved since this brief was written; the user wants the new behavior. Announce: "Today's brief was generated with v{stored}; current is v{current}. Regenerating." |
+| **Equal or newer** | Prompt the user (existing flow below) — re-running is expensive and would overwrite hand-edits and checkbox state. |
+
+CalVer ordering is lexicographic (`YYYY.MM.DD-HHMMSS` UTC), so a plain
+string compare is correct: `[ "$STORED" \< "$CURRENT" ]` means stored
+is older.
+
+Read the existing `morning.md` and surface a short summary for the
+prompt path:
 - Generation timestamp (file mtime)
-- Item counts per section (`needs response`, `PRs to review`, `meetings`, etc.)
+- Generator version (from frontmatter)
+- Item counts per section (`needs response`, `PRs to review`, etc.)
 - Any items already checked off
 
-Then prompt:
+Then prompt (only when stored version is equal/newer):
 
 > "Today's morning brief already exists at
-> `sitrep/{YYYY}/{MM}/{DD}/morning.md` (generated {mtime}, {N} actionable
-> items, {C} completed).
+> `sitrep/{YYYY}/{MM}/{DD}/morning.md` (generated {mtime} with
+> v{stored}, {N} actionable items, {C} completed).
 >
 > **(a)** Open the existing brief — no regeneration
 > **(b)** Regenerate from scratch — overwrites current files
@@ -110,9 +121,12 @@ Then prompt:
 | (b) | Continue to Stage 1. The user has explicitly accepted overwrite. |
 | (c) | Exit silently. |
 
-Auto mode is **not** an exemption — silently overwriting today's brief
-defeats the user's prior triage. In auto mode, default to **(a)** and
-note the skip in the run summary.
+Auto mode is **not** an exemption for the prompt path — silently
+overwriting today's brief defeats the user's prior triage. In auto
+mode, default to **(a)** and note the skip in the run summary. The
+auto-regenerate-on-older-version path runs in auto mode without
+prompting (the version delta is itself the user's prior consent —
+they bumped the skill).
 
 ### Read yesterday's evening summary
 
@@ -841,11 +855,57 @@ The built-in templates described in 2b and 2c below are the **fallback
 only** — they document the slot/scalar contract that any custom
 template must satisfy.
 
+### Brief versioning (applies to 2b and 2c)
+
+Every generated brief MUST embed the generator's `metadata.version`
+so the next run can detect "is this brief older than the current
+skill?" without parsing prose. Read the value from this skill's own
+frontmatter at runtime — never hardcode.
+
+- **markdown** (`morning.md`): YAML frontmatter at the top of the
+  file with the keys `generated_with`, `generated_with_skill`, and
+  `generated_at` (ISO-8601 UTC):
+
+  ```markdown
+  ---
+  generated_with: 2026.04.27-190851
+  generated_with_skill: wk:goodmorning
+  generated_at: <timestamp>
+  ---
+
+  # Morning Brief — {YYYY-MM-DD}
+  ```
+
+- **html** (`morning.html`): `<meta>` tags inside `<head>` with
+  matching values:
+
+  ```html
+  <meta name="generated-with-version" content="2026.04.27-190851">
+  <meta name="generated-with-skill" content="wk:goodmorning">
+  <meta name="generated-at" content="<timestamp>">
+  ```
+
+The Stage 0 idempotency check reads `generated_with` (markdown YAML
+or HTML meta) and string-compares against this skill's current
+`metadata.version`. CalVer (`YYYY.MM.DD-HHMMSS` UTC) is lexicographic,
+so plain `<` comparison gives the correct ordering.
+
+If the user-maintained template (per the discovery cascade) does not
+already include these annotations, the renderer must inject them
+before writing the file — they are non-negotiable structural metadata,
+not user-customizable design.
+
 ### 2b. morning.md
 
 Write to `<today_dir>/morning.md`:
 
 ```markdown
+---
+generated_with: {SKILL_VERSION}
+generated_with_skill: wk:goodmorning
+generated_at: {ISO_8601_UTC}
+---
+
 # Morning Brief — {YYYY-MM-DD}
 
 ## Today's Meeting Prep
@@ -919,6 +979,7 @@ dashboard — **no CDN dependencies**, all CSS and JS embedded.
 
 **Required features:**
 
+0. **Generator metadata** — `<head>` must include `<meta name="generated-with-version" content="{SKILL_VERSION}">`, `<meta name="generated-with-skill" content="wk:goodmorning">`, and `<meta name="generated-at" content="{ISO_8601_UTC}">`. The Stage 0 idempotency check reads these on the next run.
 1. **Header** — date, greeting, overall progress bar (X of Y items done)
 2. **Multi-column dashboard layout** — use CSS grid to fill the screen:
    - **3-column grid** on wide screens (>1200px), **2-column** on medium

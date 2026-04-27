@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-171618'
+  version: '2026.04.27-192211'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -65,24 +65,34 @@ artifacts already exist:
 test -f "$TODAY_DIR/evening.md" || test -f "$TODAY_DIR/evening.html"
 ```
 
-If either file exists, **stop and require explicit user confirmation**
-before continuing. Re-running is expensive (7 parallel agents, MCP auth,
-interactive resolution, draft review) and a regeneration overwrites the
-user's existing brag document, carry-over decisions, and any
-hand-curated notes in `evening.md` — the file tomorrow's
-`wk:goodmorning` will read.
+If either exists, read its **generator version** from the frontmatter
+(see "Brief versioning" below — markdown YAML `generated_with:`, HTML
+`<meta name="generated-with-version">`). Compare against this skill's
+current `metadata.version`:
 
-Read the existing `evening.md` and surface a short summary:
+| Stored version | Action |
+|----------------|--------|
+| Missing (legacy file, no annotation) | Treat as older — prompt to regenerate. |
+| **Older** than current | **Auto-regenerate** without prompting. The skill has improved since this wrap-up was written; the user wants the new behavior. Announce: "Today's wrap-up was generated with v{stored}; current is v{current}. Regenerating." |
+| **Equal or newer** | Prompt the user (existing flow below) — re-running is expensive (7 parallel agents, MCP auth, draft review) and would overwrite the brag document, carry-over decisions, and hand-curated notes that tomorrow's `wk:goodmorning` will read. |
+
+CalVer ordering is lexicographic (`YYYY.MM.DD-HHMMSS` UTC), so a plain
+string compare is correct: `[ "$STORED" \< "$CURRENT" ]` means stored
+is older.
+
+Read the existing `evening.md` and surface a short summary for the
+prompt path:
 - Generation timestamp (file mtime)
+- Generator version (from frontmatter)
 - Achievement counts (PRs shipped, meetings documented, feedback given)
 - Carry-over count and unresolved items
 - Any issues created today
 
-Then prompt:
+Then prompt (only when stored version is equal/newer):
 
 > "Today's evening wrap-up already exists at
-> `sitrep/{YYYY}/{MM}/{DD}/evening.md` (generated {mtime}, {A}
-> achievements, {C} carry-overs).
+> `sitrep/{YYYY}/{MM}/{DD}/evening.md` (generated {mtime} with
+> v{stored}, {A} achievements, {C} carry-overs).
 >
 > **(a)** Open the existing wrap-up — no regeneration
 > **(b)** Regenerate from scratch — overwrites current files and
@@ -97,7 +107,10 @@ Then prompt:
 | (b) | Continue to Stage 1. The user has explicitly accepted overwrite. |
 | (c) | Exit silently. |
 
-Auto mode is **not** an exemption — silently overwriting today's
+Auto mode is **not** an exemption for the prompt path. The
+auto-regenerate-on-older-version path runs in auto mode without
+prompting (the version delta is itself the user's prior consent).
+Silently overwriting today's
 wrap-up loses the day's documented achievements. In auto mode, default
 to **(a)** and note the skip in the run summary.
 
@@ -810,7 +823,30 @@ If no candidates, skip silently.
 Write to `<today_dir>/evening.md`. This file is consumed by
 tomorrow's `wk:goodmorning` — structure it for machine readability.
 
+### Brief versioning (applies to evening.md and evening.html)
+
+Every generated wrap-up MUST embed the generator's `metadata.version`
+so the next run's idempotency check can detect "is this older than
+the current skill?" without parsing prose. Read the value from this
+skill's own frontmatter at runtime — never hardcode.
+
+- **markdown** (`evening.md`): YAML frontmatter at the top with
+  `generated_with`, `generated_with_skill`, `generated_at`.
+- **html** (`evening.html`): `<meta name="generated-with-version">`,
+  `<meta name="generated-with-skill">`, `<meta name="generated-at">`
+  inside `<head>`.
+
+CalVer string-compare gives correct ordering. The annotations are
+non-negotiable structural metadata; the renderer must inject them
+even when a user-maintained template doesn't include the slots.
+
 ```markdown
+---
+generated_with: {SKILL_VERSION}
+generated_with_skill: wk:goodevening
+generated_at: {ISO_8601_UTC}
+---
+
 # Evening Summary — {YYYY-MM-DD}
 
 ## Achievements
@@ -879,6 +915,7 @@ not "here's what's left."
 
 **Required features:**
 
+0. **Generator metadata** — `<head>` must include `<meta name="generated-with-version" content="{SKILL_VERSION}">`, `<meta name="generated-with-skill" content="wk:goodevening">`, and `<meta name="generated-at" content="{ISO_8601_UTC}">`. The Stage 0 idempotency check reads these on the next run.
 1. **Header** — date, cheerful greeting ("Great day, {name}!" or
    "You crushed it today!"), overall stats bar (items completed,
    PRs shipped, meetings attended)
