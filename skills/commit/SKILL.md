@@ -26,7 +26,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-184708'
+  version: '2026.04.27-190529'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -91,6 +91,10 @@ classifier emojis after it. Classifiers carry signal that future readers
 | 🚸 | UX improvement | `feat(ux): 🚸 friendlier error copy on form submit` |
 | 🚀 | Deploy / release-related | `chore(release): 🚀 cut v2026.04.27` |
 | ⏱️ | Performance — latency-specific | `perf(api): ⚡⏱️ cache hot endpoint` |
+| 🔐 | Touching secrets / keys / credentials | `chore(env): 🔐 rotate signing key` |
+| 🛞 | Re-inventing the wheel — flag for review | `feat(util): 🛞 custom retry helper (lib X already does this)` |
+| 🧪 | Adding tests alongside another change | `feat(auth): ✨🧪 OAuth login + coverage` |
+| 🎨 | Readability / code-as-art polish | `refactor(parser): ♻️🎨 rename for clarity` |
 
 **Stacking.** Append classifiers after the action emoji, no separator:
 `fix(ci): ⬇️📌 downgrade and pin lychee to 0.23.0`. Two classifiers max
