@@ -26,7 +26,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-190529'
+  version: '2026.04.27-190619'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -90,21 +90,34 @@ classifier emojis after it. Classifiers carry signal that future readers
 | 🌐 | Internationalization / localization | `feat(i18n): 🌐 add fr-CA translations` |
 | 🚸 | UX improvement | `feat(ux): 🚸 friendlier error copy on form submit` |
 | 🚀 | Deploy / release-related | `chore(release): 🚀 cut v2026.04.27` |
-| ⏱️ | Performance — latency-specific | `perf(api): ⚡⏱️ cache hot endpoint` |
+| ⏱️ | Performance — latency-specific | `perf(api): ⏱️ cache hot endpoint` |
 | 🔐 | Touching secrets / keys / credentials | `chore(env): 🔐 rotate signing key` |
 | 🛞 | Re-inventing the wheel — flag for review | `feat(util): 🛞 custom retry helper (lib X already does this)` |
-| 🧪 | Adding tests alongside another change | `feat(auth): ✨🧪 OAuth login + coverage` |
-| 🎨 | Readability / code-as-art polish | `refactor(parser): ♻️🎨 rename for clarity` |
+| 🧪 | Test-only commit (paired with `test` action) | `test(auth): 🧪 cover token expiry` |
+| 🎨 | Readability / code-as-art polish | `refactor(parser): 🎨 rename for clarity` |
+| 🤖 | Fallback when no other emoji fits | `chore: 🤖 mixed cleanup across modules` |
 
-**Stacking.** Append classifiers after the action emoji, no separator:
-`fix(ci): ⬇️📌 downgrade and pin lychee to 0.23.0`. Two classifiers max
-in the subject line; if more apply, move the rest into the body.
+**Exactly one emoji per commit subject. No stacking.**
 
-**Pick the most specific classifier that fits.** `🔧` (config tuning) and
-`📌` (pinning) are both `chore` flavors — pick the one a future reader
-would search for. When unsure, prefer the emoji that names the
-*observable change* (pinned, downgraded, security-hardened) over the
-generic action emoji.
+Pick the single most specific emoji that names the change. If a primary
+action emoji and a classifier both fit, **use the classifier** — it
+carries more signal (`📌` beats `🔧` for a version pin; `⬇️` beats
+`fix`'s 🐛 for a version downgrade). If two classifiers both seem
+relevant, pick the one a future reader would `grep` for first.
+
+**Fallback when no emoji fits: 🤖.** When a change genuinely defies
+classification (mixed-bag commit, agent-driven mechanical change with
+no single observable shape, "miscellaneous"), use 🤖 rather than
+stacking multiple emojis or picking a poor fit. 🤖 is also the right
+choice for fully agent-authored commits where no human curated the
+intent.
+
+| Pick this | Over this | Why |
+|-----------|-----------|-----|
+| `📌` | `🔧` | Pinning is the specific change; config tuning is the category |
+| `⬇️` | `🐛` | Downgrade names the action; bug-fix is the outcome |
+| `🛡️` | `✨` | Guardrail is the shape; feature is the bucket |
+| `🤖` | `✨🐛` | One emoji always beats two |
 
 Always pass commit messages via HEREDOC for correct formatting:
 
@@ -291,7 +304,7 @@ If `N >= 3 && LINES < 50`, ask:
 - **Force-push is required after squash.** Confirm the user accepts
   the force-push before rewriting history on a pushed branch.
 - **Use the new subject to name the actual fix**, not the journey.
-  "fix(ci): ⬇️📌 downgrade and pin lychee 0.23.0" beats "squashed CI
+  "fix(ci): ⬇️ downgrade and pin lychee 0.23.0" beats "squashed CI
   fix attempts."
 
 If the user declines or the thresholds aren't met, leave history alone.
