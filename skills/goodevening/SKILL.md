@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.23-055340'
+  version: '2026.04.27-171618'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -55,6 +55,51 @@ WEEK_NUM=$(date +%V)
 MONTH_DIR="$PWD/sitrep/$(date +%Y)/$(date +%m)"
 WEEK_MEMORY="$MONTH_DIR/week-${WEEK_NUM}-memory.md"
 ```
+
+### Idempotency check — has today's wrap-up already been generated?
+
+Before doing any data fetch or triage, check whether today's output
+artifacts already exist:
+
+```bash
+test -f "$TODAY_DIR/evening.md" || test -f "$TODAY_DIR/evening.html"
+```
+
+If either file exists, **stop and require explicit user confirmation**
+before continuing. Re-running is expensive (7 parallel agents, MCP auth,
+interactive resolution, draft review) and a regeneration overwrites the
+user's existing brag document, carry-over decisions, and any
+hand-curated notes in `evening.md` — the file tomorrow's
+`wk:goodmorning` will read.
+
+Read the existing `evening.md` and surface a short summary:
+- Generation timestamp (file mtime)
+- Achievement counts (PRs shipped, meetings documented, feedback given)
+- Carry-over count and unresolved items
+- Any issues created today
+
+Then prompt:
+
+> "Today's evening wrap-up already exists at
+> `sitrep/{YYYY}/{MM}/{DD}/evening.md` (generated {mtime}, {A}
+> achievements, {C} carry-overs).
+>
+> **(a)** Open the existing wrap-up — no regeneration
+> **(b)** Regenerate from scratch — overwrites current files and
+>     re-runs all 7 agents
+> **(c)** Cancel
+>
+> Reply with your choice."
+
+| Choice | Behavior |
+|--------|----------|
+| (a) | `open "$TODAY_DIR/evening.html"` and exit. Skip all remaining stages. |
+| (b) | Continue to Stage 1. The user has explicitly accepted overwrite. |
+| (c) | Exit silently. |
+
+Auto mode is **not** an exemption — silently overwriting today's
+wrap-up loses the day's documented achievements. In auto mode, default
+to **(a)** and note the skip in the run summary.
 
 ### Read the morning brief
 

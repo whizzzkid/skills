@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.24-215834'
+  version: '2026.04.27-171618'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -71,6 +71,48 @@ DOW=$(date +%u)
 
 mkdir -p "$TODAY_DIR"
 ```
+
+### Idempotency check — has today's brief already been generated?
+
+Before doing any data fetch or triage, check whether today's output
+artifacts already exist:
+
+```bash
+test -f "$TODAY_DIR/morning.md" || test -f "$TODAY_DIR/morning.html"
+```
+
+If either file exists, **stop and require explicit user confirmation**
+before continuing. Re-running is expensive (parallel agents, MCP auth,
+interactive triage) and a regeneration will overwrite any hand-edits the
+user made to `morning.md` or checkbox state persisted in
+`morning.html`'s localStorage view.
+
+Read the existing `morning.md` and surface a short summary:
+- Generation timestamp (file mtime)
+- Item counts per section (`needs response`, `PRs to review`, `meetings`, etc.)
+- Any items already checked off
+
+Then prompt:
+
+> "Today's morning brief already exists at
+> `sitrep/{YYYY}/{MM}/{DD}/morning.md` (generated {mtime}, {N} actionable
+> items, {C} completed).
+>
+> **(a)** Open the existing brief — no regeneration
+> **(b)** Regenerate from scratch — overwrites current files
+> **(c)** Cancel
+>
+> Reply with your choice."
+
+| Choice | Behavior |
+|--------|----------|
+| (a) | `open "$TODAY_DIR/morning.html"` and exit. Skip all remaining stages. |
+| (b) | Continue to Stage 1. The user has explicitly accepted overwrite. |
+| (c) | Exit silently. |
+
+Auto mode is **not** an exemption — silently overwriting today's brief
+defeats the user's prior triage. In auto mode, default to **(a)** and
+note the skip in the run summary.
 
 ### Read yesterday's evening summary
 
