@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-213814'
+  version: '2026.04.27-215905'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -179,6 +179,58 @@ in the other two surfaces. Fetch all three every run.
 Inline comments and their threads come from GraphQL + REST (below).
 Review summary bodies and issue comments must be fetched separately —
 they do not appear in `reviewThreads` or `/pulls/{n}/comments`.
+
+### HARD RULE: three-surface pre-flight check
+
+Before proceeding to Step 4, **every invocation** must have fetched
+all three surfaces in the current run. Track explicit per-invocation
+flags and refuse to advance until each is `true`:
+
+```
+inline_comments_fetched  = false
+review_bodies_fetched    = false
+issue_comments_fetched   = false
+```
+
+Cached results from a prior `wk:pr-resolve` invocation in the same
+session do **not** count. Issue comments and review summaries can
+appear at any time, including between invocations — most often the
+top-of-PR description-drift bots fire late. Skipping a surface
+because "we already looked at this PR earlier" loses high-severity
+findings (description drift, title/body mismatch, missing test
+counts) that don't surface anywhere else.
+
+If any flag remains false (HTTP error, network failure, MCP/auth
+issue), stop and report:
+
+> "Step 3 incomplete: {surface(s)} not fetched. Re-run after fixing
+> {error}, or proceed manually."
+
+Never silently advance with partial fetches.
+
+### HARD RULE: agent-observed drift is first-class feedback
+
+If during Step 1 (PR view) or Step 3 (file/diff reads) the agent
+notices PR drift the bots haven't flagged yet — stale title, stale
+description, mismatched test counts, outdated `Closes #N` references,
+contradictions between the body and the latest commits — treat that
+observation as an active item in this run, **not** a side-offer to
+the user.
+
+Inject a synthetic comment into the comment map with:
+
+- `surface: agent_observation`
+- `reviewer: <agent>` (or the model name)
+- `path`/`line`: the affected location, or `null` for whole-PR drift
+- `body`: the observation, framed as a finding ("Title still says
+  'block non-allowlisted' after the rename to denylist")
+- `bot_badge` flag set so the comment renders as `🤖 (agent)` in
+  Step 4's suggestion format
+
+The triage flow (Step 4 classification, Step 5 consultation, Step 6
+fix) handles it identically to any other finding. The agent often
+sees drift before bots do; deferring to "wait for the bot to catch
+up" is strictly worse than acting in the same run.
 
 ### Identify the PR author
 
