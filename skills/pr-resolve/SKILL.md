@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.24-231603'
+  version: '2026.04.27-213814'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -411,12 +411,52 @@ otherwise.
 Be honest in the skip rationale. If there is no good reason to skip,
 say so explicitly — do not fabricate a dismissal justification.
 
+### Classify each suggestion: obvious-fix vs judgment-required
+
+After preparing the suggestion, tag it with a classification that
+controls how Step 5 presents it. The goal is to keep one-at-a-time
+consultation for real decisions while removing ceremony from
+mechanical fixes.
+
+| Tag | Condition | Examples |
+|-----|-----------|----------|
+| `obvious-fix` | "Why this could be skipped" reduces to "no valid reason" / empty / "broken link" / "stale reference"; OR the fix mechanically follows from a previous user-approved change in the same PR (rename cleanup, inversion cleanup, renamed-symbol references) | Broken link to a renamed spec, env var that contradicts the PR's own stated rename, missed reference after a global rename |
+| `judgment-required` | Real tradeoff, false-positive possibility, scope question, multiple valid approaches, security/perf judgment, anything where a thoughtful reviewer would push back | Suggested API change, alternative algorithm, scope-creep request, "is this even a bug?" |
+
+Default to `judgment-required` when uncertain — false negatives here
+(asking when you didn't need to) are cheap; false positives
+(auto-applying something that needed review) are expensive.
+
 ## Step 5: Consult — Collect All Decisions First
 
 **HARD RULE: Do NOT touch code during this step.** This is a
-consultation-only phase. Present each comment one at a time, collect the
-user's decision, then move to the next. No edits, no commits, no
-replies — just decisions.
+consultation-only phase. Present each `judgment-required` comment one
+at a time, collect the user's decision, then move to the next. No
+edits, no commits, no replies — just decisions.
+
+### Auto-apply preview for obvious-fix comments
+
+Before per-comment consultation, bundle every `obvious-fix` suggestion
+(from Step 4 classification) into a single preview block:
+
+> "**Auto-apply queue ({K} obvious fixes — no judgment needed):**
+>
+> 1. {path}:{line} — {one-line summary} (skip rationale: {empty / no
+>    valid reason})
+> 2. ...
+>
+> These will be applied as-is during Step 6, one commit each per Hard
+> Rule 7. Reply **all-review** to instead consult on each one
+> individually, or proceed without reply to keep the queue."
+
+Wait briefly for an `all-review` override, then move to per-comment
+consultation for `judgment-required` items only. Apply the
+`obvious-fix` queue in Step 6 with no further prompts (still one
+commit per finding; replies + thread resolution as normal).
+
+If **all** active comments are `obvious-fix`, present the preview and
+skip Step 5's per-comment loop entirely — proceed to Step 6 after the
+override window closes.
 
 ### Present one at a time
 
