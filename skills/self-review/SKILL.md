@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.24-215834'
+  version: '2026.04.27-190744'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -90,6 +90,52 @@ changed, why it changed, and what alternatives existed.
 
 The goal is signal, not noise. Fewer high-quality comments beat many trivial
 ones.
+
+## Step 2.5: Reconcile against existing self-review
+
+Before presenting proposed comments, fetch every review thread on the
+PR authored by the PR author (i.e., prior self-review). On a
+multi-round PR, the natural "what's new since last push" framing
+makes it easy to restate rationale that's already on the PR — each
+design decision should appear **exactly once**.
+
+```bash
+PR_NUM=$(gh pr view --json number --jq .number)
+OWNER=$(gh repo view --json owner --jq .owner.login)
+REPO=$(gh repo view --json name --jq .name)
+AUTHOR=$(gh pr view --json author --jq .author.login)
+
+gh api graphql -f query='
+  query($o:String!,$r:String!,$n:Int!){
+    repository(owner:$o,name:$r){pullRequest(number:$n){
+      reviewThreads(first:100){nodes{
+        isResolved
+        comments(first:100){nodes{path line body author{login}}}
+      }}
+    }}
+  }' -F o="$OWNER" -F r="$REPO" -F n="$PR_NUM" \
+  --jq --arg a "$AUTHOR" '
+    .data.repository.pullRequest.reviewThreads.nodes[]
+    | select(.comments.nodes[0].author.login == $a)
+    | {resolved: .isResolved, c: .comments.nodes[0]}
+    | {path: .c.path, line: .c.line, resolved, body: .c.body}'
+```
+
+For each proposed new comment, check the existing self-review threads
+for **topical overlap** (same rationale, even on a different file or
+line). On overlap:
+
+- **Drop** the new comment if the prior note already says everything
+  this one would, OR
+- **Rewrite as a cross-reference** ("See related design note on
+  `docs/specs/...:N`.") if the new location needs a pointer.
+
+Resolve the prior thread only if its rationale is now **stale** —
+never just because the new comment restates it.
+
+Spec files are usually the canonical home for design rationale;
+implementation-file notes should either add NEW context (tradeoff
+specific to this site) or point at the spec.
 
 ## Step 3: Present Comments for Approval
 
