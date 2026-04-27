@@ -33,7 +33,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.27-211535'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -407,6 +407,27 @@ leaks or accumulation bugs.
 contracts. Mutate the function's output in downstream consumers to see
 if callers validate what they receive. For modified functions, verify
 that existing callers still receive the shape they expect.
+
+**Interpreter / runtime portability:** When the diff touches scripts
+or modules that target multiple runtime environments (Linux CI vs
+macOS dev, multiple Node versions, Python 3.x vs 3.y), run the
+playground tests under **each runtime explicitly** — not just
+whatever is first on `PATH`. Static review cannot catch
+version-specific syntax; only runtime execution under the older or
+stricter interpreter can.
+
+| Diff includes | Run playground/tests under |
+|---------------|---------------------------|
+| `*.sh`, `*.bash`, `Brewfile`, shebanged shell | both `/bin/bash` (macOS bash 3.2) **and** the modern bash on `PATH`; flag bash 4+ idioms: `${var,,}`, `${var^^}`, `${var^}`, `${var,}`, `declare -A`, `mapfile`, `readarray`, `\|&`, `coproc` |
+| `*.py` | each Python version in the project's support matrix (`pyproject.toml [project] requires-python` or CI matrix) |
+| `*.js`, `*.ts`, `package.json` engines change | each Node version in `engines.node` / `.nvmrc` / CI matrix |
+| `*.rb`, `Gemfile.lock` | each Ruby version in `.ruby-version` / CI matrix |
+| `Dockerfile`, GH Actions matrix | each `runs-on` / base image listed |
+
+If a runtime listed above is not installed locally, do not silently
+skip it — note the gap in the review report ("could not test under
+bash 3.2; recommend reviewer or CI verify"). Authors and reviewers
+running modern interpreters consistently miss old-runtime breakage.
 
 Keep each experiment script short and focused — one script per function,
 one concern per script. Log failures clearly with input/output pairs.
