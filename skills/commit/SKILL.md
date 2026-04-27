@@ -26,7 +26,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-184112'
+  version: '2026.04.27-184708'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -250,6 +250,47 @@ Or:
 
 Silence after a push that touched an open PR is itself a violation of
 this rule.
+
+## Post-CI-Fix Squash Offer
+
+After the CI fix loop (`wk:workflow` Phase 6) exits green, before
+marking the PR ready, check whether the branch has a long tail of
+small `fix(ci):` commits that would be more readable as one.
+
+**Detection:** count commits on the branch ahead of the base whose
+message matches `^fix(\(ci\))?:`. If the count is ≥3 **and** the net
+diff across those commits is small (<50 lines, single config file or a
+handful of related ones), offer to squash them into a single commit
+that names the actual change that shipped:
+
+```bash
+N=$(git log --oneline "$(git merge-base HEAD main)..HEAD" \
+    --grep '^fix(\(ci\))\?:' | wc -l | tr -d ' ')
+LINES=$(git diff "$(git merge-base HEAD main)..HEAD" \
+    -- $(git log --name-only --pretty=format: "$(git merge-base HEAD main)..HEAD" \
+    --grep '^fix(\(ci\))\?:' | sort -u) | wc -l | tr -d ' ')
+```
+
+If `N >= 3 && LINES < 50`, ask:
+
+> "The branch has {N} `fix(ci):` commits whose net diff is {LINES}
+> lines. Want me to squash them into a single
+> `fix(ci): <emoji> <what-actually-shipped>` commit before marking the
+> PR ready? (a) yes  (b) keep separate"
+
+**Rules:**
+
+- **Do not auto-squash.** This is destructive — the user must approve.
+- **Do not squash across user-authored commits.** Only squash the
+  agent's own back-to-back CI fix commits. If a user commit sits in
+  the middle, leave the chain intact.
+- **Force-push is required after squash.** Confirm the user accepts
+  the force-push before rewriting history on a pushed branch.
+- **Use the new subject to name the actual fix**, not the journey.
+  "fix(ci): ⬇️📌 downgrade and pin lychee 0.23.0" beats "squashed CI
+  fix attempts."
+
+If the user declines or the thresholds aren't met, leave history alone.
 
 ## Quick Reference
 
