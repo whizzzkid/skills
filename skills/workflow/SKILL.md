@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.24-215834'
+  version: '2026.04.27-171618'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -464,16 +464,93 @@ When CI fails:
 4. **For infrastructure issues**: re-trigger the build. If persistent, inform
    the user — do not attempt code fixes for infra problems
 
+### Diagnosis discipline
+
+Before generating fix candidates, cross-reference the failure surface
+against the repo's own rulebook and runtime constraints. Most CI
+failures are first violations of a standard the repo already documents.
+
+**Cross-reference repo standards.** Re-read the repo's `CLAUDE.md`,
+`AGENTS.md`, and any `docs/conventions/`-style files when the error
+message contains any of these signals:
+
+| Error signal | Rule to re-check |
+|--------------|------------------|
+| `no version is set`, `couldn't resolve latest`, `version not found`, `unknown tag` | Version-pinning rule (any `latest`/unpinned dep is suspect) |
+| `auth failed`, `unauthorized`, `bad credentials`, `expired token` | Env-var / secrets provenance docs |
+| `permission denied` on a script | File-permissions rule (`chmod +x` on executables) |
+| `command not found` on a tool the project uses | Tool-version manifest (`mise.toml`, `.tool-versions`) |
+
+If the error matches a rule the repo already states, the **first** fix
+candidate must be "make the repo comply with its own rule" — not a
+backend change, installer rewrite, or workaround.
+
+**Respect runner constraints.** When the workflow uses an
+organization-managed runner group (`runs-on: group: <org>-*-default` or
+similar), assume the runner enforces an action allowlist and other
+policy that's invisible from the workflow file alone. Before
+introducing a new third-party GitHub Action on such a runner:
+
+1. Prefer `actions/*` first-party actions, or any third-party action
+   already used elsewhere in the same workflow set.
+2. Prefer non-action approaches (curl install, package manager, mise)
+   when a first-party action does not exist.
+3. If a new third-party action is genuinely the right answer, ask the
+   user before pushing: "Does `<action@SHA>` need allowlisting on the
+   `<runner-group>` runner?" The round-trip cost of asking is much
+   smaller than a blocked CI run + revert.
+
 ### Step 3: Fix and Re-push
 
 For code failures:
 
-1. **Fix the issue** — apply the minimal, targeted fix
+1. **Fix the issue** — apply the minimal, targeted fix (see ordering below)
 2. **Run tests locally** — verify the fix passes before pushing
 3. **Commit via `wk:commit`** — one fix per commit, conventional format
 4. **Push** — regular `git push`, never force-push
 5. **Update PR description** — `gh pr edit` to reflect the fix
 6. **Re-enter the loop** — go back to Step 1
+
+#### Fix-candidate ordering
+
+"Minimal" is not just smallest diff — it's smallest change to the part
+of the system the user did not explicitly choose. Order candidates from
+"smallest input change" to "largest stack change":
+
+1. **Smallest version regression.** When a dependency upgrade is the
+   proximate cause of the failure, try downgrading that dependency by
+   one minor or patch version before changing build/install machinery,
+   switching backends, or rewriting workflow steps. Two-version-down
+   beats N-tool-changes-deep almost every time, and it preserves the
+   rest of the user's setup. A version pin is also a smaller diff than
+   a backend swap.
+2. **Repo-rule compliance.** If Diagnosis discipline surfaced a violated
+   repo rule (e.g., unpinned version), the fix is "comply with the
+   rule" — usually a one-line config change.
+3. **Same-tool config tweak.** Adjust the existing tool's config
+   (`mise.toml`, `.lychee.toml`, `tsconfig.json`) before swapping the
+   tool out.
+4. **Same-tool backend/option change.** Switch backend, installer
+   flag, or runner option within the user's chosen tool.
+5. **Tool-stack change.** Removing or replacing a tool the user named.
+
+**Hard rule: do not bypass a user-named tool without explicit
+confirmation.** When the user has explicitly named the tool stack they
+want (`mise-action`, `actions/setup-node`, a specific package manager,
+etc.), do not silently rewrite the workflow to skip that tool because
+the obvious fixes proved hard. A property of a tool's behavior
+("auto-install off", "no caching") is not the same as the tool itself
+("mise", "setup-node"). Before any change at level 5 above, stop and
+ask:
+
+> "<Tool>'s <backend/config> is failing on <version>. Options:
+> (a) downgrade <dep> to <prior-version>, (b) switch to <alternative
+> backend within the same tool>, (c) drop <tool> from this workflow.
+> Which do you want?"
+
+Even in auto mode, removing a named tool from the user's stack is a
+design decision that exceeds the autonomy budget — it is not "make
+reasonable assumptions on routine work."
 
 ### Loop Limits
 
@@ -490,6 +567,15 @@ For code failures:
 - **Each attempt must be different.** Never retry the exact same fix. If
   the same failure persists after a fix, the diagnosis was wrong — re-read
   the logs and try a different approach
+- **Axis-of-variation check before attempt 3.** Before pushing the third
+  fix attempt, write a one-line restatement of the axis being varied
+  (e.g., "I'm varying the install backend", "I'm varying the binary
+  path"). If attempts 1 and 2 are on the same axis, **broaden** — try a
+  different axis on attempt 3 (version regression, tool choice,
+  dependency removal), not "the same thing harder." Different surface
+  errors on the same axis are still the same axis. A genuinely
+  different axis is the only thing that converts the 3-attempt limit
+  into a useful bailout instead of three wasted CI runs.
 
 ### Exit Conditions
 
