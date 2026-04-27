@@ -23,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.27-184708'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -181,11 +181,68 @@ Wait for approval before editing the skill file.
 
 ## Step 7: Apply the Update
 
-After approval:
-- Edit the skill file — both the new content and any audit cleanup
-- Re-read the final file to confirm coherence
-- Bump the `metadata.version` (patch for fixes, minor for new steps)
-- Commit with a message describing the improvement
+After approval, edit the files:
+
+1. Edit the skill file — both the new content and any audit cleanup
+2. Re-read the final file to confirm coherence
+3. Bump the `metadata.version` (patch for fixes, minor for new steps)
+
+Step 7 is **edits only**. Committing happens in Step 8 — do not commit
+inside Step 7 and call the run done.
+
+## Step 8: Verify and Commit (terminal gate)
+
+The run is not complete until this step finishes. Do not return control
+to the user with a dirty working tree, an uninstalled skill, or an
+unpushed commit.
+
+### Run the install verifier
+
+The repo's post-change hook is hand-run, not automated. Confirm it
+succeeded before declaring victory:
+
+```bash
+test -d ./skills || cd "$(git rev-parse --show-toplevel)"
+npx skills add . -g -y -a=claude 2>&1 | tail -5
+```
+
+Read the output. `Done!` means the install succeeded. `No skills found`
+or any non-zero exit means the cwd was wrong or the install failed —
+re-run from the repo root and do not proceed until you see `Done!`.
+Treat silent success patterns as a hard failure that requires retry.
+
+### Commit and push
+
+```bash
+git status --short
+```
+
+Every dirty file must end up in a commit before the run completes. In
+batch mode, group by logical change (one commit per skill updated, plus
+one chore commit for `.learned.md` renames + `.distilled-sources.log`
+update). Use `wk:commit`'s conventional format with classifier emojis
+(🦾 agentic-tool strengthening, 🛡️ guardrails, 🔧 config tuning) where
+applicable.
+
+Push immediately after each commit unless the user has said otherwise.
+
+### Final clean-tree check
+
+```bash
+git status --short
+```
+
+The output must be empty. If anything remains uncommitted, decide
+whether to commit it or stash it — do not leave debt for "later." A
+non-empty `git status` at the end of a sharpen run is a violation of
+this gate.
+
+### Report
+
+Tell the user, in one line per skill: which skill was updated, the
+new version, and the principle distilled. Then confirm: tree clean,
+skills installed, commits pushed. Silence after edits is a violation
+of this gate.
 
 ## Anti-Patterns to Avoid
 
@@ -233,7 +290,7 @@ specific incident.
 | `/wk:sharpen --scan --force` | Batch mode — reprocess everything, ignore log |
 
 **Single mode:** Read report → Read full skill → Distill → Draft →
-Audit for overlap/bloat → Present with cleanup → Apply
+Audit for overlap/bloat → Present with cleanup → Apply → Verify & commit
 
 **Batch mode:** Scan learnings + memories → Filter by log → Process each
 via single mode → Rename learnings to `.learned.md` → Update log
