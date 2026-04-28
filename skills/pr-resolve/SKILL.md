@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-215905'
+  version: '2026.04.28-193417'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -120,49 +120,65 @@ If co-author session:
 ## Step 2: Sync Branch
 
 Ensure the local branch is up to date with **both** the base branch and
-the remote PR branch. The remote PR branch can move independently of
-local (e.g., GitHub's "Update branch" button, another session, or a
-teammate pushing). If local has commits not on the remote PR branch AND
-the remote PR branch has commits not on local, merging only the base
-branch creates divergent histories and `git push` will be rejected as
-non-fast-forward.
-
-```bash
-git fetch origin
-```
+the remote PR branch before fetching or triaging any feedback. Resolving
+comments against a stale branch surfaces fixes that no longer apply
+cleanly and can produce review replies that contradict the post-merge
+state.
 
 ### Reconcile with the remote PR branch first
 
-Before merging the base branch, check whether the remote PR branch is
-ahead of local:
+The remote PR branch can move independently of local (GitHub's "Update
+branch" button, another session, a teammate pushing). If local has
+commits not on the remote PR branch AND vice versa, integrating the
+base alone creates divergent histories and the eventual push will be
+rejected non-fast-forward.
 
 ```bash
-git log --oneline HEAD..origin/{head_branch}
+git fetch origin
+HEAD_BRANCH=$(gh pr view --json headRefName --jq .headRefName)
+
+if [ -n "$(git log --oneline HEAD..origin/$HEAD_BRANCH 2>/dev/null)" ]; then
+  git rebase "origin/$HEAD_BRANCH"
+fi
 ```
 
-If the output is non-empty, rebase local commits onto the remote PR
-branch to absorb the upstream changes:
+This keeps the next push fast-forward and avoids creating a second
+merge commit that diverges from the remote.
 
-```bash
-git rebase origin/{head_branch}
+### Integrate the base branch via `wk:pr-update`
+
+Delegate base-branch integration to `wk:pr-update` rather than running
+merge/rebase directly here. That skill picks the right strategy for
+the branch's size (rebase for `<5` commits ahead, patch-replay
+otherwise), runs the conflict-resolution loop, re-validates the work
+post-integration (tests + cheap typecheck), and force-with-lease
+pushes.
+
+```
+Skill(wk:pr-update, args="<base_branch>")
 ```
 
-This keeps push as fast-forward and avoids creating a second merge
-commit that diverges from the remote.
+If `wk:pr-update` reports an unresolvable conflict and resets to the
+starting SHA, **stop the resolve flow** — there's nothing to triage
+on a branch that can't integrate base. Surface the conflict to the
+user and exit; resume `wk:pr-resolve` after the user untangles
+manually.
 
-### Merge the base branch
+If `wk:pr-update` reports validation regression after integration,
+also stop — fixing the regression is a higher-priority concern than
+addressing review feedback on a broken branch.
 
-```bash
-git merge origin/{base_branch} --no-edit
-```
+If `wk:pr-update` reports the branch was already up to date
+(`$BEHIND == 0`), continue immediately to Step 3.
 
-If the merge produces conflicts:
-1. List conflicted files with `git status`
-2. Present to the user and ask how to resolve
-3. Do not proceed until the working tree is clean
+### Why delegate
 
-If already up to date on both fronts, confirm:
-> "Branch is up to date with `{base_branch}` and `origin/{head_branch}`."
+The merge/rebase + conflict + validation logic was previously inlined
+here in shorter form. Delegating to `wk:pr-update` ensures every
+update path uses the same strategy heuristics, the same safety net
+(`$START_SHA` reset on failure), and the same PR sync rules — so a
+PR-resolve update is indistinguishable from a manual `wk:pr-update`
+run, and improvements to integration behavior apply everywhere.
 
 ## Step 3: Fetch Unresolved Comments
 
