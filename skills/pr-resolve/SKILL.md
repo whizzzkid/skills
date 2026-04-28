@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.28-193417'
+  version: '2026.04.28-215001'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -478,6 +478,57 @@ otherwise.
 
 Be honest in the skip rationale. If there is no good reason to skip,
 say so explicitly — do not fabricate a dismissal justification.
+
+### Check whether the comment exposes a design flaw
+
+Before drafting the suggested fix as a localized patch to whatever
+the reviewer pointed at, decide whether the comment is actually a
+**design signal** about the surrounding code. Reviewers often
+phrase a structural concern as a narrow line-level observation;
+treating it as line-level loses the signal.
+
+Trigger phrases / patterns that mean **"the design is fragile,"**
+not "this line needs a tweak":
+
+- "this might not trigger" / "this branch is never hit in {context}"
+- "this depends on X being correctly set" (external/upstream
+  invariant)
+- "what happens if {edge case the code can't actually distinguish}"
+- "why do we need this {check / branch / fallback} at all"
+- "this is duplicated with / contradicts {another path}"
+- "the contract here is unclear" / "I don't understand when this
+  fires"
+
+When the comment matches one of these, the **primary suggested fix**
+is a design change — typically removing the fragile branch,
+inverting a conditional, lifting an invariant up to the caller,
+collapsing two paths into one, or extracting a clearer contract.
+A clarifying reply is the **secondary** option, not the lead.
+
+Format the suggestion to make the design option visible:
+
+```
+**Suggested fix (primary — design):** <Remove/restructure/invert>
+**Why this fix:** <The structural problem the reviewer's
+observation pointed at, even if they framed it as a line-level
+question.>
+
+**Suggested fix (secondary — clarify):** <One-paragraph reply
+explaining the current design's intent, IF the design is actually
+correct and the reviewer just needs context.>
+```
+
+In Step 5's per-comment consultation, present the design option
+first. The reserved letters keep their meaning: `(a) Apply the
+suggested fix` selects the design option as drafted; the user can
+pick `(e) Edit` to choose the clarifying reply or shape the design
+fix differently.
+
+The lead-with-explanation failure mode is common because writing a
+clarifying reply is cheaper than reworking the code — but if the
+reviewer was pointing at a real fragility, the explanation
+preserves the bug. Bias toward design changes when the trigger
+phrases above appear.
 
 ### Classify each suggestion: obvious-fix vs judgment-required
 
