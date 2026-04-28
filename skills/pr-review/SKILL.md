@@ -33,7 +33,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.28-193540'
+  version: '2026.04.28-194037'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -187,10 +187,28 @@ gh api graphql -f query='
 
 ### Summarize
 
-Announce what was found before moving on:
+Announce what was found before moving on, broken down by commenter
+type so the dedup and validation strategy is planned upfront:
 
-> "Found X existing review comments (Y active, Z resolved as stale). Carrying
-> N active comments forward into investigation."
+> "Found X existing review comments (Y active, Z resolved as stale).
+> Active breakdown: A from human reviewers, B from bot reviewers
+> ({bot_logins}). Carrying N active comments forward into
+> investigation; B bot findings queued for Phase 4 validation."
+
+### Build the bot-findings validation queue
+
+Every active comment whose author is a bot (`user.type == "Bot"` or
+login ending in `[bot]`) goes into a `bot_findings_to_validate`
+queue. Phase 4 reproduces each in the playground; Phase 5 posts a
+typed reply driven by the validation outcome (see "Validate bot
+findings in the playground" in Phase 4).
+
+This is in addition to — not instead of — the exclusion list below.
+The exclusion list still prevents the agent from posting parallel
+top-level comments on the same line; the validation queue is the
+mechanism by which bot findings get either confirmed (with a
+suggestion fix) or refuted (with counter-evidence) instead of being
+silently ignored.
 
 ### Build exclusion list
 
@@ -432,6 +450,55 @@ running modern interpreters consistently miss old-runtime breakage.
 Keep each experiment script short and focused — one script per function,
 one concern per script. Log failures clearly with input/output pairs.
 
+### Validate bot findings in the playground
+
+Every entry in Phase 2's `bot_findings_to_validate` queue must run
+through a reproduction experiment in the playground before Phase 5
+posts replies. Bots fire on heuristics, so their findings range
+from precise and actionable to false-positive noise — silent skip
+either misses a real issue or wastes the author's time, and silent
+agreement amplifies false positives. Validation in code is the
+arbiter.
+
+For each queued bot finding:
+
+1. **Read the bot's claim** — the comment body plus any code
+   pointers (file:line, snippets, "consider X" suggestions).
+2. **Reproduce in a script** — write a focused playground experiment
+   that exercises the exact code path the bot flagged. If the
+   finding is "this function returns the wrong value when X," call
+   the function with X and compare. If the finding is "this loop
+   is O(n²)," time it at growing input sizes. If the finding is
+   "this regex doesn't match Y," feed it Y. Use the same
+   adversarial-testing patterns as the rest of Phase 4.
+3. **Classify the outcome:**
+
+| Outcome | Definition | Phase 5 action |
+|---------|------------|----------------|
+| **Confirmed** | The script reproduces the failure mode the bot described. | Reply to the bot's thread with `**Validated locally** — <one-line evidence>` followed by a ` ```suggestion ` block (or a code-fence example if outside the diff). The author can apply the suggestion directly. |
+| **Refuted** | The script contradicts the bot's claim — the code behaves correctly under the inputs the bot flagged. | Reply with `**Could not reproduce** — <one-line counter-evidence>` and a brief explanation of what was tested. Do NOT silently leave the thread open; the author needs the counter-signal to dismiss confidently. |
+| **Inconclusive** | The script can't decisively confirm or refute (missing fixtures, the failure mode requires production-only state, the claim is style/preference rather than behavior). | Leave the thread alone. Note "inconclusive" in the Phase 4 summary so the user can decide whether to investigate further or accept the bot's verdict. |
+
+Save each validation script under
+`.review-playground/bot-findings/{bot_login}-{thread_id}.{ext}` so
+the user can inspect what was actually run.
+
+If a bot finding is **out of scope for the playground** (e.g., a
+documentation/style claim that requires reading prose, not running
+code), skip the script step and use Phase 3 reading-based
+investigation instead — but still classify outcome and reply
+accordingly. The reply policy is the same regardless of how the
+verdict was reached.
+
+The validation outcome supersedes the dedup-against-bot branching
+in Phase 5: a confirmed bot finding gets a reply with suggestion
+fix even when the agent had not independently spotted it; a refuted
+bot finding gets a reply with counter-evidence rather than the
+default "validated locally" template. The dedup-against-bot
+fallback only applies when validation produces "inconclusive" AND
+the agent has independently flagged the same issue — in that case
+post the agent's evidence + fix in a reply.
+
 ### Validate PR tests via mutation
 
 For each test file in the PR, verify the tests actually detect breakage:
@@ -598,28 +665,30 @@ benefit from independent verification, human reviewers do not.
 - If the existing comment is **wrong or incomplete**, reply with a
   correction rather than posting a parallel comment.
 
-**Duplicate of a bot reviewer's comment** (commenter `user.type` ==
-`Bot`, or login ends in `[bot]`):
+**Bot reviewer comments** (commenter `user.type` == `Bot`, or login
+ends in `[bot]`):
 
-- **Reply, don't skip.** A second-pass agent independently reaching
-  the same conclusion is *evidence* the issue is real — silence
-  loses that signal and leaves the author unsure whether to act.
-- The reply should include (1) **one line of local-validation
-  evidence** ("Validated locally — confirmed at <file>:<line>" or
-  "Reproduced via Phase 4 playground experiment <name>") and
-  (2) a **concrete actionable fix** — preferably as a
-  ` ```suggestion ` block per the rules above.
-- These bot-validation replies count toward the 6-comment cap, same
-  as new top-level comments.
-- Never post a parallel top-level comment for the same issue — the
-  reply preserves the no-duplicates rule while adding independent
-  verification.
+Every active bot comment was queued in Phase 2 and run through
+Phase 4's "Validate bot findings in the playground" step. The
+validation outcome decides the reply, not the fact of duplication:
 
-When presenting the comment summary, include both a "Bot-validation
-replies" section and a "Skipped" section so the user sees the dedup
-strategy and can override individual entries if needed. Phase 2's
-active-comments summary should also break down bot vs human
-counts so the dedup strategy is planned before Phase 3 starts.
+| Phase 4 outcome | Phase 5 action |
+|-----------------|----------------|
+| **Confirmed** | Reply with `**Validated locally** — <evidence>` + ` ```suggestion ` block (or in-diff anchored code-fence example if the fix is outside the diff). Always reply, even when the agent did not independently spot the issue. |
+| **Refuted** | Reply with `**Could not reproduce** — <counter-evidence>` + brief description of what was tested. Always reply — silent skip leaves the author guessing. |
+| **Inconclusive** AND agent independently flagged the same issue | Reply with the agent's own evidence + suggestion fix (the agent's verdict carries the thread). |
+| **Inconclusive** AND agent did not flag it | Leave the thread alone. Note in the Phase 5 summary so the user can override. |
+| **Out of scope for code validation** (style/prose claim) | Use Phase 3 reading-based verdict; reply per the same confirmed/refuted templates. |
+
+These bot replies count toward the 6-comment cap, same as new
+top-level comments. Never post a parallel top-level comment for
+the same issue — the reply preserves the no-duplicates rule while
+adding the validation verdict.
+
+When presenting the comment summary, group entries as
+**Bot-validation: confirmed / refuted / inconclusive** plus
+**Skipped (human duplicates)** so the user sees the full strategy
+and can override individual entries.
 
 ### Validate comment positions against the diff
 
