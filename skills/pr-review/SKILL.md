@@ -33,7 +33,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-211535'
+  version: '2026.04.28-193540'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -535,6 +535,49 @@ Each comment body should follow this structure:
 {Optional: context, evidence from playground experiments, or suggested fix}
 ```
 
+### Use applicable `suggestion` blocks for actionable fixes
+
+When a comment proposes a concrete code replacement, prefer a GitHub
+` ```suggestion ` fence over a language fence (` ```go `, ` ```ts `,
+etc.). Suggestion fences render as a one-click "Commit suggestion"
+button in the GitHub UI; language fences render as read-only code
+samples the author has to copy by hand.
+
+Rules:
+
+- Use ` ```suggestion ` fences only when the target lines are inside
+  the PR diff. Suggestions outside the diff are not applicable —
+  GitHub disables the apply button.
+- Anchor the comment on the exact lines being replaced. One-line
+  fix → `line: <N>` + `side: "RIGHT"`. Multi-line replacement →
+  `start_line` + `line` + matching `start_side`/`side` to span the
+  range; both endpoints must be in the diff.
+- The suggestion body must match the **exact existing whitespace**
+  (tabs vs spaces, depth). Indentation drift silently breaks the
+  apply button. Pre-fetch the raw lines before drafting and visually
+  verify:
+  ```bash
+  awk 'NR>=START && NR<=END' "$FILE" | cat -A   # shows tabs as ^I
+  ```
+- Multiple ` ```suggestion ` blocks per comment are allowed — each
+  becomes its own commit when applied.
+- Reply suggestions inherit the parent's anchor; they only apply to
+  replacements at the parent's line. If the fix spans different
+  lines, prefer a new top-level comment with the correct multi-line
+  anchor (and reference the parent thread in the body) over a reply
+  with an un-applicable suggestion.
+- If the lines to replace are **outside** the diff: anchor the
+  comment on a nearby diff-visible line, drop the suggestion fence,
+  use a plain language fence as an example, and note that the change
+  must be applied manually.
+- Praise / questions / pure observations do not need suggestion
+  blocks.
+
+Capture the raw target lines with their original whitespace as a
+**Phase 4 prerequisite** for any finding with a concrete fix —
+getting indentation wrong only manifests after the comment is
+posted, when the apply button silently fails.
+
 ### Deduplicate against existing comments
 
 **HARD RULE: Never post a new top-level comment that duplicates an existing
@@ -542,15 +585,41 @@ review comment.** Before drafting each comment, check the exclusion list from
 Phase 2. A comment is a duplicate if it targets the same file and line range
 AND raises the same concern — even if you discovered it independently.
 
-For duplicates:
-- **Skip it.** The existing thread already covers the issue.
-- If your investigation adds **new information** the original reviewer missed,
-  reply to the existing thread instead of creating a new comment.
-- If the existing comment is **wrong or incomplete**, reply with a correction
-  rather than posting a parallel comment.
+Treatment depends on the original commenter's type — bot reviewers
+benefit from independent verification, human reviewers do not.
 
-When presenting the comment summary, include a "Skipped" section listing
-intentionally omitted duplicates so the user can override if needed.
+**Duplicate of a human reviewer's comment:**
+
+- **Skip it.** The existing thread already carries the human's
+  voice; a second voice agreeing is noise.
+- If your investigation adds **new information** the original
+  reviewer missed, reply to the existing thread instead of creating
+  a new comment.
+- If the existing comment is **wrong or incomplete**, reply with a
+  correction rather than posting a parallel comment.
+
+**Duplicate of a bot reviewer's comment** (commenter `user.type` ==
+`Bot`, or login ends in `[bot]`):
+
+- **Reply, don't skip.** A second-pass agent independently reaching
+  the same conclusion is *evidence* the issue is real — silence
+  loses that signal and leaves the author unsure whether to act.
+- The reply should include (1) **one line of local-validation
+  evidence** ("Validated locally — confirmed at <file>:<line>" or
+  "Reproduced via Phase 4 playground experiment <name>") and
+  (2) a **concrete actionable fix** — preferably as a
+  ` ```suggestion ` block per the rules above.
+- These bot-validation replies count toward the 6-comment cap, same
+  as new top-level comments.
+- Never post a parallel top-level comment for the same issue — the
+  reply preserves the no-duplicates rule while adding independent
+  verification.
+
+When presenting the comment summary, include both a "Bot-validation
+replies" section and a "Skipped" section so the user sees the dedup
+strategy and can override individual entries if needed. Phase 2's
+active-comments summary should also break down bot vs human
+counts so the dedup strategy is planned before Phase 3 starts.
 
 ### Validate comment positions against the diff
 
