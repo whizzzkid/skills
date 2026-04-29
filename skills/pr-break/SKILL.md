@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.29-201047'
+  version: '2026.04.29-201410'
   internal: false
   model:
     openai: gpt-4.1
@@ -297,6 +297,46 @@ Every child PR's draft description must mention:
 This matches `wk:pr`'s description template (see Step 2 there);
 the `wk:pr-break` plan **populates** that template for each child.
 
+### Propagate parent annotations into the right child
+
+The original PR carries metadata that downstream readers and
+automation rely on — GitHub issue links, Jira keys, design-doc
+URLs, deploy/test notes, hand-curated context. The split must
+preserve every annotation, but distribute them so each child
+carries only what is relevant to *its* slice. Blindly copying
+every annotation into every child creates noise; dropping any
+annotation loses traceability.
+
+Extract from Stage 1's reads — title, body, comments, commit
+trailers — and classify each annotation:
+
+| Annotation kind | Routing rule |
+|-----------------|--------------|
+| `Closes #N` / `Fixes #N` (GitHub issue auto-close) | **Final child only.** Closing the issue before the user-visible behavior ships claims work that hasn't shipped. The earlier children carry `Refs #N` instead, so the issue thread still surfaces them. |
+| `Refs #N` / `Related to #N` (non-closing reference) | **Every child** that touches code in the issue's scope. Cheap context for reviewers; no auto-close side effect. |
+| Jira key suffix `[BOARD-NUM]` (per `wk:jira`) | **Every child's title.** The shared ticket is the umbrella; `wk:jira`'s state machine still transitions In Progress → In Review → Done off the *final* child's merge, not each one. |
+| Linked design doc / RFC / spec URL | **Every child.** Reviewers of any slice need the design context to evaluate fit. |
+| Linked benchmark / perf data / load-test result | **The child that touches the path being measured.** Other children skip — the data does not apply to them. |
+| Linked screenshot / Loom / demo | **The user-visible feature child** (usually the final one, or the per-feature slice that produces the demo'd state). |
+| Hand-written reviewer notes ("ignore the test churn", "this depends on env var X being set") | **The child(ren) that actually require the note.** Drop from children where the note is irrelevant. |
+| `Co-Authored-By:` trailers from the parent's commits | Preserve on the **commits** that ship the corresponding work, per the original commit-to-author mapping. |
+| Deploy / migration callouts ("requires data migration", "feature flag X must be on") | **The child that introduces the dependency** AND the **final child** if the dependency stays load-bearing once the stack lands. |
+
+When in doubt about routing, prefer **including** the annotation in
+a child over dropping it — the cost of an extra `Refs #N` line is
+zero; the cost of losing a deploy callout is real.
+
+For each child block in Stage 4's plan output, add an
+**Annotations** subsection listing the propagated metadata so the
+user can audit routing during Stage 6 review:
+
+```
+**Annotations propagated:**
+- Refs #NNN (issue from parent — Closes moves to final child)
+- Spec: docs/specs/feature-x.md (carried from parent)
+- [BOARD-NUM] Jira suffix on title
+```
+
 ---
 
 ## Stage 5: Validate the plan against the five invariants
@@ -340,6 +380,46 @@ location if one is established) and return.
 ---
 
 ## Stage 7: Execute (only on explicit approval)
+
+### Child branch naming
+
+Every child branch reuses the original PR's branch name with a
+`-part-N` suffix, where `N` is the child's stack position starting
+at **1**:
+
+```
+<original-branch>          # parent / source
+<original-branch>-part-1   # first child (cut from $BASE_BRANCH)
+<original-branch>-part-2   # second child (cut from -part-1)
+<original-branch>-part-3   # third child (cut from -part-2)
+...
+```
+
+If the original branch already ends in `-part-N` (the user is
+re-splitting an already-split PR), append onto the **leaf** name —
+do not double-suffix. `feat/foo-part-2` becoming a 2-child split
+produces `feat/foo-part-2-part-1` and `feat/foo-part-2-part-2`,
+not `feat/foo-part-1` (which would collide with a sibling).
+
+Validate the names before cutting branches:
+
+```bash
+ORIG_BRANCH=$(gh pr view "$PR_NUM" --json headRefName --jq .headRefName)
+for n in $(seq 1 "$N"); do
+  CHILD="$ORIG_BRANCH-part-$n"
+  if git show-ref --verify --quiet "refs/heads/$CHILD" \
+     || git ls-remote --exit-code --heads origin "$CHILD" >/dev/null 2>&1; then
+    echo "Branch $CHILD already exists locally or on origin; aborting."
+    exit 1
+  fi
+done
+```
+
+Name collisions abort the run rather than silently overwriting —
+re-running `wk:pr-break` after a partial failure must not clobber
+the prior attempt's branches.
+
+### Per-child execution
 
 For each child, in stack order:
 
