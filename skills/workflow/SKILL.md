@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-184708'
+  version: '2026.04.29-231055'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -362,6 +362,14 @@ If the review surfaces issues:
 
 ## Phase 5: PR
 
+**HARD RULE: every push to a branch that has no open PR invokes
+`wk:pr` automatically.** No size exemption — a one-line fix is the
+same as a 500-line feature for this rule. Phrases like "this is
+small," "this doesn't need a PR," or "just a quick fix" are red
+flags; if the rule applies, execute it. If the user pushes back
+asking why no PR was created, **open it without asking** — the
+Autonomy Rules table forbids the "would you like a PR?" question.
+
 After code review passes, invoke `wk:pr` automatically. Do not ask for
 permission — the workflow prescribes it. **Never use raw `gh pr create`
 or any other method.** This is non-negotiable. `wk:pr` handles:
@@ -394,6 +402,36 @@ When pushing new commits to a branch that already has a PR:
 2. Enter the CI fix loop (Phase 6)
 3. Update or resolve stale self-review comments
 4. Address new automated feedback
+
+### Pre-rework fetch (HARD RULE)
+
+Before any **rework** of a PR's branch — force-push, restructure,
+content rewrite, big rebase, scope change — fetch and reconcile
+against the PR's actual base **and** the default branch:
+
+```bash
+PR_NUM=$(gh pr view --json number --jq .number)
+BASE=$(gh pr view "$PR_NUM" --json baseRefName --jq .baseRefName)
+DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD --short \
+          | sed 's@^origin/@@')
+
+git fetch origin "$BASE" "$DEFAULT" --quiet
+
+# If the resolved base advanced, integrate before reworking
+LOCAL_MB=$(git merge-base HEAD "origin/$BASE")
+REMOTE_TIP=$(git rev-parse "origin/$BASE")
+if [ "$LOCAL_MB" != "$REMOTE_TIP" ]; then
+  Skill(wk:pr-update, args="$BASE")
+fi
+```
+
+Reworking on a stale base produces conflicts that are 100%
+predictable from remote state and 100% avoidable with the fetch.
+The cost is a few seconds; the cost of a force-push that
+immediately reports `CONFLICTING` is a forced second cycle plus
+visible churn. Never assume `main` is the relevant upstream — for
+stacked PRs the base is a non-default branch that mutates
+independently.
 
 ---
 
