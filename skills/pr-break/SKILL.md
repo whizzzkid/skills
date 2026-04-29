@@ -24,6 +24,8 @@ allowed-tools:
   - "Bash(gh pr view:*)"
   - "Bash(gh pr diff:*)"
   - "Bash(gh pr checks:*)"
+  - "Bash(gh pr ready:*)"
+  - "Bash(gh pr edit:*)"
   - "Bash(gh api:*)"
   # Learning capture
   - Write
@@ -35,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.29-200733'
+  version: '2026.04.29-201047'
   internal: false
   model:
     openai: gpt-4.1
@@ -110,6 +112,41 @@ Confirm the working tree is clean. A dirty tree means the user has
 local changes that must be either committed or stashed before the
 split — the plan generator works against a known commit set, not
 against in-flight edits.
+
+### Mark the original PR as draft
+
+Before reading any context or proposing seams, convert the original
+PR back to draft state if it isn't already. While the split is in
+flight the PR is structurally incomplete (its replacement stack
+hasn't shipped); leaving it ready-for-review invites approvals,
+auto-merge, or reviewer time spent on a PR that is about to be
+superseded.
+
+```bash
+PR_STATE=$(gh pr view --json isDraft --jq .isDraft)
+if [ "$PR_STATE" = "false" ]; then
+  gh pr ready --undo "$PR_NUM"
+fi
+```
+
+`gh pr ready --undo` is idempotent — calling it on a PR that is
+already a draft is a no-op. If the call fails (e.g., the PR has
+auto-merge enabled and the API refuses the transition), stop and
+report; do not proceed to break a PR that could merge mid-split.
+
+Append a note to the PR description recording why the PR was
+returned to draft and the expected child stack count, so reviewers
+who land on the page understand the state:
+
+```
+> ⚠️ Returned to draft for split via `wk:pr-break`. A stack of
+> ~{N} child PRs will replace this one. Original diff preserved
+> here as the source of truth until the stack lands.
+```
+
+The "ready" state will be restored — by the user, on the original
+PR — only after every child PR in the stack has merged. This skill
+does not automatically promote the PR back to ready.
 
 ---
 
