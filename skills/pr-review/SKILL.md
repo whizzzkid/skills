@@ -33,7 +33,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.28-194037'
+  version: '2026.04.29-173918'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -680,10 +680,22 @@ validation outcome decides the reply, not the fact of duplication:
 | **Inconclusive** AND agent did not flag it | Leave the thread alone. Note in the Phase 5 summary so the user can override. |
 | **Out of scope for code validation** (style/prose claim) | Use Phase 3 reading-based verdict; reply per the same confirmed/refuted templates. |
 
-These bot replies count toward the 6-comment cap, same as new
-top-level comments. Never post a parallel top-level comment for
-the same issue — the reply preserves the no-duplicates rule while
-adding the validation verdict.
+Bot-thread replies are delivered via one of the two mechanisms in
+Phase 6 ("Creating the pending review"):
+
+- **(a) folded into the review body** with an anchor reference —
+  costs **0** against the 6-comment cap.
+- **(b) live `/comments/{id}/replies` post** — costs **1** against
+  the cap; requires explicit user opt-in at the Phase 6 prompt
+  because it bypasses the pending-review checkpoint.
+
+`in_reply_to` is **not** a valid field on draft-review comments,
+so a bot reply cannot be embedded as a `comments[]` entry in the
+pending-review payload. Never attempt that — it returns 422.
+
+Never post a parallel top-level comment on the same line — the
+reply (via either mechanism) preserves the no-duplicates rule
+while adding the validation verdict.
 
 When presenting the comment summary, group entries as
 **Bot-validation: confirmed / refuted / inconclusive** plus
@@ -741,13 +753,21 @@ time you are about to post, ask first and wait for explicit confirmation.
 
 ### Present and wait
 
-After presenting the comment summary, ask:
-> "Here are the proposed review comments. You can:
-> - Edit or skip individual comments
-> - Post the review yourself from GitHub after I create it as pending
-> - Tell me to 'post it' and I'll create the pending review for you
+After presenting the comment summary, ask with literal A/B/C labels:
+
+> "Here are the proposed review comments. Choose:
 >
-> What would you like to do?"
+> **A)** Post the pending review now (I create it; you submit on GitHub).
+> **B)** Edit one or more comments — say which numbers and what to change.
+> **C)** Skip one or more comments — say which numbers to drop.
+>
+> Reply `A` / `B` / `C` (or combine, e.g. `C: skip 2, then A`)."
+
+Use the labels verbatim. Do not improvise alternative phrasings,
+free-form bullets, or different orderings — labeled options keep
+the choice unambiguous and prevent the agent from drifting into
+prose alternatives. The HARD RULE above still applies: the user
+must explicitly pick `A` (or its equivalent) before posting.
 
 Wait for the user's explicit response before taking any action.
 
@@ -758,6 +778,28 @@ Build the review payload and post via `gh api`:
 **Important:** Do NOT include `"event": "PENDING"` in the payload — the REST
 API rejects `PENDING` as an event value (422 error). Omitting `event` entirely
 creates a pending (draft) review by default.
+
+**Important:** `in_reply_to` is **not a valid field** on
+`DraftPullRequestReviewComment`. The REST API rejects it with 422
+(`Field is not defined on DraftPullRequestReviewComment`). Every
+entry in `comments[]` must be a top-level comment with `path`,
+`line`, and `side`. Bot-thread replies (per Phase 5's
+"Validate bot findings" outcome) cannot ride along in the pending
+review payload — choose one of:
+
+- **(a) Inline in the review body** — add the validation note to
+  the top-level review `body` referencing the bot's anchor:
+  `Re: {bot} thread on {file}:{line} — Validated locally; suggested
+  fix: ...`. Zero extra API calls; counts as **0** toward the
+  6-comment cap.
+- **(b) Live reply via `/comments/{id}/replies`** — posts
+  immediately (not draft); requires explicit user authorization in
+  Phase 6's prompt because it's a live action outside the pending
+  review. Counts as **1** toward the cap. Format:
+  `gh api repos/{owner}/{repo}/pulls/{n}/comments/{parent_id}/replies --method POST -f body="..."`.
+
+Default to (a) unless the user opted into (b) when picking option
+A in the present-and-wait prompt.
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \
@@ -786,9 +828,32 @@ user clicks "Submit review" on GitHub or explicitly asks the agent to submit.
 
 ### After posting
 
+Capture the `html_url` from the POST response (it points at the
+pending review on GitHub) and open it in the user's browser so
+they can review and submit without copy-pasting:
+
+```bash
+HTML_URL=$(gh api repos/{owner}/{repo}/pulls/{number}/reviews \
+  --method POST --input - <<'EOF'
+{ ... }
+EOF
+  --jq .html_url)
+
+case "$(uname -s)" in
+  Darwin)  open "$HTML_URL" ;;
+  Linux)   xdg-open "$HTML_URL" >/dev/null 2>&1 || true ;;
+  MINGW*|MSYS*|CYGWIN*) start "" "$HTML_URL" ;;
+esac
+```
+
+Always print the URL alongside the open call — terminal scrollback
+and remote sessions where the browser can't launch still need the
+text. Open failures are non-fatal; never block the workflow on a
+browser-launch hiccup.
+
 Confirm success:
-> "Pending review created with N comments. Go to {pr-url} to review and
-> submit when ready."
+> "Pending review created with N comments — opened at {html_url}.
+> Submit on GitHub when ready."
 
 Remind the user:
 > "The `.review-playground/` directory has your experiments and test files.
