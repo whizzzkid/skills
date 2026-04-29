@@ -29,7 +29,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.29-224736'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -60,17 +60,85 @@ a post-creation workflow that ensures quality before marking ready for review.
 
 ## Step 1: Assess Scope
 
-Measure the change size to determine if stacking is needed:
+### Detect the true base branch (run unconditionally)
+
+Before measuring scope, detect the branch's actual fork point.
+Assuming the default branch is the base produces a PR with
+unrelated commits in the diff (from a parent in-flight branch),
+CI failures against the wrong target, and a silent stacked-PR
+that lacks the `[Part X/Y]` annotation.
+
+Compute the merge-base distance between the current branch and
+every candidate base — the default branch plus every open PR's
+`headRefName` (your own and others'). The candidate with the
+**closest** merge-base (smallest commit distance) is the real
+base; ties prefer the default branch.
 
 ```bash
-DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
-git diff "${DEFAULT_BRANCH:-main}...HEAD" --stat
-git diff "${DEFAULT_BRANCH:-main}...HEAD" --shortstat
+DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null \
+                 | sed 's@^refs/remotes/origin/@@')
+DEFAULT_BRANCH=${DEFAULT_BRANCH:-main}
+
+# Candidate set: default + every open PR's head ref
+CANDIDATES=$(
+  { echo "$DEFAULT_BRANCH"
+    gh pr list --state open --json headRefName --jq '.[].headRefName'
+  } | sort -u
+)
+
+BEST_BASE="$DEFAULT_BRANCH"
+BEST_DIST=999999
+HEAD_SHA=$(git rev-parse HEAD)
+for CAND in $CANDIDATES; do
+  git fetch origin "$CAND" --quiet 2>/dev/null || continue
+  MB=$(git merge-base "$HEAD_SHA" "origin/$CAND" 2>/dev/null) || continue
+  [ "$MB" = "$HEAD_SHA" ] && continue   # candidate is downstream of HEAD; not a base
+  DIST=$(git rev-list --count "$MB..$HEAD_SHA")
+  if [ "$DIST" -lt "$BEST_DIST" ] || \
+     { [ "$DIST" -eq "$BEST_DIST" ] && [ "$CAND" = "$DEFAULT_BRANCH" ]; }; then
+    BEST_DIST=$DIST
+    BEST_BASE=$CAND
+  fi
+done
 ```
 
-- If the diff exceeds ~30 lines, ask the user if they want a stacked PR
-- If borderline or unclear, ask the user's preference
-- Determine the base branch (`main`, `master`, or a previous PR branch)
+If `$BEST_BASE` differs from `$DEFAULT_BRANCH`, surface to the user
+before doing anything else — silent mis-basing is hard to recover
+from once CI has run and reviewers have started reading:
+
+> "This branch was forked from `{BEST_BASE}` (open PR #{N}), not
+> `{DEFAULT_BRANCH}`. Choose:
+>
+> **A)** Create this PR with `--base {BEST_BASE}` and treat it as
+> stacked (adds `[Part X/Y]` and `## Stack` to the body).
+> **B)** Rebase onto `{DEFAULT_BRANCH}` first, then create against
+> the default base.
+> **C)** Cancel.
+>
+> Reply `A` / `B` / `C`."
+
+Auto mode picks **A** — preserving the existing fork point is
+non-destructive and the stacked-PR convention covers the
+metadata. Picking **B** invokes `wk:pr-update` to rebase before
+proceeding.
+
+### Measure scope against the resolved base
+
+Use `$BEST_BASE` for both the scope diff and the eventual
+`gh pr create --base` flag — measuring against the wrong base
+inflates the LOC and breaks the stacking decision below.
+
+```bash
+git diff "$BEST_BASE...HEAD" --stat
+git diff "$BEST_BASE...HEAD" --shortstat
+```
+
+- If the diff exceeds ~30 lines, ask the user if they want to split
+  further via `wk:pr-break` (in addition to any stacking implied
+  by `$BEST_BASE`).
+- If borderline or unclear, ask the user's preference.
+- Pass `$BEST_BASE` through to Step 2 — never re-detect or default
+  back to `main`.
 
 ## Step 2: Create Draft PR
 
@@ -120,7 +188,8 @@ When using a repo template:
 ### Simple PR (fallback — no repo template found)
 
 ```bash
-gh pr create --draft --title "feat(scope): ✨ description" --body "$(cat <<'EOF'
+gh pr create --draft --base "$BEST_BASE" \
+  --title "feat(scope): ✨ description" --body "$(cat <<'EOF'
 ## Summary
 - What changed and why
 
@@ -130,6 +199,11 @@ gh pr create --draft --title "feat(scope): ✨ description" --body "$(cat <<'EOF
 EOF
 )"
 ```
+
+`--base "$BEST_BASE"` MUST be present on every `gh pr create`
+call — never omit it and rely on the default. The base resolved
+in Step 1 is authoritative; defaulting silently re-introduces
+the mis-basing failure mode.
 
 PR titles use the same conventional commit + emoji scheme as commit messages.
 
