@@ -12,6 +12,9 @@ allowed-tools:
   - "Bash(git branch:*)"
   - "Bash(git worktree:*)"
   - "Bash(gh pr list:*)"
+  - "Bash(git log:*)"
+  - "Bash(stat:*)"
+  - Skill
   - AskUserQuestion
   # Learning capture (post-completion hook)
   - Write
@@ -23,7 +26,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.22-070656'
+  version: '2026.04.29-185947'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -103,9 +106,50 @@ If the result is `> 0`, the branch has a merged PR.
 - **unmerged** — neither check confirmed it
 - **unknown** — `gh` command failed (e.g., no remote, no auth); treat as unmerged
 
-## Step 4: Clean Up Merged Worktrees
+## Step 4: Capture learnings before deletion (HARD RULE)
 
-For each **merged** branch, remove the worktree and delete the branch:
+A worktree often holds the only copy of session-specific context —
+`.review-playground/` scripts, ad-hoc notes, agent transcripts not
+yet distilled into `$WK_SKILLS_HOME/learnings/`. Once the worktree
+is removed, that context is unrecoverable. Run `wk:retro` against
+each merged worktree **before** calling `git wtr`.
+
+For each branch classified as `merged`:
+
+1. Detect whether retro has already been run for this worktree.
+   Look for any of these signals (any one is sufficient):
+   - A learning file in `$WK_SKILLS_HOME/learnings/skills/**/` whose
+     mtime falls inside the worktree's active window
+     (worktree creation → most-recent commit time).
+   - An entry in `~/.claude/memory/retro-log.md` referencing the
+     branch name or its PR number.
+   - A user override: "skip retro for this worktree" recorded in
+     this run.
+2. If no signal is present, **invoke `wk:retro` against the
+   worktree** before cleanup:
+
+   ```
+   Skill(wk:retro, args="--worktree worktrees/{branch}")
+   ```
+
+   `wk:retro`'s 5-lens reflection runs against the worktree's
+   conversation/transcript and writes any captured learnings to
+   `$WK_SKILLS_HOME/learnings/skills/<skill>/` and the global
+   retro log.
+3. After the retro returns, confirm the working tree of the
+   worktree is clean (no fresh learning files left uncommitted).
+
+In auto mode, retro runs without prompting — the cost of an empty
+retro is small; the cost of a missed learning is unrecoverable.
+
+If `wk:retro` is unavailable or fails, **stop and ask** before
+deleting the worktree. Do not silently proceed; the user may want
+to capture context manually.
+
+## Step 5: Clean Up Merged Worktrees
+
+For each **merged** branch whose retro has been confirmed (Step 4),
+remove the worktree and delete the branch:
 
 ```bash
 git wtr {branch}
@@ -117,7 +161,11 @@ This alias expands to `git worktree remove worktrees/{branch} && git branch -D {
 merged.** The `-D` flag force-deletes the branch regardless of merge status.
 If in doubt, classify as unmerged and let the user decide.
 
-## Step 5: Prune Stale References
+**HARD RULE: Never call `git wtr` until Step 4 has either run
+`wk:retro` against the worktree or recorded an explicit skip.**
+Worktree-local learnings are unrecoverable post-deletion.
+
+## Step 6: Prune Stale References
 
 After removing merged worktrees, clean up any stale metadata:
 
@@ -125,7 +173,7 @@ After removing merged worktrees, clean up any stale metadata:
 git worktree prune
 ```
 
-## Step 6: Report
+## Step 7: Report
 
 Present a summary with two sections:
 
