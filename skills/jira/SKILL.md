@@ -33,7 +33,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-212532'
+  version: '2026.04.30-192913'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -97,13 +97,11 @@ If available, cache the resolved tool names for the session.
 
 ## Stage 1: Detect the ticket key
 
-A Jira key matches `[A-Z][A-Z0-9]+-\d+` (e.g., `BOARD-NUM`,
-`GWTH-111`, `PROJ-1`). Search in priority order; stop at the first
-hit:
+A Jira key matches `[A-Z][A-Z0-9]+-\d+` — letters/digits, a hyphen,
+then digits. Search in priority order; stop at the first hit:
 
 1. **Current branch name** — `git rev-parse --abbrev-ref HEAD`. Many
-   teams encode the key (`feat/BOARD-NUM-oauth-login`,
-   `gwth-111-rate-limit`).
+   teams encode the key (`feat/<KEY>-<slug>`, `<key>-<slug>`).
 2. **Most recent commit message** — `git log -1 --pretty=%B`. Look
    in subject and body.
 3. **PR title and body** — when fired during PR creation/update,
@@ -115,7 +113,7 @@ Normalize matches to UPPERCASE. If multiple distinct keys appear,
 prefer the one in the branch name; if still ambiguous, **ask** before
 transitioning anything:
 
-> "Found Jira keys {BOARD-NUM, GWTH-111}. Which one is the work for
+> "Found Jira keys {KEY-A, KEY-B}. Which one is the work for
 > this branch?"
 
 If **no** key is found, do not invent one. Skip transitions; in
@@ -175,8 +173,8 @@ Every PR title carries the key in **square brackets** at the end of
 the subject:
 
 ```
-feat(auth): ✨ OAuth login [BOARD-NUM]
-fix(ci): 💚 pin lychee to 0.23.0 [GWTH-111]
+feat(auth): ✨ OAuth login [<KEY>]
+fix(ci): 💚 pin dependency [<KEY>]
 ```
 
 Rules:
@@ -197,7 +195,7 @@ reviewers can navigate to context:
 ```markdown
 ## Ticket
 
-[BOARD-NUM](https://<your-domain>.atlassian.net/browse/BOARD-NUM) — <ticket summary>
+[<KEY>](https://<your-domain>.atlassian.net/browse/<KEY>) — <ticket summary>
 ```
 
 Place the `## Ticket` section near the top, just under the

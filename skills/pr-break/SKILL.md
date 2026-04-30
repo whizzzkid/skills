@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.29-201410'
+  version: '2026.04.30-192913'
   internal: false
   model:
     openai: gpt-4.1
@@ -334,7 +334,7 @@ user can audit routing during Stage 6 review:
 **Annotations propagated:**
 - Refs #NNN (issue from parent — Closes moves to final child)
 - Spec: docs/specs/feature-x.md (carried from parent)
-- [BOARD-NUM] Jira suffix on title
+- [<KEY>] Jira suffix on title
 ```
 
 ---
