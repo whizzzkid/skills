@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.30-191919'
+  version: '2026.04.30-192216'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -585,7 +585,7 @@ Format the merged suggestion citing every original reviewer:
 
 ```
 ### Comment {n}/{total}: {path}:{line}
-**Reviewers:** @copilot 🤖, @{bot} 🤖
+**Reviewers:** @{reviewer-a} 🤖, @{reviewer-b} 🤖
 **Comments:** {one-line summary of each, attributed}
 ...
 ```
@@ -937,10 +937,13 @@ review thread still exists. Two known causes:
 
 1. **Force-push during this session** (e.g., after a rebase in Step 2)
    may invalidate existing review comment threads.
-2. **Bot review replacement** — bots like `{bot}`,
-   `copilot[bot]`, and similar review automation often replace their
-   entire review object on each push, which destroys the previous
-   comment IDs even though the thread node ID (`PRRT_...`) survives.
+2. **Bot review replacement** — review-automation bots that
+   re-create their entire review object on each push destroy the
+   previous comment IDs even though the thread node ID
+   (`PRRT_...`) survives. This pattern applies to any bot that
+   posts a single overarching review per commit instead of
+   incremental comments; recognize it by seeing a fresh review
+   object replace the prior one rather than new comments appended.
 
 REST comment IDs are unstable; GraphQL thread node IDs are stable.
 When a 404 is returned, the thread itself may still be valid for
@@ -1018,10 +1021,11 @@ If the mutation returns **`NOT_FOUND`** (or `Could not resolve to
 a node` / similar) for a thread ID:
 
 The bot likely **replaced its review** during the push that
-preceded resolution — bots like `{bot}` re-create
-their review object on each push, invalidating every thread node
-ID from the prior fetch. The thread itself usually still exists
-under a new ID. Recover by re-fetching:
+preceded resolution — review-replacing bots (those that post one
+overarching review per commit and re-create the review object on
+each push) invalidate every thread node ID from the prior fetch.
+The thread itself usually still exists under a new ID. Recover by
+re-fetching:
 
 1. Re-run the GraphQL `reviewThreads` query (Step 3 form) to get
    the current thread set with fresh IDs.
