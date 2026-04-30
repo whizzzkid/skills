@@ -23,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-184708'
+  version: '2026.04.30-192441'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -167,6 +167,50 @@ variables that have been renamed or removed in prior edits.
 
 If the audit surfaces cleanup beyond your original edit, bundle the
 cleanup into the same change. Do not leave known debt for a future pass.
+
+### Mechanical overfit scan (HARD RULE)
+
+Before Step 6 presents the diff, run a checklist-driven grep
+against the **proposed edit text** — not against memory or intent.
+"Does this look overfitted?" answered by the same brain that just
+wrote the overfit defaults to "looks fine to me." A categorical
+scan converts the audit from vibes-level to code-level.
+
+For every category below, grep the proposed addition. Each match
+must either be replaced with a generic mechanism / placeholder
+**or** explicitly justified inline.
+
+| Category | Patterns / signals | Replace with |
+|----------|--------------------|--------------|
+| Reviewer / bot logins | `[bot]`, `@[a-z0-9_-]+`, named automation, "bots like X" | `{reviewer}`, "review-automation bots that <mechanism>" |
+| Organization prefixes | known org tokens, `<org>-managed`, `<org>-*-default` runner names | "an organization-managed runner group", "an org allowlist" |
+| Specific ticket IDs | `[A-Z]+-\d+` outside placeholder examples | `[BOARD-NUM]` or remove |
+| Specific repo / file / package names | concrete project names that don't generalize | "the file", "the repo", "the package" |
+| Line numbers / SHAs / PR numbers | `:\d+`, short SHAs, `#\d+` outside template slots | "the target line", "the commit", "the PR" |
+| Specific tool versions | exact versions cited when the failure pattern is version-agnostic | "a version that introduces <change>" |
+| Concrete person names | reviewer / committer names | "the reviewer", "the author" |
+
+For each grep match in the proposed text:
+
+- **Replace** with the generic mechanism / placeholder — describe
+  the *behavior* (what makes the case match the rule) instead of
+  the *identity* (what the case is called).
+- **Justify inline** only when the literal token is required —
+  stable API names like `PRRT_*`, verbatim error messages from an
+  API (`422 "Line could not be resolved"`), framework-defined env
+  vars (`CLAUDE_PROJECT_DIR`), or explicitly placeholder strings
+  in `{like-this}` or `<like-this>` form.
+
+**Cohort check.** When the user calls out an overfit on a recent
+edit, treat it as a signal that other recent edits likely carry
+the same class of overfit. Audit every sharpen edit made in the
+current session (and the last few in `.distilled-sources.log`)
+for the same pattern before considering the issue closed —
+overfits travel in cohorts because the source learnings often
+cite the same incident's tokens.
+
+The category list lives in this skill and grows as new categories
+surface. When a new overfit type bites, add a row.
 
 ## Step 6: Present for Review
 
