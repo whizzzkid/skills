@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.28-215001'
+  version: '2026.04.30-191919'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -546,6 +546,57 @@ Default to `judgment-required` when uncertain — false negatives here
 (asking when you didn't need to) are cheap; false positives
 (auto-applying something that needed review) are expensive.
 
+**The classification key is the skip rationale, not the change
+shape.** A design change can be `obvious-fix`, a rename can be
+`judgment-required` — it depends entirely on whether there is a
+real tradeoff worth weighing. Before tagging anything
+`judgment-required`, re-read the agent's own "Why this could be
+skipped" rationale. If it contains any of:
+
+- "no valid reason"
+- "no good reason to skip"
+- "—" / empty
+- any phrasing that effectively concedes the comment is right and
+  there is nothing to weigh
+
+…the tag is **`obvious-fix`**, regardless of whether the change is
+mechanical, design-level, refactor-shaped, or touches multiple
+files. Words like "design," "refactor," or "structure" are not
+reflex triggers for `judgment-required`. The check is: would the
+agent push back on this finding if it were doing the review
+itself? If no, `obvious-fix`. If yes (with a meaningful
+counterargument), `judgment-required`.
+
+A second mechanism: if Step 5 finds itself drafting a `(d) Dismiss`
+prompt with the dismiss reason field empty or "no valid reason,"
+that prompt should never have been emitted — re-classify the
+comment as `obvious-fix` and move it to the auto-apply queue
+before sending the message.
+
+### Merge duplicate findings on the same line
+
+When two or more comments target the **same `path:line` with the
+same concern** (different reviewers — e.g., one bot finding plus
+one human reviewer, or two bots flagging the same issue), merge
+them into a **single suggestion block** rather than generating one
+suggestion per comment.
+
+Format the merged suggestion citing every original reviewer:
+
+```
+### Comment {n}/{total}: {path}:{line}
+**Reviewers:** @copilot 🤖, @{bot} 🤖
+**Comments:** {one-line summary of each, attributed}
+...
+```
+
+Apply as **one commit**, then reply from **each** thread to the
+same commit SHA so every reviewer sees the resolution. Resolve
+all source threads. Merge logic only fires when the *concern* is
+identical — two reviewers flagging the same line with different
+asks (one wants a rename, one wants extraction) stay separate
+suggestions.
+
 ## Step 5: Consult — Collect All Decisions First
 
 **HARD RULE: Do NOT touch code during this step.** This is a
@@ -963,7 +1014,56 @@ gh api graphql -f query='
 ' -f threadId="{thread_id}"
 ```
 
-If resolution returns an error (thread invalidated), log and continue.
+If the mutation returns **`NOT_FOUND`** (or `Could not resolve to
+a node` / similar) for a thread ID:
+
+The bot likely **replaced its review** during the push that
+preceded resolution — bots like `{bot}` re-create
+their review object on each push, invalidating every thread node
+ID from the prior fetch. The thread itself usually still exists
+under a new ID. Recover by re-fetching:
+
+1. Re-run the GraphQL `reviewThreads` query (Step 3 form) to get
+   the current thread set with fresh IDs.
+2. Look up the original thread by its stable identity tuple
+   `(path, line, root_comment.databaseId)` — `databaseId` on
+   the root REST comment survives re-fetch even when the thread
+   node ID does not.
+3. If a match is found with the same root comment, retry
+   `resolveReviewThread` with the new thread ID.
+4. If no match (the bot dropped the finding entirely on its
+   replacement review), log and continue — the resolution is
+   moot because the thread no longer exists from the bot's side.
+
+Cap the recovery to **one retry per original thread** to avoid
+loops if the bot is rapidly re-replacing reviews. If the retry
+also fails or the lookup misses, log and continue.
+
+If resolution returns any other error, log and continue.
+
+### Re-surfaced findings on the post-push review
+
+A push during resolve commonly triggers a fresh bot review with
+findings that **were already addressed by commits earlier in this
+session**. These are not real new findings; they are echoes of
+the bot re-running against the new HEAD before its database
+catches up. Triaging them as `dismiss` mislabels valid findings;
+re-applying the same fix produces an empty commit.
+
+When Step 4 sees a comment that matches `(path, line, concern)` of
+a thread already resolved earlier in the **same session**, tag the
+comment as `already-addressed` and reply from the new thread:
+
+```
+Already addressed in commit {short-SHA} earlier in this session.
+Resolving thread.
+```
+
+Then resolve the new thread. Do not re-prompt the user; do not
+generate a new commit. The session-local resolution map (kept
+across the session's invocations of `wk:pr-resolve`) is the
+ground truth — the bot's view will catch up on its next
+post-merge re-review.
 
 **HARD RULE: Never resolve threads in the `reply_only` list.** Those have
 follow-up questions and must stay open for the reviewer to respond.
