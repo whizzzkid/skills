@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.30-184035'
+  version: '2026.04.30-210212'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -215,6 +215,42 @@ Execute the plan step by step. After completing each step:
 
 Never batch multiple steps into one commit. Never defer documentation to the
 end. Never skip tests between commits.
+
+### Design pivots travel with their docs (HARD RULE)
+
+When a commit changes the **logical structure** of a feature —
+not just a bug fix or polish, but a redirect of *how* the feature
+works — the same commit MUST update every artifact that described
+the old shape:
+
+1. The design spec (`docs/specs/`-equivalent for the project).
+2. The implementation plan (`docs/plans/`-equivalent).
+3. Inline code comments referencing the old approach.
+4. Test names / test file comments referencing the old approach.
+5. Any ADR (`docs/adr/`) that captured the original decision —
+   either update it or add a successor ADR superseding it.
+
+If the spec needs a major rewrite (pseudocode blocks, sequence
+diagrams, etc.) and that rewrite would dwarf the code commit,
+add a **STATUS UPDATE** banner to the top of the doc citing the
+commit SHA and a one-paragraph summary of the redirect, then
+schedule the full rewrite as a follow-up commit on the **same
+branch** (not a follow-up PR). The banner keeps the doc honest
+while the rewrite lands.
+
+Triggers that mean "this is a design pivot, not a polish":
+
+- A conditional became unconditional (or vice versa).
+- A layered helper was lifted, inlined, or replaced by a
+  different abstraction.
+- Two paths merged into one, or one path split into two.
+- An interface signature changed (params added/removed/reordered).
+- A piece of state moved to a different lifecycle (per-request →
+  global, per-call → cached, etc.).
+
+Reviewers and bots reliably catch cross-doc inconsistency on the
+next round and require a separate response commit. Folding the
+doc update into the pivot commit is one round; deferring is two.
 
 ### Code Standards
 

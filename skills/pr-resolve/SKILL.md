@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.30-192216'
+  version: '2026.04.30-210212'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -734,6 +734,40 @@ Announce the transition to execution:
 **Now** apply all decisions collected in Step 5. Process each entry in
 `fixes_to_apply` and `dismissals` in order.
 
+### Issue-class scan before each fix (HARD RULE)
+
+Before applying any fix, identify the **class** of the underlying
+issue (credential exposure, missing validation, unhandled error,
+race condition, missing fallback, etc.) and grep the **full PR
+diff** for every path that could share the same class. Apply the
+fix to all matching paths in **one commit** rather than waiting
+for the next review cycle to surface them.
+
+```bash
+BASE=$(gh pr view --json baseRefName --jq .baseRefName)
+git diff "origin/$BASE...HEAD" | grep -nE '<class-pattern>' \
+  | grep -v '<already-fixed-pattern>'
+```
+
+Pattern hints by issue class:
+
+| Class | Grep pattern (illustrative) |
+|-------|-----------------------------|
+| Credential / token in stderr | `git (clone\|fetch\|push)`, `curl`, `wget`, `>&2`, `2>&1` — minus already-redacted lines |
+| Missing input validation | the validated symbol + every entry point that takes it |
+| Unhandled exception | the exception type + every call site of the throwing function |
+| Race condition / TOCTOU | the file/resource path + every read-then-write site |
+| Missing retry / timeout | the call type (`requests.get`, `http.client`, etc.) |
+
+Fold every matching path into the same commit. The reply comment
+should list every path covered so the reviewer doesn't reconstruct
+the surface: `Applied at <path>:<line>, <path>:<line>, …`. The
+goal is **one commit per finding-class**, not one per finding.
+
+This rule fires alongside the same-line dedup (Step 4) — same-line
+dedup merges multiple comments **about the same line**; this scan
+extends a fix to **the same class on different lines**.
+
 ### For each fix (option `a` or `e`)
 
 1. **Apply the code change** using the Edit tool
@@ -784,13 +818,26 @@ Announce the transition to execution:
    to hunt for the commit manually. Always link:
 
    ```markdown
-   Fixed in [`abc1234`](https://github.com/{owner}/{repo}/commit/{full_sha}) — {explanation}
+   Fixed in [`<short>`](https://github.com/{owner}/{repo}/commit/{full_sha}) — {explanation}
    ```
 
-   Use the full 40-char SHA in the URL and the 7-char short SHA in the
-   link text. This rule applies to **every** reply comment that
-   references a commit, not only the first — if a single reply mentions
-   multiple commits, link each one.
+   **HARD RULE: derive the full SHA from git, never extend the short
+   SHA by inference.** The 7-char short SHA is a prefix; the
+   remaining 33 chars cannot be guessed. Capture the canonical
+   full hash immediately after each commit:
+
+   ```bash
+   FULL_SHA=$(git log --format=%H -1 <short_or_HEAD>)
+   ```
+
+   Use `$FULL_SHA` in the URL and the 7-char short SHA in the
+   link text. Fabricated full SHAs return 404/422 from the
+   GitHub commit-URL renderer and force a delete-and-repost
+   cycle; verify before embedding.
+
+   This rule applies to **every** reply comment that references
+   a commit, not only the first — if a single reply mentions
+   multiple commits, link each one with its own verified full SHA.
 
 Use the commit type that matches the nature of the change: `fix` for bug
 fixes, `refactor` for restructuring, `feat` for new behavior. Always

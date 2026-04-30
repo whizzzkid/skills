@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-190744'
+  version: '2026.04.30-210212'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -136,6 +136,57 @@ never just because the new comment restates it.
 Spec files are usually the canonical home for design rationale;
 implementation-file notes should either add NEW context (tradeoff
 specific to this site) or point at the spec.
+
+## Step 2.6: Parallel-path completeness audit
+
+Before any review comment is posted, scan for **sibling and
+parallel code paths that may carry the same flaw** as anything
+this PR fixed (or anything Step 2 found worth flagging).
+
+A bug class rarely lives in a single line. Issues that recur per
+location include credential redaction, input validation, error
+handling, retry logic, fallback branches, guards, and
+cleanup-on-error. When the diff fixes one instance, the next
+review round (bot or human) almost always surfaces the same
+class in the path the fix didn't touch — costing a separate
+commit and review cycle for what should have been one fix.
+
+For every change that fixes or flags a recurring-class issue,
+run two scans:
+
+1. **Same-file parallel branches** — the file's other code paths
+   that perform the analogous operation:
+
+   ```bash
+   # For credential / stderr / error-output classes
+   grep -n 'stderr\|2>&1\|>&2\|err\|error' <file>
+   # For external calls of a kind
+   grep -nE 'git (clone|fetch|push|remote)|curl|wget|http' <file>
+   ```
+
+2. **Sibling files in the same pipeline** — when shell scripts,
+   modules, or services come in pairs / sets that share a
+   contract:
+
+   ```bash
+   ls "$(dirname <fixed_file>)"/*.{sh,rb,py,ts,js} 2>/dev/null
+   ```
+
+   For each sibling, grep for the same pattern. Each hit is
+   either (a) already correct, (b) doesn't have the analogous
+   path, or (c) needs the same fix.
+
+If category (c) appears, fold the parallel fix into **the same
+commit** rather than deferring to a follow-up — single-round
+review is the goal. The self-review comment that documents the
+fix should list every path covered ("Applied at <path>:<line>,
+<path>:<line>, …") so the reviewer doesn't have to reconstruct
+the surface.
+
+When a parallel path is genuinely unaffected (different contract,
+defensive layer above, etc.), record that as a self-review
+comment noting the audit was performed. Silence reads as "the
+agent didn't look."
 
 ## Step 3: Present Comments for Approval
 
