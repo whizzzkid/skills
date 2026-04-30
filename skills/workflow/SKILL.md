@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.29-231055'
+  version: '2026.04.30-184035'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -141,6 +141,49 @@ Prefer the smallest possible commits. Each commit must:
 
 If a step is too large for a single commit, split it into sub-steps with their
 own commit boundaries. When in doubt, split.
+
+### Prefactor probe — lift before extending
+
+Before writing a new caller of an existing pattern, lift the shared
+logic and migrate the existing caller first. The new caller then
+delegates to the helper plus its new behavior. Order: **lift →
+migrate → extend**, not "extend now, refactor later" — once the
+duplicated code lands working, it stops being a delta in the diff
+and becomes "how the file looks," and consolidation cost goes up
+with every test that accretes against both copies.
+
+Trigger phrases / signals that should fire the probe during
+planning:
+
+- "another <X>", "similar to <X>", "like the <X> version"
+- The new feature is a verb the codebase already implements:
+  "post a comment", "validate <format>", "fetch <resource>",
+  "open a build", "render <view>".
+- The new caller will live in a different file from the existing
+  one — duplication hides especially well across file boundaries.
+
+When the probe fires:
+
+1. **Grep** for the operation across the codebase. Read both call
+   sites end-to-end, not just the function signatures.
+2. **Identify the duplicated prologue/epilogue** — validation, error
+   handling, logging, retries, formatting. The behavioral core is
+   often small; the ceremony around it is what duplicates.
+3. **Lift** the duplicated portion into a helper module/function in
+   the same `lib/`-equivalent location, with **one** consolidated
+   test file.
+4. **Migrate** the existing caller onto the helper as a separate
+   commit, with all existing tests still passing.
+5. **Then extend** — implement the new caller as a thin wrapper
+   that delegates to the helper plus its new behavior.
+
+The plan must list these as numbered steps before the new-feature
+step, not after. The migration commit on the existing caller is
+reviewable in isolation; the new caller's diff ends up small and
+reads as new behavior, not as duplicated prologue.
+
+If grep returns no existing caller, the probe is a no-op — proceed
+with the new feature directly.
 
 ### Plan Presentation
 

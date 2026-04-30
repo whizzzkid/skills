@@ -26,7 +26,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.29-185947'
+  version: '2026.04.30-184035'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -109,10 +109,31 @@ If the result is `> 0`, the branch has a merged PR.
 ## Step 4: Capture learnings before deletion (HARD RULE)
 
 A worktree often holds the only copy of session-specific context —
-`.review-playground/` scripts, ad-hoc notes, agent transcripts not
-yet distilled into `$WK_SKILLS_HOME/learnings/`. Once the worktree
-is removed, that context is unrecoverable. Run `wk:retro` against
-each merged worktree **before** calling `git wtr`.
+ad-hoc notes, agent transcripts, draft plans not yet distilled into
+`$WK_SKILLS_HOME/learnings/`. Once the worktree is removed, that
+context is unrecoverable. Run `wk:retro` against each merged
+worktree **before** calling `git wtr`.
+
+### Disposable paths — skip retro and clean without prompting
+
+Some untracked content in a worktree is **always disposable** and
+should not block cleanup or trigger the retro check:
+
+| Path | Why disposable |
+|------|----------------|
+| `.review-playground/` | `wk:pr-review`'s scratch space for reproduction scripts and analysis docs. Findings are already posted to the PR before merge; the directory has no lasting value. |
+| `.DS_Store`, `Thumbs.db` | OS noise. |
+| `*.swp`, `*.swo`, `.idea/`, `.vscode/` (when not committed) | Editor noise. |
+| `node_modules/`, `.venv/`, `target/`, `dist/`, `build/`, `.next/`, `.cache/` (when matched by `.gitignore`) | Build artifacts; trivially regenerable. |
+
+When checking the worktree for retro signals, **ignore these paths
+entirely** — their presence is not a "fresh context" signal, and
+they should not appear in the worktree's "dirty" list. If the only
+untracked content is in these paths, treat the worktree as clean
+and proceed; before `git wtr` (Step 5), `git clean -fd` may run
+without per-worktree user confirmation to remove them.
+
+Anything outside this list still triggers the normal retro check.
 
 For each branch classified as `merged`:
 
