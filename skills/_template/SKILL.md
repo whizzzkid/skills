@@ -10,9 +10,7 @@ allowed-tools:
   - Bash
   - Read
   - AskUserQuestion
-  # Learning capture (post-completion hook)
   - Write
-  - "Bash(mkdir -p:*)"
 # Claude Code model: sonnet | opus
 # High tier (complex reasoning): opus
 # Low tier (procedural tasks): sonnet
@@ -24,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-074735'
+  version: '2026.05.01-224941'
   model:
     openai: gpt-4.1-mini       # low tier: gpt-4.1-mini | high tier: o3
     google: gemini-2.5-flash   # low tier: gemini-2.5-flash | high tier: gemini-2.5-pro

@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-221318'
+  version: '2026.05.01-224941'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -1064,6 +1064,39 @@ excluded from the scan.
 | Lattice | `"lattice"` | 5 | **BLOCKED** — require MCP |
 | Jira + Confluence | `"jira"` / `"confluence"` | 6 | **BLOCKED** — require MCP |
 | DX | `"DX"` | 7 | **BLOCKED** — require MCP |
+
+---
+
+## QPR Brag Accumulation
+
+**QPR brag accumulation:** As you compile today's brag document, flag items
+that are particularly QPR-worthy with a `🌟` marker. An item is QPR-worthy
+when it demonstrates: shipping a meaningful feature or system, making an
+architectural decision, leading cross-team work, facilitating training,
+contributing to hiring, resolving a security issue, or receiving peer
+recognition. Append flagged items to the running QPR brag log:
+
+```bash
+QPR_LOG="$PWD/QPR/brag-log.md"
+# Create if missing, append date-stamped wins
+```
+
+Format each appended entry as:
+
+```
+## {YYYY-MM-DD}
+- 🌟 {accomplishment — strong verb, specific impact, evidence link}
+```
+
+This log feeds `wk:self-perf` with pre-distilled signals when QPR season
+arrives, so you're not reconstructing the quarter from scratch.
+
+**Perf review season awareness:** During February and August ($EMPLOYER QPR
+seasons), add a banner to the evening summary:
+
+> "📋 **QPR Season** — Consider whether today's achievements should be
+> captured in your self-review. Run `/wk:self-perf quarter` to generate
+> your current-quarter narrative."
 
 ---
 

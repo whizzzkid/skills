@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-221318'
+  version: '2026.05.01-224941'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -1147,6 +1147,28 @@ Then announce:
 | Google Drive/Docs | `"gdrive"` / `"gdocs"` | 3 | **BLOCKED** — require MCP |
 | GitHub | `"github"` | 4 | `gh` CLI (always available) |
 | Jira + Confluence | `"jira"` / `"confluence"` | 5 | **BLOCKED** — require MCP |
+
+---
+
+## QPR Season Awareness
+
+Check if today falls in a QPR preparation window (typically the last 2 weeks
+of January, April, July, or October — ahead of $EMPLOYER's quarterly review cycles):
+
+```bash
+MONTH=$(date +%m)
+DAY=$(date +%d)
+# Flag if: (Jan and day >= 15) or (Apr and day >= 15) or (Jul and day >= 15) or (Oct and day >= 15)
+```
+
+If in a QPR window AND `$PWD/QPR/brag-log.md` exists with recent entries,
+add a **QPR Prep** banner to the morning brief:
+
+> "📋 **QPR Prep** — Quarter ends soon. Your brag log has {N} entries
+> since {start date}. Run `/wk:self-perf quarter` to generate your
+> performance narrative."
+
+This fires once per day during the window, not on every run.
 
 ---
 
