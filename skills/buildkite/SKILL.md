@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080507'
+  version: '2026.05.01-080818'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -219,7 +219,8 @@ bk build view -p <pipeline> -b <branch> -w
 
 When saving any Buildkite artifact to disk — build JSON, job logs,
 artifact files — write to a structured, namespaced path rather than an
-ad-hoc `/tmp/<name>`.
+ad-hoc `/tmp/<name>`. This follows the same `/tmp/agent/<tool>/...`
+convention used by wk:gh (see wk:gh for the rationale).
 
 ```
 /tmp/agent/buildkite/<build_number>/<job_id>/<filename>

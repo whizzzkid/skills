@@ -15,8 +15,6 @@ allowed-tools:
   - Bash
   - AskUserQuestion
   - Skill
-  # Learning capture (post-completion hook)
-  - "Bash(mkdir -p:*)"
 model: sonnet
 effort: low
 model-invocable: true
@@ -24,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-080947'
   internal: false
   model:
     openai: gpt-4.1-mini

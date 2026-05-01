@@ -19,9 +19,7 @@ allowed-tools:
   - "Bash(gh api repos:*)"
   - Read
   - AskUserQuestion
-  # Learning capture (post-completion hook)
   - Write
-  - "Bash(mkdir -p:*)"
 model: sonnet
 effort: medium
 model-invocable: true
@@ -29,7 +27,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-080947'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash

@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-080818'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -182,23 +182,30 @@ re-dispatch with the contract emphasized.
 1. `ToolSearch` to find MCP tools for the service
 2. Call the authenticate tool to start OAuth
 3. After auth completes, use the operational tools
-4. **If auth fails** → **STOP the agent** and return an error:
-   `"BLOCKED: {Service} authentication failed. User must complete OAuth at: {url}"`
-5. **If no MCP tools found** → **STOP the agent** and return an error:
-   `"BLOCKED: {Service} MCP tools not configured. User must install the MCP server."`
+4. **If auth fails (OAuth URL returned)** → return a **SOFT BLOCK**:
+   `"SOFT_BLOCKED: {Service} needs authorization at: {url}"`
+5. **If no MCP tools found or missing secret** → return a **HARD BLOCK**:
+   `"HARD_BLOCKED: {Service} MCP tools not configured. User must install the MCP server."`
 
-**No service is optional.** If any agent returns a BLOCKED error, pause
-and present ALL blocked services to the user at once:
+### Soft vs hard blockers
+
+| Type | Example | Behavior |
+|------|---------|----------|
+| **Hard** | MCP not installed, missing secret | Stop output; list all hard blocks; require user fix before continuing |
+| **Soft** | OAuth URL returned | Continue with degraded data; embed the authorization URL in the affected section; note in the summary |
+
+If ANY hard block occurs, pause and present all hard blocks at once:
 
 > "The following services need your attention before I can continue:
 >
 > 1. {Service}: {reason and action needed}
-> 2. {Service}: {reason and action needed}
 >
 > Please fix these and tell me to continue."
 
-**Do not proceed to Stage 2 until all agents succeed.** After the user
-fixes access, re-run only the failed agents.
+If only soft blocks occur, proceed to Stage 2. For each soft-blocked
+service, use yesterday's evening.md as a fallback and embed the
+authorization URL as a prominent **⚠ Authorize {Service}** CTA.
+After the user fixes access, re-run only the failed agents.
 
 ---
 

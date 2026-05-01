@@ -14,8 +14,6 @@ allowed-tools:
   - Write
   - Edit
   - AskUserQuestion
-  # Learning capture (post-completion hook)
-  - "Bash(mkdir -p:*)"
 model: opus
 effort: medium
 model-invocable: true
@@ -23,7 +21,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-075328'
+  version: '2026.05.01-080947'
   model:
     openai: o3
     google: gemini-2.5-pro

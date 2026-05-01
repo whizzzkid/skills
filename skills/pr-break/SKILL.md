@@ -27,9 +27,7 @@ allowed-tools:
   - "Bash(gh pr ready:*)"
   - "Bash(gh pr edit:*)"
   - "Bash(gh api:*)"
-  # Learning capture
   - Write
-  - "Bash(mkdir -p:*)"
 model: sonnet
 effort: high
 model-invocable: true
@@ -37,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-080947'
   internal: false
   model:
     openai: gpt-4.1

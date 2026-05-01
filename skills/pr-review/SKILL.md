@@ -24,8 +24,6 @@ allowed-tools:
   - Edit
   - Agent
   - AskUserQuestion
-  # Learning capture (post-completion hook)
-  - "Bash(mkdir -p:*)"
 model: opus
 effort: high
 model-invocable: true
@@ -33,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-080947'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -150,7 +148,9 @@ Would you like me to resolve threads 1 and 2?
 
 ### Resolve confirmed threads
 
-After the user confirms, query for thread node IDs via GraphQL:
+After the user confirms, query for thread node IDs via GraphQL
+(follows the `reviewThreads` pattern from wk:pr-resolve Step 3 —
+this variant fetches only the fields needed for matching and resolving):
 
 ```bash
 gh api graphql -f query='
