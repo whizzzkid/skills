@@ -23,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-075328'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -268,7 +268,12 @@ update). Use `wk:commit`'s conventional format with classifier emojis
 (🦾 agentic-tool strengthening, 🛡️ guardrails, 🔧 config tuning) where
 applicable.
 
-Push immediately after each commit unless the user has said otherwise.
+**Commit continuously, push once.** Within a multi-skill or multi-phase
+run, commits are incremental checkpoints — make them as each logical
+change lands and proceed immediately to the next change. Do not pause
+between commits or phases waiting on a push. Push a single time after
+all planned commits exist, just before the final clean-tree check.
+Single-skill runs may push immediately after their lone commit.
 
 ### Final clean-tree check
 
@@ -514,6 +519,8 @@ skill's `metadata.version` (CalVer).
 
 Same terminal gate as other modes: install (`npx skills add . -g -y -a=claude`),
 group commits per skill or per phase, push, final clean-tree check.
+Per-phase commits are not blocking gates — land each phase's commits
+and proceed; push happens once at the end of the run, not between phases.
 
 ### Hard rules for improve mode
 
