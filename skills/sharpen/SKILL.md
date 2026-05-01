@@ -23,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.30-192441'
+  version: '2026.05.01-070234'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -332,12 +332,16 @@ specific incident.
 | `/wk:sharpen commit "agent skipped signing"` | Distill verbal report, audit, propose skill improvement |
 | `/wk:sharpen` (no args) | Batch mode — scan learnings + memories, distill all |
 | `/wk:sharpen --scan --force` | Batch mode — reprocess everything, ignore log |
+| `/wk:sharpen improve [scope]` | Improve mode — refactor and prune accumulated entropy |
 
 **Single mode:** Read report → Read full skill → Distill → Draft →
 Audit for overlap/bloat → Present with cleanup → Apply → Verify & commit
 
 **Batch mode:** Scan learnings + memories → Filter by log → Process each
 via single mode → Rename learnings to `.learned.md` → Update log
+
+**Improve mode:** Inventory scope → Parallel audit → Consolidate findings →
+Phased proposal (user approval per phase) → Apply → Verify & commit
 
 ## Batch Mode: Scan Learnings and Memories
 
@@ -446,6 +450,85 @@ After processing, report results:
 > - {count} learnings absorbed (.learned.md)
 > - {count} memories distilled (logged)
 > - {count} skipped (already processed / no matching skill)"
+
+## Improve Mode: Refactor and Optimize
+
+When invoked as `/wk:sharpen improve [scope]`, sharpen enters improve mode —
+a cross-cutting refactor pass that prunes accumulated entropy from the skill
+suite rather than processing new incident evidence.
+
+`[scope]` is one of:
+- omitted / `all` — every skill in `skills/`
+- `<skill-name>` — deep-clean a single skill
+- glob pattern (e.g., `pr-*`) — clean a named cluster
+
+### Step 1: Inventory pass
+
+Read every skill in scope. Build a per-skill map of: hard rules, phases/steps,
+recurring sections, and any cross-skill references. This map drives the audit.
+
+### Step 2: Parallel audit dispatch
+
+Spawn cluster-grouped agents (typically 4–6 in parallel) to find:
+- Duplicate or overlapping instructions (within and across skills)
+- Overfit residue per the mechanical overfit categories in this skill
+- Bloated sections (>3–4 paragraphs for a single action)
+- Cross-skill duplication — boilerplate blocks (e.g., Post-Completion Learning
+  Capture) or repeated patterns (shared API auth flows, GraphQL queries) that
+  could be referenced once
+- Stale or contradictory references
+- Missing structure (where a table or HARD RULE would compress prose)
+
+### Step 3: Optional external research
+
+Dispatch one agent to search for best-practice patterns the suite hasn't
+adopted (Anthropic skill docs, public skill repos, community discussions).
+Filter to non-obvious, actionable insights that survive overfit scrutiny.
+
+### Step 4: Consolidate findings
+
+Merge all agent reports. Deduplicate findings cited by multiple agents. Group
+by skill and by cross-cutting theme. Rank by leverage:
+- **High** — clear win with no information loss
+- **Low** — nitpick or style preference
+
+### Step 5: Phased proposal to user
+
+Present findings as a phased plan rather than a single mass diff:
+- **Phase A** — extract shared boilerplate to referenced fragments
+- **Phase B** — per-skill deduplication and bloat trimming
+- **Phase C** — cross-skill consolidation
+- **Phase D** — apply external best-practice insights that survived review
+
+For each phase: list affected skills, the change shape, and the risk. **Wait
+for explicit user approval per phase.** Even in auto mode, mass edits across
+multiple skills are high blast-radius and require confirmation.
+
+### Step 6: Apply approved phase
+
+Run the Step 5 single-mode audit (overlap, contradiction, redundancy, bloat,
+stale, overfit) on each per-skill edit before saving. Apply edits. Bump each
+skill's `metadata.version` (CalVer).
+
+### Step 7: Verify and commit
+
+Same terminal gate as other modes: install (`npx skills add . -g -y -a=claude`),
+group commits per skill or per phase, push, final clean-tree check.
+
+### Hard rules for improve mode
+
+- **No information loss.** Remove a rule only if (a) it is provably duplicated
+  elsewhere with identical semantics, or (b) a stricter rule added later
+  supersedes it. Otherwise the rule moves rather than disappears.
+- **Phased approval required.** Auto mode does not short-circuit this —
+  suite-scale refactoring is too risky to apply silently.
+- **Cohort overfit scan applies.** Every proposed edit goes through the
+  mechanical overfit scan before presentation.
+- **Capture insights.** When external research surfaces a useful pattern, add
+  it to the overfit-categories table or as a new rule in `wk:sharpen` so the
+  next improve run has it as baseline.
+
+---
 
 ## Requirements
 
