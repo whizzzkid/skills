@@ -14,7 +14,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-192211'
+  version: '2026.05.01-001458'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -248,6 +248,19 @@ SUBAGENT CONTRACT (mandatory):
 - Do NOT prompt the user for input — the orchestrator handles all triage
 - Do NOT open files in browsers or call `open`
 - Your output is markdown text the orchestrator pastes into a section
+- EVERY item you return that could become a priority MUST include a
+  source identifier: a URL, MCP deep link, file path, or
+  `{system}:{id}` reference. Items without a source identifier will
+  be rejected at compile time. If the item came from a meeting note,
+  return the meeting URL or ID alongside the extracted insight; if
+  from a Slack message, return the permalink; if inferred, mark
+  `(inferred)` and list the source artifacts the inference used.
+- Distinguish verified facts from single-source claims. Tag each
+  item `verified` (concrete artifact like a calendar invite, Jira
+  ticket, PR URL, explicit announcement) or `claim` (extracted from
+  someone's offhand remark in a meeting/DM and not cross-checked).
+  The orchestrator uses this to choose render styling and conflict
+  detection.
 ```
 
 Before compiling outputs in Stage 2, the orchestrator must verify git
@@ -779,6 +792,61 @@ Categories to surface when present: Slack threads/DMs, GitHub PRs/issues,
 Jira tickets, Calendar Zoom URLs (for time-blocked priorities), Google
 Doc/Drive URLs, Buildkite/Datadog/external tool URLs.
 
+**Internal sources count too.** When the upstream artifact is internal
+(meeting notes, prior-day brief carry-over, agent inference) instead of
+an external URL, the priority must still carry a citation. The rule is
+"every priority is traceable to its source," not "every priority has an
+https link." Use these forms:
+
+- Meeting note → `granola://meeting/<id>` deep link, or
+  `(Granola: {meeting-title} {YYYY-MM-DD})` inline if no deep link is
+  available.
+- Carry-over from yesterday's `evening.md` / earlier `morning.md` →
+  `(carry-over from {YYYY-MM-DD})` linking to the relative file path.
+- Agent-derived inference (e.g., "PR #X looks superseded by #Y") →
+  `(inferred)` annotation plus links to the underlying artifacts the
+  inference referenced.
+- Pure synthesis with no upstream artifact at all (e.g., "Adjust
+  system prompt") → exempt as before.
+
+A priority with no traceable source must not be rendered. The render
+pass below rejects such items.
+
+### Claim-confidence annotation
+
+Single-source claims extracted from meeting notes or DMs are not
+verified facts and must not render with the same weight as items
+backed by a concrete artifact (calendar invite, Jira ticket, PR URL,
+explicit announcement). Distinguish at render time:
+
+- `(verified: <link>)` — backed by a concrete external artifact.
+  Renders in the default style.
+- `(claim: {source})` — single-source claim that has not been
+  cross-checked against another data point. Render in a softer style
+  (italics in markdown, muted color in HTML) so it does not read as
+  an authoritative deadline.
+
+When promoting a `(claim: ...)` item to a hard priority — top-of-list
+or "deadline today" framing — the renderer must flip it back to
+`(claim: ...)` styling **and** carry a `?` or `unverified` marker so
+the user can spot it at a glance.
+
+### Cross-source conflict detection
+
+Before emitting any priority, cross-check it against the other
+gathered sources for the day. If a single-source claim contradicts
+another data point — e.g., a meeting note's "deadline tomorrow"
+versus a calendar invite's "AMA next week" or a Gmail
+announcement's later date — flag inline rather than silently
+picking one source:
+
+```
+- [ ] {item} ⚠ conflicts with: {other source link}  (claim: {origin})
+```
+
+Conflict detection is a Stage 2 step that runs after all Stage 1
+agents have returned and before the priorities slot is built.
+
 ### 2.0. Template discovery (run before 2b and 2c)
 
 The brief's structure is **owned by the user**, not the skill. Before
@@ -827,9 +895,33 @@ matching `{slot}_count` scalars for badge totals.
 **Source-link enforcement at render time.** The `priorities` slot
 builder MUST emit inline source links (`slack ↗ · doc ↗ · zoom ↗` for
 HTML, `[label](url) · …` for markdown) for every priority that maps to
-an external artifact. This rule is structural — embed it in the slot
-builder so it cannot be forgotten on a per-run basis. Synthesized
-priorities with no upstream artifact are exempt.
+an external artifact, **and** an internal-source citation
+(`(Granola: ...)`, `(carry-over from ...)`, `(inferred)`) for every
+priority backed by an internal source. This rule is structural — embed
+it in the slot builder so it cannot be forgotten on a per-run basis.
+Pure synthesis with no upstream artifact at all is exempt.
+
+**Reject sourceless items.** When building the priorities slot, drop
+any item whose Stage 1 source identifier is missing or empty. Either
+re-fetch with a sourcing prompt to the agent, demote the item out of
+priorities, or render it as a `(claim: unsourced)` line in a softer
+style — never promote a sourceless item to a hard priority.
+
+**Confidence-aware styling.** Items tagged `claim` from Stage 1 must
+render with the softer style described in the claim-confidence
+annotation rule above. The slot builder reads the tag and chooses
+the styling — it does not silently flatten claims into the default
+authoritative style.
+
+**Auto mode does not silently resolve high-impact uncertainty.** Auto
+mode skips routine triage prompts; it does not let a single-source
+`claim` flagged as `unverified-but-promoted-to-priority` (top-of-list
+or "deadline today" framing) pass without a one-time confirmation.
+Before rendering such an item as a hard priority in auto mode, surface
+a single yes/no prompt to the user with the source and the
+conflicting / corroborating data points. The exception applies only
+to claims that would shift the user's day if wrong — routine claims
+remain auto-handled.
 
 **Checkbox enforcement at render time.** The `priorities` slot
 builder MUST also emit a checkbox for every priority — `- [ ]` /
