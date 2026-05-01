@@ -9,12 +9,16 @@ description: >-
   evening.md for tomorrow's morning brief. Use at the end of your workday.
 model-invocable: false
 user-invocable: true
+allowed-tools:
+  - Skill
+  - Agent
+  - AskUserQuestion
 model: sonnet
 effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080818'
+  version: '2026.05.01-221318'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -260,17 +264,15 @@ issues closed, with URLs.
 
 **Step 1: Fetch today's calendar events**
 
-ToolSearch query: `"gcal"` or `"calendar"`
-
-Get all events for today — title, time, attendees, whether attended.
+Follow `wk:cal §Fetch Day Events` — ToolSearch for `"gcal"` or `"calendar"`,
+then list today's events (title, time, attendees, whether attended).
 
 **Step 1b: Fetch tomorrow's calendar events**
 
-Also fetch events for the next business day. For each event, extract:
-- Title, time, duration, attendees, organizer
-- Description/notes field and any linked document URLs
-- Whether it's a recurring meeting
-- Whether the user is a presenter, organizer, or has an active role
+Repeat `wk:cal §Fetch Day Events` for the next business day. For each event
+extract: title, time, duration, attendees/organizer, description, linked
+document URLs, recurrence flag, and whether the user is a presenter, organizer,
+or has an active role.
 
 Flag meetings that likely need prep:
 - Meetings where the user is the organizer or presenter

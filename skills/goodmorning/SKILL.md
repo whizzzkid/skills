@@ -9,12 +9,16 @@ description: >-
   Use at the start of your workday.
 model-invocable: false
 user-invocable: true
+allowed-tools:
+  - Skill
+  - Agent
+  - AskUserQuestion
 model: sonnet
 effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-221318'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -223,6 +227,17 @@ yet exist **AND** `$PREV_WEEK_MEMORY` exists:
 If it is **not Monday**, or the previous week's memory doesn't exist,
 skip this step.
 
+### Interview prep scaffolding
+
+Invoke `wk:cal §Interview Prep Scan` via the Skill tool before launching
+the parallel agents. This ensures prep and scorecard blocks are created on
+the calendar before Agent 3 fetches today's/tomorrow's events — so they
+appear correctly in the meeting timeline.
+
+The scan runs silently. Surface its output as an **Interview Scaffolding**
+section in the final morning brief only when blocks were created or when a
+conflict was found that needs manual action.
+
 ---
 
 ## Stage 1: Parallel Data Gathering
@@ -399,15 +414,10 @@ calendar results drive Granola and Drive lookups.
 
 **Step 1: Fetch today's meetings**
 
-ToolSearch query: `"gcal"` or `"calendar"`
-
-For each event, extract:
-- Title, time, duration
-- Attendees (and organizer)
-- Location or video link
-- Description/notes field
-- Whether it's a recurring meeting
-- Any linked document URLs in the description
+Follow `wk:cal §Fetch Day Events` — ToolSearch for `"gcal"` or `"calendar"`,
+then list today's events. For each event extract: title, time, duration,
+attendees (organizer flagged), location/video link, description, recurrence
+flag, and any linked document URLs.
 
 **Step 2: Enrich recurring meetings with Granola (parallel per meeting)**
 
