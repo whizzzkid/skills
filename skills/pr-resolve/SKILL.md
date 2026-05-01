@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.30-210212'
+  version: '2026.05.01-001458'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -597,6 +597,41 @@ identical — two reviewers flagging the same line with different
 asks (one wants a rename, one wants extraction) stay separate
 suggestions.
 
+### Treat multi-reviewer convergence as an incomplete-fix signal
+
+When two or more reviewers (any combination of bots and humans)
+independently flag the **same class of concern** within a single
+review cycle — even on different lines or files — treat it as
+evidence that an earlier fix on that topic was incomplete, not
+as a coincidence of two checkers running the same heuristic.
+
+Trigger pattern: a category that was supposedly addressed in a
+prior commit shows up again from multiple sources after the next
+push. Common categories where this fires: credential exposure,
+input validation, cross-doc consistency, naming/rename cleanup,
+test enumeration drift, error-handling gaps.
+
+When the trigger fires:
+
+1. Do **not** triage the new comments as independent findings.
+   Merge them into a single finding even when the lines or files
+   differ — the *concern class* is what's shared.
+2. Pause and re-ask: "Is the prior fix incomplete? What sibling
+   instances of this class exist in the diff that the prior
+   commit missed?"
+3. Run the Step 6 issue-class scan **before** drafting any fix —
+   grep the full PR diff for every path matching the concern
+   class, including paths the new comments did not flag.
+4. Apply the fix to **every** instance in one commit, then reply
+   from each flagging thread referencing the same commit SHA.
+
+This complements the same-line dedup above: same-line dedup
+handles "different reviewers, same line, same concern"; the
+convergence rule handles "different reviewers, different lines,
+same concern class — and the prior fix on this topic missed
+siblings." Both signals point at the same root remedy: scan the
+class, fix the class, reply once.
+
 ## Step 5: Consult — Collect All Decisions First
 
 **HARD RULE: Do NOT touch code during this step.** This is a
@@ -604,29 +639,46 @@ consultation-only phase. Present each `judgment-required` comment one
 at a time, collect the user's decision, then move to the next. No
 edits, no commits, no replies — just decisions.
 
-### Auto-apply preview for obvious-fix comments
+### Bulk-apply preview for obvious-fix comments (opt-in only)
 
-Before per-comment consultation, bundle every `obvious-fix` suggestion
-(from Step 4 classification) into a single preview block:
+Per-comment consultation is the **default for every active comment**,
+including `obvious-fix` items. The classification informs how the
+prompt is framed (`obvious-fix` items get a leading "skip rationale:
+{empty / no valid reason}" line so `(a)` is the obvious choice), but
+the user still answers each prompt explicitly. Hard Rule 5 of Step 5
+("one comment per message — never batch") applies to every active
+comment without exception.
 
-> "**Auto-apply queue ({K} obvious fixes — no judgment needed):**
+Skip the per-comment loop **only when the user has explicitly opted
+in** to bulk apply for this run. Acceptable opt-ins:
+
+- The user invoked the skill with an explicit auto / yes-to-all flag.
+- The user, after seeing the bulk preview below, responds with an
+  affirmative phrase (`auto`, `yes-to-all`, `apply all`).
+
+If `obvious-fix` items exist, before entering the per-comment loop
+present a single preview block and ask once:
+
+> "**Bulk-apply candidates ({K} obvious fixes — skip rationale empty
+> / no valid reason):**
 >
-> 1. {path}:{line} — {one-line summary} (skip rationale: {empty / no
->    valid reason})
+> 1. {path}:{line} — {one-line summary}
 > 2. ...
 >
-> These will be applied as-is during Step 6, one commit each per Hard
-> Rule 7. Reply **all-review** to instead consult on each one
-> individually, or proceed without reply to keep the queue."
+> Default: I'll consult on each one individually below.
+> Reply **auto** (or `yes-to-all`) to apply all {K} as-is in Step 6
+> instead. (One commit per finding; replies + thread resolution
+> remain normal.)"
 
-Wait briefly for an `all-review` override, then move to per-comment
-consultation for `judgment-required` items only. Apply the
-`obvious-fix` queue in Step 6 with no further prompts (still one
-commit per finding; replies + thread resolution as normal).
+Wait for an explicit affirmative reply before switching to bulk
+apply. Silence, an unrelated reply, or any non-affirmative response
+keeps the default — proceed into per-comment consultation for every
+item. Never silently advance to Step 6 on a timeout; the user must
+state the override.
 
-If **all** active comments are `obvious-fix`, present the preview and
-skip Step 5's per-comment loop entirely — proceed to Step 6 after the
-override window closes.
+When all active comments are `obvious-fix`, the same rule holds:
+present the preview, wait for an explicit affirmative, otherwise
+fall through to per-comment consultation.
 
 ### Present one at a time
 
@@ -999,6 +1051,28 @@ resolution via GraphQL (`resolveReviewThread`).
 This is expected and non-fatal — log the failure, but try to resolve
 the thread by node ID before giving up (see "Post reply comments"
 below). Continue with the remaining replies regardless.
+
+### Refresh thread IDs when bot reviewers are present
+
+Before posting any replies, if any reviewer in the comment map is a
+bot account (`[bot]` suffix or any review-automation account that
+re-creates its review object on each push), re-run the GraphQL
+`reviewThreads` query from Step 3 against the post-push HEAD and
+rebuild the thread/comment ID map for those reviewers' findings.
+
+Bot review replacement is not a first-fetch-only problem: the push
+in this step commonly triggers an immediate re-review that expires
+every pre-push REST comment ID. Replying with stale IDs returns
+404 from `POST /pulls/{n}/comments/{id}/replies` and the reply text
+is lost.
+
+Match each pre-push finding to its post-push thread by the stable
+identity tuple `(path, line, root_comment.body_excerpt)` — REST IDs
+are unstable but `(path, line, body)` survives review replacement
+when the bot kept the same finding. If the post-push fetch shows
+the finding was dropped on the replacement review, skip the reply
+and continue (the bot retracted it). The 404-recovery branch below
+remains as a fallback for any reply that still fails after refresh.
 
 ### Post reply comments (sequentially)
 
