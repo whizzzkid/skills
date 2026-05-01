@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.30-210212'
+  version: '2026.05.01-002324'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -187,6 +187,47 @@ When a parallel path is genuinely unaffected (different contract,
 defensive layer above, etc.), record that as a self-review
 comment noting the audit was performed. Silence reads as "the
 agent didn't look."
+
+## Step 2.7: Verify code-comment claims against current implementation
+
+Before posting any review comments, scan the diff for **inline code
+comments and doc strings that make behavioral claims** about the
+surrounding code, and mentally execute each claim against the
+implementation that ships in this PR. A comment is correct only if
+its claim is true given what the code actually does today, not given
+what the code did when the comment was written.
+
+Behavioral claims to flag for verification:
+
+- "This makes X available" / "this enables Y"
+- "Always works" / "is guaranteed to" / "never fails"
+- "Required because" / "needed for" — the dependency must still hold
+- Claims about subprocess, network, OS, or filesystem behavior that
+  depend on flags, depths, modes, or environment that the
+  implementation may have since narrowed
+- Claims about what other code paths do (the comment names a
+  function or behavior elsewhere that may have changed)
+
+For each flagged comment:
+
+1. Read the surrounding implementation in the current PR state.
+2. Decide whether the claim is still true. If the implementation
+   was narrowed (e.g., a deeper fetch became a shallower one, a
+   recursive scan became flat, a guarded path became unguarded),
+   the comment is likely stale.
+3. If stale, **fix the comment in this PR** rather than leaving a
+   review note about it — stale comments are documentation bugs,
+   not design notes. Fold the fix into the same commit as the
+   change that invalidated the comment if still possible, or add
+   a comment-only fix commit on the same branch.
+4. If the claim is still true but non-obvious, leave a self-review
+   note pointing at the load-bearing detail so future readers
+   know what holds the comment up.
+
+This check runs independently of Step 2.6's parallel-path scan:
+parallel-path looks for sibling instances of a fix; comment-accuracy
+looks for stale narration of a behavior. Both fire on the same
+trigger (the implementation changed) but cover different surfaces.
 
 ## Step 3: Present Comments for Approval
 
