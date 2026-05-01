@@ -16,9 +16,7 @@ allowed-tools:
   - Grep
   - Glob
   - AskUserQuestion
-  # Learning capture
   - Write
-  - "Bash(mkdir -p:*)"
 model: sonnet
 effort: medium
 model-invocable: true
@@ -26,7 +24,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-080026'
   internal: false
   model:
     openai: gpt-4.1
