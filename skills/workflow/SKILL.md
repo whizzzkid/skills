@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-081659'
+  version: '2026.05.01-082029'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -411,7 +411,7 @@ or two-stage accordingly.
 After all implementation is complete and tests pass, launch a **fresh
 adversarial critique agent** to review the work on the current branch.
 
-Spawn a dedicated code-review subagent. The reviewer operates on `git diff main...HEAD` and
+Spawn a dedicated code-review subagent. The reviewer operates on `git diff <base>...HEAD` (where `<base>` is the PR's `baseRefName` — resolve with `gh pr view --json baseRefName --jq .baseRefName`) and
 must be:
 
 - **Adversarial** — actively seek bugs, security issues, and design flaws
