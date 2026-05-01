@@ -24,9 +24,6 @@ allowed-tools:
   - "Bash(docker compose config:*)"
   - "Bash(docker compose logs:*)"
   - AskUserQuestion
-  # Learning capture (post-completion hook)
-  - Write
-  - "Bash(mkdir -p:*)"
 model: sonnet
 effort: medium
 model-invocable: true
@@ -34,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-080507'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -112,8 +109,8 @@ docker run --rm --entrypoint cat <image>:<tag> /etc/os-release 2>&1
 Some base images set a custom ENTRYPOINT that interferes with
 docker-compose commands.
 
-**Known issue:** `jdxcode/mise` sets `ENTRYPOINT ["mise"]`, which causes
-`docker-compose run <service> sh -c '...'` to become `mise sh -c '...'`,
+**Example:** an image that sets `ENTRYPOINT ["/custom-tool"]` turns
+`docker-compose run <service> sh -c '...'` into `custom-tool sh -c '...'`,
 breaking all commands.
 
 **Fix:** Add `ENTRYPOINT []` in the Dockerfile after installing tools to

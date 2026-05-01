@@ -16,9 +16,6 @@ allowed-tools:
   - "Bash(gh pr edit:*)"
   - "Bash(gh pr list:*)"
   - AskUserQuestion
-  # Learning capture (post-completion hook)
-  - Write
-  - "Bash(mkdir -p:*)"
 model: sonnet
 effort: low
 model-invocable: true
@@ -26,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-075013'
+  version: '2026.05.01-080507'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -209,20 +206,14 @@ gh pr view --json number,title,body,headRefName,state 2>/dev/null
 ### Step 2: Check for drift
 
 Compare the PR's current title and body against the branch's
-post-push state. Drift is present when **any** of these is true:
+post-push state:
 
-- The PR title no longer matches the branch's primary intent (e.g.,
-  the branch was originally "add feature X" but now also fixes Y, or
-  the scope flipped from feat to fix, or a version pin landed but the
-  title still says "upgrade").
-- The PR body lists commits, files, or behaviors that no longer match
-  the branch (removed commits via amend/rebase, added commits the body
-  doesn't mention, reverted decisions still described as live).
-- A "Test plan" / "Summary" / "Closes #N" section is now wrong (test
-  steps reference removed code, summary bullets contradict the diff,
-  linked issue was actually closed by a different PR).
-- The PR body lists a version, dependency, or config value that the
-  latest push has changed.
+| Drift signal | Example |
+|---|---|
+| Title no longer matches primary intent | scope flipped feat→fix; version pin landed but title still says "upgrade" |
+| Body lists commits/behaviors that no longer exist | removed commits, reverted decisions still described as live |
+| Test plan / Closes section is now wrong | steps reference removed code; linked issue closed by a different PR |
+| Body cites a version or config value the push changed | dep version in body doesn't match lockfile |
 
 A clean push that only adds tests/docs aligned with the existing
 description is **not** drift.

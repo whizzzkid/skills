@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-074735'
+  version: '2026.05.01-080332'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -323,24 +323,17 @@ When making a significant architectural decision (new dependency, pattern
 change, technology choice, trade-off acceptance), create an ADR in
 `docs/adr/` using the format: title, status, context, decision, consequences.
 
-### Reuse hygiene
+### Provenance checks
 
-Patterns lifted from neighboring files are not portable by default.
-Before copying a fallback chain, default, or conditional from one file
-into another, trace each variable involved:
+**Reuse hygiene.** Patterns lifted from neighboring files are not portable by default.
+Before copying a fallback chain, default, or conditional, trace each variable:
+1. **Where is it set?** — secrets manager, pipeline env, bootstrap script, calling tool.
+2. **What code path sets it?** — does that path reach the new location?
+3. **Does the value mean the same thing in the new context?** — if not, adapt; don't copy verbatim.
 
-1. **Where is it set?** — secrets manager, pipeline env, bootstrap
-   script, calling tool, operator workflow.
-2. **What code path sets it?** — and does that same path reach the new
-   location?
-3. **Does the value mean the same thing in the new context?** — same
-   PR, same env, same caller? If not, the pattern needs to be adapted,
-   not copied verbatim.
+Cross-script copies are especially hazardous — each script tends to have a different invocation environment. Ask or grep for setters before reusing.
 
-Cross-script copies (one `bin/` script to another) are especially
-hazardous because each script tends to have a different invocation
-environment. When a variable's provenance differs between source and
-destination, ask or grep for setters before reusing the pattern.
+**Environment variables in docs.** Whenever code or docs introduce or reference an env var, document: where it is stored, who can edit that store, how a change propagates, and what the default is if unset. Operators need to know how to change the value without a code deploy.
 
 ### Two-sided flow survey
 
@@ -353,22 +346,6 @@ coherent story — which is authoritative, which is advisory, what
 happens when they disagree. Surfacing the caller side late forces a
 redesign mid-implementation; surfacing it first folds it into the
 original design.
-
-### Environment-variable provenance in docs
-
-Whenever code or docs introduce or reference an environment variable,
-the documentation must answer:
-
-1. **Where is it stored?** — secrets manager path, pipeline config,
-   shell profile, deploy manifest.
-2. **Who can edit that store?**
-3. **How does a change propagate?** — next build, runtime reload,
-   redeploy.
-4. **What is the default if unset?**
-
-Operators reading the doc need to know how to change the value without
-a code deploy. If any of these are unclear at write time, ask the user
-before publishing the doc or the code path that consumes the variable.
 
 ---
 

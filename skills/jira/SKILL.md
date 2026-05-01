@@ -23,9 +23,6 @@ allowed-tools:
   - "Bash(git branch:*)"
   - "Bash(git log:*)"
   - "Bash(git config:*)"
-  # Learning capture
-  - Write
-  - "Bash(mkdir -p:*)"
 model: sonnet
 effort: low
 model-invocable: true
@@ -33,7 +30,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-080507'
   internal: false
   model:
     openai: gpt-4.1-mini

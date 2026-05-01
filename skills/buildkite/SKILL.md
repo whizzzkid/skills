@@ -28,9 +28,6 @@ allowed-tools:
   - "Bash(bk config get:*)"
   - "Bash(bk version:*)"
   - AskUserQuestion
-  # Learning capture (post-completion hook)
-  - Write
-  - "Bash(mkdir -p:*)"
 model: sonnet
 effort: medium
 model-invocable: true
@@ -38,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-080507'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -193,8 +190,7 @@ bk build view -p <pipeline> -b main --json 2>&1 | \
 ## Monitoring Builds After Push
 
 After pushing code, check the build status. Since cron-based polling of `bk`
-can be unreliable (known issue with Bash tool internal errors in cron context),
-prefer manual checks:
+can be unreliable, prefer manual checks:
 
 ```bash
 # Quick status check

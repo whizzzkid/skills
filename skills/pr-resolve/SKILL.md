@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-074735'
+  version: '2026.05.01-080332'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1141,28 +1141,19 @@ gh api graphql -f query='
 If the mutation returns **`NOT_FOUND`** (or `Could not resolve to
 a node` / similar) for a thread ID:
 
-The bot likely **replaced its review** during the push that
-preceded resolution — review-replacing bots (those that post one
-overarching review per commit and re-create the review object on
-each push) invalidate every thread node ID from the prior fetch.
-The thread itself usually still exists under a new ID. Recover by
+Same cause as the 404 reply case above — a bot review replacement
+during the push invalidated the thread node ID. Recover by
 re-fetching:
 
-1. Re-run the GraphQL `reviewThreads` query (Step 3 form) to get
-   the current thread set with fresh IDs.
-2. Look up the original thread by its stable identity tuple
-   `(path, line, root_comment.databaseId)` — `databaseId` on
-   the root REST comment survives re-fetch even when the thread
-   node ID does not.
-3. If a match is found with the same root comment, retry
-   `resolveReviewThread` with the new thread ID.
-4. If no match (the bot dropped the finding entirely on its
-   replacement review), log and continue — the resolution is
-   moot because the thread no longer exists from the bot's side.
+1. Re-run the GraphQL `reviewThreads` query (Step 3 form) for
+   fresh IDs.
+2. Look up the original thread by stable identity tuple
+   `(path, line, root_comment.databaseId)`.
+3. If matched, retry `resolveReviewThread` with the new thread ID.
+4. If no match (bot dropped the finding), log and continue.
 
-Cap the recovery to **one retry per original thread** to avoid
-loops if the bot is rapidly re-replacing reviews. If the retry
-also fails or the lookup misses, log and continue.
+Cap to **one retry per thread**. If the retry also fails, log and
+continue.
 
 If resolution returns any other error, log and continue.
 
