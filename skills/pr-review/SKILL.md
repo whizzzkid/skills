@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-081659'
+  version: '2026.05.01-083122'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -272,7 +272,7 @@ Resolve threads where fixes were acknowledged (with user consent per the
 existing hard rule). Leave all other threads open.
 
 **After follow-ups are posted, proceed to Phase 3** to investigate new
-issues. The follow-up replies count toward the 6-comment cap in Phase 5.
+issues.
 
 ## Phase 3: Investigation
 
@@ -445,7 +445,7 @@ For each queued bot finding:
 
 | Outcome | Definition | Phase 5 action |
 |---------|------------|----------------|
-| **Confirmed** | The script reproduces the failure mode the bot described. | Reply to the bot's thread with `**Validated locally** — <one-line evidence>` followed by a ` ```suggestion ` block (or a code-fence example if outside the diff). The author can apply the suggestion directly. |
+| **Confirmed** | The script reproduces the failure mode the bot described. | **Skip the reply.** The bot's thread already carries the finding; a "validated locally" pile-on is noise. Only reply if the playground surfaced **new evidence the bot missed** (different reproduction angle, broader blast radius, an additional failure mode). |
 | **Refuted** | The script contradicts the bot's claim — the code behaves correctly under the inputs the bot flagged. | Reply with `**Could not reproduce** — <one-line counter-evidence>` and a brief explanation of what was tested. Do NOT silently leave the thread open; the author needs the counter-signal to dismiss confidently. |
 | **Inconclusive** | The script can't decisively confirm or refute (missing fixtures, the failure mode requires production-only state, the claim is style/preference rather than behavior). | Leave the thread alone. Note "inconclusive" in the Phase 4 summary so the user can decide whether to investigate further or accept the bot's verdict. |
 
@@ -460,14 +460,13 @@ investigation instead — but still classify outcome and reply
 accordingly. The reply policy is the same regardless of how the
 verdict was reached.
 
-The validation outcome supersedes the dedup-against-bot branching
-in Phase 5: a confirmed bot finding gets a reply with suggestion
-fix even when the agent had not independently spotted it; a refuted
-bot finding gets a reply with counter-evidence rather than the
-default "validated locally" template. The dedup-against-bot
-fallback only applies when validation produces "inconclusive" AND
-the agent has independently flagged the same issue — in that case
-post the agent's evidence + fix in a reply.
+**Silent skip on agreement is the default for bot threads.** A confirmed
+bot finding gets no reply — the bot's thread already carries the verdict
+and a duplicate "validated locally" reply just adds noise. A refuted
+finding always gets a reply with counter-evidence so the author can
+dismiss the bot confidently. Inconclusive findings the agent
+independently flagged get the agent's own evidence; otherwise leave the
+thread alone.
 
 ### Validate PR tests via mutation
 
@@ -573,23 +572,31 @@ After running experiments, summarize what you discovered:
 
 Formulate inline review comments anchored to specific lines in the diff.
 
-### Comment cap
+### Stay focused — no comment cap, but every comment must be actionable
 
-**HARD RULE: Limit each review pass to a maximum of 6 comments.** If
-investigation and playground testing surface more than 6 distinct issues,
-stop experimenting. Rank findings by severity (blockers first, then
-suggestions, then questions) and post only the top 6. Mention in the
-review body that additional issues were found and will be covered in a
-follow-up review after this round is addressed.
+There is no hard cap on comment count. The user-approval gate (Phase 6)
+is the safety net against over-commenting; surface every actionable
+finding and let the user prune.
 
-This prevents overwhelming the author. Short, focused reviews get faster
-turnaround. Multiple passes are better than one massive dump.
+What stays inline:
+- Bugs the author should fix
+- Concrete suggestions with a `suggestion` block when applicable
+- Genuine questions about intent or behavior
+
+What does NOT go inline:
+- Restating what the diff already shows
+- Generic praise for routine correctness ("nice naming", "good test")
+- Pure observations the author can't act on
+- Bot agreements (see "Deduplicate against existing comments")
+
+Praise and overall verdict belong in the **review body** (Phase 6), not
+inline. Inline noise dilutes the actionable signal.
 
 ### Tone
 
-Be encouraging and constructive. The goal is to help the author improve the
-code, not to block the PR. Acknowledge good work. Frame suggestions as
-opportunities, not demands.
+Terse and constructive. Each comment is one or two sentences of
+actionable feedback. No filler, no hedging, no restating the diff.
+Frame non-blockers as "candidate for a follow-up" rather than demands.
 
 ### Severity
 
@@ -601,8 +608,9 @@ Tag each comment with a severity prefix:
   refactoring ideas, pedantic observations, potential optimizations.
 - **`question:`** Genuine uncertainty about intent or behavior. Ask the author
   to clarify.
-- **`praise:`** Call out good patterns, clever solutions, or well-handled edge
-  cases. Reinforce good work.
+- **`praise:`** Reserve for inline only when calling out a non-obvious
+  pattern the reviewer should learn from. Generic praise belongs in the
+  review body, not as an inline thread.
 
 **Default to `suggestion` unless something is genuinely critical.** Frame
 non-blocking items as "good candidate for a follow-up" or "something to
@@ -690,20 +698,21 @@ validation outcome decides the reply, not the fact of duplication:
 
 | Phase 4 outcome | Phase 5 action |
 |-----------------|----------------|
-| **Confirmed** | Reply with `**Validated locally** — <evidence>` + ` ```suggestion ` block (or in-diff anchored code-fence example if the fix is outside the diff). Always reply, even when the agent did not independently spot the issue. |
+| **Confirmed** | **Skip.** Bot has it covered; a duplicate reply is noise. Reply only if the playground surfaced new evidence the bot missed. |
 | **Refuted** | Reply with `**Could not reproduce** — <counter-evidence>` + brief description of what was tested. Always reply — silent skip leaves the author guessing. |
 | **Inconclusive** AND agent independently flagged the same issue | Reply with the agent's own evidence + suggestion fix (the agent's verdict carries the thread). |
 | **Inconclusive** AND agent did not flag it | Leave the thread alone. Note in the Phase 5 summary so the user can override. |
-| **Out of scope for code validation** (style/prose claim) | Use Phase 3 reading-based verdict; reply per the same confirmed/refuted templates. |
+| **Out of scope for code validation** (style/prose claim) | Use Phase 3 reading-based verdict; reply only on refute. |
 
-Bot-thread replies are delivered via one of the two mechanisms in
-Phase 6 ("Creating the pending review"):
+Bot-thread replies (when one is needed — refuted or new-evidence cases)
+are delivered via one of the two mechanisms in Phase 6 ("Creating the
+pending review"):
 
-- **(a) folded into the review body** with an anchor reference —
-  costs **0** against the 6-comment cap.
-- **(b) live `/comments/{id}/replies` post** — costs **1** against
-  the cap; requires explicit user opt-in at the Phase 6 prompt
-  because it bypasses the pending-review checkpoint.
+- **(a) folded into the review body** with an anchor reference — zero
+  extra API calls; stays inside the pending checkpoint.
+- **(b) live `/comments/{id}/replies` post** — requires explicit user
+  opt-in at the Phase 6 prompt because it bypasses the pending-review
+  checkpoint.
 
 `in_reply_to` is **not** a valid field on draft-review comments,
 so a bot reply cannot be embedded as a `comments[]` entry in the
@@ -803,41 +812,69 @@ entry in `comments[]` must be a top-level comment with `path`,
 "Validate bot findings" outcome) cannot ride along in the pending
 review payload — choose one of:
 
-- **(a) Inline in the review body** — add the validation note to
+- **(a) Inline in the review body** — add the counter-evidence note to
   the top-level review `body` referencing the bot's anchor:
-  `Re: {bot} thread on {file}:{line} — Validated locally; suggested
-  fix: ...`. Zero extra API calls; counts as **0** toward the
-  6-comment cap.
-- **(b) Live reply via `/comments/{id}/replies`** — posts
-  immediately (not draft); requires explicit user authorization in
-  Phase 6's prompt because it's a live action outside the pending
-  review. Counts as **1** toward the cap. Format:
+  `Re: {bot} thread on {file}:{line} — Could not reproduce; <evidence>`.
+  Zero extra API calls; stays inside the pending checkpoint.
+- **(b) Live reply via `/comments/{id}/replies`** — posts immediately
+  (not draft); requires explicit user authorization in Phase 6's prompt
+  because it's a live action outside the pending review. Format:
   `gh api repos/{owner}/{repo}/pulls/{n}/comments/{parent_id}/replies --method POST -f body="..."`.
 
 Default to (a) unless the user opted into (b) when picking option
 A in the present-and-wait prompt.
+
+### Compose the review body
+
+The review body is **the agent's verdict on the change as a whole**, not
+a summary of the inline comments. Write a concise impression of the PR,
+keyed to the change's overall shape:
+
+- **Clean, focused PR with no glaring issues:** praise the author and
+  write `LGTM 🚀`. Be specific about what's strong (clear naming, tight
+  tests, well-scoped change) — generic praise is worse than no praise.
+- **PR is too large or mixes concerns:** call it out and recommend
+  splitting into smaller PRs. Sketch the natural split lines.
+- **PR has structural concerns spanning the whole change:** describe the
+  pattern, not the individual instances (those go inline). E.g.,
+  "logging is inconsistent across the new modules" goes in the body;
+  individual missing log lines go inline.
+
+Use emojis where they aid scanning (✅ 🚀 🛠️ 🧪 ⚠️ 📦 🎯). Keep the body
+short — one to three short paragraphs.
+
+**Always end the body with this footer (verbatim):**
+
+```
+---
+This review was generated with the help of an Agent. If you find it noisy or annoying, please DM me your feedback.
+```
+
+Bot-thread counter-evidence notes (option (a) above) are folded in
+before the footer, anchored as `Re: {bot} thread on {file}:{line} — …`.
+
+### Build the payload
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --method POST \
   --input - <<'EOF'
 {
-  "body": "Reviewing with the help of {agent-name}, please let me know if it's annoying or noisy or not useful.",
+  "body": "<composed verdict — see 'Compose the review body' above — ending with the footer>",
   "comments": [
     {
       "path": "src/file.ts",
       "line": 42,
       "side": "RIGHT",
-      "body": "**suggestion:** Consider extracting this into a helper — good candidate for a follow-up."
+      "body": "**suggestion:** Extract this into a helper — candidate for a follow-up."
     }
   ]
 }
 EOF
 ```
 
-Replace `{owner}/{repo}` with the actual repository, `{number}` with the PR
-number, and `{agent-name}` with the name of the agent in use (e.g., "Claude
-Code", "Cursor"). If unknown, use "an AI coding assistant."
+Replace `{owner}/{repo}` with the actual repository and `{number}` with
+the PR number.
 
 The review stays **pending** (draft) — it is not visible to others until the
 user clicks "Submit review" on GitHub or explicitly asks the agent to submit.
