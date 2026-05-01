@@ -29,7 +29,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.01-224941'
   internal: false
   model:
     openai: gpt-4.1
@@ -111,7 +111,11 @@ BASE="${1:-$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null \
             || git symbolic-ref refs/remotes/origin/HEAD --short \
                 | sed 's@^origin/@@')}"
 
-git fetch origin "$BASE"
+# Base may have been merged and deleted; re-detect if fetch fails
+if ! git fetch origin "$BASE" 2>/dev/null; then
+  BASE=$(gh pr view --json baseRefName --jq .baseRefName)
+  git fetch origin "$BASE"
+fi
 BASE_REF="origin/$BASE"
 
 # Commits the branch is ahead of the base
@@ -312,6 +316,39 @@ git reset --hard "$START_SHA"
 
 The branch returns to its pre-integration state. The user can retry
 after fixing whatever made integration produce broken output.
+
+### Behavior-preservation check
+
+Tests passing is necessary but **not sufficient** — when both production
+code and its spec are picked from the same side of a conflict, the
+regression is internally consistent and CI does not catch it.
+
+For every file touched by the integration, diff the integrated result
+against the pre-integration base:
+
+```bash
+git diff "$START_SHA"..HEAD -- <file>
+```
+
+Scan for removed lines in these high-risk categories:
+
+| Category | Examples |
+|----------|---------|
+| Environment lookups | `ENV.fetch`, `process.env`, `os.environ` |
+| Fallback chains | `if x.nil?`, `x || default`, `?? fallback` |
+| Error handling | `rescue`, `catch`, `try/except`, `.on_error` |
+| Guards / early returns | `unless`, `return if`, `if !x` |
+| Spec coverage | removed `it` / `test` / `describe` blocks |
+
+If a removed line's behavior appears nowhere else in the diff, surface
+it:
+
+> "Line removed: `{line}` — behavior `{description}` now has no owner.
+> Was this intentional?"
+
+Do not push if the user has not answered. A pure integration's net diff
+should be narrow; large unexplained deletions warrant line-by-line review,
+not just a passing test suite.
 
 ---
 
