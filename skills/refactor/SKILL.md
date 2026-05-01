@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.30-205505'
+  version: '2026.05.01-073751'
   internal: false
   model:
     openai: gpt-4.1
@@ -337,69 +337,6 @@ when possible; otherwise compare against the base branch.
 
 ---
 
-## Post-Completion: Learning Capture
+## Post-Completion
 
-**After this skill finishes its primary work**, capture what happened
-before returning control.
-
-### Check environment
-
-```bash
-test -n "$WK_SKILLS_HOME" && echo "OK: $WK_SKILLS_HOME" || echo "MISSING"
-```
-
-If `$WK_SKILLS_HOME` is not set, ask the user:
-
-> "`$WK_SKILLS_HOME` is not set. Please add
-> `export WK_SKILLS_HOME=/path/to/skills` to your shell profile and
-> restart your terminal."
-
-**Stop here if the variable is missing.** Do not guess or use a fallback.
-
-### Reflect
-
-1. **What went wrong?** — A removed-line shape the checklist
-   doesn't cover; a refactor kind whose expected shape wasn't in
-   Stage 0; a finding the user had to point out post-PASS.
-2. **What was missing?** — A trigger condition the skill should
-   have fired under; a skill it should have coordinated with.
-3. **What worked well?** — A finding caught before the user saw
-   it; a kind classification that landed cleanly.
-4. **What surprised you?** — A semantically-equivalent rewrite
-   that looked different on diff but behaved identically (false
-   positive avoided), or its inverse (false negative — looked
-   identical, behaved differently).
-
-If ALL lenses are empty (routine execution, nothing notable), **skip
-writing**.
-
-### Write the learning
-
-```bash
-mkdir -p "$WK_SKILLS_HOME/learnings/skills/refactor"
-```
-
-Write to
-`$WK_SKILLS_HOME/learnings/skills/refactor/<YYYY-MM-DD>_<learning-slug>.md`:
-
-```markdown
----
-skill: wk:refactor
-date: <YYYY-MM-DD>
-type: <correction | gap | pattern | surprise>
-severity: <low | medium | high>
----
-
-<One-line summary>
-
-**What happened:** <What the skill did or failed to do>
-
-**Root cause:** <Why — missing instruction, wrong assumption, edge case>
-
-**Suggested fix:** <What should change in the skill to prevent this>
-```
-
-### Signal for distillation
-
-> "📝 Learning captured: `refactor/<date>_<slug>.md` — distill with
-> `wk:sharpen` when ready."
+Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn refactor`).

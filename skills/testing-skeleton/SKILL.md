@@ -26,7 +26,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.28-203920'
+  version: '2026.05.01-073751'
   internal: false
   model:
     openai: gpt-4.1
@@ -304,67 +304,6 @@ behavioral coverage.
 
 ---
 
-## Post-Completion: Learning Capture
+## Post-Completion
 
-**After this skill finishes its primary work**, capture what happened
-before returning control.
-
-### Check environment
-
-```bash
-test -n "$WK_SKILLS_HOME" && echo "OK: $WK_SKILLS_HOME" || echo "MISSING"
-```
-
-If `$WK_SKILLS_HOME` is not set, ask the user:
-
-> "`$WK_SKILLS_HOME` is not set. Please add
-> `export WK_SKILLS_HOME=/path/to/skills` to your shell profile and
-> restart your terminal."
-
-**Stop here if the variable is missing.** Do not guess or use a fallback.
-
-### Reflect
-
-1. **What went wrong?** — Tests that passed on broken code,
-   structural tests written when behavioral was possible,
-   missing sad paths.
-2. **What was missing?** — A test type for a kind of unit not
-   yet covered, mutation idioms for a language family.
-3. **What worked well?** — Plan caught a path that would have
-   been missed; mutation pass caught a hole.
-4. **What surprised you?** — A unit that genuinely required
-   structural testing (rare — worth recording).
-
-If ALL lenses are empty (routine execution, nothing notable), **skip
-writing**.
-
-### Write the learning
-
-```bash
-mkdir -p "$WK_SKILLS_HOME/learnings/skills/testing-skeleton"
-```
-
-Write to
-`$WK_SKILLS_HOME/learnings/skills/testing-skeleton/<YYYY-MM-DD>_<learning-slug>.md`:
-
-```markdown
----
-skill: wk:testing-skeleton
-date: <YYYY-MM-DD>
-type: <correction | gap | pattern | surprise>
-severity: <low | medium | high>
----
-
-<One-line summary>
-
-**What happened:** <What the skill did or failed to do>
-
-**Root cause:** <Why — missing instruction, wrong assumption, edge case>
-
-**Suggested fix:** <What should change in the skill to prevent this>
-```
-
-### Signal for distillation
-
-> "📝 Learning captured: `testing-skeleton/<date>_<slug>.md` —
-> distill with `wk:sharpen` when ready."
+Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn testing-skeleton`).

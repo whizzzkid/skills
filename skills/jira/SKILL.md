@@ -33,7 +33,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.30-192913'
+  version: '2026.05.01-073751'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -290,66 +290,6 @@ ticket state is a side-effect of the work, not a precondition for it.
 
 ---
 
-## Post-Completion: Learning Capture
+## Post-Completion
 
-**After this skill finishes its primary work**, capture what happened
-before returning control.
-
-### Check environment
-
-```bash
-test -n "$WK_SKILLS_HOME" && echo "OK: $WK_SKILLS_HOME" || echo "MISSING"
-```
-
-If `$WK_SKILLS_HOME` is not set, ask the user:
-
-> "`$WK_SKILLS_HOME` is not set. Please add
-> `export WK_SKILLS_HOME=/path/to/skills` to your shell profile and
-> restart your terminal."
-
-**Stop here if the variable is missing.** Do not guess or use a fallback.
-
-### Reflect
-
-1. **What went wrong?** — Wrong key detected, missing transition,
-   reassignment of someone else's work, MCP errors mishandled.
-2. **What was missing?** — A board workflow shape this skill doesn't
-   cover, a transition naming convention not in the matching list.
-3. **What worked well?** — Auto-detection that picked the right key
-   without prompting; clean state transitions matching board workflow.
-4. **What surprised you?** — Boards with non-linear workflows
-   (multiple "done-like" states, conditional transitions).
-
-If ALL lenses are empty (routine execution, nothing notable), **skip
-writing**.
-
-### Write the learning
-
-```bash
-mkdir -p "$WK_SKILLS_HOME/learnings/skills/jira"
-```
-
-Write to
-`$WK_SKILLS_HOME/learnings/skills/jira/<YYYY-MM-DD>_<learning-slug>.md`:
-
-```markdown
----
-skill: wk:jira
-date: <YYYY-MM-DD>
-type: <correction | gap | pattern | surprise>
-severity: <low | medium | high>
----
-
-<One-line summary>
-
-**What happened:** <What the skill did or failed to do>
-
-**Root cause:** <Why — missing instruction, wrong assumption, edge case>
-
-**Suggested fix:** <What should change in the skill to prevent this>
-```
-
-### Signal for distillation
-
-> "📝 Learning captured: `jira/<date>_<slug>.md` — distill with
-> `wk:sharpen` when ready."
+Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn jira`).

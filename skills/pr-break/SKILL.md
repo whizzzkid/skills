@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.30-192913'
+  version: '2026.05.01-073751'
   internal: false
   model:
     openai: gpt-4.1
@@ -483,67 +483,6 @@ to be re-cut.
 
 ---
 
-## Post-Completion: Learning Capture
+## Post-Completion
 
-**After this skill finishes its primary work**, capture what happened
-before returning control.
-
-### Check environment
-
-```bash
-test -n "$WK_SKILLS_HOME" && echo "OK: $WK_SKILLS_HOME" || echo "MISSING"
-```
-
-If `$WK_SKILLS_HOME` is not set, ask the user:
-
-> "`$WK_SKILLS_HOME` is not set. Please add
-> `export WK_SKILLS_HOME=/path/to/skills` to your shell profile and
-> restart your terminal."
-
-**Stop here if the variable is missing.** Do not guess or use a fallback.
-
-### Reflect
-
-1. **What went wrong?** — A seam that looked clean but produced an
-   isolation failure; a learning the planner missed; a reviewer
-   ask that wasn't honored.
-2. **What was missing?** — A seam category not in the Stage 3
-   list; a check the invariant pass missed.
-3. **What worked well?** — A split that landed cleanly; a
-   reviewer-quoted ask that drove a good cut.
-4. **What surprised you?** — A diff that fought the planner —
-   coupling that wasn't visible from file boundaries alone.
-
-If ALL lenses are empty (routine execution, nothing notable), **skip
-writing**.
-
-### Write the learning
-
-```bash
-mkdir -p "$WK_SKILLS_HOME/learnings/skills/pr-break"
-```
-
-Write to
-`$WK_SKILLS_HOME/learnings/skills/pr-break/<YYYY-MM-DD>_<learning-slug>.md`:
-
-```markdown
----
-skill: wk:pr-break
-date: <YYYY-MM-DD>
-type: <correction | gap | pattern | surprise>
-severity: <low | medium | high>
----
-
-<One-line summary>
-
-**What happened:** <What the skill did or failed to do>
-
-**Root cause:** <Why — missing instruction, wrong assumption, edge case>
-
-**Suggested fix:** <What should change in the skill to prevent this>
-```
-
-### Signal for distillation
-
-> "📝 Learning captured: `pr-break/<date>_<slug>.md` — distill with
-> `wk:sharpen` when ready."
+Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn pr-break`).

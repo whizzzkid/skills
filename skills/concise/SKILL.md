@@ -24,7 +24,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-184708'
+  version: '2026.05.01-073751'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -389,57 +389,6 @@ Confirm deactivation:
 
 ---
 
-## Post-Completion: Learning Capture
+## Post-Completion
 
-**After this skill finishes its primary work**, capture what happened
-before returning control.
-
-### Check environment
-
-```bash
-test -n "$WK_SKILLS_HOME" && echo "OK: $WK_SKILLS_HOME" || echo "MISSING"
-```
-
-If `$WK_SKILLS_HOME` is not set, ask the user:
-
-> "`$WK_SKILLS_HOME` is not set. Please add
-> `export WK_SKILLS_HOME=/path/to/skills` to your shell profile and
-> restart your terminal."
-
-**Stop here if the variable is missing.** Do not guess or use a fallback.
-
-### Reflect
-
-Review what happened during this skill's execution:
-
-1. **What went wrong?** — Errors, wrong assumptions, user corrections, API failures
-2. **What was missing?** — Steps the skill should have included, edge cases not covered
-3. **What worked well?** — Approaches worth reinforcing
-4. **What surprised you?** — Non-obvious discoveries for future runs
-
-If ALL lenses are empty, **skip writing**.
-
-### Write the learning
-
-```bash
-mkdir -p "$WK_SKILLS_HOME/learnings/skills/concise"
-```
-
-Write to `$WK_SKILLS_HOME/learnings/skills/concise/<YYYY-MM-DD>_<slug>.md`:
-
-```markdown
----
-skill: wk:concise
-date: <YYYY-MM-DD>
-type: <correction | gap | pattern | surprise>
-severity: <low | medium | high>
----
-
-<One-line summary>
-
-**What happened:** <description>
-**Root cause:** <why>
-**Suggested fix:** <what to change>
-```
-
-> "📝 Learning captured: `concise/<date>_<slug>.md` — distill with `wk:sharpen` when ready."
+Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn concise`).

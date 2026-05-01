@@ -24,7 +24,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.27-211249'
+  version: '2026.05.01-073751'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -262,76 +262,6 @@ the first commit that the formatting reflects user defaults.
 
 ---
 
-## Post-Completion: Learning Capture
+## Post-Completion
 
-**After this skill finishes its primary work**, capture what happened
-before returning control.
-
-### Check environment
-
-```bash
-test -n "$WK_SKILLS_HOME" && echo "OK: $WK_SKILLS_HOME" || echo "MISSING"
-```
-
-If `$WK_SKILLS_HOME` is not set, ask the user:
-
-> "`$WK_SKILLS_HOME` is not set. Please add
-> `export WK_SKILLS_HOME=/path/to/skills` to your shell profile and
-> restart your terminal."
-
-**Stop here if the variable is missing.** Do not guess or use a fallback.
-
-### Reflect
-
-Review what happened during this skill's execution:
-
-1. **What went wrong?** — A repo config the skill couldn't parse,
-   a language with no detection rule, a preference the user
-   overrode mid-session.
-2. **What was missing?** — A language family the skill doesn't
-   cover, a config format not in the extraction table.
-3. **What worked well?** — Auto-resolution that landed the right
-   answer without prompting.
-4. **What surprised you?** — Conflicting repo configs that needed
-   adjudication beyond the documented precedence.
-
-If ALL lenses are empty (routine execution, nothing notable), **skip
-writing** — not every run produces a learning.
-
-### Write the learning
-
-```bash
-mkdir -p "$WK_SKILLS_HOME/learnings/skills/format"
-```
-
-Write to
-`$WK_SKILLS_HOME/learnings/skills/format/<YYYY-MM-DD>_<learning-slug>.md`:
-
-```markdown
----
-skill: wk:format
-date: <YYYY-MM-DD>
-type: <correction | gap | pattern | surprise>
-severity: <low | medium | high>
----
-
-<One-line summary>
-
-**What happened:** <What the skill did or failed to do>
-
-**Root cause:** <Why — missing instruction, wrong assumption, edge case>
-
-**Suggested fix:** <What should change in the skill to prevent this>
-```
-
-Use a 2-4 word kebab-case slug.
-
-### Signal for distillation
-
-After writing, note:
-
-> "📝 Learning captured: `format/<date>_<slug>.md` — distill with
-> `wk:sharpen` when ready."
-
-Learnings accumulate in `$WK_SKILLS_HOME/learnings/skills/` and are
-batch-distilled into skill improvements via `wk:sharpen`.
+Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn format`).
