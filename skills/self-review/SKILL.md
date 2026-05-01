@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-074735'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -234,9 +234,9 @@ trigger (the implementation changed) but cover different surfaces.
 Show a numbered summary of proposed comments:
 
 ```
-1. src/auth.ts:42 — Chose HMAC over RSA here because tokens are short-lived
-2. src/cache.ts:91 — This eviction strategy trades memory for latency
-3. src/api.ts:15 — Breaking change: removed deprecated v1 endpoint
+1. <module>/handler.ts:42 — Chose HMAC over RSA here because tokens are short-lived
+2. <module>/store.ts:91 — This eviction strategy trades memory for latency
+3. <module>/routes.ts:15 — Breaking change: removed deprecated v1 endpoint
 ```
 
 Wait for user approval. They may edit, skip, or approve individual comments.

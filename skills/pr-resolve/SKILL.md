@@ -37,7 +37,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-074735'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -337,7 +337,7 @@ For each comment, classify the author:
 
 | `user_type` | Pattern | Classification |
 |-------------|---------|----------------|
-| `Bot` | `*[bot]` suffix (e.g., `copilot[bot]`, `github-actions[bot]`) | **Bot review** |
+| `Bot` | `*[bot]` suffix (e.g., `dependabot[bot]`, `github-actions[bot]`) | **Bot review** |
 | `Bot` | Custom bot names without `[bot]` suffix | **Bot review** |
 | `User` | Matches PR author login | **Self-review** (skip) |
 | `User` | Matches current user login (co-author session) | **Self-review** (skip) |
@@ -417,12 +417,12 @@ Separate bot comments from human reviewer comments in the summary:
 > S skipped as self-review)."
 >
 > **Bot reviews:**
-> **src/auth.ts** (2 comments from copilot[bot])
+> **src/feature.ts** (2 comments from {review-bot}[bot])
 >
 > **Reviewer comments:**
-> **src/auth.ts** (1 comment from @reviewer1)
-> **src/api.ts** (1 comment from @reviewer2)
-> **src/utils.ts** (2 comments from @reviewer1)
+> **src/feature.ts** (1 comment from @{reviewer-a})
+> **src/service.ts** (1 comment from @{reviewer-b})
+> **src/utils.ts** (2 comments from @{reviewer-a})
 
 ## Step 4: Generate Suggestions
 
@@ -918,27 +918,27 @@ After ALL comments are processed, present a full summary:
 ## Resolution Summary
 
 ### Fixes applied ({count} commits)
-1. abc1234 — fix(auth): 🐛 invalidate session on logout
-   - Addresses: @reviewer src/auth.ts:42, src/auth.ts:58
+1. {sha-1} — fix(feature): 🐛 invalidate session on logout
+   - Addresses: @{reviewer-a} src/feature.ts:42, src/feature.ts:58
 
-2. def5678 — refactor(api): ♻️ extract timeout config
-   - Addresses: @reviewer2 src/api.ts:33
+2. {sha-2} — refactor(service): ♻️ extract timeout config
+   - Addresses: @{reviewer-b} src/service.ts:33
 
 ### Bot reviews addressed ({count})
-3. src/auth.ts:15 — copilot[bot]: applied suggested null check
-4. src/api.ts:22 — copilot[bot]: dismissed (false positive)
+3. src/feature.ts:15 — {review-bot}[bot]: applied suggested null check
+4. src/service.ts:22 — {review-bot}[bot]: dismissed (false positive)
 
 ### Reply comments to post ({count})
-1. src/auth.ts:42 → "Fixed in [`abc1234`](https://github.com/{owner}/{repo}/commit/{full_sha}) — session now invalidated on logout"
-2. src/api.ts:33 → "Extracted to config — timeout is now configurable"
-3. src/auth.ts:15 → "Applied — added null check as suggested"
-4. src/api.ts:22 → "False positive — value is guaranteed non-null by L18"
+1. src/feature.ts:42 → "Fixed in [`{sha-1}`](https://github.com/{owner}/{repo}/commit/{full_sha}) — session now invalidated on logout"
+2. src/service.ts:33 → "Extracted to config — timeout is now configurable"
+3. src/feature.ts:15 → "Applied — added null check as suggested"
+4. src/service.ts:22 → "False positive — value is guaranteed non-null by L18"
 
 ### Follow-up questions ({count})
 5. src/utils.ts:18 → "Could you clarify whether you mean..."
 
 ### Threads to resolve ({count})
-- src/auth.ts:42, src/auth.ts:58, src/api.ts:33, src/auth.ts:15, src/api.ts:22
+- src/feature.ts:42, src/feature.ts:58, src/service.ts:33, src/feature.ts:15, src/service.ts:22
 
 ### Threads left open ({count})
 - src/utils.ts:18 (follow-up question)

@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-074735'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -490,22 +490,9 @@ or any other method.** This is non-negotiable. `wk:pr` handles:
 - Automated review feedback triage
 - Marking ready for review
 
-### PR Description Maintenance
+### Post-push sync
 
-**After EVERY push to a branch with an existing PR, the PR description MUST
-be updated to reflect the current state of the branch.** The description
-always matches what's on the branch — never stale. `wk:pr` handles this
-automatically for pushes within its workflow. For pushes outside of `wk:pr`,
-manually update with `gh pr edit`.
-
-### Post-Push on Existing PR
-
-When pushing new commits to a branch that already has a PR:
-
-1. Update the PR description (`gh pr edit`)
-2. Enter the CI fix loop (Phase 6)
-3. Update or resolve stale self-review comments
-4. Address new automated feedback
+`wk:commit` handles PR description sync and stale comment resolution after every push. See `wk:commit` for the full Post-Push PR Sync rules.
 
 ### Pre-rework fetch (HARD RULE)
 
@@ -818,8 +805,10 @@ All `wk:*` skills and when to invoke them during this workflow:
 | `wk:pr` | When creating or updating a pull request | 5 |
 | `wk:self-review` | Invoked automatically by `wk:pr` after CI passes | 5 |
 | `wk:buildkite` | Diagnosing CI failures in the fix loop | 6 |
+| `wk:pr-update` | Rebasing / syncing a PR branch with its base | 5, 6 |
 | `wk:pr-review` | When reviewing someone else's PR | — |
 | `wk:pr-resolve` | When addressing review feedback on your PR | — |
+| `wk:learn` | Post-completion learning capture (end of any skill run) | any |
 | `wk:retro` | End of every session (mandatory) | 8 |
 | `wk:docker` | When working with Docker/containers | any |
 | `wk:datadog` | When managing observability resources | any |
