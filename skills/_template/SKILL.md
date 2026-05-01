@@ -19,24 +19,19 @@ allowed-tools:
 model: sonnet
 # effort: low | medium | high
 effort: medium
-# Explicitly enable model invocation (skills are model-invocable by default)
 model-invocable: true
 user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
-  internal: true
-  # Cross-platform model recommendations
-  # High tier: o3, gemini-2.5-pro, llama-4-maverick, k2, qwen3-235b, composer-2
-  # Low tier: gpt-4.1-mini, gemini-2.5-flash, llama-4-scout, k2, qwen3-30b, composer-1.5
+  version: '2026.05.01-074735'
   model:
-    openai: gpt-4.1-mini
-    google: gemini-2.5-flash
-    meta: llama-4-scout
+    openai: gpt-4.1-mini       # low tier: gpt-4.1-mini | high tier: o3
+    google: gemini-2.5-flash   # low tier: gemini-2.5-flash | high tier: gemini-2.5-pro
+    meta: llama-4-scout        # low tier: llama-4-scout | high tier: llama-4-maverick
     kimi: k2
-    qwen: qwen3-30b
-    cursor: composer-1.5
+    qwen: qwen3-30b            # low tier: qwen3-30b | high tier: qwen3-235b
+    cursor: composer-2
 ---
 
 # Skill Name
@@ -58,20 +53,24 @@ Explain what the agent should do and why.
 
 Continue with clear, actionable instructions.
 
-## Examples
+## HARD RULE: Example rule name
 
-```
-Example input or usage scenario
-```
+State the rule in one sentence. Follow with a brief explanation of the
+failure mode it prevents and how to comply.
 
-Expected behavior or output.
+## Quick Reference
 
-## References
+| Trigger | Behavior |
+|---------|----------|
+| `/wk:skill-name` | Full flow description |
+| `/wk:skill-name <arg>` | Variant behavior |
 
-- Link to relevant documentation or resources
+## Requirements
+
+- Any tools, credentials, or context the skill needs
 
 ---
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn _template`).
+Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn skill-name`).

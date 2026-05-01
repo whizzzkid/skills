@@ -20,7 +20,7 @@ metadata:
     meta: llama-4-scout
     kimi: k2
     qwen: qwen3-30b
-    cursor: composer-1.5
+    cursor: composer-2
 ---
 
 # Workflow

@@ -26,14 +26,14 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.01-075013'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
     meta: llama-4-scout
     kimi: k2
     qwen: qwen3-30b
-    cursor: composer-1.5
+    cursor: composer-2
 ---
 
 # Commit
@@ -74,16 +74,16 @@ classifier emojis after it. Classifiers carry signal that future readers
 
 | Emoji | Meaning | Example |
 |-------|---------|---------|
-| 🔧 | Tuning configs (in-tool knobs, thresholds) | `chore(ci): 🔧 raise lychee timeout to 60s` |
-| 📌 | Version pinned (was unpinned / floating) | `chore(deps): 📌 pin lychee to 0.23.0` |
+| 🔧 | Tuning configs (in-tool knobs, thresholds) | `chore(ci): 🔧 raise {tool} timeout to 60s` |
+| 📌 | Version pinned (was unpinned / floating) | `chore(deps): 📌 pin {dep} to {version}` |
 | ⬆️ | Version bump (upgrade) | `chore(deps): ⬆️ bump rust 1.93 → 1.94` |
-| ⬇️ | Version downgrade | `fix(ci): ⬇️ downgrade lychee 0.24 → 0.23` |
+| ⬇️ | Version downgrade | `fix(ci): ⬇️ downgrade {dep} 0.24 → 0.23` |
 | 🦾 | Agentic tool strengthening (skill / hook / agent capability) | `feat(skill): 🦾 add idempotency gate to wk:goodmorning` |
 | 🛡️ | Adding guardrails (validation, gate, policy enforcement) | `feat(commit): 🛡️ enforce PR sync after push` |
 | 🔒 | Security fix or hardening | `fix(auth): 🔒 reject unsigned tokens` |
 | 🔥 | Removed code / files / features | `refactor: 🔥 drop deprecated v1 routes` |
 | 🚨 | Fix lint / type / static-analysis warning | `fix(lint): 🚨 resolve clippy warnings` |
-| 💚 | Fix failing CI | `fix(ci): 💚 install lychee directly` |
+| 💚 | Fix failing CI | `fix(ci): 💚 install {tool} directly` |
 | 🚧 | Work-in-progress (use sparingly; prefer drafts) | `feat(parser): 🚧 partial AST walker` |
 | 🩹 | Small non-critical fix | `fix(ui): 🩹 trim trailing whitespace` |
 | ♿ | Accessibility improvement | `feat(ui): ♿ add ARIA labels to nav` |
@@ -304,7 +304,7 @@ If `N >= 3 && LINES < 50`, ask:
 - **Force-push is required after squash.** Confirm the user accepts
   the force-push before rewriting history on a pushed branch.
 - **Use the new subject to name the actual fix**, not the journey.
-  "fix(ci): ⬇️ downgrade and pin lychee 0.23.0" beats "squashed CI
+  "fix(ci): ⬇️ downgrade and pin {dep} {version}" beats "squashed CI
   fix attempts."
 
 If the user declines or the thresholds aren't met, leave history alone.
