@@ -33,7 +33,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.29-173918'
+  version: '2026.05.01-001458'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -515,6 +515,52 @@ For each test file in the PR, verify the tests actually detect breakage:
 Focus mutations on the code paths the tests claim to cover. One mutation
 per experiment script. Log the mutation, the test result, and whether the
 test correctly failed.
+
+### Cross-system artifact-flow validation
+
+When the diff touches a flow where one system **produces** an
+artifact and another system **consumes** it across a process or
+network boundary — CI artifact upload/download, S3/GCS object
+publish + fetch, queue producer/consumer, file drop + scanner —
+verify the producer's output layout matches the consumer's read
+strategy. Mismatches survive unit tests because each side is
+tested against its own assumed layout, not the actual on-disk /
+on-wire shape.
+
+Checks to run for every producer→consumer pair in the diff:
+
+1. **Compare the produced path/key against the consumed path/key
+   exactly.** If the producer writes `prefix/foo.ext` and the
+   consumer expects flat `foo.ext`, the consumer needs to either
+   recurse or include the prefix. Most artifact systems
+   (Buildkite artifacts, S3 sync, `cp -r`, `tar`) preserve
+   sub-directory structure on the consuming side; flat scans miss
+   nested files silently.
+2. **Verify recursion depth.** If the producer writes nested
+   paths and the consumer uses a non-recursive scan
+   (`read_dir`, `ls`, `glob('*.ext')` without `**`), the nested
+   files will never be found. Migrations that swap a recursive
+   tool (`find -name`) for a non-recursive one (`read_dir`,
+   `Path.glob('*')`) are a common silent regression.
+3. **Check the test harness mirrors production layout, not the
+   consumer's scan assumption.** Tests that place fixtures at
+   the path the consumer happens to scan today will pass even
+   when the producer writes somewhere else. Tests must populate
+   fixtures at the **producer's actual output path** for the
+   given environment.
+4. **Detect destructive cleanup that runs after a missed read.**
+   If the consumer wipes the staging directory after attempting
+   to consume (`rm -rf`, `remove_dir_all`, `shutil.rmtree`) and
+   the read missed the file, the data is gone before anyone
+   notices. Flag any cleanup-after-consume path that doesn't
+   first verify the consume succeeded.
+
+Build a playground experiment that **populates the staging
+location with the producer's actual layout** (including any
+prefixes, nested directories, or naming conventions the
+producer applies) and runs the consumer against it. Tests that
+only exercise the consumer's scan in isolation cannot catch
+layout mismatches.
 
 ### Interface contract violations
 
