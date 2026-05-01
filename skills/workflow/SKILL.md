@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-082029'
+  version: '2026.05.01-224941'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -78,6 +78,14 @@ has already approved the workflow by using it. Minimize interruptions:
 `wk:commit`" or "invoke `wk:pr`", the agent MUST use the Skill tool to
 call the skill — not approximate the behavior by running raw commands.
 The skills contain rules, guards, and conventions that raw commands skip.
+
+**Run the full skill flow.** When a skill is invoked — whether called
+from this workflow or triggered directly by the user — execute the
+skill's entire prescribed workflow in order. User prose in the same
+message is additive context or a specific step adjustment; it is never
+a license to run only part of the skill. Additional deliverables
+(learnings, summaries, explanations) come after the skill completes its
+full flow, not instead of it.
 
 ## Continuity Rules
 
