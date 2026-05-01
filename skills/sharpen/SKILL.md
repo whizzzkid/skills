@@ -21,7 +21,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.01-081659'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -234,62 +234,14 @@ inside Step 7 and call the run done.
 
 ## Step 8: Verify and Commit (terminal gate)
 
-The run is not complete until this step finishes. Do not return control
-to the user with a dirty working tree, an uninstalled skill, or an
-unpushed commit.
+Do not return control to the user until all four checks pass:
 
-### Run the install verifier
+1. **Install:** `npx skills add . -g -y -a=claude 2>&1 | tail -5` from the repo root — must print `Done!`. Re-run from repo root if it prints `No skills found` or exits non-zero.
+2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated; one chore commit for `.learned.md` renames + `.distilled-sources.log`); use `wk:commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
+3. **Push once:** after all commits exist, push a single time. Single-skill runs may push immediately after their lone commit.
+4. **Clean tree:** `git status --short` must be empty — if anything remains, commit or stash it.
 
-The repo's post-change hook is hand-run, not automated. Confirm it
-succeeded before declaring victory:
-
-```bash
-test -d ./skills || cd "$(git rev-parse --show-toplevel)"
-npx skills add . -g -y -a=claude 2>&1 | tail -5
-```
-
-Read the output. `Done!` means the install succeeded. `No skills found`
-or any non-zero exit means the cwd was wrong or the install failed —
-re-run from the repo root and do not proceed until you see `Done!`.
-Treat silent success patterns as a hard failure that requires retry.
-
-### Commit and push
-
-```bash
-git status --short
-```
-
-Every dirty file must end up in a commit before the run completes. In
-batch mode, group by logical change (one commit per skill updated, plus
-one chore commit for `.learned.md` renames + `.distilled-sources.log`
-update). Use `wk:commit`'s conventional format with classifier emojis
-(🦾 agentic-tool strengthening, 🛡️ guardrails, 🔧 config tuning) where
-applicable.
-
-**Commit continuously, push once.** Within a multi-skill or multi-phase
-run, commits are incremental checkpoints — make them as each logical
-change lands and proceed immediately to the next change. Do not pause
-between commits or phases waiting on a push. Push a single time after
-all planned commits exist, just before the final clean-tree check.
-Single-skill runs may push immediately after their lone commit.
-
-### Final clean-tree check
-
-```bash
-git status --short
-```
-
-The output must be empty. If anything remains uncommitted, decide
-whether to commit it or stash it — do not leave debt for "later." A
-non-empty `git status` at the end of a sharpen run is a violation of
-this gate.
-
-### Report
-
-Tell the user, in one line per skill: which skill was updated, the
-new version, and the principle distilled. Then confirm: tree clean,
-skills installed, commits pushed. Silence after edits is a violation
-of this gate.
+Report: one line per skill updated (name, new version, principle distilled), then confirm tree clean, installed, pushed. Silence after edits is a violation of this gate.
 
 ## Anti-Patterns to Avoid
 

@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.01-081659'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -388,43 +388,13 @@ parallel experiments** that try to break it. Use the Agent tool to run
 these concurrently — each agent writes its own script under
 `.review-playground/` and reports back.
 
-**Edge cases:** Boundary values, empty inputs, null/undefined/nil, zero,
-negative numbers, max-size collections, single-element vs many, unicode,
-special characters, whitespace-only strings, very long strings.
-
-**Boundary arithmetic:** Off-by-one errors, fence-post problems, integer
-overflow/underflow, floating-point precision loss, array index bounds
-(first, last, one-past-end), loop termination conditions, pagination
-boundaries (page 0 vs page 1, last page, beyond last page).
-
-**Type confusion and coercion:** Pass wrong types to every parameter —
-string where number expected, array where object expected, number where
-boolean expected, null where non-nullable expected. Test implicit
-coercion traps: `"0"` vs `0` vs `false`, empty string vs null, `[]` vs
-`{}`. For typed languages, test with values that satisfy the type but
-violate semantic constraints (e.g., negative age, future birth date,
-email without `@`).
-
-**Input mutation:** Take valid inputs and mutate one field at a time —
-wrong type, missing field, extra field, swapped arguments, out-of-range
-values. Confirm the function fails gracefully rather than silently
-producing wrong output.
-
-**State and ordering:** For stateful code (classes, modules with
-initialization, connection pools, caches), call methods in wrong order —
-use before init, double-init, use after close, concurrent access from
-multiple callers. For async code, test interleaving and cancellation.
-
-**Fuzz testing:** Generate randomized inputs (random strings, numbers,
-nested objects, deeply nested structures) and call the function in a loop.
-Look for crashes, hangs, uncaught exceptions, or inconsistent results.
-Vary the volume — 1 call, 10 calls, 1000 calls — to expose resource
-leaks or accumulation bugs.
-
-**Output validation:** Verify return values match expected types and
-contracts. Mutate the function's output in downstream consumers to see
-if callers validate what they receive. For modified functions, verify
-that existing callers still receive the shape they expect.
+- **Edge cases:** boundary values, empty inputs, null/undefined/nil, zero, negative, max-size collections, single vs many, unicode, special characters, whitespace-only, very long strings
+- **Boundary arithmetic:** off-by-one, fence-post, integer overflow/underflow, floating-point precision, array index bounds (first/last/one-past-end), loop termination, pagination (page 0 vs 1, last page, beyond last)
+- **Type confusion:** wrong types per parameter; implicit coercion traps (`"0"` vs `0` vs `false`, empty string vs null, `[]` vs `{}`); values that satisfy the type but violate semantic constraints (negative age, future birth date, email without `@`)
+- **Input mutation:** valid inputs with one field mutated — wrong type, missing field, extra field, swapped arguments, out-of-range; confirm graceful failure rather than silent wrong output
+- **State and ordering:** stateful code — call methods out of order (use-before-init, double-init, use-after-close, concurrent callers); async code — test interleaving and cancellation
+- **Fuzz:** randomized inputs (strings, numbers, nested objects) in a loop; vary volume (1, 10, 1000 calls) to expose resource leaks or accumulation bugs
+- **Output:** return values match expected types and contracts; mutate output in downstream consumers to verify callers validate what they receive; existing callers still receive the expected shape
 
 **Interpreter / runtime portability:** When the diff touches scripts
 or modules that target multiple runtime environments (Linux CI vs

@@ -20,7 +20,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.01-081659'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -137,54 +137,23 @@ specific to this site) or point at the spec.
 
 ## Step 2.6: Parallel-path completeness audit
 
-Before any review comment is posted, scan for **sibling and
-parallel code paths that may carry the same flaw** as anything
-this PR fixed (or anything Step 2 found worth flagging).
+Before posting comments, scan for sibling and parallel code paths that carry the same flaw as anything this PR fixed or flagged. A bug class rarely lives in a single line — credential redaction, input validation, error handling, retry logic, guards, and cleanup-on-error recur across sibling paths.
 
-A bug class rarely lives in a single line. Issues that recur per
-location include credential redaction, input validation, error
-handling, retry logic, fallback branches, guards, and
-cleanup-on-error. When the diff fixes one instance, the next
-review round (bot or human) almost always surfaces the same
-class in the path the fix didn't touch — costing a separate
-commit and review cycle for what should have been one fix.
+For every recurring-class fix, run two scans:
 
-For every change that fixes or flags a recurring-class issue,
-run two scans:
-
-1. **Same-file parallel branches** — the file's other code paths
-   that perform the analogous operation:
-
+1. **Same-file parallel branches:**
    ```bash
-   # For credential / stderr / error-output classes
    grep -n 'stderr\|2>&1\|>&2\|err\|error' <file>
-   # For external calls of a kind
    grep -nE 'git (clone|fetch|push|remote)|curl|wget|http' <file>
    ```
 
-2. **Sibling files in the same pipeline** — when shell scripts,
-   modules, or services come in pairs / sets that share a
-   contract:
-
+2. **Sibling files in the same pipeline:**
    ```bash
    ls "$(dirname <fixed_file>)"/*.{sh,rb,py,ts,js} 2>/dev/null
    ```
+   For each sibling, grep for the same pattern.
 
-   For each sibling, grep for the same pattern. Each hit is
-   either (a) already correct, (b) doesn't have the analogous
-   path, or (c) needs the same fix.
-
-If category (c) appears, fold the parallel fix into **the same
-commit** rather than deferring to a follow-up — single-round
-review is the goal. The self-review comment that documents the
-fix should list every path covered ("Applied at <path>:<line>,
-<path>:<line>, …") so the reviewer doesn't have to reconstruct
-the surface.
-
-When a parallel path is genuinely unaffected (different contract,
-defensive layer above, etc.), record that as a self-review
-comment noting the audit was performed. Silence reads as "the
-agent didn't look."
+If a sibling path needs the same fix, fold it into **the same commit** — single-round review is the goal. List every path covered in the self-review comment. If a path is genuinely unaffected, note the audit was performed — silence reads as "the agent didn't look."
 
 ## Step 2.7: Verify code-comment claims against current implementation
 

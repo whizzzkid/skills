@@ -19,6 +19,7 @@ allowed-tools:
   - Grep
   - Write
   - Edit
+  - Skill
   - AskUserQuestion
 model: sonnet
 effort: low
@@ -27,7 +28,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.01-081659'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -173,7 +174,7 @@ All targets are **global** (user-level), not project-scoped:
 | Agent behavior, approach corrections | `~/.claude/memory/` (as a `feedback` type memory file) |
 | Standing decisions (what was rejected) | `~/.claude/memory/` (as a `feedback` type memory file) |
 | User preferences, collaboration style | `~/.claude/memory/` (as a `user` type memory file) |
-| Skill gaps or missing steps | Propose a specific edit via AskUserQuestion — do not write skill files directly |
+| Skill gaps or missing steps | Invoke `wk:learn <skill-name>` to write a learning file — `wk:sharpen` batch mode will distill it on the next run |
 
 ### Memory file format
 
