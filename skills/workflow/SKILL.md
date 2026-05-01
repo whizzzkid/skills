@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.04.30-210212'
+  version: '2026.05.01-002324'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -229,6 +229,31 @@ the old shape:
 4. Test names / test file comments referencing the old approach.
 5. Any ADR (`docs/adr/`) that captured the original decision —
    either update it or add a successor ADR superseding it.
+6. Spec sections that **enumerate** tests by count, name, or
+   bullet list. When a test is added, removed, or renamed, every
+   spec/plan/README that quantifies or lists tests must be
+   updated in the same commit so counts and bullets stay in sync
+   with the test file.
+
+### Test enumeration sync (HARD RULE)
+
+Whenever a commit adds, removes, or renames a test, before
+committing run a grep for the test file or function name across
+spec/plan/README artifacts:
+
+```bash
+grep -rn '<test_file_basename>\|<new_test_function_name>' \
+  docs/ README.md 2>/dev/null
+```
+
+Also grep for **count phrases** that reference the test set
+(e.g., `"\d+ tests"`, `"covers \w+ scenarios"`, or any phrasing
+that quantifies the test surface) in the files that own the
+test description. Any hit must be
+updated in the same commit. The invariant is: spec test counts
+and bullet lists always match the actual test file. A one-line
+diff to the spec costs nothing now and saves a separate review
+round later.
 
 If the spec needs a major rewrite (pseudocode blocks, sequence
 diagrams, etc.) and that rewrite would dwarf the code commit,
