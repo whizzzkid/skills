@@ -21,7 +21,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-081659'
+  version: '2026.05.01-082341'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -163,6 +163,12 @@ scannable — not essays.
 **Stale references:** Sections that reference steps, phases, or
 variables that have been renamed or removed in prior edits.
 
+**Orphaned label artifacts:** When removing a tool, permission, or
+config line, scan for the adjacent label comment that introduced it
+(e.g., a `# Learning capture` header above an `allowed-tools` entry,
+a section heading above a removed code block). A label with no
+following content is dead text — remove it in the same edit.
+
 If the audit surfaces cleanup beyond your original edit, bundle the
 cleanup into the same change. Do not leave known debt for a future pass.
 
@@ -187,6 +193,7 @@ must either be replaced with a generic mechanism / placeholder
 | Line numbers / SHAs / PR numbers | `:\d+`, short SHAs, `#\d+` outside template slots | "the target line", "the commit", "the PR" |
 | Specific tool versions | exact versions cited when the failure pattern is version-agnostic | "a version that introduces <change>" |
 | Concrete person names | reviewer / committer names | "the reviewer", "the author" |
+| Hardcoded branch names | `main`, `master`, `develop` literal in `git diff/log/merge-base/rebase` commands or prose | `<base>` placeholder + dynamic resolution (e.g., `gh pr view --json baseRefName --jq .baseRefName`) — stacked PRs have non-default bases |
 
 For each grep match in the proposed text:
 
