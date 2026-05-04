@@ -18,7 +18,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-221318'
+  version: '2026.05.04-174109'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -170,7 +170,12 @@ Case-insensitive match. If the event description mentions "candidate" or
 
 ### Step 2: For each detected interview
 
-Check the same day's calendar for two scaffolding blocks:
+**Skip rule:** If the interview title contains `debrief` (case-insensitive),
+create **only** the Prep block — skip the Scorecard block entirely. Debrief
+sessions are already the scorecard discussion; a separate scorecard block is
+redundant.
+
+Check the same day's calendar for scaffolding blocks:
 
 **A. 15-min Interview Prep block** immediately before the interview.
 
