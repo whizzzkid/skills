@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-224941'
+  version: '2026.05.04-174403'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -962,6 +962,20 @@ The overall vibe is "end of a good day."
 
 **Links:** All links to PRs, issues, Slack threads, Jira tickets, and
 Confluence pages MUST use `target="_blank" rel="noopener noreferrer"`.
+
+### Write last_working_day marker
+
+After writing the evening files, record today as the last working day so
+tomorrow's `wk:goodmorning` can find yesterday's sitrep correctly — even
+when "yesterday" is a weekend (Monday morning problem):
+
+```bash
+mkdir -p "$PWD/sitrep"
+echo "$TODAY" > "$PWD/sitrep/last_working_day"
+```
+
+This file is consumed by `wk:goodmorning §Determine dates and paths` to
+set `YESTERDAY` to the last day goodevening ran, not the last calendar day.
 
 ### Open for review
 

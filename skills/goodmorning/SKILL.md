@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-224941'
+  version: '2026.05.04-174402'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -53,12 +53,22 @@ Run these sequentially — they're fast and everything else depends on them.
 
 ```bash
 TODAY=$(date +%Y-%m-%d)
-YESTERDAY=$(date -v-1d +%Y-%m-%d 2>/dev/null || date -d "yesterday" +%Y-%m-%d)
+
+# Prefer the last_working_day marker written by wk:goodevening.
+# This correctly handles Monday (previous working day = Friday, not Sunday).
+LAST_WD_FILE="$PWD/sitrep/last_working_day"
+if [ -f "$LAST_WD_FILE" ]; then
+  YESTERDAY=$(cat "$LAST_WD_FILE")
+else
+  # Fallback: previous calendar day (may be a weekend — used only when
+  # goodevening has never run or the file is missing).
+  YESTERDAY=$(date -v-1d +%Y-%m-%d 2>/dev/null || date -d "yesterday" +%Y-%m-%d)
+fi
 
 # Today:     sitrep/<YYYY>/<MM>/<DD>/
-# Yesterday: sitrep/<YYYY>/<MM>/<DD>/  (computed from yesterday's date)
+# Yesterday: derived from $YESTERDAY (last working day, not last calendar day)
 TODAY_DIR="$PWD/sitrep/$(date +%Y)/$(date +%m)/$(date +%d)"
-YESTERDAY_DIR="$PWD/sitrep/$(date -v-1d +%Y 2>/dev/null || date -d yesterday +%Y)/$(date -v-1d +%m 2>/dev/null || date -d yesterday +%m)/$(date -v-1d +%d 2>/dev/null || date -d yesterday +%d)"
+YESTERDAY_DIR="$PWD/sitrep/$(echo "$YESTERDAY" | cut -d- -f1)/$(echo "$YESTERDAY" | cut -d- -f2)/$(echo "$YESTERDAY" | cut -d- -f3)"
 
 # Weekly memory: sitrep/<YYYY>/<MM>/week-<WW>-memory.md
 WEEK_NUM=$(date +%V)
