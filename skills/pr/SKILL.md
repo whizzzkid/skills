@@ -27,7 +27,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.04-232313'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -204,6 +204,21 @@ in Step 1 is authoritative; defaulting silently re-introduces
 the mis-basing failure mode.
 
 PR titles use the same conventional commit + emoji scheme as commit messages.
+
+### Jira key suffix
+
+Before composing the title, detect a Jira key (`[A-Z][A-Z0-9]+-\d+`) from the
+branch name and most recent commit message:
+
+```bash
+JIRA_KEY=$(git rev-parse --abbrev-ref HEAD | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1)
+[ -z "$JIRA_KEY" ] && JIRA_KEY=$(git log -1 --pretty=%B | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1)
+```
+
+If a key is found and the title does not already end with `[<KEY>]`, append it
+as the last token: `feat(scope): ✨ description [<KEY>]`. This prevents
+wk:jira Stage 3 from having to patch a keyless title after the PR already exists.
+If no key is found, compose the title without a suffix — do not invent one.
 
 ### Stacked PR (fallback — no repo template found)
 

@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080818'
+  version: '2026.05.04-232313'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -209,6 +209,36 @@ bk build view --json 2>&1 | jq -r '.pipeline.slug'
 bk build view -p <pipeline> --json 2>&1 | jq '{number: .number, state: .state, branch: .branch}'
 ```
 
+## Cancelling Builds
+
+### From within a running build (self-cancel)
+
+A step running inside a Buildkite agent can cancel its own build without an
+external API token. Use the agent CLI subcommand:
+
+```bash
+buildkite-agent build cancel
+```
+
+This is the right tool when a guard step detects a condition that should abort
+the pipeline (e.g., wrong branch, missing prerequisite, duplicate build). The
+agent binary is always present in the build environment so no additional auth
+setup is needed.
+
+### From outside the build (external cancel)
+
+To cancel a build from outside the agent (e.g., from a script or another
+system), use the Buildkite REST API:
+
+```bash
+curl -s -X PUT \
+  "https://api.buildkite.com/v2/organizations/{org}/pipelines/{pipeline}/builds/{build_number}/cancel" \
+  -H "Authorization: Bearer $BUILDKITE_TOKEN"
+```
+
+Replace `{org}`, `{pipeline}`, and `{build_number}` with the actual values.
+This requires a token with the `write_builds` scope.
+
 ## Opening in Browser
 
 ```bash
@@ -251,6 +281,8 @@ external system — see `wk:gh` for the matching path.
 | Auth error (401/403) | **Stop.** Tell user to run `bk auth login` |
 | Missing scope | **Stop.** Tell user which scope is needed, run `bk auth login` |
 | After git push | Check build status, report result |
+| Cancel from within a build | `buildkite-agent build cancel` (no token needed) |
+| Cancel from outside a build | REST API `PUT .../builds/{n}/cancel` with `write_builds` token |
 | Saving any `bk` payload to disk | Use `/tmp/agent/buildkite/<build>/...` |
 
 ---
