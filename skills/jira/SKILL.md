@@ -7,9 +7,11 @@ description: >-
   name, commit messages, or recent prompts; assigns the ticket to the user;
   transitions the ticket through In Progress → In Review → Done in lockstep
   with PR state; and ensures every PR title carries a `[BOARD-NUM]` suffix
-  and the PR description references the ticket. Requires the Jira MCP
-  connector. Not user-invocable — fires automatically alongside `wk:commit`,
-  `wk:pr`, and `wk:workflow`.
+  and the PR description references the ticket. Also gates user-initiated
+  write operations (create, edit, batch transition) behind explicit
+  confirmation — Jira writes are effectively irreversible (no delete API).
+  Requires the Jira MCP connector. Not user-invocable — fires automatically
+  alongside `wk:commit`, `wk:pr`, and `wk:workflow`.
 allowed-tools:
   - Bash
   - Read
@@ -30,7 +32,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080507'
+  version: '2026.05.04-231307'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -255,6 +257,55 @@ move only one step forward and report. Do not skip stages.
 Report:
 
 > "Jira: {KEY} → Done. PR #<N> merged."
+
+---
+
+## Manual ticket operations (confirm-first)
+
+When the user explicitly asks the agent to create, edit, or batch-transition
+Jira items outside the auto lifecycle (e.g., "create user stories from this
+meeting", "split this epic", "move these to next sprint"), confirm before
+any write call.
+
+**HARD RULE:** Never call `createJiraIssue`, `editJiraIssue`, or any
+write/transition tool on user-initiated work without explicit approval of
+the proposed change set.
+
+### Why
+
+Jira write operations exposed via MCP are effectively irreversible: there
+is no delete API — the strongest cleanup available is a `Won't Do`
+transition which leaves the issue, links, and history visible. A wrong
+batch creates permanent noise and forces an apology trail.
+
+### When to ask
+
+Confirm before writing whenever any of these are true:
+
+- The source for the items is ambiguous (multiple candidate meetings,
+  docs, or threads could match the user's reference)
+- Items are generated from synthesis (meeting notes, conversation,
+  research) rather than restating user-supplied content verbatim
+- Multiple items will be written in one batch
+- The operation cannot be cleanly undone (creates, parent-link changes,
+  transitions to terminal states)
+
+### How to ask
+
+1. If the source is ambiguous, list the candidates first and confirm which
+   source to use before drafting items.
+2. Present the proposed write set as a numbered, scannable list — title
+   plus one-line summary per item. Do not show full descriptions.
+3. Wait for explicit confirmation ("yes", "create them", "go ahead").
+   Silence, "ok", or redirected questions are not confirmations.
+4. After confirmation, issue the writes in parallel.
+
+### Auto mode does not exempt
+
+Auto mode short-circuits *low-risk* assumptions, not write operations on
+shared systems. Jira items are visible to the team and entered into project
+tracking — treat them with the same caution as posting to a channel or
+pushing to a branch.
 
 ---
 
