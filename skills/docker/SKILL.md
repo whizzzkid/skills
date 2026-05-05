@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080507'
+  version: '2026.05.05-180000'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -122,6 +122,33 @@ docker run --rm <image> sh -c 'echo works'
 
 If the output shows an error about unknown commands or arguments, the
 ENTRYPOINT needs to be reset.
+
+## Declare Runtime Env Vars in the Dockerfile
+
+Every environment variable the entrypoint or CMD reads at runtime
+must be declared with `ENV VAR=""` (or a real default) in the
+Dockerfile, before the `ENTRYPOINT` / `USER` line.
+
+The Dockerfile is the canonical interface document for the image.
+An env var that only appears in compose, CI pipeline, or orchestrator
+config is invisible to anyone reading the image alone — they cannot
+tell whether the var is supported, ignored, or required without
+spelunking the entrypoint script.
+
+**How to apply.** When wiring a new runtime env var, after updating
+compose / pipeline allowlists, grep the Dockerfile for the var name.
+If absent, add it inside a grouped `# Optional runtime env vars`
+block near the bottom of the build stage:
+
+```dockerfile
+# Optional runtime env vars (defaults documented; override at run time)
+ENV LOG_LEVEL=""
+ENV FEATURE_FLAG_X=""
+```
+
+Use an empty string for "unset by default; entrypoint handles
+absence" and a real value when there is a meaningful default. Either
+way the variable name is now part of the image's documented contract.
 
 ## Building Images
 
