@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.04-232313'
+  version: '2026.05.05-180000'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -238,6 +238,41 @@ curl -s -X PUT \
 
 Replace `{org}`, `{pipeline}`, and `{build_number}` with the actual values.
 This requires a token with the `write_builds` scope.
+
+## Adding env vars to a CI pipeline
+
+A new environment variable that the build needs at runtime must be
+allowlisted at **every** layer between the Buildkite agent host and
+the container that reads it. Adding the var at one layer is silently
+insufficient — the var is dropped at the first layer that doesn't
+forward it, and the feature appears wired but never receives the
+value.
+
+The layers, in forwarding order:
+
+1. **Pipeline definition** (`pipeline.yml` or generated equivalent) —
+   the `env:` block exposes the var to the step. Without this the
+   agent never sees it.
+2. **Pipeline build script** (e.g., a `pipeline.rb` / dynamic-pipeline
+   generator) — when the pipeline uses the docker-compose plugin,
+   that plugin has its **own** `env:` array listing which build-host
+   variables it forwards into the compose invocation. A var present
+   on the agent but missing from this array is dropped at the
+   compose layer.
+3. **Compose definition** (`docker-compose.yml` or equivalent) — the
+   service's `environment:` block must reference the var so compose
+   passes it into the container.
+4. **Container image** (`Dockerfile`) — declare the var with
+   `ENV VAR=""` to document that the entrypoint reads it. The image
+   is the canonical interface for the runtime; an undeclared var is
+   invisible to anyone reading the image alone.
+
+When adding or renaming a CI env var, walk every layer above and
+verify the var name is present at each one. Where the pipeline build
+script has a corresponding spec, add an
+`expect(config['env']).to include('VAR')` assertion so a future
+removal at the plugin layer is caught by the test suite, not by a
+silently-broken build.
 
 ## Opening in Browser
 
