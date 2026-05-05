@@ -32,7 +32,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.04-231307'
+  version: '2026.05.05-181000'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -91,6 +91,14 @@ Direct the user to https://claude.ai/customize/connectors only when
 they explicitly ask why a ticket didn't move.
 
 If available, cache the resolved tool names for the session.
+
+**HARD RULE: never read or write Jira via a browser, WebFetch, or a
+web-search agent.** All Jira reads and writes must go through the
+MCP connector. The browser path is slower, escapes the agent's
+context, can spawn an extra agent, and produces unstructured output
+that the agent then has to re-parse. If the MCP is unavailable, do
+not fall back to the browser — surface the connector gap per the
+silent-skip rule above and let the user decide.
 
 ---
 
