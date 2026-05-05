@@ -24,7 +24,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.05-180000'
+  version: '2026.05.05-181000'
   internal: false
   model:
     openai: gpt-4.1
@@ -218,6 +218,23 @@ Avoid:
 - **Assertions on private state.** If the test needs to read a
   private field to verify behavior, the contract is too narrow —
   expand the public observation surface or skip the assertion.
+- **Tests that inherit ambient process env.** When stubbing process
+  env, every variable the unit-under-test reads must be explicitly
+  set in the stub — including ones the test wants absent, set to
+  `nil` / removed. Patterns like `ENV.to_h.merge(...).compact` keep
+  ambient values for unlisted vars, producing tests that pass
+  locally (where the var is unset) and fail in CI (where the runner
+  injects it), or the reverse. Audit the unit for every env-read
+  call site and pin each one in the stub.
+- **Structural locators that aren't sanity-checked.** When a
+  structure test isolates a region with a locator (line-number
+  lookup, sed/awk range, regex extract) before asserting on its
+  contents, verify the locator independently first — print or count
+  the extraction and compare to the expected size. A locator that
+  silently matches too much (e.g., a sed end-marker that never
+  matches, falling through to EOF) or the wrong line (e.g., a grep
+  hit on a comment instead of the conditional) makes assertions
+  pass vacuously.
 
 Match the project's existing test framework, file layout, and
 naming convention. `wk-format` runs alongside; defer to its rules
