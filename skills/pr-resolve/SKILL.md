@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.05-101515'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -565,11 +565,16 @@ agent push back on this finding if it were doing the review
 itself? If no, `obvious-fix`. If yes (with a meaningful
 counterargument), `judgment-required`.
 
-A second mechanism: if Step 5 finds itself drafting a `(d) Dismiss`
-prompt with the dismiss reason field empty or "no valid reason,"
-that prompt should never have been emitted — re-classify the
-comment as `obvious-fix` and move it to the auto-apply queue
-before sending the message.
+A second mechanism (HARD RULE): immediately before emitting **any**
+Step 5 consultation prompt — not only `(d) Dismiss` — re-read the
+comment's "Why this could be skipped" rationale. If it is empty,
+"no valid reason," "no good reason to skip," `—`, or any phrasing
+that concedes the comment is right with nothing to weigh, the
+prompt must not be emitted. Re-tag the comment as `obvious-fix`
+and route it to the bulk-apply queue. Per-comment consultation is
+reserved for items with a real tradeoff — emitting `(a)/(e)/(d)/(s)`
+for a comment whose own rationale says there is nothing to skip
+forces the user to answer `a` for ceremony.
 
 ### Merge duplicate findings on the same line
 
@@ -637,25 +642,24 @@ consultation-only phase. Present each `judgment-required` comment one
 at a time, collect the user's decision, then move to the next. No
 edits, no commits, no replies — just decisions.
 
-### Bulk-apply preview for obvious-fix comments (opt-in only)
+### Bulk-apply preview for obvious-fix comments
 
-Per-comment consultation is the **default for every active comment**,
-including `obvious-fix` items. The classification informs how the
-prompt is framed (`obvious-fix` items get a leading "skip rationale:
-{empty / no valid reason}" line so `(a)` is the obvious choice), but
-the user still answers each prompt explicitly. Hard Rule 5 of Step 5
-("one comment per message — never batch") applies to every active
-comment without exception.
+Per-comment consultation is the default for `judgment-required`
+items only. `obvious-fix` items — those whose skip rationale is
+empty / "no valid reason" / equivalent (see Step 4 classification
+rules) — go to the **bulk-apply preview**, not the per-comment
+loop. The one-at-a-time rule below applies to consultation
+prompts; bulk-apply has no per-comment prompt to batch.
 
-Skip the per-comment loop **only when the user has explicitly opted
-in** to bulk apply for this run. Acceptable opt-ins:
+Acceptable opt-ins to extend bulk-apply across the **whole** set
+(including any remaining `judgment-required` items):
 
 - The user invoked the skill with an explicit auto / yes-to-all flag.
 - The user, after seeing the bulk preview below, responds with an
   affirmative phrase (`auto`, `yes-to-all`, `apply all`).
 
-If `obvious-fix` items exist, before entering the per-comment loop
-present a single preview block and ask once:
+If `obvious-fix` items exist, present a single preview block and ask
+once before applying:
 
 > "**Bulk-apply candidates ({K} obvious fixes — skip rationale empty
 > / no valid reason):**
@@ -663,20 +667,20 @@ present a single preview block and ask once:
 > 1. {path}:{line} — {one-line summary}
 > 2. ...
 >
-> Default: I'll consult on each one individually below.
-> Reply **auto** (or `yes-to-all`) to apply all {K} as-is in Step 6
-> instead. (One commit per finding; replies + thread resolution
-> remain normal.)"
+> I'll apply all {K} as-is in Step 6 (one commit per finding; replies
+> + thread resolution remain normal). Reply **stop** to switch any of
+> these to per-comment consultation, or list the indices you want
+> consulted (e.g., `consult 2,4`)."
 
-Wait for an explicit affirmative reply before switching to bulk
-apply. Silence, an unrelated reply, or any non-affirmative response
-keeps the default — proceed into per-comment consultation for every
-item. Never silently advance to Step 6 on a timeout; the user must
-state the override.
+Default on silence, affirmative, or unrelated reply: proceed with
+bulk-apply. Only an explicit `stop` / `consult <indices>` diverts
+items into the per-comment loop. The single confirmation gate
+prevents silent execution while honoring that obvious-fix items
+have no decision to make.
 
-When all active comments are `obvious-fix`, the same rule holds:
-present the preview, wait for an explicit affirmative, otherwise
-fall through to per-comment consultation.
+When `judgment-required` items also exist, the per-comment loop
+runs **after** bulk-apply executes — so the user sees the obvious
+fixes land first, then consults on the real decisions.
 
 ### Present one at a time
 
