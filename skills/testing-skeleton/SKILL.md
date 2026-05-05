@@ -24,7 +24,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080026'
+  version: '2026.05.05-180000'
   internal: false
   model:
     openai: gpt-4.1
@@ -150,6 +150,13 @@ its public contract. Every path becomes a test.
 - Type confusion: pass values that satisfy the type but violate
   the semantic contract (negative age, future birth date, email
   without `@`).
+- Format validators (character-set / regex / schema checks):
+  derive the allowed set from **real example values** found in the
+  codebase, spec, or upstream docs — not from intuition. Grep for
+  representative inputs of the format under test and assert each
+  character / token in those examples passes the validator. Validators
+  written from intuition routinely reject legal-but-uncommon characters
+  (e.g., `:` in a versioned identifier) that real inputs require.
 
 ### Path-coverage check
 
