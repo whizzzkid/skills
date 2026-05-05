@@ -1,5 +1,5 @@
 ---
-name: wk:pr-resolve
+name: wk-pr-resolve
 description: >-
   Address PR review comments interactively — resolve feedback from reviewers by
   implementing fixes, preparing response comments, and managing the full
@@ -63,7 +63,7 @@ and manage the full resolution cycle from sync to summary.
 4. **Never force-push.** Use regular `git push` only.
 5. **Never commit without attempting verification** (build/lint/test). If
    verification is unavailable or fails, inform the user before proceeding.
-6. **Commits follow `wk:commit` conventions** — conventional format with
+6. **Commits follow `wk-commit` conventions** — conventional format with
    emoji, signed commits, HEREDOC for messages. Never use `--no-gpg-sign`.
 7. **One commit per resolved comment.** Each triaged comment gets its own
    commit so reviewers can trace exactly which commit addresses which
@@ -143,9 +143,9 @@ fi
 This keeps the next push fast-forward and avoids creating a second
 merge commit that diverges from the remote.
 
-### Integrate the base branch via `wk:pr-update`
+### Integrate the base branch via `wk-pr-update`
 
-Delegate base-branch integration to `wk:pr-update` rather than running
+Delegate base-branch integration to `wk-pr-update` rather than running
 merge/rebase directly here. That skill picks the right strategy for
 the branch's size (rebase for `<5` commits ahead, patch-replay
 otherwise), runs the conflict-resolution loop, re-validates the work
@@ -153,29 +153,29 @@ post-integration (tests + cheap typecheck), and force-with-lease
 pushes.
 
 ```
-Skill(wk:pr-update, args="<base_branch>")
+Skill(wk-pr-update, args="<base_branch>")
 ```
 
-If `wk:pr-update` reports an unresolvable conflict and resets to the
+If `wk-pr-update` reports an unresolvable conflict and resets to the
 starting SHA, **stop the resolve flow** — there's nothing to triage
 on a branch that can't integrate base. Surface the conflict to the
-user and exit; resume `wk:pr-resolve` after the user untangles
+user and exit; resume `wk-pr-resolve` after the user untangles
 manually.
 
-If `wk:pr-update` reports validation regression after integration,
+If `wk-pr-update` reports validation regression after integration,
 also stop — fixing the regression is a higher-priority concern than
 addressing review feedback on a broken branch.
 
-If `wk:pr-update` reports the branch was already up to date
+If `wk-pr-update` reports the branch was already up to date
 (`$BEHIND == 0`), continue immediately to Step 3.
 
 ### Why delegate
 
 The merge/rebase + conflict + validation logic was previously inlined
-here in shorter form. Delegating to `wk:pr-update` ensures every
+here in shorter form. Delegating to `wk-pr-update` ensures every
 update path uses the same strategy heuristics, the same safety net
 (`$START_SHA` reset on failure), and the same PR sync rules — so a
-PR-resolve update is indistinguishable from a manual `wk:pr-update`
+PR-resolve update is indistinguishable from a manual `wk-pr-update`
 run, and improvements to integration behavior apply everywhere.
 
 ## Step 3: Fetch Unresolved Comments
@@ -206,7 +206,7 @@ review_bodies_fetched    = false
 issue_comments_fetched   = false
 ```
 
-Cached results from a prior `wk:pr-resolve` invocation in the same
+Cached results from a prior `wk-pr-resolve` invocation in the same
 session do **not** count. Issue comments and review summaries can
 appear at any time, including between invocations — most often the
 top-of-PR description-drift bots fire late. Skipping a surface
@@ -891,7 +891,7 @@ extends a fix to **the same class on different lines**.
 
 Use the commit type that matches the nature of the change: `fix` for bug
 fixes, `refactor` for restructuring, `feat` for new behavior. Always
-include the emoji per `wk:commit` conventions.
+include the emoji per `wk-commit` conventions.
 
 ### For each dismissal (option `d`)
 
@@ -1023,7 +1023,7 @@ EOF
 )"
 ```
 
-This mirrors the `wk:pr` rule: after every push to a branch with an existing
+This mirrors the `wk-pr` rule: after every push to a branch with an existing
 PR, the description must be updated.
 
 ### Causes of 404 on reply posting
@@ -1175,7 +1175,7 @@ Resolving thread.
 
 Then resolve the new thread. Do not re-prompt the user; do not
 generate a new commit. The session-local resolution map (kept
-across the session's invocations of `wk:pr-resolve`) is the
+across the session's invocations of `wk-pr-resolve`) is the
 ground truth — the bot's view will catch up on its next
 post-merge re-review.
 
@@ -1235,7 +1235,7 @@ PR URL: {url}
 
 ## Step 11: Session Retro
 
-After the final summary, invoke `wk:retro` to capture session learnings.
+After the final summary, invoke `wk-retro` to capture session learnings.
 This is mandatory — do not skip even if the session was short or routine.
 
 ## Quick Reference
@@ -1246,7 +1246,7 @@ This is mandatory — do not skip even if the session was short or routine.
 | "address review feedback" | Full workflow |
 | "fix PR #{number}" | Full workflow for specific PR |
 | "respond to reviewers" | Full workflow with focus on replies |
-| Session ends | Invoke `wk:retro` |
+| Session ends | Invoke `wk-retro` |
 
 ## Requirements
 
@@ -1259,4 +1259,4 @@ This is mandatory — do not skip even if the session was short or routine.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn pr-resolve`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn pr-resolve`).

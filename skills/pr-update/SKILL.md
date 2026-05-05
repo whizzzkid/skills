@@ -1,11 +1,11 @@
 ---
-name: wk:pr-update
+name: wk-pr-update
 description: >-
   Update a PR branch with the latest changes from its base branch. Picks
   the right strategy automatically — rebase when the branch has <5 commits
   ahead, patch-replay (diff against old base, apply onto new base) when it
   has more. Resolves conflicts interactively, re-validates the work after
-  integration (tests + build), syncs the PR description via `wk:commit`'s
+  integration (tests + build), syncs the PR description via `wk-commit`'s
   PR Sync rule, and force-with-lease pushes. Use when asked to "update
   PR", "rebase on main", "sync with base", "pull in latest from main",
   or after CI surfaces a base-branch conflict.
@@ -68,7 +68,7 @@ Pre-flight ──► Detect base ──► Choose strategy
 4. **Never push without re-validation.** The branch must build and pass
    tests after integration, not before.
 5. **Never skip PR description sync.** A push that updates the branch
-   but leaves a stale PR body violates `wk:commit`'s PR Sync HARD RULE.
+   but leaves a stale PR body violates `wk-commit`'s PR Sync HARD RULE.
 
 ---
 
@@ -93,7 +93,7 @@ START_SHA=$(git rev-parse HEAD)
 If the tree is dirty, ask:
 
 > "Working tree has uncommitted changes. (a) stash → run → unstash,
-> (b) commit them first via `wk:commit`, (c) abort."
+> (b) commit them first via `wk-commit`, (c) abort."
 
 Auto mode defaults to **(c) abort** — picking (a) or (b) on the
 user's behalf is the kind of mutation auto mode should not make
@@ -198,7 +198,7 @@ git add -A
 git commit -S -m "$(cat <<EOF
 <conventional-subject>: <emoji> <one-line summary of the net change>
 
-Squashed via wk:pr-update onto $BASE @ $(git rev-parse --short "$BASE_REF").
+Squashed via wk-pr-update onto $BASE @ $(git rev-parse --short "$BASE_REF").
 
 Original commits:
 $(cat /tmp/pr-update-$$.log)
@@ -208,7 +208,7 @@ EOF
 )"
 ```
 
-The commit subject MUST follow `wk:commit`'s conventional format with
+The commit subject MUST follow `wk-commit`'s conventional format with
 a single emoji classifier. If the original branch had a clear theme,
 use that theme; if mixed, use 🤖 (the "no single emoji fits"
 fallback).
@@ -358,7 +358,7 @@ The branch is now correct; align the PR with reality.
 
 ### Sync the PR
 
-Invoke the PR Sync flow from `wk:commit` (HARD RULE: post-push, the
+Invoke the PR Sync flow from `wk-commit` (HARD RULE: post-push, the
 PR title and body must reflect the post-push branch state). For
 patch-replay specifically, also update:
 
@@ -400,16 +400,16 @@ its line — don't omit the line.
 
 ## Coordination with other skills
 
-- **`wk:workflow`** — this skill is a *tool* used inside Phase 5/6.
-  When `wk:workflow` Phase 6's CI fix loop diagnoses a "branch is
-  behind base" failure, it should invoke `wk:pr-update` rather than
+- **`wk-workflow`** — this skill is a *tool* used inside Phase 5/6.
+  When `wk-workflow` Phase 6's CI fix loop diagnoses a "branch is
+  behind base" failure, it should invoke `wk-pr-update` rather than
   reinventing the rebase logic.
-- **`wk:pr`** — when `wk:pr` is updating an existing PR (not
+- **`wk-pr`** — when `wk-pr` is updating an existing PR (not
   creating one) and the branch is behind base, it should invoke
-  `wk:pr-update` first, then resume the rest of its post-creation
+  `wk-pr-update` first, then resume the rest of its post-creation
   workflow.
-- **`wk:commit`** — the integration commit (patch-replay) and any
-  conflict-resolution commits MUST follow `wk:commit`'s rules:
+- **`wk-commit`** — the integration commit (patch-replay) and any
+  conflict-resolution commits MUST follow `wk-commit`'s rules:
   signed, conventional format, single emoji, PR Sync after push.
 
 ---
@@ -418,9 +418,9 @@ its line — don't omit the line.
 
 | Trigger | Stages |
 |---------|--------|
-| `/wk:pr-update` | 0 → 7 |
-| `/wk:pr-update <branch>` | 0 → 7 with explicit base |
-| `wk:workflow` Phase 6 detects "behind base" | 0 → 7 (then resume CI fix loop) |
+| `/wk-pr-update` | 0 → 7 |
+| `/wk-pr-update <branch>` | 0 → 7 with explicit base |
+| `wk-workflow` Phase 6 detects "behind base" | 0 → 7 (then resume CI fix loop) |
 | Branch already up to date (`$BEHIND == 0`) | Exit at Stage 1 |
 | Dirty tree | Abort at Stage 0 unless user picks stash/commit |
 | Conflicts unresolvable | Reset to `$START_SHA`, hand back to user |
@@ -429,4 +429,4 @@ its line — don't omit the line.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn pr-update`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn pr-update`).

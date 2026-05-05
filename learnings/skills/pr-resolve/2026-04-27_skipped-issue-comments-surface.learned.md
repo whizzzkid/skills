@@ -1,5 +1,5 @@
 ---
-skill: wk:pr-resolve
+skill: wk-pr-resolve
 date: 2026-04-27
 type: correction
 severity: high

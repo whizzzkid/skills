@@ -1,5 +1,5 @@
 ---
-name: wk:concise
+name: wk-concise
 description: >-
   Reduce response verbosity and token usage. Drops articles, filler, hedging,
   and pleasantries from agent replies while preserving technical accuracy.
@@ -168,7 +168,7 @@ If `HOOK_INSTALLED=0` **or** `SNIPPET_INSTALLED=0`, emit a one-time offer
 (and mark offered in `~/.claude/.concise-setup-offered` so later invocations
 don't re-ask):
 
-> `wk:concise — first-run setup`
+> `wk-concise — first-run setup`
 >
 > To make brief mode the default for every session, I can wire up:
 > - [{snippet_state}] `~/.claude/CLAUDE.md` — opt-in-by-default across all agents
@@ -180,7 +180,7 @@ don't re-ask):
 
 ### Apply
 
-On the user's answer, invoke `wk:update-config` (for the `settings.json`
+On the user's answer, invoke `wk-update-config` (for the `settings.json`
 edit) and write the CLAUDE.md snippet from
 `templates/claude-md-snippet.md` appended to `~/.claude/CLAUDE.md`.
 
@@ -204,7 +204,7 @@ The `settings.json` addition:
 }
 ```
 
-`wk:update-config` handles the merge — preserves existing hooks, adds this
+`wk-update-config` handles the merge — preserves existing hooks, adds this
 one, validates JSON, reports the result.
 
 After applying, write `~/.claude/.concise-setup-offered` (empty file) so the
@@ -389,4 +389,4 @@ Confirm deactivation:
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn concise`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn concise`).

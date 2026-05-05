@@ -1,9 +1,9 @@
 ---
-name: wk:self-review
+name: wk-self-review
 description: >-
   Post inline self-review comments on your own PR to document design decisions,
   non-obvious choices, and critical context for human reviewers. Use when a PR
-  is ready for self-review, after CI passes, or when wk:pr invokes this skill.
+  is ready for self-review, after CI passes, or when wk-pr invokes this skill.
 allowed-tools:
   - "Bash(gh pr view:*)"
   - "Bash(gh pr diff:*)"
@@ -250,7 +250,7 @@ When new commits are pushed to a PR that already has self-review comments:
 
 | Trigger | Behavior |
 |---------|----------|
-| Invoked by `wk:pr` | Full self-review flow after CI passes |
+| Invoked by `wk-pr` | Full self-review flow after CI passes |
 | "self-review this PR" | Manual invocation on current PR |
 | New commits pushed | Update existing comments, resolve stale ones |
 
@@ -258,4 +258,4 @@ When new commits are pushed to a PR that already has self-review comments:
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn self-review`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn self-review`).

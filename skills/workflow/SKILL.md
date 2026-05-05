@@ -1,5 +1,5 @@
 ---
-name: wk:workflow
+name: wk-workflow
 description: >-
   Master workflow for development tasks. Activates whenever the agent begins
   planning, implementing, or executing any coding task — feature work, bug
@@ -25,12 +25,12 @@ metadata:
 
 # Workflow
 
-Master orchestration for all development tasks. Every `wk:*` skill is invoked
+Master orchestration for all development tasks. Every `wk-*` skill is invoked
 from within this workflow at the prescribed point. Follow this sequence exactly.
 
 ```
 Plan -> Implement (commit per step + docs) -> Test (happy/sad/edge)
-  -> Review (adversarial agent) -> PR (wk:pr) -> CI Fix Loop
+  -> Review (adversarial agent) -> PR (wk-pr) -> CI Fix Loop
   -> Self-Review -> Docs Audit -> Retro
 ```
 
@@ -60,12 +60,12 @@ has already approved the workflow by using it. Minimize interruptions:
 
 | Situation | Do this | Do NOT do this |
 |-----------|---------|----------------|
-| Ready to commit | Invoke `wk:commit` | Ask "shall I commit?" |
-| Tests pass, review clean | Invoke `wk:pr` | Ask "would you like a PR?" |
+| Ready to commit | Invoke `wk-commit` | Ask "shall I commit?" |
+| Tests pass, review clean | Invoke `wk-pr` | Ask "would you like a PR?" |
 | CI fails | Enter fix loop automatically | Ask "should I investigate?" |
 | Review surfaces issues | Fix them and re-review | Ask "should I fix these?" |
-| Docs need updating | Invoke `wk:docs` | Ask "should I update docs?" |
-| Session ending | Invoke `wk:retro` | Ask "should I do a retro?" |
+| Docs need updating | Invoke `wk-docs` | Ask "should I update docs?" |
+| Session ending | Invoke `wk-retro` | Ask "should I do a retro?" |
 
 **Only stop and ask the user when:**
 - The plan is ambiguous and multiple valid approaches exist
@@ -75,7 +75,7 @@ has already approved the workflow by using it. Minimize interruptions:
 - Destructive or shared-state actions (force push, production deploy)
 
 **Skill invocation is mandatory.** When this workflow says "invoke
-`wk:commit`" or "invoke `wk:pr`", the agent MUST use the Skill tool to
+`wk-commit`" or "invoke `wk-pr`", the agent MUST use the Skill tool to
 call the skill — not approximate the behavior by running raw commands.
 The skills contain rules, guards, and conventions that raw commands skip.
 
@@ -113,8 +113,8 @@ ask, not the original plan. The update-first rule prevents that drift.
 Before declaring the task complete, re-read the full plan and confirm
 that **every numbered step** is either (a) finished or (b) explicitly
 deferred or removed by the user. "The code shipped" is not the same as
-"the plan is done." Polish steps — `wk:self-review`, `wk:docs`,
-`wk:retro`, the CI verification — are part of the contract; silently
+"the plan is done." Polish steps — `wk-self-review`, `wk-docs`,
+`wk-retro`, the CI verification — are part of the contract; silently
 skipping them is a violation even when they feel optional after a
 successful merge.
 
@@ -129,14 +129,14 @@ contain these elements — if any are missing, add them before executing:
 
 1. **Implementation steps** — what to build or change, broken into the smallest
    meaningful units
-2. **Commit boundary after each step** — each step ends with `wk:commit`
-3. **Documentation update with each step** — each step includes a `wk:docs`
+2. **Commit boundary after each step** — each step ends with `wk-commit`
+3. **Documentation update with each step** — each step includes a `wk-docs`
    invocation for affected docs, README, specs, or ADRs
 4. **Testing step** — covers happy path, sad path, and edge cases
 5. **Code review step** — adversarial critique agent reviews the branch
 6. **PR offer** — ask the user if they want a PR
 7. **CI fix loop** — monitor CI, auto-diagnose and fix failures, re-push
-8. **Session retro** — `wk:retro` at end of session (non-negotiable)
+8. **Session retro** — `wk-retro` at end of session (non-negotiable)
 
 ### Commit Granularity
 
@@ -145,7 +145,7 @@ Prefer the smallest possible commits. Each commit must:
 - Do exactly one logical thing
 - Pass all tests and CI in isolation — no commit may break the build
 - Include documentation updates for any behavior it introduces or changes
-- Be immediately committable via `wk:commit`
+- Be immediately committable via `wk-commit`
 
 If a step is too large for a single commit, split it into sub-steps with their
 own commit boundaries. When in doubt, split.
@@ -216,10 +216,10 @@ steps produce commits. Example:
 Execute the plan step by step. After completing each step:
 
 1. **Run tests** — verify the step doesn't break anything
-2. **Invoke `wk:docs`** — check for and update affected documentation (README,
+2. **Invoke `wk-docs`** — check for and update affected documentation (README,
    specs, ADRs, tutorials, reference docs). A feature commit without its
    documentation update is incomplete
-3. **Invoke `wk:commit`** — create a signed, conventional commit with emoji
+3. **Invoke `wk-commit`** — create a signed, conventional commit with emoji
 
 Never batch multiple steps into one commit. Never defer documentation to the
 end. Never skip tests between commits.
@@ -442,7 +442,7 @@ regressions, naming violations, and mismatches between names and intent.
 
 If the review surfaces issues:
 
-1. Fix each issue (committing each fix individually via `wk:commit`)
+1. Fix each issue (committing each fix individually via `wk-commit`)
 2. Re-run the review until clean
 3. Only proceed to PR after a clean review
 
@@ -451,21 +451,21 @@ If the review surfaces issues:
 ## Phase 5: PR
 
 **HARD RULE: every push to a branch that has no open PR invokes
-`wk:pr` automatically.** No size exemption — a one-line fix is the
+`wk-pr` automatically.** No size exemption — a one-line fix is the
 same as a 500-line feature for this rule. Phrases like "this is
 small," "this doesn't need a PR," or "just a quick fix" are red
 flags; if the rule applies, execute it. If the user pushes back
 asking why no PR was created, **open it without asking** — the
 Autonomy Rules table forbids the "would you like a PR?" question.
 
-After code review passes, invoke `wk:pr` automatically. Do not ask for
+After code review passes, invoke `wk-pr` automatically. Do not ask for
 permission — the workflow prescribes it. **Never use raw `gh pr create`
-or any other method.** This is non-negotiable. `wk:pr` handles:
+or any other method.** This is non-negotiable. `wk-pr` handles:
 
 - Draft creation (always starts as draft)
 - Stacked PRs when the diff exceeds ~30 lines
 - CI polling (waits for green before proceeding)
-- Self-review via `wk:self-review` — posts inline comments on **critical
+- Self-review via `wk-self-review` — posts inline comments on **critical
   changes only**: design decisions, non-obvious logic, security-sensitive
   paths, behavioral changes. No noise, no trivial comments. Self-review
   is a **pending review** even when there is only one comment to make —
@@ -476,7 +476,7 @@ or any other method.** This is non-negotiable. `wk:pr` handles:
 
 ### Post-push sync
 
-`wk:commit` handles PR description sync and stale comment resolution after every push. See `wk:commit` for the full Post-Push PR Sync rules.
+`wk-commit` handles PR description sync and stale comment resolution after every push. See `wk-commit` for the full Post-Push PR Sync rules.
 
 ### Pre-rework fetch (HARD RULE)
 
@@ -496,7 +496,7 @@ git fetch origin "$BASE" "$DEFAULT" --quiet
 LOCAL_MB=$(git merge-base HEAD "origin/$BASE")
 REMOTE_TIP=$(git rev-parse "origin/$BASE")
 if [ "$LOCAL_MB" != "$REMOTE_TIP" ]; then
-  Skill(wk:pr-update, args="$BASE")
+  Skill(wk-pr-update, args="$BASE")
 fi
 ```
 
@@ -523,9 +523,9 @@ to self-review until this loop exits green.**
 │  Poll CI ──► Green? ──yes──► Exit loop      │
 │     │                                       │
 │     └─ Failing? ──► Diagnose ──► Fix ──►    │
-│         │            (wk:buildkite)   │     │
+│         │            (wk-buildkite)   │     │
 │         │                             │     │
-│         │    ◄── commit (wk:commit) ◄─┘     │
+│         │    ◄── commit (wk-commit) ◄─┘     │
 │         │    ◄── push                       │
 │         │    ◄── update PR description      │
 │         │                                   │
@@ -538,14 +538,14 @@ to self-review until this loop exits green.**
 ### Step 1: Poll CI Status
 
 After each push, poll the CI status for the PR's HEAD commit. Use the
-GitHub checks API or `wk:buildkite` depending on the project's CI system:
+GitHub checks API or `wk-buildkite` depending on the project's CI system:
 
 ```bash
 # GitHub Actions / generic checks
 gh pr checks --watch --fail-fast
 
 # Buildkite (if applicable)
-# Use wk:buildkite to check build status
+# Use wk-buildkite to check build status
 ```
 
 **Run watch commands in the background.** Any CI poll that may block for
@@ -562,7 +562,7 @@ of the workflow on a foregrounded watch.
 
 When CI fails:
 
-1. **Read the actual logs** — invoke `wk:buildkite` for Buildkite projects
+1. **Read the actual logs** — invoke `wk-buildkite` for Buildkite projects
    or fetch GitHub Actions logs via `gh run view --log-failed`. Never guess
    at the cause
 2. **Identify the root cause** — distinguish between:
@@ -619,7 +619,7 @@ For code failures:
 
 1. **Fix the issue** — apply the minimal, targeted fix (see ordering below)
 2. **Run tests locally** — verify the fix passes before pushing
-3. **Commit via `wk:commit`** — one fix per commit, conventional format
+3. **Commit via `wk-commit`** — one fix per commit, conventional format
 4. **Push** — regular `git push`, never force-push
 5. **Update PR description** — `gh pr edit` to reflect the fix
 6. **Re-enter the loop** — go back to Step 1
@@ -711,8 +711,8 @@ The loop exits when:
 3. **Infrastructure/flaky failure confirmed** — inform user, optionally
    re-trigger, do not block on it
 
-After a green exit, resume the `wk:pr` post-creation workflow: self-review
-(`wk:self-review`), automated feedback triage, and mark ready.
+After a green exit, resume the `wk-pr` post-creation workflow: self-review
+(`wk-self-review`), automated feedback triage, and mark ready.
 
 ---
 
@@ -721,19 +721,19 @@ After a green exit, resume the `wk:pr` post-creation workflow: self-review
 Documentation is woven into every commit during Phase 2, but do a final audit
 after all code is complete:
 
-1. Invoke `wk:docs` for a full scan of affected documentation
+1. Invoke `wk-docs` for a full scan of affected documentation
 2. Verify the README reflects any user-facing changes
 3. Create or update ADRs for significant architectural decisions made
 4. Update specs if behavior changed from what was originally specified
 5. Ensure the `docs/` index (`docs/README.md`) is current
-6. If the project has no `docs/` folder, `wk:docs` bootstraps one with:
+6. If the project has no `docs/` folder, `wk-docs` bootstraps one with:
    `plans/`, `specs/`, `adr/`, `tutorials/`, `examples/`
 
 ---
 
 ## Phase 8: Session Retro — NON-NEGOTIABLE
 
-**At the end of EVERY session, invoke `wk:retro`.** No exceptions. This is
+**At the end of EVERY session, invoke `wk-retro`.** No exceptions. This is
 mandatory regardless of whether the task completed, partially completed,
 failed, or was abandoned.
 
@@ -761,7 +761,7 @@ When encountering `authorization failed`, `no basic auth credentials`,
 
 When encountering `Cannot connect to the Docker daemon`, `docker.sock: no
 such file or directory`, or `Is the docker daemon running?`: prompt the user
-to start Docker Desktop or Colima (`colima start`). Use `wk:docker` for
+to start Docker Desktop or Colima (`colima start`). Use `wk-docker` for
 Docker-related work.
 
 ### Configuration
@@ -773,30 +773,30 @@ Always add permission rules, settings, and MCP servers to
 
 ### CI Failures
 
-Use `wk:buildkite` when investigating CI failures. Do not guess at CI
+Use `wk-buildkite` when investigating CI failures. Do not guess at CI
 issues — read the actual logs.
 
 ---
 
 ## Skill Reference
 
-All `wk:*` skills and when to invoke them during this workflow:
+All `wk-*` skills and when to invoke them during this workflow:
 
 | Skill | When | Phase |
 |-------|------|-------|
-| `wk:commit` | After completing each implementation step; CI fix commits | 2, 6 |
-| `wk:docs` | With each commit and during final audit | 2, 7 |
-| `wk:pr` | When creating or updating a pull request | 5 |
-| `wk:self-review` | Invoked automatically by `wk:pr` after CI passes | 5 |
-| `wk:buildkite` | Diagnosing CI failures in the fix loop | 6 |
-| `wk:pr-update` | Rebasing / syncing a PR branch with its base | 5, 6 |
-| `wk:pr-review` | When reviewing someone else's PR | — |
-| `wk:pr-resolve` | When addressing review feedback on your PR | — |
-| `wk:learn` | Post-completion learning capture (end of any skill run) | any |
-| `wk:retro` | End of every session (mandatory) | 8 |
-| `wk:docker` | When working with Docker/containers | any |
-| `wk:datadog` | When managing observability resources | any |
-| `wk:worktree-cleanup` | When cleaning up merged worktrees | any |
+| `wk-commit` | After completing each implementation step; CI fix commits | 2, 6 |
+| `wk-docs` | With each commit and during final audit | 2, 7 |
+| `wk-pr` | When creating or updating a pull request | 5 |
+| `wk-self-review` | Invoked automatically by `wk-pr` after CI passes | 5 |
+| `wk-buildkite` | Diagnosing CI failures in the fix loop | 6 |
+| `wk-pr-update` | Rebasing / syncing a PR branch with its base | 5, 6 |
+| `wk-pr-review` | When reviewing someone else's PR | — |
+| `wk-pr-resolve` | When addressing review feedback on your PR | — |
+| `wk-learn` | Post-completion learning capture (end of any skill run) | any |
+| `wk-retro` | End of every session (mandatory) | 8 |
+| `wk-docker` | When working with Docker/containers | any |
+| `wk-datadog` | When managing observability resources | any |
+| `wk-worktree-cleanup` | When cleaning up merged worktrees | any |
 
 ---
 
@@ -816,11 +816,11 @@ Use this as a final gate before claiming work is complete:
 - [ ] Diagrams use Mermaid, not ASCII art
 - [ ] Regex uses named capture groups
 - [ ] ADRs created for significant architectural decisions
-- [ ] Session retro completed via `wk:retro`
+- [ ] Session retro completed via `wk-retro`
 - [ ] Every numbered plan step is finished or explicitly deferred — not "most" or "the important ones"
 
 ---
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn workflow`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn workflow`).

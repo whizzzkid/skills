@@ -1,5 +1,5 @@
 ---
-name: wk:mise
+name: wk-mise
 description: >-
   Use when working with mise (formerly rtx) — installing tools, managing
   .mise.toml or .tool-versions configs, running commands in mise context,
@@ -244,4 +244,4 @@ is in `mise ls`, this is the cause. Activate mise and retry.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn mise`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn mise`).

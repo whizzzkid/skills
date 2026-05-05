@@ -1,5 +1,5 @@
 ---
-name: wk:sharpen
+name: wk-sharpen
 description: >-
   Improve a skill based on field reports or incident retrospectives. Extracts
   generalizable principles from specific failures without overfitting on
@@ -244,7 +244,7 @@ inside Step 7 and call the run done.
 Do not return control to the user until all four checks pass:
 
 1. **Install:** `npx skills add . -g -y -a=claude 2>&1 | tail -5` from the repo root — must print `Done!`. Re-run from repo root if it prints `No skills found` or exits non-zero.
-2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated; one chore commit for `.learned.md` renames + `.distilled-sources.log`); use `wk:commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
+2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated; one chore commit for `.learned.md` renames + `.distilled-sources.log`); use `wk-commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
 3. **Push once:** after all commits exist, push a single time. Single-skill runs may push immediately after their lone commit.
 4. **Clean tree:** `git status --short` must be empty — if anything remains, commit or stash it.
 
@@ -290,11 +290,11 @@ specific incident.
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk:sharpen pr-review incident.md` | Read incident, distill lesson, audit full skill, propose update |
-| `/wk:sharpen commit "agent skipped signing"` | Distill verbal report, audit, propose skill improvement |
-| `/wk:sharpen` (no args) | Batch mode — scan learnings + memories, distill all |
-| `/wk:sharpen --scan --force` | Batch mode — reprocess everything, ignore log |
-| `/wk:sharpen improve [scope]` | Improve mode — refactor and prune accumulated entropy |
+| `/wk-sharpen pr-review incident.md` | Read incident, distill lesson, audit full skill, propose update |
+| `/wk-sharpen commit "agent skipped signing"` | Distill verbal report, audit, propose skill improvement |
+| `/wk-sharpen` (no args) | Batch mode — scan learnings + memories, distill all |
+| `/wk-sharpen --scan --force` | Batch mode — reprocess everything, ignore log |
+| `/wk-sharpen improve [scope]` | Improve mode — refactor and prune accumulated entropy |
 
 **Single mode:** Read report → Read full skill → Distill → Draft →
 Audit for overlap/bloat → Present with cleanup → Apply → Verify & commit
@@ -307,8 +307,8 @@ Phased proposal (user approval per phase) → Apply → Verify & commit
 
 ## Batch Mode: Scan Learnings and Memories
 
-When invoked without a specific incident (e.g., `/wk:sharpen` with no
-arguments, or `/wk:sharpen --scan`), sharpen enters batch mode — scanning
+When invoked without a specific incident (e.g., `/wk-sharpen` with no
+arguments, or `/wk-sharpen --scan`), sharpen enters batch mode — scanning
 two sources for distillable material.
 
 ### Source 1: Learnings directory
@@ -370,9 +370,9 @@ memory files on every run.
 
 ```
 <date>\t<source-path>\t<action>\t<target-skill>
-2026-04-21\t~/.claude/memory/feedback_testing.md\tdistilled\twk:workflow
+2026-04-21\t~/.claude/memory/feedback_testing.md\tdistilled\twk-workflow
 2026-04-21\t~/.claude/memory/user_role.md\tskipped\t—
-2026-04-21\tlearnings/skills/pr-review/2026-04-21_stale-diff.md\tdistilled\twk:pr-review
+2026-04-21\tlearnings/skills/pr-review/2026-04-21_stale-diff.md\tdistilled\twk-pr-review
 ```
 
 **Before processing any source**, check if its path appears in the log.
@@ -391,7 +391,7 @@ grep -qF "$source_path" "$WK_SKILLS_HOME/.distilled-sources.log"
 **After processing**, append an entry to the log.
 
 **Force reprocessing:** If the user explicitly asks to revisit memories
-(e.g., `/wk:sharpen --scan --force` or "rescan all memories"), ignore
+(e.g., `/wk-sharpen --scan --force` or "rescan all memories"), ignore
 the log and process everything.
 
 ### Batch mode presentation
@@ -415,7 +415,7 @@ After processing, report results:
 
 ## Improve Mode: Refactor and Optimize
 
-When invoked as `/wk:sharpen improve [scope]`, sharpen enters improve mode —
+When invoked as `/wk-sharpen improve [scope]`, sharpen enters improve mode —
 a cross-cutting refactor pass that prunes accumulated entropy from the skill
 suite rather than processing new incident evidence.
 
@@ -489,7 +489,7 @@ and proceed; push happens once at the end of the run, not between phases.
 - **Cohort overfit scan applies.** Every proposed edit goes through the
   mechanical overfit scan before presentation.
 - **Capture insights.** When external research surfaces a useful pattern, add
-  it to the overfit-categories table or as a new rule in `wk:sharpen` so the
+  it to the overfit-categories table or as a new rule in `wk-sharpen` so the
   next improve run has it as baseline.
 
 ---
@@ -506,4 +506,4 @@ and proceed; push happens once at the end of the run, not between phases.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn sharpen`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn sharpen`).

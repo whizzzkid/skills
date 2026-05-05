@@ -1,5 +1,5 @@
 ---
-name: wk:goodevening
+name: wk-goodevening
 description: >-
   Wrap up your workday — review morning progress, write a brag document of
   the day's achievements, capture meeting learnings from Granola, check
@@ -78,7 +78,7 @@ current `metadata.version`:
 |----------------|--------|
 | Missing (legacy file, no annotation) | Treat as older — prompt to regenerate. |
 | **Older** than current | **Auto-regenerate** without prompting. The skill has improved since this wrap-up was written; the user wants the new behavior. Announce: "Today's wrap-up was generated with v{stored}; current is v{current}. Regenerating." |
-| **Equal or newer** | Prompt the user (existing flow below) — re-running is expensive (7 parallel agents, MCP auth, draft review) and would overwrite the brag document, carry-over decisions, and hand-curated notes that tomorrow's `wk:goodmorning` will read. |
+| **Equal or newer** | Prompt the user (existing flow below) — re-running is expensive (7 parallel agents, MCP auth, draft review) and would overwrite the brag document, carry-over decisions, and hand-curated notes that tomorrow's `wk-goodmorning` will read. |
 
 CalVer ordering is lexicographic (`YYYY.MM.DD-HHMMSS` UTC), so a plain
 string compare is correct: `[ "$STORED" \< "$CURRENT" ]` means stored
@@ -169,7 +169,7 @@ verbatim:
 ```
 SUBAGENT CONTRACT (mandatory):
 - Return STRUCTURED DATA ONLY — do not write files, run git commands, or commit
-- Do NOT invoke /skills or act as the wk:goodevening orchestrator
+- Do NOT invoke /skills or act as the wk-goodevening orchestrator
 - Do NOT prompt the user for input — the orchestrator handles all triage
 - Do NOT open files in browsers or call `open`
 - Your output is markdown text the orchestrator pastes into a section
@@ -221,7 +221,7 @@ uses git and `gh` CLI directly.
 **Run all in parallel:**
 
 **IMPORTANT:** Before running any `gh` command, check that `$GITHUB_ORG`
-is set (see `wk:gh`). All search commands MUST include
+is set (see `wk-gh`). All search commands MUST include
 `--owner="$GITHUB_ORG"`.
 
 Draft/WIP PRs are fine to include in the **brag document** (creating a
@@ -264,12 +264,12 @@ issues closed, with URLs.
 
 **Step 1: Fetch today's calendar events**
 
-Follow `wk:cal §Fetch Day Events` — ToolSearch for `"gcal"` or `"calendar"`,
+Follow `wk-cal §Fetch Day Events` — ToolSearch for `"gcal"` or `"calendar"`,
 then list today's events (title, time, attendees, whether attended).
 
 **Step 1b: Fetch tomorrow's calendar events**
 
-Repeat `wk:cal §Fetch Day Events` for the next business day. For each event
+Repeat `wk-cal §Fetch Day Events` for the next business day. For each event
 extract: title, time, duration, attendees/organizer, description, linked
 document URLs, recurrence flag, and whether the user is a presenter, organizer,
 or has an active role.
@@ -768,7 +768,7 @@ possible:
   Do not create an issue, carry forward, or draft anything.
 - **(c) Skip** → Omit entirely from evening.md — not carried forward,
   not recorded as done.
-- **(d) GitHub issue** → `gh issue create --title "{action}" --body "{context}" --assignee @me` (verify `$GITHUB_ORG` per `wk:gh`)
+- **(d) GitHub issue** → `gh issue create --title "{action}" --body "{context}" --assignee @me` (verify `$GITHUB_ORG` per `wk-gh`)
 - **(d/e) Draft response** → Queue for draft review (present all drafts
   together after all groups are done)
 - **(e) Jira ticket** → Create via Jira MCP tools
@@ -830,7 +830,7 @@ If no candidates, skip silently.
 ## Stage 4: Generate evening.md
 
 Write to `<today_dir>/evening.md`. This file is consumed by
-tomorrow's `wk:goodmorning` — structure it for machine readability.
+tomorrow's `wk-goodmorning` — structure it for machine readability.
 
 ### Brief versioning (applies to evening.md and evening.html)
 
@@ -852,7 +852,7 @@ even when a user-maintained template doesn't include the slots.
 ```markdown
 ---
 generated_with: {SKILL_VERSION}
-generated_with_skill: wk:goodevening
+generated_with_skill: wk-goodevening
 generated_at: {ISO_8601_UTC}
 ---
 
@@ -924,7 +924,7 @@ not "here's what's left."
 
 **Required features:**
 
-0. **Generator metadata** — `<head>` must include `<meta name="generated-with-version" content="{SKILL_VERSION}">`, `<meta name="generated-with-skill" content="wk:goodevening">`, and `<meta name="generated-at" content="{ISO_8601_UTC}">`. The Stage 0 idempotency check reads these on the next run.
+0. **Generator metadata** — `<head>` must include `<meta name="generated-with-version" content="{SKILL_VERSION}">`, `<meta name="generated-with-skill" content="wk-goodevening">`, and `<meta name="generated-at" content="{ISO_8601_UTC}">`. The Stage 0 idempotency check reads these on the next run.
 1. **Header** — date, cheerful greeting ("Great day, {name}!" or
    "You crushed it today!"), overall stats bar (items completed,
    PRs shipped, meetings attended)
@@ -966,7 +966,7 @@ Confluence pages MUST use `target="_blank" rel="noopener noreferrer"`.
 ### Write last_working_day marker
 
 After writing the evening files, record today as the last working day so
-tomorrow's `wk:goodmorning` can find yesterday's sitrep correctly — even
+tomorrow's `wk-goodmorning` can find yesterday's sitrep correctly
 when "yesterday" is a weekend (Monday morning problem):
 
 ```bash
@@ -974,7 +974,7 @@ mkdir -p "$PWD/sitrep"
 echo "$TODAY" > "$PWD/sitrep/last_working_day"
 ```
 
-This file is consumed by `wk:goodmorning §Determine dates and paths` to
+This file is consumed by `wk-goodmorning §Determine dates and paths`
 set `YESTERDAY` to the last day goodevening ran, not the last calendar day.
 
 ### Open for review
@@ -1027,9 +1027,9 @@ For each unprocessed `.md` file found:
 
 1. **Read the learning** — extract the skill name, what happened, root
    cause, and suggested fix
-2. **Invoke `wk:sharpen`** via the Skill tool with the learning file as
+2. **Invoke `wk-sharpen`** via the Skill tool with the learning file as
    input — this distills the principle and applies it to the target skill
-3. **After `wk:sharpen` completes**, rename the file to mark it absorbed:
+3. **After `wk-sharpen` completes**, rename the file to mark it absorbed:
 
 ```bash
 mv "$learning_file" "${learning_file%.md}.learned.md"
@@ -1102,14 +1102,14 @@ Format each appended entry as:
 - 🌟 {accomplishment — strong verb, specific impact, evidence link}
 ```
 
-This log feeds `wk:self-perf` with pre-distilled signals when QPR season
+This log feeds `wk-self-perf` with pre-distilled signals when QPR season
 arrives, so you're not reconstructing the quarter from scratch.
 
 **Perf review season awareness:** During February and August ($EMPLOYER QPR
 seasons), add a banner to the evening summary:
 
 > "📋 **QPR Season** — Consider whether today's achievements should be
-> captured in your self-review. Run `/wk:self-perf quarter` to generate
+> captured in your self-review. Run `/wk-self-perf quarter` to generate
 > your current-quarter narrative."
 
 ---
@@ -1118,13 +1118,13 @@ seasons), add a banner to the evening summary:
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk:goodevening` | Full evening wrap-up — 7 parallel agents, then interactive |
+| `/wk-goodevening` | Full evening wrap-up — 7 parallel agents, then interactive |
 | No morning.md | Gathers fresh context, still produces evening.md |
 | Service unavailable | Block and prompt user to fix, re-run failed agents |
 | All comms answered | Celebrates clean inbox |
 | Item skipped consistently | Offer to add auto-skip rule to weekly memory |
 | No weekly memory | No auto-rules — all items triaged manually |
-| Unprocessed learnings found | Distill via `wk:sharpen`, rename to `.learned.md` |
+| Unprocessed learnings found | Distill via `wk-sharpen`, rename to `.learned.md` |
 | No learnings | Skip distillation silently |
 | >5 learnings pending | Process top 5 by severity, carry rest to tomorrow |
 
@@ -1132,4 +1132,4 @@ seasons), add a banner to the evening summary:
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn goodevening`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn goodevening`).

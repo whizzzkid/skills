@@ -1,5 +1,5 @@
 ---
-name: wk:buildkite
+name: wk-buildkite
 description: >-
   Use when working with Buildkite CI — checking build status, investigating
   failures, viewing job logs, or monitoring builds after push. Activates on
@@ -250,7 +250,7 @@ bk build view -p <pipeline> -b <branch> -w
 When saving any Buildkite artifact to disk — build JSON, job logs,
 artifact files — write to a structured, namespaced path rather than an
 ad-hoc `/tmp/<name>`. This follows the same `/tmp/agent/<tool>/...`
-convention used by wk:gh (see wk:gh for the rationale).
+convention used by wk-gh (see wk-gh for the rationale).
 
 ```
 /tmp/agent/buildkite/<build_number>/<job_id>/<filename>
@@ -269,7 +269,7 @@ files clobbering each other), and provides a greppable audit trail
 (`ls /tmp/agent/buildkite/`).
 
 This convention is shared across every skill that downloads from an
-external system — see `wk:gh` for the matching path.
+external system — see `wk-gh` for the matching path.
 
 ## Quick Reference
 
@@ -289,4 +289,4 @@ external system — see `wk:gh` for the matching path.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn buildkite`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn buildkite`).

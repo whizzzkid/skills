@@ -1,17 +1,17 @@
 ---
-skill: wk:sharpen
+skill: wk-sharpen
 date: 2026-04-30
 type: gap
 severity: high
 ---
 
-`wk:sharpen` only flows incident → principle → skill edit. It has no
+`wk-sharpen` only flows incident → principle → skill edit. It has no
 mode for refactoring/optimizing existing skills as a whole — when
 skills accrete bloat, duplication, overfit residue, or stale
 references after many distillation cycles, there is no first-class
 entry point to scrub them.
 
-**What happened:** User invoked `/wk:sharpen` with a request to
+**What happened:** User invoked `/wk-sharpen` with a request to
 audit the entire skill suite for duplicate suggestions, overfitting,
 poor examples, long-winded instructions, and to incorporate external
 best-practice ideas — without losing any instructions. The current
@@ -32,15 +32,15 @@ from new evidence. It has no symmetric mode for *pruning* or
 the entropy from many incremental edits exceeds what per-finding
 audits (Step 5 of single mode) can clean up.
 
-**Suggested fix:** Add a third mode: `/wk:sharpen improve [scope]`.
+**Suggested fix:** Add a third mode: `/wk-sharpen improve [scope]`.
 
 Modes summary table:
 
 | Trigger | Mode |
 |---------|------|
-| `/wk:sharpen <skill> <incident>` | single (existing) |
-| `/wk:sharpen` | batch-distill (existing) |
-| `/wk:sharpen improve [scope]` | refactor/optimize (NEW) |
+| `/wk-sharpen <skill> <incident>` | single (existing) |
+| `/wk-sharpen` | batch-distill (existing) |
+| `/wk-sharpen improve [scope]` | refactor/optimize (NEW) |
 
 Where `[scope]` is one of:
 - omitted / `all` — every skill in `skills/`
@@ -120,10 +120,10 @@ Where `[scope]` is one of:
 - **Capture insight for the next pass.** When external
   research surfaces a useful pattern, add it as a row to the
   existing overfit-categories table (or as a new rule in
-  `wk:sharpen` itself) so the next improve run has it as
+  `wk-sharpen` itself) so the next improve run has it as
   baseline.
 
-### Why this fits in `wk:sharpen` rather than a new skill
+### Why this fits in `wk-sharpen` rather than a new skill
 
 Sharpen already owns the audit step (Step 5), the overfit
 scan, the install-and-commit gate, and the learning-capture

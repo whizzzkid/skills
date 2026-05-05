@@ -1,5 +1,5 @@
 ---
-name: wk:retro
+name: wk-retro
 description: >-
   Run a session retrospective to capture learnings and improve future sessions.
   Use when ending a work session, after completing a major task, when asked to
@@ -174,7 +174,7 @@ All targets are **global** (user-level), not project-scoped:
 | Agent behavior, approach corrections | `~/.claude/memory/` (as a `feedback` type memory file) |
 | Standing decisions (what was rejected) | `~/.claude/memory/` (as a `feedback` type memory file) |
 | User preferences, collaboration style | `~/.claude/memory/` (as a `user` type memory file) |
-| Skill gaps or missing steps | Invoke `wk:learn <skill-name>` to write a learning file — `wk:sharpen` batch mode will distill it on the next run |
+| Skill gaps or missing steps | Invoke `wk-learn <skill-name>` to write a learning file — `wk-sharpen` batch mode will distill it on the next run |
 
 ### Memory file format
 
@@ -246,8 +246,8 @@ retro — control stays with the user.
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk:retro` | Full 4-step retro with promotion |
-| `/wk:retro "auth refactor"` | Retro focused on a specific topic |
+| `/wk-retro` | Full 4-step retro with promotion |
+| `/wk-retro "auth refactor"` | Retro focused on a specific topic |
 
 ## Requirements
 
@@ -258,4 +258,4 @@ retro — control stays with the user.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn retro`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn retro`).

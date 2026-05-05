@@ -1,5 +1,5 @@
 ---
-skill: wk:pr-resolve
+skill: wk-pr-resolve
 date: 2026-04-30
 type: correction
 severity: medium
@@ -7,7 +7,7 @@ severity: medium
 
 If "Why this could be skipped" reduces to "no valid reason," the comment is `obvious-fix` — auto-apply, do not consult.
 
-**What happened:** During a `wk:pr-resolve` session on PR #NNN, the agent classified a bot finding ("domain logic in `GithubClient`") as `judgment-required` and asked for `(a/e/d/s)` confirmation, even though the agent's own "Why this could be skipped" rationale was *"No valid reason — the design regressed when I added this method without restoring the domain-layer filtering pattern."* The user pushed back: "when there was no obvious reason to skip the fix, then why did you ask me if you can fix it."
+**What happened:** During a `wk-pr-resolve` session on PR #NNN, the agent classified a bot finding ("domain logic in `GithubClient`") as `judgment-required` and asked for `(a/e/d/s)` confirmation, even though the agent's own "Why this could be skipped" rationale was *"No valid reason — the design regressed when I added this method without restoring the domain-layer filtering pattern."* The user pushed back: "when there was no obvious reason to skip the fix, then why did you ask me if you can fix it."
 
 **Root cause:** The agent treated the word "design" / "refactor" as a reflex trigger for `judgment-required`, overriding the actual classification rule. Step 4's table is explicit: `obvious-fix` ⇔ "Why this could be skipped" reduces to "no valid reason / empty / broken link / stale reference." A design change can absolutely be obvious if there is no real tradeoff and the agent cannot honestly produce a reason to leave the code as-is. The category isn't "is this a structural change?" — it's "is there a real tradeoff between applying and not applying?"
 

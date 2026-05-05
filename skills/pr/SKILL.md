@@ -1,5 +1,5 @@
 ---
-name: wk:pr
+name: wk-pr
 description: >-
   Create a GitHub pull request and manage the post-PR workflow. Use when asked
   to create a PR, open a PR, push for review, or manage a stacked PR. Handles
@@ -117,7 +117,7 @@ from once CI has run and reviewers have started reading:
 
 Auto mode picks **A** — preserving the existing fork point is
 non-destructive and the stacked-PR convention covers the
-metadata. Picking **B** invokes `wk:pr-update` to rebase before
+metadata. Picking **B** invokes `wk-pr-update` to rebase before
 proceeding.
 
 ### Measure scope against the resolved base
@@ -132,7 +132,7 @@ git diff "$BEST_BASE...HEAD" --shortstat
 ```
 
 - If the diff exceeds ~30 lines, ask the user if they want to split
-  further via `wk:pr-break` (in addition to any stacking implied
+  further via `wk-pr-break` (in addition to any stacking implied
   by `$BEST_BASE`).
 - If borderline or unclear, ask the user's preference.
 - Pass `$BEST_BASE` through to Step 2 — never re-detect or default
@@ -217,7 +217,7 @@ JIRA_KEY=$(git rev-parse --abbrev-ref HEAD | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | 
 
 If a key is found and the title does not already end with `[<KEY>]`, append it
 as the last token: `feat(scope): ✨ description [<KEY>]`. This prevents
-wk:jira Stage 3 from having to patch a keyless title after the PR already exists.
+wk-jira Stage 3 from having to patch a keyless title after the PR already exists.
 If no key is found, compose the title without a suffix — do not invent one.
 
 ### Stacked PR (fallback — no repo template found)
@@ -266,7 +266,7 @@ After the draft PR is created (or after pushing new commits to an existing PR):
 
 ## Step 4: Once CI is Green
 
-1. **Invoke `wk:self-review`** to post design-decision comments on the PR.
+1. **Invoke `wk-self-review`** to post design-decision comments on the PR.
    This documents non-obvious choices and critical context for human reviewers.
 
 2. **Address automated review feedback** — Fetch existing review comments from
@@ -294,7 +294,7 @@ Confirm to the user:
 
 ## Step 6: Session Retro
 
-After the PR is marked ready, invoke `wk:retro` to capture session learnings.
+After the PR is marked ready, invoke `wk-retro` to capture session learnings.
 This retrospective reviews what went well, what was corrected, and promotes
 actionable lessons to the appropriate project files.
 
@@ -316,4 +316,4 @@ actionable lessons to the appropriate project files.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn pr`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn pr`).

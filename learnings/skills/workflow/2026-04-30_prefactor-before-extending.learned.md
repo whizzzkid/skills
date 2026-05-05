@@ -1,5 +1,5 @@
 ---
-skill: wk:workflow
+skill: wk-workflow
 date: 2026-04-30
 type: gap
 severity: medium
@@ -7,11 +7,11 @@ severity: medium
 
 Prefactor before extending: when adding a second caller of a pattern, lift the shared logic first, then implement the new caller against the lifted helper.
 
-**What happened:** While building `StatusCommenter` (a new "post a Fresh Eyes PR comment" surface) on PR #NNN, the validation prologue (`token?` → `pr_number.to_s` → `REPO_PATTERN` → `PR_NUMBER_PATTERN`) was copied verbatim from `ReviewPoster#post_summary_comment`. The duplication landed across 4 commits and survived two `wk:pr-resolve` passes before a reviewer pointed at the pattern. After the duplicate `gh pr comment --edit-last` upsert was finally consolidated, ~15 LOC of validation still mirrored across both classes.
+**What happened:** While building `StatusCommenter` (a new "post a Fresh Eyes PR comment" surface) on PR #NNN, the validation prologue (`token?` → `pr_number.to_s` → `REPO_PATTERN` → `PR_NUMBER_PATTERN`) was copied verbatim from `ReviewPoster#post_summary_comment`. The duplication landed across 4 commits and survived two `wk-pr-resolve` passes before a reviewer pointed at the pattern. After the duplicate `gh pr comment --edit-last` upsert was finally consolidated, ~15 LOC of validation still mirrored across both classes.
 
-**Root cause:** `wk:workflow`'s implementation phase treats "make the new feature work" and "consolidate with the existing feature it resembles" as separate concerns, with the second concern usually deferred to "later." When the first commit lands working code, the duplication becomes invisible — it's no longer a delta in the diff, it's just "how the file looks." Tests then accumulate against both copies, raising the cost of consolidation. The pattern hides especially well when the two callers live in different files and were touched in different PRs.
+**Root cause:** `wk-workflow`'s implementation phase treats "make the new feature work" and "consolidate with the existing feature it resembles" as separate concerns, with the second concern usually deferred to "later." When the first commit lands working code, the duplication becomes invisible — it's no longer a delta in the diff, it's just "how the file looks." Tests then accumulate against both copies, raising the cost of consolidation. The pattern hides especially well when the two callers live in different files and were touched in different PRs.
 
-**Suggested fix:** Add a "prefactor probe" to `wk:workflow` Phase 1 (planning):
+**Suggested fix:** Add a "prefactor probe" to `wk-workflow` Phase 1 (planning):
 
 > Before writing the new caller, grep the codebase for the operation it performs (e.g. "post a PR comment", "validate repo format", "open a build", "fetch labels"). If another caller exists:
 > 1. Read both call sites end-to-end.

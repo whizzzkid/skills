@@ -1,5 +1,5 @@
 ---
-skill: wk:workflow
+skill: wk-workflow
 date: 2026-04-29
 type: gap
 severity: medium
@@ -25,7 +25,7 @@ non-default branch that mutates independently of main and can advance
 while the agent works. The skill never says "fetch the PR's
 `baseRefName` and rebase onto it before any rework."
 
-**Suggested fix:** Add a step to wk:workflow that fires whenever the
+**Suggested fix:** Add a step to wk-workflow that fires whenever the
 agent is about to rework a PR (force-push, big restructure, content
 rewrite):
 

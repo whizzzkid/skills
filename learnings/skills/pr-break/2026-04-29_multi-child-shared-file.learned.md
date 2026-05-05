@@ -1,5 +1,5 @@
 ---
-skill: wk:pr-break
+skill: wk-pr-break
 date: 2026-04-29
 type: pattern
 severity: low

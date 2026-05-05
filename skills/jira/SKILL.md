@@ -1,5 +1,5 @@
 ---
-name: wk:jira
+name: wk-jira
 description: >-
   Coordinate Jira ticket state with the development lifecycle. Auto-invoked
   when the agent starts work on a branch, creates a PR, marks a PR ready,
@@ -11,7 +11,7 @@ description: >-
   write operations (create, edit, batch transition) behind explicit
   confirmation — Jira writes are effectively irreversible (no delete API).
   Requires the Jira MCP connector. Not user-invocable — fires automatically
-  alongside `wk:commit`, `wk:pr`, and `wk:workflow`.
+  alongside `wk-commit`, `wk-pr`, and `wk-workflow`.
 allowed-tools:
   - Bash
   - Read
@@ -69,9 +69,9 @@ done.
 | Trigger | Stages to run |
 |---------|---------------|
 | Agent begins work on a branch (first edit, first commit on a fresh branch) | 0 (MCP), 1 (detect), 2 (start) |
-| About to create a PR (called from `wk:pr`) | 0, 1, 3 (title + description) |
+| About to create a PR (called from `wk-pr`) | 0, 1, 3 (title + description) |
 | PR transitioning from draft → ready | 0, 1, 4 (In Review) |
-| PR merged (detected during `wk:pr` post-merge or via `gh pr view --json state`) | 0, 1, 5 (Done) |
+| PR merged (detected during `wk-pr` post-merge or via `gh pr view --json state`) | 0, 1, 5 (Done) |
 
 If the agent cannot determine which trigger fired, default to detect
 (Stage 1) and report what was found — never guess and transition.
@@ -163,7 +163,7 @@ Report in one line:
 
 ## Stage 3: PR title and description sync
 
-When `wk:pr` is creating or updating a PR for a branch with a
+When `wk-pr` is creating or updating a PR for a branch with a
 detected key, enforce two things:
 
 ### Title suffix
@@ -202,7 +202,7 @@ auto-generated `## Summary`. Pull `<ticket summary>` from the Jira
 issue (`fields.summary`) so the link carries human context. Use the
 canonical Atlassian URL the MCP returns.
 
-If `wk:pr` already builds a description, **insert** the `## Ticket`
+If `wk-pr` already builds a description, **insert** the `## Ticket`
 section rather than overwriting the rest. If the section already
 exists, refresh its content if the ticket summary has changed.
 
@@ -210,7 +210,7 @@ exists, refresh its content if the ticket summary has changed.
 
 ## Stage 4: PR ready → In Review
 
-When `wk:pr` flips a PR from draft to ready (`gh pr ready`), or when
+When `wk-pr` flips a PR from draft to ready (`gh pr ready`), or when
 the agent observes a non-draft PR for the first time on the branch,
 transition the ticket:
 
@@ -330,7 +330,7 @@ ticket state is a side-effect of the work, not a precondition for it.
 | Trigger | Stages |
 |---------|--------|
 | First commit on a branch | 0, 1, 2 |
-| `wk:pr` creating/updating PR | 0, 1, 3 |
+| `wk-pr` creating/updating PR | 0, 1, 3 |
 | `gh pr ready` succeeds | 0, 1, 4 |
 | `gh pr view` shows MERGED | 0, 1, 5 |
 | Ambiguous: multiple keys found | 1 only — ask |
@@ -340,4 +340,4 @@ ticket state is a side-effect of the work, not a precondition for it.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn jira`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn jira`).

@@ -1,5 +1,5 @@
 ---
-skill: wk:workflow
+skill: wk-workflow
 date: 2026-04-24
 type: gap
 severity: medium
@@ -15,7 +15,7 @@ triggers that always set REVIEW_PR_NUMBER), BUILDKITE_PULL_REQUEST
 points at the wrong PR ({repo} itself) and the fallback is
 dangerous, not protective.
 
-**Root cause:** wk:workflow does not prescribe a "trace before reuse"
+**Root cause:** wk-workflow does not prescribe a "trace before reuse"
 step. The implementation phase is correctly silent on style — but it
 also doesn't push the agent to verify that copied semantics still hold
 in the new context. Code review (Phase 4) catches the issue eventually,

@@ -1,16 +1,16 @@
 ---
-name: wk:refactor
+name: wk-refactor
 description: >-
   Validate that a refactor preserved behavior. Auto-invoked after
-  `wk:pr-update` finishes a rebase or patch-replay, after `wk:pr-resolve`
+  `wk-pr-update` finishes a rebase or patch-replay, after `wk-pr-resolve`
   resolves any conflict, after the agent extracts a helper / moves a file /
   renames a symbol / splits a module, and before any "ready for review"
   claim on a PR whose diff is dominated by movement rather than new
   behavior. Diffs against both the merge-base and the post-refactor base,
   classifies the refactor's expected diff shape, and runs a removed-line
   audit checklist looking for behavior that was dropped instead of
-  relocated. Manual invocation: `/wk:refactor` to run the audit on the
-  current branch; `/wk:refactor <pr>` to run against a specific PR.
+  relocated. Manual invocation: `/wk-refactor` to run the audit on the
+  current branch; `/wk-refactor <pr>` to run against a specific PR.
 argument-hint: '[<pr-number-or-url>]'
 allowed-tools:
   - Bash
@@ -68,11 +68,11 @@ Detect kind ──► Two-axis diff ──► Removed-line audit
 
 | Trigger | Required |
 |---------|----------|
-| `wk:pr-update` finishes a rebase or patch-replay | Yes |
-| `wk:pr-resolve` resolves any conflict | Yes |
+| `wk-pr-update` finishes a rebase or patch-replay | Yes |
+| `wk-pr-resolve` resolves any conflict | Yes |
 | Agent has just extracted a helper / moved a file / renamed a symbol / split a module | Yes |
 | Before any "ready for review" / `gh pr ready` on a PR whose diff is movement-dominated | Yes |
-| User invokes `/wk:refactor` or `/wk:refactor <pr>` | Manual |
+| User invokes `/wk-refactor` or `/wk-refactor <pr>` | Manual |
 
 The skill never blocks integration; it produces findings the user
 must acknowledge. **Do not** use the lint/test gate as a substitute —
@@ -286,7 +286,7 @@ The report is suitable to paste into the PR description (under a
 
 ## Conflict-resolution audit (special case)
 
-When this skill fires after `wk:pr-update` or `wk:pr-resolve`
+When this skill fires after `wk-pr-update` or `wk-pr-resolve`
 resolved conflicts, run an additional pass: for every file where
 `--theirs` or `--ours` was used wholesale (rather than a
 hand-merge), the file is **automatically suspicious** until
@@ -306,17 +306,17 @@ when possible; otherwise compare against the base branch.
 
 ## Coordination with other skills
 
-- **`wk:pr-update`** invokes `wk:refactor` after every successful
+- **`wk-pr-update`** invokes `wk-refactor` after every successful
   rebase / patch-replay before reporting integration as complete.
-- **`wk:pr-resolve`** invokes `wk:refactor` after resolving any
+- **`wk-pr-resolve`** invokes `wk-refactor` after resolving any
   conflicts in Step 2 before triaging review feedback.
-- **`wk:pr`** invokes `wk:refactor` before `gh pr ready` when the
+- **`wk-pr`** invokes `wk-refactor` before `gh pr ready` when the
   branch's diff is movement-dominated (renames > 50% of touched
   files, or net-zero LOC across many files).
-- **`wk:workflow`** Phase 4 (Code Review) treats a `wk:refactor`
+- **`wk-workflow`** Phase 4 (Code Review) treats a `wk-refactor`
   PASS as a precondition for the adversarial code review when the
   task was framed as a refactor.
-- **`wk:testing-skeleton`** complements: it writes tests for new
+- **`wk-testing-skeleton`** complements: it writes tests for new
   behavior; this skill protects existing behavior from disappearing
   during reshape. Together they cover both directions.
 
@@ -326,9 +326,9 @@ when possible; otherwise compare against the base branch.
 
 | Trigger | Stages |
 |---------|--------|
-| `/wk:refactor` (current branch's PR) | 0 → 5 |
-| `/wk:refactor <pr>` | Same; explicit PR target |
-| Auto after wk:pr-update / wk:pr-resolve | 0 → 5; conflict-resolution audit fires |
+| `/wk-refactor` (current branch's PR) | 0 → 5 |
+| `/wk-refactor <pr>` | Same; explicit PR target |
+| Auto after wk-pr-update / wk-pr-resolve | 0 → 5; conflict-resolution audit fires |
 | Diff shape deviates from refactor kind | Stop at Stage 0; surface mismatch first |
 | All findings confirmed intentional | PASS, append report to PR |
 | Any regression remains | Non-pass; user override possible but logged |
@@ -337,4 +337,4 @@ when possible; otherwise compare against the base branch.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn refactor`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn refactor`).

@@ -1,5 +1,5 @@
 ---
-name: wk:commit
+name: wk-commit
 description: >-
   Use when creating git commits or pushing code. Enforces conventional commits
   with emoji, commit signing, and safe push behavior. Use for all git commit
@@ -75,7 +75,7 @@ classifier emojis after it. Classifiers carry signal that future readers
 | 📌 | Version pinned (was unpinned / floating) | `chore(deps): 📌 pin {dep} to {version}` |
 | ⬆️ | Version bump (upgrade) | `chore(deps): ⬆️ bump rust 1.93 → 1.94` |
 | ⬇️ | Version downgrade | `fix(ci): ⬇️ downgrade {dep} 0.24 → 0.23` |
-| 🦾 | Agentic tool strengthening (skill / hook / agent capability) | `feat(skill): 🦾 add idempotency gate to wk:goodmorning` |
+| 🦾 | Agentic tool strengthening (skill / hook / agent capability) | `feat(skill): 🦾 add idempotency gate to wk-goodmorning` |
 | 🛡️ | Adding guardrails (validation, gate, policy enforcement) | `feat(commit): 🛡️ enforce PR sync after push` |
 | 🔒 | Security fix or hardening | `fix(auth): 🔒 reject unsigned tokens` |
 | 🔥 | Removed code / files / features | `refactor: 🔥 drop deprecated v1 routes` |
@@ -261,7 +261,7 @@ this rule.
 
 ## Post-CI-Fix Squash Offer
 
-After the CI fix loop (`wk:workflow` Phase 6) exits green, before
+After the CI fix loop (`wk-workflow` Phase 6) exits green, before
 marking the PR ready, check whether the branch has a long tail of
 small `fix(ci):` commits that would be more readable as one.
 
@@ -315,4 +315,4 @@ If the user declines or the thresholds aren't met, leave history alone.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn commit`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn commit`).

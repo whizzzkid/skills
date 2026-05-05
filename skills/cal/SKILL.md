@@ -1,10 +1,10 @@
 ---
-name: wk:cal
+name: wk-cal
 description: >-
   Use for all Google Calendar operations — fetching events, creating events in
   smart free slots, checking availability across attendees, and scanning for
   upcoming interviews to automatically schedule prep and scorecard blocks.
-  Invoked by wk:goodmorning for interview prep, by wk:goodevening for tomorrow
+  Invoked by wk-goodmorning for interview prep, by wk-goodevening for tomorrow
   preview, and directly for any calendar management task.
 argument-hint: '[fetch-today | fetch-range <start> <end> | create | interview-prep-scan]'
 allowed-tools:
@@ -58,7 +58,7 @@ Lunch window (12:00–1:00 PM) is soft-protected — prefer not to schedule here
 ## § Fetch Day Events
 
 Canonical pattern for fetching events for a given day or range. Used by
-`wk:goodmorning` (today) and `wk:goodevening` (today + tomorrow).
+`wk-goodmorning` (today) and `wk-goodevening` (today + tomorrow).
 
 ```
 gcal.list_events(
@@ -152,7 +152,7 @@ gcal.create_event(
 
 ## § Interview Prep Scan
 
-Run this during `wk:goodmorning` to ensure every upcoming interview has the
+Run this during `wk-goodmorning` to ensure every upcoming interview has the
 right calendar scaffolding. The scan covers the **next 5 calendar days**.
 
 ### Step 1: Detect interviews
@@ -228,8 +228,8 @@ Surface results as part of the morning brief or evening preview:
 
 | Invocation | Behavior |
 |---|---|
-| `wk:goodmorning` | Automatically runs `§ Interview Prep Scan` for next 5 days |
-| `wk:goodevening` | Uses `§ Fetch Day Events` for today + tomorrow preview |
+| `wk-goodmorning` | Automatically runs `§ Interview Prep Scan` for next 5 days |
+| `wk-goodevening` | Uses `§ Fetch Day Events` for today + tomorrow preview |
 | "schedule a meeting" / "find time for X" | Runs `§ Smart Event Creation` |
 | "check my calendar" / "what's on today" | Runs `§ Fetch Day Events` for today |
 | "do I have interviews coming up" | Runs `§ Interview Prep Scan` |
@@ -239,4 +239,4 @@ Surface results as part of the morning brief or evening preview:
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn cal`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn cal`).

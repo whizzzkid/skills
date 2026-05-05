@@ -1,5 +1,5 @@
 ---
-name: wk:docs
+name: wk-docs
 description: >-
   Check for and update documentation affected by code changes. Use when making
   code changes, adding features, modifying APIs, or when docs may be stale.
@@ -101,4 +101,4 @@ Ensure every doc file is listed and no stale entries remain.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn docs`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn docs`).

@@ -1,5 +1,5 @@
 ---
-skill: wk:self-review
+skill: wk-self-review
 date: 2026-04-27
 type: gap
 severity: medium

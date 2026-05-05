@@ -1,5 +1,5 @@
 ---
-skill: wk:retro
+skill: wk-retro
 date: 2026-04-30
 type: correction
 severity: high

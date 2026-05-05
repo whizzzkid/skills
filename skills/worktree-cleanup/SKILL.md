@@ -1,5 +1,5 @@
 ---
-name: wk:worktree-cleanup
+name: wk-worktree-cleanup
 description: >-
   Clean up git worktrees whose branches have been merged. Use when asked to
   clean up worktrees, remove merged worktrees, tidy up branches, or prune
@@ -108,10 +108,10 @@ If the result is `> 0`, the branch has a merged PR.
 A worktree often holds the only copy of session-specific context —
 ad-hoc notes, agent transcripts, draft plans not yet distilled into
 `$WK_SKILLS_HOME/learnings/`. Once the worktree is removed, that
-context is unrecoverable. Run `wk:retro` against each merged
+context is unrecoverable. Run `wk-retro` against each merged
 worktree **before** calling `git wtr`.
 
-`wk:retro` writes to global memory (`~/.claude/memory/`). `wk:learn` is for skill-specific learnings (`$WK_SKILLS_HOME/learnings/skills/`) — do not substitute one for the other here.
+`wk-retro` writes to global memory (`~/.claude/memory/`). `wk-learn` is for skill-specific learnings (`$WK_SKILLS_HOME/learnings/skills/`) — do not substitute one for the other here.
 
 ### Disposable paths — skip retro and clean without prompting
 
@@ -120,7 +120,7 @@ should not block cleanup or trigger the retro check:
 
 | Path | Why disposable |
 |------|----------------|
-| `.review-playground/` | `wk:pr-review`'s scratch space for reproduction scripts and analysis docs. Findings are already posted to the PR before merge; the directory has no lasting value. |
+| `.review-playground/` | `wk-pr-review`'s scratch space for reproduction scripts and analysis docs. Findings are already posted to the PR before merge; the directory has no lasting value. |
 | `.DS_Store`, `Thumbs.db` | OS noise. |
 | `*.swp`, `*.swo`, `.idea/`, `.vscode/` (when not committed) | Editor noise. |
 | `node_modules/`, `.venv/`, `target/`, `dist/`, `build/`, `.next/`, `.cache/` (when matched by `.gitignore`) | Build artifacts; trivially regenerable. |
@@ -145,14 +145,14 @@ For each branch classified as `merged`:
      branch name or its PR number.
    - A user override: "skip retro for this worktree" recorded in
      this run.
-2. If no signal is present, **invoke `wk:retro` against the
+2. If no signal is present, **invoke `wk-retro` against the
    worktree** before cleanup:
 
    ```
-   Skill(wk:retro, args="--worktree worktrees/{branch}")
+   Skill(wk-retro, args="--worktree worktrees/{branch}")
    ```
 
-   `wk:retro`'s 5-lens reflection runs against the worktree's
+   `wk-retro`'s 5-lens reflection runs against the worktree's
    conversation/transcript and writes any captured learnings to
    `$WK_SKILLS_HOME/learnings/skills/<skill>/` and the global
    retro log.
@@ -162,7 +162,7 @@ For each branch classified as `merged`:
 In auto mode, retro runs without prompting — the cost of an empty
 retro is small; the cost of a missed learning is unrecoverable.
 
-If `wk:retro` is unavailable or fails, **stop and ask** before
+If `wk-retro` is unavailable or fails, **stop and ask** before
 deleting the worktree. Do not silently proceed; the user may want
 to capture context manually.
 
@@ -182,7 +182,7 @@ merged.** The `-D` flag force-deletes the branch regardless of merge status.
 If in doubt, classify as unmerged and let the user decide.
 
 **HARD RULE: Never call `git wtr` until Step 4 has either run
-`wk:retro` against the worktree or recorded an explicit skip.**
+`wk-retro` against the worktree or recorded an explicit skip.**
 Worktree-local learnings are unrecoverable post-deletion.
 
 ## Step 6: Prune Stale References
@@ -241,4 +241,4 @@ For unmerged worktrees, let the user know:
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn worktree-cleanup`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn worktree-cleanup`).

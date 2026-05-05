@@ -41,7 +41,7 @@ npx skills add whizzzkid/skills -s skill-name
 
 | Variable | Required by | Description |
 |----------|-------------|-------------|
-| `WK_SKILLS_HOME` | All skills (learning capture) | Path to this skills repo (e.g., `~/gitc/skills`). Used by the post-completion learning hook on every skill and by `wk:sharpen` batch mode. |
+| `WK_SKILLS_HOME` | All skills (learning capture) | Path to this skills repo (e.g., `~/gitc/skills`). Used by the post-completion learning hook on every skill and by `wk-sharpen` batch mode. |
 | `GITHUB_ORG` | gh, goodmorning, goodevening | GitHub organization to scope `gh` CLI queries (PRs, issues, notifications). |
 | `DATADOG_API_KEY` | datadog | Datadog API key for dashboard/monitor/SLO management. |
 | `DATADOG_APP_KEY` | datadog | Datadog application key (read/write access). |

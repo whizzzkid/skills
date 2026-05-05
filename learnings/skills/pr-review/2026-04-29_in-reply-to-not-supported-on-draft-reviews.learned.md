@@ -1,5 +1,5 @@
 ---
-skill: wk:pr-review
+skill: wk-pr-review
 date: 2026-04-29
 type: gap
 severity: medium

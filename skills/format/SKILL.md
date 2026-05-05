@@ -1,12 +1,12 @@
 ---
-name: wk:format
+name: wk-format
 description: >-
   Apply the user's code-formatting preferences to any file the agent writes
   or edits, reconciled with the repo's existing lint/style configs
   (.editorconfig, .eslintrc, .prettierrc, pyproject.toml/ruff/black,
   rubocop.yml, .pylintrc, gofmt, rustfmt, .clang-format). Auto-invoked
   whenever the agent is about to write, edit, or refactor code. Manually
-  invoked via /wk:format to (re)scan a repo and report the active rule set.
+  invoked via /wk-format to (re)scan a repo and report the active rule set.
   Repo lint config is authoritative — preferences fill gaps, never override.
 argument-hint: '[scan|rules|check <path>]'
 allowed-tools:
@@ -45,8 +45,8 @@ edits. Repo config wins on conflict; preferences fill gaps.
 - **Auto:** before writing or editing any source file (any language).
   The skill runs once per repo per session, caches the resolved
   rule set, and passes it forward.
-- **Manual:** `/wk:format` rescans, `/wk:format rules` prints the
-  active rule set, `/wk:format check <path>` reports likely
+- **Manual:** `/wk-format` rescans, `/wk-format rules` prints the
+  active rule set, `/wk-format check <path>` reports likely
   violations of the merged ruleset against an existing file.
 
 ---
@@ -195,7 +195,7 @@ naming_min_chars: 3                      # except idiomatic loop counters
 banned_names: data, temp, result, info, value, obj, thing, do_stuff, manager
 ```
 
-`/wk:format rules` prints this set; `/wk:format check <path>` runs
+`/wk-format rules` prints this set; `/wk-format check <path>` runs
 the rules against an existing file and reports violations (with line
 numbers).
 
@@ -253,9 +253,9 @@ the first commit that the formatting reflects user defaults.
 | Trigger | Behavior |
 |---------|----------|
 | About to write/edit code | Auto-resolve rule set; apply during write |
-| `/wk:format` | Rescan repo configs, refresh cached rule set |
-| `/wk:format rules` | Print merged active rule set |
-| `/wk:format check <path>` | Lint an existing file against the merged set; report violations |
+| `/wk-format` | Rescan repo configs, refresh cached rule set |
+| `/wk-format rules` | Print merged active rule set |
+| `/wk-format check <path>` | Lint an existing file against the merged set; report violations |
 | Repo config conflicts with preference | Repo wins; flag once per session |
 | No repo config | Apply hard preferences as defaults |
 
@@ -263,4 +263,4 @@ the first commit that the formatting reflects user defaults.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn format`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn format`).

@@ -1,5 +1,5 @@
 ---
-name: wk:datadog
+name: wk-datadog
 description: >-
   Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks
   via the Datadog REST API. Use when asked to create a dashboard, set up a
@@ -308,4 +308,4 @@ curl -s -X DELETE "${DD_API}/v1/notebooks/{notebook_id}" "${DD_HEADERS[@]}"
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn datadog`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn datadog`).

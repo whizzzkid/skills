@@ -1,5 +1,5 @@
 ---
-name: wk:calver
+name: wk-calver
 description: >-
   Generate a CalVer version string in YYYY.MM.DD-HHMMSS format using UTC time.
   Auto-invoked whenever the model is about to assign, bump, or reference a

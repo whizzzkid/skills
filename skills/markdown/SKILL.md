@@ -1,5 +1,5 @@
 ---
-name: wk:markdown
+name: wk-markdown
 description: >-
   Use when creating or editing any markdown file — enforces 120-column line
   width, multi-level heading hierarchy, mermaid diagrams for relational content,
@@ -17,7 +17,7 @@ allowed-tools:
   - "Bash(stat:*)"
   - "Bash(ls:*)"
   - "Bash(fmt:*)"
-  - "Bash(awk:*)"
+  - "Bash(awk-*)"
   - "Bash(grep:*)"
   - AskUserQuestion
 model: sonnet
@@ -199,4 +199,4 @@ Before calling `Write` or `Edit` on any markdown file, every item must pass:
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn markdown`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn markdown`).

@@ -1,5 +1,5 @@
 ---
-skill: wk:retro
+skill: wk-retro
 date: 2026-05-04
 type: pattern
 severity: low

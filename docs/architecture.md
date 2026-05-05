@@ -27,7 +27,7 @@ learnings/
 ### Skill Frontmatter
 
 ```yaml
-name: wk:pr-resolve
+name: wk-pr-resolve
 description: >-
   Address PR review comments interactively ...  ← agent trigger text
 model: opus                                      ← default model tier
@@ -52,7 +52,7 @@ sequenceDiagram
     participant A as Agent
     participant S as Skill (SKILL.md)
     participant L as learnings/skills/<name>/
-    participant SH as wk:sharpen
+    participant SH as wk-sharpen
 
     U->>A: Trigger (slash command or auto-detect)
     A->>S: Load SKILL.md
@@ -61,7 +61,7 @@ sequenceDiagram
     A->>L: Post-completion hook: write <date>_<slug>.md
     A-->>U: Result
     note over L: Accumulates until sharpen runs
-    U->>SH: /wk:sharpen (manual or batch)
+    U->>SH: /wk-sharpen (manual or batch)
     SH->>L: Scan *.md (not *.learned.md)
     SH->>S: Distill principle → patch SKILL.md
     SH->>L: Rename → *.learned.md
@@ -80,7 +80,7 @@ flowchart TD
     C -- yes --> D[Write learning to learnings/skills/name/date_slug.md]
     D --> E[Learning accumulates]
 
-    E --> F[/wk:sharpen invoked/]
+    E --> F[/wk-sharpen invoked/]
     F --> G[Scan learnings/*.md]
     G --> H[Read full SKILL.md]
     H --> I[Extract principle — remove specifics]
@@ -95,7 +95,7 @@ flowchart TD
 
 ## Memory Sources: Two Input Channels for Sharpen
 
-`wk:sharpen` pulls from two sources in batch mode:
+`wk-sharpen` pulls from two sources in batch mode:
 
 ```mermaid
 flowchart LR
@@ -109,7 +109,7 @@ flowchart LR
     end
 
     subgraph Action
-        SH[wk:sharpen]
+        SH[wk-sharpen]
         SK[SKILL.md patch]
     end
 
@@ -163,24 +163,24 @@ keep costs low. High-reasoning skills (pr-review, sharpen, workflow) use
 
 | Skill | Tier | Role |
 |-------|------|------|
-| `wk:workflow` | opus | Master orchestration — invokes all others |
-| `wk:pr-review` | opus | Thorough adversarial code review |
-| `wk:sharpen` | opus | Distill learnings → improve skills |
-| `wk:pr-resolve` | sonnet | Address reviewer feedback interactively |
-| `wk:pr` | sonnet | Create and manage pull requests |
-| `wk:commit` | sonnet | Conventional commits with signing |
-| `wk:self-review` | sonnet | Post design-decision comments on own PR |
-| `wk:retro` | sonnet | Session retrospective → global memory |
-| `wk:goodmorning` | sonnet | Daily brief — Slack, Gmail, Calendar, GitHub |
-| `wk:goodevening` | sonnet | End-of-day wrap-up and action tracking |
-| `wk:buildkite` | sonnet | CI investigation and log reading |
-| `wk:docs` | sonnet | Keep documentation in sync with code |
-| `wk:mise` | sonnet | Runtime version management |
-| `wk:docker` | sonnet | Image builds, daemon issues |
-| `wk:datadog` | sonnet | Dashboards, monitors, SLOs |
-| `wk:gh` | sonnet | GitHub CLI scoped to org |
-| `wk:calver` | sonnet | Generate CalVer version strings |
-| `wk:worktree-cleanup` | sonnet | Prune merged git worktrees |
+| `wk-workflow` | opus | Master orchestration — invokes all others |
+| `wk-pr-review` | opus | Thorough adversarial code review |
+| `wk-sharpen` | opus | Distill learnings → improve skills |
+| `wk-pr-resolve` | sonnet | Address reviewer feedback interactively |
+| `wk-pr` | sonnet | Create and manage pull requests |
+| `wk-commit` | sonnet | Conventional commits with signing |
+| `wk-self-review` | sonnet | Post design-decision comments on own PR |
+| `wk-retro` | sonnet | Session retrospective → global memory |
+| `wk-goodmorning` | sonnet | Daily brief — Slack, Gmail, Calendar, GitHub |
+| `wk-goodevening` | sonnet | End-of-day wrap-up and action tracking |
+| `wk-buildkite` | sonnet | CI investigation and log reading |
+| `wk-docs` | sonnet | Keep documentation in sync with code |
+| `wk-mise` | sonnet | Runtime version management |
+| `wk-docker` | sonnet | Image builds, daemon issues |
+| `wk-datadog` | sonnet | Dashboards, monitors, SLOs |
+| `wk-gh` | sonnet | GitHub CLI scoped to org |
+| `wk-calver` | sonnet | Generate CalVer version strings |
+| `wk-worktree-cleanup` | sonnet | Prune merged git worktrees |
 
 ---
 

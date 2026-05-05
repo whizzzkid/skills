@@ -1,5 +1,5 @@
 ---
-name: wk:testing-skeleton
+name: wk-testing-skeleton
 description: >-
   Frames how the agent writes tests for any code change. Auto-invoked
   whenever the agent is about to write, add, or modify tests — new
@@ -7,7 +7,7 @@ description: >-
   plan toward behavioral tests over structural ones, requires both happy
   and sad paths, requires mutation verification of new tests, and treats
   coverage as a lagging indicator rather than a goal. Structural tests
-  are a last-resort fallback, not a default. Integrates with `wk:workflow`
+  are a last-resort fallback, not a default. Integrates with `wk-workflow`
   Phase 3 (Test) — testing-skeleton produces the plan, Phase 3 verifies
   the suite passes.
 allowed-tools:
@@ -213,7 +213,7 @@ Avoid:
   expand the public observation surface or skip the assertion.
 
 Match the project's existing test framework, file layout, and
-naming convention. `wk:format` runs alongside; defer to its rules
+naming convention. `wk-format` runs alongside; defer to its rules
 for style.
 
 ---
@@ -274,17 +274,17 @@ behavioral coverage.
 
 ## Coordination with other skills
 
-- **`wk:workflow` Phase 3 (Test):** testing-skeleton runs first
+- **`wk-workflow` Phase 3 (Test):** testing-skeleton runs first
   and produces the plan; Phase 3 verifies the resulting suite
   passes (lint, type, full suite). Phase 3's "happy/sad/edge"
   requirement is the same shape as Stage 1 here.
-- **`wk:format`:** test files are code — formatting rules apply
+- **`wk-format`:** test files are code — formatting rules apply
   identically.
-- **`wk:commit`:** test additions ship with their own commit
+- **`wk-commit`:** test additions ship with their own commit
   (preferred) or alongside the implementation in a single commit
   with the `🧪` classifier emoji when tests + impl are
   inseparable.
-- **`wk:pr-review` Phase 4:** the playground's mutation step is
+- **`wk-pr-review` Phase 4:** the playground's mutation step is
   the same idea applied to *someone else's* tests. The plan
   produced here is what the reviewer will check against.
 
@@ -304,4 +304,4 @@ behavioral coverage.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn testing-skeleton`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn testing-skeleton`).

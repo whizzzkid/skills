@@ -1,5 +1,5 @@
 ---
-skill: wk:goodmorning
+skill: wk-goodmorning
 date: 2026-04-22
 type: gap
 severity: medium

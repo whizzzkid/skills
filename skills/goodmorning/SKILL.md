@@ -1,5 +1,5 @@
 ---
-name: wk:goodmorning
+name: wk-goodmorning
 description: >-
   Prepare for your day by connecting to Slack, Gmail, Calendar, Granola,
   Google Drive, and GitHub. Surfaces unread messages needing response,
@@ -54,7 +54,7 @@ Run these sequentially — they're fast and everything else depends on them.
 ```bash
 TODAY=$(date +%Y-%m-%d)
 
-# Prefer the last_working_day marker written by wk:goodevening.
+# Prefer the last_working_day marker written by wk-goodevening.
 # This correctly handles Monday (previous working day = Friday, not Sunday).
 LAST_WD_FILE="$PWD/sitrep/last_working_day"
 if [ -f "$LAST_WD_FILE" ]; then
@@ -239,7 +239,7 @@ skip this step.
 
 ### Interview prep scaffolding
 
-Invoke `wk:cal §Interview Prep Scan` via the Skill tool before launching
+Invoke `wk-cal §Interview Prep Scan` via the Skill tool before launching
 the parallel agents. This ensures prep and scorecard blocks are created on
 the calendar before Agent 3 fetches today's/tomorrow's events — so they
 appear correctly in the meeting timeline.
@@ -269,7 +269,7 @@ Stage 1 agent prompt verbatim:
 ```
 SUBAGENT CONTRACT (mandatory):
 - Return STRUCTURED DATA ONLY — do not write files, run git commands, or commit
-- Do NOT invoke /skills or act as the wk:goodmorning orchestrator
+- Do NOT invoke /skills or act as the wk-goodmorning orchestrator
 - Do NOT prompt the user for input — the orchestrator handles all triage
 - Do NOT open files in browsers or call `open`
 - Your output is markdown text the orchestrator pastes into a section
@@ -424,7 +424,7 @@ calendar results drive Granola and Drive lookups.
 
 **Step 1: Fetch today's meetings**
 
-Follow `wk:cal §Fetch Day Events` — ToolSearch for `"gcal"` or `"calendar"`,
+Follow `wk-cal §Fetch Day Events` — ToolSearch for `"gcal"` or `"calendar"`,
 then list today's events. For each event extract: title, time, duration,
 attendees (organizer flagged), location/video link, description, recurrence
 flag, and any linked document URLs.
@@ -473,7 +473,7 @@ Prep: {what to review or prepare}
 **ToolSearch query:** `"github"` — if unavailable, use `gh` CLI.
 
 **IMPORTANT:** Before running any `gh` command, check that `$GITHUB_ORG`
-is set (see `wk:gh`). All search commands MUST include
+is set (see `wk-gh`). All search commands MUST include
 `--owner="$GITHUB_ORG"` to scope results to the user's organization.
 
 Run all four queries (in parallel where the tool supports it):
@@ -960,7 +960,7 @@ the next run.
 shape it appears in should not. Loading the skeleton from disk
 guarantees that user style edits persist day-over-day, the skill's job
 shrinks to "gather + triage + emit fragments", and other sitrep skills
-(e.g., `wk:goodevening`, evening.md/.html) adopt the same convention
+(e.g., `wk-goodevening`, evening.md/.html) adopt the same convention
 under `<repo_root>/_templates/<skill>/`.
 
 The built-in templates described in 2b and 2c below are the **fallback
@@ -981,7 +981,7 @@ frontmatter at runtime — never hardcode.
   ```markdown
   ---
   generated_with: 2026.04.27-190851
-  generated_with_skill: wk:goodmorning
+  generated_with_skill: wk-goodmorning
   generated_at: <timestamp>
   ---
 
@@ -993,7 +993,7 @@ frontmatter at runtime — never hardcode.
 
   ```html
   <meta name="generated-with-version" content="2026.04.27-190851">
-  <meta name="generated-with-skill" content="wk:goodmorning">
+  <meta name="generated-with-skill" content="wk-goodmorning">
   <meta name="generated-at" content="<timestamp>">
   ```
 
@@ -1014,7 +1014,7 @@ Write to `<today_dir>/morning.md`:
 ```markdown
 ---
 generated_with: {SKILL_VERSION}
-generated_with_skill: wk:goodmorning
+generated_with_skill: wk-goodmorning
 generated_at: {ISO_8601_UTC}
 ---
 
@@ -1091,7 +1091,7 @@ dashboard — **no CDN dependencies**, all CSS and JS embedded.
 
 **Required features:**
 
-0. **Generator metadata** — `<head>` must include `<meta name="generated-with-version" content="{SKILL_VERSION}">`, `<meta name="generated-with-skill" content="wk:goodmorning">`, and `<meta name="generated-at" content="{ISO_8601_UTC}">`. The Stage 0 idempotency check reads these on the next run.
+0. **Generator metadata** — `<head>` must include `<meta name="generated-with-version" content="{SKILL_VERSION}">`, `<meta name="generated-with-skill" content="wk-goodmorning">`, and `<meta name="generated-at" content="{ISO_8601_UTC}">`. The Stage 0 idempotency check reads these on the next run.
 1. **Header** — date, greeting, overall progress bar (X of Y items done)
 2. **Multi-column dashboard layout** — use CSS grid to fill the screen:
    - **3-column grid** on wide screens (>1200px), **2-column** on medium
@@ -1175,7 +1175,7 @@ If in a QPR window AND `$PWD/QPR/brag-log.md` exists with recent entries,
 add a **QPR Prep** banner to the morning brief:
 
 > "📋 **QPR Prep** — Quarter ends soon. Your brag log has {N} entries
-> since {start date}. Run `/wk:self-perf quarter` to generate your
+> since {start date}. Run `/wk-self-perf quarter` to generate your
 > performance narrative."
 
 This fires once per day during the window, not on every run.
@@ -1186,7 +1186,7 @@ This fires once per day during the window, not on every run.
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk:goodmorning` | Full morning prep — 5 parallel agents |
+| `/wk-goodmorning` | Full morning prep — 5 parallel agents |
 | Service auth fails | Block and prompt user to fix, re-run failed agents |
 | No evening.md | Skip carry-over section, note in output |
 | Monday (new week) | Roll over previous week's memory, confirm rules |
@@ -1197,4 +1197,4 @@ This fires once per day during the window, not on every run.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn goodmorning`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn goodmorning`).

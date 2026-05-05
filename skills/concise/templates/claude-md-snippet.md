@@ -9,7 +9,7 @@ Opt out permanently by removing this block.
 
 ## Concise by default
 
-All responses follow `wk:concise` rules in **brief** mode unless explicitly
+All responses follow `wk-concise` rules in **brief** mode unless explicitly
 disabled:
 
 - Drop pleasantries, hedging, filler, redundant phrasing.
@@ -33,4 +33,4 @@ disabled:
 **Upgrade to dense mode:** `/concise dense` — adds fragments, arrow causality
 (`X → Y`), short synonyms, article drops in procedural text.
 
-Full skill: `wk:concise`.
+Full skill: `wk-concise`.

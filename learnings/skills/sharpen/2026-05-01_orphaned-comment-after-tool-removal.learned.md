@@ -1,5 +1,5 @@
 ---
-skill: wk:sharpen
+skill: wk-sharpen
 date: 2026-05-01
 type: gap
 severity: medium

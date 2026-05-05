@@ -1,11 +1,11 @@
 ---
-name: wk:self-perf
+name: wk-self-perf
 description: >-
   Generate a self-performance review narrative by pulling data from all work
   systems (GitHub, Slack, Gmail, Calendar, Jira/Confluence, Granola, Docs, DX).
   Supports any time window: day, week, month, quarter, half-year, or annual.
   Writes a QPR reference corpus + synthesized narrative draft to QPR/<period>/.
-  Run as: /wk:self-perf quarter  or  /wk:self-perf week  or  /wk:self-perf Q1
+  Run as: /wk-self-perf quarter  or  /wk-self-perf week  or  /wk-self-perf Q1
 argument-hint: '[day | week | month | quarter | Q1-Q4 | H1-H2 | annual | YYYY-MM-DD:YYYY-MM-DD]'
 allowed-tools:
   - Skill
@@ -477,15 +477,15 @@ This log accumulates across quarters so the next QPR has a richer corpus.
 
 | Command | Behavior |
 |---------|----------|
-| `/wk:self-perf quarter` | Current FY quarter |
-| `/wk:self-perf Q1` | Q1 FY2026 (Feb–Apr) |
-| `/wk:self-perf week` | Current week |
-| `/wk:self-perf month` | Current month |
-| `/wk:self-perf annual` | Full FY |
-| `/wk:self-perf 2026-02-01:2026-04-30` | Custom range |
+| `/wk-self-perf quarter` | Current FY quarter |
+| `/wk-self-perf Q1` | Q1 FY2026 (Feb–Apr) |
+| `/wk-self-perf week` | Current week |
+| `/wk-self-perf month` | Current month |
+| `/wk-self-perf annual` | Full FY |
+| `/wk-self-perf 2026-02-01:2026-04-30` | Custom range |
 
 ---
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name: `wk:learn self-perf`.
+Invoke `wk-learn` with this skill's short name: `wk-learn self-perf`.

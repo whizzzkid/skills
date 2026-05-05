@@ -19,14 +19,14 @@ Use `kebab-case` for the directory name.
 
 ```yaml
 ---
-name: wk:your-skill-name
+name: wk-your-skill-name
 description: >-
   Describe when agents should activate this skill. Be specific about
   trigger phrases, use cases, and the problem it solves.
 license: MIT
 metadata:
   author: whizzzkid
-  version: 'YYYY.MM.DD-HHMMSS'  # CalVer, generated via wk:calver
+  version: 'YYYY.MM.DD-HHMMSS'  # CalVer, generated via wk-calver
 ---
 ```
 
@@ -34,7 +34,7 @@ metadata:
 
 | Field | Description |
 |-------|-------------|
-| `name` | Unique identifier with `wk:` prefix, e.g. `wk:my-skill` |
+| `name` | Unique identifier with `wk-` prefix, e.g. `wk-my-skill` |
 | `description` | When and why to use this skill — agents match on this |
 
 **Optional fields:**
@@ -48,7 +48,7 @@ metadata:
 | `disable-model-invocation` | Set `true` to opt out of model invocation |
 | `license` | License identifier (e.g., `MIT`) |
 | `metadata.author` | Skill author |
-| `metadata.version` | CalVer string `YYYY.MM.DD-HHMMSS` (UTC). Use `wk:calver` to generate. Semver is forbidden. |
+| `metadata.version` | CalVer string `YYYY.MM.DD-HHMMSS` (UTC). Use `wk-calver` to generate. Semver is forbidden. |
 | `metadata.effort` | Complexity level: `low`, `medium`, or `high` |
 | `metadata.internal` | Set `true` to hide from discovery |
 
@@ -144,4 +144,4 @@ before any procedure that an agent might apply to a boundary case.
 
 - Write descriptions that help agents decide when to activate — vague descriptions lead to false activations
 - Prefer scripts over inline code in skill instructions to reduce token consumption
-- Test with `npx skills add . -s wk:your-skill-name` to verify local installation
+- Test with `npx skills add . -s wk-your-skill-name` to verify local installation

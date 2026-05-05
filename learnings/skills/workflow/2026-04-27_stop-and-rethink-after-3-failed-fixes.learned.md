@@ -1,5 +1,5 @@
 ---
-skill: wk:workflow
+skill: wk-workflow
 date: 2026-04-27
 type: gap
 severity: medium

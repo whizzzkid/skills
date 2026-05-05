@@ -1,5 +1,5 @@
 ---
-skill: wk:sharpen
+skill: wk-sharpen
 date: 2026-04-30
 type: correction
 severity: high
@@ -7,7 +7,7 @@ severity: high
 
 Step 5 audit failed to catch overfitted tokens (specific bot login, organization-prefixed names, project-specific IDs) that landed in distilled skill instructions across multiple sessions.
 
-**What happened:** During multiple back-to-back sharpen runs into `wk:pr-resolve`, the distilled instructions embedded the literal bot login of a specific organization's review-automation bot (`{bot}`) — once in a suggestion-format example, twice in failure-mode descriptions. The user caught the violation on a later turn ("why did you add specific names of the bots in the learnings? sharpen is supposed to distill the learnings not match exact scenarios"). On audit, the same overfit pattern existed in three places in `pr-resolve/SKILL.md`. The whole point of `wk:sharpen` is to extract principles, not embed examples — Step 3's "Remove" list explicitly names "Names of reviewers, PRs, or commits"; Step 5's audit and the Anti-Patterns table both restate the rule. The audit fired on every run and missed it every time.
+**What happened:** During multiple back-to-back sharpen runs into `wk-pr-resolve`, the distilled instructions embedded the literal bot login of a specific organization's review-automation bot (`{bot}`) — once in a suggestion-format example, twice in failure-mode descriptions. The user caught the violation on a later turn ("why did you add specific names of the bots in the learnings? sharpen is supposed to distill the learnings not match exact scenarios"). On audit, the same overfit pattern existed in three places in `pr-resolve/SKILL.md`. The whole point of `wk-sharpen` is to extract principles, not embed examples — Step 3's "Remove" list explicitly names "Names of reviewers, PRs, or commits"; Step 5's audit and the Anti-Patterns table both restate the rule. The audit fired on every run and missed it every time.
 
 **Root cause:** Step 3's removal list and Step 5's audit are described in prose, with no mechanical check the agent runs against the proposed diff. The agent reads the rule, internalizes it as a *principle*, and then writes instructions that paraphrase the source incident's specific tokens — at which point the audit step asks "does this look overfitted?" with the same brain that just wrote the overfit. Confirmation bias does the rest. Two structural gaps: (a) no concrete grep / scan step against the proposed diff before Step 6 presents it; (b) no checklist of token *categories* the audit must scan for (org prefixes, bot logins, repo names, ticket prefixes, runner-group names, file paths). Without a categorical checklist, the audit defaults to "looks fine to me."
 

@@ -1,13 +1,13 @@
 ---
-skill: wk:goodmorning
+skill: wk-goodmorning
 date: 2026-04-24
 type: gap
 severity: medium
 ---
 
-wk:goodmorning always generates morning.html from scratch using an inline template in the skill, even when the user has a preferred template stored in the repo. Same for morning.md. This causes daily drift (minor styling changes, reordered sections, regenerated CSS) and blocks the user from evolving their own design without editing the skill.
+wk-goodmorning always generates morning.html from scratch using an inline template in the skill, even when the user has a preferred template stored in the repo. Same for morning.md. This causes daily drift (minor styling changes, reordered sections, regenerated CSS) and blocks the user from evolving their own design without editing the skill.
 
-**What happened:** Over several days, the morning.html produced by wk:goodmorning shifted in small ways — CSS tokens slightly different, section ordering inconsistent across runs, some cards present one day and missing the next. The user said "I like this template more than the ones generated before" and asked for a reusable skeleton at `<repo_root>/_templates/morning/brief.html` that the skill should adopt day-over-day instead of regenerating.
+**What happened:** Over several days, the morning.html produced by wk-goodmorning shifted in small ways — CSS tokens slightly different, section ordering inconsistent across runs, some cards present one day and missing the next. The user said "I like this template more than the ones generated before" and asked for a reusable skeleton at `<repo_root>/_templates/morning/brief.html` that the skill should adopt day-over-day instead of regenerating.
 
 **Root cause:** The skill's Stage 2c ("write morning.html") specifies the full HTML structure inline and re-emits it on every run. There is no step that checks for a user-maintained template in the repo. Same applies to Stage 2b (morning.md) — the markdown outline lives in the skill, not the repo. The user's design preferences have no durable place to live.
 
@@ -40,7 +40,7 @@ wk:goodmorning always generates morning.html from scratch using an inline templa
 **Benefits:**
 - User owns the design — style tweaks live in the repo, not in skill code.
 - Daily output is deterministic — same template in = same shell out, only content varies.
-- Other sitrep skills (wk:goodevening) can follow the same pattern: `<repo_root>/_templates/evening/brief.html`.
+- Other sitrep skills (wk-goodevening) can follow the same pattern: `<repo_root>/_templates/evening/brief.html`.
 - Skill code becomes simpler (data + slot fragments) and easier to evolve.
 
 **Related learning:** `2026-04-24_priorities-need-source-links.md` — should be folded into the priorities slot builder so link-injection is enforced at render time rather than trusted to per-run judgment.

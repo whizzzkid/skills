@@ -1,5 +1,5 @@
 ---
-skill: wk:workflow
+skill: wk-workflow
 date: 2026-04-24
 type: gap
 severity: high
@@ -7,7 +7,7 @@ severity: high
 
 Interruptions during a workflow run cause earlier plan steps to be silently dropped.
 
-**What happened:** Mid-execution of the wk:workflow plan (implement → commit
+**What happened:** Mid-execution of the wk-workflow plan (implement → commit
 → test → review → PR → CI loop → self-review → docs audit → retro), the
 user interrupted four times with new sub-tasks. I executed each sub-task
 but never returned to the original plan's tail — CI loop, self-review,
@@ -22,7 +22,7 @@ checkpoint that says "before responding 'done', re-read the plan and
 confirm every step is finished or removed."
 
 **Suggested fix:** Add an explicit "On interruption" subsection to
-wk:workflow:
+wk-workflow:
 
 > When the user interrupts mid-plan, before executing the new ask:
 > (1) update the active TodoWrite list — insert the new task at the

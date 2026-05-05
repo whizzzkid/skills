@@ -1,5 +1,5 @@
 ---
-name: wk:gh
+name: wk-gh
 description: >-
   Activates whenever the agent uses the gh CLI or interacts with GitHub
   PRs, issues, or notifications. Ensures all GitHub operations are scoped
@@ -126,7 +126,7 @@ overwrites of identically-named scratch files, and provides a
 greppable audit trail (`ls /tmp/agent/gh/<owner>/<repo>/pulls/`).
 
 This convention is shared across every skill that downloads from an
-external system — see `wk:buildkite` for the matching path.
+external system — see `wk-buildkite` for the matching path.
 
 ## Quick Reference
 
@@ -143,4 +143,4 @@ external system — see `wk:buildkite` for the matching path.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn gh`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn gh`).

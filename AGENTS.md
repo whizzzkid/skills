@@ -8,7 +8,7 @@
 
 ## Naming Rules
 
-- Skill names: always prefixed with `wk:` (e.g., `wk:my-cool-skill`)
+- Skill names: always prefixed with `wk-` (e.g., `wk-my-cool-skill`)
 - Skill directories: `kebab-case` (e.g., `my-cool-skill`) — no prefix in directory name
 - Definition file: always `SKILL.md` (uppercase)
 - Scripts: `kebab-case.sh` with executable permissions
@@ -17,7 +17,7 @@
 
 ```yaml
 ---
-name: wk:skill-name
+name: wk-skill-name
 description: When and why to use this skill
 license: MIT
 metadata:
@@ -43,6 +43,30 @@ Required fields: `name`, `description`
 - Skills are model-invocable by default — use `model-invocable: true` to
   explicitly enable, or `disable-model-invocation: true` to opt out.
   `disable-model-invocation: false` is a no-op and should not be used.
+
+## Versioning
+
+All skill versions use **CalVer** format: `YYYY.MM.DD-HHMMSS` (UTC).
+Semver (`MAJOR.MINOR.PATCH`) is forbidden in this project.
+
+Whenever a `metadata.version` field needs to be set or bumped, invoke
+`wk-calver` to generate the correct UTC timestamp:
+
+```bash
+date -u '+%Y.%m.%d-%H%M%S'
+```
+
+This applies to all skills, including `_template`.
+
+## Post-Change Hook
+
+After adding or updating any skill, always run:
+
+```bash
+npx skills add . -g -y -a=claude
+```
+
+This reinstalls all skills globally for the agent. Never skip this step.
 
 ## Workflow
 

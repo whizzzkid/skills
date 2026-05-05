@@ -1,5 +1,5 @@
 ---
-name: wk:pr-break
+name: wk-pr-break
 description: >-
   Take an existing PR that has grown too large and break it into a stack of
   smaller, reviewable, individually-shippable PRs. Reads the PR description,
@@ -11,7 +11,7 @@ description: >-
   (4) every child PR's description names its blockers and follow-up work;
   (5) the split prioritizes reviewer digestibility, not raw line count.
   Use when asked to "split this PR", "break down this PR", "make smaller
-  PRs from this", or when wk:pr-review flags a PR as too large to review.
+  PRs from this", or when wk-pr-review flags a PR as too large to review.
 argument-hint: '[<pr-number-or-url>]'
 allowed-tools:
   - Bash
@@ -64,7 +64,7 @@ Read PR ──► Read context ──► Identify seams ──► Plan stack
                                          Present for approval
                                                   │
                                                   ▼
-                                          Execute (per-child wk:pr)
+                                          Execute (per-child wk-pr)
 ```
 
 ---
@@ -137,7 +137,7 @@ returned to draft and the expected child stack count, so reviewers
 who land on the page understand the state:
 
 ```
-> ⚠️ Returned to draft for split via `wk:pr-break`. A stack of
+> ⚠️ Returned to draft for split via `wk-pr-break`. A stack of
 > ~{N} child PRs will replace this one. Original diff preserved
 > here as the source of truth until the stack lands.
 ```
@@ -151,7 +151,7 @@ does not automatically promote the PR back to ready.
 ## Stage 1: Read every PR surface
 
 Three surfaces, all read every run (the same three-surface rule
-that `wk:pr-resolve` uses — silent-skip on any surface drops
+that `wk-pr-resolve` uses — silent-skip on any surface drops
 context the planner needs):
 
 ```bash
@@ -196,7 +196,7 @@ Surface the body of knowledge that should inform the split:
   (e.g., "config X must travel with version Y").
 - `~/.claude/memory/retro-log.md` — entries near the PR's create
   date often capture context not yet promoted into a learning.
-- Linked Jira ticket(s) (per `wk:jira` detection) — the ticket
+- Linked Jira ticket(s) (per `wk-jira` detection) — the ticket
   description names the user-visible scope; that scope is the
   contract the stack must collectively satisfy.
 
@@ -292,8 +292,8 @@ Every child PR's draft description must mention:
   the child PR(s) that will pick it up, or a TODO with a tracking
   ticket if the follow-up is post-stack.
 
-This matches `wk:pr`'s description template (see Step 2 there);
-the `wk:pr-break` plan **populates** that template for each child.
+This matches `wk-pr`'s description template (see Step 2 there);
+the `wk-pr-break` plan **populates** that template for each child.
 
 ### Propagate parent annotations into the right child
 
@@ -312,7 +312,7 @@ trailers — and classify each annotation:
 |-----------------|--------------|
 | `Closes #N` / `Fixes #N` (GitHub issue auto-close) | **Final child only.** Closing the issue before the user-visible behavior ships claims work that hasn't shipped. The earlier children carry `Refs #N` instead, so the issue thread still surfaces them. |
 | `Refs #N` / `Related to #N` (non-closing reference) | **Every child** that touches code in the issue's scope. Cheap context for reviewers; no auto-close side effect. |
-| Jira key suffix `[BOARD-NUM]` (per `wk:jira`) | **Every child's title.** The shared ticket is the umbrella; `wk:jira`'s state machine still transitions In Progress → In Review → Done off the *final* child's merge, not each one. |
+| Jira key suffix `[BOARD-NUM]` (per `wk-jira`) | **Every child's title.** The shared ticket is the umbrella; `wk-jira`'s state machine still transitions In Progress → In Review → Done off the *final* child's merge, not each one. |
 | Linked design doc / RFC / spec URL | **Every child.** Reviewers of any slice need the design context to evaluate fit. |
 | Linked benchmark / perf data / load-test result | **The child that touches the path being measured.** Other children skip — the data does not apply to them. |
 | Linked screenshot / Loom / demo | **The user-visible feature child** (usually the final one, or the per-feature slice that produces the demo'd state). |
@@ -414,7 +414,7 @@ done
 ```
 
 Name collisions abort the run rather than silently overwriting —
-re-running `wk:pr-break` after a partial failure must not clobber
+re-running `wk-pr-break` after a partial failure must not clobber
 the prior attempt's branches.
 
 ### Per-child execution
@@ -428,14 +428,14 @@ For each child, in stack order:
    files, or `git apply` of a pre-prepared patch for partial
    files. The original PR's branch stays unchanged until all
    children have been opened.
-3. Run the project's test command (Phase 3 of `wk:workflow`); if
+3. Run the project's test command (Phase 3 of `wk-workflow`); if
    it fails, stop — invariant 2 was violated by the seam, not by
    execution.
-4. Invoke `wk:commit` for the child's commit (signed,
+4. Invoke `wk-commit` for the child's commit (signed,
    conventional, single emoji).
-5. Invoke `wk:pr` to open the child as a draft PR with the
+5. Invoke `wk-pr` to open the child as a draft PR with the
    description populated from Stage 4.
-6. Wait for CI to go green via the standard `wk:workflow` Phase 6
+6. Wait for CI to go green via the standard `wk-workflow` Phase 6
    loop.
 
 After all children are open, update the original PR's description
@@ -453,18 +453,18 @@ to be re-cut.
 
 ## Coordination with other skills
 
-- **`wk:workflow`** — this skill produces the plan that `wk:workflow`
+- **`wk-workflow`** — this skill produces the plan that `wk-workflow`
   Phase 1 would otherwise produce manually for a multi-step task.
   Stage 7 invokes Phase 6 loop logic per child.
-- **`wk:pr`** — each child PR is opened via `wk:pr`'s draft + CI +
+- **`wk-pr`** — each child PR is opened via `wk-pr`'s draft + CI +
   ready flow. The Stage 4 child block is the input.
-- **`wk:commit`** — child commits use `wk:commit`'s conventional
+- **`wk-commit`** — child commits use `wk-commit`'s conventional
   format with single-emoji classifier.
-- **`wk:pr-resolve`** — comments collected in Stage 1 may also
-  inform `wk:pr-resolve` if the original PR has open feedback;
+- **`wk-pr-resolve`** — comments collected in Stage 1 may also
+  inform `wk-pr-resolve` if the original PR has open feedback;
   the planner's job is structural, not addressing the comments.
-- **`wk:pr-update`** — if children land out of order or main
-  moves under the stack, use `wk:pr-update` to keep each child's
+- **`wk-pr-update`** — if children land out of order or main
+  moves under the stack, use `wk-pr-update` to keep each child's
   base current.
 
 ---
@@ -473,8 +473,8 @@ to be re-cut.
 
 | Trigger | Stages |
 |---------|--------|
-| `/wk:pr-break` (current branch's PR) | 0 → 6 always; 7 on approval |
-| `/wk:pr-break <pr-num>` | Same; explicit PR target |
+| `/wk-pr-break` (current branch's PR) | 0 → 6 always; 7 on approval |
+| `/wk-pr-break <pr-num>` | Same; explicit PR target |
 | Auto mode | 0 → 6 then save plan to file and stop |
 | Reviewer asks "can this be split?" | Quote the ask; cite as the trigger in the plan |
 | Plan violates an invariant | Return to Stage 3; never ship a violating plan |
@@ -483,4 +483,4 @@ to be re-cut.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn pr-break`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn pr-break`).

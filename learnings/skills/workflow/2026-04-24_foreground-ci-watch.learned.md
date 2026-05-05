@@ -1,5 +1,5 @@
 ---
-skill: wk:workflow
+skill: wk-workflow
 date: 2026-04-24
 type: correction
 severity: medium
@@ -13,7 +13,7 @@ timeout. The user rejected the call. CI watching can block for many
 minutes; foregrounding it stalls every other plan step (self-review,
 docs audit, retro) for no reason.
 
-**Root cause:** wk:workflow's Phase 6 (CI Fix Loop) describes "Poll CI
+**Root cause:** wk-workflow's Phase 6 (CI Fix Loop) describes "Poll CI
 status" with `gh pr checks --watch` but does not specify the foreground
 vs. background distinction. The natural reading is to call it directly,
 which the Bash tool interprets as foreground.

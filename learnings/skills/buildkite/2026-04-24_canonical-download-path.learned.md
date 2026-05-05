@@ -1,5 +1,5 @@
 ---
-skill: wk:buildkite
+skill: wk-buildkite
 date: 2026-04-24
 type: gap
 severity: medium
@@ -17,14 +17,14 @@ correctness problem (one agent's log overwrites another's), and there's
 no audit trail — once `/tmp/foo.log` is overwritten, the original is
 gone.
 
-**Root cause:** The wk:buildkite skill describes how to fetch logs and
+**Root cause:** The wk-buildkite skill describes how to fetch logs and
 artifacts (`bk job log`, `bk artifact download`, raw curl on the API)
 but says nothing about *where* to put them. The natural default is
 `/tmp/<friendly-name>` which has none of the structure needed for
 multi-build / multi-session work.
 
 **Suggested fix:** Add a "Canonical download path" subsection to
-wk:buildkite:
+wk-buildkite:
 
 > All Buildkite downloads (build JSON, job logs, artifacts) must land
 > under a canonical path:

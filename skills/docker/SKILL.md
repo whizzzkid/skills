@@ -1,5 +1,5 @@
 ---
-name: wk:docker
+name: wk-docker
 description: >-
   Use when working with Docker — building images, inspecting containers,
   debugging Dockerfile issues, verifying image tags exist, or troubleshooting
@@ -201,4 +201,4 @@ When a Docker build fails:
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn docker`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn docker`).

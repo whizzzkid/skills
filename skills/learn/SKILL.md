@@ -1,10 +1,10 @@
 ---
-name: wk:learn
+name: wk-learn
 description: >-
-  Post-completion learning capture for any wk:* skill. Call at the end of a
+  Post-completion learning capture for any wk-* skill. Call at the end of a
   skill run to reflect on what happened and write a structured learning file
-  for later distillation via wk:sharpen. Pass the calling skill's short name
-  as the argument (e.g., `wk:learn pr-review`).
+  for later distillation via wk-sharpen. Pass the calling skill's short name
+  as the argument (e.g., `wk-learn pr-review`).
 argument-hint: '<skill-name>  (e.g., pr-review, commit, workflow)'
 allowed-tools:
   - Bash
@@ -31,7 +31,7 @@ metadata:
 # Learn
 
 Capture what happened during a skill run and write a structured learning file
-for later distillation. Called at the end of any `wk:*` skill run.
+for later distillation. Called at the end of any `wk-*` skill run.
 
 The argument is the **calling skill's short name** (e.g., `pr-review`,
 `commit`, `workflow`). If omitted, use `unknown`.
@@ -77,7 +77,7 @@ Write to `$WK_SKILLS_HOME/learnings/skills/$SKILL_NAME/<YYYY-MM-DD>_<slug>.md`:
 
 ```markdown
 ---
-skill: wk:<SKILL_NAME>
+skill: wk-<SKILL_NAME>
 date: <YYYY-MM-DD>
 type: <correction | gap | pattern | surprise>
 severity: <low | medium | high>
@@ -100,7 +100,7 @@ Use a 2–4 word kebab-case slug (e.g., `missing-null-check`,
 After writing, output:
 
 > "📝 Learning captured: `<SKILL_NAME>/<date>_<slug>.md` — distill with
-> `wk:sharpen` when ready."
+> `wk-sharpen` when ready."
 
 Learnings accumulate in `$WK_SKILLS_HOME/learnings/skills/` and are
-batch-distilled into skill improvements via `wk:sharpen`.
+batch-distilled into skill improvements via `wk-sharpen`.

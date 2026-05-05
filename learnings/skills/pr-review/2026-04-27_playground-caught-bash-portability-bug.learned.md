@@ -1,5 +1,5 @@
 ---
-skill: wk:pr-review
+skill: wk-pr-review
 date: 2026-04-27
 type: pattern
 severity: medium

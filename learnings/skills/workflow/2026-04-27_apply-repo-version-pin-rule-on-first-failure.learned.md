@@ -1,5 +1,5 @@
 ---
-skill: wk:workflow
+skill: wk-workflow
 date: 2026-04-27
 type: gap
 severity: medium
@@ -11,4 +11,4 @@ When a repo's `CLAUDE.md`/`AGENTS.md` mandates exact-version pins, and the first
 
 **Root cause:** I read the failure as "mise's exec/shim layer is misbehaving" rather than "the repo's existing config violates a rule that turns out to matter on CI." The repo's pin-exact rule was sitting in the same `AGENTS.md` I had loaded into context; I just didn't cross-reference it with the failure surface. Project standards aren't only style preferences — they're often calibrated against the project's tooling, and CI is exactly the place violations surface.
 
-**Suggested fix:** Phase 6 (CI fix loop) should cross-reference the failure error message against repo `CLAUDE.md`/`AGENTS.md` rules before generating fix candidates. Specific patterns to check: any "version" / "tag" / "latest" / "resolve" / "shim" / "not found" error → re-read the repo's pinning rule; any auth/credentials error → re-read the repo's env-var provenance docs. The instinct should be "the repo standards exist for a reason; check them first when CI breaks." For the `wk:workflow` skill: add a one-line cross-reference step at the top of Phase 6's fix loop.
+**Suggested fix:** Phase 6 (CI fix loop) should cross-reference the failure error message against repo `CLAUDE.md`/`AGENTS.md` rules before generating fix candidates. Specific patterns to check: any "version" / "tag" / "latest" / "resolve" / "shim" / "not found" error → re-read the repo's pinning rule; any auth/credentials error → re-read the repo's env-var provenance docs. The instinct should be "the repo standards exist for a reason; check them first when CI breaks." For the `wk-workflow` skill: add a one-line cross-reference step at the top of Phase 6's fix loop.

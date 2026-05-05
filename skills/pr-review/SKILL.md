@@ -1,5 +1,5 @@
 ---
-name: wk:pr-review
+name: wk-pr-review
 description: >-
   Thorough, critical code review of a GitHub pull request. Use when asked to
   review a PR, review code changes, help review this PR, create review comments,
@@ -149,7 +149,7 @@ Would you like me to resolve threads 1 and 2?
 ### Resolve confirmed threads
 
 After the user confirms, query for thread node IDs via GraphQL
-(follows the `reviewThreads` pattern from wk:pr-resolve Step 3 —
+(follows the `reviewThreads` pattern from wk-pr-resolve Step 3 —
 this variant fetches only the fields needed for matching and resolving):
 
 ```bash
@@ -261,7 +261,7 @@ Re-review: You have {N} prior comment threads with updates:
 ```
 
 Wait for user approval, then post approved follow-up replies sequentially
-using the same reply API as `wk:pr-resolve`:
+using the same reply API as `wk-pr-resolve`:
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
@@ -930,4 +930,4 @@ Remind the user:
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn pr-review`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn pr-review`).

@@ -1,5 +1,5 @@
 ---
-skill: wk:goodmorning
+skill: wk-goodmorning
 date: 2026-04-30
 type: gap
 severity: high
@@ -34,4 +34,4 @@ A second related gap: the skill doesn't distinguish between **verified facts** (
 
 6. **Auto mode is not a license to silently resolve uncertainty.** When agent data contains a vague single-source claim that becomes a "hard deadline" or "critical priority," the skill should either (a) demote it to "claim: ..." in the rendered output, or (b) surface a confirmation prompt to the user even in auto mode for items flagged as `unverified-but-promoted-to-priority`. The current behavior — flatten everything into authoritative priorities and skip prompting — accumulates errors. Add an exception to the "non-interactive / auto mode" rules: auto mode skips routine triage, but high-impact unverified claims still warrant a single confirmation. User feedback verbatim: "you've stopped confirming with me regarding what is happening and that is causing issues."
 
-This applies equally to wk:goodevening — meeting follow-through items in evening.md should carry Granola URLs back to the source meeting, and unverified meeting claims should be flagged not promoted.
+This applies equally to wk-goodevening — meeting follow-through items in evening.md should carry Granola URLs back to the source meeting, and unverified meeting claims should be flagged not promoted.

@@ -1,5 +1,5 @@
 ---
-skill: wk:buildkite
+skill: wk-buildkite
 date: 2026-05-04
 type: gap
 severity: medium

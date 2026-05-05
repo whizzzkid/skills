@@ -1,5 +1,5 @@
 ---
-name: wk:skill-name
+name: wk-skill-name
 description: >-
   Describe when this skill should activate. Be specific — agents use this
   to decide whether to apply the skill. Include trigger phrases and use cases.
@@ -60,8 +60,8 @@ failure mode it prevents and how to comply.
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk:skill-name` | Full flow description |
-| `/wk:skill-name <arg>` | Variant behavior |
+| `/wk-skill-name` | Full flow description |
+| `/wk-skill-name <arg>` | Variant behavior |
 
 ## Requirements
 
@@ -71,4 +71,4 @@ failure mode it prevents and how to comply.
 
 ## Post-Completion
 
-Invoke `wk:learn` with this skill's short name as the argument (e.g., `wk:learn skill-name`).
+Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn skill-name`).
