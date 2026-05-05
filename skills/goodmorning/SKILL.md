@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.04-174402'
+  version: '2026.05.05-160000'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -1076,6 +1076,14 @@ generated_at: {ISO_8601_UTC}
 ### Announcements
 - {page title} — {space} [link]
 
+## Standup Snippet
+- 👈🏽 Yesterday:
+   - {achievement} {bare URL}
+- 👉🏽 Today:
+   - {priority} {bare URL}
+- ✋🏽 Blockers:
+   - {blocker} {bare URL}
+
 ## Notes
 _Space for anything that comes up during the day._
 ```
@@ -1125,6 +1133,66 @@ dashboard — **no CDN dependencies**, all CSS and JS embedded.
 **Design:** clean, minimal, system font stack, subtle colors, clear
 hierarchy, sections default expanded, progress bar updates in real-time.
 Cards have subtle border/shadow, consistent padding, and rounded corners.
+
+### 2d. Standup snippet (mandatory — both outputs)
+
+Append a copy-paste-ready Slack standup at the end of `morning.md`
+**and** as a dedicated card in `morning.html`. The user posts this
+verbatim to a team standup channel every working day, so the format is
+constrained by Slack's paste behavior — not by markdown aesthetics.
+
+**Format (markdown and HTML both):**
+
+```
+- 👈🏽 Yesterday:
+   - {achievement} {bare URL} [{bare URL} ...]
+   - ... (3-4 highest-impact items)
+- 👉🏽 Today:
+   - {priority} {bare URL}
+   - ... (3-4 time-sensitive items, deadlines first)
+- ✋🏽 Blockers:
+   - {blocker} {bare URL}
+   - ... (omit the section entirely if no blockers)
+```
+
+**HARD RULE — bare URLs only.** Slack does not render markdown
+`[text](url)` syntax when pasted from the clipboard; it renders the
+literal brackets and parentheses. Always emit URLs as bare strings
+(Slack auto-linkifies them on paste). This applies to both the
+markdown file (so the user can copy from the source) and the HTML
+copy-to-clipboard payload.
+
+**Source mapping:**
+- **Yesterday** → previous working day's `evening.md` `## Achievements`
+  section. Pick 3-4 items with the highest visible impact (shipped/merged
+  PRs, decisions led, blockers cleared, key meetings).
+- **Today** → today's `## Today's Priorities` list. Pick the top 3-4
+  🔥/⚠️-flagged or time-sensitive items, deadline-first.
+- **Blockers** → any item flagged ⚠️, containing "BLOCKED", or noted as
+  a conflict/dependency. If none, omit the bullet entirely (do not emit
+  an empty Blockers heading).
+
+**Source-link enforcement.** Every bullet in Yesterday/Today/Blockers
+must include at least one bare URL pointing to its primary artifact
+(PR, ticket, Slack thread, doc). Items with multiple artifacts list
+each URL space-separated on the same line. Items with no external
+artifact (e.g., a meeting debrief, a synthesized priority) may omit
+the URL but should still appear if they belong in the standup.
+
+**HTML rendering:**
+- Render the snippet inside its own card titled "Standup Snippet"
+  positioned at the top of the dashboard (above the priorities card)
+  so the user can grab it first thing.
+- Include a "Copy to clipboard" button that copies the **plain-text
+  payload with bare URLs** — not the rendered HTML. Use
+  `navigator.clipboard.writeText(plainText)` with the same indented
+  bullet structure as the markdown version.
+- Inside the card, display the plain text in a monospace block so
+  what the user sees matches what they paste.
+
+**Markdown rendering:** add a `## Standup Snippet` section as the last
+section before `## Notes`. The user copies directly from the rendered
+file; bare URLs ensure Slack-paste fidelity.
 
 ### Open for review
 
