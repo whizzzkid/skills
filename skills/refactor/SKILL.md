@@ -29,7 +29,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.05-180000'
   internal: false
   model:
     openai: gpt-4.1
@@ -190,6 +190,7 @@ Mandatory checks per kind of removed line:
 | Conditional that selects between two valid paths | Was the unselected path documented elsewhere? Is selecting one path always correct? |
 | A call site of an external API / CLI / DB query | Is that call now made elsewhere, with the same arguments and error handling? |
 | A test (deleted or renamed) | Does an equivalent assertion exist on the new shape? |
+| Behavior narrowed to a specific arm / mode / branch (an unconditional read moved inside a conditional) | Do all existing tests still drive the unit through the arm that now owns the behavior? Tests pinned to the pre-narrowing invocation may pass coincidentally (default value matches) while no longer exercising the relocated code. Grep the test tree for the old invocation form and verify each test reaches the new code path. |
 
 A removed line that the refactor's kind does NOT predict (e.g., an
 `ENV.fetch` removal during a rename) is **suspicious by default** —
