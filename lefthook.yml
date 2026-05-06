@@ -1,0 +1,4 @@
+post-merge:
+  commands:
+    install-skills:
+      run: ./scripts/install-skills.sh
