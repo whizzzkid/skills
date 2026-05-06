@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-224941'
+  version: '2026.05.06-171554'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -340,6 +340,8 @@ Before copying a fallback chain, default, or conditional, trace each variable:
 3. **Does the value mean the same thing in the new context?** — if not, adapt; don't copy verbatim.
 
 Cross-script copies are especially hazardous — each script tends to have a different invocation environment. Ask or grep for setters before reusing.
+
+**Error-string discriminators.** When a fallback decides whether to recover by matching a specific error message (e.g., `grep -q "some error text"`), reproduce the failure against a real-enough fixture and capture the exact text before writing the catch. Error wording changes between tool versions; a stale discriminator either swallows real failures silently or never fires on the intended case. Use a minimal throwaway fixture (for git, prefer `file://` URIs over bare paths so network-protocol code paths actually run) and write the verification before writing the catch clause.
 
 **Environment variables in docs.** Whenever code or docs introduce or reference an env var, document: where it is stored, who can edit that store, how a change propagates, and what the default is if unset. Operators need to know how to change the value without a code deploy.
 
