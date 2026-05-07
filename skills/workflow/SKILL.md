@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.06-171554'
+  version: '2026.05.07-231719'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -284,6 +284,26 @@ Triggers that mean "this is a design pivot, not a polish":
 Reviewers and bots reliably catch cross-doc inconsistency on the
 next round and require a separate response commit. Folding the
 doc update into the pivot commit is one round; deferring is two.
+
+### Signature widening pre-flight
+
+When adding a non-optional parameter to a public function or a
+required field to a public struct/type, grep every caller and
+initializer **before** running tests. Compile errors from a
+widened signature are deterministic and enumerable upfront — let
+the test runner discover them and you waste a cycle per missed
+site, plus any test that doesn't even reach the changed code.
+
+```bash
+grep -rn '<TypeName>\s*{'  src/ tests/   # struct/record initializers
+grep -rn '<FunctionName>(' src/ tests/   # function/method calls
+```
+
+Fix every site in the same commit as the signature change, then
+run tests once. This applies to any language where adding a
+required field/param is a build-breaking change (Rust, Go, Kotlin,
+TypeScript with strict types, etc.) — not just to the language
+that surfaced the lesson.
 
 ### Code Standards
 
