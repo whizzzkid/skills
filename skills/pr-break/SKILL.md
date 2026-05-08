@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.08-183653'
   internal: false
   model:
     openai: gpt-4.1
@@ -71,26 +71,15 @@ Read PR ──► Read context ──► Identify seams ──► Plan stack
 
 ## Five invariants — every plan must satisfy all five
 
-1. **Functional equivalence.** All child PRs merged in stack order
-   reproduce the parent PR's behavior exactly. No feature dropped; no
-   behavior added.
-2. **Isolation.** Each child PR builds, lints, and passes its own
-   tests on its own branch. No "tests in PR 3 cover code in PR 1"
-   shortcuts.
-3. **Stack-order coherence.** Each child reads as a self-contained
-   change in its own right — a refactor, a primitive, a feature
-   slice — without forward-references to PRs that don't exist yet.
-4. **Description completeness.** Every child PR description names
-   what it depends on (parent PR in the stack), what it blocks
-   (children that follow), and what it leaves for follow-up
-   (deferred work, known TODOs, dead code that lives until the
-   final child).
-5. **Reviewer digestibility.** The split is judged by reviewer
-   ergonomics, not LOC. A 600-line refactor that reviews as one
-   coherent rename beats two 300-line PRs that fragment the rename.
+1. **Functional equivalence.** All child PRs merged in order reproduce the parent's behavior exactly — nothing dropped, nothing added.
+2. **Isolation.** Each child builds, lints, and passes its own tests on its own branch.
+   - No "tests in PR 3 cover code in PR 1" shortcuts.
+3. **Stack-order coherence.** Each child reads as a self-contained change without forward-references to later PRs.
+4. **Description completeness.** Every child names its blocker (prior child), what it blocks (next child), and deferred work.
+5. **Reviewer digestibility.** The split is judged by reviewer ergonomics, not LOC.
+   - A 600-line rename that reviews as one coherent change beats two 300-line fragments.
 
-If a draft plan violates any invariant, **rework the plan** — do
-not ship a violation and call it good enough.
+If a draft plan violates any invariant, **rework the plan** — do not ship a violation.
 
 ---
 
@@ -150,39 +139,36 @@ does not automatically promote the PR back to ready.
 
 ## Stage 1: Read every PR surface
 
-Three surfaces, all read every run (the same three-surface rule
-that `wk-pr-resolve` uses — silent-skip on any surface drops
-context the planner needs):
+Fetch all three comment surfaces every run. For full context on these
+surfaces, see `skills/pr-resolve/SKILL.md` Step 3.
 
 ```bash
 PR_NUM=$(gh pr view --json number --jq .number)
-
 # Inline review comments (anchored to file:line)
 gh api repos/{owner}/{repo}/pulls/$PR_NUM/comments --paginate
+```
 
+```bash
 # Review summary bodies
 gh api repos/{owner}/{repo}/pulls/$PR_NUM/reviews --paginate
+```
 
+```bash
 # PR conversation (issue) comments
 gh api repos/{owner}/{repo}/issues/$PR_NUM/comments --paginate
 ```
 
-Plus:
+Also fetch:
 
-- The PR description (title + body) — captures intent, linked tickets,
-  test plan.
-- Every commit on the branch — `git log --oneline $BASE..HEAD`.
-- The full diff — `gh pr diff $PR_NUM`.
+- PR description — `gh pr view --json title,body`
+- Commits — `git log --oneline $BASE..HEAD`
+- Full diff — `gh pr diff $PR_NUM`
 
-Scan each comment surface for **scope signals** the planner must
-honor:
+Scan each comment surface for **scope signals**:
 
-- "Can this be split?" / "Too large to review" / "Please break this
-  up" — explicit reviewer ask. Quote the comment in the plan.
-- "Out of scope" / "Should be a follow-up" — flagged candidates for
-  the **last** child PR or for a deferred follow-up.
-- "Blocking concern" / "Don't merge until" — these become **exit
-  conditions** on the corresponding child PR.
+- "Can this be split?" / "Too large to review" — explicit reviewer ask; quote it in the plan.
+- "Out of scope" / "Should be a follow-up" — candidates for the last child or a deferred follow-up.
+- "Blocking concern" / "Don't merge until" — become exit conditions on the corresponding child.
 
 ---
 
@@ -297,42 +283,26 @@ the `wk-pr-break` plan **populates** that template for each child.
 
 ### Propagate parent annotations into the right child
 
-The original PR carries metadata that downstream readers and
-automation rely on — GitHub issue links, Jira keys, design-doc
-URLs, deploy/test notes, hand-curated context. The split must
-preserve every annotation, but distribute them so each child
-carries only what is relevant to *its* slice. Blindly copying
-every annotation into every child creates noise; dropping any
-annotation loses traceability.
+Extract annotations from Stage 1 (title, body, comments, commit trailers) and route each
+to the appropriate child. When in doubt, include rather than drop.
 
-Extract from Stage 1's reads — title, body, comments, commit
-trailers — and classify each annotation:
+| Annotation | Routing |
+|------------|---------|
+| `Closes #N` / `Fixes #N` | **Final child only** — earlier children carry `Refs #N`. |
+| `Refs #N` / `Related to #N` | Every child touching code in the issue's scope. |
+| `[BOARD-NUM]` Jira key | Every child's title (umbrella ticket; `wk-jira` transitions on final child). |
+| Design doc / RFC / spec URL | Every child — reviewers of any slice need the design context. |
+| Deploy / migration callout | The child that introduces the dependency, and the final child. |
+| Linked demo / screenshot / Loom | The user-visible feature child (usually last). |
+| `Co-Authored-By:` trailers | Commits that ship the corresponding work, per original mapping. |
 
-| Annotation kind | Routing rule |
-|-----------------|--------------|
-| `Closes #N` / `Fixes #N` (GitHub issue auto-close) | **Final child only.** Closing the issue before the user-visible behavior ships claims work that hasn't shipped. The earlier children carry `Refs #N` instead, so the issue thread still surfaces them. |
-| `Refs #N` / `Related to #N` (non-closing reference) | **Every child** that touches code in the issue's scope. Cheap context for reviewers; no auto-close side effect. |
-| Jira key suffix `[BOARD-NUM]` (per `wk-jira`) | **Every child's title.** The shared ticket is the umbrella; `wk-jira`'s state machine still transitions In Progress → In Review → Done off the *final* child's merge, not each one. |
-| Linked design doc / RFC / spec URL | **Every child.** Reviewers of any slice need the design context to evaluate fit. |
-| Linked benchmark / perf data / load-test result | **The child that touches the path being measured.** Other children skip — the data does not apply to them. |
-| Linked screenshot / Loom / demo | **The user-visible feature child** (usually the final one, or the per-feature slice that produces the demo'd state). |
-| Hand-written reviewer notes ("ignore the test churn", "this depends on env var X being set") | **The child(ren) that actually require the note.** Drop from children where the note is irrelevant. |
-| `Co-Authored-By:` trailers from the parent's commits | Preserve on the **commits** that ship the corresponding work, per the original commit-to-author mapping. |
-| Deploy / migration callouts ("requires data migration", "feature flag X must be on") | **The child that introduces the dependency** AND the **final child** if the dependency stays load-bearing once the stack lands. |
-
-When in doubt about routing, prefer **including** the annotation in
-a child over dropping it — the cost of an extra `Refs #N` line is
-zero; the cost of losing a deploy callout is real.
-
-For each child block in Stage 4's plan output, add an
-**Annotations** subsection listing the propagated metadata so the
-user can audit routing during Stage 6 review:
+For each child block, add an **Annotations** subsection so the user can audit routing:
 
 ```
 **Annotations propagated:**
-- Refs #NNN (issue from parent — Closes moves to final child)
-- Spec: docs/specs/feature-x.md (carried from parent)
-- [<KEY>] Jira suffix on title
+- Refs #NNN (Closes moves to final child)
+- Spec: docs/specs/feature-x.md
+- [BOARD-NUM] Jira suffix on title
 ```
 
 ---
