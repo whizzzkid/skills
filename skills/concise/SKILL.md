@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.08-182836'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -153,20 +153,14 @@ activation, before confirming the mode, run:
 
 ```bash
 SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
-HOOK_PATH="$HOME/.agents/skills/wk-concise/hooks/concise-reminder.sh"
-
-# Is the hook already wired up?
 grep -Fq "concise-reminder.sh" "$SETTINGS" 2>/dev/null && HOOK_INSTALLED=1 || HOOK_INSTALLED=0
-
-# Is the CLAUDE.md snippet already present?
 grep -Fq "Concise by default" "$HOME/.claude/CLAUDE.md" 2>/dev/null && SNIPPET_INSTALLED=1 || SNIPPET_INSTALLED=0
 ```
 
 ### Offer
 
 If `HOOK_INSTALLED=0` **or** `SNIPPET_INSTALLED=0`, emit a one-time offer
-(and mark offered in `~/.claude/.concise-setup-offered` so later invocations
-don't re-ask):
+(mark `~/.claude/.concise-setup-offered` after so it doesn't re-ask):
 
 > `wk-concise — first-run setup`
 >
@@ -176,71 +170,38 @@ don't re-ask):
 >
 > Apply both? `(y)es / (n)o / (s)nippet only / (h)ook only`
 
-`{snippet_state}` and `{hook_state}` are `✓ already installed` or ` ` (pending).
+`{snippet_state}` / `{hook_state}` = `✓ already installed` or ` ` (pending).
 
 ### Apply
 
-On the user's answer, invoke `wk-update-config` (for the `settings.json`
-edit) and write the CLAUDE.md snippet from
-`templates/claude-md-snippet.md` appended to `~/.claude/CLAUDE.md`.
-
-The `settings.json` addition:
-
-```json
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.agents/skills/wk-concise/hooks/concise-reminder.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-`wk-update-config` handles the merge — preserves existing hooks, adds this
-one, validates JSON, reports the result.
-
-After applying, write `~/.claude/.concise-setup-offered` (empty file) so the
-offer is one-time. User can re-trigger via `/concise:setup`.
-
-### `/concise:setup` — manual trigger
-
-Forces the detection + offer flow regardless of the one-time marker. Use
-when: re-installing the skill, changing harness, or troubleshooting.
+On the user's answer, invoke `wk-update-config` (for the `settings.json` edit)
+and append `templates/claude-md-snippet.md` to `~/.claude/CLAUDE.md`.
+`wk-update-config` handles merge, validates JSON, reports result.
+Write `~/.claude/.concise-setup-offered` after applying (one-time guard).
+User can re-trigger via `/concise:setup`.
 
 ---
 
-## Default Activation (opt-in by default)
+## Default Activation
 
-Concise mode can be enabled globally so every session across every agent
-(Claude Code, Cursor, Gemini CLI, Copilot, Codex) starts in `brief` mode.
-Three mechanisms, stackable:
+Enable concise globally so every session starts in `brief` mode. Three
+stackable mechanisms — the first-run setup flow offers to install them
+automatically; use `/concise:setup` to re-run if needed.
 
 ### Mechanism 1: CLAUDE.md / AGENTS.md snippet (works everywhere)
 
-The most portable approach — works for every agent that reads a memory
-file. Paste `templates/claude-md-snippet.md` into one of:
+Paste `templates/claude-md-snippet.md` into one of:
 
 - `~/.claude/CLAUDE.md` — global, all Claude Code sessions
 - `~/.agents/AGENTS.md` — cross-agent global
 - `<repo>/CLAUDE.md` or `<repo>/AGENTS.md` — per-project
 - `~/.gemini/GEMINI.md`, `.cursor/rules/concise.md`, etc. — agent-specific
 
-The snippet declares brief mode active plus the opt-out instructions.
 No hook, no code — just prose the model reads at session start.
 
-### Mechanism 2: UserPromptSubmit hook (Claude Code, per-turn)
+### Mechanism 2: UserPromptSubmit hook (Claude Code, per-turn reinforcement)
 
-Enables per-turn reinforcement in Claude Code. Pure POSIX shell, no deps.
-
-Install: add to `~/.claude/settings.json`:
+Add to `~/.claude/settings.json`:
 
 ```json
 {
@@ -260,20 +221,14 @@ Install: add to `~/.claude/settings.json`:
 }
 ```
 
-The hook reads the mode from `~/.claude/.concise-mode` (default: `brief`)
-and emits a 1-line reminder into the agent's context. Silent-fail on any
-I/O error — never blocks a session.
+Reads mode from `~/.claude/.concise-mode` (default: `brief`), emits a 1-line
+reminder into agent context. Silent-fail on I/O error — never blocks a session.
 
 ### Mechanism 3: Mode file (single source of truth)
 
-Both the hook and `/concise` commands read/write `~/.claude/.concise-mode`:
-
 ```bash
-# Start in dense mode globally
-echo "dense" > ~/.claude/.concise-mode
-
-# Revert to brief (the default)
-echo "brief" > ~/.claude/.concise-mode
+echo "dense" > ~/.claude/.concise-mode   # Start in dense mode globally
+echo "brief" > ~/.claude/.concise-mode   # Revert to brief (default)
 ```
 
 ## Opt-Out
@@ -289,6 +244,8 @@ Any of these disables concise mode without removing the skill:
 
 Opt-out precedence (hook evaluates top-to-bottom): `$CONCISE_OFF=1` →
 `~/.claude/.concise-off` exists → `~/.claude/.concise-mode` = "off".
+
+Confirm deactivation: `Normal mode restored. Opt back in with /concise (or remove ~/.claude/.concise-off).`
 
 ## Session Persistence Summary
 
@@ -357,20 +314,6 @@ Bad targets — **refuse with error, do not compress**:
   `.kube/`, `.config/gcloud/`, `.docker/`
 - Symlinks (resolve and check before reading; refuse if target is outside
   the working directory or home directory prose files)
-
----
-
-## Deactivation
-
-- `/concise off` — explicit; writes `~/.claude/.concise-off` flag so future
-  sessions also start disabled (until the flag is removed)
-- "stop being brief" / "normal mode" / "full responses please" — natural language
-- `touch ~/.claude/.concise-off` — manual, persistent opt-out
-- `export CONCISE_OFF=1` — current shell only
-- Remove the CLAUDE.md snippet — permanent
-
-Confirm deactivation:
-> `Normal mode restored. Opt back in with /concise (or remove ~/.claude/.concise-off).`
 
 ---
 
