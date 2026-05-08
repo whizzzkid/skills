@@ -28,7 +28,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-182812'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -71,10 +71,12 @@ cat "$HOME/.claude/memory/MEMORY.md" 2>/dev/null || echo "No global MEMORY.md fo
 
 Also check the conversation history for corrections, redirects, and decisions.
 
-## Step 2: Reflect Across 5 Lenses
+## Step 2: Reflect Across Lenses
 
-Work through each lens. Be specific and concrete — vague observations are not
-useful. If a lens has no meaningful findings, skip it entirely.
+Work through each lens. Retro uses 5 lenses — a superset of wk-learn's 4 —
+adding a "What Worked" lens to reinforce good patterns. Be specific and
+concrete; vague observations are not useful. If a lens has no meaningful
+findings, skip it entirely.
 
 ### Lens 1: Where Claude got it wrong
 
@@ -176,25 +178,8 @@ All targets are **global** (user-level), not project-scoped:
 | User preferences, collaboration style | `~/.claude/memory/` (as a `user` type memory file) |
 | Skill gaps or missing steps | Invoke `wk-learn <skill-name>` to write a learning file — `wk-sharpen` batch mode will distill it on the next run |
 
-### Memory file format
-
-When creating memory files under `~/.claude/memory/`, use the standard
-frontmatter format:
-
-```markdown
----
-name: {descriptive name}
-description: {one-line description for relevance matching}
-type: {user | feedback | project | reference}
----
-
-{distilled rule}
-
-**Why:** {one-line reason}
-**How to apply:** {when/where this kicks in}
-```
-
-Then add a one-line pointer to `~/.claude/memory/MEMORY.md`.
+For the memory file frontmatter schema and format, see the "Step 3: Write the
+learning file" section of the `wk-learn` skill — retro uses the same format.
 
 ### For each lesson
 
