@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.05-101515'
+  version: '2026.05.08-172225'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -642,6 +642,29 @@ consultation-only phase. Present each `judgment-required` comment one
 at a time, collect the user's decision, then move to the next. No
 edits, no commits, no replies — just decisions.
 
+### Partition before any prompts (HARD RULE)
+
+Before emitting **any** Step 5 output, walk every suggestion produced
+in Step 4 and place each into exactly one of two lists:
+
+```
+obvious_fixes[]       # tag == "obvious-fix"
+judgment_required[]   # tag == "judgment-required"
+```
+
+Re-read each suggestion's "Why this could be skipped" rationale during
+the partition — not just the tag — and re-route any item whose
+rationale concedes the comment is right (empty / "no valid reason" /
+"no good reason to skip" / `—`) into `obvious_fixes[]` regardless of
+its prior tag. The partition is the last opportunity to correct a
+misclassification before the prompt loop starts.
+
+The per-comment consultation loop iterates **only** over
+`judgment_required[]`. The bulk-apply preview below covers
+`obvious_fixes[]`. Never feed an `obvious-fix` item into the per-comment
+loop — doing so forces the user to type `a` for ceremony on a finding
+the agent already conceded was correct.
+
 ### Bulk-apply preview for obvious-fix comments
 
 Per-comment consultation is the default for `judgment-required`
@@ -1213,6 +1236,66 @@ git merge --abort
 
 > "Merge conflicts detected with `{base_branch}` in: {file list}.
 > Would you like me to resolve them now?"
+
+## Step 9.5: Wait for CI, Then Loop on New Comments
+
+A push at Step 8 triggers a fresh CI run and often a fresh review pass
+from any review-automation that re-fires on new HEAD. Declaring
+resolution complete before CI reaches a terminal state leaves
+post-push findings (CI failures, late-arriving bot comments,
+description-drift callouts) for the next manual invocation. The agent
+already has the context to address them in this run.
+
+### Poll CI to terminal state
+
+Delegate CI status polling to `wk-buildkite` (or the platform skill
+matching the repo's CI). Wait until the build reaches a terminal
+state — `passed`, `failed`, or `canceled`.
+
+```
+Skill(wk-buildkite, args="<head_sha>")
+```
+
+If CI **failed** or was **canceled**, surface the failure and exit:
+
+> "CI on {short-SHA} did not pass ({state}). Failing job: {url}.
+> Fixing CI takes priority over remaining review feedback — re-run
+> `wk-pr-resolve` after CI is green."
+
+CI fixes outrank further comment triage on the same branch — a
+broken build invalidates fresh review feedback anyway.
+
+### Re-fetch comments after CI passes
+
+When CI passes, re-run **Step 3** (all three surfaces) against the
+post-push HEAD. Late-arriving findings appear here:
+
+- review-automation re-runs that fire after CI succeeds
+- description-drift bots that compare body to HEAD
+- humans who reviewed the freshly-pushed commits
+
+Compare the new comment map to the session-local resolution map
+maintained across this run. Any active comment whose `(path, line,
+concern)` matches a thread already resolved earlier in this session
+is an `already-addressed` echo — handle per the existing rule in
+Step 8 ("Re-surfaced findings on the post-push review").
+
+### Loop back if genuinely new findings exist
+
+If the post-CI fetch surfaces unresolved comments that are **not**
+already-addressed echoes:
+
+1. Re-enter Step 4 (Generate Suggestions) for the new findings.
+2. Re-enter Step 5 (Consult) — the partition rule above applies
+   again; new `obvious-fix` items go to bulk-apply, new
+   `judgment-required` items to per-comment consultation.
+3. Re-enter Steps 6–9 for the second cycle.
+4. Re-enter Step 9.5 again after the second push.
+
+Exit the loop only when CI passes **and** the post-CI fetch surfaces
+no new genuinely-unresolved comments. Cap at three iterations per
+session — beyond that, surface to the user that the PR is in a
+review-thrash loop and ask how to proceed.
 
 ## Step 10: Final Summary
 
