@@ -17,7 +17,7 @@ allowed-tools:
   - "Bash(stat:*)"
   - "Bash(ls:*)"
   - "Bash(fmt:*)"
-  - "Bash(awk-*)"
+  - "Bash(awk:*)"
   - "Bash(grep:*)"
   - AskUserQuestion
 model: sonnet
@@ -27,7 +27,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-182819'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -146,54 +146,22 @@ Do NOT embed emojis inside inline code, filenames, CLI commands, or URLs.
 **HARD RULE:** All links must be validated before the file is written or committed.
 A broken link is a documentation bug.
 
-### Step 1: Extract all links
+Extract and validate all links with:
 
 ```bash
-grep -oE '\[([^\]]+)\]\(([^)]+)\)' <file> | grep -oE '\(([^)]+)\)' | tr -d '()'
+grep -oE '\[([^\]]+)\]\(([^)]+)\)' <file> | grep -oE '\(([^)]+)\)' | tr -d '()' | while read -r url; do
+  case "$url" in
+    http*) curl -sI --max-time 10 --location "$url" 2>&1 | grep -E '^HTTP' | tail -1 ;;
+    \#*)   echo "anchor: $url (verify heading exists)" ;;
+    *)     stat "$(dirname <file>)/$url" 2>/dev/null && echo "ok: $url" || echo "MISSING: $url" ;;
+  esac
+done
 ```
 
-Classify each extracted target:
-- **External** — starts with `http://` or `https://`
-- **Relative** — any path not starting with `#` (e.g., `./docs/foo.md`, `../bar`)
-- **Anchor-only** — starts with `#`
-
-### Step 2: Validate external links
-
-```bash
-curl -sI --max-time 10 --location "<url>" 2>&1 | grep -E '^HTTP'
-```
-
-- Final response 2xx or 3xx → valid.
-- 4xx or 5xx → broken — fix or remove the link before writing.
-- Timeout / DNS failure → mark as unverifiable in the PR description; do not block on it.
-
-### Step 3: Validate relative links
-
-Resolve each relative path from the markdown file's own directory:
-
-```bash
-stat "$(dirname <file>)/<relative-path>" 2>/dev/null || echo "MISSING"
-```
-
-If the output is `MISSING`, the target does not exist — fix the path or remove the link.
-
-### Step 4: Validate anchor links
-
-GitHub-flavored anchor rules: heading text → lowercase, spaces → `-`, punctuation stripped.
-
-Manually confirm every `#anchor` target corresponds to an existing heading in the same file.
-
-## ✅ Pre-Write Checklist
-
-Before calling `Write` or `Edit` on any markdown file, every item must pass:
-
-- [ ] All prose lines ≤ 120 columns (run the `awk` check above)
-- [ ] Heading levels are sequential — no skipped levels, exactly one H1
-- [ ] Relational/process/flow content has a mermaid diagram
-- [ ] Headers and callout blocks use glyphs/emojis
-- [ ] All external links return 2xx/3xx
-- [ ] All relative links resolve to existing files
-- [ ] All anchor links match an existing heading
+Verify:
+- External links return 2xx/3xx — 4xx/5xx must be fixed or removed before writing.
+- Relative paths resolve to existing files — `MISSING` means fix the path or remove the link.
+- Anchor targets (`#foo`) match an existing heading in the same file (GFM rules: lowercase, spaces → `-`, punctuation stripped).
 
 ---
 

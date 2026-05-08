@@ -20,7 +20,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-182819'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -37,8 +37,9 @@ docs structure if the project doesn't have one.
 
 ## File Access Rules
 
-**HARD RULE:** Write and Edit tools may ONLY target files under `docs/` in
-the project root. Never write or edit files outside of `docs/`.
+**HARD RULE:** Write and Edit tools may ONLY target files under the project's
+docs root (check for `docs/`, `documentation/`, `doc/`, or `site/` — use whichever exists).
+Never write or edit files outside the docs root.
 
 Read, Glob, and Grep may access any path (read-only) to understand code changes.
 
@@ -49,18 +50,15 @@ Scan for documentation that relates to the current code changes. Look in:
 - Plans (`docs/plans/`)
 - Specs (`docs/specs/`)
 - ADRs (`docs/adr/`)
-- Tutorials (`docs/*/tutorials/`)
-- How-to guides (`docs/*/how-to/`)
-- Explanation docs (`docs/*/explanation/`)
-- Reference docs (`docs/*/reference/`)
+- Tutorials (`docs/tutorials/`)
+- Examples (`docs/examples/`)
 
 ```bash
 find docs/ -name '*.md' 2>/dev/null | head -50
 ```
 
 For each doc found, check if the current changes affect it. If so, update it
-to reflect the new state. Focus on accuracy — don't rewrite docs that are
-still correct.
+to reflect the new state. Update only docs the changes have made inaccurate — leave correct docs alone.
 
 ## Step 2: Bootstrap if Missing
 
@@ -88,14 +86,6 @@ Create a minimal `docs/README.md` index:
 
 If `docs/README.md` exists, update its index when adding or removing docs.
 Ensure every doc file is listed and no stale entries remain.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| Code changes made | Scan for affected docs, update as needed |
-| No docs folder | Bootstrap `docs/` structure |
-| New doc added/removed | Update `docs/README.md` index |
 
 ---
 
