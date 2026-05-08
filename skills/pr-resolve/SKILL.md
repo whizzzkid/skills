@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183203'
+  version: '2026.05.08-183505'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1033,49 +1033,21 @@ PR, the description must be updated.
 
 ### Causes of 404 on reply posting
 
-REST inline-reply posting (`POST /pulls/{n}/comments/{id}/replies`) can
-return **404 Not Found** for the comment ID even when the underlying
-review thread still exists. Two known causes:
+`POST /pulls/{n}/comments/{id}/replies` can return **404** even when the thread still exists. Three key facts:
 
-1. **Force-push during this session** (e.g., after a rebase in Step 2)
-   may invalidate existing review comment threads.
-2. **Bot review replacement** — review-automation bots that
-   re-create their entire review object on each push destroy the
-   previous comment IDs even though the thread node ID
-   (`PRRT_...`) survives. This pattern applies to any bot that
-   posts a single overarching review per commit instead of
-   incremental comments; recognize it by seeing a fresh review
-   object replace the prior one rather than new comments appended.
-
-REST comment IDs are unstable; GraphQL thread node IDs are stable.
-When a 404 is returned, the thread itself may still be valid for
-resolution via GraphQL (`resolveReviewThread`).
-
-This is expected and non-fatal — log the failure, but try to resolve
-the thread by node ID before giving up (see "Post reply comments"
-below). Continue with the remaining replies regardless.
+- **Force-push** (e.g., rebase in Step 2) invalidates existing REST review comment IDs.
+- **Bot review replacement** — bots that recreate their entire review object on each push destroy previous REST comment IDs; the GraphQL thread node ID (`PRRT_...`) survives.
+- **REST comment IDs are unstable; GraphQL thread node IDs are stable.** A 404 reply is expected and non-fatal — log it, attempt thread resolution via GraphQL node ID, and continue.
 
 ### Refresh thread IDs when bot reviewers are present
 
-Before posting any replies, if any reviewer in the comment map is a
-bot account (`[bot]` suffix or any review-automation account that
-re-creates its review object on each push), re-run the GraphQL
-`reviewThreads` query from Step 3 against the post-push HEAD and
-rebuild the thread/comment ID map for those reviewers' findings.
+Before posting any replies when the comment map contains bot reviewers:
 
-Bot review replacement is not a first-fetch-only problem: the push
-in this step commonly triggers an immediate re-review that expires
-every pre-push REST comment ID. Replying with stale IDs returns
-404 from `POST /pulls/{n}/comments/{id}/replies` and the reply text
-is lost.
-
-Match each pre-push finding to its post-push thread by the stable
-identity tuple `(path, line, root_comment.body_excerpt)` — REST IDs
-are unstable but `(path, line, body)` survives review replacement
-when the bot kept the same finding. If the post-push fetch shows
-the finding was dropped on the replacement review, skip the reply
-and continue (the bot retracted it). The 404-recovery branch below
-remains as a fallback for any reply that still fails after refresh.
+- Re-run the GraphQL `reviewThreads` query (Step 3 form) against the post-push HEAD; the push commonly triggers an immediate re-review that expires all pre-push REST IDs.
+- Rebuild the thread/comment ID map for every bot reviewer's findings using the fresh query results.
+- Match each pre-push finding to its post-push thread by stable identity tuple `(path, line, root_comment.body_excerpt)` — REST IDs are unstable but this tuple survives review replacement.
+- If the post-push fetch shows a finding was dropped (bot retracted it), skip the reply and continue.
+- The 404-recovery fallback below still applies to any reply that fails after this refresh.
 
 ### Post reply comments (sequentially)
 
@@ -1141,48 +1113,20 @@ gh api graphql -f query='
 ' -f threadId="{thread_id}"
 ```
 
-If the mutation returns **`NOT_FOUND`** (or `Could not resolve to
-a node` / similar) for a thread ID:
+If the mutation returns **`NOT_FOUND`** (or `Could not resolve to a node` / similar), recover in four steps (cap one retry per thread):
 
-Same cause as the 404 reply case above — a bot review replacement
-during the push invalidated the thread node ID. Recover by
-re-fetching:
-
-1. Re-run the GraphQL `reviewThreads` query (Step 3 form) for
-   fresh IDs.
-2. Look up the original thread by stable identity tuple
-   `(path, line, root_comment.databaseId)`.
+1. Re-run the GraphQL `reviewThreads` query (Step 3 form) for fresh IDs.
+2. Look up the original thread by stable identity `(path, line, root_comment.databaseId)`.
 3. If matched, retry `resolveReviewThread` with the new thread ID.
-4. If no match (bot dropped the finding), log and continue.
-
-Cap to **one retry per thread**. If the retry also fails, log and
-continue.
+4. If no match (bot dropped the finding) or retry fails, log and continue.
 
 If resolution returns any other error, log and continue.
 
 ### Re-surfaced findings on the post-push review
 
-A push during resolve commonly triggers a fresh bot review with
-findings that **were already addressed by commits earlier in this
-session**. These are not real new findings; they are echoes of
-the bot re-running against the new HEAD before its database
-catches up. Triaging them as `dismiss` mislabels valid findings;
-re-applying the same fix produces an empty commit.
-
-When Step 4 sees a comment that matches `(path, line, concern)` of
-a thread already resolved earlier in the **same session**, tag the
-comment as `already-addressed` and reply from the new thread:
-
-```
-Already addressed in commit {short-SHA} earlier in this session.
-Resolving thread.
-```
-
-Then resolve the new thread. Do not re-prompt the user; do not
-generate a new commit. The session-local resolution map (kept
-across the session's invocations of `wk-pr-resolve`) is the
-ground truth — the bot's view will catch up on its next
-post-merge re-review.
+- A post-push bot re-review commonly re-reports findings **already addressed in this session** — they are echoes, not new issues (the bot re-runs before its database catches up).
+- When Step 4 sees a comment matching `(path, line, concern)` of a thread already resolved in this session, tag it `already-addressed`, reply `"Already addressed in commit {short-SHA} earlier in this session. Resolving thread."`, and resolve without re-prompting or committing.
+- The session-local resolution map is the ground truth; do not triage `already-addressed` echoes as `dismiss` (mislabels a valid finding) or re-apply the fix (produces an empty commit).
 
 **HARD RULE:** Never resolve threads in the `reply_only` list. Those have
 follow-up questions and must stay open for the reviewer to respond.
