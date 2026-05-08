@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-183221'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -259,6 +259,8 @@ others.
 
 ### Subagent contract (mandatory — include in every Stage 1 prompt)
 
+> Canonical source: [`skills/goodmorning/references/subagent-contract.md`](./references/subagent-contract.md)
+
 Every agent dispatched in this stage is a **data-gathering subagent**,
 not a co-orchestrator. When the subagent reads this skill's instructions
 as part of its context, it may mistake itself for the orchestrator and
@@ -294,6 +296,8 @@ intended sitrep paths) — a subagent that overran its scope will show up
 here.
 
 ### MCP Connection Pattern (shared by all agents)
+
+> See also: [`skills/goodmorning/references/subagent-contract.md`](./references/subagent-contract.md) — canonical copy of this pattern and the soft/hard blocker table.
 
 Each agent follows this pattern for its service:
 

@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.04-174403'
+  version: '2026.05.08-183227'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -111,12 +111,12 @@ Then prompt (only when stored version is equal/newer):
 | (b) | Continue to Stage 1. The user has explicitly accepted overwrite. |
 | (c) | Exit silently. |
 
-Auto mode is **not** an exemption for the prompt path. The
-auto-regenerate-on-older-version path runs in auto mode without
-prompting (the version delta is itself the user's prior consent).
-Silently overwriting today's
-wrap-up loses the day's documented achievements. In auto mode, default
-to **(a)** and note the skip in the run summary.
+Auto mode does **not** exempt the consultation gate — silently overwriting today's
+wrap-up loses the day's documented achievements. When the prompt path is reached in
+auto mode and the only viable option is obvious (e.g., an equal/newer version exists
+and overwriting would destroy hand-edited brag notes with no upside), default to **(a)**
+and note the skip in the run summary. The auto-regenerate-on-older-version path runs
+in auto mode without prompting (the version delta is itself the user's prior consent).
 
 ### Read the morning brief
 
@@ -156,60 +156,21 @@ Goodevening only reads the weekly memory; goodmorning owns the rollover.
 its own MCP authentication independently. If any agent fails to
 authenticate, it returns a skip notice — it does not block the others.
 
-### Subagent contract (mandatory — include in every Stage 1 prompt)
+### Subagent contract and MCP pattern
 
-Every agent dispatched in this stage is a **data-gathering subagent**,
-not a co-orchestrator. When the subagent reads this skill's instructions
-as part of its context, it may mistake itself for the orchestrator and
-run the entire skill — writing evening.md/evening.html, committing,
-pushing, or starting its own interactive triage. Prevent this by
-prepending the following contract to every Stage 1 agent prompt
-verbatim:
+> See [`skills/goodmorning/references/subagent-contract.md`](../goodmorning/references/subagent-contract.md)
+> for the canonical subagent contract, MCP soft/hard block pattern, `+m` modifier table,
+> and pattern-extraction table. Include the full contract verbatim at the start of every
+> Stage 1 agent prompt; substitute `wk-goodevening` for the orchestrator name.
 
-```
-SUBAGENT CONTRACT (mandatory):
-- Return STRUCTURED DATA ONLY — do not write files, run git commands, or commit
-- Do NOT invoke /skills or act as the wk-goodevening orchestrator
-- Do NOT prompt the user for input — the orchestrator handles all triage
-- Do NOT open files in browsers or call `open`
-- Your output is markdown text the orchestrator pastes into a section
-```
+Before compiling outputs in Stage 2, the orchestrator must verify git state (no
+unexpected commits, no uncommitted files outside the session's intended sitrep paths)
+— a subagent that overran its scope will show up here. If any subagent wrote files or
+committed, discard its output and re-dispatch with the contract emphasized.
 
-Before compiling outputs in Stage 2, the orchestrator must verify git
-state (no unexpected commits, no uncommitted files outside the session's
-intended sitrep paths) — a subagent that overran its scope will show up
-here. If any subagent wrote files or committed, discard its output and
-re-dispatch with the contract emphasized.
-
-### MCP Connection Pattern (shared by all agents)
-
-1. `ToolSearch` to find MCP tools for the service
-2. Call the authenticate tool to start OAuth
-3. After auth completes, use the operational tools
-4. **If auth fails (OAuth URL returned)** → return a **SOFT BLOCK**:
-   `"SOFT_BLOCKED: {Service} needs authorization at: {url}"`
-5. **If no MCP tools found or missing secret** → return a **HARD BLOCK**:
-   `"HARD_BLOCKED: {Service} MCP tools not configured. User must install the MCP server."`
-
-### Soft vs hard blockers
-
-| Type | Example | Behavior |
-|------|---------|----------|
-| **Hard** | MCP not installed, missing secret | Stop output; list all hard blocks; require user fix before continuing |
-| **Soft** | OAuth URL returned | Continue with degraded data; embed the authorization URL in the affected section; note in the summary |
-
-If ANY hard block occurs, pause and present all hard blocks at once:
-
-> "The following services need your attention before I can continue:
->
-> 1. {Service}: {reason and action needed}
->
-> Please fix these and tell me to continue."
-
-If only soft blocks occur, proceed to Stage 2. For each soft-blocked
-service, use yesterday's evening.md as a fallback and embed the
-authorization URL as a prominent **⚠ Authorize {Service}** CTA.
-After the user fixes access, re-run only the failed agents.
+For soft blocks, use the most recent available brief (morning.md or yesterday's
+evening.md) as fallback data and embed the authorization URL as a prominent
+**⚠ Authorize {Service}** CTA.
 
 ---
 
@@ -712,33 +673,13 @@ the next batch (if the group has more items) or move to the next group.
 
 ### The `+m` (remember) modifier
 
-Any per-item or batch-level choice can have `+m` appended to save it as
-a weekly memory rule. This works with any option:
+> See [`skills/goodmorning/references/subagent-contract.md`](../goodmorning/references/subagent-contract.md)
+> — `+m` modifier table and pattern-extraction table.
 
-| Input | Effect |
-|-------|--------|
-| `2c+m` | Skip item 2 AND add an auto-skip rule to weekly memory |
-| `3a+m` | Will do item 3 AND add an auto-will-do rule to weekly memory |
-| `all:c+m` | Skip entire batch AND add auto-skip rules for all items |
-
-When `+m` is used, extract the **pattern** (not the specific instance):
-
-| Item type | Pattern extracted |
-|-----------|-----------------|
-| Slack message | Channel name (e.g., "skip all from #alerts") |
-| Email | Sender or subject pattern (e.g., "skip newsletters from noreply@") |
-| GitHub PR/Issue | Repository name (e.g., "always will-do PRs from repo-x") |
-| Jira ticket | Project key (e.g., "skip mentions from PROJECT-Y") |
-| Confluence | Space name (e.g., "skip announcements from Engineering space") |
-| Action item | Source meeting or thread (e.g., "always carry-forward from standup") |
-
-Confirm inline:
-
-> "Saving weekly rule: **auto-skip items from #{channel}**.
-> This will apply to all future items matching this pattern this week."
-
-If the user says "no" or "cancel", apply the action but don't save
-the rule.
+Behavior summary: append `+m` to any choice (`2c+m`, `all:c+m`) to save a weekly memory
+rule. Extract the pattern (channel name, sender, repo, project key, space name, or
+source meeting), confirm inline, and write to `$WEEK_MEMORY`. If the user says "no" or
+"cancel", apply the action but don't save the rule.
 
 ### Group-specific options
 

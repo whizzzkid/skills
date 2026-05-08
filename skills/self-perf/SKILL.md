@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-224941'
+  version: '2026.05.08-183228'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -111,17 +111,19 @@ Launch **7 agents in parallel**. Each writes its output to a file in
 
 ### Subagent contract (mandatory)
 
-Include verbatim at the start of every agent prompt:
+> See [`skills/goodmorning/references/subagent-contract.md`](../goodmorning/references/subagent-contract.md)
+> for the base contract. Prepend verbatim to every agent prompt, then append these
+> self-perf-specific additions:
 
 ```
-SUBAGENT CONTRACT:
-- Write your findings ONLY to the specified output file
-- Do NOT commit, push, or run git commands
-- Do NOT invoke skills or prompt the user
+SUBAGENT CONTRACT ADDITIONS (self-perf):
+- Write your findings ONLY to the specified output file (path provided in prompt)
 - Be comprehensive — this is for a performance review where the user's job depends on it
 - Use strong-verb impact language: "shipped", "led", "designed", "resolved"
 - Include specific evidence: PR numbers, dates, ticket keys, attendee counts, metrics
 ```
+
+The base contract's source-identifier and verified/claim tagging rules apply here too.
 
 ---
 
