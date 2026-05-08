@@ -23,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-183219'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -69,14 +69,14 @@ of a branch name in brackets).
 
 ## Step 2: Detect the Default Branch
 
-Determine whether the repo uses `main` or `master`:
+Resolve the default branch dynamically and store as `{default-branch}`:
 
 ```bash
-git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'
+$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null || git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||')
 ```
 
-If that fails, fall back to checking which of `main` or `master` exists locally.
-Use this as `{default-branch}` in subsequent steps.
+If both fail, fall back to whichever of `main` or `master` exists locally.
+Use `{default-branch}` in all subsequent git commands.
 
 ## Step 3: Check Merge Status
 
@@ -115,56 +115,22 @@ worktree **before** calling `git wtr`.
 
 ### Disposable paths — skip retro and clean without prompting
 
-Some untracked content in a worktree is **always disposable** and
-should not block cleanup or trigger the retro check:
+Some untracked content is always disposable: **temporary directories created
+by the agent during this session** (review playgrounds, build artifacts, IDE
+caches), OS metadata files, and editor swap files matched by `.gitignore`.
 
-| Path | Why disposable |
-|------|----------------|
-| `.review-playground/` | `wk-pr-review`'s scratch space for reproduction scripts and analysis docs. Findings are already posted to the PR before merge; the directory has no lasting value. |
-| `.DS_Store`, `Thumbs.db` | OS noise. |
-| `*.swp`, `*.swo`, `.idea/`, `.vscode/` (when not committed) | Editor noise. |
-| `node_modules/`, `.venv/`, `target/`, `dist/`, `build/`, `.next/`, `.cache/` (when matched by `.gitignore`) | Build artifacts; trivially regenerable. |
-
-When checking the worktree for retro signals, **ignore these paths
-entirely** — their presence is not a "fresh context" signal, and
-they should not appear in the worktree's "dirty" list. If the only
-untracked content is in these paths, treat the worktree as clean
-and proceed; before `git wtr` (Step 5), `git clean -fd` may run
+If the only untracked content falls into these categories, treat the worktree
+as clean and proceed. Before `git wtr` (Step 5), `git clean -fd` may run
 without per-worktree user confirmation to remove them.
 
-Anything outside this list still triggers the normal retro check.
+Anything else — session notes, draft plans, uncommitted code — still triggers
+the normal retro check.
 
 For each branch classified as `merged`:
 
-1. Detect whether retro has already been run for this worktree.
-   Look for any of these signals (any one is sufficient):
-   - A learning file in `$WK_SKILLS_HOME/learnings/skills/**/` whose
-     mtime falls inside the worktree's active window
-     (worktree creation → most-recent commit time).
-   - An entry in `~/.claude/memory/retro-log.md` referencing the
-     branch name or its PR number.
-   - A user override: "skip retro for this worktree" recorded in
-     this run.
-2. If no signal is present, **invoke `wk-retro` against the
-   worktree** before cleanup:
-
-   ```
-   Skill(wk-retro, args="--worktree worktrees/{branch}")
-   ```
-
-   `wk-retro`'s 5-lens reflection runs against the worktree's
-   conversation/transcript and writes any captured learnings to
-   `$WK_SKILLS_HOME/learnings/skills/<skill>/` and the global
-   retro log.
-3. After the retro returns, confirm the working tree of the
-   worktree is clean (no fresh learning files left uncommitted).
-
-In auto mode, retro runs without prompting — the cost of an empty
-retro is small; the cost of a missed learning is unrecoverable.
-
-If `wk-retro` is unavailable or fails, **stop and ask** before
-deleting the worktree. Do not silently proceed; the user may want
-to capture context manually.
+- **Retro already run?** (learning file mtime within this worktree's active window, entry in `~/.claude/memory/retro-log.md` for this branch/PR, or explicit user skip recorded this run) → skip retro, proceed to Step 5.
+- **No signal found** → invoke `wk-retro` before deletion: `Skill(wk-retro, args="--worktree worktrees/{branch}")`. If `wk-retro` is unavailable or fails, stop and ask the user before proceeding.
+- **After retro returns** → confirm the worktree is clean, then proceed to Step 5.
 
 ## Step 5: Clean Up Merged Worktrees
 
@@ -180,10 +146,6 @@ This alias expands to `git worktree remove worktrees/{branch} && git branch -D {
 **HARD RULE:** Never call `git wtr` on a branch that has not been confirmed
 merged. The `-D` flag force-deletes the branch regardless of merge status.
 If in doubt, classify as unmerged and let the user decide.
-
-**HARD RULE:** Never call `git wtr` until Step 4 has either run
-`wk-retro` against the worktree or recorded an explicit skip.
-Worktree-local learnings are unrecoverable post-deletion.
 
 ## Step 6: Prune Stale References
 
