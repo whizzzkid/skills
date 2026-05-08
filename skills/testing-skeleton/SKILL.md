@@ -24,7 +24,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.05-181000'
+  version: '2026.05.08-182753'
   internal: false
   model:
     openai: gpt-4.1
@@ -67,8 +67,9 @@ Trigger ──► Classify the change ──► Plan paths
    path proves the code can succeed; a passing sad path proves the
    code fails the way it claims to. One without the other is half
    a test.
-4. **Every new test gets mutation-verified.** A test that doesn't
-   fail when the implementation is broken is decorative.
+4. **Every new behavioral test gets mutation-verified.** A test that doesn't fail
+   when the implementation is broken is decorative. Property-based and snapshot
+   tests are exempt — the framework fuzzes or diffs for you.
 5. **Coverage % is a lagging indicator.** Never write a test to
    raise a number; never skip a path because the number is already
    high.
@@ -205,36 +206,14 @@ For each planned path, write the test as a behavioral observation:
 
 Avoid:
 
-- **Mock-heavy tests where mocks are inside the unit's boundary.**
-  Replace internal collaborators only when they cross a process
-  boundary (network, disk, clock). Mocking a function the unit
-  itself owns turns the test structural.
-- **Mock-call-count assertions** as the primary assertion. "Called
-  with X" is structural; "produced output Y for input X" is
-  behavioral. If only the call matters (e.g., logging emission),
-  assert the emitted record's shape, not the call to the logger.
-- **One mega-test that exercises everything.** One test = one
-  observable claim. Multi-claim tests fail uninformatively.
-- **Assertions on private state.** If the test needs to read a
-  private field to verify behavior, the contract is too narrow —
-  expand the public observation surface or skip the assertion.
-- **Tests that inherit ambient process env.** When stubbing process
-  env, every variable the unit-under-test reads must be explicitly
-  set in the stub — including ones the test wants absent, set to
-  `nil` / removed. Patterns like `ENV.to_h.merge(...).compact` keep
-  ambient values for unlisted vars, producing tests that pass
-  locally (where the var is unset) and fail in CI (where the runner
-  injects it), or the reverse. Audit the unit for every env-read
-  call site and pin each one in the stub.
-- **Structural locators that aren't sanity-checked.** When a
-  structure test isolates a region with a locator (line-number
-  lookup, sed/awk range, regex extract) before asserting on its
-  contents, verify the locator independently first — print or count
-  the extraction and compare to the expected size. A locator that
-  silently matches too much (e.g., a sed end-marker that never
-  matches, falling through to EOF) or the wrong line (e.g., a grep
-  hit on a comment instead of the conditional) makes assertions
-  pass vacuously.
+- **Mocking inside the unit's boundary.** Replace collaborators only at process
+  boundaries (network, disk, clock). Mocking internals turns the test structural.
+- **Mock-call-count as primary assertion.** "Called with X" is structural;
+  "produced output Y" is behavioral. Assert emitted record shape, not logger call count.
+- **One mega-test that exercises everything.** One test = one observable claim.
+  Multi-claim tests fail uninformatively.
+- **Assertions on private state.** If the test needs a private field, the public
+  observation surface is too narrow — expand it or skip the assertion.
 
 Match the project's existing test framework, file layout, and
 naming convention. `wk-format` runs alongside; defer to its rules
@@ -265,11 +244,9 @@ fails at least one test. Mutations that fail nothing point at
 either a missing test or a structural one that doesn't observe
 behavior.
 
-This step is **non-negotiable** for any new behavioral test. Skip
-it only for property-based tests with explicit shrinkers (the
-shrinker performs the mutation step automatically) and for
-snapshot tests (where the snapshot diff is the verification
-mechanism).
+This step is **required for every new behavioral test.** Two exemptions:
+- **Property-based tests** — the fuzzer/shrinker performs the mutation step automatically.
+- **Snapshot tests** — the snapshot diff is the verification mechanism.
 
 ---
 
