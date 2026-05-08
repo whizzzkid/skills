@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183232'
+  version: '2026.05.08-193837'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -285,6 +285,18 @@ Reviewers and bots reliably catch cross-doc inconsistency on the
 next round and require a separate response commit. Folding the
 doc update into the pivot commit is one round; deferring is two.
 
+### External-call reproduction before fix and commit
+
+**HARD RULE:** Before writing a fix for any failing external API or CLI
+call, reproduce the failure locally and read the response body. Before
+committing the fix, rerun the same call locally and confirm it now
+returns success.
+
+- Reproduce first. Construct a minimal local invocation (curl, equivalent CLI) using the exact parameters the failing call used.
+- Read the response body — most APIs name the missing or invalid field directly.
+- Reject status-code-only diagnosis. A 4xx attributed to one cause ("branch missing", "auth expired") is often a different cause ("required field absent"); guessing produces a second PR after the first fix lands on the wrong root cause.
+- Rerun the local invocation with the fix applied before `wk-commit`. Only commit after the call returns 2xx.
+
 ### Signature widening pre-flight
 
 When adding a non-optional parameter to a public function or a
@@ -400,6 +412,12 @@ Every task MUST have tests covering:
 - Each commit on the branch should pass tests independently — run the suite
   after each commit to confirm
 - If the project has a linter or type checker, those must also pass
+- Run the **full pre-push gate the repo defines** before any `git push` —
+  every test suite, lint, and type check the repo wires into pre-push
+  (e.g., `lefthook run pre-push`, `bin/ci`, `make check`). Independent
+  suites can assert on the same source with different matchers; passing
+  one does not imply the others pass. Inspect the hook config to enumerate
+  every gate, do not assume the suite you ran during dev is the full set.
 
 ### Shell-script structure tests (awk/grep pitfalls)
 
