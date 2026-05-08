@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-183232'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -515,7 +515,7 @@ DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD --short \
 git fetch origin "$BASE" "$DEFAULT" --quiet
 
 # If the resolved base advanced, integrate before reworking
-LOCAL_MB=$(git merge-base HEAD "origin/$BASE")
+LOCAL_MB=$(git merge-base HEAD "origin/$BASE")  # $BASE resolved from PR above
 REMOTE_TIP=$(git rev-parse "origin/$BASE")
 if [ "$LOCAL_MB" != "$REMOTE_TIP" ]; then
   Skill(wk-pr-update, args="$BASE")
@@ -582,58 +582,27 @@ of the workflow on a foregrounded watch.
 
 ### Step 2: Diagnose Failures
 
-When CI fails:
+When CI fails, read the actual logs first — use `wk-buildkite` for Buildkite or `gh run view --log-failed` for GitHub Actions. Never guess.
 
-1. **Read the actual logs** — invoke `wk-buildkite` for Buildkite projects
-   or fetch GitHub Actions logs via `gh run view --log-failed`. Never guess
-   at the cause
-2. **Identify the root cause** — distinguish between:
-   - **Code failures** — test failures, lint errors, type errors, build
-     errors caused by the PR's changes
-   - **Flaky tests** — failures unrelated to the PR (check if the same test
-     fails on the base branch)
-   - **Infrastructure issues** — timeout, OOM, runner unavailable, network
-     errors
-3. **For flaky tests**: re-trigger the build once. If it fails again on the
-   same test, treat as a real failure
-4. **For infrastructure issues**: re-trigger the build. If persistent, inform
-   the user — do not attempt code fixes for infra problems
+**Classify the failure before generating fix candidates:**
 
-### Diagnosis discipline
+| Failure type | Action |
+|--------------|--------|
+| Code failure (test/lint/type/build) | Diagnose root cause; apply fix-candidate ordering below |
+| Flaky test (unrelated to PR) | Re-trigger once; if same test fails again, treat as real |
+| Infrastructure (timeout/OOM/runner down) | Re-trigger; if persistent, inform user — no code fix |
 
-Before generating fix candidates, cross-reference the failure surface
-against the repo's own rulebook and runtime constraints. Most CI
-failures are first violations of a standard the repo already documents.
+**Diagnosis discipline — cross-reference repo standards first:**
 
-**Cross-reference repo standards.** Re-read the repo's `CLAUDE.md`,
-`AGENTS.md`, and any `docs/conventions/`-style files when the error
-message contains any of these signals:
+| Error signal | Check this rule |
+|--------------|----------------|
+| `no version is set`, `couldn't resolve latest`, `unknown tag` | Version-pinning (`latest`/unpinned dep) |
+| `auth failed`, `unauthorized`, `expired token` | Env-var / secrets provenance docs |
+| `permission denied` on a script | File-permissions (`chmod +x` on executables) |
+| `command not found` for a project tool | Tool-version manifest (`mise.toml`, `.tool-versions`) |
+| New third-party Action on org-managed runner | Prefer `actions/*` or non-action install; ask user before adding new third-party action |
 
-| Error signal | Rule to re-check |
-|--------------|------------------|
-| `no version is set`, `couldn't resolve latest`, `version not found`, `unknown tag` | Version-pinning rule (any `latest`/unpinned dep is suspect) |
-| `auth failed`, `unauthorized`, `bad credentials`, `expired token` | Env-var / secrets provenance docs |
-| `permission denied` on a script | File-permissions rule (`chmod +x` on executables) |
-| `command not found` on a tool the project uses | Tool-version manifest (`mise.toml`, `.tool-versions`) |
-
-If the error matches a rule the repo already states, the **first** fix
-candidate must be "make the repo comply with its own rule" — not a
-backend change, installer rewrite, or workaround.
-
-**Respect runner constraints.** When the workflow uses an
-organization-managed runner group (`runs-on: group: <org>-*-default` or
-similar), assume the runner enforces an action allowlist and other
-policy that's invisible from the workflow file alone. Before
-introducing a new third-party GitHub Action on such a runner:
-
-1. Prefer `actions/*` first-party actions, or any third-party action
-   already used elsewhere in the same workflow set.
-2. Prefer non-action approaches (curl install, package manager, mise)
-   when a first-party action does not exist.
-3. If a new third-party action is genuinely the right answer, ask the
-   user before pushing: "Does `<action@SHA>` need allowlisting on the
-   `<runner-group>` runner?" The round-trip cost of asking is much
-   smaller than a blocked CI run + revert.
+If the error matches a repo rule, the first fix candidate is "comply with that rule" — not a backend change or workaround.
 
 ### Step 3: Fix and Re-push
 
@@ -648,56 +617,19 @@ For code failures:
 
 #### Fix-candidate ordering
 
-"Minimal" is not just smallest diff — it's smallest change to the part
-of the system the user did not explicitly choose. Order candidates from
-"smallest input change" to "largest stack change":
+Order fixes from smallest input change to largest stack change:
 
-1. **Smallest version regression.** When a dependency upgrade is the
-   proximate cause of the failure, try downgrading that dependency by
-   one minor or patch version before changing build/install machinery,
-   switching backends, or rewriting workflow steps. Two-version-down
-   beats N-tool-changes-deep almost every time, and it preserves the
-   rest of the user's setup. A version pin is also a smaller diff than
-   a backend swap.
-2. **Repo-rule compliance.** If Diagnosis discipline surfaced a violated
-   repo rule (e.g., unpinned version), the fix is "comply with the
-   rule" — usually a one-line config change.
-3. **Same-tool config tweak.** Adjust the existing tool's config
-   (`mise.toml`, `.lychee.toml`, `tsconfig.json`) before swapping the
-   tool out.
-4. **Same-tool backend/option change.** Switch backend, installer
-   flag, or runner option within the user's chosen tool.
-5. **Tool-stack change.** Removing or replacing a tool the user named.
+| Priority | Candidate | Notes |
+|----------|-----------|-------|
+| 1 | Version downgrade (one minor/patch) | When dep upgrade is proximate cause; smaller diff than backend swap |
+| 2 | Repo-rule compliance | Comply with the violated rule — usually a one-line config change |
+| 3 | Same-tool config tweak | Adjust `mise.toml`, `.lychee.toml`, `tsconfig.json` before swapping tools |
+| 4 | Same-tool backend/option change | Switch backend, installer flag, or runner option within existing tool |
+| 5 | Tool-stack change | Removing/replacing a user-named tool — **requires explicit confirmation** |
 
-**Coupled config travels with version changes.** When a fix changes a
-tool's version (bump or downgrade), list the config files that tool
-reads (`.lychee.toml`, `.rubocop.yml`, `tsconfig.json`, `mise.toml`,
-package-manager lockfiles, etc.) and treat them as a coupled set. A
-version change without a coupled-config check often produces a fix that
-ships fine in isolation but breaks the next run. When **reverting** a
-version, also revert any config changes that were made for the
-abandoned version — unless the new syntax is forwards-compatible. A
-one-line check ("did I change config files for this version?") at
-version-revert time catches this; treat it as part of the fix, not as
-follow-up work.
+**Coupled config rule:** When changing a tool's version (bump or revert), audit all config files that tool reads (`.rubocop.yml`, `tsconfig.json`, lockfiles, etc.) in the same commit. A version change without a coupled-config check ships fine in isolation and breaks the next run.
 
-**Hard rule: do not bypass a user-named tool without explicit
-confirmation.** When the user has explicitly named the tool stack they
-want (`mise-action`, `actions/setup-node`, a specific package manager,
-etc.), do not silently rewrite the workflow to skip that tool because
-the obvious fixes proved hard. A property of a tool's behavior
-("auto-install off", "no caching") is not the same as the tool itself
-("mise", "setup-node"). Before any change at level 5 above, stop and
-ask:
-
-> "<Tool>'s <backend/config> is failing on <version>. Options:
-> (a) downgrade <dep> to <prior-version>, (b) switch to <alternative
-> backend within the same tool>, (c) drop <tool> from this workflow.
-> Which do you want?"
-
-Even in auto mode, removing a named tool from the user's stack is a
-design decision that exceeds the autonomy budget — it is not "make
-reasonable assumptions on routine work."
+**Hard rule:** Before any level-5 change, stop and ask the user — do not silently remove a named tool. Even in auto mode, dropping a user-named tool exceeds the autonomy budget.
 
 ### Loop Limits
 
