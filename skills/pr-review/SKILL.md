@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-182713'
+  version: '2026.05.08-183612'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -369,13 +369,14 @@ parallel experiments** that try to break it. Use the Agent tool to run
 these concurrently — each agent writes its own script under
 `.review-playground/` and reports back.
 
-- **Edge cases:** boundary values, empty inputs, null/undefined/nil, zero, negative, max-size collections, single vs many, unicode, special characters, whitespace-only, very long strings
-- **Boundary arithmetic:** off-by-one, fence-post, integer overflow/underflow, floating-point precision, array index bounds (first/last/one-past-end), loop termination, pagination (page 0 vs 1, last page, beyond last)
-- **Type confusion:** wrong types per parameter; implicit coercion traps (`"0"` vs `0` vs `false`, empty string vs null, `[]` vs `{}`); values that satisfy the type but violate semantic constraints (negative age, future birth date, email without `@`)
-- **Input mutation:** valid inputs with one field mutated — wrong type, missing field, extra field, swapped arguments, out-of-range; confirm graceful failure rather than silent wrong output
-- **State and ordering:** stateful code — call methods out of order (use-before-init, double-init, use-after-close, concurrent callers); async code — test interleaving and cancellation
-- **Fuzz:** randomized inputs (strings, numbers, nested objects) in a loop; vary volume (1, 10, 1000 calls) to expose resource leaks or accumulation bugs
-- **Output:** return values match expected types and contracts; mutate output in downstream consumers to verify callers validate what they receive; existing callers still receive the expected shape
+- **Boundary values:** empty, null/nil/undefined, zero, negative, max-size, single-vs-many, off-by-one, first/last/one-past-end, pagination edges.
+- **Type confusion:** wrong types per parameter; implicit coercion traps (`"0"` vs `0` vs `false`, `[]` vs `{}`); values that satisfy the type but violate semantic constraints.
+- **Input mutation:** valid input with one field wrong (wrong type, missing, extra, swapped, out-of-range); confirm graceful failure rather than silent corruption.
+- **State and ordering:** call stateful methods out of order (use-before-init, double-init, use-after-close); test async interleaving and cancellation.
+- **Fuzz:** randomized inputs in a loop; vary volume (1 / 10 / 1000) to expose resource leaks or accumulation bugs.
+- **Output contracts:** return values match expected types; mutate output in downstream consumers to verify callers validate what they receive.
+- **Concurrency:** parallel callers on shared state; race conditions; lock/unlock symmetry.
+- **Runtime portability:** run under each interpreter/runtime version in the project's support matrix, not just the one on `PATH`.
 
 **Interpreter / runtime portability:** When the diff touches scripts
 or modules that target multiple runtime environments (Linux CI vs
@@ -422,13 +423,7 @@ For each queued bot finding:
    is O(n²)," time it at growing input sizes. If the finding is
    "this regex doesn't match Y," feed it Y. Use the same
    adversarial-testing patterns as the rest of Phase 4.
-3. **Classify the outcome:**
-
-| Outcome | Definition | Phase 5 action |
-|---------|------------|----------------|
-| **Confirmed** | The script reproduces the failure mode the bot described. | **Skip the reply.** The bot's thread already carries the finding; a "validated locally" pile-on is noise. Only reply if the playground surfaced **new evidence the bot missed** (different reproduction angle, broader blast radius, an additional failure mode). |
-| **Refuted** | The script contradicts the bot's claim — the code behaves correctly under the inputs the bot flagged. | Reply with `**Could not reproduce** — <one-line counter-evidence>` and a brief explanation of what was tested. Do NOT silently leave the thread open; the author needs the counter-signal to dismiss confidently. |
-| **Inconclusive** | The script can't decisively confirm or refute (missing fixtures, the failure mode requires production-only state, the claim is style/preference rather than behavior). | Leave the thread alone. Note "inconclusive" in the Phase 4 summary so the user can decide whether to investigate further or accept the bot's verdict. |
+3. **Classify the outcome** as **Confirmed**, **Refuted**, or **Inconclusive**. Phase 5 drives the reply based on this classification — see the outcome table in Phase 5 "Deduplicate against existing comments."
 
 Save each validation script under
 `.review-playground/bot-findings/{bot_login}-{thread_id}.{ext}` so
@@ -440,14 +435,6 @@ code), skip the script step and use Phase 3 reading-based
 investigation instead — but still classify outcome and reply
 accordingly. The reply policy is the same regardless of how the
 verdict was reached.
-
-**Silent skip on agreement is the default for bot threads.** A confirmed
-bot finding gets no reply — the bot's thread already carries the verdict
-and a duplicate "validated locally" reply just adds noise. A refuted
-finding always gets a reply with counter-evidence so the author can
-dismiss the bot confidently. Inconclusive findings the agent
-independently flagged get the agent's own evidence; otherwise leave the
-thread alone.
 
 ### Validate PR tests via mutation
 
@@ -468,49 +455,15 @@ test correctly failed.
 
 ### Cross-system artifact-flow validation
 
-When the diff touches a flow where one system **produces** an
-artifact and another system **consumes** it across a process or
-network boundary — CI artifact upload/download, S3/GCS object
-publish + fetch, queue producer/consumer, file drop + scanner —
-verify the producer's output layout matches the consumer's read
-strategy. Mismatches survive unit tests because each side is
-tested against its own assumed layout, not the actual on-disk /
-on-wire shape.
+When the diff touches a producer→consumer boundary (CI artifact upload/download, S3/GCS publish+fetch, queue, file-drop+scanner), verify the output layout matches the read strategy.
 
-Checks to run for every producer→consumer pair in the diff:
-
-1. **Compare the produced path/key against the consumed path/key
-   exactly.** If the producer writes `prefix/foo.ext` and the
-   consumer expects flat `foo.ext`, the consumer needs to either
-   recurse or include the prefix. Most artifact systems
-   (Buildkite artifacts, S3 sync, `cp -r`, `tar`) preserve
-   sub-directory structure on the consuming side; flat scans miss
-   nested files silently.
-2. **Verify recursion depth.** If the producer writes nested
-   paths and the consumer uses a non-recursive scan
-   (`read_dir`, `ls`, `glob('*.ext')` without `**`), the nested
-   files will never be found. Migrations that swap a recursive
-   tool (`find -name`) for a non-recursive one (`read_dir`,
-   `Path.glob('*')`) are a common silent regression.
-3. **Check the test harness mirrors production layout, not the
-   consumer's scan assumption.** Tests that place fixtures at
-   the path the consumer happens to scan today will pass even
-   when the producer writes somewhere else. Tests must populate
-   fixtures at the **producer's actual output path** for the
-   given environment.
-4. **Detect destructive cleanup that runs after a missed read.**
-   If the consumer wipes the staging directory after attempting
-   to consume (`rm -rf`, `remove_dir_all`, `shutil.rmtree`) and
-   the read missed the file, the data is gone before anyone
-   notices. Flag any cleanup-after-consume path that doesn't
-   first verify the consume succeeded.
-
-Build a playground experiment that **populates the staging
-location with the producer's actual layout** (including any
-prefixes, nested directories, or naming conventions the
-producer applies) and runs the consumer against it. Tests that
-only exercise the consumer's scan in isolation cannot catch
-layout mismatches.
+| Component | What to check |
+|-----------|--------------|
+| **Path/key match** | Producer's written path exactly equals consumer's expected path — including prefixes, subdirectories, and naming conventions. |
+| **Recursion depth** | Consumer scan is recursive if producer writes nested paths; non-recursive scans (`read_dir`, `glob('*.ext')`) silently miss subdirectories. |
+| **Test fixtures** | Test harness populates fixtures at the producer's actual output path, not the consumer's assumed path — otherwise tests pass on layout mismatch. |
+| **Cleanup ordering** | Destructive cleanup (`rm -rf`, `shutil.rmtree`) runs only after confirming the consume succeeded; cleanup-before-verify loses data silently. |
+| **Playground experiment** | Populate staging with the producer's real layout and run the consumer against it — isolated consumer tests cannot catch layout mismatches. |
 
 ### Interface contract violations
 
