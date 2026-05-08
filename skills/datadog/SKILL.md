@@ -16,7 +16,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-182715'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -55,14 +55,6 @@ If keys are missing, ask:
 > Set them as environment variables:
 > `export DATADOG_API_KEY=... DATADOG_APP_KEY=...`"
 
-### Auth header helper
-
-All requests use these headers:
-
-```bash
-DD_HEADERS=(-H "DD-API-KEY: ${DATADOG_API_KEY}" -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}" -H "Content-Type: application/json")
-```
-
 ## File Access Rules
 
 **HARD RULE:** Write tool may ONLY create temporary JSON payload files
@@ -74,8 +66,6 @@ Read may access any path (read-only) to understand existing configurations.
 
 ## Step 2: Identify the Operation
 
-Determine what the user wants from their request:
-
 | Resource | API Version | Base Path |
 |----------|-------------|-----------|
 | Dashboard | v1 | `${DD_API}/v1/dashboard` |
@@ -83,149 +73,149 @@ Determine what the user wants from their request:
 | SLO | v1 | `${DD_API}/v1/slo` |
 | Notebook | v1 | `${DD_API}/v1/notebooks` |
 
+## Common Patterns
+
+### Auth header helper
+
+All requests use these headers:
+
+```bash
+DD_HEADERS=(-H "DD-API-KEY: ${DATADOG_API_KEY}" -H "DD-APPLICATION-KEY: ${DATADOG_APP_KEY}" -H "Content-Type: application/json")
+```
+
+### Canonical curl skeleton
+
+```bash
+# Read (list / get)
+curl -s -X GET  "${DD_API}/v1/{resource}[/{id}]" "${DD_HEADERS[@]}" | jq .
+
+# Write (create)
+curl -s -X POST "${DD_API}/v1/{resource}" "${DD_HEADERS[@]}" --data @payload.json | jq .
+
+# Write (update)
+curl -s -X PUT  "${DD_API}/v1/{resource}/{id}" "${DD_HEADERS[@]}" --data @payload.json | jq .
+
+# Delete (see confirm rule below)
+curl -s -X DELETE "${DD_API}/v1/{resource}/{id}" "${DD_HEADERS[@]}"
+```
+
+### Confirm-before-delete
+
+**HARD RULE:** Always confirm with the user before issuing any DELETE request,
+for every resource type (dashboards, monitors, SLOs, notebooks).
+
+### Error handling
+
+| HTTP Status | Meaning | Action |
+|-------------|---------|--------|
+| 400 | Bad request | Show the error body, help user fix the JSON payload |
+| 403 | Forbidden | Check API/App key permissions, suggest user verify keys |
+| 404 | Not found | Verify the resource ID, list resources to find correct one |
+| 429 | Rate limited | Wait and retry after the `X-RateLimit-Reset` header value |
+
+---
+
 ## Dashboards
 
-### List dashboards
+Endpoints: `${DD_API}/v1/dashboard[/{dashboard_id}]`
+
+### List / Get
 
 ```bash
 curl -s -X GET "${DD_API}/v1/dashboard" "${DD_HEADERS[@]}" | jq '.dashboards[] | {id, title, url}'
-```
-
-### Get dashboard by ID
-
-```bash
 curl -s -X GET "${DD_API}/v1/dashboard/{dashboard_id}" "${DD_HEADERS[@]}" | jq .
 ```
 
-### Create dashboard
+### Create / Update
 
-Build a JSON definition and POST it. Ask the user for:
-- Title and description
-- Layout type: `ordered` (grid) or `free` (freeform)
-- Widgets to include (timeseries, query value, top list, heatmap, etc.)
+Ask the user for: title, description, layout type (`ordered` or `free`), and
+widgets (timeseries, query value, top list, heatmap, etc.).
 
 ```bash
-curl -s -X POST "${DD_API}/v1/dashboard" "${DD_HEADERS[@]}" \
-  --data @dashboard.json | jq '{id, title, url}'
+curl -s -X POST "${DD_API}/v1/dashboard" "${DD_HEADERS[@]}" --data @dashboard.json | jq '{id, title, url}'
+curl -s -X PUT  "${DD_API}/v1/dashboard/{dashboard_id}" "${DD_HEADERS[@]}" --data @dashboard.json | jq '{id, title, url}'
 ```
 
-### Update dashboard
+### Delete
 
-```bash
-curl -s -X PUT "${DD_API}/v1/dashboard/{dashboard_id}" "${DD_HEADERS[@]}" \
-  --data @dashboard.json | jq '{id, title, url}'
-```
-
-### Delete dashboard
-
-**Always confirm with the user before deleting.**
+See [Confirm-before-delete](#confirm-before-delete).
 
 ```bash
 curl -s -X DELETE "${DD_API}/v1/dashboard/{dashboard_id}" "${DD_HEADERS[@]}"
 ```
 
-### Clone dashboard
+### Clone
 
 Get the existing dashboard, strip the `id` field, modify the title, and POST
 as a new dashboard.
 
+---
+
 ## Monitors
 
-### List monitors
+Endpoints: `${DD_API}/v1/monitor[/{monitor_id}]`
+
+### List / Get
 
 ```bash
 curl -s -X GET "${DD_API}/v1/monitor" "${DD_HEADERS[@]}" | jq '.[] | {id, name, type, overall_state}'
-```
-
-Search with query parameter:
-
-```bash
 curl -s -X GET "${DD_API}/v1/monitor?query=tag:env:production" "${DD_HEADERS[@]}"
-```
-
-### Get monitor by ID
-
-```bash
 curl -s -X GET "${DD_API}/v1/monitor/{monitor_id}" "${DD_HEADERS[@]}" | jq .
 ```
 
-### Create monitor
+### Create / Update
 
-Ask the user for:
-- Monitor type: `metric alert`, `log alert`, `apm`, `process`, `composite`, etc.
-- Query (metric query, log query, etc.)
-- Thresholds (critical, warning, ok)
-- Notification message and recipients
+Ask the user for: monitor type (`metric alert`, `log alert`, `apm`, `process`,
+`composite`, etc.), query, thresholds (critical, warning, ok), notification
+message, and recipients.
 
 ```bash
-curl -s -X POST "${DD_API}/v1/monitor" "${DD_HEADERS[@]}" \
-  --data @monitor.json | jq '{id, name, type}'
+curl -s -X POST "${DD_API}/v1/monitor" "${DD_HEADERS[@]}" --data @monitor.json | jq '{id, name, type}'
+curl -s -X PUT  "${DD_API}/v1/monitor/{monitor_id}" "${DD_HEADERS[@]}" --data @monitor.json | jq '{id, name, type}'
 ```
 
-### Update monitor
+### Delete
 
-```bash
-curl -s -X PUT "${DD_API}/v1/monitor/{monitor_id}" "${DD_HEADERS[@]}" \
-  --data @monitor.json | jq '{id, name, type}'
-```
-
-### Delete monitor
-
-**Always confirm with the user before deleting.**
+See [Confirm-before-delete](#confirm-before-delete).
 
 ```bash
 curl -s -X DELETE "${DD_API}/v1/monitor/{monitor_id}" "${DD_HEADERS[@]}"
 ```
 
-### Mute / Unmute monitor
+### Mute / Unmute
 
 ```bash
-# Mute
 curl -s -X POST "${DD_API}/v1/monitor/{monitor_id}/mute" "${DD_HEADERS[@]}"
-
-# Unmute
 curl -s -X POST "${DD_API}/v1/monitor/{monitor_id}/unmute" "${DD_HEADERS[@]}"
 ```
 
+---
+
 ## SLOs
 
-### List SLOs
+Endpoints: `${DD_API}/v1/slo[/{slo_id}]`
+
+### List / Get
 
 ```bash
 curl -s -X GET "${DD_API}/v1/slo" "${DD_HEADERS[@]}" | jq '.data[] | {id, name, type}'
-```
-
-### Get SLO by ID
-
-```bash
 curl -s -X GET "${DD_API}/v1/slo/{slo_id}" "${DD_HEADERS[@]}" | jq .
 ```
 
-### Create SLO
+### Create / Update
 
-Ask the user for:
-- SLO type: `metric` or `monitor`
-- Name and description
-- Target percentage (e.g., 99.9)
-- Timeframe: `7d`, `30d`, `90d`
-- For metric-based: numerator and denominator queries
-- For monitor-based: monitor IDs
+Ask the user for: SLO type (`metric` or `monitor`), name, description, target
+percentage (e.g., 99.9), timeframe (`7d`, `30d`, `90d`). For metric-based:
+numerator and denominator queries. For monitor-based: monitor IDs.
 
 ```bash
-curl -s -X POST "${DD_API}/v1/slo" "${DD_HEADERS[@]}" \
-  --data @slo.json | jq '.data[] | {id, name, type}'
+curl -s -X POST "${DD_API}/v1/slo" "${DD_HEADERS[@]}" --data @slo.json | jq '.data[] | {id, name, type}'
+curl -s -X PUT  "${DD_API}/v1/slo/{slo_id}" "${DD_HEADERS[@]}" --data @slo.json | jq '.data[] | {id, name}'
 ```
 
-### Update SLO
+### Delete
 
-```bash
-curl -s -X PUT "${DD_API}/v1/slo/{slo_id}" "${DD_HEADERS[@]}" \
-  --data @slo.json | jq '.data[] | {id, name}'
-```
-
-### Delete SLO
-
-**Always confirm with the user before deleting.**
+See [Confirm-before-delete](#confirm-before-delete).
 
 ```bash
 curl -s -X DELETE "${DD_API}/v1/slo/{slo_id}" "${DD_HEADERS[@]}"
@@ -238,55 +228,38 @@ curl -s -X GET "${DD_API}/v1/slo/{slo_id}/history?from_ts={epoch}&to_ts={epoch}"
   "${DD_HEADERS[@]}" | jq .
 ```
 
+---
+
 ## Notebooks
 
-### List notebooks
+Endpoints: `${DD_API}/v1/notebooks[/{notebook_id}]`
+
+### List / Get
 
 ```bash
 curl -s -X GET "${DD_API}/v1/notebooks" "${DD_HEADERS[@]}" | jq '.data[] | {id, attributes: {name: .attributes.name}}'
-```
-
-### Get notebook by ID
-
-```bash
 curl -s -X GET "${DD_API}/v1/notebooks/{notebook_id}" "${DD_HEADERS[@]}" | jq .
 ```
 
-### Create notebook
+### Create / Update
 
-Ask the user for:
-- Name
-- Cells (markdown text, timeseries, log stream, etc.)
-- Time range
+Ask the user for: name, cells (markdown text, timeseries, log stream, etc.),
+and time range.
 
 ```bash
-curl -s -X POST "${DD_API}/v1/notebooks" "${DD_HEADERS[@]}" \
-  --data @notebook.json | jq '.data | {id, attributes: {name: .attributes.name}}'
+curl -s -X POST "${DD_API}/v1/notebooks" "${DD_HEADERS[@]}" --data @notebook.json | jq '.data | {id, attributes: {name: .attributes.name}}'
+curl -s -X PUT  "${DD_API}/v1/notebooks/{notebook_id}" "${DD_HEADERS[@]}" --data @notebook.json | jq '.data | {id}'
 ```
 
-### Update notebook
+### Delete
 
-```bash
-curl -s -X PUT "${DD_API}/v1/notebooks/{notebook_id}" "${DD_HEADERS[@]}" \
-  --data @notebook.json | jq '.data | {id}'
-```
-
-### Delete notebook
-
-**Always confirm with the user before deleting.**
+See [Confirm-before-delete](#confirm-before-delete).
 
 ```bash
 curl -s -X DELETE "${DD_API}/v1/notebooks/{notebook_id}" "${DD_HEADERS[@]}"
 ```
 
-## Error Handling
-
-| HTTP Status | Meaning | Action |
-|-------------|---------|--------|
-| 400 | Bad request | Show the error body, help user fix the JSON payload |
-| 403 | Forbidden | Check API/App key permissions, suggest user verify keys |
-| 404 | Not found | Verify the resource ID, list resources to find correct one |
-| 429 | Rate limited | Wait and retry after the `X-RateLimit-Reset` header value |
+---
 
 ## Quick Reference
 
