@@ -12,7 +12,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073751'
+  version: '2026.05.08-120000'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -30,29 +30,9 @@ organization. Activates automatically when the agent is about to run any
 
 ## Step 1: Check for $GITHUB_ORG
 
-Before running any `gh` command, verify that `$GITHUB_ORG` is set:
-
-```bash
-echo "${GITHUB_ORG:?}"
-```
-
-### If $GITHUB_ORG is missing or empty
-
-**STOP.** Do not run the `gh` command. Prompt the user:
-
-> "`$GITHUB_ORG` is not set. All GitHub operations are scoped to your
-> org to avoid noise from forks and personal repos.
->
-> Please set it:
-> ```
-> export GITHUB_ORG=your-org-name
-> ```
->
-> Or run `! export GITHUB_ORG=your-org-name` in this session."
-
-**Do not proceed until `$GITHUB_ORG` is set.** Do not guess or infer
-the org name from the current repo — it must be explicitly set by the
-user.
+Run `echo "${GITHUB_ORG:?}"` before any `gh` command.
+- **Missing/empty:** STOP — prompt the user to run `export GITHUB_ORG=your-org-name`; do not guess or infer from the current repo.
+- **Set:** proceed to Step 2.
 
 ## Step 2: Scope All Commands
 
@@ -105,28 +85,13 @@ In all other cases, default to `$GITHUB_ORG`.
 
 ## Canonical download path
 
-When saving any GitHub artifact to disk — API response bodies, PR body
-drafts, review payloads, workflow run logs, issue comment dumps — write
-to a structured, namespaced path rather than an ad-hoc `/tmp/<name>`.
+For artifact download paths, see `skills/buildkite/SKILL.md` — the pattern is
+identical (`/tmp/agent/<tool>/<resource>/...`). The `gh`-specific root is
+`/tmp/agent/gh/<owner>/<repo>/<resource_type>/<resource_id>/<filename>`.
 
-```
-/tmp/agent/gh/<owner>/<repo>/<resource_type>/<resource_id>/<filename>
-```
-
-| Resource | Example path |
-|---|---|
-| PR body draft | `/tmp/agent/gh/<owner>/<repo>/pulls/<n>/body.md` |
-| Self-review payload | `/tmp/agent/gh/<owner>/<repo>/pulls/<n>/self_review.json` |
-| Issue comments | `/tmp/agent/gh/<owner>/<repo>/issues/<n>/comments.json` |
-| Workflow run log | `/tmp/agent/gh/<owner>/<repo>/runs/<run_id>/log.txt` |
-
-Run `mkdir -p` on the directory before writing. The structure namespaces
-parallel work across multiple PRs/repos, prevents cross-session
-overwrites of identically-named scratch files, and provides a
-greppable audit trail (`ls /tmp/agent/gh/<owner>/<repo>/pulls/`).
-
-This convention is shared across every skill that downloads from an
-external system — see `wk-buildkite` for the matching path.
+Apply `--owner=$GITHUB_ORG` filtering to all `gh search` and `gh api
+notifications` calls when writing artifacts to ensure the path namespace
+stays org-scoped.
 
 ## Quick Reference
 

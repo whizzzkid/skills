@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.05-180000'
+  version: '2026.05.08-120000'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -58,15 +58,9 @@ build status, investigating failures, viewing logs, and monitoring builds.
 - Viewing build logs or job details
 - Any CI-related task (use Buildkite tools, NOT GitHub tools)
 
-## Pre-Flight: Auth Check
+## Auth Error Handling
 
-**HARD RULE:** Before any `bk` command, verify authentication works:
-
-```bash
-bk build view -p <pipeline> -b main --json 2>&1 | head -3
-```
-
-If you see ANY of these errors:
+If any `bk` command returns ANY of these errors:
 - `401 Authentication required`
 - `Your access token doesn't have the <scope> scope`
 - `403 Forbidden`
@@ -77,29 +71,49 @@ If you see ANY of these errors:
 > Buildkite CLI needs re-authentication. Please run `bk auth login` in your
 > terminal to refresh credentials.
 
-Common missing scopes:
-- `read_build_logs` — needed for `bk job log`
-- `read_builds` — needed for `bk build view`
-- `read_organizations` — needed for listing pipelines
+Common missing scopes: `read_build_logs` (job logs), `read_builds` (build
+view), `read_organizations` (pipeline listing).
 
 Do NOT attempt to configure auth, create tokens, or work around auth failures
-yourself. The user must run `bk auth login` interactively.
+yourself. The user must run `bk auth login` interactively. If logs can't be
+fetched after re-auth, ask the user to download them from the Buildkite web UI.
+
+## Pre-Flight: Auth Check
+
+**HARD RULE:** Before any `bk` command, verify authentication works:
+
+```bash
+bk build view -p <pipeline> -b main --json 2>&1 | head -3
+```
+
+If this returns an auth error, follow the [Auth Error Handling](#auth-error-handling)
+guidance above.
+
+## Canonical Build Query
+
+Use this pattern whenever you need to inspect a build's jobs:
+
+```bash
+bk build view -p <pipeline> -b <branch> --json 2>&1 | \
+  jq '{number: .number, state: .state, finished: .finished_at, \
+       jobs: [.jobs[] | select(.state == "failed" or .state == "broken") | \
+              {name: .name, state: .state, exit_status: .exit_status}]}'
+```
+
+Adjust the `jq` filter for the specific need (e.g., swap `-b <branch>` for
+`<build-number>` when targeting a specific build; change the `select` predicate
+to filter by different states).
 
 ## Checking Build Status
 
 ### Current Branch
 
-```bash
-bk build view -p <pipeline> -b <branch> --json 2>&1 | \
-  jq '{number: .number, state: .state, finished: .finished_at, jobs: [.jobs[] | select(.state == "failed" or .state == "broken") | {name: .name, state: .state, exit_status: .exit_status}]}'
-```
+Use the canonical build query (see above), selecting failed/broken jobs.
 
 ### Specific Build
 
-```bash
-bk build view -p <pipeline> <build-number> --json 2>&1 | \
-  jq '{state: .state, jobs: [.jobs[] | select(.type == "script") | {name: .name, state: .state, exit_status: .exit_status}]}'
-```
+Use the canonical build query with `<build-number>` in place of `-b <branch>`,
+filtering on `.type == "script"` jobs.
 
 ## Understanding Build States
 
@@ -130,10 +144,8 @@ investigate `failed` jobs first.
 
 ### Get Failed Job IDs
 
-```bash
-bk build view -p <pipeline> -b <branch> --json 2>&1 | \
-  jq -r '.jobs[] | select(.state == "failed") | "\(.id) \(.name)"'
-```
+Use the canonical build query (see above) with `.jobs[] | select(.state ==
+"failed") | "\(.id) \(.name)"` as the filter.
 
 ### Fetch Logs
 
@@ -141,13 +153,7 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | \
 bk job log <job-uuid> -p <pipeline> -b <build-number> --no-timestamps 2>&1
 ```
 
-If this returns `Your access token doesn't have the read_build_logs scope`:
-
-> Your Buildkite token is missing the `read_build_logs` scope. Please run
-> `bk auth login` to re-authenticate with the correct permissions.
-
-**Fallback:** If logs can't be fetched after re-auth, ask the user to download
-them from the Buildkite web UI and share the file for analysis.
+If this returns an auth/scope error, follow [Auth Error Handling](#auth-error-handling).
 
 ## Investigating Failures
 
@@ -155,10 +161,8 @@ Follow this progressive disclosure pattern:
 
 ### Step 1: Get Overall Status
 
-```bash
-bk build view -p <pipeline> -b <branch> --json 2>&1 | \
-  jq '{state: .state, jobs: [.jobs[] | select(.state == "failed") | {name: .name, exit_status: .exit_status}]}'
-```
+Use the canonical build query (see above), selecting only `failed` jobs and
+extracting `{name, exit_status}`.
 
 ### Step 2: Get Logs for Failed Jobs
 
@@ -180,12 +184,8 @@ For each failed job, fetch and analyze logs. Look for:
 
 ### Step 4: Check if Pre-Existing
 
-Compare with main branch to see if the failure is new:
-
-```bash
-bk build view -p <pipeline> -b main --json 2>&1 | \
-  jq '[.jobs[] | select(.name == "<failing-step-name>") | {state: .state, exit_status: .exit_status}]'
-```
+Use the canonical build query (see above) against `-b main`, selecting the
+specific failing step by name.
 
 ## Monitoring Builds After Push
 
@@ -241,38 +241,19 @@ This requires a token with the `write_builds` scope.
 
 ## Adding env vars to a CI pipeline
 
-A new environment variable that the build needs at runtime must be
-allowlisted at **every** layer between the Buildkite agent host and
-the container that reads it. Adding the var at one layer is silently
-insufficient — the var is dropped at the first layer that doesn't
-forward it, and the feature appears wired but never receives the
-value.
+A new env var must be present at **every** forwarding layer or it is silently
+dropped before reaching the container.
 
-The layers, in forwarding order:
+| Layer | Where to set | Example |
+|-------|-------------|---------|
+| Pipeline definition | `env:` block in `pipeline.yml` | `env:\n  MY_VAR: "value"` |
+| Pipeline build script | plugin `env:` array in `pipeline.rb` | `env: ["MY_VAR"]` |
+| Compose definition | `environment:` in `docker-compose.yml` | `environment:\n  - MY_VAR` |
+| Container image | `ENV` in `Dockerfile` | `ENV MY_VAR=""` |
 
-1. **Pipeline definition** (`pipeline.yml` or generated equivalent) —
-   the `env:` block exposes the var to the step. Without this the
-   agent never sees it.
-2. **Pipeline build script** (e.g., a `pipeline.rb` / dynamic-pipeline
-   generator) — when the pipeline uses the docker-compose plugin,
-   that plugin has its **own** `env:` array listing which build-host
-   variables it forwards into the compose invocation. A var present
-   on the agent but missing from this array is dropped at the
-   compose layer.
-3. **Compose definition** (`docker-compose.yml` or equivalent) — the
-   service's `environment:` block must reference the var so compose
-   passes it into the container.
-4. **Container image** (`Dockerfile`) — declare the var with
-   `ENV VAR=""` to document that the entrypoint reads it. The image
-   is the canonical interface for the runtime; an undeclared var is
-   invisible to anyone reading the image alone.
-
-When adding or renaming a CI env var, walk every layer above and
-verify the var name is present at each one. Where the pipeline build
-script has a corresponding spec, add an
-`expect(config['env']).to include('VAR')` assertion so a future
-removal at the plugin layer is caught by the test suite, not by a
-silently-broken build.
+Walk every layer when adding or renaming a var. Where the pipeline build
+script has a spec, add `expect(config['env']).to include('VAR')` so a future
+omission is caught by tests, not a silently-broken build.
 
 ## Opening in Browser
 
