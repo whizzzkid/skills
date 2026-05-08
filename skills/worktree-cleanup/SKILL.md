@@ -23,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-081659'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -103,9 +103,9 @@ If the result is `> 0`, the branch has a merged PR.
 - **unmerged** — neither check confirmed it
 - **unknown** — `gh` command failed (e.g., no remote, no auth); treat as unmerged
 
-## Step 4: Capture learnings before deletion (HARD RULE)
+## Step 4: Capture learnings before deletion
 
-A worktree often holds the only copy of session-specific context —
+**HARD RULE:** A worktree often holds the only copy of session-specific context —
 ad-hoc notes, agent transcripts, draft plans not yet distilled into
 `$WK_SKILLS_HOME/learnings/`. Once the worktree is removed, that
 context is unrecoverable. Run `wk-retro` against each merged
@@ -177,12 +177,12 @@ git wtr {branch}
 
 This alias expands to `git worktree remove worktrees/{branch} && git branch -D {branch}`.
 
-**HARD RULE: Never call `git wtr` on a branch that has not been confirmed
-merged.** The `-D` flag force-deletes the branch regardless of merge status.
+**HARD RULE:** Never call `git wtr` on a branch that has not been confirmed
+merged. The `-D` flag force-deletes the branch regardless of merge status.
 If in doubt, classify as unmerged and let the user decide.
 
-**HARD RULE: Never call `git wtr` until Step 4 has either run
-`wk-retro` against the worktree or recorded an explicit skip.**
+**HARD RULE:** Never call `git wtr` until Step 4 has either run
+`wk-retro` against the worktree or recorded an explicit skip.
 Worktree-local learnings are unrecoverable post-deletion.
 
 ## Step 6: Prune Stale References

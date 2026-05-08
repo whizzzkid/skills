@@ -22,7 +22,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-224941'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1-mini       # low tier: gpt-4.1-mini | high tier: o3
     google: gemini-2.5-flash   # low tier: gemini-2.5-flash | high tier: gemini-2.5-pro
@@ -51,9 +51,9 @@ Explain what the agent should do and why.
 
 Continue with clear, actionable instructions.
 
-## HARD RULE: Example rule name
+## Example rule name
 
-State the rule in one sentence. Follow with a brief explanation of the
+**HARD RULE:** State the rule in one sentence. Follow with a brief explanation of the
 failure mode it prevents and how to comply.
 
 ## Quick Reference

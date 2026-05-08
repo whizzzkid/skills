@@ -20,7 +20,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080026'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -37,8 +37,8 @@ docs structure if the project doesn't have one.
 
 ## File Access Rules
 
-**HARD RULE: Write and Edit tools may ONLY target files under `docs/` in
-the project root. Never write or edit files outside of `docs/`.**
+**HARD RULE:** Write and Edit tools may ONLY target files under `docs/` in
+the project root. Never write or edit files outside of `docs/`.
 
 Read, Glob, and Grep may access any path (read-only) to understand code changes.
 

@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-083122'
+  version: '2026.05.08-181958'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -128,7 +128,7 @@ Read the current file and compare the line to confirm. Categorize each comment:
 
 ### Present and ask before resolving
 
-**HARD RULE: Never resolve review threads without explicit user consent.**
+**HARD RULE:** Never resolve review threads without explicit user consent.
 Present the categorized list and wait for confirmation.
 
 ```
@@ -354,9 +354,9 @@ immediately — do not wait until Phase 5 to discover duplicates.
 
 ## File Access Rules
 
-**HARD RULE: Write and Edit tools may ONLY target files under
+**HARD RULE:** Write and Edit tools may ONLY target files under
 `.review-playground/` in the project root. Never write or edit files
-outside of `.review-playground/`. Never commit playground files.**
+outside of `.review-playground/`. Never commit playground files.
 
 Read, Glob, and Grep may access any path (read-only) for code investigation.
 
@@ -671,8 +671,8 @@ posted, when the apply button silently fails.
 
 ### Deduplicate against existing comments
 
-**HARD RULE: Never post a new top-level comment that duplicates an existing
-review comment.** Before drafting each comment, check the exclusion list from
+**HARD RULE:** Never post a new top-level comment that duplicates an existing
+review comment. Before drafting each comment, check the exclusion list from
 Phase 2. A comment is a duplicate if it targets the same file and line range
 AND raises the same concern — even if you discovered it independently.
 
@@ -729,7 +729,7 @@ and can override individual entries.
 
 ### Validate comment positions against the diff
 
-**HARD RULE: Every inline comment must target a line that exists in the diff.**
+**HARD RULE:** Every inline comment must target a line that exists in the diff.
 Lines not in the diff (unchanged code, code from merge commits) will cause a
 422 "Line could not be resolved" error from the GitHub API.
 
@@ -769,7 +769,7 @@ individual comments.
 
 ## Phase 6: Post Review
 
-**HARD RULE: Never post the review on your own.** The user must always either:
+**HARD RULE:** Never post the review on your own. The user must always either:
 1. Post the review themselves from GitHub, or
 2. Explicitly confirm in the conversation that they want you to post it.
 

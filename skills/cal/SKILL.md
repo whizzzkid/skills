@@ -18,7 +18,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.04-174109'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -33,7 +33,9 @@ metadata:
 Canonical calendar operations for Google Calendar via MCP. All skills that
 interact with calendar data delegate here.
 
-## Auth Check (HARD RULE — always first)
+## Auth Check
+
+**HARD RULE:** Always perform this check first.
 
 Before any calendar operation, verify the Google Calendar MCP is available:
 

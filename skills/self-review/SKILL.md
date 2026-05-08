@@ -20,7 +20,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-081659'
+  version: '2026.05.08-181958'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -36,9 +36,9 @@ Post inline review comments on your own PR to help human reviewers understand
 design decisions, non-obvious logic, and critical context. This is not an
 adversarial bug hunt — it's documentation for reviewers.
 
-## HARD RULE: Pending review only
+## Pending review only
 
-**Self-review is always a pending review** — multiple inline comments
+**HARD RULE:** Self-review is always a pending review — multiple inline comments
 batched under a single GitHub review that the user submits manually
 after inspection. Never approximate this with direct
 `gh api repos/.../pulls/{n}/comments` calls. The raw comments endpoint

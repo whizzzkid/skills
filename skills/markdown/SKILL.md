@@ -27,7 +27,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-082719'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -76,9 +76,9 @@ Fix every line that appears in the output before writing.
 
 ## 🧭 Mermaid Diagrams
 
-**HARD RULE: Use a mermaid diagram for any relational, hierarchical,
+**HARD RULE:** Use a mermaid diagram for any relational, hierarchical,
 sequential, or flow content. Never substitute ASCII art, plain lists, or
-prose tables for structure that a diagram would make scannable.**
+prose tables for structure that a diagram would make scannable.
 
 | Content type | Mermaid diagram type |
 |---|---|
@@ -141,9 +141,9 @@ Use admonition-style blockquotes with a leading glyph:
 
 Do NOT embed emojis inside inline code, filenames, CLI commands, or URLs.
 
-## 🔗 Link Validation (HARD RULE)
+## 🔗 Link Validation
 
-**All links must be validated before the file is written or committed.**
+**HARD RULE:** All links must be validated before the file is written or committed.
 A broken link is a documentation bug.
 
 ### Step 1: Extract all links

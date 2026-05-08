@@ -21,7 +21,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-172800'
+  version: '2026.05.08-181958'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -194,9 +194,9 @@ following content is dead text — remove it in the same edit.
 If the audit surfaces cleanup beyond your original edit, bundle the
 cleanup into the same change. Do not leave known debt for a future pass.
 
-### Mechanical overfit scan (HARD RULE)
+### Mechanical overfit scan
 
-Before Step 6 presents the diff, run a checklist-driven grep
+**HARD RULE:** Before Step 6 presents the diff, run a checklist-driven grep
 against the **proposed edit text** — not against memory or intent.
 "Does this look overfitted?" answered by the same brain that just
 wrote the overfit defaults to "looks fine to me." A categorical

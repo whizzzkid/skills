@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-172225'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -194,9 +194,9 @@ Inline comments and their threads come from GraphQL + REST (below).
 Review summary bodies and issue comments must be fetched separately —
 they do not appear in `reviewThreads` or `/pulls/{n}/comments`.
 
-### HARD RULE: three-surface pre-flight check
+### Three-surface pre-flight check
 
-Before proceeding to Step 4, **every invocation** must have fetched
+**HARD RULE:** Before proceeding to Step 4, **every invocation** must have fetched
 all three surfaces in the current run. Track explicit per-invocation
 flags and refuse to advance until each is `true`:
 
@@ -222,7 +222,7 @@ issue), stop and report:
 
 Never silently advance with partial fetches.
 
-### HARD RULE: agent-observed drift is first-class feedback
+### Agent-observed drift is first-class feedback
 
 If during Step 1 (PR view) or Step 3 (file/diff reads) the agent
 notices PR drift the bots haven't flagged yet — stale title, stale
@@ -565,7 +565,7 @@ agent push back on this finding if it were doing the review
 itself? If no, `obvious-fix`. If yes (with a meaningful
 counterargument), `judgment-required`.
 
-A second mechanism (HARD RULE): immediately before emitting **any**
+**HARD RULE:** Immediately before emitting **any**
 Step 5 consultation prompt — not only `(d) Dismiss` — re-read the
 comment's "Why this could be skipped" rationale. If it is empty,
 "no valid reason," "no good reason to skip," `—`, or any phrasing
@@ -637,14 +637,14 @@ class, fix the class, reply once.
 
 ## Step 5: Consult — Collect All Decisions First
 
-**HARD RULE: Do NOT touch code during this step.** This is a
+**HARD RULE:** Do NOT touch code during this step. This is a
 consultation-only phase. Present each `judgment-required` comment one
 at a time, collect the user's decision, then move to the next. No
 edits, no commits, no replies — just decisions.
 
-### Partition before any prompts (HARD RULE)
+### Partition before any prompts
 
-Before emitting **any** Step 5 output, walk every suggestion produced
+**HARD RULE:** Before emitting **any** Step 5 output, walk every suggestion produced
 in Step 4 and place each into exactly one of two lists:
 
 ```
@@ -728,7 +728,7 @@ outside the reserved set. Never redefine a reserved letter.
 
 Wait for the user's response before presenting the next comment.
 
-**HARD RULE: one comment per message — never batch.** Emit exactly one
+**HARD RULE:** One comment per message — never batch. Emit exactly one
 `Comment {n}/{total}` block per message, then stop and wait for the
 reply. Only after receiving the reply may the next comment be
 presented. Do not combine 2+ comments into a single message, even when
@@ -811,9 +811,9 @@ Announce the transition to execution:
 **Now** apply all decisions collected in Step 5. Process each entry in
 `fixes_to_apply` and `dismissals` in order.
 
-### Issue-class scan before each fix (HARD RULE)
+### Issue-class scan before each fix
 
-Before applying any fix, identify the **class** of the underlying
+**HARD RULE:** Before applying any fix, identify the **class** of the underlying
 issue (credential exposure, missing validation, unhandled error,
 race condition, missing fallback, etc.) and grep the **full PR
 diff** for every path that could share the same class. Apply the
@@ -898,8 +898,8 @@ extends a fix to **the same class on different lines**.
    Fixed in [`<short>`](https://github.com/{owner}/{repo}/commit/{full_sha}) — {explanation}
    ```
 
-   **HARD RULE: derive the full SHA from git, never extend the short
-   SHA by inference.** The 7-char short SHA is a prefix; the
+   **HARD RULE:** Derive the full SHA from git, never extend the short
+   SHA by inference. The 7-char short SHA is a prefix; the
    remaining 33 chars cannot be guessed. Capture the canonical
    full hash immediately after each commit:
 
@@ -1026,7 +1026,7 @@ and ask how to proceed.
 
 ### Update PR description
 
-**HARD RULE: after every push in this skill, sync the PR description.**
+**HARD RULE:** After every push in this skill, sync the PR description.
 Fixes applied and changes pushed during a resolve session invalidate
 prior claims in the body (commit counts, file lists, "remaining work"
 sections, linked commits). An out-of-date description misleads
@@ -1206,7 +1206,7 @@ across the session's invocations of `wk-pr-resolve`) is the
 ground truth — the bot's view will catch up on its next
 post-merge re-review.
 
-**HARD RULE: Never resolve threads in the `reply_only` list.** Those have
+**HARD RULE:** Never resolve threads in the `reply_only` list. Those have
 follow-up questions and must stay open for the reviewer to respond.
 
 Report progress as each action completes.

@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.05-160000'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -1155,7 +1155,7 @@ constrained by Slack's paste behavior — not by markdown aesthetics.
    - ... (omit the section entirely if no blockers)
 ```
 
-**HARD RULE — bare URLs only.** Slack does not render markdown
+**HARD RULE:** Bare URLs only. Slack does not render markdown
 `[text](url)` syntax when pasted from the clipboard; it renders the
 literal brackets and parentheses. Always emit URLs as bare strings
 (Slack auto-linkifies them on paste). This applies to both the

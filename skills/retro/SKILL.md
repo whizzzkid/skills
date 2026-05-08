@@ -28,7 +28,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-081659'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -110,9 +110,9 @@ useful. If a lens has no meaningful findings, skip it entirely.
 
 ## File Access Rules
 
-**HARD RULE: Write and Edit tools may ONLY target files under `~/.claude/`
+**HARD RULE:** Write and Edit tools may ONLY target files under `~/.claude/`
 (memory files, retro logs, MEMORY.md). Never write or edit files in the
-project working directory or anywhere else on the filesystem.**
+project working directory or anywhere else on the filesystem.
 
 Read, Glob, and Grep may access any path (read-only).
 

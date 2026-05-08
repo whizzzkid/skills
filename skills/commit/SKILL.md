@@ -23,7 +23,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080507'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -181,11 +181,11 @@ stop and ask the user to run the command manually.
 If a regular push is rejected, tell the user and ask how to proceed rather
 than automatically force-pushing.
 
-## Post-Push: PR Sync (HARD RULE)
+## Post-Push: PR Sync
 
-**After every successful push to a branch that has an open PR, the PR
+**HARD RULE:** After every successful push to a branch that has an open PR, the PR
 title and description MUST be re-checked against the post-push branch
-state and updated if they have drifted.** No exceptions.
+state and updated if they have drifted. No exceptions.
 
 Drift signals to a reviewer that the agent shipped without re-reading
 its own work. The PR is the source of truth for everyone except the

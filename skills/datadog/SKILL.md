@@ -16,7 +16,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080507'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -65,7 +65,7 @@ DD_HEADERS=(-H "DD-API-KEY: ${DATADOG_API_KEY}" -H "DD-APPLICATION-KEY: ${DATADO
 
 ## File Access Rules
 
-**HARD RULE: Write tool may ONLY create temporary JSON payload files
+**HARD RULE:** Write tool may ONLY create temporary JSON payload files
 (e.g., `dashboard.json`, `monitor.json`, `slo.json`, `notebook.json`)
 in the current directory for API requests. Never write to project source
 files, configuration, or any other location.**

@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.07-231719'
+  version: '2026.05.08-181958'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -224,9 +224,9 @@ Execute the plan step by step. After completing each step:
 Never batch multiple steps into one commit. Never defer documentation to the
 end. Never skip tests between commits.
 
-### Design pivots travel with their docs (HARD RULE)
+### Design pivots travel with their docs
 
-When a commit changes the **logical structure** of a feature —
+**HARD RULE:** When a commit changes the **logical structure** of a feature —
 not just a bug fix or polish, but a redirect of *how* the feature
 works — the same commit MUST update every artifact that described
 the old shape:
@@ -243,9 +243,9 @@ the old shape:
    updated in the same commit so counts and bullets stay in sync
    with the test file.
 
-### Test enumeration sync (HARD RULE)
+### Test enumeration sync
 
-Whenever a commit adds, removes, or renames a test, before
+**HARD RULE:** Whenever a commit adds, removes, or renames a test, before
 committing run a grep for the test file or function name across
 spec/plan/README artifacts:
 
@@ -472,8 +472,8 @@ If the review surfaces issues:
 
 ## Phase 5: PR
 
-**HARD RULE: every push to a branch that has no open PR invokes
-`wk-pr` automatically.** No size exemption — a one-line fix is the
+**HARD RULE:** Every push to a branch that has no open PR invokes
+`wk-pr` automatically. No size exemption — a one-line fix is the
 same as a 500-line feature for this rule. Phrases like "this is
 small," "this doesn't need a PR," or "just a quick fix" are red
 flags; if the rule applies, execute it. If the user pushes back
@@ -500,9 +500,9 @@ or any other method.** This is non-negotiable. `wk-pr` handles:
 
 `wk-commit` handles PR description sync and stale comment resolution after every push. See `wk-commit` for the full Post-Push PR Sync rules.
 
-### Pre-rework fetch (HARD RULE)
+### Pre-rework fetch
 
-Before any **rework** of a PR's branch — force-push, restructure,
+**HARD RULE:** Before any **rework** of a PR's branch — force-push, restructure,
 content rewrite, big rebase, scope change — fetch and reconcile
 against the PR's actual base **and** the default branch:
 
