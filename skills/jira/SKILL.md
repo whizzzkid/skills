@@ -32,7 +32,7 @@ user-invocable: false
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-000002'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -271,49 +271,21 @@ Report:
 ## Manual ticket operations (confirm-first)
 
 When the user explicitly asks the agent to create, edit, or batch-transition
-Jira items outside the auto lifecycle (e.g., "create user stories from this
-meeting", "split this epic", "move these to next sprint"), confirm before
-any write call.
+Jira items outside the auto lifecycle, confirm before any write call. Jira
+write operations via the Atlassian MCP connector (`createJiraIssue`,
+`editJiraIssue`, and similar write methods) are effectively irreversible —
+there is no delete API.
 
-**HARD RULE:** Never call `createJiraIssue`, `editJiraIssue`, or any
-write/transition tool on user-initiated work without explicit approval of
-the proposed change set.
+**HARD RULE:** Never call a Jira write method on user-initiated work without
+explicit approval of the proposed change set. Auto mode does not exempt —
+Jira items are visible to the whole team.
 
-### Why
-
-Jira write operations exposed via MCP are effectively irreversible: there
-is no delete API — the strongest cleanup available is a `Won't Do`
-transition which leaves the issue, links, and history visible. A wrong
-batch creates permanent noise and forces an apology trail.
-
-### When to ask
-
-Confirm before writing whenever any of these are true:
-
-- The source for the items is ambiguous (multiple candidate meetings,
-  docs, or threads could match the user's reference)
-- Items are generated from synthesis (meeting notes, conversation,
-  research) rather than restating user-supplied content verbatim
-- Multiple items will be written in one batch
-- The operation cannot be cleanly undone (creates, parent-link changes,
-  transitions to terminal states)
-
-### How to ask
-
-1. If the source is ambiguous, list the candidates first and confirm which
-   source to use before drafting items.
-2. Present the proposed write set as a numbered, scannable list — title
-   plus one-line summary per item. Do not show full descriptions.
-3. Wait for explicit confirmation ("yes", "create them", "go ahead").
-   Silence, "ok", or redirected questions are not confirmations.
-4. After confirmation, issue the writes in parallel.
-
-### Auto mode does not exempt
-
-Auto mode short-circuits *low-risk* assumptions, not write operations on
-shared systems. Jira items are visible to the team and entered into project
-tracking — treat them with the same caution as posting to a channel or
-pushing to a branch.
+| Operation | Confirmation required | Command pattern |
+|-----------|----------------------|-----------------|
+| Create issue(s) | Yes — show numbered list of titles before writing | Present draft set, wait for "yes" / "go ahead" |
+| Edit issue fields | Yes — if ambiguous source or batch | Show diff of proposed changes |
+| Transition to terminal state | Yes — if not part of auto lifecycle | Confirm the target state explicitly |
+| Assign to user (auto lifecycle) | No — auto-assign as part of Stage 2 | `editJiraIssue` with assignee |
 
 ---
 

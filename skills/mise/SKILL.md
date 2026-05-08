@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080947'
+  version: '2026.05.08-000001'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -69,15 +69,8 @@ non-interactive shell), the mise shims directory may not be on `$PATH`,
 so tools appear missing even though they are installed.
 
 **The fix:** Prefix any command with `mise exec --` to load the correct
-tool versions for the current directory before running.
-
-```bash
-# Instead of:
-node --version        # → "command not found"
-
-# Use:
-mise exec -- node --version   # → loads mise context, runs node
-```
+tool versions for the current directory before running. See the
+`mise exec --` pattern below.
 
 ## Diagnosing "Command Not Found"
 
@@ -99,7 +92,7 @@ mise current
 ```
 
 If `mise which <tool>` returns a path but the tool isn't on `$PATH`,
-use `mise exec --` to run it.
+see the `mise exec --` pattern in the next section.
 
 ## Running Commands with Mise Context
 
@@ -123,7 +116,7 @@ mise exec -- bun run dev
 **Explicit tool version for a single command:**
 
 ```bash
-mise exec node@20.11.0 -- node --version
+mise exec node@{version} -- node --version
 ```
 
 **Running a script that calls multiple tools:**
@@ -157,8 +150,8 @@ current directory. Run this when `mise ls` shows tools as not installed.
 ### Install a specific tool version
 
 ```bash
-mise use node@22.3.0       # pins to project .mise.toml
-mise use --global node@22.3.0  # pins globally
+mise use node@{version}          # pins to project .mise.toml
+mise use --global node@{version} # pins globally
 ```
 
 Always pin to an exact version — never use `latest` or `lts`.
@@ -176,18 +169,18 @@ mise ls-remote node | grep "^22\."  # filter to major
 
 ```toml
 [tools]
-node = "22.3.0"
-ruby = "3.3.1"
-python = "3.12.4"
-go = "1.22.5"
+node = "{version}"
+ruby = "{version}"
+python = "{version}"
+go = "{version}"
 ```
 
 ### `.tool-versions` (legacy asdf format)
 
 ```
-node 22.3.0
-ruby 3.3.1
-python 3.12.4
+node {version}
+ruby {version}
+python {version}
 ```
 
 When both exist in the same directory, `.mise.toml` takes precedence.
@@ -212,10 +205,10 @@ configuration conflicts. Run this first when mise behaves unexpectedly.
 
 ## Git Hooks and Mise
 
-Bash tool sessions do not inherit the user's interactive shell environment,
-so `mise activate` has not run. When a repo uses git hooks (lefthook, husky,
-pre-commit) that call mise-managed binaries, hooks fail with "command not
-found" (exit 127).
+When a repo uses git hooks (lefthook, husky, pre-commit) that call
+mise-managed binaries, hooks fail with "command not found" (exit 127) for
+the same reason described in "How Mise Works" above — the shims directory
+is not on `$PATH` in non-interactive shells.
 
 **Before `git push` or `git commit` in a mise-managed repo:**
 
@@ -235,7 +228,7 @@ is in `mise ls`, this is the cause. Activate mise and retry.
 | Tool not found in Claude/CI context | `mise exec -- <tool> [args]` |
 | Check what's installed | `mise ls` |
 | Install project tools | `mise install` |
-| Pin a tool version | `mise use node@22.3.0` |
+| Pin a tool version | `mise use node@{version}` |
 | Find where a tool is | `mise which <tool>` |
 | Debug mise setup | `mise doctor` |
 | Trust project config | `mise trust` |
