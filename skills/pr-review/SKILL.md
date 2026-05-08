@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-182713'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -92,7 +92,7 @@ Collect and internalize:
 - The base branch to understand what's being merged into
 
 Before moving on, announce what you found:
-> "Reviewing PR #N: *title* — X files changed, Y commits. Base: `main`. Let me dig in."
+> "Reviewing PR #N: *title* — X files changed, Y commits. Base: `{base_branch}`. Let me dig in."
 
 ## Phase 2: Existing Review Comments
 
@@ -149,28 +149,9 @@ Would you like me to resolve threads 1 and 2?
 ### Resolve confirmed threads
 
 After the user confirms, query for thread node IDs via GraphQL
-(follows the `reviewThreads` pattern from wk-pr-resolve Step 3 —
-this variant fetches only the fields needed for matching and resolving):
-
-```bash
-gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      pullRequest(number: $number) {
-        reviewThreads(first: 100) {
-          nodes {
-            id
-            isResolved
-            comments(first: 1) {
-              nodes { body path line }
-            }
-          }
-        }
-      }
-    }
-  }
-' -f owner="{owner}" -f repo="{repo}" -F number={number}
-```
+(see `skills/pr-resolve/references/graphql-review-threads.md` for the canonical query —
+use `comments(first: 1)` with only `body path line` fields when matching for resolution
+is all that is needed):
 
 Match each confirmed stale comment to its thread by `path` + `line` + `body`,
 then resolve:

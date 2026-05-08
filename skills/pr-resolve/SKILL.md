@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-182713'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -254,27 +254,7 @@ was authored by the PR owner are skipped entirely.
 
 ### GraphQL — thread resolution status and IDs
 
-```bash
-gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      pullRequest(number: $number) {
-        author { login }
-        reviewThreads(first: 100) {
-          nodes {
-            id
-            isResolved
-            isOutdated
-            comments(first: 100) {
-              nodes { id databaseId body path line author { login } }
-            }
-          }
-        }
-      }
-    }
-  }
-' -f owner="{owner}" -f repo="{repo}" -F number={number}
-```
+See `skills/pr-resolve/references/graphql-review-threads.md` for the canonical query.
 
 ### REST — full comment details
 

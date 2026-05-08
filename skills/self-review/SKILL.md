@@ -20,7 +20,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.08-182713'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -102,21 +102,19 @@ PR_NUM=$(gh pr view --json number --jq .number)
 OWNER=$(gh repo view --json owner --jq .owner.login)
 REPO=$(gh repo view --json name --jq .name)
 AUTHOR=$(gh pr view --json author --jq .author.login)
+```
 
-gh api graphql -f query='
-  query($o:String!,$r:String!,$n:Int!){
-    repository(owner:$o,name:$r){pullRequest(number:$n){
-      reviewThreads(first:100){nodes{
-        isResolved
-        comments(first:100){nodes{path line body author{login}}}
-      }}
-    }}
-  }' -F o="$OWNER" -F r="$REPO" -F n="$PR_NUM" \
-  --jq --arg a "$AUTHOR" '
-    .data.repository.pullRequest.reviewThreads.nodes[]
-    | select(.comments.nodes[0].author.login == $a)
-    | {resolved: .isResolved, c: .comments.nodes[0]}
-    | {path: .c.path, line: .c.line, resolved, body: .c.body}'
+Use the canonical query from `skills/pr-resolve/references/graphql-review-threads.md`
+with `-F o="$OWNER" -F r="$REPO" -F n="$PR_NUM"`, then pipe through jq to filter
+by author and extract the fields needed:
+
+```bash
+# pipe the GraphQL result through jq
+jq --arg a "$AUTHOR" '
+  .data.repository.pullRequest.reviewThreads.nodes[]
+  | select(.comments.nodes[0].author.login == $a)
+  | {resolved: .isResolved, c: .comments.nodes[0]}
+  | {path: .c.path, line: .c.line, resolved, body: .c.body}'
 ```
 
 For each proposed new comment, check the existing self-review threads
