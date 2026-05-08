@@ -27,7 +27,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.04-232313'
+  version: '2026.05.08-183140'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -44,17 +44,9 @@ a post-creation workflow that ensures quality before marking ready for review.
 
 ## Hard Rules
 
-1. **Preserve PR body metadata across description rewrites.** When updating a
-   PR description with `gh pr edit`, always read the current body first and
-   carry forward these metadata lines into the new body:
-   - `Closes #N` / `Fixes #N` / `Resolves #N` — auto-close annotations
-   - `Co-authored-by:` lines — attribution
-   - Automation-generated blocks: `**Build:** [...]` links, `<details>`
-     context blocks, generator footer lines
-   
-   These are metadata, not prose — they survive across description rewrites.
-   `gh pr edit --body-file` replaces the entire body with no merge. Silently
-   dropping `Closes #N` means the linked issue stays open after merge.
+1. **Preserve PR body metadata across description rewrites.** Before overwriting
+   the PR description, preserve metadata lines — see
+   `skills/pr/references/pr-description-metadata.md`.
 
 ## Step 1: Assess Scope
 
@@ -258,8 +250,8 @@ After the draft PR is created (or after pushing new commits to an existing PR):
 
 1. **Update PR description** — Review the existing description to ensure it
    still covers all changes. If it has drifted, update with `gh pr edit`.
-   **Before overwriting**, read the current body and extract metadata lines
-   (see Hard Rule 1). Re-insert them into the updated body.
+   **Before overwriting**, preserve metadata lines per Hard Rule 1
+   (`skills/pr/references/pr-description-metadata.md`).
 2. **Poll CI** — Launch a background polling job (using the pass-the-build
    agent if available) to wait for all build steps to pass. Do not proceed
    while CI is failing.

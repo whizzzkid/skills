@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-182713'
+  version: '2026.05.08-183203'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1018,10 +1018,8 @@ any stale counts, mention fixes applied, link the new commits as
 markdown URLs (not bare SHAs), and ensure the body matches the current
 branch state.
 
-**Before overwriting**, read the current body and carry forward metadata lines:
-`Closes #N` / `Fixes #N` / `Resolves #N`, `Co-authored-by:` lines, and any
-automation-generated blocks (`**Build:**`, `<details>` context). These are
-metadata, not prose — dropping them silently breaks issue auto-closing.
+**HARD RULE:** Before overwriting the PR description, preserve metadata lines —
+see `skills/pr/references/pr-description-metadata.md`.
 
 ```bash
 gh pr edit {number} --body "$(cat <<'EOF'

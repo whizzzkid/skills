@@ -29,7 +29,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-224941'
+  version: '2026.05.08-183237'
   internal: false
   model:
     openai: gpt-4.1
@@ -364,8 +364,9 @@ patch-replay specifically, also update:
 
 - The PR body's commit list / "What's included" section, if present
   — the branch is now one squashed commit, not N.
-- Any "Closes #N" / "Refs #N" annotations preserved verbatim.
-- Test-plan checkboxes the human ticked are NOT overwritten.
+- Metadata lines (issue-closing annotations, co-author trailers, automation blocks,
+  ticked test-plan checkboxes) — **HARD RULE:** preserve verbatim per
+  `skills/pr/references/pr-description-metadata.md`.
 
 ### Push
 
