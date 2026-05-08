@@ -21,7 +21,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-082341'
+  version: '2026.05.08-172800'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -43,6 +43,28 @@ behavior, not just the specific instance.
 - A field report describes what went wrong during skill execution
 - A retrospective identifies a behavioral pattern worth preventing
 - You're about to edit a skill based on a specific incident
+
+## Style Rules for Every Edit
+
+Every edit you write into a target skill must follow these rules. They apply
+to new content **and** to any cleanup of existing prose touched during audit.
+
+- **Bullets over prose.** Default to bulleted lists. Use a paragraph only
+  when the rule cannot be split into discrete imperatives without loss.
+- **Imperative voice.** Each bullet starts with a verb: "Run", "Verify",
+  "Reject", "Skip", "Re-fetch". No "you should" / "we recommend" / "it is
+  important to".
+- **One rule per bullet.** Do not chain "and / and / and". Split into
+  separate bullets.
+- **Crisp.** Strip hedging ("typically", "usually", "may want to"). State
+  the rule. State the failure mode in one clause.
+- **Instructional, not explanatory.** Tell the agent what to **do**, not
+  what the rule is **about**. The "why" sits in a single trailing
+  sub-bullet or parenthetical, not a paragraph.
+- **Concrete commands** belong in fenced code blocks. Do not paraphrase a
+  command in prose when the command itself is shorter.
+- **No essays.** A section that runs past four bullets either splits into
+  named sub-sections or trims to the load-bearing rules.
 
 ## Core Rule: Extract Principles, Not Examples
 
@@ -232,19 +254,97 @@ Wait for approval before editing the skill file.
 
 After approval, edit the files:
 
-1. Edit the skill file — both the new content and any audit cleanup
-2. Re-read the final file to confirm coherence
-3. Bump the `metadata.version` (patch for fixes, minor for new steps)
+- Edit `skills/{skill-name}/SKILL.md` with the new content **and** every
+  audit cleanup item — do not defer cleanup to a follow-up pass.
+- Verify each new or edited section follows the **Style Rules** above
+  (bullets, imperative voice, one rule per bullet, no essays).
+- Write distilled context to `skills/{skill-name}/references/` (see below).
+- Bump `metadata.version` to a fresh CalVer (`YYYY.MM.DD-HHMMSS`, UTC) —
+  patch for fixes, minor for new steps. Never reuse a version string.
+- Re-read the final file end-to-end to confirm coherence and absence of
+  drift (see "Drift check" below).
 
-Step 7 is **edits only**. Committing happens in Step 8 — do not commit
-inside Step 7 and call the run done.
+Step 7 is **edits only**. Committing happens in Step 8.
+
+### Write distilled references to `skills/{name}/references/`
+
+The target skill's prose teaches the agent **what to do**. The
+`references/` directory teaches the agent **what was learned and why**,
+without bloating the SKILL.md itself.
+
+- Create the directory if missing:
+
+  ```bash
+  mkdir -p skills/{skill-name}/references
+  ```
+
+- For each distilled learning that produced an edit in this run, write
+  one short reference file: `references/{YYYY-MM-DD}_{slug}.md`.
+  - One learning per file. Do not concatenate multiple incidents.
+  - File body: 5–15 lines maximum. Bullets only.
+  - Required sections: **Rule** (one line), **Why** (one line, the
+    failure mode), **Where** (one line, which Step / HARD RULE in
+    SKILL.md it landed in).
+  - No incident-specific tokens that the SKILL.md edit already
+    stripped (filenames, line numbers, reviewer logins, SHAs).
+- Do not link references from SKILL.md prose. They are an index for
+  future sharpen runs and audits, not runtime documentation.
+- The mechanical overfit scan (Step 5) applies to reference files too —
+  they are part of the proposed edit set.
+
+### Drift check
+
+Before exiting Step 7, scan the full SKILL.md for drift between
+iterations. Multi-edit runs accumulate stale content fast.
+
+- Frontmatter `description` still matches what the skill actually does
+  after every edit in this run.
+- `argument-hint` matches the current argument shape.
+- `allowed-tools` lists every tool the new edits reference (and no
+  orphaned entries).
+- Quick-reference table, Trigger table, and Step list at the top match
+  the section headings in the body — no renamed Steps left referenced
+  by the old name.
+- Cross-references between Steps (`see Step N`, `per the rule above`)
+  still resolve to the correct targets.
+- Examples in SKILL.md that demonstrate the fixed behavior (good vs
+  bad) reflect the **post-edit** behavior, not the pre-edit one.
+
+Fix every drift item in the same edit pass.
+
+## Step 7.5: Refactor Pass (concision gate)
+
+Once every learning queued for the run has been folded into the target
+skill, run a refactor pass on the **edited file** before committing. Do
+not skip even when each individual edit looked tight in isolation —
+multi-edit runs accumulate redundancy across sections that no single
+edit can see.
+
+- Invoke `wk-refactor` against the edited SKILL.md and any new
+  `references/` files:
+
+  ```
+  Skill(wk-refactor, args="skills/{skill-name}/SKILL.md")
+  ```
+
+- Apply only refactor suggestions that **preserve every rule** —
+  consolidating duplicates, collapsing nested prose into bullets,
+  removing dead labels left by earlier edits.
+- Reject any suggestion that drops a HARD RULE, an error code, or a
+  failure-mode explanation. Concision must not cost coverage.
+- After refactor edits land, re-run the **Drift check** in Step 7 — a
+  refactor that renames a Step or merges sections can re-introduce
+  drift the prior pass cleared.
+
+The goal is: the final SKILL.md contains exactly what the executing
+agent needs, no more.
 
 ## Step 8: Verify and Commit (terminal gate)
 
 Do not return control to the user until all four checks pass:
 
 1. **Install:** `npx skills add . -g -y -a=claude 2>&1 | tail -5` from the repo root — must print `Done!`. Re-run from repo root if it prints `No skills found` or exits non-zero.
-2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated; one chore commit for `.learned.md` renames + `.distilled-sources.log`); use `wk-commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
+2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated, including its `references/` additions; one chore commit for `.learned.md` renames + `.distilled-sources.log`); use `wk-commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
 3. **Push once:** after all commits exist, push a single time. Single-skill runs may push immediately after their lone commit.
 4. **Clean tree:** `git status --short` must be empty — if anything remains, commit or stash it.
 
