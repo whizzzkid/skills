@@ -31,7 +31,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183612'
+  version: '2026.05.11-221733'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -632,15 +632,27 @@ validation outcome decides the reply, not the fact of duplication:
 
 | Phase 4 outcome | Phase 5 action |
 |-----------------|----------------|
-| **Confirmed** | **Skip.** Bot has it covered; a duplicate reply is noise. Reply only if the playground surfaced new evidence the bot missed. |
+| **Confirmed** | **Skip silently.** No inline reply and no body anchor. The bot thread already stands; a "yes the bot was right" line is noise. Only reply if the playground surfaced new evidence the bot missed. |
 | **Refuted** | Reply with `**Could not reproduce** — <counter-evidence>` + brief description of what was tested. Always reply — silent skip leaves the author guessing. |
 | **Inconclusive** AND agent independently flagged the same issue | Reply with the agent's own evidence + suggestion fix (the agent's verdict carries the thread). |
 | **Inconclusive** AND agent did not flag it | Leave the thread alone. Note in the Phase 5 summary so the user can override. |
 | **Out of scope for code validation** (style/prose claim) | Use Phase 3 reading-based verdict; reply only on refute. |
 
-Bot-thread replies (when one is needed — refuted or new-evidence cases)
-are delivered via one of the two mechanisms in Phase 6 ("Creating the
-pending review"):
+**HARD RULE:** A bot-thread reply — whether folded into the body or
+posted as a live reply — is only justified when the agent has new
+evidence beyond confirming the bot's exact claim. Pure Confirmed
+outcomes get silent skip: no inline reply, no body anchor, no
+"Re: {bot} thread on …" line. The bot thread already stands; a body
+anchor saying "yes the bot was right" is noise.
+
+Reserve body anchors and live replies for:
+
+- **Refuted** — counter-evidence the bot missed.
+- **Inconclusive AND agent independently flagged the same issue** —
+  the agent's own evidence carries the verdict.
+
+When a reply is justified, deliver it via one of the two mechanisms
+in Phase 6 ("Creating the pending review"):
 
 - **(a) folded into the review body** with an anchor reference — zero
   extra API calls; stays inside the pending checkpoint.
@@ -786,6 +798,8 @@ This review was generated with the help of an Agent. If you find it noisy or ann
 
 Bot-thread counter-evidence notes (option (a) above) are folded in
 before the footer, anchored as `Re: {bot} thread on {file}:{line} — …`.
+Only refuted or new-evidence cases earn a body anchor — never pure
+Confirmed outcomes (see Phase 5 HARD RULE).
 
 ### Build the payload
 
