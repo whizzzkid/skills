@@ -28,14 +28,14 @@ allowed-tools:
   - Edit
   - Write
   - AskUserQuestion
-model: sonnet
+model: opus
 effort: medium
 model-invocable: true
 user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183505'
+  version: '2026.05.11-195406'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
