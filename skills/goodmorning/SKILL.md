@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.12-180450'
+  version: '2026.05.12-184309'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -1187,6 +1187,12 @@ payload embedded in `morning.html`.
 - **Yesterday** → previous working day's `evening.md` `## Achievements`
   section. Pick 3-4 items with the highest visible impact (shipped/merged
   PRs, decisions led, blockers cleared, key meetings).
+  - **HARD RULE: Authorship filter.** A PR qualifies as a Yesterday
+    achievement only if the user is (a) the author, (b) a listed
+    co-author, or (c) the primary/approving reviewer who drove the
+    work to completion. Merging another person's PR — even as a
+    maintainer — is a maintenance action, not an achievement. Drop
+    any PR that fails this test before picking the top 3-4.
 - **Today** → today's `## Today's Priorities` list. Pick the top 3-4
   🔥/⚠️-flagged or time-sensitive items, deadline-first.
 - **Blockers** → any item flagged ⚠️, containing "BLOCKED", or noted as
