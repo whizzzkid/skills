@@ -29,6 +29,7 @@ effort: low
 model-invocable: true
 user-invocable: true
 license: MIT
+group: tools
 metadata:
   author: whizzzkid
   version: '2026.05.08-000001'

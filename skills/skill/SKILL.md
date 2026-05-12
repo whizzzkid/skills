@@ -23,6 +23,7 @@ effort: medium
 model-invocable: true
 user-invocable: true
 license: MIT
+group: workflows
 metadata:
   author: whizzzkid
   version: '2026.05.12-220153'
@@ -95,10 +96,15 @@ these become the first draft of the "Common Mistakes" section.
 
 ## Step 4: Determine metadata
 
-If description, model tier, or effort were not provided as arguments, ask:
+If description, model tier, effort, or group were not provided as arguments, ask:
 
 1. **Description** (one sentence, "Use when…" form, ≤500 chars)
-2. **Model tier** — pick based on task complexity:
+2. **Group** — pick the logical group this skill belongs to:
+   - `rituals` — time-bounded routines: daily bookends, session wrap-ups, performance reviews
+   - `pull-request` — anything in the PR lifecycle: create, review, resolve, update, break
+   - `tools` — external tool integrations: CI, observability, VCS, containers, package managers
+   - `workflows` — development process: commits, formatting, docs, testing, meta-skills
+3. **Model tier** — pick based on task complexity:
 
    | Tier | When | Claude | OpenAI | Gemini |
    |------|------|--------|--------|--------|
@@ -106,10 +112,10 @@ If description, model tier, or effort were not provided as arguments, ask:
    | `opus` | Deep reasoning, adversarial review, batch distillation | claude-opus-4-7 | o3 | gemini-2.5-pro |
    | `haiku` | Single lookups, calver generation, trivial transforms | claude-haiku-4-5 | gpt-4.1-nano | gemini-2.5-flash-8b |
 
-3. **Effort** — `low` (single action), `medium` (multi-step flow), `high`
+4. **Effort** — `low` (single action), `medium` (multi-step flow), `high`
    (long-running, many decisions)
-4. **User-invocable** — `true` if the user should call it directly with `/`
-5. **Model-invocable** — `true` if another skill or agent should auto-trigger it
+5. **User-invocable** — `true` if the user should call it directly with `/`
+6. **Model-invocable** — `true` if another skill or agent should auto-trigger it
 
 ## Step 5: Generate CalVer version
 
@@ -126,7 +132,7 @@ mkdir -p "$WK_SKILLS_HOME/skills/<name>"
 ```
 
 Write `$WK_SKILLS_HOME/skills/<name>/SKILL.md` with:
-- Frontmatter filled in from Steps 4–5
+- Frontmatter filled in from Steps 4–5, including `group: <group>` before `metadata:`
 - Skeleton body: `# <Title>`, `## When to Use`, `## Step 1`, `## Quick Reference`, `## Requirements`, `## Post-Completion`
 - `## Post-Completion` always ends with:
   ```

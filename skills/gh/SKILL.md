@@ -10,6 +10,7 @@ user-invocable: false
 model: sonnet
 effort: low
 license: MIT
+group: tools
 metadata:
   author: whizzzkid
   version: '2026.05.08-120000'

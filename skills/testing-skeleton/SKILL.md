@@ -22,6 +22,7 @@ effort: medium
 model-invocable: true
 user-invocable: false
 license: MIT
+group: workflows
 metadata:
   author: whizzzkid
   version: '2026.05.08-182753'

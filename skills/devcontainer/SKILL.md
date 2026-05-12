@@ -7,6 +7,7 @@ description: >
   Trigger phrases: "set up devcontainer", "create devcontainer", "devcontainer
   not working", "bundle install fails in devcontainer", "mise tools missing in
   container".
+group: tools
 metadata:
   version: 2026.05.12-220540
   model: sonnet

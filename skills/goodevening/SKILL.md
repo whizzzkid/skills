@@ -16,6 +16,7 @@ allowed-tools:
 model: sonnet
 effort: medium
 license: MIT
+group: rituals
 metadata:
   author: whizzzkid
   version: '2026.05.12-184309'

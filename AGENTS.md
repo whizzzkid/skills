@@ -2,7 +2,7 @@
 
 ## Repository Structure
 
-- Skills live in `skills/<skill-name>/SKILL.md`
+- Skills live in `skills/<skill-name>/SKILL.md` — each skill has a `group:` frontmatter field indicating its logical group (`rituals`, `pull-request`, `tools`, `workflows`)
 - Each skill is a self-contained directory with a single `SKILL.md` file
 - Optional `scripts/` and `references/` subdirectories for supporting files
 
@@ -30,7 +30,7 @@ Required fields: `name`, `description`
 
 ## Adding a Skill
 
-1. Create `skills/<skill-name>/SKILL.md`
+1. Create `skills/<skill-name>/SKILL.md` and set `group:` in frontmatter
 2. Add YAML frontmatter with `name` and `description`
 3. Write clear instructions in the markdown body
 4. Update the skills table in `README.md`

@@ -11,6 +11,7 @@ user-invocable: false
 model: sonnet
 effort: low
 license: MIT
+group: workflows
 metadata:
   author: whizzzkid
   version: '2026.05.12-213220'

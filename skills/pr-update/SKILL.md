@@ -27,6 +27,7 @@ effort: medium
 model-invocable: true
 user-invocable: true
 license: MIT
+group: pull-request
 metadata:
   author: whizzzkid
   version: '2026.05.08-183237'
