@@ -21,7 +21,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-181958'
+  version: '2026.05.12-184309'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -43,6 +43,26 @@ behavior, not just the specific instance.
 - A field report describes what went wrong during skill execution
 - A retrospective identifies a behavioral pattern worth preventing
 - You're about to edit a skill based on a specific incident
+
+### HARD RULE: invocation routing — `wk-learn` vs `wk-sharpen`
+
+`wk-sharpen` rewrites `SKILL.md` files. `wk-learn` only writes to
+`learnings/`. Direct skill edits without explicit user consent are
+out of scope — the skills repo is effectively read-only unless the
+user explicitly authorizes a sharpen pass.
+
+- Route to `wk-learn` (capture only, no skill edits):
+  - "make a learning"
+  - "capture this"
+  - "note this for later"
+  - "log what happened"
+- Route to `wk-sharpen` (apply edits to `SKILL.md`):
+  - "sharpen the skill"
+  - "apply this to the skill"
+  - "update the skill now"
+  - explicit `/wk-sharpen` invocation
+- Ambiguous phrasing ("learn from this and sharpen") defaults to
+  `wk-learn`. Ask before promoting to `wk-sharpen`.
 
 ## Style Rules for Every Edit
 
