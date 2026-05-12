@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183237'
+  version: '2026.05.12-225934'
   internal: false
   model:
     openai: gpt-4.1
@@ -282,6 +282,27 @@ rebase $BASE_REF` and re-run."
 The branch now has the base's changes integrated; the work must
 still build and pass tests **after** that integration. Pre-integration
 validation does not transfer.
+
+### Dependency install pre-check
+
+Integration may invalidate the local dependency cache. Before
+running the test suite, diff the project's dependency lockfile
+between the pre-integration base and the post-integration base.
+If it changed, install dependencies first — otherwise a
+"missing dependency" error masquerades as a test regression.
+
+```bash
+# Example signals — extend per project package manager
+for lockfile in Gemfile.lock package-lock.json yarn.lock pnpm-lock.yaml \
+                Cargo.lock poetry.lock uv.lock go.sum; do
+  [ -f "$lockfile" ] || continue
+  if ! git diff --quiet "$START_SHA"..HEAD -- "$lockfile"; then
+    echo "Lockfile changed: $lockfile — install before validating."
+    # Run the project's install command (bundle install, npm ci, cargo fetch, etc.)
+    break
+  fi
+done
+```
 
 Detect the project's test command from these signals (first hit
 wins):
