@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.12-213220'
+  version: '2026.05.12-230002'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -208,6 +208,29 @@ reads as new behavior, not as duplicated prologue.
 
 If grep returns no existing caller, the probe is a no-op — proceed
 with the new feature directly.
+
+### Intra-file duplication probe
+
+The prefactor probe above targets cross-file duplication. A
+separate failure mode is **intra-file duplication** — adding a
+new function, event handler, or initialization block to a large
+file that already contains a stale or partial version of the
+same logic, silently shadowed.
+
+Before adding any new block to a large mixed-content file
+(>200 lines, especially `.erb`, `.html`, `.vue`, `.svelte`, or
+any template that interleaves multiple languages), grep the
+file itself for the function name, event name, selector, or
+feature keyword first.
+
+```bash
+grep -nE '<feature-keyword>|<function-name>|<event-name>' "$FILE"
+```
+
+If a match exists, decide in the same commit whether to remove
+the prior version, replace it, or merge — never add alongside.
+Shadowed duplicates pass tests when the live copy is correct
+and silently corrupt behavior when the stale copy wins.
 
 ### Plan Presentation
 
@@ -468,6 +491,25 @@ Before writing any range-based assertion, scan the target script for
 (a) string literals that contain the planned end-range keyword as a
 substring, and (b) duplicate branch labels across case blocks. Anchor
 or two-stage accordingly.
+
+3. **`grep -qv` is a false-positive trap for negative assertions.**
+   `grep -qv 'pattern'` exits 0 when **any** line in the input does
+   not match — which is almost always true for multi-line output.
+   The assertion passes trivially and never fires on the intended
+   case. Use `! grep -q 'pattern'` instead, which fails (non-zero)
+   if the pattern appears anywhere.
+
+   ```bash
+   # WRONG — passes whenever any other line exists
+   echo "$output" | grep -qv 'exit 1'
+
+   # CORRECT — fails if exit 1 appears anywhere
+   ! echo "$output" | grep -q 'exit 1'
+   ```
+
+   The same trap applies to two-stage pipelines like
+   `grep -v X | grep -qv Y` — the second stage still passes
+   trivially.
 
 ---
 
