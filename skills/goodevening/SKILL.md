@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183227'
+  version: '2026.05.12-184309'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -454,6 +454,12 @@ Structure:
 
 ### Code & PRs
 - {what you shipped, reviewed, or unblocked}
+
+**HARD RULE: Authorship filter.** Include a PR only if the user is
+(a) the author, (b) a listed co-author, or (c) the primary/approving
+reviewer who drove the work to completion. Merging another person's
+PR — even as a maintainer — is a maintenance action, not an
+achievement, and does not belong in the brag document.
 
 ### Meetings & Collaboration
 - {decisions made, discussions led, context shared}
