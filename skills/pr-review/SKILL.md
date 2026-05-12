@@ -32,7 +32,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.12-234327'
+  version: '2026.05.12-234444'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -331,6 +331,29 @@ There is no fixed checklist. You decide what matters based on the actual changes
 Follow the code wherever it leads — if a changed function is called from 5
 places, read all 5. If a new dependency is added, evaluate it.
 
+### Read framework source when local install is unavailable
+
+Worktree review environments often lack a full dependency install
+(broken bundle, missing DB creds, gems not installed). When the
+review needs to inspect a framework method's source:
+
+- Identify the package's upstream repository and the exact version
+  the project depends on (lockfile, `Gemfile.lock`, `package-lock.json`,
+  `requirements.txt`, etc.).
+- Fetch the file directly from the upstream repo via the GitHub
+  contents API, base64-decoded:
+
+  ```bash
+  gh api "repos/{owner}/{repo}/contents/{path}?ref={tag-or-sha}" \
+    --jq '.content' | base64 -d
+  ```
+
+- Read the fetched source the same way a local `Read` would — quote
+  exact lines in playground experiments and review comments.
+
+Do not abandon a review path because the bundle/lockfile cannot be
+installed locally; the upstream source is authoritative regardless.
+
 **Audit test quality.** If the PR includes test files, verify they actually
 test the change surface — not just pad coverage numbers. For each test file
 in the diff, check for these red flags:
@@ -437,6 +460,29 @@ running modern interpreters consistently miss old-runtime breakage.
 
 Keep each experiment script short and focused — one script per function,
 one concern per script. Log failures clearly with input/output pairs.
+
+### Standalone playground when the app cannot boot
+
+When the worktree cannot boot the app (broken bundle, missing DB,
+gated services) but the review concerns pure framework/library
+logic, replicate the relevant framework code verbatim in a
+self-contained script under `.review-playground/` and run it with
+the system runtime.
+
+- Fetch the framework method(s) under test via the GitHub contents
+  API (see "Read framework source when local install is
+  unavailable" above).
+- Copy the methods verbatim into a single-file script — preserve
+  signatures, control flow, and any sentinel constants (`Halt`,
+  `Stop`, custom error classes).
+- Drive the script with the system interpreter on `PATH` and run
+  the same adversarial cases as the rest of Phase 4.
+- Note in the comment body that the verdict comes from a
+  re-implemented harness, with the upstream SHA/tag cited, so the
+  reviewer can audit the harness.
+
+A standalone harness is as rigorous as booting the app for pure
+logic checks and avoids the boot-dependency cliff entirely.
 
 ### Validate bot findings in the playground
 
