@@ -9,7 +9,7 @@ description: >
   container".
 group: tools
 metadata:
-  version: 2026.05.12-220540
+  version: 2026.05.12-230100
   model: sonnet
   effort: medium
   user-invocable: true
@@ -61,11 +61,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install --yes --no-install-recommends \
     build-essential \
-    curl \
-    git \
     libffi-dev \
-    libssl-dev \
-    default-libmysqlclient-dev \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
@@ -78,8 +74,33 @@ WORKDIR /workspace
 CMD ["sleep", "infinity"]
 ```
 
-`default-libmysqlclient-dev` provides MySQL headers for `trilogy`/`mysql2`
-native gems.
+### Apt package audit
+
+Install only what gems actually compile against. The minimal set above
+covers the common case; everything else is redundant.
+
+| Package | Keep? | Why |
+|---------|-------|-----|
+| `build-essential` | yes | C compiler + make for any gem with a C extension |
+| `libffi-dev` | yes | `ffi` gem links libffi at compile time |
+| `pkg-config` | yes | native gem builds use it to locate system libraries |
+| `curl`, `git` | **drop** | already in the `jdx/mise` base image |
+| `default-libmysqlclient-dev` | **drop if `trilogy`** | `trilogy` speaks MySQL wire protocol natively; only `mysql2` links libmysqlclient |
+| `libssl-dev` | **drop** | mise Ruby ships with OpenSSL compiled in |
+
+**Caveat:** if `bundle install` fails with an OpenSSL compile error
+(gem locks an `openssl` version that does not match the bundled one),
+add `libssl-dev` back. The default omits it.
+
+## Step 2.5: Optional — mise profiles for container-only tools
+
+Keep host `mise.toml` lean; add container-only tools via a profile so
+host developers don't install them.
+
+- `mise.toml` (everyone): shared tools (`ruby`, `lefthook`).
+- `mise.devcontainer.toml` (container only): tools like `gh`.
+- Compose env: `MISE_PROFILE: devcontainer` — mise merges both files
+  when the profile is active.
 
 ## Step 3: Write docker-compose.yml
 
@@ -92,6 +113,9 @@ services:
     volumes:
       - ..:/workspace:cached
       - bundle-cache:/usr/local/bundle
+      # Inherit developer's host configs read-only / read-write where noted
+      - ${XDG_CONFIG_HOME:-~/.config}/mise/config.toml:/root/.config/mise/config.toml:ro
+      - ~/.claude:/root/.claude
     command: sleep infinity
     environment:
       MISE_TRUSTED_CONFIG_PATHS: /workspace
@@ -136,6 +160,9 @@ Key decisions:
 - `ssl_mode: preferred` — Docker MySQL has no TLS; `required` causes `SSL is required but the server doesn't support it`
 - `depends_on.condition: service_healthy` — waits for real readiness, not just container start
 - `bundle-cache:/usr/local/bundle` — persists gems across restarts (only works with `BUNDLE_PATH` set in Dockerfile)
+- Host config mounts:
+  - `~/.config/mise/config.toml:ro` — inherit developer's global mise settings (trusted plugins, overrides); `${XDG_CONFIG_HOME:-~/.config}` falls back when unset
+  - `~/.claude` — mounts Claude Code settings, memory, and skills read-write so transcripts and memory persist
 
 ## Step 4: Write devcontainer.json
 
@@ -146,7 +173,11 @@ Key decisions:
   "service": "app",
   "workspaceFolder": "/workspace",
   "postCreateCommand": "bundle install && bin/rails db:create db:migrate",
+  "postStartCommand": "mkdir -p .devcontainer/logs && nohup bin/rails server -b 0.0.0.0 -p 3000 > .devcontainer/logs/server.log 2>&1 &",
   "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Rails", "onAutoForward": "openBrowser" }
+  },
   "remoteEnv": {
     "PATH": "${containerEnv:PATH}:/workspace/bin"
   },
@@ -165,6 +196,17 @@ Key decisions:
 - `/workspace/bin` on PATH — Rails binstubs without `bundle exec` prefix
 - `forwardPorts: [3000]` — avoids manual port forwarding for the Rails server
 - `postCreateCommand` runs after workspace mounts, so `bundle install` has access to the bind-mounted Gemfile
+- `postStartCommand` runs on every container connect (not just first create) — `nohup ... &` backgrounds the Rails server so the connect doesn't block
+- `portsAttributes` with `onAutoForward: openBrowser` auto-opens the browser when VS Code detects the forwarded port
+
+### Log paths
+
+Write logs to paths inside the workspace bind-mount so they are
+visible from the host without declaring an extra volume.
+
+- Server output → `.devcontainer/logs/server.log` (from `postStartCommand`).
+- Rails app logs → `log/development.log` (Rails default, already on host).
+- Add `.devcontainer/logs/` to `.gitignore` to keep runtime logs out of git.
 
 ## Step 5: Update mise.toml
 
@@ -207,6 +249,7 @@ Investigation order for a new project:
 2. `config/database.yml` — DB config keys
 3. `.ruby-version` — exact Ruby version for mise.toml
 4. `Gemfile` — extra services (Sidekiq, Elasticsearch, etc.)
+5. DB adapter in `Gemfile` — `trilogy` (no `libmysqlclient-dev` needed) vs `mysql2` (needs it)
 
 ## Post-Completion
 
