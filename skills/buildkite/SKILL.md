@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-120000'
+  version: '2026.05.12-213500'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -77,6 +77,30 @@ view), `read_organizations` (pipeline listing).
 Do NOT attempt to configure auth, create tokens, or work around auth failures
 yourself. The user must run `bk auth login` interactively. If logs can't be
 fetched after re-auth, ask the user to download them from the Buildkite web UI.
+
+- Never extract a token from the user's `bk` config / environment and call
+  the Buildkite REST API directly via `curl` as a workaround. Token-based
+  curl workarounds bypass scope checks, leak credentials into shell history,
+  and have repeatedly produced multi-turn dead ends when the original auth
+  failure was scope-shaped, not credential-shaped.
+
+## Tool Selection
+
+**HARD RULE:** Use the locally-installed `bk` CLI for every Buildkite
+inspection. Never substitute `npx <some-buildkite-cli>` or `WebFetch` on a
+Buildkite URL when `bk` is available.
+
+- Resolve once at the start of any Buildkite flow:
+
+  ```bash
+  command -v bk >/dev/null || { echo "bk CLI not on PATH — install it"; exit 1; }
+  ```
+
+- When the user pastes a Buildkite URL, parse `pipeline` and `build` from
+  the path and call `bk build view -p <pipeline> -b <build-number>`. Do not
+  `WebFetch` the URL — the HTML view omits structured job data.
+- Fall back to the REST API via `curl` only when `bk` is unavailable **and**
+  the user explicitly approves the fallback.
 
 ## Pre-Flight: Auth Check
 
