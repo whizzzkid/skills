@@ -17,6 +17,7 @@ license: MIT
 metadata:
   author: whizzzkid
   version: '2026.05.08-183557'
+  internal: true
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash

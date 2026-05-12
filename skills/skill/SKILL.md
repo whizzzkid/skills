@@ -1,0 +1,203 @@
+---
+name: wk-skill
+description: >-
+  Scaffold a new wk-* skill from the canonical template. Use when creating a
+  new skill from scratch — generates the directory, fills frontmatter, applies
+  best practices, hooks into wk-calver / wk-learn, and verifies installation.
+  Trigger phrases: "create a skill", "new skill", "bootstrap a skill",
+  "scaffold a skill", "/wk-skill <name>".
+argument-hint: '<skill-name> [description hint]'
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - AskUserQuestion
+  - "Bash(date:*)"
+  - "Bash(mkdir:*)"
+  - "Bash(test:*)"
+  - "Bash(find:*)"
+  - "Bash(grep:*)"
+  - "Bash(npx:*)"
+model: sonnet
+effort: medium
+model-invocable: true
+user-invocable: true
+license: MIT
+metadata:
+  author: whizzzkid
+  version: '2026.05.12-220153'
+  model:
+    openai: gpt-4.1-mini
+    google: gemini-2.5-flash
+    meta: llama-4-scout
+    kimi: k2
+    qwen: qwen3-30b
+    cursor: composer-2
+---
+
+# Skill
+
+Scaffold a new `wk-*` skill from the canonical template, pull in any relevant
+field learnings, and wire up all infrastructure hooks.
+
+## When to Use
+
+- Creating a new skill from scratch
+- Bootstrapping a skill directory before writing its body
+- When `/wk-skill <name>` is invoked directly
+
+**REQUIRED BACKGROUND:** Read `superpowers:writing-skills` before filling in
+the skill body — the TDD RED-GREEN-REFACTOR cycle applies to all skill
+authoring. This skill creates the scaffold only; the body comes after the RED
+phase (baseline test without the skill).
+
+## Step 1: Check environment
+
+```bash
+test -n "$WK_SKILLS_HOME" && echo "OK: $WK_SKILLS_HOME" || echo "MISSING"
+```
+
+Stop and tell the user to set `$WK_SKILLS_HOME` if missing.
+
+Parse the argument:
+- Strip a leading `wk-` prefix from the directory name (the `wk-` lives in
+  the `name:` frontmatter field, not the directory).
+- The skill `name:` field is always `wk-<name>`.
+- If no argument is provided, ask the user for the skill name.
+
+## Step 2: Guard against collisions
+
+```bash
+test -d "$WK_SKILLS_HOME/skills/<name>" && echo "EXISTS" || echo "CLEAR"
+```
+
+Stop if the directory already exists — do not overwrite an existing skill.
+Suggest `wk-sharpen` if the user wants to improve an existing one.
+
+## Step 3: Surface relevant learnings
+
+Scan for unprocessed learnings that may inform the new skill's scope or
+known pitfalls:
+
+```bash
+find "$WK_SKILLS_HOME/learnings/skills" -name "*.md" \
+  ! -name "*.learned.md" -type f 2>/dev/null | head -20
+```
+
+Also grep for the skill name / topic across existing learnings:
+
+```bash
+grep -rl "<name>" "$WK_SKILLS_HOME/learnings/" 2>/dev/null
+```
+
+Read any matches. Surface key insights as a bullet list before scaffolding —
+these become the first draft of the "Common Mistakes" section.
+
+## Step 4: Determine metadata
+
+If description, model tier, or effort were not provided as arguments, ask:
+
+1. **Description** (one sentence, "Use when…" form, ≤500 chars)
+2. **Model tier** — pick based on task complexity:
+
+   | Tier | When | Claude | OpenAI | Gemini |
+   |------|------|--------|--------|--------|
+   | `sonnet` | Most skills — structured, multi-step work | claude-sonnet-4-6 | gpt-4.1-mini | gemini-2.5-flash |
+   | `opus` | Deep reasoning, adversarial review, batch distillation | claude-opus-4-7 | o3 | gemini-2.5-pro |
+   | `haiku` | Single lookups, calver generation, trivial transforms | claude-haiku-4-5 | gpt-4.1-nano | gemini-2.5-flash-8b |
+
+3. **Effort** — `low` (single action), `medium` (multi-step flow), `high`
+   (long-running, many decisions)
+4. **User-invocable** — `true` if the user should call it directly with `/`
+5. **Model-invocable** — `true` if another skill or agent should auto-trigger it
+
+## Step 5: Generate CalVer version
+
+Invoke `wk-calver` to get the UTC timestamp for `metadata.version`.
+
+```bash
+date -u '+%Y.%m.%d-%H%M%S'
+```
+
+## Step 6: Scaffold the skill
+
+```bash
+mkdir -p "$WK_SKILLS_HOME/skills/<name>"
+```
+
+Write `$WK_SKILLS_HOME/skills/<name>/SKILL.md` with:
+- Frontmatter filled in from Steps 4–5
+- Skeleton body: `# <Title>`, `## When to Use`, `## Step 1`, `## Quick Reference`, `## Requirements`, `## Post-Completion`
+- `## Post-Completion` always ends with:
+  ```
+  Invoke `wk-learn` with this skill's short name as the argument
+  (e.g., `wk-learn <name>`).
+  ```
+- If Step 3 surfaced learnings, add a pre-filled `## Common Mistakes` section
+  with those insights
+
+**HARD RULE:** Write only the skeleton — no behavior instructions yet.
+Writing the body before running the RED phase (testing baseline agent behavior
+without the skill) violates the `superpowers:writing-skills` TDD contract.
+
+## Step 7: Show the scaffold and prompt
+
+Display the full scaffolded `SKILL.md` to the user. Then print:
+
+> "Scaffold written to `skills/<name>/SKILL.md`.
+>
+> **Next steps (follow `superpowers:writing-skills`):**
+> 1. RED — test a subagent on your scenario *without* the skill; document
+>    exact rationalizations and failures.
+> 2. GREEN — fill in the skill body to address those specific failures.
+> 3. REFACTOR — identify new loopholes, add explicit counters, re-test.
+>
+> Run `/wk-skill --install` after writing the body to verify and commit."
+
+## Step 8: Install and verify (run after body is written)
+
+When the user has filled in the skill body and asks to install/verify:
+
+```bash
+cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5
+```
+
+Must print `Done!`. If it prints `No skills found` or exits non-zero:
+- Re-run from the repo root (`$WK_SKILLS_HOME`)
+- Check that `name:` in frontmatter uses only letters, numbers, and hyphens
+
+Confirm the skill appears in the registry:
+
+```bash
+npx skills list -a=claude 2>/dev/null | grep "wk-<name>"
+```
+
+## Step 9: Commit
+
+Invoke `wk-commit` with message:
+
+```
+✨ feat(skills): add wk-<name> skill
+```
+
+## Quick Reference
+
+| Trigger | Behavior |
+|---------|----------|
+| `/wk-skill <name>` | Full scaffold + metadata prompts |
+| `/wk-skill <name> "description"` | Scaffold with pre-filled description |
+| `/wk-skill --install` | Skip scaffold, run Steps 8–9 on current dir |
+
+## Requirements
+
+- `$WK_SKILLS_HOME` set to the skills repo root
+- Write access to `$WK_SKILLS_HOME/skills/`
+- `npx` available for install verification
+- `superpowers:writing-skills` read before filling in the skill body
+
+---
+
+## Post-Completion
+
+Invoke `wk-learn` with this skill's short name as the argument
+(e.g., `wk-learn skill`).
