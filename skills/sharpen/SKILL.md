@@ -21,7 +21,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.12-184309'
+  version: '2026.05.12-211741'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -429,9 +429,37 @@ Phased proposal (user approval per phase) → Apply → Verify & commit
 
 When invoked without a specific incident (e.g., `/wk-sharpen` with no
 arguments, or `/wk-sharpen --scan`), sharpen enters batch mode — scanning
-two sources for distillable material.
+three sources for distillable material.
 
-### Source 1: Learnings directory
+### Source 1: Global learnings inbox
+
+- Mirror unprocessed learnings from `~/.claude/skills/learnings/` into the
+  repo's tracked tree before distilling. Global captures land outside the
+  repo and must be version-controlled here to log as `.learned.md`.
+- Skip the entire source if the directory does not exist.
+- For each `*.md` (excluding `*.learned.md`) under the inbox:
+  - Resolve destination as `$WK_SKILLS_HOME/learnings/skills/<relative-path>`
+    preserving sub-directory structure.
+  - Skip the copy if the destination already exists (already mirrored).
+  - Copy the file, then delete the inbox original so the inbox stays
+    drained:
+
+    ```bash
+    inbox=~/.claude/skills/learnings
+    [ -d "$inbox" ] || exit 0
+    find "$inbox" -name "*.md" ! -name "*.learned.md" -type f | while read -r src; do
+      rel="${src#$inbox/}"
+      dest="$WK_SKILLS_HOME/learnings/skills/$rel"
+      [ -e "$dest" ] && continue
+      mkdir -p "$(dirname "$dest")"
+      cp "$src" "$dest" && rm "$src"
+    done
+    ```
+
+- After mirroring, fall through to Source 2 — the copied files are now
+  unprocessed learnings in the repo tree and get distilled there.
+
+### Source 2: Repo learnings directory
 
 Scan `$WK_SKILLS_HOME/learnings/skills/` for unprocessed files:
 
@@ -451,7 +479,7 @@ For each unprocessed learning:
 Process highest-severity learnings first. If more than 5 exist, process
 5 and report the rest for the next run.
 
-### Source 2: Global memory files
+### Source 3: Global memory files
 
 Scan `~/.claude/memory/` for memory files that contain skill-applicable
 feedback or corrections:
@@ -619,6 +647,8 @@ and proceed; push happens once at the end of the run, not between phases.
 - Read access to the skill file being improved
 - Edit access to `skills/{skill-name}/SKILL.md`
 - Read access to `~/.claude/memory/` (for batch mode)
+- Read/write/delete access to `~/.claude/skills/learnings/` (global learnings
+  inbox — files are moved into the repo tree, then removed from the inbox)
 - Read/write access to `$WK_SKILLS_HOME/learnings/` (for batch mode)
 - Read/write access to `$WK_SKILLS_HOME/.distilled-sources.log`
 
