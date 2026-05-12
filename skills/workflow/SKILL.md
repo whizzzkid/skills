@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.12-185904'
+  version: '2026.05.12-213220'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -123,6 +123,21 @@ If any step is ambiguous, ask the user before claiming completion.
 ---
 
 ## Phase 1: Plan
+
+### Investigate user-provided artifacts first
+
+Before spawning exploration `Agent` calls, scan the user's most recent
+message for concrete references — URL, PR number, file path, error
+message with line/column, build ID, stack frame.
+
+- If any concrete artifact is present, fetch/read it directly first
+  (`gh pr diff`, `Read`, `gh run view`, `bk build view`, etc.). The
+  user has already scoped the investigation.
+- Spawn parallel exploration agents only when no concrete artifact
+  exists or the artifact is exhausted and gaps remain.
+- Treat parallel `Agent` dispatch as a higher-cost fallback, not the
+  default — running it while a user-provided URL is unread signals
+  inattention and wastes a turn.
 
 Before writing any code, produce an explicitly numbered plan. Every plan MUST
 contain these elements — if any are missing, add them before executing:
@@ -296,6 +311,7 @@ returns success.
 - Read the response body — most APIs name the missing or invalid field directly.
 - Reject status-code-only diagnosis. A 4xx attributed to one cause ("branch missing", "auth expired") is often a different cause ("required field absent"); guessing produces a second PR after the first fix lands on the wrong root cause.
 - Rerun the local invocation with the fix applied before `wk-commit`. Only commit after the call returns 2xx.
+- When the agent cannot reproduce locally (missing token, gated network, user-only credentials), pause before `wk-commit` and offer the user the exact command to run plus the success criterion. Commit after the user confirms — committing an unverified API-shape change forces a follow-up PR when the live call still fails.
 
 ### Signature widening pre-flight
 
