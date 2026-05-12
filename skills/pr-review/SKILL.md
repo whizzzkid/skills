@@ -32,7 +32,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.11-221733'
+  version: '2026.05.12-234327'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -92,8 +92,43 @@ Collect and internalize:
 - Commit history on this branch
 - The base branch to understand what's being merged into
 
+### Extract author review focus from the PR description
+
+Authors often steer reviewers toward specific sections, files, or
+concerns in the PR body. Parse the description before investigation
+and turn explicit asks into a `review_focus` list that biases
+Phases 3–5.
+
+- Scan the body for explicit-ask signals:
+  - Headings or labels like "Review focus", "Please review", "Asks
+    for reviewers", "Areas of concern", "Open questions", "Thoughts on".
+  - Direct questions to the reviewer ("Does X seem right?", "Am I
+    handling Y correctly?", "Is this the cleanest way to Z?").
+  - Markers tagging specific files or paths ("focus on `foo.ts`",
+    "the tricky part is in `bar/`", "ignore `vendor/`").
+  - Self-flagged uncertainty ("I'm not sure about the locking
+    strategy", "FIXME: revisit this before merge").
+- Capture each ask as `{topic, files, question, severity-hint}` —
+  `severity-hint` is `blocker` when the author flags correctness or
+  security, `suggestion` otherwise.
+- Drop boilerplate that is not a review ask: test-plan checkboxes,
+  rollout notes, "closes #N" lines, screenshots, automation blocks.
+- If the body has no asks, record `review_focus: []` and proceed
+  normally — absence is not a failure.
+
+Thread the focus list through later phases:
+
+- **Phase 3:** prioritize the named files/topics first; still cover
+  the full diff, but front-load the author's flagged areas.
+- **Phase 4:** add a playground experiment per ask whose validation
+  is runnable (e.g., "is this concurrent-safe" → race-condition
+  script).
+- **Phase 5:** answer every ask explicitly — inline on the relevant
+  line when an answer is local, in the review body when the answer
+  spans the change. An unanswered author question is a review gap.
+
 Before moving on, announce what you found:
-> "Reviewing PR #N: *title* — X files changed, Y commits. Base: `{base_branch}`. Let me dig in."
+> "Reviewing PR #N: *title* — X files changed, Y commits. Base: `{base_branch}`. Author asks: {k} focus item(s). Let me dig in."
 
 ## Phase 2: Existing Review Comments
 
@@ -699,6 +734,24 @@ For each proposed comment, check that `(path, line)` is in the commentable set:
 - **No match at all:** convert to a file-level comment using
   `"subject_type": "file"` (omit `line` and `side`), or move the observation
   into the review body with a `file:line` reference.
+
+### Answer author review-focus items
+
+For each entry in the `review_focus` list captured in Phase 1, ensure
+the review addresses it before presenting comments.
+
+- Local answer (a specific file/line): post an inline comment with
+  severity `question` reframed as an answer, or `suggestion` /
+  `blocker` when the answer surfaces an issue.
+- Cross-cutting answer (spans files or whole change): add a short
+  named section to the review body (Phase 6) — `Re: <author's
+  question>` — with the verdict and evidence.
+- Unanswerable from the diff alone (needs author context): keep the
+  question open and reply inline asking the specific clarifying
+  question, do not pretend to answer.
+
+Mark every focus item as `answered: inline | body | open` so the
+present-for-approval summary can show coverage at a glance.
 
 ### Present for approval
 
