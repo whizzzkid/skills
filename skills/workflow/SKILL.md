@@ -13,7 +13,7 @@ effort: low
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-193837'
+  version: '2026.05.12-185904'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -705,16 +705,20 @@ after all code is complete:
 
 ## Phase 8: Session Retro — NON-NEGOTIABLE
 
-**At the end of EVERY session, invoke `wk-retro`.** No exceptions. This is
-mandatory regardless of whether the task completed, partially completed,
-failed, or was abandoned.
+**HARD RULE: At the end of EVERY session, invoke `wk-retro`.** No
+exceptions. Mandatory regardless of whether the task completed,
+partially completed, failed, or was abandoned. Auto mode does not
+exempt this phase. Skipping the retro is a workflow violation.
 
 The retro:
+- Auto-invokes `wk-learn scan` to mine the session transcript for
+  every user interruption / redirect, classify each by affected
+  skill, and write per-skill learning files (Step 1.5 of `wk-retro`).
 - Reviews what happened across 5 lenses (mistakes, corrections, gaps,
-  decisions, successes)
-- Writes a dated entry to the global retro log
-- Distills findings into actionable rules and promotes them globally to
-  `~/.claude/memory/` so ALL future sessions benefit
+  decisions, successes), informed by the scan's findings.
+- Writes a dated entry to the global retro log.
+- Distills findings into actionable rules and promotes them globally
+  to `~/.claude/memory/` so ALL future sessions benefit.
 
 There is no "the session was too short" or "nothing interesting happened."
 Run the retro.
