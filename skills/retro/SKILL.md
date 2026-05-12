@@ -28,7 +28,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-182812'
+  version: '2026.05.12-185904'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -70,6 +70,25 @@ cat "$HOME/.claude/memory/MEMORY.md" 2>/dev/null || echo "No global MEMORY.md fo
 ```
 
 Also check the conversation history for corrections, redirects, and decisions.
+
+## Step 1.5: Auto-mine interruptions via `wk-learn scan`
+
+**HARD RULE:** Invoke `wk-learn scan` before reflecting. The scan
+walks the session transcript(s), extracts every moment the user
+interrupted the agent or redirected it, classifies each by affected
+skill, and writes per-skill learning files. This converts the retro
+from memory-based recall to evidence-based capture.
+
+- Invoke via the `Skill` tool: `Skill(wk-learn, args="scan")`.
+- Run before Step 2 — the scan's findings feed the reflection.
+- Auto mode is **not** an exemption. The scan runs every retro.
+- If the scan finds zero interruptions, continue to Step 2; the
+  reflection still has the other four lenses to cover.
+
+The scan emits its own learning files under
+`$WK_SKILLS_HOME/learnings/skills/`. Treat those files as inputs to
+Step 2 — each one is a candidate finding the retro should
+acknowledge and, where appropriate, promote globally in Step 4.
 
 ## Step 2: Reflect Across Lenses
 
