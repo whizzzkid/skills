@@ -35,7 +35,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.11-195406'
+  version: '2026.05.12-213020'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -74,6 +74,17 @@ and manage the full resolution cycle from sync to summary.
    OR the current user. Both are "self" — the PR author's own notes are
    not reviewer feedback, and the current user's prior comments are their
    own observations being acted on, not external review.
+   - **User-touched reviewer threads — narrow follow-up allowed.** On a
+     reviewer or bot thread where the root is **not** self but the
+     current user has already posted a reply, the agent may post one
+     follow-up comment **only if** (a) a fix in this session changed
+     the finding, or (b) a new item not covered by the user's reply
+     needs explicit callout. Still requires explicit user confirmation
+     per Hard Rule 2. Never resolve the thread on the back of a
+     follow-up comment — resolution rights come from working the fix,
+     not from commenting (Hard Rule 3).
+   - **Off-limits.** Reviewer or bot threads where the current user
+     has posted no reply remain untouchable for new agent comments.
 9. **Co-author attribution.** When the current user is not the PR author,
    include a `Co-authored-by:` trailer for the PR author in every commit.
    The user is resolving on behalf of the author — attribution must reflect
