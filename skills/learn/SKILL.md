@@ -5,12 +5,18 @@ description: >-
   skill run to reflect on what happened and write a structured learning file
   for later distillation via wk-sharpen. Pass the calling skill's short name
   as the argument (e.g., `wk-learn pr-review`).
-argument-hint: '<skill-name>  (e.g., pr-review, commit, workflow)'
+argument-hint: '<skill-name> | scan  (e.g., pr-review, commit, workflow, scan)'
 allowed-tools:
   - Bash
+  - Read
+  - Glob
+  - Grep
   - Write
   - "Bash(mkdir -p:*)"
   - "Bash(test -n:*)"
+  - "Bash(find ~/.claude/projects:*)"
+  - "Bash(ls ~/.claude/projects:*)"
+  - "Bash(jq:*)"
 model: sonnet
 effort: low
 model-invocable: true
@@ -18,7 +24,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.01-073258'
+  version: '2026.05.12-185904'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -104,3 +110,110 @@ After writing, output:
 
 Learnings accumulate in `$WK_SKILLS_HOME/learnings/skills/` and are
 batch-distilled into skill improvements via `wk-sharpen`.
+
+## Scan Mode: mine session transcripts for interruptions
+
+Invoke as `wk-learn scan` (or auto-invoked by `wk-retro`). Scans
+recent session transcripts for moments where the user interrupted
+the agent or told it to stop, classifies each by the affected skill,
+and writes one learning file per finding.
+
+### Step S1: Locate transcripts
+
+Claude Code stores per-session transcripts at:
+
+```bash
+TRANSCRIPT_ROOT="$HOME/.claude/projects"
+```
+
+- Each project directory is the cwd path with `/` replaced by `-`.
+- Each session is a `.jsonl` file; one JSON message per line.
+
+Default to the current project (matches `$PWD` slug) and the last 7
+days of transcripts. Override via `wk-learn scan --since=<N>d` or
+`wk-learn scan --all` (every transcript on disk).
+
+```bash
+PROJECT_SLUG=$(echo "$PWD" | sed 's|/|-|g')
+find "$TRANSCRIPT_ROOT/$PROJECT_SLUG" -name '*.jsonl' \
+  -mtime -7 -type f 2>/dev/null
+```
+
+### Step S2: Extract interruption signals
+
+For each transcript, scan messages for these patterns — each marks a
+moment the user redirected the agent:
+
+- Verbatim runtime markers: `[Request interrupted by user]`,
+  `[Request interrupted by user for tool use]`.
+- User messages immediately following an assistant tool call whose
+  text starts with stop-words: `stop`, `wait`, `no`, `don't`, `do not`,
+  `actually`, `hold on`, `that's wrong`, `not that`, `revert`, `undo`.
+- User corrections that name a tool or skill the agent just invoked
+  ("you shouldn't have run X", "we don't use Y here").
+- Permission denials surfaced as user prose (the user typed a
+  rejection rather than clicking deny).
+
+Use `jq` to walk each `.jsonl`:
+
+```bash
+jq -c 'select(.type == "user" or .type == "assistant")' "$f"
+```
+
+Pair each interruption with the **immediately preceding assistant
+turn** — the tool call, file edit, or proposed action that triggered
+the redirect. That context is the learning's "What happened" body.
+
+### Step S3: Classify each finding by affected skill
+
+For every interruption, decide which skill needs to learn from it:
+
+| Signal in the preceding turn | Likely skill |
+|------------------------------|--------------|
+| `gh pr create` / `gh pr edit` | `wk-pr` |
+| `gh pr review` / inline comment payload | `wk-pr-review` |
+| `git commit` / `git push` | `wk-commit` |
+| `git rebase` / `git merge` / base-branch sync | `wk-pr-update` |
+| Resolving reviewer threads | `wk-pr-resolve` |
+| `bk` CLI / Buildkite URLs | `wk-buildkite` |
+| `docker` commands / Dockerfile edits | `wk-docker` |
+| Writing tests / mocks / fixtures | `wk-testing-skeleton` |
+| Editing a `SKILL.md` | `wk-sharpen` |
+| Morning / evening dashboards | `wk-goodmorning` / `wk-goodevening` |
+| No specific skill — general agent behavior | `wk-workflow` |
+
+When two skills could fit, prefer the one closest to the agent's
+in-flight action. When none fits, default to `wk-workflow`.
+
+### Step S4: Write one learning per finding
+
+For each classified interruption, write
+`$WK_SKILLS_HOME/learnings/skills/<skill-name>/<YYYY-MM-DD>_<slug>.md`
+using the same frontmatter and body shape as Step 3 above. Set
+`type: correction` and `severity` based on impact (data loss / wrong
+artifact shipped → `high`; cosmetic / scope drift → `medium`; minor
+clarification → `low`).
+
+**HARD RULE: strip incident-specific tokens.** Do not embed session
+IDs, transcript paths, exact timestamps, file paths the user did
+not authorize sharing, or verbatim user prose that names third
+parties. Distill the principle exactly as the main learning flow
+requires.
+
+### Step S5: Deduplicate against existing learnings
+
+Before writing each file, check whether a learning with the same
+`(skill, slug)` already exists — including `.learned.md` archives.
+Skip duplicates. If the existing file is unprocessed and the new
+finding adds evidence, append a `## Additional evidence` bullet
+rather than creating a parallel file.
+
+### Step S6: Report
+
+After processing, print a one-line summary per skill touched:
+
+> "📝 Scan complete: {N} interruptions captured across {M} skills.
+> Run `wk-sharpen` when ready to distill."
+
+If zero interruptions surface, say so and exit — no learning files
+are written for an uneventful scan.
