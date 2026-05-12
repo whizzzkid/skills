@@ -18,7 +18,7 @@ effort: medium
 license: MIT
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183221'
+  version: '2026.05.12-180450'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -1166,6 +1166,23 @@ literal brackets and parentheses. Always emit URLs as bare strings
 markdown file (so the user can copy from the source) and the HTML
 copy-to-clipboard payload.
 
+**HARD RULE:** Emoji lead characters (`👈🏽`, `👉🏽`, `✋🏽`) are mandatory
+on the Yesterday, Today, and Blockers bullets respectively. After
+writing the file, verify they are present:
+
+```bash
+grep -c "👈🏽" "$TODAY_DIR/morning.md"  # must be >= 1
+grep -c "👉🏽" "$TODAY_DIR/morning.md"  # must be >= 1
+```
+
+If either `grep` returns 0, the emoji were stripped (a known failure
+mode when writing files via bash heredoc — multi-byte sequences can be
+silently dropped by locale or shell encoding mismatches). Re-write the
+standup section using the Write tool or a `printf` approach that
+preserves UTF-8, then re-verify. Do not commit until all three emoji
+leads are confirmed present in both `morning.md` and the clipboard
+payload embedded in `morning.html`.
+
 **Source mapping:**
 - **Yesterday** → previous working day's `evening.md` `## Achievements`
   section. Pick 3-4 items with the highest visible impact (shipped/merged
@@ -1206,15 +1223,22 @@ After writing both files, open the HTML dashboard automatically:
 open "$TODAY_DIR/morning.html"
 ```
 
-Then announce:
+**HARD RULE: `open` is unconditional.** It runs immediately after the files are
+written — before any commit/push offer, before any announcement, and without
+exception in auto mode. Auto mode does not exempt this step. The file must be
+open in the browser before the agent proceeds to the next step.
+
+Then announce (do NOT ask whether the user wants to see it — it is already open):
 
 > "Your morning brief is ready and opened in your browser:
 > - `sitrep/{YYYY}/{MM}/{DD}/morning.md` — structured reference
-> - `sitrep/{YYYY}/{MM}/{DD}/morning.html` — interactive dashboard
+> - `sitrep/{YYYY}/{MM}/{DD}/morning.html` — interactive dashboard (opened)
 >
-> You have X items needing action, Y follow-ups, and Z meetings today.
->
-> Would you like to commit and push these files?"
+> You have X items needing action, Y follow-ups, and Z meetings today."
+
+After the announcement, offer the commit/push step:
+
+> "Commit and push these files? (auto mode: yes)"
 
 ---
 
