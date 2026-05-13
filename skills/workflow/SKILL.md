@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.13-183137'
+  version: '2026.05.13-190000'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -590,6 +590,22 @@ or any other method.** This is non-negotiable. `wk-pr` handles:
 ### Post-push sync
 
 `wk-commit` handles PR description sync and stale comment resolution after every push. See `wk-commit` for the full Post-Push PR Sync rules.
+
+### Self-review sync on approach pivots
+
+**HARD RULE:** After any push that changes the implementation **approach**
+(not just polish), resolve pending self-review threads that reference
+the old design and post fresh self-review comments for the new design
+via `wk-self-review` before returning control.
+
+- "Approach pivot" = the mechanism, API, data flow, or abstraction
+  changed — not a rename, comment tweak, or formatting pass.
+- Self-review comments rationalising the old design mislead
+  reviewers exactly as a stale PR body does. PR-body sync alone is
+  insufficient on a pivot.
+- Resolve the stale threads explicitly (do not just let them
+  scroll off); post the replacement comments in the same
+  `wk-self-review` invocation.
 
 ### Pre-rework fetch
 
