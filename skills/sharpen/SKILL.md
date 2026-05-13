@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.12-211741'
+  version: '2026.05.13-183137'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -159,6 +159,19 @@ Keep:
 - Error codes and messages (e.g., `422 "Line could not be resolved"`)
 - API behavior (e.g., "REST API rejects PENDING")
 - Structural patterns (e.g., "lines not in the diff")
+
+### HARD RULE: full-read before `already-covered`
+
+Mark a learning `already-covered` only after reading the full
+learning file and matching every rule/bullet in it against an
+existing rule/bullet in the target skill.
+
+- Match at the rule/bullet level, not the topic level. Two
+  surface overlaps do not prove full coverage.
+- If any line teaches something the skill does not yet encode,
+  classify as `partial` and distill the missing parts.
+- Cite the specific existing lines that already encode each
+  bullet — "topic exists in the skill" is not a coverage proof.
 
 ## Step 4: Draft the Skill Update
 
