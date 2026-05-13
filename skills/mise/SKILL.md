@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.08-000001'
+  version: '2026.05.13-003344'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -94,6 +94,37 @@ mise current
 
 If `mise which <tool>` returns a path but the tool isn't on `$PATH`,
 see the `mise exec --` pattern in the next section.
+
+## Diagnosing Toolchain Version Mismatch (silent failure)
+
+When a tool **is** on `$PATH` but the system version differs from the
+project's mise-pinned version, the failure is not "command not found" —
+it is a confusing build/runtime error from the tool itself. Treat any
+of these signals as a mise-mismatch:
+
+- Go: `compile: version "goX.Y" does not match go tool version "goA.B"`
+  on stdlib packages.
+- Node: `The engine "node" is incompatible with this module` or
+  syntax errors on features the pinned version supports.
+- Python: `SyntaxError` on features the pinned version supports;
+  `pip` resolving wheels for a different ABI.
+- Ruby: `Your Ruby version is X, but your Gemfile specified Y`.
+
+The fix is the same as the missing-tool case — prefix the command with
+`mise exec --` so mise activates the pinned toolchain before invoking
+the tool:
+
+```bash
+mise exec -- go build ./...
+mise exec -- go test ./...
+mise exec -- node --version
+mise exec -- bundle exec rspec
+```
+
+Apply this to **every** invocation of a mise-managed tool in a repo
+with a matching `.mise.toml` entry, not just commands that previously
+failed — a working bare invocation today silently breaks when the
+system version drifts.
 
 ## Running Commands with Mise Context
 
