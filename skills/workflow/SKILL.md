@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.12-230002'
+  version: '2026.05.13-183137'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -124,6 +124,20 @@ If any step is ambiguous, ask the user before claiming completion.
 ---
 
 ## Phase 1: Plan
+
+### Jira ticket pre-flight
+
+Before any exploration — `Read`, `Grep`, or `Agent` dispatch —
+check whether a Jira ticket exists for the work.
+
+- If the user's prompt contains a Jira URL or key, treat that as
+  yes and proceed.
+- If yes, invoke `wk-jira` (Stage 0+1+2) before drafting the
+  plan. Acceptance criteria and linked specs belong in the plan,
+  not retrofitted after exploration starts.
+- If unknown, ask the user once before spawning exploration.
+- Surfacing the ticket after exploration is underway wastes the
+  turn and risks a plan that contradicts acceptance criteria.
 
 ### Investigate user-provided artifacts first
 
