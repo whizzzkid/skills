@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.12-185904'
+  version: '2026.05.13-190000'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -44,6 +44,20 @@ metadata:
 Structured retrospective that captures session learnings and promotes them
 globally so ALL future sessions benefit — regardless of which project they run
 in. Run at the end of a work session or after completing a significant task.
+
+## HARD RULE: capture in real time, not only at retro
+
+Invoke `wk-learn <affected-skill>` in the same response that
+acknowledges a user correction or self-caught error — do not defer
+to retro.
+
+- Retro refines and promotes. It must not be the first capture.
+- Reconstructing corrections at retro time drops precision and
+  loses any correction the agent forgets between events.
+- Multiple corrections in one session → multiple `wk-learn` calls,
+  one per affected skill, at the moment each correction lands.
+- This rule applies to the agent during the session; the retro
+  flow below still runs as the consolidation pass.
 
 ## Global Paths
 
