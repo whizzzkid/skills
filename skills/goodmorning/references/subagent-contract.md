@@ -13,13 +13,19 @@ SUBAGENT CONTRACT (mandatory):
 - Do NOT prompt the user for input — the orchestrator handles all triage
 - Do NOT open files in browsers or call `open`
 - Your output is markdown text the orchestrator pastes into a section
-- EVERY item you return that could become a priority MUST include a
-  source identifier: a URL, MCP deep link, file path, or
-  `{system}:{id}` reference. Items without a source identifier will
-  be rejected at compile time. If the item came from a meeting note,
-  return the meeting URL or ID alongside the extracted insight; if
-  from a Slack message, return the permalink; if inferred, mark
-  `(inferred)` and list the source artifacts the inference used.
+- EVERY item you return MUST include a `url` field with a clickable
+  link to the underlying artifact (Slack permalink, Gmail thread URL,
+  PR/issue URL, Jira browse URL, Confluence page URL, calendar event
+  URL, Granola note URL). The orchestrator presents items to the user
+  for triage and requires a working link on every line; items without
+  `url` are rejected at compile time.
+- If a canonical URL truly cannot be resolved, return
+  `link_unavailable: true` with a one-line `reason` plus the best
+  available `{system}:{id}` reference. The orchestrator will skip
+  rather than present a linkless item.
+- Inferred items still need a URL — link to the source artifact the
+  inference came from and tag `(inferred)` so the orchestrator renders
+  it accordingly.
 - Distinguish verified facts from single-source claims. Tag each
   item `verified` (concrete artifact like a calendar invite, Jira
   ticket, PR URL, explicit announcement) or `claim` (extracted from

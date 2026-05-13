@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.12-184309'
+  version: '2026.05.13-003212'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -652,6 +652,19 @@ If ALL groups are empty after auto-resolution, skip Stage 3:
 > "Nothing needs your input — all items are tracked and all comms answered!"
 
 ### Presentation format
+
+**HARD RULE:** Every triaged item MUST be presented with a clickable
+link to the underlying artifact. The `[link]` slot is non-optional.
+
+- Resolve URLs at fetch time — every Stage 1 agent emits a `url`
+  field on each item.
+- Render the link as a markdown autolink `<url>` or labeled link
+  `[title](url)` so terminals and the HTML dashboard both resolve it.
+- Refuse to prompt on any item lacking a URL — re-fetch, fall back to
+  a search query, or mark `link_unavailable: true` with a reason and
+  skip the item rather than present a bare summary.
+- Source mapping per group is in
+  [`../goodmorning/references/triage-link-sources.md`](../goodmorning/references/triage-link-sources.md).
 
 For each group, present up to 5 items at a time. Each batch includes
 **batch-level actions** that apply to all items, and individual per-item
