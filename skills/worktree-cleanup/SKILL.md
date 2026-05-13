@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183219'
+  version: '2026.05.13-185500'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -136,13 +136,28 @@ For each branch classified as `merged`:
 ## Step 5: Clean Up Merged Worktrees
 
 For each **merged** branch whose retro has been confirmed (Step 4),
-remove the worktree and delete the branch:
+remove the worktree and delete the branch.
+
+### Pre-clean disposable untracked content
+
+Run `git clean -fd` inside the worktree before `git wtr`. `git worktree
+remove` refuses to delete a worktree that contains untracked files and
+errors out without `--force`. Falling back to `--force` masks unrelated
+uncommitted work the disposable-paths classifier missed.
+
+- Scope the clean to the worktree path; do not run it in the primary
+  checkout.
+- Only run after Step 4 confirmed every untracked path is disposable —
+  the classifier is the gate, `git clean` is the executor.
+- If a non-disposable untracked path appears between Step 4 and Step 5
+  (e.g., a generated file from `wk-retro`), re-run Step 4's check.
 
 ```bash
+git -C worktrees/{branch} clean -fd
 git wtr {branch}
 ```
 
-This alias expands to `git worktree remove worktrees/{branch} && git branch -D {branch}`.
+The `git wtr` alias expands to `git worktree remove worktrees/{branch} && git branch -D {branch}`.
 
 **HARD RULE:** Never call `git wtr` on a branch that has not been confirmed
 merged. The `-D` flag force-deletes the branch regardless of merge status.
