@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.12-213020'
+  version: '2026.05.13-184500'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1060,6 +1060,21 @@ Before posting any replies when the comment map contains bot reviewers:
 - Match each pre-push finding to its post-push thread by stable identity tuple `(path, line, root_comment.body_excerpt)` — REST IDs are unstable but this tuple survives review replacement.
 - If the post-push fetch shows a finding was dropped (bot retracted it), skip the reply and continue.
 - The 404-recovery fallback below still applies to any reply that fails after this refresh.
+
+### Re-check pending self-review before replies
+
+**HARD RULE:** Re-run the Step 3 pending-review check immediately before posting
+the first reply — even if Step 3 found none.
+
+- A pending self-review submitted between Step 3 and Step 8 (manual review pass,
+  another agent, IDE auto-draft) will reject every reply with HTTP 422
+  (`user_id can only have one pending review per pull request`).
+- Run the same `gh api .../reviews | jq` query from "Pre-check: pending
+  self-reviews" against the current state.
+- If a pending review now exists, submit it as `COMMENT` (same `event=COMMENT`
+  call as Step 3) before posting any reply. Do not ask the user again — the
+  Step 3 prompt already authorized the resolution path for this session.
+- Reject any reply loop entry whose pre-flight skipped this re-check.
 
 ### Post reply comments (sequentially)
 
