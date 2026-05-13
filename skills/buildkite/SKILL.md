@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.12-213500'
+  version: '2026.05.13-190000'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -211,6 +211,31 @@ For each failed job, fetch and analyze logs. Look for:
 
 Use the canonical build query (see above) against `-b main`, selecting the
 specific failing step by name.
+
+## Reading upstream step status from a downstream step
+
+When a downstream step needs to branch on whether an upstream step
+passed, failed, or timed out, use the platform's native step-outcome
+API.
+
+```bash
+buildkite-agent step get "outcome" --step "<step-key>"
+# returns: passed | failed | soft_failed | timed_out | broken
+```
+
+- Use `buildkite-agent step get "outcome"` — written by the agent
+  itself, available regardless of how the upstream step terminated.
+- Reject sentinel files, marker artifacts, or any side-effect file
+  written by the upstream step's own code as a status signal. If
+  the step crashes before its cleanup trap runs, the sentinel is
+  never written and the downstream step has no signal — exactly
+  the failure case the detection exists for.
+- Reject `buildkite-agent artifact search` as a status proxy for
+  the same reason; artifact presence is a side effect of the
+  step's code path, not a platform-written outcome.
+- Before designing any cross-step status detection, grep the repo
+  for existing `buildkite-agent step` usage and check the
+  Buildkite agent CLI reference for first-class APIs.
 
 ## Monitoring Builds After Push
 
