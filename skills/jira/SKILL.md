@@ -33,7 +33,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.08-000002'
+  version: '2026.05.14-234426'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -167,6 +167,49 @@ mcp__claude_ai_Jira_Confluence__transitionJiraIssue  # for status
 Report in one line:
 
 > "Jira: {KEY} → In Progress, assigned @<user>."
+
+### Ticket description quality check
+
+After fetching the ticket, evaluate `fields.description`. A thin
+description leaves reviewers and future maintainers without the
+"why" behind the work — fill the gap at start-of-work, not after.
+
+- Treat as **thin** when any of these hold:
+  - `fields.description` is empty, null, or whitespace-only.
+  - Body text (after stripping markup) is fewer than 40 characters.
+  - Body repeats only the ticket summary or a placeholder (`TBD`,
+    `n/a`, `see slack`, etc.).
+- When thin, propose appending a structured context block. Never
+  overwrite existing content — wrap it as `<existing details>`.
+- Pre-fill `Date` with today's date (UTC, `YYYY-MM-DD`). Pre-fill
+  `Problem` / `Decision` / `Trade-offs` / `Context` from session
+  signal (branch name, recent prompts, linked PR title/body) only
+  when confident; otherwise leave the field empty for the user.
+- Append template:
+
+  ```
+  <existing details>
+
+  ---
+
+  Date: <YYYY-MM-DD>
+  Problem:
+  Decision:
+  Trade-offs:
+  Context:
+
+  ---
+  ```
+
+- Confirm before writing — the Manual ticket operations HARD RULE
+  applies. Present the proposed merged description, wait for
+  explicit approval, then call `editJiraIssue`.
+- Skip silently when the description already exceeds the thinness
+  threshold; do not re-prompt the same branch.
+
+Report once on append:
+
+> "Jira: {KEY} description enriched with context block."
 
 ---
 

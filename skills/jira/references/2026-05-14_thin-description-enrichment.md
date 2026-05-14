@@ -1,0 +1,7 @@
+- **Rule:** When a Jira ticket's `fields.description` is thin (empty, <40 chars, or placeholder), propose appending a structured context block — `Date / Problem / Decision / Trade-offs / Context` — wrapped after the existing body.
+- **Why:** Thin tickets strip reviewers and future maintainers of the "why" behind the work; the agent already touches the ticket at start-of-work, so it's the cheapest moment to fix.
+- **Where:** Stage 2 → "Ticket description quality check" sub-section, gated by the Manual ticket operations HARD RULE (confirm-first write).
+- **Notes:**
+  - Never overwrite existing content — wrap as `<existing details>` and append.
+  - Pre-fill `Date` (UTC). Pre-fill other fields only when session signal is confident; otherwise leave empty stubs.
+  - Skip silently when the description already passes the threshold; do not re-prompt the same branch.
