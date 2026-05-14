@@ -1,0 +1,8 @@
+- **Rule:** Auto-invoke wk-jira whenever a Jira URL (`*.atlassian.net/...` or `/browse/<KEY>`) or a Jira key token (`[A-Z][A-Z0-9]+-\d+`) appears in agent context — prompts, files, branch names, commits, PR bodies, recent agent messages.
+- **Why:** Limiting auto-invocation to dev-lifecycle events misses the most common case: the user pastes a ticket link and expects the agent to know the ticket's status/summary before answering.
+- **Where:** Frontmatter `description` (artifact-mention triggers listed first); Trigger conditions table (new top row); new Stage 6 "Surface ticket context"; Quick Reference table.
+- **Notes:**
+  - Stage 6 is read-only — no transitions, no assigns, no writes.
+  - One digest line per key per session; cap at 5 surfaced keys per turn.
+  - Stage 6 does not run the thin-description audit (Stage 2 owns it; requires development intent).
+  - HARD RULE: artifact in context → Stages 0+1+6 run before any answer that depends on ticket context.

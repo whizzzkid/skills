@@ -1,17 +1,22 @@
 ---
 name: wk-jira
 description: >-
-  Coordinate Jira ticket state with the development lifecycle. Auto-invoked
-  when the agent starts work on a branch, creates a PR, marks a PR ready,
-  or detects a PR merge. Detects the associated Jira key from the branch
-  name, commit messages, or recent prompts; assigns the ticket to the user;
-  transitions the ticket through In Progress → In Review → Done in lockstep
-  with PR state; and ensures every PR title carries a `[BOARD-NUM]` suffix
-  and the PR description references the ticket. Also gates user-initiated
-  write operations (create, edit, batch transition) behind explicit
-  confirmation — Jira writes are effectively irreversible (no delete API).
-  Requires the Jira MCP connector. Not user-invocable — fires automatically
-  alongside `wk-commit`, `wk-pr`, and `wk-workflow`.
+  Coordinate Jira ticket state with the development lifecycle, and surface
+  Jira context whenever the agent encounters a Jira artifact. Auto-invoked
+  on ANY of: a Jira URL in a prompt or file (matches
+  `https?://[^/]+\.atlassian\.net/`, `/browse/<KEY>`, or a configured
+  self-hosted host); a Jira key token (`[A-Z][A-Z0-9]+-\d+`) in a prompt,
+  branch name, commit message, PR body, or recent agent message; the agent
+  starting work on a branch; PR creation; PR draft→ready; or PR merge.
+  Detects the associated key; assigns the ticket to the user; transitions
+  it through In Progress → In Review → Done in lockstep with PR state;
+  audits the ticket description and proposes a structured context block
+  when thin; ensures every PR title carries a `[BOARD-NUM]` suffix and the
+  PR description references the ticket. Gates user-initiated write
+  operations (create, edit, batch transition) behind explicit confirmation
+  — Jira writes are effectively irreversible (no delete API). Requires the
+  Jira MCP connector. Not user-invocable — fires automatically alongside
+  `wk-commit`, `wk-pr`, and `wk-workflow`.
 allowed-tools:
   - Bash
   - Read
@@ -33,7 +38,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.14-234426'
+  version: '2026.05.14-234625'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -63,12 +68,14 @@ PR merged  ──► Done
 
 ## Trigger conditions
 
-The skill fires automatically at four lifecycle points. Only the
-matching subset of stages runs each time — do not re-do work already
-done.
+The skill fires automatically on artifact mentions **and** at lifecycle
+points. Only the matching subset of stages runs each time — do not
+re-do work already done.
 
 | Trigger | Stages to run |
 |---------|---------------|
+| Jira URL appears in a user prompt, file, or agent context (`https?://[^/]+\.atlassian\.net/...` or `/browse/<KEY>`) | 0, 1, 6 (surface) |
+| Jira key token (`[A-Z][A-Z0-9]+-\d+`) appears in a prompt, branch name, commit, PR body, or recent agent message | 0, 1, 6 (surface) |
 | Agent begins work on a branch (first edit, first commit on a fresh branch) | 0 (MCP), 1 (detect), 2 (start) |
 | About to create a PR (called from `wk-pr`) | 0, 1, 3 (title + description) |
 | PR transitioning from draft → ready | 0, 1, 4 (In Review) |
@@ -76,6 +83,11 @@ done.
 
 If the agent cannot determine which trigger fired, default to detect
 (Stage 1) and report what was found — never guess and transition.
+
+**HARD RULE:** never assume "wasn't told to look up Jira" — if a Jira
+URL or key is in the agent's context, Stage 0 + Stage 1 + Stage 6
+run before any other response that depends on ticket context. Skip
+only when the MCP is unavailable (silent-skip rule).
 
 ---
 
@@ -312,6 +324,32 @@ Report:
 
 ---
 
+## Stage 6: Surface ticket context (read-only)
+
+Fires when the trigger was a Jira URL or key mention outside the
+development lifecycle (e.g., the user pasted a ticket link, asked a
+question about a ticket, or a key surfaced in a doc the agent read).
+
+- Fetch the ticket once per session per key (cache in-session):
+
+  ```
+  mcp__claude_ai_Jira_Confluence__getJiraIssue(issueIdOrKey="<KEY>")
+  ```
+
+- Report a one-line digest before answering the user's actual
+  question:
+
+  > "Jira: {KEY} — {summary} ({status}, assignee: @<them or 'unassigned'>)."
+
+- Do **not** transition, assign, or write. Stage 6 is read-only.
+- Do **not** prompt for the description-quality append here — Stage 2
+  owns that, and it requires development intent.
+- If multiple keys appear in the context, surface each once. Do not
+  spam the user with more than 5 digests per turn — list the
+  remainder by key only.
+
+---
+
 ## Manual ticket operations (confirm-first)
 
 When the user explicitly asks the agent to create, edit, or batch-transition
@@ -353,6 +391,7 @@ ticket state is a side-effect of the work, not a precondition for it.
 
 | Trigger | Stages |
 |---------|--------|
+| Jira URL or key in prompt / file / context (no dev intent) | 0, 1, 6 |
 | First commit on a branch | 0, 1, 2 |
 | `wk-pr` creating/updating PR | 0, 1, 3 |
 | `gh pr ready` succeeds | 0, 1, 4 |
