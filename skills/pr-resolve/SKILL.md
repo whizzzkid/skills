@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.15-193702'
+  version: '2026.05.15-201820'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -94,6 +94,14 @@ and manage the full resolution cycle from sync to summary.
    GitHub Actions, custom bots) as first-class review feedback. Triage
    them alongside human reviewer comments — evaluate each for correctness
    before accepting or dismissing.
+11. **Adversarial-review gate before push.** Any new commits produced in
+   this session (Step 6 fixes, re-fixes after CI, follow-up commits) must
+   pass `wk-adversarial-review` before Step 8's `git push`. The gate
+   catches the recurring back-and-forth classes — vulnerability-class
+   fixes left on one site, sibling-script drift, dead defensive guards,
+   stale comments, PR-metadata drift — that this skill historically
+   surfaced only after another reviewer round. Blocked verdict means no
+   push; fix and re-invoke until clear.
 
 ## Step 1: Identify the PR
 
@@ -1038,6 +1046,15 @@ stop without pushing or posting anything.
 ## Step 8: Push and Respond
 
 **Only after explicit user confirmation.**
+
+### Adversarial-review gate (run before `git push`)
+
+Invoke `wk-adversarial-review` against the new commits introduced in
+this session (`$BASE...HEAD`). Push is **conditional** on a `clear`
+verdict (or `suggestions-only` with the user's accepted A/B/C choice).
+On `blocked`, address each blocker with a fresh atomic `wk-commit`,
+re-invoke the skill, and loop until clear. Never push past a blocker —
+that is the failure mode this gate exists to prevent.
 
 ### Push commits
 
