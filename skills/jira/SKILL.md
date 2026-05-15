@@ -38,7 +38,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.14-234625'
+  version: '2026.05.15-193702'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -182,46 +182,10 @@ Report in one line:
 
 ### Ticket description quality check
 
-After fetching the ticket, evaluate `fields.description`. A thin
-description leaves reviewers and future maintainers without the
-"why" behind the work — fill the gap at start-of-work, not after.
-
-- Treat as **thin** when any of these hold:
-  - `fields.description` is empty, null, or whitespace-only.
-  - Body text (after stripping markup) is fewer than 40 characters.
-  - Body repeats only the ticket summary or a placeholder (`TBD`,
-    `n/a`, `see slack`, etc.).
-- When thin, propose appending a structured context block. Never
-  overwrite existing content — wrap it as `<existing details>`.
-- Pre-fill `Date` with today's date (UTC, `YYYY-MM-DD`). Pre-fill
-  `Problem` / `Decision` / `Trade-offs` / `Context` from session
-  signal (branch name, recent prompts, linked PR title/body) only
-  when confident; otherwise leave the field empty for the user.
-- Append template:
-
-  ```
-  <existing details>
-
-  ---
-
-  Date: <YYYY-MM-DD>
-  Problem:
-  Decision:
-  Trade-offs:
-  Context:
-
-  ---
-  ```
-
-- Confirm before writing — the Manual ticket operations HARD RULE
-  applies. Present the proposed merged description, wait for
-  explicit approval, then call `editJiraIssue`.
-- Skip silently when the description already exceeds the thinness
-  threshold; do not re-prompt the same branch.
-
-Report once on append:
-
-> "Jira: {KEY} description enriched with context block."
+Run the **Description quality gate** subroutine (defined below).
+Invoked from every writable stage — Stage 2 (start), Stage 3 (PR
+created), Stage 4 (PR ready) — so a session that joins mid-branch
+still gets a checkpoint before reviewers see the ticket.
 
 ---
 
@@ -270,6 +234,12 @@ If `wk-pr` already builds a description, **insert** the `## Ticket`
 section rather than overwriting the rest. If the section already
 exists, refresh its content if the ticket summary has changed.
 
+### Description quality check (Stage 3)
+
+Run the **Description quality gate** subroutine. PR-creation time
+exposes title + summary that pre-fills `Problem` / `Context` with
+high confidence.
+
 ---
 
 ## Stage 4: PR ready → In Review
@@ -296,6 +266,61 @@ should be a no-op for this team.
 Report once per state change:
 
 > "Jira: {KEY} → In Review."
+
+### Description quality check (Stage 4)
+
+Run the **Description quality gate** subroutine. PR-ready is the
+last natural writable checkpoint — when a session starts
+mid-branch (after the initial commit but before ready), this is
+the only run that fires. Skipping it leaves reviewers without the
+"why".
+
+---
+
+## Description quality gate (subroutine)
+
+Invoked from any writable stage. Idempotent — safe to call
+repeatedly per branch; skips silently after the first successful
+append.
+
+- Evaluate `fields.description`. Treat as **thin** when any hold:
+  - Empty, null, or whitespace-only.
+  - Body text (after stripping markup) fewer than 40 characters.
+  - Body repeats only the ticket summary or a placeholder (`TBD`,
+    `n/a`, `see slack`, etc.).
+- When thin, propose appending a structured context block. Never
+  overwrite existing content — wrap it as `<existing details>`.
+- Pre-fill `Date` with today's date (UTC, `YYYY-MM-DD`). Pre-fill
+  `Problem` / `Decision` / `Trade-offs` / `Context` from the
+  highest-signal source available at this stage (branch name,
+  recent prompts, PR title/body, linked commits); leave empty
+  otherwise.
+- Append template:
+
+  ```
+  <existing details>
+
+  ---
+
+  Date: <YYYY-MM-DD>
+  Problem:
+  Decision:
+  Trade-offs:
+  Context:
+
+  ---
+  ```
+
+- Confirm before writing — the Manual ticket operations HARD RULE
+  applies. Present the proposed merged description, wait for
+  explicit approval, then call `editJiraIssue`.
+- Skip silently when the description already exceeds the thinness
+  threshold OR when this branch has already had a successful
+  enrichment append in this session.
+
+Report once on append:
+
+> "Jira: {KEY} description enriched with context block."
 
 ---
 

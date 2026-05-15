@@ -1,0 +1,6 @@
+- **Rule:** Run the description quality gate from every writable stage (2 / 3 / 4), not Stage 2 only.
+- **Why:** Sessions that join mid-branch never trigger Stage 2; if the check lives only there, a thin description silently survives until reviewers see it.
+- **Where:** Description quality gate refactored into a freestanding subroutine; invoked from Stage 2, Stage 3 (PR created), and Stage 4 (PR ready). Idempotent — per-branch in-session guard skips repeat appends.
+- **Notes:**
+  - Pre-fill source escalates by stage: branch+prompts (Stage 2) → +PR title/body (Stage 3) → +linked commits (Stage 4).
+  - Confirm-first write-gate (Manual ticket operations HARD RULE) still applies at every stage.
