@@ -117,6 +117,22 @@ flowchart TD
     style WF fill:#4a90e2,color:#fff
     style JIRA fill:#f5a623,color:#fff
     style ADV fill:#d0021b,color:#fff
+
+    click WF href "./workflow/README.md" _blank
+    click COMMIT href "./commit/README.md" _blank
+    click DOCS href "./docs/README.md" _blank
+    click FMT href "./format/README.md" _blank
+    click SKEL href "./testing-skeleton/README.md" _blank
+    click ADV href "./adversarial-review/README.md" _blank
+    click PR href "./pr/README.md" _blank
+    click SR href "./self-review/README.md" _blank
+    click CI href "./buildkite/README.md" _blank
+    click PRR href "./pr-review/README.md" _blank
+    click RES href "./pr-resolve/README.md" _blank
+    click UPD href "./pr-update/README.md" _blank
+    click BREAK href "./pr-break/README.md" _blank
+    click JIRA href "./jira/README.md" _blank
+    click RETRO href "./retro/README.md" _blank
 ```
 
 ---
@@ -136,6 +152,10 @@ flowchart LR
 
     style SHARPEN fill:#7b68ee,color:#fff
     style SKILL fill:#2ecc71,color:#fff
+
+    click LEARN href "./learn/README.md" _blank
+    click RETRO href "./retro/README.md" _blank
+    click SHARPEN href "./sharpen/README.md" _blank
 ```
 
 The cycle: **session → learn → retro → sharpen → better skills → next session**.

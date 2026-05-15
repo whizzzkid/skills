@@ -32,6 +32,7 @@ flowchart TD
     K --> L[Parallel audit agents]
     L --> M[Consolidate + phased proposal per user approval]
     M --> Q
+    click R href "../refactor/README.md" _blank
 ```
 
 ## Noteworthy

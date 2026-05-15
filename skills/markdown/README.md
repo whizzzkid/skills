@@ -30,6 +30,7 @@ flowchart TD
     K -->|no| M[✅ Write file]
     L --> M
     M --> N[wk-learn markdown]
+    click N href "../learn/README.md" _blank
 ```
 
 ## Noteworthy

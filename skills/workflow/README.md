@@ -28,6 +28,10 @@ flowchart TD
     I -->|no — 3 attempts| J[Stop + ask user]
     I -->|yes| K[Phase 7: wk-docs final audit]
     K --> L[Phase 8: wk-retro — NON-NEGOTIABLE]
+    click D href "../adversarial-review/README.md" _blank
+    click G href "../pr/README.md" _blank
+    click K href "../docs/README.md" _blank
+    click L href "../retro/README.md" _blank
 ```
 
 ## Noteworthy

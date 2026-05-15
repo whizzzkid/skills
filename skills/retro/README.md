@@ -22,6 +22,7 @@ flowchart TD
     G --> H[Promote to ~/.claude/memory/ globally]
     F -->|no| I[Done]
     H --> I
+    click C href "../learn/README.md" _blank
 ```
 
 ## Noteworthy
