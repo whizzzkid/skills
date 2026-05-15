@@ -21,7 +21,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.08-182713'
+  version: '2026.05.15-232615'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -206,6 +206,29 @@ Show a numbered summary of proposed comments:
 ```
 
 Wait for user approval. They may edit, skip, or approve individual comments.
+
+## Step 3.5: Validate every comment line lies inside a diff hunk
+
+**HARD RULE:** Before POSTing, verify each comment's `line` falls
+inside a `@@` hunk range in `git diff <base>...HEAD -- <path>`. The
+API rejects out-of-hunk lines with `422 "Line could not be resolved"`.
+
+- Resolve `<base>` dynamically: `gh pr view --json baseRefName --jq .baseRefName`.
+- Extract `+N,M` ranges from each `@@` header for the file; the
+  commentable set is the union of `[N, N+M-1]` per hunk on the new-file side.
+- For each proposed comment, check `line ∈ commentable_set`. If not:
+  - Snap to the nearest in-hunk line, **or**
+  - Convert to a file-level comment by omitting both `line` and
+    `side` in the API payload.
+- Absolute file line numbers from `Read` output are not commentable
+  unless they also appear in a diff hunk — never assume the two are
+  the same.
+
+```bash
+BASE=$(gh pr view --json baseRefName --jq .baseRefName)
+git diff "origin/$BASE...HEAD" -- "$PATH_TO_FILE" \
+  | grep -E '^@@' | sed -E 's/.*\+([0-9]+),?([0-9]*).*/\1 \2/'
+```
 
 ## Step 4: Post Comments
 
