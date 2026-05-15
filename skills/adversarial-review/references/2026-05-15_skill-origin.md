@@ -1,0 +1,3 @@
+- **Rule:** Adversarial pre-flight review must run before any artifact leaves the machine.
+- **Why:** Reviewer / bot cycles repeatedly flagged the same classes — vulnerability-class fixes left on one site, sibling-script drift, stale comments, dead defensive guards, PR-metadata drift, design-pivot doc drift. Each round of back-and-forth costs a cycle that mechanical pre-push sweeps would have caught locally.
+- **Where:** Step 0–7 (full skill) and Hard Rule 1. Replaces wk-workflow Phase 4's inline adversarial-agent description; wired into wk-pr before first push and `gh pr ready`, and wk-pr-resolve before Step 8 push.
