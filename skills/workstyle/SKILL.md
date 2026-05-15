@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.15-215748'
+  version: '2026.05.15-232615'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -236,6 +236,9 @@ explicitly sets a different value.
 - **Prefer `map`, `select`, `reduce`** over imperative loops.
 - **`raise` specific exception subclasses**, not bare `RuntimeError`.
 - **No `rescue Exception`** — rescue `StandardError` at most unless explicitly handling signals.
+- **ASCII-only in source comments.** Use `-`, `->`, `--`, `...` — not em dash (`—`), en dash (`–`), smart quotes,
+  or Unicode ellipsis. RuboCop's `Style/AsciiComments` enforces this in many Ruby shops; the cop default is
+  ASCII-only. Applies to `.rb` files and bin scripts loaded as Ruby.
 
 ### Go
 
