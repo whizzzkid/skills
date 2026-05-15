@@ -22,13 +22,14 @@ sequenceDiagram
     S->>S: Step 2 — sync branch via wk-pr-update
     S->>GH: Step 3 — fetch all 3 surfaces (inline, review bodies, issue comments)
     S->>S: Step 4 — generate suggestions with obvious-fix vs judgment-required tags
+    S->>U: Step 5 — bulk-queue preview for obvious fixes (queued, NOT applied)
+    U->>S: Confirm queue
     loop Per judgment-required comment (one at a time)
         S->>U: Step 5 — present suggestion + options (a/e/d/t/s/r)
         U->>S: Decision
     end
-    S->>U: Step 5 — bulk-apply preview for obvious fixes
-    U->>S: Confirm
-    S->>S: Step 6 — apply fixes, verify, commit (one commit per comment)
+    S->>U: Step 5 — after-decisions summary (obvious + accepted)
+    S->>S: Step 6 — apply unified queue, verify, commit (one commit per fix)
     S->>U: Step 7 — full summary, ask for confirmation
     U->>S: Proceed
     S->>S: wk-adversarial-review gate
@@ -40,6 +41,9 @@ sequenceDiagram
 
 ## Noteworthy
 
+- **HARD RULE — Step 5 is execution-free:** Obvious-fix items are **queued** into `fixes_to_apply`, not
+  auto-applied mid-Step-5. Triage finishes (obvious bulk-queue → judgment-required per-comment loop) before
+  Step 6 executes the unified queue — one commit per fix.
 - **HARD RULE — one comment per message in Step 5:** Auto mode does not collapse the consultation loop. Each
   `judgment-required` item gets its own prompt + response cycle; batching is never allowed.
 - **Three comment surfaces are mandatory:** Inline review comments, review summary bodies, and PR conversation

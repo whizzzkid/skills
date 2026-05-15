@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.15-201820'
+  version: '2026.05.15-204908'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -700,16 +700,22 @@ The per-comment consultation loop iterates **only** over
 loop — doing so forces the user to type `a` for ceremony on a finding
 the agent already conceded was correct.
 
-### Bulk-apply preview for obvious-fix comments
+### Bulk-queue preview for obvious-fix comments
+
+**HARD RULE:** Step 5 is execution-free. Obvious-fix items get **queued**
+into `fixes_to_apply` during Step 5; they are not applied, committed,
+or pushed until Step 6 runs the unified execution pass. The user
+sees the full triage outcome — obvious + judgment-required — before
+any code change lands.
 
 Per-comment consultation is the default for `judgment-required`
 items only. `obvious-fix` items — those whose skip rationale is
 empty / "no valid reason" / equivalent (see Step 4 classification
-rules) — go to the **bulk-apply preview**, not the per-comment
-loop. The one-at-a-time rule below applies to consultation
-prompts; bulk-apply has no per-comment prompt to batch.
+rules) — go to the **bulk-queue preview**, not the per-comment
+loop. They still need a single confirmation gate; they do not need
+a per-item decision.
 
-Acceptable opt-ins to extend bulk-apply across the **whole** set
+Acceptable opt-ins to extend bulk-queue across the **whole** set
 (including any remaining `judgment-required` items):
 
 - The user invoked the skill with an explicit auto / yes-to-all flag.
@@ -717,28 +723,32 @@ Acceptable opt-ins to extend bulk-apply across the **whole** set
   affirmative phrase (`auto`, `yes-to-all`, `apply all`).
 
 If `obvious-fix` items exist, present a single preview block and ask
-once before applying:
+once before queueing:
 
-> "**Bulk-apply candidates ({K} obvious fixes — skip rationale empty
+> "**Bulk-queue candidates ({K} obvious fixes — skip rationale empty
 > / no valid reason):**
 >
 > 1. {path}:{line} — {one-line summary}
 > 2. ...
 >
-> I'll apply all {K} as-is in Step 6 (one commit per finding; replies
-> + thread resolution remain normal). Reply **stop** to switch any of
-> these to per-comment consultation, or list the indices you want
-> consulted (e.g., `consult 2,4`)."
+> I'll **queue** all {K} for Step 6 execution (one commit per
+> finding; replies + thread resolution remain normal). Step 6 runs
+> only after all judgment-required items below are triaged. Reply
+> **stop** to switch any of these to per-comment consultation, or
+> list the indices you want consulted (e.g., `consult 2,4`)."
 
-Default on silence, affirmative, or unrelated reply: proceed with
-bulk-apply. Only an explicit `stop` / `consult <indices>` diverts
-items into the per-comment loop. The single confirmation gate
-prevents silent execution while honoring that obvious-fix items
-have no decision to make.
+Default on silence, affirmative, or unrelated reply: queue all
+obvious-fix items into `fixes_to_apply` and proceed to the
+per-comment loop for `judgment-required`. Only an explicit
+`stop` / `consult <indices>` diverts items into the per-comment
+loop. The single confirmation gate prevents silent execution while
+honoring that obvious-fix items have no per-item decision to make.
 
 When `judgment-required` items also exist, the per-comment loop
-runs **after** bulk-apply executes — so the user sees the obvious
-fixes land first, then consults on the real decisions.
+runs **after** the obvious-fix queueing — but **no execution
+happens until Step 6**. The user sees every queued/accepted fix in
+the "After all decisions collected" summary before any commit
+lands.
 
 ### Present one at a time
 
@@ -830,16 +840,21 @@ do not invent a non-reserved letter for that path.
 
 ### After all decisions collected
 
-Announce the transition to execution:
+Announce the transition to execution. `fixes_to_apply` now contains
+both bulk-queued obvious-fix items and judgment-required items the
+user accepted via option `a`/`e`. Step 6 processes the unified list,
+one commit per fix, in order:
 
 > "All {total} comments reviewed. Decisions collected:
-> - {apply_count} fixes to apply (option `a`/`e`)
+> - {obvious_count} obvious fixes queued (bulk-queue)
+> - {apply_count} judgment-required fixes accepted (option `a`/`e`)
 > - {followup_count} follow-up questions to post (non-reserved options)
 > - {dismiss_count} dismissals (option `d`)
 > - {defer_count} deferrals to follow-up tickets (option `t`)
 > - {skip_count} skipped (option `s`)
 >
-> Moving to implementation — I'll apply fixes, verify, and commit each one."
+> Moving to implementation — I'll apply all {obvious_count + apply_count}
+> fixes now, one commit per fix, verifying each."
 
 ## Step 6: Execute — Apply Fixes, Verify, and Commit
 
