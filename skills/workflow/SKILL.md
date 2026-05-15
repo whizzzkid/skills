@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.13-190000'
+  version: '2026.05.15-201820'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -64,7 +64,7 @@ has already approved the workflow by using it. Minimize interruptions:
 | Ready to commit | Invoke `wk-commit` | Ask "shall I commit?" |
 | Tests pass, review clean | Invoke `wk-pr` | Ask "would you like a PR?" |
 | CI fails | Enter fix loop automatically | Ask "should I investigate?" |
-| Review surfaces issues | Fix them and re-review | Ask "should I fix these?" |
+| Adversarial review blocks | Fix blockers, re-invoke `wk-adversarial-review` | Ask "should I fix these?" |
 | Docs need updating | Invoke `wk-docs` | Ask "should I update docs?" |
 | Session ending | Invoke `wk-retro` | Ask "should I do a retro?" |
 
@@ -163,7 +163,7 @@ contain these elements — if any are missing, add them before executing:
 3. **Documentation update with each step** — each step includes a `wk-docs`
    invocation for affected docs, README, specs, or ADRs
 4. **Testing step** — covers happy path, sad path, and edge cases
-5. **Code review step** — adversarial critique agent reviews the branch
+5. **Adversarial review step** — invoke `wk-adversarial-review` to gate the push
 6. **PR offer** — ask the user if they want a PR
 7. **CI fix loop** — monitor CI, auto-diagnose and fix failures, re-push
 8. **Session retro** — `wk-retro` at end of session (non-negotiable)
@@ -256,7 +256,7 @@ steps produce commits. Example:
 2. Add auth tests (happy/sad)  -> commit
 3. Update docs/specs/ADR       -> commit (or fold into step 1/2 if small)
 4. Run full test suite
-5. Adversarial code review
+5. Adversarial review (`wk-adversarial-review`)
 6. Offer to create PR
 7. CI fix loop (auto-fix until green or bail after 3 attempts)
 8. Session retro
@@ -527,37 +527,35 @@ or two-stage accordingly.
 
 ---
 
-## Phase 4: Code Review
+## Phase 4: Adversarial Review
 
-After all implementation is complete and tests pass, launch a **fresh
-adversarial critique agent** to review the work on the current branch.
+After implementation is complete and tests pass, invoke `wk-adversarial-review`.
+The skill is the **sole authority** for pre-push critique — do not approximate
+it with an inline subagent, ad-hoc grep pass, or "quick check".
 
-Spawn a dedicated code-review subagent. The reviewer operates on `git diff <base>...HEAD` (where `<base>` is the PR's `baseRefName` — resolve with `gh pr view --json baseRefName --jq .baseRefName`) and
-must be:
+`wk-adversarial-review` runs mechanical sweeps for the issue classes
+reviewers and bots historically flag (vulnerability-class fixes left on
+one site, sibling-script drift, dead defensive guards, comment-accuracy,
+hardcoded base branches, version pins, signature widening, cross-doc
+enumeration sync, design-pivot doc drift, PR-metadata drift,
+external-call reproduction, raw-API bypass, pre-push gate compliance),
+then spawns a fresh adversarial subagent, then validates runtime claims
+in a playground. It returns one of three verdicts: **clear**, **blocked**,
+or **suggestions-only**.
 
-- **Adversarial** — actively seek bugs, security issues, and design flaws
-- **Unbiased** — treat the code as if written by a stranger
-- **Critical** — flag real problems, not just style preferences
-- **Objective** — judge against the diff, not assumptions about intent
-- **Naming-aware** — scrutinize variable, function, class, and file names for
-  clarity, consistency, and adherence to project conventions. Flag vague names
-  (`data`, `temp`, `result`), inconsistent casing, misleading names, and
-  names that diverge from surrounding code style
-- **Diff-sensitive** — stricter on net-new code and public API surfaces; verify
-  renames/moves preserve behavior and update all references; confirm refactors
-  don't alter semantics
+### After Verdict
 
-The reviewer checks for: logic errors, missing error handling, security
-vulnerabilities, test coverage gaps, documentation inconsistencies,
-regressions, naming violations, and mismatches between names and intent.
+- **Clear** — proceed to Phase 5 (PR).
+- **Blocked** — fix each blocker (one commit per fix via `wk-commit`),
+  then re-invoke `wk-adversarial-review`. Loop until clear. Never push,
+  never `gh pr ready`, never `gh pr create` on a blocked verdict.
+- **Suggestions only** — follow the skill's A/B/C prompt; auto mode
+  defaults per the skill.
 
-### After Review
-
-If the review surfaces issues:
-
-1. Fix each issue (committing each fix individually via `wk-commit`)
-2. Re-run the review until clean
-3. Only proceed to PR after a clean review
+**HARD RULE:** Every push, every PR transition (`gh pr create`,
+`gh pr ready`), and every force-push that leaves this machine runs
+`wk-adversarial-review` first. There is no size, scope, or "docs-only"
+exemption.
 
 ---
 
@@ -854,6 +852,7 @@ All `wk-*` skills and when to invoke them during this workflow:
 | `wk-pr` | When creating or updating a pull request | 5 |
 | `wk-self-review` | Invoked automatically by `wk-pr` after CI passes | 5 |
 | `wk-buildkite` | Diagnosing CI failures in the fix loop | 6 |
+| `wk-adversarial-review` | Pre-flight gate before every push / PR transition | 4, 5, 6 |
 | `wk-pr-update` | Rebasing / syncing a PR branch with its base | 5, 6 |
 | `wk-pr-review` | When reviewing someone else's PR | — |
 | `wk-pr-resolve` | When addressing review feedback on your PR | — |
@@ -872,7 +871,7 @@ Use this as a final gate before claiming work is complete:
 - [ ] Every commit is atomic and passes tests/CI independently
 - [ ] Documentation updated alongside each code change
 - [ ] Tests cover happy path, sad path, and edge cases
-- [ ] Adversarial code review passed with no open issues
+- [ ] `wk-adversarial-review` returned a clear verdict against current HEAD
 - [ ] CI fix loop exited green (all checks passing)
 - [ ] PR description reflects current branch state
 - [ ] Self-review posted highlighting critical changes only
