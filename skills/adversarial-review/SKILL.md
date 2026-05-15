@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.15-212026'
+  version: '2026.05.15-232615'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -190,11 +190,19 @@ test fixture that simulates the impossible producer output.
 
 ### 2.4 Comment accuracy pass
 
-Grep added or modified comments for behavioral claims: `always`,
-`guaranteed`, `never`, `available`, `works`, `cannot`, `must`. Mentally
-execute each claim against the current implementation. Update or delete
-the comment if false — stale comments asserting old behavior are a
-top-3 reviewer flag.
+Grep added or modified comments for two parallel classes:
+
+- **Assertive behavioral claims:** `always`, `guaranteed`, `never`,
+  `available`, `works`, `cannot`, `must`.
+- **Descriptive intent phrases:** `treat .* as`, `interpret .* as`,
+  `use .* to match`, `equivalent to`, `mirrors`, `behaves like`.
+
+Mentally execute each claim against the current implementation. For
+intent phrases, verify the described behavior still appears in the
+same function body — refactors often remove the behavior but leave
+the comment. Update or delete the comment if false; stale comments
+asserting old behavior or describing removed intent are a top-3
+reviewer flag.
 
 ### 2.5 Hardcoded base / branch sweep
 
@@ -314,6 +322,23 @@ are added to the verdict, not auto-fixed. Surface:
 Project config is authoritative — suppress any finding that contradicts
 an active linter config.
 
+### 2.16 Plugin install portability
+
+When the diff includes a `SKILL.md` or `.claude-plugin/plugin.json`,
+scan the SKILL.md body for path references that resolve only in the
+publishing repo.
+
+- Flag `Read("skills/.../*.md")`, `cat skills/...`, or any relative
+  path rooted at the publishing-repo layout. Paths that work in the
+  authoring repo fail silently when the plugin is installed in a
+  consumer repo.
+- Require one of: a `${CLAUDE_PLUGIN_ROOT}/`-prefixed path, an inline
+  fallback (the content embedded in SKILL.md), or a `WebFetch` of a
+  pinned upstream URL.
+- Blocker until resolved — install-time portability failures are
+  invisible to the authoring repo's own CI and only surface in the
+  consumer's session.
+
 ---
 
 ## Step 3: Spawn Adversarial Subagent
@@ -383,6 +408,11 @@ mutates", "this regex misses X", "this script doesn't run under bash
 
 - Create `.review-playground/` (gitignored). Writes from this skill
   are confined to that directory.
+- **HARD RULE — never commit the gitignore entry.** `.review-playground/`
+  is a local, ephemeral scratch dir. Keep it in `~/.gitignore_global`
+  or rely on the user's per-repo opt-in. Never `git add .gitignore`
+  to introduce a `.review-playground/` line on the branch under
+  review — skill scratch dirs are not repo state.
 - One script per finding. Drive with the runtime the production code
   uses. If the project supports a matrix, run each interpreter — do
   not silently skip uninstalled runtimes; flag the gap.
