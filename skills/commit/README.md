@@ -1,0 +1,39 @@
+# wk-commit
+
+> Use when creating git commits or pushing code. Enforces conventional commits with emoji, commit signing, and safe push behavior.
+
+## Invocation
+
+| Mode | Trigger |
+|------|---------|
+| User-invocable | "commit this", "push", `/wk-commit` |
+| Model-invocable | automatic on: any git commit or push operation |
+
+## How It Works
+
+```mermaid
+flowchart TD
+    A[Stage files] --> B[Build commit message\naction + scope + emoji + body]
+    B --> C[git commit via HEREDOC\nsigned, no --no-verify]
+    C -->|Signing failure| D[Stop: tell user to fix\nGPG/SSH agent]
+    C -->|Hook failure| E[Stop: ask user to\nrun hook manually]
+    C -->|Success| F{Mise-managed repo?}
+    F -->|Yes| G[eval mise activate bash\nthen git push]
+    F -->|No| H[git push]
+    G & H -->|Rejected| I[Report rejection\nAsk how to proceed]
+    G & H -->|Success| J{Open PR exists?}
+    J -->|No| K[Done]
+    J -->|Yes| L[PR Sync: compare title+body\nvs post-push branch state]
+    L -->|No drift| M[Report: already in sync]
+    L -->|Drift detected| N[gh pr edit with refreshed\ntitle + body]
+    N --> O[Report: PR updated]
+```
+
+## Noteworthy
+
+- **Push is part of the commit sequence**, not a separate step — every commit is followed by a push unless the user has explicitly said not to. Silent skip is a violation.
+- **Exactly one emoji per commit subject** — classifiers beat primary action emojis (`📌` beats `🔧` for a pin), and `🤖` is the canonical fallback for agent-authored or mixed-bag commits rather than stacking multiple emojis.
+- **PR Sync runs after every successful push** to a branch with an open PR — title and body are diffed against the post-push state and updated if they have drifted, with human-authored sections (review checkboxes, hand-edited test plans) preserved.
+- **Signing is non-negotiable** — `--no-gpg-sign`, `-n`, and `git -c commit.gpgsign=false` are forbidden; on signing failure the skill stops and surfaces the error.
+- **Mise activation is required before push** in mise-managed repos — without `eval "$(mise activate bash)"`, git hooks (lefthook, husky) fail with exit 127 for tools like `lychee` and `shellcheck`.
+- **Post-CI squash offer** fires when ≥3 `fix(ci):` commits exist with a net diff under 50 lines — never auto-squashes, always asks, and requires explicit user approval for the mandatory force-push.

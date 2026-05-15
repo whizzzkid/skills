@@ -1,0 +1,36 @@
+# wk-docker
+
+> Use when working with Docker — building images, inspecting containers, debugging Dockerfile issues, verifying image tags exist, or troubleshooting Docker daemon connectivity.
+
+## Invocation
+
+| Mode | Trigger |
+|------|---------|
+| User-invocable | `/wk-docker` |
+| Model-invocable | automatic on: Docker-related errors, Dockerfile edits, docker-compose operations, image tag verification needs |
+
+## How It Works
+
+```mermaid
+flowchart TD
+    A[Docker operation requested] --> B{Daemon running?}
+    B -- No --> C[Tell user: start Docker Desktop or colima start]
+    B -- Yes --> D{Operation type}
+    D -- Dockerfile edit --> E[Verify base image tag via docker manifest inspect]
+    D -- Build failure --> F[Read full error → check exit code → debug failing layer]
+    D -- Auth error --> G[Tell user: run aws sso login]
+    D -- Container inspection --> H[docker ps / logs / exec / history]
+    E --> I{Tag exists?}
+    I -- No --> J[Try tag format variations: v-prefix, patch version]
+    I -- Yes --> K[Check base OS for package manager]
+    K --> L[Proceed with Dockerfile changes]
+```
+
+## Noteworthy
+
+- **HARD RULE:** Always run `docker manifest inspect <image>:<tag>` before using any image tag in a `FROM` directive — never assume a tag exists.
+- **ENTRYPOINT reset:** Images with custom entrypoints break `docker-compose run` commands; the fix is `ENTRYPOINT []` in the Dockerfile. Verify with `docker run --rm <image> sh -c 'echo works'`.
+- **Runtime env vars contract:** Every env var read by the entrypoint at runtime must have an `ENV VAR=""` declaration in the Dockerfile — the image is the canonical interface document.
+- **Daemon startup is user-only:** The skill never attempts to start the Docker daemon itself; it instructs the user to start Docker Desktop or `colima start`.
+- **ECR auth:** `authorization failed` / `ExpiredToken` errors always mean `aws sso login` — the skill does not attempt re-authentication.
+- **Exit code table:** Codes 137 (OOM) and 125 (daemon error) have specific meanings; the skill maps them rather than treating all failures as generic errors.

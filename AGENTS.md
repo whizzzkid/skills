@@ -34,6 +34,35 @@ Required fields: `name`, `description`
 2. Add YAML frontmatter with `name` and `description`
 3. Write clear instructions in the markdown body
 4. Update the skills table in `README.md`
+5. Write `README.md` following the template in `skills/README.md`
+
+## README Maintenance
+
+Every skill directory MUST contain a `README.md` alongside its `SKILL.md`. The README follows
+the per-skill format established in `skills/README.md` (name heading, purpose, invocation trigger,
+key phases or rules, and integration points).
+
+**Co-change rule:** When `SKILL.md` changes — description, invocation behavior, phases, hard rules,
+or integration points — the corresponding `README.md` MUST be updated in the **same commit**.
+No exceptions; a SKILL.md update without a README.md update is an incomplete commit.
+
+**Rename/remove rule:** When a skill is renamed or removed, its `README.md` must be
+renamed/deleted in the same commit as the `SKILL.md` change.
+
+**Root index rule:** `skills/README.md` (the top-level skills index) MUST be updated whenever:
+- A skill is added or removed
+- A skill's `group:` field changes
+- A skill's one-line `description:` changes materially
+
+**Drift check (pre-sharpen gate):** Before any `wk-sharpen` commit lands, verify the modified
+`SKILL.md`'s `name:` frontmatter value matches the `# wk-*` heading in its `README.md`. If they
+diverge, fail and fix before committing:
+
+```bash
+skill_name=$(grep '^name:' skills/<skill-name>/SKILL.md | awk '{print $2}')
+readme_heading=$(grep '^# wk-' skills/<skill-name>/README.md | head -1 | sed 's/^# //')
+[ "$skill_name" = "$readme_heading" ] || echo "DRIFT: $skill_name != $readme_heading"
+```
 
 ## Guidelines
 

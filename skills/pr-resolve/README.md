@@ -1,0 +1,56 @@
+# wk-pr-resolve
+
+> Address PR review comments interactively — implement fixes, draft responses, and manage the full resolution
+> cycle from branch sync through push, CI polling, and session retro.
+
+## Invocation
+
+| Mode | Trigger |
+|------|---------|
+| User-invocable | `/wk-pr-resolve [PR number or URL]` |
+| Model-invocable | Automatic on: "resolve PR comments", "address review feedback", "fix PR #{N}", or "respond to reviewers" |
+
+## How It Works
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant S as wk-pr-resolve
+    participant GH as GitHub API
+
+    S->>GH: Step 1 — identify PR, detect co-author scenario
+    S->>S: Step 2 — sync branch via wk-pr-update
+    S->>GH: Step 3 — fetch all 3 surfaces (inline, review bodies, issue comments)
+    S->>S: Step 4 — generate suggestions with obvious-fix vs judgment-required tags
+    loop Per judgment-required comment (one at a time)
+        S->>U: Step 5 — present suggestion + options (a/e/d/t/s/r)
+        U->>S: Decision
+    end
+    S->>U: Step 5 — bulk-apply preview for obvious fixes
+    U->>S: Confirm
+    S->>S: Step 6 — apply fixes, verify, commit (one commit per comment)
+    S->>U: Step 7 — full summary, ask for confirmation
+    U->>S: Proceed
+    S->>S: wk-adversarial-review gate
+    S->>GH: Step 8 — push, post replies, resolve threads
+    S->>S: Step 9.5 — poll CI, loop on new findings
+    S->>U: Step 10 — final summary
+    S->>S: Step 11 — wk-retro
+```
+
+## Noteworthy
+
+- **HARD RULE — one comment per message in Step 5:** Auto mode does not collapse the consultation loop. Each
+  `judgment-required` item gets its own prompt + response cycle; batching is never allowed.
+- **Three comment surfaces are mandatory:** Inline review comments, review summary bodies, and PR conversation
+  (issue) comments must all be fetched every run. Cached results from a prior invocation in the same session
+  do not count — bots can post late.
+- **One commit per resolved comment:** Each triaged comment gets its own commit so reviewers can trace
+  exactly which commit addresses which comment. All commits push together in Step 8 — no per-commit pushes.
+- **Adversarial-review gate before push:** Any commits produced in the session must pass `wk-adversarial-review`
+  before Step 8's `git push`. Blocked means no push.
+- **Bot-native reply commands are preferred:** Before drafting a freeform reply to a bot finding, the skill
+  checks the bot's documented command grammar (e.g., `@<bot> fp <id> <reason>`) and uses it.
+  Generic replies leave findings open and add noise.
+- **Self-review threads are excluded:** Threads where the root comment was authored by the PR author OR the
+  current user are skipped for triage and resolution — they are not reviewer feedback.
