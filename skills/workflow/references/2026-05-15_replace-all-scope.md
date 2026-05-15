@@ -1,0 +1,3 @@
+- **Rule:** Before `replace_all: true` on an Edit, grep the target string in the file and confirm every occurrence should receive the same replacement; reject `replace_all` if any hit needs different treatment.
+- **Why:** Same-string different-meaning is a silent corruption — production call sites and test stubs share a name but expect different arg shapes; blanket replace clobbers the stubs.
+- **Where:** Phase 2 (Implement) → new sub-section "`replace_all` scope pre-flight", placed adjacent to "Signature widening pre-flight" (both pre-flight grep rules).

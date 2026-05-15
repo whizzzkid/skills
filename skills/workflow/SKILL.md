@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.15-212026'
+  version: '2026.05.15-215337'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -373,6 +373,24 @@ run tests once. This applies to any language where adding a
 required field/param is a build-breaking change (Rust, Go, Kotlin,
 TypeScript with strict types, etc.) — not just to the language
 that surfaced the lesson.
+
+### `replace_all` scope pre-flight
+
+**HARD RULE:** Before using `replace_all: true` on an Edit, grep the
+target string across the file and confirm every occurrence should
+receive the same replacement.
+
+- Run `grep -nE '<target>' <file>` and read every hit.
+- If any occurrence requires a different value, a different surrounding
+  context, or must remain unchanged (test stubs, fixture data, doc
+  examples, commented-out reference), reject `replace_all` and use
+  targeted single-occurrence edits instead.
+- Same-string different-meaning is the recurring failure: production
+  call sites and test stubs share a function name but expect different
+  arg shapes; a blanket `replace_all` corrupts the test stub silently.
+- The rule applies to any tooling equivalent (`sed -i`, IDE refactor
+  across file, multi-cursor select-all) — verify the match set before
+  letting the edit fire.
 
 ### Code Standards
 
