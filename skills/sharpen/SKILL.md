@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.15-220139'
+  version: '2026.05.15-220409'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -561,6 +561,13 @@ find ~/.claude/memory -name "*.md" -type f 2>/dev/null
 **Only process memories of type `feedback`.** Read each file's frontmatter
 — if `type: feedback`, the memory likely contains a behavioral correction
 or confirmed approach that could improve a skill.
+
+**HARD RULE — never rename memory files.** The `.learned.md` suffix is a
+**repo learnings** convention (Source 2 only). Memory files in
+`~/.claude/memory/` always keep their original `.md` name; their
+processed state is tracked exclusively by `.distilled-sources.log`.
+Renaming a memory file breaks `MEMORY.md` index links and orphans the
+content from cross-session recall.
 
 For each feedback memory:
 1. Check if it's already been processed (see tracking below)
