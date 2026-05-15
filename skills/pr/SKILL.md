@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183140'
+  version: '2026.05.15-201820'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -48,6 +48,16 @@ a post-creation workflow that ensures quality before marking ready for review.
 1. **Preserve PR body metadata across description rewrites.** Before overwriting
    the PR description, preserve metadata lines — see
    `skills/pr/references/pr-description-metadata.md`.
+2. **Adversarial review gates every transition.** Invoke
+   `wk-adversarial-review` before:
+   - The first push that creates the PR (before `gh pr create`).
+   - Every subsequent push to the PR branch.
+   - `gh pr ready` (Step 5).
+   - Any force-push or rebase that rewrites pushed history.
+
+   A `blocked` verdict means no `gh pr create`, no `gh pr ready`, no
+   push. Fix the blockers (each via `wk-commit`) and re-invoke until
+   clear. No size or scope exemption.
 
 ## Step 1: Assess Scope
 
@@ -132,6 +142,17 @@ git diff "$BEST_BASE...HEAD" --shortstat
   back to `main`.
 
 ## Step 2: Create Draft PR
+
+### Adversarial-review gate (run before `gh pr create`)
+
+Invoke `wk-adversarial-review` against `$BEST_BASE...HEAD`. The skill
+performs the mechanical pre-push sweeps and the adversarial subagent
+critique. Do not proceed to `gh pr create` until the verdict is
+`clear` (or `suggestions-only` and the user has accepted the offered
+A/B/C choice).
+
+On `blocked`, address each blocker with atomic `wk-commit` invocations,
+then re-invoke `wk-adversarial-review`. Loop until clear.
 
 **Always create PRs in draft mode** (`--draft` flag). Never create a non-draft
 PR unless the user explicitly asks.
@@ -276,7 +297,15 @@ After the draft PR is created (or after pushing new commits to an existing PR):
 
 ## Step 5: Mark Ready
 
-After the self-review is posted and automated feedback is addressed:
+### Final adversarial-review gate
+
+Invoke `wk-adversarial-review` one more time against PR HEAD before
+`gh pr ready`. Self-review, CI fixes, and automated-feedback resolution
+may have introduced new commits since Step 2's gate. Re-running catches
+drift between draft and ready.
+
+After the self-review is posted, automated feedback is addressed, and
+the adversarial-review verdict is `clear`:
 
 ```bash
 gh pr ready
