@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.13-183137'
+  version: '2026.05.15-220139'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -173,7 +173,51 @@ existing rule/bullet in the target skill.
 - Cite the specific existing lines that already encode each
   bullet — "topic exists in the skill" is not a coverage proof.
 
+### Classify: principle vs one-off
+
+**HARD RULE:** Before drafting any SKILL.md edit, classify the distilled
+lesson as `principle` or `one-off`. Routing is different for each —
+SKILL.md grows unbounded if every one-off lands inline.
+
+- `principle` — the failure mode generalizes; the rule applies on
+  most invocations of the skill or to a recurring class of input.
+  Route: fold into SKILL.md (proceed to Step 4) AND write a
+  reference file recording provenance.
+- `one-off` — the scenario is narrow, repo-specific, tool-version-
+  specific, or unlikely to recur; the rule does not generalize
+  cleanly to most agent runs.
+  Route: write a reference file ONLY (see Step 7 reference rules).
+  Do NOT edit SKILL.md. Do NOT bump `metadata.version`.
+
+Classify as `principle` when **any** of:
+
+- The same pattern appears in ≥ 2 prior learnings, memories, or
+  `.distilled-sources.log` entries for this skill.
+- The failure mode would surface on every invocation that touches
+  the affected step (not gated on uncommon inputs).
+- The fix is a check or rule expressible in one bullet without
+  naming specific tools, versions, or repos.
+
+Classify as `one-off` when **any** of:
+
+- The fix requires a verbatim recipe that only works for one tool
+  version, runtime, or repo layout.
+- The failure mode only fires under a configuration the agent
+  rarely encounters.
+- The user described it explicitly as a corner case or a one-time
+  workaround.
+- Distilling the principle leaves nothing actionable that is not
+  already covered by existing rules in the skill.
+
+Record the classification in the run report and in the reference
+file's frontmatter (`class: principle` or `class: one-off`). When
+ambiguous, ask the user once before proceeding.
+
 ## Step 4: Draft the Skill Update
+
+**Skip Step 4 entirely for `one-off`-class lessons.** Jump to Step 7
+and write the reference file only — no SKILL.md edit, no version bump.
+For `principle`-class lessons, continue here.
 
 Locate where in the skill the lesson belongs:
 - **New step?** Add a new heading in the relevant phase.
@@ -312,15 +356,26 @@ without bloating the SKILL.md itself.
   mkdir -p skills/{skill-name}/references
   ```
 
-- For each distilled learning that produced an edit in this run, write
-  one short reference file: `references/{YYYY-MM-DD}_{slug}.md`.
+- For each distilled learning, write one short reference file:
+  `references/{YYYY-MM-DD}_{slug}.md`. Both classes get a reference;
+  the file shape differs by class.
   - One learning per file. Do not concatenate multiple incidents.
-  - File body: 5–15 lines maximum. Bullets only.
-  - Required sections: **Rule** (one line), **Why** (one line, the
-    failure mode), **Where** (one line, which Step / HARD RULE in
-    SKILL.md it landed in).
+  - Frontmatter: `class: principle` or `class: one-off` (mandatory).
+  - File body: 5–15 lines for `principle`; up to 30 lines for
+    `one-off` (it carries the full context since SKILL.md does not).
+    Bullets only.
+  - **`principle` required sections:** **Rule** (one line), **Why**
+    (one line, the failure mode), **Where** (one line, which Step /
+    HARD RULE in SKILL.md it landed in).
+  - **`one-off` required sections:** **Scenario** (one line, the
+    narrow condition), **Symptom** (one line, what fails), **Fix**
+    (concrete recipe — verbatim commands allowed since SKILL.md will
+    not carry them), **Why not promoted** (one line citing the
+    one-off classification criterion that matched).
   - No incident-specific tokens that the SKILL.md edit already
-    stripped (filenames, line numbers, reviewer logins, SHAs).
+    stripped (filenames, line numbers, reviewer logins, SHAs) —
+    exception: `one-off` files may keep tokens that the recipe
+    requires verbatim, since they are not generalizing.
 - Do not link references from SKILL.md prose. They are an index for
   future sharpen runs and audits, not runtime documentation.
 - The mechanical overfit scan (Step 5) applies to reference files too —
@@ -430,8 +485,9 @@ specific incident.
 | `/wk-sharpen --scan --force` | Batch mode — reprocess everything, ignore log |
 | `/wk-sharpen improve [scope]` | Improve mode — refactor and prune accumulated entropy |
 
-**Single mode:** Read report → Read full skill → Distill → Draft →
-Audit for overlap/bloat → Present with cleanup → Apply → Verify & commit
+**Single mode:** Read report → Read full skill → Distill → Classify
+(`principle` vs `one-off`) → Draft (skip for `one-off`) → Audit for
+overlap/bloat → Present with cleanup → Apply → Verify & commit
 
 **Batch mode:** Scan learnings + memories → Filter by log → Process each
 via single mode → Rename learnings to `.learned.md` → Update log
