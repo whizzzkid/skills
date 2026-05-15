@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.13-184500'
+  version: '2026.05.15-193702'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -440,6 +440,41 @@ Bot comments (Copilot, custom bots, CI bots) often include:
 - **Automated analysis**: Summarize the bot's finding and propose an action.
 
 Do NOT blindly accept bot suggestions. Evaluate each one for correctness.
+
+### Bot-native reply syntax
+
+Many review bots accept **structured commands** in reply comments
+that close their findings cleanly — `@<bot> <action> <finding-id>
+<reason>`. Generic freeform replies leave the finding open and add
+noise to the thread.
+
+- Before drafting a reply, check the bot's own documentation or its
+  comment template for a documented command grammar.
+- Detect the bot by login (e.g., `*[bot]` author) and look for a
+  stable finding identifier in the comment body (typical shape:
+  `<prefix>_<hex>` or a numbered ID).
+- Reply via `/issues/{n}/comments` (issue comment surface) when the
+  bot reads from there — most security/policy bots do, not the
+  inline review-comment thread.
+- Map the user's decision to the bot's action vocabulary:
+  - "false positive" → the bot's `fp` / `false-positive` / `dismiss`
+    command.
+  - "low impact" → the bot's `nit` / `acknowledge` / `info` command.
+  - "fixed in commit" → the bot's `resolved` / `fixed` command (if
+    supported); otherwise drop a reply pointing to the SHA.
+- Include the finding ID verbatim. Bots reject the command when the
+  ID is missing or malformed.
+- Concrete example — a security bot (`{bot}`)
+  publishes findings with IDs like `drs_<8-hex>` and accepts:
+
+  ```
+  @<bot> fp <finding-id> <reason>
+  @<bot> nit <finding-id> <reason>
+  ```
+
+- For bots without a documented command surface, fall back to the
+  generic dismissal reply but tag the bot in the body so the
+  thread is visibly addressed.
 
 ### Suggestion format
 

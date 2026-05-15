@@ -1,0 +1,8 @@
+- **Rule:** When a review bot publishes a documented command grammar (`@<bot> <action> <finding-id> <reason>`), reply with the bot-native command instead of a freeform dismissal.
+- **Why:** Freeform replies leave the bot's finding open in its own tracker and add unresolved noise to the thread; the bot's structured command closes the finding cleanly.
+- **Where:** Step 4 → "Bot-native reply syntax" sub-section, ahead of the generic Suggestion format.
+- **Notes:**
+  - Reply via `/issues/{n}/comments` surface — most security/policy bots do not read inline review-comment replies.
+  - Include the finding ID verbatim; malformed IDs cause silent rejection.
+  - Map user decisions to the bot's vocabulary: false-positive → `fp`/`dismiss`; low-impact → `nit`/`acknowledge`; fixed → `resolved` or fall back to a SHA reference.
+  - Concrete example used in the skill: a security bot (`{bot}`) with `drs_<hex>` IDs and `fp` / `nit` actions — justified inline as a literal bot/API token.
