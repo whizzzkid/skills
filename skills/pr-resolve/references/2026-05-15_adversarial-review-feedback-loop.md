@@ -1,0 +1,3 @@
+- **Rule:** Every pr-resolve session ends by emitting `wk-learn adversarial-review` learnings — one per issue class surfaced this session — before invoking `wk-retro`.
+- **Why:** Every reviewer- or bot-flagged finding is by definition a coverage gap in adversarial-review (its job is pre-push critique). Without this capture, the loop never tightens; reviewers keep catching the same classes that pre-flight should have caught.
+- **Where:** Step 11 "Capture Adversarial-Review Learnings" (mandatory); current Session Retro renumbered to Step 12. Quick Reference updated.

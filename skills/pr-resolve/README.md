@@ -36,7 +36,8 @@ sequenceDiagram
     S->>GH: Step 8 — push, post replies, resolve threads
     S->>S: Step 9.5 — poll CI, loop on new findings
     S->>U: Step 10 — final summary
-    S->>S: Step 11 — wk-retro
+    S->>S: Step 11 — wk-learn adversarial-review (one per issue class)
+    S->>S: Step 12 — wk-retro
 ```
 
 ## Noteworthy
@@ -58,3 +59,6 @@ sequenceDiagram
   Generic replies leave findings open and add noise.
 - **Self-review threads are excluded:** Threads where the root comment was authored by the PR author OR the
   current user are skipped for triage and resolution — they are not reviewer feedback.
+- **HARD RULE — Step 11 feedback loop to adversarial-review:** Every session emits one `wk-learn adversarial-review`
+  per issue class surfaced. Every reviewer-caught finding is a coverage gap in pre-flight by definition; logging
+  it forces the next `wk-sharpen` batch to fold the detection into adversarial-review's mechanical sweeps.
