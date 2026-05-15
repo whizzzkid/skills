@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.15-212026'
+  version: '2026.05.15-215748'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -122,6 +122,22 @@ explicitly sets a different value.
 - **No commented-out code.** Delete it. Git is the history. If it
   must stay for reference, add a comment explaining why it's
   preserved — not just the dead code itself.
+- **Avoid duplication.** Before pasting or rewriting a block that
+  resembles existing code, grep the codebase for the operation and
+  reuse or extract. Three near-duplicates in the diff (or across the
+  repo) is the threshold for extracting a helper — once duplication
+  ships, every consumer accretes tests against its copy and
+  consolidation cost climbs.
+  - Two duplicates can stay; copy-paste the third time means lift.
+  - Pure-coincidence similarity (same shape, unrelated semantics)
+    is not duplication — do not force an abstraction across it.
+- **Invoke `wk-refactor` when duplication is frequent.** If the
+  current change touches ≥ 3 near-identical sites, or the codebase
+  already carries ≥ 5 copies of a pattern the change extends,
+  invoke `wk-refactor` to lift-and-migrate **before** extending the
+  pattern further. Match the lift → migrate → extend ordering from
+  `wk-workflow`'s prefactor probe; new behavior rides on top of the
+  helper, not alongside another copy.
 
 ### Async and concurrency
 

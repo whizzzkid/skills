@@ -20,7 +20,7 @@ flowchart TD
 
     E --> E1[Layout: 120 col, spaces, imports at top]
     E --> E2[Naming: ALL_CAPS constants, descriptive vars, boolean predicates]
-    E --> E3[Structure: no nested ternaries, guard clauses, ≤30-line fns]
+    E --> E3[Structure: no nested ternaries, guard clauses, ≤30-line fns, avoid duplication → wk-refactor]
     E --> E4[Async: no temporal deps, no unbounded chains, propagate errors]
     E --> E5[Docs: JSDoc/docstring for public API, WHY comments on decisions]
     E --> E6[Testing: cover new paths, sad-path tests, behavior not impl]

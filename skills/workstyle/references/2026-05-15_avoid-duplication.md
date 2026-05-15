@@ -1,0 +1,3 @@
+- **Rule:** Grep before pasting near-duplicate blocks; three duplicates in the diff or repo is the threshold to extract a helper. Invoke `wk-refactor` (lift → migrate → extend) when the change touches ≥ 3 near-identical sites or the repo already carries ≥ 5 copies of a pattern being extended.
+- **Why:** Every duplicate accretes tests against its copy; consolidation cost climbs with every shipped clone. Pure-coincidence similarity is not duplication — do not force abstractions across unrelated semantics.
+- **Where:** Step 1 → Structure section, two new bullets ("Avoid duplication" + "Invoke `wk-refactor` when duplication is frequent"). Aligns with `wk-workflow`'s prefactor probe ordering.
