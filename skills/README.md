@@ -125,13 +125,13 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    SESSION[Agent session] --> LEARN[wk-learn\ncaptures per-skill\nlearnings]
-    LEARN --> FILES[learnings/skills/\n{skill}/*.md]
-    SESSION --> RETRO[wk-retro\naggregates session\nlearnings]
-    RETRO --> MEM[~/.claude/memory/\npersistent context]
-    FILES --> SHARPEN[wk-sharpen\ndistills patterns\nwithout overfitting]
+    SESSION["Agent session"] --> LEARN["wk-learn<br/>captures per-skill<br/>learnings"]
+    LEARN --> FILES["learnings/skills/<br/>{skill}/*.md"]
+    SESSION --> RETRO["wk-retro<br/>aggregates session<br/>learnings"]
+    RETRO --> MEM["~/.claude/memory/<br/>persistent context"]
+    FILES --> SHARPEN["wk-sharpen<br/>distills patterns<br/>without overfitting"]
     MEM --> SHARPEN
-    SHARPEN --> SKILL[SKILL.md rewritten\nnew version shipped]
+    SHARPEN --> SKILL["SKILL.md rewritten<br/>new version shipped"]
     SKILL --> SESSION
 
     style SHARPEN fill:#7b68ee,color:#fff
