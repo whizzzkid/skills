@@ -34,10 +34,10 @@ sequenceDiagram
     U->>S: Proceed
     S->>S: wk-adversarial-review gate
     S->>GH: Step 8 — push, post replies, resolve threads
-    S->>S: Step 9.5 — poll CI, loop on new findings
+    S->>S: Step 9.4 — wk-learn adversarial-review (one per issue class, pre-CI)
+    S->>S: Step 9.5 — poll CI, loop on new findings (each cycle re-runs 9.4)
     S->>U: Step 10 — final summary
-    S->>S: Step 11 — wk-learn adversarial-review (one per issue class)
-    S->>S: Step 12 — wk-retro
+    S->>S: Step 11 — wk-retro
 ```
 
 ## Noteworthy
@@ -59,6 +59,9 @@ sequenceDiagram
   Generic replies leave findings open and add noise.
 - **Self-review threads are excluded:** Threads where the root comment was authored by the PR author OR the
   current user are skipped for triage and resolution — they are not reviewer feedback.
-- **HARD RULE — Step 11 feedback loop to adversarial-review:** Every session emits one `wk-learn adversarial-review`
-  per issue class surfaced. Every reviewer-caught finding is a coverage gap in pre-flight by definition; logging
-  it forces the next `wk-sharpen` batch to fold the detection into adversarial-review's mechanical sweeps.
+- **HARD RULE — Step 9.4 feedback loop to adversarial-review (pre-CI-wait):** Every session emits one
+  `wk-learn adversarial-review` per issue class surfaced. The capture runs **before** the Step 9.5 CI wait so
+  the work happens in active foreground time rather than parked behind a background watch. Every reviewer-caught
+  finding is a coverage gap in pre-flight by definition; logging it forces the next `wk-sharpen` batch to fold
+  the detection into adversarial-review's mechanical sweeps. The Step 9.5 loop re-runs Step 9.4 for each cycle's
+  newly-surfaced findings.

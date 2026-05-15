@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.15-220000'
+  version: '2026.05.15-221839'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1253,6 +1253,87 @@ git merge --abort
 > "Merge conflicts detected with `{base_branch}` in: {file list}.
 > Would you like me to resolve them now?"
 
+## Step 9.4: Capture Adversarial-Review Learnings (mandatory)
+
+**HARD RULE:** Emit `wk-learn adversarial-review` for every issue class
+surfaced this session **before** entering the Step 9.5 CI wait. Every
+reviewer- or bot-flagged finding is by definition a coverage gap in
+`wk-adversarial-review`'s pre-flight sweeps; the next `wk-sharpen` batch
+absorbs the learnings.
+
+- Run **immediately after Step 9 (push complete + conflict check)** and
+  **before Step 9.5 (CI wait)**. CI wait blocks foreground work — any
+  task scheduled after it is dead time. Emit learnings while CI is
+  still pending; do not park them behind a background watch.
+- Do not skip when the session was short, routine, or resolved zero
+  findings — even a zero-finding session is a signal that the
+  pre-flight baseline is holding for that PR class. Log it.
+
+### What to capture
+
+For each comment processed in this session (excluding self-review and
+already-addressed echoes), classify the underlying issue and group:
+
+- **Vulnerability-class drift** — fix applied to one site, sibling not
+  fixed; same class on parallel paths.
+- **Stale comment / doc drift** — code comment, PR body, or spec out
+  of sync with the changed code.
+- **Dead defensive guard** — guard added against a sentinel an upstream
+  transform already eliminates.
+- **Hardcoded base / branch / version pin** — literal default branch
+  name, `:latest`, unpinned dep.
+- **Cross-doc enumeration miss** — test count, flag list, error code
+  catalog out of sync with the code.
+- **Design-pivot doc drift** — spec/plan/ADR still describes pre-pivot
+  shape after a structural change.
+- **Signature widening miss** — caller updated but a sibling caller or
+  initializer was not.
+- **Raw-API bypass** — review comment posted outside the pending-review
+  flow.
+- **External-call shape change without local reproduction.**
+- **Comment-accuracy drift** — `always`, `guaranteed`, `never` claims
+  contradict current code.
+- **Other** — any reviewer-caught issue that does not map to an
+  existing category. Capture the class name as a new candidate.
+
+### Emit one learning per issue class
+
+For each non-empty category, invoke `wk-learn` targeting
+`wk-adversarial-review`:
+
+```
+Skill(wk-learn, args="adversarial-review")
+```
+
+The learning body must encode:
+
+- **Class:** which category from the list above (or a new one).
+- **Mechanism:** what the reviewer saw that the pre-flight should have
+  caught — described as a generic pattern, never with file paths,
+  line numbers, reviewer logins, or commit SHAs from this PR.
+- **Detection sketch:** a one-line grep, command, or check that
+  adversarial-review's Step 2 mechanical sweeps could run to catch the
+  next instance. If the existing sweep covers the class but missed it,
+  note the false-negative cause instead.
+- **Confidence:** `high` (mechanical detection possible) or
+  `judgment` (requires subagent reasoning).
+
+### Skip conditions
+
+- The session resolved zero findings AND no reviewer/bot threads were
+  active — emit one summary learning ("baseline holding") rather than
+  skipping entirely.
+- The finding originated from the agent's own self-review thread —
+  self-review is excluded from this capture (its learnings route to
+  `wk-self-review`, not `wk-adversarial-review`).
+
+### Post-CI loop addendum
+
+If Step 9.5's post-CI fetch surfaces genuinely-new findings, re-run
+this step (Step 9.4) for that batch **before** the next CI wait. Each
+CI cycle emits its own learning set; do not defer multi-cycle
+learnings to the end of the session.
+
 ## Step 9.5: Wait for CI, Then Loop on New Comments
 
 A push at Step 8 triggers a fresh CI run and often a fresh review pass
@@ -1336,92 +1417,12 @@ Present a concise summary of everything done:
 PR URL: {url}
 ```
 
-## Step 11: Capture Adversarial-Review Learnings (mandatory)
+## Step 11: Session Retro
 
-**HARD RULE:** Every `wk-pr-resolve` session ends by emitting a learning
-targeted at `wk-adversarial-review`. Every reviewer- or bot-flagged
-finding addressed in this session is by definition a gap in
-`wk-adversarial-review`'s pre-flight sweeps — that skill's job is to
-catch issues before push, so anything pre-push missed is teachable
-signal for it.
-
-- Run after Step 10 (Final Summary) and before Step 12 (Session Retro).
-- Do not skip when the session was short, routine, or resolved zero
-  findings — even a zero-finding session is a signal that the
-  adversarial-review baseline is holding for that PR class. Log it.
-
-### What to capture
-
-For each comment processed in this session (excluding self-review and
-already-addressed echoes), classify the underlying issue and group:
-
-- **Vulnerability-class drift** — fix applied to one site, sibling not
-  fixed; same class on parallel paths.
-- **Stale comment / doc drift** — code comment, PR body, or spec out
-  of sync with the changed code.
-- **Dead defensive guard** — guard added against a sentinel an upstream
-  transform already eliminates.
-- **Hardcoded base / branch / version pin** — literal `main`/`master`,
-  `:latest`, unpinned dep.
-- **Cross-doc enumeration miss** — test count, flag list, error code
-  catalog out of sync with the code.
-- **Design-pivot doc drift** — spec/plan/ADR still describes pre-pivot
-  shape after a structural change.
-- **Signature widening miss** — caller updated but a sibling caller or
-  initializer was not.
-- **Raw-API bypass** — review comment posted outside the pending-review
-  flow.
-- **External-call shape change without local reproduction.**
-- **Comment-accuracy drift** — `always`, `guaranteed`, `never` claims
-  contradict current code.
-- **Other** — any reviewer-caught issue that does not map to an
-  existing category. Capture the class name as a new candidate.
-
-### Emit one learning per issue class
-
-For each non-empty category from the list above, invoke `wk-learn`
-targeting `wk-adversarial-review`:
-
-```
-Skill(wk-learn, args="adversarial-review")
-```
-
-The learning body must encode:
-
-- **Class:** which category from the list above (or a new one).
-- **Mechanism:** what the reviewer saw that the pre-flight should have
-  caught — described as a generic pattern, never with file paths,
-  line numbers, reviewer logins, or commit SHAs from this PR.
-- **Detection sketch:** a one-line grep, command, or check that
-  adversarial-review's Step 2 mechanical sweeps could run to catch
-  the next instance. If the existing sweep covers the class but
-  missed it, note the false-negative cause (regex too narrow,
-  surface not scanned, etc.) instead.
-- **Confidence:** `high` (mechanical detection possible) or
-  `judgment` (requires subagent reasoning).
-
-### Skip conditions
-
-- The session resolved zero findings AND no reviewer/bot threads were
-  active — emit one summary learning ("baseline holding") rather than
-  skipping entirely.
-- The finding originated from the agent's own self-review thread —
-  self-review is excluded from this capture (its learnings route to
-  `wk-self-review`, not `wk-adversarial-review`).
-
-### Why this matters
-
-Without this step, every pr-resolve cycle teaches the agent that
-reviewers will catch what pre-flight misses — the loop never tightens.
-This step makes every reviewer round a forcing function on
-`wk-adversarial-review`'s coverage. The next `wk-sharpen` batch run
-absorbs the learnings into the skill body.
-
-## Step 12: Session Retro
-
-After capturing adversarial-review learnings, invoke `wk-retro` to
-capture session-level learnings. This is mandatory — do not skip even
-if the session was short or routine.
+Invoke `wk-retro` to capture session-level learnings. This is
+mandatory — do not skip even if the session was short or routine.
+Adversarial-review learnings were already emitted in Step 9.4
+(before CI wait); this step covers session-level reflection only.
 
 ## Quick Reference
 
@@ -1431,7 +1432,7 @@ if the session was short or routine.
 | "address review feedback" | Full workflow |
 | "fix PR #{number}" | Full workflow for specific PR |
 | "respond to reviewers" | Full workflow with focus on replies |
-| Session ends | Capture adversarial-review learnings (Step 11), then `wk-retro` (Step 12) |
+| Session ends | Capture adversarial-review learnings (Step 9.4, pre-CI-wait), then `wk-retro` (Step 11) |
 
 ## Requirements
 
