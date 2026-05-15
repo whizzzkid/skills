@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.15-201820'
+  version: '2026.05.15-212026'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -296,6 +296,23 @@ Inspect the repo's pre-push hook config (`.lefthook.yml`,
 `.husky/pre-push`, `.git/hooks/pre-push`, `bin/ci`). Enumerate every
 gate the hook runs. Confirm each has been run locally against the
 current HEAD. Passing one suite does not imply the others pass.
+
+### 2.15 Workstyle pass
+
+Invoke `wk-workstyle check <path>` on every source file in the diff.
+The pass runs in report-only mode during adversarial review — findings
+are added to the verdict, not auto-fixed. Surface:
+
+- Unnamed constants / magic numbers / magic strings.
+- Nested ternaries.
+- Undocumented public functions or methods added in the diff.
+- Missing sad-path tests for new error-handling branches.
+- Temporal dependencies in new async code.
+- Stale comments adjacent to modified code.
+- Empty `catch`/`rescue`/`except` blocks.
+
+Project config is authoritative — suppress any finding that contradicts
+an active linter config.
 
 ---
 

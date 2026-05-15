@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.15-201820'
+  version: '2026.05.15-212026'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -269,10 +269,13 @@ steps produce commits. Example:
 Execute the plan step by step. After completing each step:
 
 1. **Run tests** — verify the step doesn't break anything
-2. **Invoke `wk-docs`** — check for and update affected documentation (README,
+2. **Invoke `wk-workstyle`** — apply code-quality gate to touched files
+   (naming, docs, structure, async patterns, testing intent). Auto-fires
+   before every commit; project settings are authoritative.
+3. **Invoke `wk-docs`** — check for and update affected documentation (README,
    specs, ADRs, tutorials, reference docs). A feature commit without its
    documentation update is incomplete
-3. **Invoke `wk-commit`** — create a signed, conventional commit with emoji
+4. **Invoke `wk-commit`** — create a signed, conventional commit with emoji
 
 Never batch multiple steps into one commit. Never defer documentation to the
 end. Never skip tests between commits.
@@ -848,6 +851,7 @@ All `wk-*` skills and when to invoke them during this workflow:
 | Skill | When | Phase |
 |-------|------|-------|
 | `wk-commit` | After completing each implementation step; CI fix commits | 2, 6 |
+| `wk-workstyle` | Code-quality gate before every commit on a code diff | 2 |
 | `wk-docs` | With each commit and during final audit | 2, 7 |
 | `wk-pr` | When creating or updating a pull request | 5 |
 | `wk-self-review` | Invoked automatically by `wk-pr` after CI passes | 5 |
@@ -869,6 +873,7 @@ All `wk-*` skills and when to invoke them during this workflow:
 Use this as a final gate before claiming work is complete:
 
 - [ ] Every commit is atomic and passes tests/CI independently
+- [ ] `wk-workstyle` pass completed on all touched files (naming, docs, structure, coverage)
 - [ ] Documentation updated alongside each code change
 - [ ] Tests cover happy path, sad path, and edge cases
 - [ ] `wk-adversarial-review` returned a clear verdict against current HEAD

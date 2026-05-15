@@ -66,6 +66,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | `wk-docs` | Check and update documentation affected by code changes | User + Model |
 | `wk-testing-skeleton` | Frame the test plan for any code change — behavioral over structural, happy+sad paths | Auto (before writing tests) |
 | `wk-format` | Apply code-formatting preferences reconciled with repo lint config | Auto (before writing code) |
+| `wk-workstyle` | Code-quality gate — naming, docs, structure, async patterns, testing intent | Auto (before commit) |
 | `wk-refactor` | Validate a refactor preserved behavior — removed-line audit, diff classification | User + Model |
 | `wk-markdown` | Enforce 120-col line width, heading hierarchy, Mermaid diagrams, validated links | Auto (on .md edits) |
 | `wk-concise` | Reduce response verbosity — drop filler, keep technical precision | User: `/concise` |
@@ -85,6 +86,7 @@ flowchart TD
 
     WF --> PLAN[Plan]
     PLAN --> IMPL[Implement]
+    IMPL --> WKSTYLE[wk-workstyle]
     IMPL --> COMMIT[wk-commit]
     IMPL --> DOCS[wk-docs]
     IMPL --> FMT[wk-format]
@@ -117,7 +119,9 @@ flowchart TD
     style WF fill:#4a90e2,color:#fff
     style JIRA fill:#f5a623,color:#fff
     style ADV fill:#d0021b,color:#fff
+    style WKSTYLE fill:#8e44ad,color:#fff
 
+    click WKSTYLE href "./workstyle/README.md" _blank
     click WF href "./workflow/README.md" _blank
     click COMMIT href "./commit/README.md" _blank
     click DOCS href "./docs/README.md" _blank

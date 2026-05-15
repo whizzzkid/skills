@@ -16,7 +16,7 @@ flowchart TD
     A[Phase 1: Plan] --> A1[Jira pre-flight + prefactor probe]
     A1 --> A2[Numbered plan with commit + docs per step]
     A2 --> B[Phase 2: Implement]
-    B --> B1[Each step: tests → wk-docs → wk-commit]
+    B --> B1[Each step: tests → wk-workstyle → wk-docs → wk-commit]
     B1 --> C[Phase 3: Test — happy + sad + edge]
     C --> D[Phase 4: wk-adversarial-review]
     D --> E{Verdict}
