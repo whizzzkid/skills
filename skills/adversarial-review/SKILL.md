@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.15-232615'
+  version: '2026.05.19-172503'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -339,6 +339,42 @@ publishing repo.
   invisible to the authoring repo's own CI and only surface in the
   consumer's session.
 
+### 2.17 Dynamic-language call/definition cross-check
+
+For dynamic-language source files in the diff (Ruby, Python, JS/TS,
+Elixir, etc.), the compiler cannot catch a deleted helper whose callers
+survive. Conflict-resolution merges and inline-refactor commits both
+hit this. Tests fail at runtime; the file still loads.
+
+- For each method call added or kept in the diff (`<name>(`, `.<name>`),
+  grep the file and the module for a matching definition:
+
+  ```bash
+  grep -nE 'def +<name>\b|function +<name>\b|<name> *=' <file>
+  ```
+
+- Flag any call whose definition is absent from the file, module, or
+  imported namespace.
+- Pairs with sweep 2.7 (signature widening) — 2.7 covers added params,
+  2.17 covers removed definitions still called.
+
+### 2.18 Removed-constant magic-string scan
+
+When a named constant is removed in the diff, its literal value often
+gets inlined at multiple call-sites — re-introducing the duplication
+the constant existed to prevent.
+
+- For each removed `const X = "..."` / `X = "..."` / `<X> = "..."` (any
+  language), grep the post-rebase diff for the literal value:
+
+  ```bash
+  git diff "$BASE...HEAD" | grep -nF '<literal-value>'
+  ```
+
+- Flag as `suggestion` (not blocker) when the literal appears at 2+
+  non-comment sites. Recommend extracting a helper or restoring the
+  named constant.
+
 ---
 
 ## Step 3: Spawn Adversarial Subagent
@@ -455,6 +491,19 @@ by `(file, line, category)`.
 
   Default to **A** in auto mode if every suggestion has a concrete
   fix-sketch under 10 lines; otherwise default to **B**.
+
+### Note bot reviewers in the verdict
+
+When the pre-push comment map contains bot reviewers (login matches
+`*[bot]`), append to the verdict body:
+
+- Post-push thread count may shrink — bots that recreate their entire
+  review object on each push retract pre-push threads and may post a
+  single replacement before their database catches up with HEAD.
+- The caller MUST re-fetch threads after push (`wk-pr-resolve` Step 8.x
+  refresh) and match findings by `(path, line, body_excerpt)`, not by
+  REST comment ID.
+- A reduced thread count is expected, not a regression signal.
 
 ### Clearance record
 
