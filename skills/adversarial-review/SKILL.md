@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.19-172503'
+  version: '2026.05.19-232716'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -375,9 +375,27 @@ the constant existed to prevent.
   non-comment sites. Recommend extracting a helper or restoring the
   named constant.
 
----
+### 2.19 Tautological test assertion scan
 
-## Step 3: Spawn Adversarial Subagent
+Self-referential equality assertions pass regardless of behavior — both
+sides derive from the same source, so the test would still pass if the
+production code were inverted, deleted, or replaced with a no-op.
+
+- Grep new and modified test/spec files for equality forms where both
+  operands reference the same variable(s):
+
+  ```bash
+  grep -nE 'eq\(.*\.sort\)|expect\(([a-zA-Z_]+)\)\.to eq\(\1\)|assert.*==.*\.sort\b' \
+    <(git diff "$BASE...HEAD" -- 'spec/**' 'test/**' '**/*.test.*' '**/*.spec.*')
+  ```
+
+- Generalize the pattern: any `expect(x).to eq(x[.method])` form, any
+  `assertEqual(x, x.method())` form, any `expect(arr).toEqual(arr.sort())`
+  form, any comparison where both sides reference the same variable
+  passed through a transform.
+- Blocker — the test provides zero coverage of the function under test.
+- Fix: construct the expected value independently of the input (literal
+  array, hand-written sequence, or a known-good fixture).
 
 After mechanical sweeps land their findings, dispatch a fresh subagent
 with no prior context to critique the diff. The subagent operates only
