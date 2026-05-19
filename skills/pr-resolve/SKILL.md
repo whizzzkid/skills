@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.15-221839'
+  version: '2026.05.19-172503'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -448,6 +448,27 @@ Bot comments (Copilot, custom bots, CI bots) often include:
 - **Automated analysis**: Summarize the bot's finding and propose an action.
 
 Do NOT blindly accept bot suggestions. Evaluate each one for correctness.
+
+### Verify "missing documentation" bot findings against repo docs
+
+Before surfacing a bot finding that claims a behavior, design decision,
+or trade-off is undocumented (typical phrasing: "description-check",
+"missing context", "explain why", "document the rationale"), confirm
+the claim against the repo itself. Surfacing the consultation without
+this check forces the user to re-clarify what the agent could have
+found.
+
+- Grep the diff and `docs/specs/`, `docs/plans/`, `docs/adr/`, and any
+  in-code design block referenced by the touched files for the
+  behavior the bot calls out.
+- If the docs already cover it, include the reference inline in the
+  suggestion (`spec already covers this at docs/specs/<file>.md`) and
+  default the suggestion to `dismiss-with-reference`.
+- If the docs do not cover it, present the consultation normally —
+  the bot's flag is accurate.
+- Skip the consultation entirely when the answer is unambiguous from
+  reading the touched code (e.g., the rationale is in a sibling
+  comment block). Note the reference and dismiss.
 
 ### Bot-native reply syntax
 
@@ -1127,6 +1148,23 @@ Before posting any replies when the comment map contains bot reviewers:
 - Match each pre-push finding to its post-push thread by stable identity tuple `(path, line, root_comment.body_excerpt)` — REST IDs are unstable but this tuple survives review replacement.
 - If the post-push fetch shows a finding was dropped (bot retracted it), skip the reply and continue.
 - The 404-recovery fallback below still applies to any reply that fails after this refresh.
+
+### Detect in-place updates to bot summary issue comments
+
+Some bots track PR state through a single persistent issue comment
+keyed on a magic HTML marker (e.g., `<!-- <bot-id>-review -->`) and
+overwrite its body on each cycle rather than posting a new comment.
+Diff-based "new comment since pre-push" detection misses the update.
+
+- For every bot-authored issue comment captured in the pre-push
+  snapshot, re-fetch its body via `gh api .../issues/comments/{id}`
+  and compare against the snapshot.
+- A body transition from "Found N issues" / active-findings shape to
+  a clean shape ("No issues found", empty list) is a positive
+  resolution signal — log it in the session summary and resolve any
+  related inline threads.
+- A body transition that adds new findings is a regression — route
+  the new finding through Step 4 like any other active comment.
 
 ### Re-check pending self-review before replies
 
