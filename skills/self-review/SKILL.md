@@ -21,7 +21,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.15-232615'
+  version: '2026.05.20-191230'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -36,6 +36,17 @@ metadata:
 Post inline review comments on your own PR to help human reviewers understand
 design decisions, non-obvious logic, and critical context. This is not an
 adversarial bug hunt — it's documentation for reviewers.
+
+## GitHub interaction routing
+
+**HARD RULE:** All GitHub reads and writes in this skill follow
+`wk-gh`:
+
+- Read-side: org scoping per `wk-gh` Step 1–2.
+- Write-side: append the canonical outbound footer per `wk-gh`
+  Step 4 to every inline comment body posted via the pending
+  review. Inject at payload-render time so no `comments[]` entry
+  ships footer-less.
 
 ## Pending review only
 
