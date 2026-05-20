@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.19-232716'
+  version: '2026.05.20-191230'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -247,6 +247,13 @@ Test-count sync is mandatory: count test functions in changed
 count phrases (`"\d+ tests"`, `"covers \d+ scenarios"`), update every
 mismatch in this branch.
 
+Cross-module filter parity: when a metric, counter, or summary
+purports to count artifacts produced by another module, grep that
+producer for the filter it applies. Flag any divergence between the
+metric's filter and the producer's filter as a data-model mismatch —
+"what counts as an X" must be defined in one place, not implicitly
+split across modules.
+
 ### 2.9 Design-pivot doc audit
 
 If the diff touches `docs/specs/` or removes pseudocode/sequence blocks,
@@ -268,6 +275,12 @@ If a PR exists for the branch:
   (`Closes #N`, `Co-authored-by:`, `**Build:**`, `<details>Prompt</details>`).
 - Verify Jira key suffix `[BOARD-NUM]` is present when a Jira key is
   detectable from branch name or any commit message.
+- Rename audit: enumerate every symbol (path, class, method, flag,
+  command) deleted in `git diff "$BASE...HEAD" --diff-filter=D` and
+  grep the PR body for each. Any hit is a blocker until the body is
+  updated to the replacement text — rename commits update code but
+  leave the PR body stale because body edits are not part of the
+  file diff.
 
 ### 2.11 External-call reproduction gate
 
@@ -318,6 +331,14 @@ are added to the verdict, not auto-fixed. Surface:
 - Temporal dependencies in new async code.
 - Stale comments adjacent to modified code.
 - Empty `catch`/`rescue`/`except` blocks.
+- Inline test helpers duplicating production source. For each new
+  `let`, `before`, fixture, or factory in a spec/test file that
+  defines a multi-line callable, grep the production source in the
+  diff for an identical or near-identical block (threshold: >3
+  identical non-trivial lines). Flag as `test-tautology` — stubs
+  applied to the copied body never exercise the real code, so the
+  test passes regardless of production drift. Fix: extract the
+  production code to a requireable module and import it.
 
 Project config is authoritative — suppress any finding that contradicts
 an active linter config.
@@ -522,6 +543,13 @@ When the pre-push comment map contains bot reviewers (login matches
   refresh) and match findings by `(path, line, body_excerpt)`, not by
   REST comment ID.
 - A reduced thread count is expected, not a regression signal.
+- Emit a `session_resolved_classes` set in the verdict — one entry
+  per finding addressed this session, keyed by `(path_prefix,
+  concern_class)`. Callers match incoming bot threads against this
+  set by concern class **before** matching by exact `path:line`,
+  tagging matches as `already-addressed` and skipping triage. Bots
+  that re-evaluate from a stale post-push snapshot otherwise echo
+  every prior finding as new.
 
 ### Clearance record
 
