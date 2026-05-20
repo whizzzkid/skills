@@ -32,7 +32,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.20-194214'
+  version: '2026.05.20-215945'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -696,6 +696,13 @@ Rules:
   ```
 - Multiple ` ```suggestion ` blocks per comment are allowed — each
   becomes its own commit when applied.
+- A single suggestion fence must target one **contiguous** range.
+  Fixes that touch two or more non-adjacent locations (e.g., an
+  array declaration and its expansion site) cannot ride in one
+  fence — GitHub applies the replacement as a single hunk. Split
+  into one anchored comment per site (each with its own contiguous
+  suggestion), or describe the multi-site fix in a plain language
+  fence without a suggestion.
 - Reply suggestions inherit the parent's anchor; they only apply to
   replacements at the parent's line. If the fix spans different
   lines, prefer a new top-level comment with the correct multi-line
