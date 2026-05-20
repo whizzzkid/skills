@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.15-201820'
+  version: '2026.05.20-191230'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -45,6 +45,11 @@ a post-creation workflow that ensures quality before marking ready for review.
 
 ## Hard Rules
 
+0. **All GitHub reads/writes route through `wk-gh`.** Org scoping
+   per `wk-gh` Step 1–2; every PR title/body, review body, and
+   comment body emitted by this skill ends with the canonical
+   outbound footer per `wk-gh` Step 4 — injected at heredoc/template
+   render time so no `gh pr create` / `gh pr edit` ships footer-less.
 1. **Preserve PR body metadata across description rewrites.** Before overwriting
    the PR description, preserve metadata lines — see
    `skills/pr/references/pr-description-metadata.md`.

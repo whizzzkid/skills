@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183653'
+  version: '2026.05.20-191230'
   internal: false
   model:
     openai: gpt-4.1
@@ -81,6 +81,11 @@ Read PR ──► Read context ──► Identify seams ──► Plan stack
    - A 600-line rename that reviews as one coherent change beats two 300-line fragments.
 
 If a draft plan violates any invariant, **rework the plan** — do not ship a violation.
+
+**HARD RULE:** All GitHub reads/writes route through `wk-gh`. Every
+child PR's title/body emitted by this skill ends with the canonical
+outbound footer per `wk-gh` Step 4, appended after any child-specific
+metadata block.
 
 ---
 

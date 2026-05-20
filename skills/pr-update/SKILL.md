@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.12-225934'
+  version: '2026.05.20-191230'
   internal: false
   model:
     openai: gpt-4.1
@@ -70,6 +70,9 @@ Pre-flight ──► Detect base ──► Choose strategy
    tests after integration, not before.
 5. **Never skip PR description sync.** A push that updates the branch
    but leaves a stale PR body violates `wk-commit`'s PR Sync HARD RULE.
+6. **All GitHub reads/writes route through `wk-gh`.** Org scoping per
+   `wk-gh` Step 1–2; PR-body sync emits the canonical outbound footer
+   per `wk-gh` Step 4 once at the end of the body — never duplicated.
 
 ---
 

@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.19-172503'
+  version: '2026.05.20-191230'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -53,6 +53,10 @@ and manage the full resolution cycle from sync to summary.
 
 ## Hard Rules
 
+0. **All GitHub reads/writes route through `wk-gh`.** Org scoping
+   per `wk-gh` Step 1–2; every reply comment body, PR body edit,
+   and thread message ends with the canonical outbound footer per
+   `wk-gh` Step 4 — applied at payload-render time.
 1. **Never push without explicit user confirmation.**
 2. **Never post reply comments without explicit user confirmation.**
 3. **Only resolve threads you actually worked on.** A thread is resolvable

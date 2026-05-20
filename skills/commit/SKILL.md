@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183225'
+  version: '2026.05.20-191230'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -209,6 +209,10 @@ Rules for the refresh:
 - Reflect the **current** set of commits and the **current** behavior —
   not the historical narrative of how the branch evolved.
 - Keep the title under ~70 chars; details belong in the body.
+- **Route through `wk-gh`.** Any `gh pr edit --body` issued by this
+  skill ends with the canonical outbound footer per `wk-gh` Step 4 —
+  emitted exactly once at the end of the body. If the existing body
+  already contains the footer, do not duplicate it on edit.
 
 If unsure whether a section is human-authored vs agent-authored, ask
 the user before overwriting it. Better to ask once than to clobber a

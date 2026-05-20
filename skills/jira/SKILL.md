@@ -38,7 +38,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.15-193702'
+  version: '2026.05.20-191230'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -233,6 +233,11 @@ canonical Atlassian URL the MCP returns.
 If `wk-pr` already builds a description, **insert** the `## Ticket`
 section rather than overwriting the rest. If the section already
 exists, refresh its content if the ticket summary has changed.
+
+**HARD RULE:** Any `gh pr edit --body` issued by this skill routes
+through `wk-gh` — the canonical outbound footer per `wk-gh` Step 4
+stays at the very end of the body, after the `## Ticket` insertion.
+Do not strip the footer when editing; preserve it exactly once.
 
 ### Description quality check (Stage 3)
 
