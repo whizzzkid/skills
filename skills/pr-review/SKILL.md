@@ -32,7 +32,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.12-234444'
+  version: '2026.05.20-191230'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -47,6 +47,18 @@ metadata:
 Automated, thorough code review that investigates changes deeply, builds a
 playground to validate assumptions, and posts encouraging but critical review
 comments as a pending GitHub review.
+
+## GitHub interaction routing
+
+**HARD RULE:** Every `gh` read and every write to GitHub (review
+bodies, inline comments, thread replies, resolutions) follows
+`wk-gh`'s conventions:
+
+- Read-side: org scoping per `wk-gh` Step 1–2.
+- Write-side: append the canonical outbound footer per `wk-gh`
+  Step 4 — review body and every inline comment body. Do not draft
+  a separate footer in this skill; the canonical one in `wk-gh` is
+  authoritative.
 
 ## Phase 1: Context
 
@@ -889,17 +901,18 @@ keyed to the change's overall shape:
 Use emojis where they aid scanning (✅ 🚀 🛠️ 🧪 ⚠️ 📦 🎯). Keep the body
 short — one to three short paragraphs.
 
-**Always end the body with this footer (verbatim):**
-
-```
----
-This review was generated with the help of an Agent. If you find it noisy or annoying, please DM me your feedback.
-```
+**Always end the body with the canonical outbound footer from
+`wk-gh` Step 4.** Do not write a custom footer here; emit the
+canonical one verbatim as the last content in the body.
 
 Bot-thread counter-evidence notes (option (a) above) are folded in
-before the footer, anchored as `Re: {bot} thread on {file}:{line} — …`.
+**before** the footer, anchored as `Re: {bot} thread on {file}:{line} — …`.
 Only refuted or new-evidence cases earn a body anchor — never pure
 Confirmed outcomes (see Phase 5 HARD RULE).
+
+Every inline comment body also receives the canonical footer per
+`wk-gh` Step 4 — apply at payload-render time so no `comments[]`
+entry ships footer-less.
 
 ### Build the payload
 
