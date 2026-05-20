@@ -32,7 +32,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.20-191230'
+  version: '2026.05.20-194214'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -558,6 +558,22 @@ When the diff touches a producer→consumer boundary (CI artifact upload/downloa
 | **Test fixtures** | Test harness populates fixtures at the producer's actual output path, not the consumer's assumed path — otherwise tests pass on layout mismatch. |
 | **Cleanup ordering** | Destructive cleanup (`rm -rf`, `shutil.rmtree`) runs only after confirming the consume succeeded; cleanup-before-verify loses data silently. |
 | **Playground experiment** | Populate staging with the producer's real layout and run the consumer against it — isolated consumer tests cannot catch layout mismatches. |
+
+### Cluster-promotion dedup guards
+
+When the diff includes a promotion / canonicalization / clustering
+algorithm that selects a **representative** from a cluster of
+entries (max-id, first-seen, highest-score), audit the dedup guard:
+
+- Check whether the guard tests the iteration anchor or the chosen
+  representative. When the cluster's representative differs from
+  the anchor, a guard on the anchor passes while the representative
+  overlaps with an existing canonical — producing silent duplicates
+  in the output set.
+- Construct a playground experiment that iterates entries in
+  reverse and non-sequential order. Proximity-based dedup loops
+  whose representative and anchor diverge under those orderings
+  expose the class of bug.
 
 ### Interface contract violations
 
