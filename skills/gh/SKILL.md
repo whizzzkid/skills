@@ -13,7 +13,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.20-191230'
+  version: '2026.05.20-213935'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -28,6 +28,14 @@ metadata:
 Ensures all `gh` CLI and GitHub interactions are scoped to the user's
 organization. Activates automatically when the agent is about to run any
 `gh` command or interact with GitHub PRs, issues, or notifications.
+
+**HARD RULE — no size or surface exemption.** Every `gh` write
+fires this skill: `gh pr create`, `gh pr edit`, `gh pr comment`,
+`gh issue comment`, `gh api` POST/PATCH/DELETE, `gh pr review`,
+reply posts, thread resolutions. "It's just a comment" / "it's
+one-line" / "the user asked for it inline" are not bypass criteria.
+Read-only `gh` calls (`view`, `diff`, `search`, `api` GET) still
+honor Step 1–2 scoping but skip Step 4 (no body to footer).
 
 ## Step 1: Check for $GITHUB_ORG
 
