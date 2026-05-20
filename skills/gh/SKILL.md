@@ -13,7 +13,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.08-120000'
+  version: '2026.05.20-191230'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -84,6 +84,74 @@ The org scope is **not applied** when:
 
 In all other cases, default to `$GITHUB_ORG`.
 
+## Step 3: Canonical surface for GitHub writes
+
+Every skill that creates or edits GitHub-visible content routes
+through this skill's conventions. Read-only `gh` calls (view, diff,
+search, api GET) do not require this routing — only writes.
+
+Surfaces covered (non-exhaustive):
+
+- PR title and body (`gh pr create`, `gh pr edit`)
+- Review body and inline review comments (`gh api .../pulls/{n}/reviews`)
+- Inline-comment replies (`gh api .../pulls/{n}/comments/{id}/replies`)
+- Issue and PR conversation comments (`gh issue comment`, `gh pr comment`)
+- Review-thread state changes (resolve/unresolve via GraphQL)
+
+Every write surface above must:
+
+- Honor `$GITHUB_ORG` scoping per Step 1–2.
+- Append the outbound footer per Step 4 — no exceptions for short
+  comments, draft reviews, or PR descriptions.
+- Stay pending / drafted when the calling skill's contract is
+  human-in-the-loop (self-review, pr-review). Never auto-submit on
+  the user's behalf without explicit per-invocation consent.
+
+## Step 4: Outbound message footer
+
+**HARD RULE:** Every message this agent posts to GitHub on the user's
+behalf must end with the canonical footer below, verbatim. The footer
+attributes the automation and gives the user a feedback channel —
+silent posts erode trust and make automated activity hard to audit.
+
+```
+---
+<sup>Generated using [wk-skills](https://github.com/whizzzkid/skills) and multiple agents/models. DM me your feedback.</sup>
+```
+
+Apply to:
+
+- PR descriptions (body of `gh pr create` and `gh pr edit`).
+- Review bodies (the top-level `body` of a `/pulls/{n}/reviews` POST).
+- Inline review comments (each entry's `body` in the `comments[]`
+  array — the footer goes at the end of the comment body).
+- Conversation comments on PRs and issues.
+- Replies to existing review threads.
+
+Footer placement rules:
+
+- Footer is the **last** content in the message. Nothing follows it.
+- Separate from prior content with a blank line above the `---`.
+- When the calling skill already specifies a richer footer (e.g.,
+  `wk-commit` PR-body sync footer, `wk-pr-review` review-body
+  closing line), append this footer **after** the skill-specific
+  one — never replace the skill-specific footer.
+- When editing an existing PR body that already contains this
+  footer, do not duplicate it — re-emit the body with the footer
+  appearing exactly once at the end.
+
+Exceptions:
+
+- Suggestion fences (` ```suggestion `) embedded inside a comment
+  body do not carry the footer themselves; the footer applies to
+  the enclosing comment.
+- Resolution / state-change mutations (resolving a thread, marking
+  a PR ready, merging) carry no message body and are exempt.
+
+If the calling skill emits a payload via a template (heredoc, file,
+jq construction), inject the footer at template-render time so a
+forgotten append cannot ship a footer-less message.
+
 ## Canonical download path
 
 For artifact download paths, see `skills/buildkite/SKILL.md` — the pattern is
@@ -104,6 +172,8 @@ stays org-scoped.
 | User says "all orgs" | Skip org filter |
 | Current-repo commands | No filter needed |
 | Saving any `gh` payload to disk | Use `/tmp/agent/gh/<owner>/<repo>/...` |
+| Any outbound GitHub message | Append canonical footer (Step 4) — once, last |
+| Calling skill writes to GitHub | Route the write through this skill's Step 3/4 |
 
 ---
 
