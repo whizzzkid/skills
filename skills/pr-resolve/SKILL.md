@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.20-191230'
+  version: '2026.05.21-044518'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -169,12 +169,33 @@ merge commit that diverges from the remote.
 
 ### Integrate the base branch via `wk-pr-update`
 
-Delegate base-branch integration to `wk-pr-update` rather than running
-merge/rebase directly here. That skill picks the right strategy for
-the branch's size (rebase for `<5` commits ahead, patch-replay
-otherwise), runs the conflict-resolution loop, re-validates the work
-post-integration (tests + cheap typecheck), and force-with-lease
-pushes.
+Run a merge-aware pre-check before delegating. When HEAD already
+contains a merge commit from the base and `$BEHIND` is small, the
+right action is a plain `git merge "$BASE_REF"` — delegating to
+`wk-pr-update` would route through patch-replay strategy selection
+that overstates the work and risks squashing already-reviewed commits:
+
+```bash
+BASE=$(gh pr view --json baseRefName --jq .baseRefName)
+git fetch origin "$BASE"
+BEHIND=$(git rev-list --count "HEAD..origin/$BASE")
+LAST_BASE_MERGE=$(git log --merges --first-parent --pretty=format:%H \
+  | while read sha; do
+      if git merge-base --is-ancestor "$sha^2" "origin/$BASE" 2>/dev/null; then
+        echo "$sha"; break
+      fi
+    done)
+if [ -n "$LAST_BASE_MERGE" ] && [ "$BEHIND" -le 5 ]; then
+  git merge "origin/$BASE"   # trivial merge-style integration
+fi
+```
+
+For all other cases, delegate base-branch integration to `wk-pr-update`
+rather than running merge/rebase directly here. That skill picks the
+right strategy for the branch's size (rebase for `<5` commits ahead,
+patch-replay otherwise), runs the conflict-resolution loop,
+re-validates the work post-integration (tests + cheap typecheck), and
+force-with-lease pushes.
 
 ```
 Skill(wk-pr-update, args="<base_branch>")
