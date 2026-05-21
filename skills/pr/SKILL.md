@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.20-191230'
+  version: '2026.05.21-044943'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -272,6 +272,19 @@ structure and inject the `## Stack` section listing all parts with PR numbers
 and status, following the same format shown above.
 
 ## Step 3: Post-Creation Workflow
+
+**HARD RULE — no early return after `gh pr create`.** PR creation is the
+midpoint of this workflow, not the terminus. Continue immediately into
+Step 3 without returning control to the user. The only valid stopping
+points before `gh pr ready` (Step 5) are:
+
+- CI still failing after 3 fix-loop attempts.
+- A `blocked` adversarial-review verdict requiring user design input.
+- Explicit user interjection.
+
+Reporting the PR URL and stopping is a violation — the user expects the
+full lifecycle (description sync → CI poll → self-review → feedback
+triage → ready) on a single invocation.
 
 After the draft PR is created (or after pushing new commits to an existing PR):
 

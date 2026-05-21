@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.15-215337'
+  version: '2026.05.21-044943'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -148,6 +148,11 @@ message with line/column, build ID, stack frame.
 - If any concrete artifact is present, fetch/read it directly first
   (`gh pr diff`, `Read`, `gh run view`, `bk build view`, etc.). The
   user has already scoped the investigation.
+- For GitHub comment / review URLs specifically, fetch the comment
+  body via `gh api repos/{owner}/{repo}/{pulls|issues}/comments/{id}`
+  before any codebase grep. The comment text usually contains the
+  exact diagnostic information needed; running grep first wastes a
+  turn and signals inattention to user-supplied scope.
 - Spawn parallel exploration agents only when no concrete artifact
   exists or the artifact is exhausted and gaps remain.
 - Treat parallel `Agent` dispatch as a higher-cost fallback, not the
