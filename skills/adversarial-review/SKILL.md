@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.20-191230'
+  version: '2026.05.21-044518'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -253,6 +253,21 @@ producer for the filter it applies. Flag any divergence between the
 metric's filter and the producer's filter as a data-model mismatch —
 "what counts as an X" must be defined in one place, not implicitly
 split across modules.
+
+Universality-claim verification: spec prose stating that a value is
+"common to every / tagged on all / present in every / applies to
+every" subject is a **hidden enumeration** — count/bullet greps miss
+it. Extract the subject noun, grep the diff for every instantiation
+of that class/function, and verify the claimed field is passed at
+every site:
+
+```bash
+grep -rnE "common to (every|all)|tagged on (every|all)|present in (every|all)|applies to (every|all)" \
+  docs/ README* 2>/dev/null
+```
+
+Flag any call site that omits the claimed field as a blocker
+(spec-vs-implementation divergence).
 
 ### 2.9 Design-pivot doc audit
 
