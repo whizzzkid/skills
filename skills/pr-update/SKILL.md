@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.20-191230'
+  version: '2026.05.21-044518'
   internal: false
   model:
     openai: gpt-4.1
@@ -132,14 +132,45 @@ echo "Branch $BRANCH is $AHEAD ahead, $BEHIND behind $BASE."
 If `$BEHIND` is 0, the branch is already up to date — exit early with
 a one-line note. Otherwise continue to strategy selection.
 
+### Merge-aware `$AHEAD` recomputation
+
+If HEAD already contains a merge commit from the base branch, the raw
+`$AHEAD` count overstates the integration work — most of those commits
+were already merged in earlier. Recompute against the most recent
+base-merge before applying the strategy heuristic:
+
+```bash
+LAST_BASE_MERGE=$(git log --merges --first-parent --grep="Merge .*$BASE" \
+  --pretty=format:%H -1 2>/dev/null)
+if [ -z "$LAST_BASE_MERGE" ]; then
+  # Fallback: any merge whose second parent is on the base branch
+  LAST_BASE_MERGE=$(git log --merges --first-parent --pretty=format:%H \
+    | while read sha; do
+        if git merge-base --is-ancestor "$sha^2" "$BASE_REF" 2>/dev/null; then
+          echo "$sha"; break
+        fi
+      done)
+fi
+if [ -n "$LAST_BASE_MERGE" ]; then
+  AHEAD=$(git rev-list --count "$LAST_BASE_MERGE..HEAD" --not "$BASE_REF")
+  echo "Branch has prior merge from $BASE; $AHEAD new commits since."
+fi
+```
+
+When the recomputed `$AHEAD` is small (`≤ 5`) and `$BEHIND` is small,
+prefer `git merge "$BASE_REF"` over rebase or patch-replay — the
+branch is a merge-style branch, not a rebase-style one, and
+patch-replay would squash already-reviewed commits.
+
 ---
 
 ## Stage 2: Choose integration strategy
 
 | `$AHEAD` | Strategy | Why |
 |----------|----------|-----|
-| **< 5** | Rebase | Small commit count → linear history is cheap to preserve; reviewers can read each commit independently. |
-| **≥ 5** | Patch-replay | Large commit count → rebasing N commits is N conflict-resolutions; one patch is one. Commit messages are reconstructed from the squashed subject + a body listing the original SHAs for traceability. |
+| **HEAD already has a base-merge, recomputed `$AHEAD ≤ 5`** | `git merge "$BASE_REF"` | Merge-style branch — preserve the merge topology; do not squash already-reviewed commits. |
+| **< 5** (no prior base-merge) | Rebase | Small commit count → linear history is cheap to preserve; reviewers can read each commit independently. |
+| **≥ 5** (no prior base-merge) | Patch-replay | Large commit count → rebasing N commits is N conflict-resolutions; one patch is one. Commit messages are reconstructed from the squashed subject + a body listing the original SHAs for traceability. |
 
 The threshold is a heuristic, not a contract. The user can override
 once at run time:
