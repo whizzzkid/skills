@@ -160,7 +160,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/calendar.md`
 
-Use Google Calendar MCP (`mcp__claude_ai_Gcal_${EMPLOYER}__*`).
+Use an available Google Calendar MCP tool (search for `gcal` via `ToolSearch` to find the configured tool).
 
 Fetch all events from `START_DATE` to `END_DATE`. Categorize:
 - Interviews conducted (as interviewer or debrief panelist)
@@ -187,7 +187,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/slack.md`
 
-Use Slack MCP (`mcp__claude_ai_Slack_${EMPLOYER}_Offical__*`).
+Use an available Slack MCP tool (search for `slack` via `ToolSearch` to find the configured tool).
 
 Search for the user's messages during the period. Look for:
 - Decisions influenced or communicated
@@ -210,7 +210,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/gmail.md`
 
-Use Gmail MCP (`mcp__claude_ai_Gmail_${EMPLOYER}__*`).
+Use an available Gmail MCP tool (search for `gmail` via `ToolSearch` to find the configured tool).
 
 Resolve the user's email dynamically:
 
@@ -268,7 +268,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/docs-meetings.md`
 
-Use Granola MCP (`mcp__granola__*`), Gdocs MCP (`mcp__claude_ai_Gdocs_${EMPLOYER}__*`),
+Use Granola MCP (`mcp__granola__*`), an available Google Docs MCP tool (search `gdocs` via `ToolSearch`),
 and Glean (`mcp__claude_ai_Glean__*`).
 
 **Granola:** Get all meetings in the period. Extract:
@@ -295,7 +295,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/dx-sitrep.md`
 
-**Part 1: DX Metrics** (if available via `mcp__claude_ai_DX_${EMPLOYER}__*`):
+**Part 1: DX Metrics** (if available — search `dx` via `ToolSearch` to find a configured DX MCP tool):
 - PR cycle time, code review turnaround
 - Deploy frequency, lead time
 - Team/org/company comparisons
