@@ -64,7 +64,7 @@ The skill accepts a period argument. Map it to a start/end date range:
 | `annual` | Feb 1 of current FY | Jan 31 of next FY |
 | `YYYY-MM-DD:YYYY-MM-DD` | Custom start | Custom end |
 
-**$EMPLOYER FY quarters** (Feb–Jan fiscal year):
+**$EMPLOYER FY quarters** (Feb–Jan fiscal year, adjust per `$EMPLOYER_FY_START` if set):
 - Q1: Feb 1 – Apr 30
 - Q2: May 1 – Jul 31
 - Q3: Aug 1 – Oct 31
@@ -160,7 +160,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/calendar.md`
 
-Use Google Calendar MCP (`mcp__claude_ai_Gcal_$EMPLOYER__*`).
+Use Google Calendar MCP (`mcp__claude_ai_Gcal_${EMPLOYER}__*`).
 
 Fetch all events from `START_DATE` to `END_DATE`. Categorize:
 - Interviews conducted (as interviewer or debrief panelist)
@@ -187,7 +187,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/slack.md`
 
-Use Slack MCP (`mcp__claude_ai_Slack_$EMPLOYER_Offical__*`).
+Use Slack MCP (`mcp__claude_ai_Slack_${EMPLOYER}_Offical__*`).
 
 Search for the user's messages during the period. Look for:
 - Decisions influenced or communicated
@@ -210,7 +210,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/gmail.md`
 
-Use Gmail MCP (`mcp__claude_ai_Gmail_$EMPLOYER__*`).
+Use Gmail MCP (`mcp__claude_ai_Gmail_${EMPLOYER}__*`).
 
 Resolve the user's email dynamically:
 
@@ -268,7 +268,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/docs-meetings.md`
 
-Use Granola MCP (`mcp__granola__*`), Gdocs MCP (`mcp__claude_ai_Gdocs_$EMPLOYER__*`),
+Use Granola MCP (`mcp__granola__*`), Gdocs MCP (`mcp__claude_ai_Gdocs_${EMPLOYER}__*`),
 and Glean (`mcp__claude_ai_Glean__*`).
 
 **Granola:** Get all meetings in the period. Extract:
@@ -295,7 +295,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/dx-sitrep.md`
 
-**Part 1: DX Metrics** (if available via `mcp__claude_ai_DX_$EMPLOYER__*`):
+**Part 1: DX Metrics** (if available via `mcp__claude_ai_DX_${EMPLOYER}__*`):
 - PR cycle time, code review turnaround
 - Deploy frequency, lead time
 - Team/org/company comparisons
@@ -397,7 +397,7 @@ When synthesizing, use this language:
 ### Calibrating to level expectations
 
 Structure the narrative to demonstrate the user's level expectations.
-For L4 at $EMPLOYER, surface these signals:
+For the user's current level at $EMPLOYER, surface these signals:
 
 | L4 Signal | Evidence to Surface |
 |-----------|---------------------|

@@ -97,6 +97,30 @@ npx skills add . -g -y -a=claude
 
 This reinstalls all skills globally for the agent. Never skip this step.
 
+## Environment-Specific Identifiers
+
+**HARD RULE: Never commit employer or organization names as literals.** This
+repository is public and employer-agnostic. All employer/org references must be
+dynamic, resolved from environment variables at runtime:
+
+- **`$EMPLOYER`** — the user's current employer name (e.g. set in `~/.zshrc` or `~/.claude/profile.sh`)
+- **`$GITHUB_ORG`** — the user's GitHub organization slug (already enforced by `wk-gh`)
+
+Rules:
+- Never write an employer name, org name, or company slug as a literal string in any `SKILL.md`, `README.md`, `AGENTS.md`, script, or reference file.
+- Never commit learnings, notes, or reference files that contain a literal employer/org name. Scrub before committing: replace literals with `$EMPLOYER` or `$GITHUB_ORG`.
+- MCP tool name patterns that embed an org/employer slug must use `${EMPLOYER}` interpolation (e.g. `mcp__claude_ai_Gcal_${EMPLOYER}__*`).
+- If you encounter a literal employer or org name anywhere in the tree during a sharpen/edit pass, replace it in the same commit.
+
+Pre-commit check:
+
+```bash
+# Fail if any literal employer token lands in a commit
+git diff --cached | grep -iE '\b($EMPLOYER|your-company|example-corp)\b' && echo "BLOCKED: literal employer name in diff"
+```
+
+Replace the grep pattern with the actual employer token(s) in your environment's pre-commit hook.
+
 ## Workflow
 
 - Always commit and push after every change to this project

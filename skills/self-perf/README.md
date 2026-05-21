@@ -35,7 +35,7 @@ flowchart TD
 
 - Uses **7 parallel subagents** to fetch evidence simultaneously — each writes to
   `QPR/<period>/references/<source>.md` before synthesis begins.
-- Period arguments map to **$EMPLOYER FY quarters** (Feb–Jan): Q1 = Feb–Apr, Q2 = May–Jul, etc.
+- Period arguments map to **$EMPLOYER FY quarters** (Feb–Jan default): Q1 = Feb–Apr, Q2 = May–Jul, etc.
   Custom ranges accepted as `YYYY-MM-DD:YYYY-MM-DD`.
 - Synthesis uses a strict **impact-language guide** — "worked on" → "designed and shipped";
   surface-level language is automatically upgraded to strong-verb form.
