@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.22-071453'
+  version: '2026.05.22-071640'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -473,6 +473,25 @@ Bot comments (Copilot, custom bots, CI bots) often include:
 - **Automated analysis**: Summarize the bot's finding and propose an action.
 
 Do NOT blindly accept bot suggestions. Evaluate each one for correctness.
+
+### Query the internal knowledge base before answering org-specific questions
+
+When a reviewer comment is a **question** that touches org-specific
+policy (retention, quotas, billing, infra config, compliance, SLAs,
+internal tooling), search the configured internal knowledge-base MCP
+before drafting the reply. Generic vendor knowledge is the wrong
+default — internal docs are authoritative.
+
+- Use `ToolSearch` to find a configured KB tool (e.g. Glean,
+  Notion, Confluence MCP) and search for the relevant doc.
+- If the KB surfaces an authoritative doc, cite it verbatim in the
+  reply (title + link) and quote the load-bearing sentence.
+- Fall back to general vendor knowledge only if the KB returns
+  nothing relevant. Flag that fallback in the reply so the
+  reviewer can override.
+- Skip this step for non-policy questions (code-level intent,
+  design rationale, test coverage) — those belong in the diff,
+  not the KB.
 
 ### Verify "missing documentation" bot findings against repo docs
 
