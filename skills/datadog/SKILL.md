@@ -17,7 +17,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.08-182715'
+  version: '2026.05.22-065957'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -64,6 +64,33 @@ in the current directory for API requests. Never write to project source
 files, configuration, or any other location.**
 
 Read may access any path (read-only) to understand existing configurations.
+
+## Step 1.5: Resolve resource-type intent before any write
+
+When the user asks to "create X per Y" (e.g., "a notebook per PR",
+"a dashboard per service"), clarify the artifact shape before
+building. Two distinct patterns share the phrasing:
+
+- **One reusable resource filtered by Y** → dashboard with
+  template variables (`$pr_number`, `$service`, `$env`). Default
+  for per-entity views, per-service health, per-team status.
+- **A new resource per Y instance** → notebook or new
+  dashboard per incident / per investigation. Default for
+  one-off forensic work, post-mortems, ad-hoc analysis.
+
+If the distinction is not explicit in the user's request, ask
+before creating. Pick the canonical Datadog pattern for the use
+case:
+
+| User intent | Canonical resource |
+|-------------|--------------------|
+| Per-entity views, recurring filter (PR, service, env) | Dashboard + template variables |
+| Per-incident investigation, free-form notes + queries | Notebook |
+| Alerting on threshold breach | Monitor |
+| Tracking objective compliance | SLO |
+
+Building a notebook-per-PR when the user wanted one filterable
+dashboard creates thousands of dead artifacts.
 
 ## Step 2: Identify the Operation
 
