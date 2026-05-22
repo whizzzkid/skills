@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.21-044518'
+  version: '2026.05.22-071453'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1239,6 +1239,41 @@ a quote referencing the original comment so the thread remains readable
 
 {your reply text}
 ```
+
+### Add emoji reaction after each reply
+
+Immediately after a reply posts successfully, add an emoji reaction
+to the **original comment** (the root of the thread) to signal the
+outcome. Reaction selection by triage outcome:
+
+| Triage | Reaction content | Emoji |
+|--------|-----------------|-------|
+| `a` (fix applied) or `e` (edit) | `+1` | 👍 |
+| `d` (dismiss — not useful) | `-1` | 👎 |
+| `f` (follow-up question from author — good question) | `heart` | ❤️ |
+| `t` (defer to ticket — acknowledged) | `+1` | 👍 |
+| `s` (skip) or `r` (rethink) | — | no reaction |
+
+Route by comment surface:
+
+**`surface: inline`** (review comment):
+
+```bash
+gh api repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions \
+  --method POST -f content="{reaction}"
+```
+
+**`surface: conversation`** or **`surface: review_body`** (issue comment):
+
+```bash
+gh api repos/{owner}/{repo}/issues/comments/{comment_id}/reactions \
+  --method POST -f content="{reaction}"
+```
+
+Reactions are fire-and-forget — a non-200 response is logged and
+skipped; never block or retry on a failed reaction. A duplicate
+reaction returns HTTP 200 with the existing reaction object; treat
+it as success.
 
 If the inline API returns **404**:
 - Log: "Reply to comment {comment_id} on {path}:{line} returned 404
