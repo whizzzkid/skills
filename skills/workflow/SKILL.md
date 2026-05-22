@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.22-065957'
+  version: '2026.05.22-223856'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -31,8 +31,8 @@ from within this workflow at the prescribed point. Follow this sequence exactly.
 
 ```
 Plan -> Implement (commit per step + docs) -> Test (happy/sad/edge)
-  -> Review (adversarial agent) -> PR (wk-pr) -> CI Fix Loop
-  -> Self-Review -> Docs Audit -> Retro
+  -> Refactor-Opportunity Scan -> Review (adversarial agent)
+  -> PR (wk-pr) -> CI Fix Loop -> Self-Review -> Docs Audit -> Retro
 ```
 
 ---
@@ -268,10 +268,11 @@ steps produce commits. Example:
 2. Add auth tests (happy/sad)  -> commit
 3. Update docs/specs/ADR       -> commit (or fold into step 1/2 if small)
 4. Run full test suite
-5. Adversarial review (`wk-adversarial-review`)
-6. Offer to create PR
-7. CI fix loop (auto-fix until green or bail after 3 attempts)
-8. Session retro
+5. Refactor-opportunity scan (Phase 3.5)
+6. Adversarial review (`wk-adversarial-review`)
+7. Offer to create PR
+8. CI fix loop (auto-fix until green or bail after 3 attempts)
+9. Session retro
 ```
 
 ---
@@ -560,9 +561,50 @@ or two-stage accordingly.
 
 ---
 
+## Phase 3.5: Refactor-Opportunity Scan
+
+After tests pass and before invoking `wk-adversarial-review`, scan the
+diff and its neighbouring code for refactor and reuse opportunities.
+This is a deliberate readability/dedup pass, not a behavior change —
+catch the duplication and clarity wins while the diff is fresh, not
+on a follow-up PR.
+
+- Re-read the full diff once: `git diff $(git merge-base HEAD "$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null || echo origin/HEAD)")...HEAD`.
+- For every new/modified function, helper, constant, or block, scan
+  the **neighbouring surface** — the same file, sibling files in the
+  same directory, and any module the diff imports from. Grep for:
+  - Existing helpers, constants, or types that already do what the
+    new code does (reuse candidate).
+  - Repeated literals (strings, numbers, regexes) that should be a
+    named constant.
+  - Near-duplicate blocks (≥ 3 similar lines) within the diff or
+    against neighbours — candidates for extraction.
+  - Long conditional chains or nested blocks that an early return,
+    guard clause, or lookup table would flatten.
+  - Re-implemented patterns the language/framework already provides
+    (stdlib utility, builtin, idiom).
+- For each opportunity, classify:
+  - **Apply now** — reuse an existing helper, replace a literal with
+    an existing constant, lift a near-duplicate into a helper that
+    both sites can call. Land as one commit before Phase 4.
+  - **Defer with note** — refactor is real but expands scope beyond
+    the current change; capture as a TODO in the PR description's
+    "Follow-ups" section and move on.
+  - **Skip** — no real win, or the abstraction would be premature
+    (`Rule of Three`: don't extract on the second occurrence alone
+    unless the duplication is load-bearing).
+- Behavior-preservation rule: a refactor commit lands only when tests
+  still pass against the post-refactor code. Re-run the suite after
+  every Apply-now change.
+- The scan is mandatory but its **output** is not — a clean diff with
+  zero opportunities is a valid outcome. Record "refactor scan: no
+  opportunities" in the Phase 8 retro so the audit happened on paper.
+
 ## Phase 4: Adversarial Review
 
-After implementation is complete and tests pass, invoke `wk-adversarial-review`.
+After implementation is complete, tests pass, and the Phase 3.5
+refactor scan has landed (or recorded "no opportunities"), invoke
+`wk-adversarial-review`.
 The skill is the **sole authority** for pre-push critique — do not approximate
 it with an inline subagent, ad-hoc grep pass, or "quick check".
 
