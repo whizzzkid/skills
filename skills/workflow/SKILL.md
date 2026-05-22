@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.21-044943'
+  version: '2026.05.22-065957'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -153,6 +153,13 @@ message with line/column, build ID, stack frame.
   before any codebase grep. The comment text usually contains the
   exact diagnostic information needed; running grep first wastes a
   turn and signals inattention to user-supplied scope.
+- Before writing any HTTP client, SDK wrapper, or API integration
+  for a third-party service, survey the available MCP tools for
+  that service name. If a matching MCP tool exists and the use
+  case is interactive (not pipeline / CI / cron code that must run
+  outside a Claude session), prefer the MCP. Only build a client
+  when the call must run in a non-Claude environment, and document
+  that reason explicitly in the plan.
 - Spawn parallel exploration agents only when no concrete artifact
   exists or the artifact is exhausted and gaps remain.
 - Treat parallel `Agent` dispatch as a higher-cost fallback, not the
