@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.22-215952'
+  version: '2026.05.22-225329'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -307,6 +307,14 @@ After the draft PR is created (or after pushing new commits to an existing PR):
    still covers all changes. If it has drifted, update with `gh pr edit`.
    **Before overwriting**, preserve metadata lines per Hard Rule 1
    (`skills/pr/references/pr-description-metadata.md`).
+
+   **HARD RULE — no-ask on drift sync.** Drift between artifact and
+   reality is an obviously-always-yes fix; never ask the user "want me
+   to update the PR body?" before syncing. The decision to sync is not
+   user-gated. Only ask when the *content* of the sync is ambiguous
+   (e.g., two equally-plausible rewrites of a bullet). Applies to PR
+   description, self-review threads, Jira ticket body, and project
+   docs touched by the change.
 2. **Poll CI** — Launch a background polling job (using the pass-the-build
    agent if available) to wait for all build steps to pass. Do not proceed
    while CI is failing.
@@ -315,6 +323,14 @@ After the draft PR is created (or after pushing new commits to an existing PR):
 
 1. **Invoke `wk-self-review`** to post design-decision comments on the PR.
    This documents non-obvious choices and critical context for human reviewers.
+
+   **HARD RULE — never compose inline comment payloads directly from
+   `wk-pr`.** Always delegate to `wk-self-review` via the Skill tool.
+   The pending-review checkpoint (`POST /pulls/{n}/reviews` with
+   `event: PENDING` then user approval before submit) is enforced by
+   `wk-self-review`; raw `gh api repos/.../pulls/{n}/comments` posts
+   inline comments immediately and bypasses the human-in-the-loop
+   gate. Never call that endpoint from this skill.
 
 2. **Address automated review feedback** — Fetch existing review comments from
    automated tools:
@@ -329,6 +345,20 @@ After the draft PR is created (or after pushing new commits to an existing PR):
    Wait for the user's response before proceeding.
 
 ## Step 5: Mark Ready
+
+**HARD RULE — never end a turn with a draft PR whose work is done.**
+Any push to an open draft PR carries an implicit commitment: re-run
+the adversarial gate, then `gh pr ready` once CI is green. The only
+valid exits before `gh pr ready` are:
+
+- CI failing after 3 fix-loop attempts.
+- An open `blocked` adversarial-review verdict.
+- Explicit user instruction to pause / hold-as-draft.
+
+Iteration rounds (refactor, dedup, follow-up commits) do not reset
+this commitment — each push restarts the path to ready, not the
+licence to stop. "Pushed the fix" is not "work complete"; "marked
+ready" is.
 
 ### Final adversarial-review gate
 
