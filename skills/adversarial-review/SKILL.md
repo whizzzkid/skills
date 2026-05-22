@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.22-065957'
+  version: '2026.05.22-071916'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -234,6 +234,21 @@ grep -rn '<FunctionName>(' src/ tests/
 grep -rn '<TypeName>\s*{' src/ tests/
 ```
 
+Structural-contract widening: refactors that swap a constrained
+shape (positional array, `"k:v"` string list) for an open
+merge / spread / dict-update against a structural container hand
+collision safety to the caller. Grep the diff for the pattern:
+
+```bash
+git diff "$BASE...HEAD" \
+  | grep -nE '\.merge\(|\.update\(|Object\.assign\(|\{\.\.\.|\*\*[a-z_]+\b|hash\[\s*[a-z_]+\s*\]\s*='
+```
+
+For each hit, verify the same commit adds an allowlist / reserved-
+key constant / collision guard. Flag missing guards as
+`suggestion`; promote to `blocker` when the container has named
+fields the caller could shadow.
+
 ### 2.8 Cross-doc enumeration sync
 
 Extract every new flag, symbol, error code, or test name from the diff.
@@ -311,6 +326,24 @@ If a PR exists for the branch:
   updated to the replacement text — rename commits update code but
   leave the PR body stale because body edits are not part of the
   file diff.
+- Rollout / operations section: when the diff touches production-
+  facing surfaces (observability backend, deployment pipeline,
+  schema migration, public API version path, monitoring, paging),
+  require the PR body to carry a rollout / rollback / monitoring
+  section. Trigger via a path-pattern grep, then check the body:
+
+  ```bash
+  PROD='datadog|metrics|telemetry|deploy|migration|schema|api[_/]v[0-9]+|observability|prometheus|grafana|pager|on[-_]?call'
+  if git diff "$BASE...HEAD" --name-only | grep -iE "$PROD" > /dev/null; then
+    gh pr view --json body --jq .body \
+      | grep -iE 'rollout|rollback|operations|migration|monitoring|on[-_]?call|deploy plan' \
+      || echo "BLOCKER: prod-facing diff missing rollout/ops section"
+  fi
+  ```
+
+  `suggestion` for internal-only telemetry; `blocker` when the
+  change affects customer-visible behavior or dashboards owned
+  by another team.
 
 ### 2.11 External-call reproduction gate
 
@@ -369,6 +402,24 @@ are added to the verdict, not auto-fixed. Surface:
   applied to the copied body never exercise the real code, so the
   test passes regardless of production drift. Fix: extract the
   production code to a requireable module and import it.
+- Bugfix-without-regression-test. For every commit whose subject
+  matches `^(fix|bugfix|bug)[:(]`, enumerate the commit's changed
+  files. If the source-side files changed without a paired
+  test-side file in the **same commit**, flag the gap. Without a
+  spec asserting the post-fix behavior, a future refactor can
+  silently revert the fix:
+
+  ```bash
+  for sha in $(git log --format=%H "$BASE..HEAD" --grep='^fix\|^bugfix\|^bug:'); do
+    src=$(git show --name-only --pretty=format: "$sha" | grep -vE '^(spec|test|tests)/')
+    tst=$(git show --name-only --pretty=format: "$sha" | grep -E '^(spec|test|tests)/')
+    [ -n "$src" ] && [ -z "$tst" ] && echo "BLOCKER: $sha changes source without test"
+  done
+  ```
+
+  `suggestion` when the fix is a one-line defensive coercion and
+  the existing spec has parallel structure; `blocker` when the fix
+  introduces a new branch.
 
 Project config is authoritative — suppress any finding that contradicts
 an active linter config.
