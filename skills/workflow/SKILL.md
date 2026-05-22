@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.22-223856'
+  version: '2026.05.22-225329'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -444,6 +444,30 @@ Use Mermaid over ASCII art in all markdown files. Choose the right type:
 | `sequenceDiagram` | Request/response, API interactions |
 | `classDiagram` | Type hierarchies, trait relationships |
 | `stateDiagram-v2` | State machines, lifecycle diagrams |
+
+#### Layer responsibility — side effects live at the entrypoint
+
+Before adding I/O (`puts`, `print`, `console.log`, file writes, env
+reads, network calls) to a module, classify the module's
+responsibility:
+
+- **Decision / pure** — returns a value, no observable effect on the
+  outside world. Library, model, calculator, mapper, validator,
+  serializer, predicate.
+- **Side-effecting / entrypoint** — CLI script, HTTP handler, job
+  runner, controller, view. Owns rendering, logging, env access, and
+  external calls.
+
+Side effects belong only in entrypoint layers. When the data is
+needed elsewhere, return it; do not log it from a decision module
+and parse the log upstream. ENV reads in a decision module are the
+same anti-pattern — the entrypoint reads ENV and passes the value
+down.
+
+Symptoms that signal the wrong layer: duplicated ENV reads across
+sibling modules, `puts` in a function whose return value is what
+callers actually consume, tests that have to capture stdout to
+assert behaviour.
 
 #### Architecture Decision Records
 
