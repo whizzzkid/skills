@@ -21,7 +21,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.20-191230'
+  version: '2026.05.22-065957'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -67,6 +67,22 @@ with the `event` field omitted (pending state).
 A request phrased as "make a note in self-review" or "leave a quick
 comment on the PR" is still a self-review and still goes through this
 flow.
+
+## Step 0: Route GitHub I/O through `wk-gh` (MANDATORY)
+
+Invoke `wk-gh` before any `gh` command or GitHub API call issued
+by this skill. Do not proceed to Step 1 until `wk-gh` confirms org
+scoping and the canonical outbound footer is staged for the
+payload-render step.
+
+```
+Skill(wk-gh)
+```
+
+- Skipping this step violates the GitHub-routing HARD RULE above —
+  posts ship without org scoping and without the canonical footer.
+- The prose HARD RULE alone does not gate execution; this numbered
+  step does. Treat Step 0 as a precondition for Step 1, not advice.
 
 ## Step 1: Gather Context
 
