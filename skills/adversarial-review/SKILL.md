@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.21-044518'
+  version: '2026.05.22-065957'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -253,6 +253,21 @@ producer for the filter it applies. Flag any divergence between the
 metric's filter and the producer's filter as a data-model mismatch —
 "what counts as an X" must be defined in one place, not implicitly
 split across modules.
+
+Unverified test-claim audit: spec prose stating "tests verify X",
+"a test confirms X", "unit tests assert X", "spec asserts X" must
+map to an actual test function exercising X. Grep spec docs for
+these phrases and cross-check against the relevant test files. Flag
+any unverified claim as a blocker (spec was written ahead of the
+test — or the test was never added):
+
+```bash
+grep -rnE "tests? (verify|confirm|assert|ensure)|spec (asserts|verifies|confirms)" \
+  docs/ README* 2>/dev/null
+```
+
+For each hit, locate the named test file and grep for a function
+name or `it`/`test` description that matches the claimed behavior.
 
 Universality-claim verification: spec prose stating that a value is
 "common to every / tagged on all / present in every / applies to
