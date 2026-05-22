@@ -32,7 +32,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.20-215945'
+  version: '2026.05.22-180105'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -749,18 +749,25 @@ validation outcome decides the reply, not the fact of duplication:
 
 | Phase 4 outcome | Phase 5 action |
 |-----------------|----------------|
-| **Confirmed** | **Skip silently.** No inline reply and no body anchor. The bot thread already stands; a "yes the bot was right" line is noise. Only reply if the playground surfaced new evidence the bot missed. |
+| **Confirmed** | **Skip silently per thread.** No inline reply and no per-thread body anchor. The bot thread already stands; a "yes the bot was right" line is noise. A single **collective acknowledgment line** in the review body (see "Compose the review body") is required when ≥ 1 bot finding was Confirmed — it tells the author the agent validated the bot rather than ignored it. Only reply per-thread if the playground surfaced new evidence the bot missed. |
 | **Refuted** | Reply with `**Could not reproduce** — <counter-evidence>` + brief description of what was tested. Always reply — silent skip leaves the author guessing. |
 | **Inconclusive** AND agent independently flagged the same issue | Reply with the agent's own evidence + suggestion fix (the agent's verdict carries the thread). |
 | **Inconclusive** AND agent did not flag it | Leave the thread alone. Note in the Phase 5 summary so the user can override. |
 | **Out of scope for code validation** (style/prose claim) | Use Phase 3 reading-based verdict; reply only on refute. |
 
-**HARD RULE:** A bot-thread reply — whether folded into the body or
-posted as a live reply — is only justified when the agent has new
-evidence beyond confirming the bot's exact claim. Pure Confirmed
-outcomes get silent skip: no inline reply, no body anchor, no
-"Re: {bot} thread on …" line. The bot thread already stands; a body
-anchor saying "yes the bot was right" is noise.
+**HARD RULE:** A **per-thread** bot reply — whether folded into the
+body as a `Re: {bot} thread on …` anchor or posted as a live reply —
+is only justified when the agent has new evidence beyond confirming
+the bot's exact claim. Pure Confirmed outcomes get silent skip at the
+thread level: no inline reply, no per-thread body anchor.
+
+**Collective acknowledgment is required, not optional.** When ≥ 1 bot
+finding was Confirmed in Phase 4, the review body must carry one short
+line naming the bots and the count (e.g., `Validated N findings from
+{bot-a}, {bot-b} — all reproduced.`). This is body-level, not
+per-thread, and does not anchor to any specific thread. Silence at the
+body level leaves the author guessing whether the agent ran the bots'
+checks; one line resolves it without re-litigating each thread.
 
 Reserve body anchors and live replies for:
 
@@ -930,8 +937,21 @@ canonical one verbatim as the last content in the body.
 
 Bot-thread counter-evidence notes (option (a) above) are folded in
 **before** the footer, anchored as `Re: {bot} thread on {file}:{line} — …`.
-Only refuted or new-evidence cases earn a body anchor — never pure
-Confirmed outcomes (see Phase 5 HARD RULE).
+Only refuted or new-evidence cases earn a per-thread body anchor —
+never pure Confirmed outcomes (see Phase 5 HARD RULE).
+
+**Collective bot acknowledgment line.** When ≥ 1 bot finding was
+Confirmed in Phase 4, emit exactly one body-level line above the
+per-thread anchors (if any) and above the footer, of the form:
+
+- `Validated N findings from {bot-a}, {bot-b} — all reproduced.` when
+  every queued bot finding was Confirmed.
+- `Validated N findings from {bot-a}: M confirmed, K refuted, L
+  inconclusive.` when the outcomes are mixed.
+
+Omit the line only when zero bot findings were queued in Phase 2.
+Never name individual file:line pairs in this line — that is the
+per-thread anchor's job.
 
 Every inline comment body also receives the canonical footer per
 `wk-gh` Step 4 — apply at payload-render time so no `comments[]`
