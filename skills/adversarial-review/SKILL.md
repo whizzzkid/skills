@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.22-071916'
+  version: '2026.05.22-215952'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -256,6 +256,30 @@ Grep `docs/`, `README*`, in-code help strings, PR body. Every surface
 that enumerates the set (counts, bullet lists, conflict matrices, format
 lists) must match the new state. A mismatch caught locally is one
 commit; deferred is a second cycle.
+
+**Synonym + casing sweep for removed terms.** When the diff removes a
+term (rule, flag, instruction name), an exact-string grep misses
+semantically-equivalent restatements elsewhere. Before declaring the
+sweep clear:
+
+- Generate a variant set for the removed term — at minimum: original,
+  Title Case, sentence case, lower case, `space-to-dash`, `dash-to-space`,
+  and any alternate phrasing visible in adjacent docs (skim one
+  neighbor doc for the concept's other names).
+- Run one grep per variant. A single hit in any variant is a stale-doc
+  blocker.
+- Treat **spec tables** as first-class sweep targets — terms often
+  appear as row labels (`| Clean-state output line | … |`) that prose
+  greps miss. Grep table-row syntax explicitly:
+
+  ```bash
+  grep -rnE "^\|[^|]*<variant>[^|]*\|" docs/ 2>/dev/null
+  ```
+
+- Named sweep targets for removed-rule audits: `docs/specs/`, validator
+  / linter skill files under `skills/*/`, plugin `README*` and
+  `SKILL.md` files — these are the most common homes for enumerated
+  rule lists.
 
 Test-count sync is mandatory: count test functions in changed
 `*_spec.*` / `*.bats` / `*_test.*` files, grep specs for matching
