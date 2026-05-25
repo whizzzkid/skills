@@ -2,12 +2,13 @@
 name: wk-pr-update
 description: >-
   Update a PR branch with the latest changes from its base branch. Picks
-  the right strategy automatically — rebase when the branch has <5 commits
-  ahead, patch-replay (diff against old base, apply onto new base) when it
-  has more. Resolves conflicts interactively, re-validates the work after
-  integration (tests + build), syncs the PR description via `wk-commit`'s
-  PR Sync rule, and force-with-lease pushes. Use when asked to "update
-  PR", "rebase on main", "sync with base", "pull in latest from main",
+  the right strategy automatically — merge by default (preserves SHAs,
+  no force-push), patch-replay (diff against old base, apply onto new
+  base) when the branch is ≥5 commits ahead, rebase only on explicit
+  user opt-in. Resolves conflicts interactively, re-validates the work
+  after integration (tests + build), syncs the PR description via
+  `wk-commit`'s PR Sync rule, and pushes. Use when asked to "update
+  PR", "merge in main", "sync with base", "pull in latest from main",
   or after CI surfaces a base-branch conflict.
 argument-hint: '[<base-branch>]'
 allowed-tools:
@@ -30,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.21-044518'
+  version: '2026.05.25-172304'
   internal: false
   model:
     openai: gpt-4.1
@@ -166,11 +167,18 @@ patch-replay would squash already-reviewed commits.
 
 ## Stage 2: Choose integration strategy
 
+**HARD RULE — merge is the default integration strategy.** Use
+`git merge "$BASE_REF"` unless the commit count makes per-commit
+conflict resolution painful or the user explicitly asks for clean
+linear history. Rebase rewrites SHAs, requires a force-push, and
+loses review-thread anchoring; merge preserves all three.
+
 | `$AHEAD` | Strategy | Why |
 |----------|----------|-----|
 | **HEAD already has a base-merge, recomputed `$AHEAD ≤ 5`** | `git merge "$BASE_REF"` | Merge-style branch — preserve the merge topology; do not squash already-reviewed commits. |
-| **< 5** (no prior base-merge) | Rebase | Small commit count → linear history is cheap to preserve; reviewers can read each commit independently. |
+| **< 5** (no prior base-merge) | `git merge "$BASE_REF"` | Default. Preserves commit SHAs, avoids force-push, keeps review threads anchored. |
 | **≥ 5** (no prior base-merge) | Patch-replay | Large commit count → rebasing N commits is N conflict-resolutions; one patch is one. Commit messages are reconstructed from the squashed subject + a body listing the original SHAs for traceability. |
+| **User asked for linear history** | Rebase | Explicit opt-in only — never the default. |
 
 The threshold is a heuristic, not a contract. The user can override
 once at run time:
