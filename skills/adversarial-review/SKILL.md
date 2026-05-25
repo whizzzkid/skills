@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.22-215952'
+  version: '2026.05.25-172304'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -501,6 +501,28 @@ the constant existed to prevent.
   non-comment sites. Recommend extracting a helper or restoring the
   named constant.
 
+### 2.19a Struct/Record field-extension contract test
+
+When the diff adds a field to a Struct/Record type — `Struct.new(...)`,
+`@dataclass`, `attr_reader :foo` / `attr_accessor`, `field :foo`,
+named tuple, TypeScript `interface` member, Go struct field, equivalent
+in any language — require a direct assertion test on the new field's
+concrete value. Transitive coverage through behavior tests passes today
+but silently allows a future refactor to drop or mis-populate the
+field.
+
+- Grep the diff for added field names inside Struct/Record-extension
+  patterns. Build the set of `(type, new-field)` pairs.
+- For each pair, grep test/spec files for
+  `expect(<instance>.<field>).to eq(...)` /
+  `assert <instance>.<field> ==` / `expect(x.<field>).toBe(...)` /
+  language-equivalent assertion.
+- Flag as `blocker` when no direct assertion exists on the new field
+  (a `respond_to?` / type check alone does not count — assert the
+  value, not the presence).
+- Pairs with sweep 2.7 (signature widening) — 2.7 covers function-
+  parameter additions, 2.19a covers data-shape additions.
+
 ### 2.19 Tautological test assertion scan
 
 Self-referential equality assertions pass regardless of behavior — both
@@ -552,7 +574,7 @@ The subagent must be:
 | Cross-system flow | Producer layout ≠ consumer scan, recursion depth mismatch, destructive cleanup before verify |
 | Runtime portability | bash 3.2 vs 4+, `mapfile`, `declare -A`; Python/Node/Ruby matrix from `.tool-versions` |
 | Refactor-removed behavior | Validation / recursion / error handling silently dropped during port |
-| Test quality | Tautological tests, missing assertions, no failure path, no test for new function |
+| Test quality | Tautological tests, missing assertions, no failure path, no test for new function, **asymmetric coverage** of fields populated on both pass and fail return paths (assert the field's value on at least one example of each path) |
 | Security | Injection, secret leakage in stderr/logs, redaction gaps, traversal |
 | Data loss | Unprotected writes, race-prone cleanups, missing rollback |
 | Error handling | Swallowed errors, generic catches, wrong error class |
