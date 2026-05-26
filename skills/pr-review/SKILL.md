@@ -32,7 +32,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.22-180105'
+  version: '2026.05.26-201558'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -618,9 +618,10 @@ Formulate inline review comments anchored to specific lines in the diff.
 
 ### Stay focused — no comment cap, but every comment must be actionable
 
-There is no hard cap on comment count. The user-approval gate (Phase 6)
-is the safety net against over-commenting; surface every actionable
-finding and let the user prune.
+There is no hard cap on comment count. The Phase 5 summary and the
+GitHub UI's edit-on-draft flow (Phase 6 auto-posts a pending review)
+are the safety nets against over-commenting; surface every actionable
+finding and let the user prune in the UI.
 
 What stays inline:
 - Bugs the author should fix
@@ -857,34 +858,31 @@ individual comments.
 
 ## Phase 6: Post Review
 
-**HARD RULE:** Never post the review on your own. The user must always either:
-1. Post the review themselves from GitHub, or
-2. Explicitly confirm in the conversation that they want you to post it.
+**HARD RULE:** Auto-create the **pending (draft) review** immediately
+after presenting the Phase 5 summary. The pending review is a draft
+on GitHub — the user still submits it themselves from the GitHub UI.
+Creating the draft is not the same as submitting it; the human-in-the-
+loop checkpoint is the GitHub Submit button, not a terminal prompt.
 
-Do not assume consent. Do not infer consent from earlier instructions. Every
-time you are about to post, ask first and wait for explicit confirmation.
+- Never call any endpoint that submits or approves the review (no
+  `event: COMMENT` / `event: APPROVE` / `event: REQUEST_CHANGES`).
+- Omit `event` entirely so GitHub creates a draft.
+- Print the review's `html_url` and the literal line `Submit on GitHub
+  when ready.` so the user knows the next action lives in the UI.
 
-### Present and wait
+### Pre-summary opt-out
 
-After presenting the comment summary, ask with literal A/B/C labels:
+The user can request edits or skips by saying so **before** the Phase 5
+summary is presented (e.g., "drop suggestions, only blockers" or
+"don't post anything"). Once the summary is shown, the agent proceeds
+to create the pending review without a separate A/B/C gate — edits and
+skips happen in the GitHub UI on the draft.
 
-> "Here are the proposed review comments. Choose:
->
-> **A)** Post the pending review now (I create it; you submit on GitHub).
-> **B)** Edit one or more comments — say which numbers and what to change.
-> **C)** Skip one or more comments — say which numbers to drop.
->
-> Reply `A` / `B` / `C` (or combine, e.g. `C: skip 2, then A`)."
+If the user explicitly says "don't post" / "wait" / "let me review
+first" at any point before posting, honor that — skip the create step
+and wait. Default is auto-post; explicit pause is opt-out.
 
-Use the labels verbatim. Do not improvise alternative phrasings,
-free-form bullets, or different orderings — labeled options keep
-the choice unambiguous and prevent the agent from drifting into
-prose alternatives. The HARD RULE above still applies: the user
-must explicitly pick `A` (or its equivalent) before posting.
-
-Wait for the user's explicit response before taking any action.
-
-### Creating the pending review (only after user confirms)
+### Creating the pending review
 
 Build the review payload and post via `gh api`:
 
@@ -905,12 +903,13 @@ review payload — choose one of:
   `Re: {bot} thread on {file}:{line} — Could not reproduce; <evidence>`.
   Zero extra API calls; stays inside the pending checkpoint.
 - **(b) Live reply via `/comments/{id}/replies`** — posts immediately
-  (not draft); requires explicit user authorization in Phase 6's prompt
-  because it's a live action outside the pending review. Format:
+  (not draft); requires explicit user authorization (e.g., "post the
+  bot-thread replies live") in the Phase 5 summary or earlier, because
+  it bypasses the pending-review draft entirely. Format:
   `gh api repos/{owner}/{repo}/pulls/{n}/comments/{parent_id}/replies --method POST -f body="..."`.
 
-Default to (a) unless the user opted into (b) when picking option
-A in the present-and-wait prompt.
+Default to (a). Use (b) only when the user has explicitly opted in
+before the summary is presented.
 
 ### Compose the review body
 
