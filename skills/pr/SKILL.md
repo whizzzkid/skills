@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.22-225329'
+  version: '2026.05.26-210720'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -315,24 +315,43 @@ After the draft PR is created (or after pushing new commits to an existing PR):
    (e.g., two equally-plausible rewrites of a bullet). Applies to PR
    description, self-review threads, Jira ticket body, and project
    docs touched by the change.
-2. **Poll CI** — Launch a background polling job (using the pass-the-build
+2. **Invoke `wk-self-review` immediately** — post the pending self-review
+   in parallel with launching the CI poll. CI takes minutes; the self-
+   review draft can be staged in that window so the PR is closer to
+   ready when CI finishes.
+
+   **HARD RULE — never compose inline comment payloads directly from
+   `wk-pr`.** Always delegate to `wk-self-review` via the Skill tool.
+   The pending-review draft (`POST /pulls/{n}/reviews` with `event`
+   omitted) is enforced by `wk-self-review`; raw
+   `gh api repos/.../pulls/{n}/comments` posts inline comments
+   immediately and bypasses the GitHub-UI Submit checkpoint. Never
+   call that endpoint from this skill.
+
+3. **Poll CI** — Launch a background polling job (using the pass-the-build
    agent if available) to wait for all build steps to pass. Do not proceed
    while CI is failing.
 
 ## Step 4: Once CI is Green
 
-1. **Invoke `wk-self-review`** to post design-decision comments on the PR.
-   This documents non-obvious choices and critical context for human reviewers.
+1. **Run `wk-pr-resolve` drift check** — Description, self-review threads,
+   and reviewer comments may have changed during the CI wait window.
+   Invoke `wk-pr-resolve` to surface and resolve any drift before
+   proceeding. Sync per the no-ask drift rule in Step 3.
 
-   **HARD RULE — never compose inline comment payloads directly from
-   `wk-pr`.** Always delegate to `wk-self-review` via the Skill tool.
-   The pending-review checkpoint (`POST /pulls/{n}/reviews` with
-   `event: PENDING` then user approval before submit) is enforced by
-   `wk-self-review`; raw `gh api repos/.../pulls/{n}/comments` posts
-   inline comments immediately and bypasses the human-in-the-loop
-   gate. Never call that endpoint from this skill.
+2. **Sync PR description and check off CI items** — Re-read the description
+   against the current change; check off any test-plan items now satisfied
+   by green CI; sync any drifted content with `gh pr edit`. Description
+   sync is not a push-time-only action — re-run after every state change
+   (CI green, new commits, review verdict).
 
-2. **Address automated review feedback** — Fetch existing review comments from
+3. **HARD RULE — self-review is mandatory after CI green.** If Step 3's
+   parallel self-review was skipped for any reason (e.g., the agent
+   judged the diff "obvious"), invoke `wk-self-review` now. There is no
+   size, simplicity, or scope exemption. Skipping requires explicit
+   user instruction in the current session — never silent skip.
+
+4. **Address automated review feedback** — Fetch existing review comments from
    automated tools:
 
    ```bash
