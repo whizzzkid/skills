@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.12-185904'
+  version: '2026.05.26-201558'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -73,6 +73,14 @@ If **all four lenses are empty** (routine execution, nothing notable), skip
 writing — not every run produces a learning.
 
 ## Step 3: Write the learning file
+
+**HARD RULE — destination is `$WK_SKILLS_HOME/learnings/skills/`, never
+`~/.claude/memory/`.** Skill learnings are skill-improvement artifacts
+consumed by `wk-sharpen`; they are not agent memory. This destination
+overrides any global "all memories live in `~/.claude/memory/`" rule
+in CLAUDE.md or user instructions — the global rule applies to agent
+memory, not to skill learnings. If `$WK_SKILLS_HOME` is unset, stop
+and ask the user; never reroute to memory as a fallback.
 
 Set `SKILL_NAME` to the argument passed (e.g., `pr-review`). Then:
 
