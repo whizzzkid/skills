@@ -21,7 +21,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.22-065957'
+  version: '2026.05.26-210720'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -222,7 +222,7 @@ parallel-path looks for sibling instances of a fix; comment-accuracy
 looks for stale narration of a behavior. Both fire on the same
 trigger (the implementation changed) but cover different surfaces.
 
-## Step 3: Present Comments for Approval
+## Step 3: Present Comments
 
 Show a numbered summary of proposed comments:
 
@@ -232,7 +232,12 @@ Show a numbered summary of proposed comments:
 3. <module>/routes.ts:15 — Breaking change: removed deprecated v1 endpoint
 ```
 
-Wait for user approval. They may edit, skip, or approve individual comments.
+**HARD RULE — never ask "want me to post this?".** Posting the pending
+(draft) review is unconditional after the summary; GitHub's Submit
+button is the human checkpoint, not a terminal prompt. The user can
+opt out by saying "don't post" / "wait" / "let me edit first" before
+the summary is presented. After the summary, proceed directly to
+Step 4 — no confirmation round-trip.
 
 ## Step 3.5: Validate every comment line lies inside a diff hunk
 
@@ -259,7 +264,8 @@ git diff "origin/$BASE...HEAD" -- "$PATH_TO_FILE" \
 
 ## Step 4: Post Comments
 
-After user approves, create a PENDING review via GitHub API:
+Post the pending review immediately after Step 3's summary — no
+approval prompt. Create a PENDING review via GitHub API:
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \
