@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.15-220409'
+  version: '2026.05.26-205521'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -110,6 +110,40 @@ not in the diff will cause a 422 error from the GitHub API.
 The anti-pattern embeds the incident's specific files and line numbers. The
 correct pattern teaches the **mechanism** and **failure mode** without
 naming the specific occurrence.
+
+## IMPORTANT — high-severity learnings are not optional
+
+**You keep forgetting this.** A learning with `severity: high` (or higher)
+MUST land in the target skill before the source file is renamed to
+`.learned.md`. Renaming without folding the rule into `SKILL.md` orphans
+the lesson — the original incident recurs and the agent re-discovers the
+same fix from scratch.
+
+For every learning surfaced this run, before doing anything else:
+
+- Read the frontmatter and extract `severity`.
+- If `severity: high` (or higher), treat as a **MUST-FOLD** item:
+  - The lesson lands in SKILL.md as a new rule, HARD RULE, or new
+    sub-step. Reference-file-only routing is forbidden for high-
+    severity items (one-off classification does not apply at this
+    severity — if it is high enough to flag, it is high enough to
+    encode).
+  - The `.distilled-sources.log` entry must record `distilled` (never
+    `partial`, never `already-covered` without citing the existing
+    SKILL.md line numbers that prove full coverage).
+  - The rename to `.learned.md` happens only after the SKILL.md edit is
+    written and the version bumped.
+- If a high-severity learning is classified `already-covered`, the
+  classification must cite specific existing SKILL.md line numbers
+  that prove every rule in the learning is encoded — per the
+  "full-read before `already-covered`" HARD RULE.
+- Treat unrecognized log actions (anything not in
+  `distilled | partial | already-covered | skipped`) as `unverified` and
+  re-audit.
+
+When in doubt on a high-severity item, escalate — ask the user before
+renaming. Silent rename without coverage is the failure mode this
+annotation exists to prevent.
 
 ## Step 1: Read the Incident Report
 
