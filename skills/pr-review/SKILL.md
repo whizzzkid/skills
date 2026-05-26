@@ -32,7 +32,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.26-201558'
+  version: '2026.05.26-203646'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -1006,6 +1006,18 @@ Always print the URL alongside the open call — terminal scrollback
 and remote sessions where the browser can't launch still need the
 text. Open failures are non-fatal; never block the workflow on a
 browser-launch hiccup.
+
+**Pending-review verification: trust `path` + `body`, not `line`.**
+GitHub's REST API returns `line: null` and `start_line: null` for
+inline comments on a PENDING (draft) review — line/position metadata
+only populates after the review is submitted. This is API behavior,
+not a payload error.
+
+- Verify pending-review comments via `path` and a `body` prefix match.
+- Do not treat `line: null` from `/pulls/{n}/reviews/{id}/comments` as
+  a failure signal for draft reviews.
+- After the user submits on GitHub, the same endpoint returns the
+  resolved `line` value.
 
 Confirm success:
 > "Pending review created with N comments — opened at {html_url}.
