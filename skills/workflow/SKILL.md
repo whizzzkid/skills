@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.22-225329'
+  version: '2026.05.27-225202'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -404,6 +404,24 @@ receive the same replacement.
 - The rule applies to any tooling equivalent (`sed -i`, IDE refactor
   across file, multi-cursor select-all) — verify the match set before
   letting the edit fire.
+
+### Same-semantic-class audit on coercions
+
+**HARD RULE:** When applying a coercion (`.to_s`, `.to_i`, `&.`, `String()`,
+`Number()`, optional-chaining, null-coalescing, etc.) to one argument or
+field, audit every argument of the same semantic class in the same pass.
+
+- Semantic class = role + nullability + type shape (e.g., "external ID,
+  nullable, string-or-int"; "count, non-nullable, int"; "timestamp,
+  optional, string-or-Time").
+- Grep the surrounding parameter list / constructor / call site for siblings
+  matching the same class; apply the same coercion to all in the same commit.
+- The recurring failure is fixing the immediately visible case while a
+  sibling of the same class one line over still carries the original bug —
+  adversarial review catches it pre-push, but only on the lucky pass.
+- This rule applies to any "fix one of N similar things" edit, not just
+  coercions: same-class guards, same-class redactions, same-class retry
+  wrappers, same-class logging.
 
 ### Code Standards
 
