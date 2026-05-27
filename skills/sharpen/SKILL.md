@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.26-205521'
+  version: '2026.05.27-214705'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -322,6 +322,7 @@ must either be replaced with a generic mechanism / placeholder
 |----------|--------------------|--------------|
 | Reviewer / bot logins | `[bot]`, `@[a-z0-9_-]+`, named automation, "bots like X" | `{reviewer}`, "review-automation bots that <mechanism>" |
 | Organization prefixes | known org tokens, `<org>-managed`, `<org>-*-default` runner names | "an organization-managed runner group", "an org allowlist" |
+| Employer / internal project names | `$EMPLOYER`, `$GITHUB_ORG`, or any literal employer name, internal repo name, or internal service name (e.g., the actual company name or monorepo name as a string) | `{owner}/{repo}`, `{service}`, "the repo", "the project" — use `$EMPLOYER`/`$GITHUB_ORG` only when referencing the env var itself, never the resolved value |
 | Specific ticket IDs | `[A-Z]+-\d+` outside placeholder examples | `[BOARD-NUM]` or remove |
 | Specific repo / file / package names | concrete project names that don't generalize | "the file", "the repo", "the package" |
 | Line numbers / SHAs / PR numbers | `:\d+`, short SHAs, `#\d+` outside template slots | "the target line", "the commit", "the PR" |
