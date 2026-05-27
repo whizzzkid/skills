@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.13-190000'
+  version: '2026.05.27-225202'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -61,13 +61,14 @@ to retro.
 
 ## Global Paths
 
-All retro artifacts are written to the **user-level** memory directory, never to
-a project-specific path. This ensures learnings travel across projects.
-
 ```
+RETRO_LOG_DIR="$WK_SKILLS_HOME/learnings/retrospect"
 GLOBAL_MEMORY="$HOME/.claude/memory"
 GLOBAL_CLAUDE="$HOME/.claude/CLAUDE.md"
 ```
+
+- Retro entries go to `$RETRO_LOG_DIR/<YYYY-MM-DD>.md` — never to `~/.claude/memory/`.
+- Memory writes in Step 4 still target `$GLOBAL_MEMORY` for cross-session agent context (rules, preferences). The retrospect log carries only distilled session principles.
 
 ## Step 1: Review Session Context
 
@@ -146,40 +147,69 @@ findings, skip it entirely.
 
 ## File Access Rules
 
-**HARD RULE:** Write and Edit tools may ONLY target files under `~/.claude/`
-(memory files, retro logs, MEMORY.md). Never write or edit files in the
-project working directory or anywhere else on the filesystem.
+**HARD RULE:** Write and Edit tools may ONLY target files under
+`$WK_SKILLS_HOME/learnings/retrospect/` or `~/.claude/` (memory files, MEMORY.md).
+Never write or edit files in the project working directory or anywhere else on
+the filesystem.
 
 Read, Glob, and Grep may access any path (read-only).
 
-## Step 3: Write Retro Notes
+## Step 3: Write Distilled Retro Entry
 
-Write a dated entry to the **global** retro log:
+**HARD RULE — destination is `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md`,
+never `~/.claude/memory/retro-log.md`.** The retrospect log is a skill-improvement
+artifact; the memory store is for cross-session agent context.
 
-```
-~/.claude/memory/retro-log.md
-```
+- Create the directory if missing: `mkdir -p "$WK_SKILLS_HOME/learnings/retrospect"`.
+- Append to today's file if it exists; otherwise create.
+- Each session adds one section: `## <HH:MM UTC> — <topic>`.
 
-Use this format — omit sections with no meaningful findings:
+**HARD RULE — distilled principles only, no narrative.** Each bullet is a one-
+sentence actionable rule, not a story. If a bullet describes *what happened* in
+a specific session, rewrite it as *what to do/avoid* in future sessions.
 
 ```markdown
-## Retro -- {YYYY-MM-DD} — {project name or topic}
+## <HH:MM UTC> — <topic>
 
-### Corrections (Claude <- User)
-- [specific thing Claude got wrong and how it was corrected]
+### Corrections
+- [Rule the agent now follows because of a correction this session]
 
-### Approach Redirects
-- [specific change in plan or design discovered during work]
+### Approach
+- [Standing approach change derived from a mid-session redirect]
 
-### Tool/Skill Gaps
-- [gap found, which file is affected, what's missing]
+### Skill gaps
+- [skill-name]: [one-sentence gap; will be folded by Step 4 wk-learn invocation]
 
 ### Decisions
-- [decision]: [rationale]
+- [Rule] — [one-clause rationale]
 
-### What Worked
-- [thing that worked well]
+### What worked
+- [Pattern worth reinforcing — phrased as a rule, not a story]
 ```
+
+**HARD RULE — no employer / internal-project tokens.** Before writing, strip:
+
+- The resolved value of `$EMPLOYER` and `$GITHUB_ORG` (env vars).
+- Any literal internal repo, service, or project name.
+- Reviewer logins, ticket IDs, commit SHAs, PR numbers, specific file paths.
+
+Replace with generic placeholders: `{owner}/{repo}`, `{service}`, "the file",
+"the reviewer", "the PR".
+
+### Validation gate (run after composing the draft, before Write)
+
+```bash
+DRAFT=/tmp/retro-draft.$$
+# write the proposed entry to $DRAFT first
+DENY="$(printenv EMPLOYER):$(printenv GITHUB_ORG)"
+echo "$DENY" | tr ':' '\n' | grep -v '^$' > /tmp/retro-deny.$$
+if grep -iF -f /tmp/retro-deny.$$ "$DRAFT" 2>/dev/null; then
+  echo "FAIL: forbidden token in draft"; exit 1
+fi
+```
+
+- Stop and rewrite the offending bullet if validation fails.
+- Append to the dated file only after validation passes.
 
 ## Step 4: Promote — Distill and Route Globally
 
@@ -217,17 +247,30 @@ learning file" section of the `wk-learn` skill — retro uses the same format.
 
 ### For each lesson
 
-1. **Distill** the finding into an actionable rule (see distillation rules above)
-2. **Check** if it's already captured in a global memory file or MEMORY.md
-3. **If not captured:** create a memory file and add to MEMORY.md index
-4. **If already captured:** verify accuracy; update if stale
+1. **Distill** the finding into an actionable rule (see distillation rules above).
+2. **Check** if it's already captured in a global memory file or MEMORY.md.
+3. **If not captured:** create a memory file and add to MEMORY.md index.
+4. **If already captured:** verify accuracy; update if stale.
 5. **For skill file edits:** propose the specific edit and ask the user to
-   approve before making changes (use AskUserQuestion)
+   approve before making changes (use AskUserQuestion).
 
-**Key rule:** The retro-log holds the story. Global memory files hold only the
-distilled, actionable rule. Never write narrative to memory files.
+### HARD RULE — invoke `wk-learn` per skill gap (do not stop at the log entry)
 
-After promoting, note in the retro entry which lessons were promoted and where.
+For every bullet under **Skill gaps** or **Corrections** that names a skill,
+invoke `wk-learn` in this same retro response — do not defer:
+
+```
+Skill(wk-learn, args="<skill-name>")
+```
+
+- Writing the distilled bullet to the retrospect log is the narrative record.
+- Invoking `wk-learn` is the actionable record routed to the per-skill learning
+  queue for `wk-sharpen` to fold into the target SKILL.md.
+- Both are required. Skipping the `wk-learn` call orphans the lesson — the
+  retrospect log is read by humans, not by the sharpen pipeline.
+- One `wk-learn` call per affected skill, not one per session.
+
+After invoking, note in the retro entry which skills were routed to `wk-learn`.
 
 ## Optional: Stop Hook
 
