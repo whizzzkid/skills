@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.27-232043'
+  version: '2026.05.27-233512'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -287,7 +287,13 @@ Execute the plan step by step. After completing each step:
    before every commit; project settings are authoritative.
 3. **Invoke `wk-docs`** — check for and update affected documentation (README,
    specs, ADRs, tutorials, reference docs). A feature commit without its
-   documentation update is incomplete
+   documentation update is incomplete.
+   - **Config-schema additions** (new YAML field, new env var, new JSON
+     output field, new CLI flag) MUST land with a `docs/specs/` entry
+     in the same or immediately following commit — never deferred.
+     The entry covers context, decision, data flow, and a config
+     reference. Reference docs that enumerate the schema get the new
+     field in the same commit.
 4. **Invoke `wk-commit`** — create a signed, conventional commit with emoji
 
 Never batch multiple steps into one commit. Never defer documentation to the
