@@ -4,7 +4,9 @@ description: >-
   Post-completion learning capture for any wk-* skill. Call at the end of a
   skill run to reflect on what happened and write a structured learning file
   for later distillation via wk-sharpen. Pass the calling skill's short name
-  as the argument (e.g., `wk-learn pr-review`).
+  as the argument (e.g., `wk-learn pr-review`). Also invoke immediately when
+  the user says "make a learning", "capture a learning", "add a learning", or
+  "learn X for Y" — never route these phrases to the memory system.
 argument-hint: '<skill-name> | scan  (e.g., pr-review, commit, workflow, scan)'
 allowed-tools:
   - Bash
@@ -25,7 +27,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.26-201558'
+  version: '2026.05.27-210401'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -42,6 +44,18 @@ for later distillation. Called at the end of any `wk-*` skill run.
 
 The argument is the **calling skill's short name** (e.g., `pr-review`,
 `commit`, `workflow`). If omitted, use `unknown`.
+
+## User-triggered invocation
+
+Invoke immediately (before writing any file) when the user says:
+
+- "make a learning"
+- "capture a learning"
+- "add a learning"
+- "learn X for skill Y"
+
+Route these phrases to this skill, not to `~/.claude/memory/`.
+Output goes to `$WK_SKILLS_HOME/learnings/skills/`, per Step 3's HARD RULE.
 
 ## Step 1: Check environment
 
