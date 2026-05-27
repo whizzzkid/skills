@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.26-210720'
+  version: '2026.05.27-210401'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -270,6 +270,25 @@ EOF
 When a repo template is used for a stacked PR, use the template as the body
 structure and inject the `## Stack` section listing all parts with PR numbers
 and status, following the same format shown above.
+
+### Markdown preview links
+
+After composing the PR body, detect changed markdown files and append
+preview links so reviewers can open the formatted view alongside the diff:
+
+```bash
+git diff "$BEST_BASE...HEAD" --name-only | grep '\.md$'
+```
+
+For each match, append to the PR body before posting:
+
+```markdown
+## Previews
+- [Rendered preview: {filename}](https://github.com/{owner}/{repo}/blob/{branch}/{path})
+```
+
+Resolve `{branch}` from the current head ref name. Skip the section
+entirely when no `.md` files are in the diff.
 
 ## Step 3: Post-Creation Workflow
 
