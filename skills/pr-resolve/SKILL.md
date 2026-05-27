@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.27-003000'
+  version: '2026.05.27-225202'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -448,6 +448,33 @@ Separate bot comments from human reviewer comments in the summary:
 > **src/utils.ts** (2 comments from @{reviewer-a})
 
 ## Step 4: Generate Suggestions
+
+### HARD RULE — detect bot re-review thrash before another fix cycle
+
+Track `(path_prefix, concern_class)` pairs across successive bot review rounds
+on this PR. After **3 re-fires** of the same pair within this session, stop and
+ask the user before generating another fix:
+
+```bash
+# concern_class derives from the comment body's top-level tag —
+# e.g., "missing nil check", "unused variable", "potential XSS",
+# "style: trailing whitespace". Path prefix is the file's directory.
+```
+
+- The counter resets when the pair is acknowledged-dismissed-with-rationale
+  or when the user picks a follow-up ticket.
+- Three re-fires signals one of: the fix is wrong, the bot has a stale snapshot,
+  or the concern is structural and not fixable in this PR.
+- On the 3rd re-fire, present:
+
+  > "Bot has re-raised `<concern_class>` under `<path_prefix>` 3 times. Pick:
+  > (a) investigate root cause now, (b) defer to follow-up ticket, (c) dismiss
+  > with rationale on the thread."
+
+- Do not auto-pick. The thrash gate is user-driven; silent loop continuation
+  is the failure mode this rule exists to prevent.
+
+### Order of processing
 
 Process bot reviews first (they often flag actionable issues like style
 violations, security concerns, or code suggestions), then human reviewer
