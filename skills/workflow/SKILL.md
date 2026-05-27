@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.27-225202'
+  version: '2026.05.27-232043'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -801,6 +801,13 @@ The runtime sends a completion notification when the watch exits. Only
 foreground a status check when the next step genuinely depends on the
 result (e.g., immediately before `gh pr ready`). Do not stall the rest
 of the workflow on a foregrounded watch.
+
+**Never end a turn announcing a holding pattern.** After issuing a
+backgrounded watch, return control immediately with the next concrete
+step or a question — never close out with "CI watch running, will
+continue when green." The runtime fires a completion notification
+when the watch exits; a holding-pattern sign-off forces the user to
+re-prompt and defeats the purpose of running in the background.
 
 ### Step 2: Diagnose Failures
 
