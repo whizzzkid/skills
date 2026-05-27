@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.13-185500'
+  version: '2026.05.27-225202'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -129,8 +129,27 @@ the normal retro check.
 
 For each branch classified as `merged`:
 
+- **Pre-delete content scan.** Surface uncommitted or stashed content before any retro/delete decision — merged status only proves committed work landed; staged, untracked-non-disposable, or stashed content can still be unique to this worktree:
+
+  ```bash
+  git -C worktrees/{branch} status --short
+  git -C worktrees/{branch} stash list
+  ```
+
+  If either reports non-empty content (beyond the disposable-paths classifier set), surface to the user before proceeding.
+
+- **Author check — skip retro when branch is owned by another user.** `wk-retro` reflects the current session; running it against another contributor's branch yields empty lenses:
+
+  ```bash
+  AUTHOR=$(git -C worktrees/{branch} log -1 --format='%ae')
+  ME=$(git config user.email)
+  [ "$AUTHOR" = "$ME" ] || SKIP_RETRO=1
+  ```
+
+  If `SKIP_RETRO=1`, jump to Step 5 directly; record the skip reason in the cleanup report.
+
 - **Retro already run?** (learning file mtime within this worktree's active window, entry in `~/.claude/memory/retro-log.md` for this branch/PR, or explicit user skip recorded this run) → skip retro, proceed to Step 5.
-- **No signal found** → invoke `wk-retro` before deletion: `Skill(wk-retro, args="--worktree worktrees/{branch}")`. If `wk-retro` is unavailable or fails, stop and ask the user before proceeding.
+- **No signal found and author matches** → invoke `wk-retro` before deletion: `Skill(wk-retro, args="--worktree worktrees/{branch}")`. If `wk-retro` is unavailable or fails, stop and ask the user before proceeding.
 - **After retro returns** → confirm the worktree is clean, then proceed to Step 5.
 
 ## Step 5: Clean Up Merged Worktrees
