@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.25-172304'
+  version: '2026.05.27-005500'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -522,6 +522,66 @@ field.
   value, not the presence).
 - Pairs with sweep 2.7 (signature widening) — 2.7 covers function-
   parameter additions, 2.19a covers data-shape additions.
+
+### 2.20 Env-var pipeline forwarding sweep
+
+New env reads in application code that the CI pipeline never forwards
+into the container produce **silent runtime null-reads** — build green,
+feature never fires. Sibling to 2.7 (signature widening) but the caller
+lives in YAML/DSL, not source. Code-to-pipeline interface drift is
+invisible at every individual layer (secret set, agent dump shows it,
+code reads with default) and breaks only at the agent→container
+boundary.
+
+Run unconditionally on every diff that touches application code in a
+project with a CI pipeline.
+
+1. Extract net-new env reads from the diff. Multi-language coverage:
+
+   ```bash
+   git diff "$BASE...HEAD" \
+     | grep -nE '^\+.*(ENV\.fetch\(|ENV\[|os\.environ|os\.getenv|process\.env\.|os\.Getenv\()[ "'\''[\.]([A-Z][A-Z0-9_]+)' \
+     | grep -oE '[A-Z][A-Z0-9_]{3,}' | sort -u
+   ```
+
+   Covers Ruby (`ENV.fetch`, `ENV[...]`), Python (`os.environ`,
+   `os.getenv`), JS/TS (`process.env.X`), Go (`os.Getenv`), shell
+   (`${X}` paired with a new export or `[ -z "${X:-}" ]` guard).
+
+2. For each var, locate the entry-point script that reads it — grep
+   `bin/`, `cmd/`, `scripts/`, `lib/`, `src/`.
+3. For each entry-point script, locate the pipeline template / CI step
+   that invokes it — grep `.buildkite/`, `.github/workflows/`,
+   `.circleci/`, `azure-pipelines*`, `gitlab-ci*` for the script name.
+4. For each invoking step, verify the var name appears in the step's
+   env allowlist. Allowlist location varies:
+
+   | Platform | Allowlist location |
+   |---|---|
+   | Buildkite + docker_compose plugin | plugin step's `env: [...]` array |
+   | Buildkite native step | step `env:` block |
+   | GitHub Actions | step or workflow `env:`; `secrets:` for reusable workflows |
+   | docker-compose direct | `services.<svc>.environment:` |
+   | Dockerfile runtime default | `ENV` |
+
+5. Missing forwarding is a **blocker** — the symptom only surfaces when
+   the feature is expected to fire (runtime null-read + default
+   fallback). Build stays green.
+6. Exempt env names matching the platform's auto-injection prefix
+   (e.g., `BUILDKITE_*`, `GITHUB_*`, `CI_*`) — no explicit forwarding
+   required.
+
+One-liner detection sketch:
+
+```bash
+for V in $(git diff "$BASE...HEAD" | grep -nE '^\+.*(ENV\.fetch|ENV\[|os\.environ|os\.getenv|process\.env\.)[ "'\''[\.]([A-Z][A-Z0-9_]+)' | grep -oE '[A-Z][A-Z0-9_]{3,}' | sort -u); do
+  for SCRIPT in $(grep -rl "$V" bin/ scripts/ src/ lib/ 2>/dev/null); do
+    grep -rl "$(basename "$SCRIPT")" .buildkite/ .github/workflows/ 2>/dev/null | while read TEMPLATE; do
+      grep -q "\"$V\"\|'$V'" "$TEMPLATE" || echo "BLOCKER: $V read by $SCRIPT but not forwarded in $TEMPLATE"
+    done
+  done
+done
+```
 
 ### 2.19 Tautological test assertion scan
 
