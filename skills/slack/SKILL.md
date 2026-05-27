@@ -8,15 +8,15 @@ description: >-
   a status update to a public or private channel.
 argument-hint: '[channel] [message-intent]'
 allowed-tools:
-  - mcp__claude_ai_Slack_Org_Offical__slack_send_message
-  - mcp__claude_ai_Slack_Org_Offical__slack_send_message_draft
-  - mcp__claude_ai_Slack_Org_Offical__slack_search_public_and_private
-  - mcp__claude_ai_Slack_Org_Offical__slack_search_channels
-  - mcp__claude_ai_Slack_Org_Offical__slack_read_channel
-  - mcp__claude_ai_Slack_Org_Offical__slack_read_thread
-  - mcp__claude_ai_Slack_Org_Offical__slack_read_user_profile
-  - mcp__claude_ai_Slack_Org_Offical__slack_add_reaction
-  - mcp__claude_ai_Slack_Org_Offical__slack_search_users
+  - "mcp__claude_ai_Slack_*__slack_send_message"
+  - "mcp__claude_ai_Slack_*__slack_send_message_draft"
+  - "mcp__claude_ai_Slack_*__slack_search_public_and_private"
+  - "mcp__claude_ai_Slack_*__slack_search_channels"
+  - "mcp__claude_ai_Slack_*__slack_read_channel"
+  - "mcp__claude_ai_Slack_*__slack_read_thread"
+  - "mcp__claude_ai_Slack_*__slack_read_user_profile"
+  - "mcp__claude_ai_Slack_*__slack_add_reaction"
+  - "mcp__claude_ai_Slack_*__slack_search_users"
 model: sonnet
 effort: low
 model-invocable: true
@@ -25,7 +25,7 @@ license: MIT
 group: communication
 metadata:
   author: whizzzkid
-  version: '2026.05.25-212935'
+  version: '2026.05.27-215205'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -219,7 +219,7 @@ After sending, confirm:
 
 ## Requirements
 
-- Slack MCP connector (`mcp__claude_ai_Slack_Org_Offical__*`)
+- Slack MCP connector (`mcp__claude_ai_Slack_*`)
 - Channel ID or channel name to resolve to ID via `slack_search_channels`
 - User handle (from `slack_read_user_profile` if only a name is given)
 
