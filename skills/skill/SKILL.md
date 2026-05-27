@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.12-220153'
+  version: '2026.05.27-215726'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -141,6 +141,23 @@ Write `$WK_SKILLS_HOME/skills/<name>/SKILL.md` with:
   ```
 - If Step 3 surfaced learnings, add a pre-filled `## Common Mistakes` section
   with those insights
+
+**HARD RULE — MCP tools use wildcards, never employer-specific IDs.** When
+populating `allowed-tools` with MCP connector entries, replace the org/tenant
+segment with `*`:
+
+```yaml
+# Wrong — embeds an employer-specific identifier
+allowed-tools:
+  - mcp__claude_ai_Slack_AcmeCorp__slack_send_message
+
+# Correct — wildcards the org segment
+allowed-tools:
+  - "mcp__claude_ai_Slack_*__slack_send_message"
+```
+
+This applies to all MCP tool patterns: `mcp__claude_ai_<Service>_*__<operation>`.
+Quote wildcard entries so YAML parsers don't interpret `*` as a glob anchor.
 
 **HARD RULE:** Write only the skeleton — no behavior instructions yet.
 Writing the body before running the RED phase (testing baseline agent behavior
