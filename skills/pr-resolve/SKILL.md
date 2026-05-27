@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.27-001500'
+  version: '2026.05.27-003000'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1076,6 +1076,9 @@ one comment at a time.
 - When the gate fires, emit the prompt below; otherwise announce
   "All decisions explicit — proceeding to adversarial-review gate
   and push" and continue.
+- When the gate is skipped, Step 8.5 (Sync PR description) is the
+  only remaining drift-catch — emit the `gh pr edit --body` call
+  there unconditionally, even if the body looks current.
 
 After ALL comments are processed, present a full summary:
 
@@ -1174,22 +1177,34 @@ then `git rebase origin/{head_branch}`) and push again. Never
 force-push. If the rejection is for any other reason, tell the user
 and ask how to proceed.
 
-### Update PR description
+## Step 8.5: Sync PR description (mandatory, immediately after push)
 
-**HARD RULE:** After every push in this skill, sync the PR description.
-Fixes applied and changes pushed during a resolve session invalidate
-prior claims in the body (commit counts, file lists, "remaining work"
-sections, linked commits). An out-of-date description misleads
-reviewers and future readers. This step is non-optional even when the
-body looks "roughly correct."
+**HARD RULE:** Emit `gh pr edit {number} --body ...` after **every**
+`git push` in this skill, **before** posting any reply comments or
+resolving threads. The body-sync is non-negotiable even when the body
+looks "roughly correct." When the Step 7 confirmation gate is skipped
+(per "Skip the confirmation gate when Step 5 decisions are explicit"),
+this step is the **only** drift-catch checkpoint — emit the edit even
+if you believe the body is current.
 
-Sync the body to reflect all commits pushed in this session — correct
-any stale counts, mention fixes applied, link the new commits as
-markdown URLs (not bare SHAs), and ensure the body matches the current
-branch state.
+Resolve sessions invalidate prior claims in the body: commit counts,
+file lists, "remaining work" sections, linked commits, and **the CI
+status section** (a now-green branch needs the section updated
+explicitly; a re-running branch needs the status reflected). Skipping
+the sync misleads reviewers and future readers.
 
-**HARD RULE:** Before overwriting the PR description, preserve metadata lines —
-see `skills/pr/references/pr-description-metadata.md`.
+The agent must explicitly satisfy this step with one of:
+
+- A `gh pr edit {number} --body "..."` call that overwrites the body
+  with the synced content.
+- An explicit "no drift detected" log line: a one-line statement that
+  the agent compared the current body against {commit list,
+  test-plan items, CI section, linked SHAs} and confirmed each is
+  current. The log is required — silently skipping is the failure
+  mode.
+
+**HARD RULE:** Before overwriting the PR description, preserve metadata
+lines — see `skills/pr/references/pr-description-metadata.md`.
 
 ```bash
 gh pr edit {number} --body "$(cat <<'EOF'
@@ -1198,8 +1213,26 @@ EOF
 )"
 ```
 
-This mirrors the `wk-pr` rule: after every push to a branch with an existing
-PR, the description must be updated.
+Items to verify in the body before deciding "no drift":
+
+- Commit list / commit count — each new SHA from this session linked
+  as `[`abc1234`](https://github.com/{owner}/{repo}/commit/{full_sha})`.
+- Test-plan checkboxes — check off items now satisfied by green CI or
+  this session's fixes.
+- CI status section — reflect the current run's terminal state when
+  one exists; remove stale "pending" claims.
+- "Remaining work" / "Known limitations" — drop items addressed in
+  this session's commits.
+- File lists — add any files touched in this session's fixes.
+
+This mirrors the `wk-pr` rule: after every push to a branch with an
+existing PR, the description must be updated.
+
+## Step 8.6: Post replies, reactions, and resolve threads
+
+Once Step 8.5's body-sync is satisfied, proceed with reply posting,
+emoji reactions, and thread resolution. Each subsection below is part
+of the reply-posting workflow.
 
 ### Causes of 404 on reply posting
 
