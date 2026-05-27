@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.22-071640'
+  version: '2026.05.27-001500'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1052,6 +1052,31 @@ Step 8 as a single `git push`, so only one CI build is triggered.
 
 ## Step 7: Confirm Everything
 
+### HARD RULE: Skip the confirmation gate when Step 5 decisions are explicit
+
+Step 5's per-comment decisions (`a` / `e` / `d` / `t` / `s`) **are**
+the explicit user confirmation required by Hard Rule 1. Re-asking
+"proceed? (yes / edit / abort)" after a fully-decided Step 5 is
+redundant ceremony — the user already authorized every action,
+one comment at a time.
+
+- **Default behavior:** print the resolution summary below, then
+  proceed directly to Step 8 (adversarial-review gate → push →
+  replies). Do **not** emit a "Proceed?" prompt.
+- **Gate fires only when** one of these applies:
+  - Any `(e)` edit in Step 5 where the user described an adjustment
+    the agent did not echo back verbatim for confirmation (the
+    adjusted approach was not reviewed by the user).
+  - Co-author session where the PR author's name / email for the
+    `Co-authored-by:` trailer was **inferred** rather than read
+    directly from git log / PR metadata.
+  - Step 5 contained any ambiguous batch where the agent collapsed
+    multiple comments into one decision (should not happen given
+    the one-per-message HARD RULE, but guard anyway).
+- When the gate fires, emit the prompt below; otherwise announce
+  "All decisions explicit — proceeding to adversarial-review gate
+  and push" and continue.
+
 After ALL comments are processed, present a full summary:
 
 ```
@@ -1095,7 +1120,7 @@ a tracked ticket (`t`). Threads with follow-up questions (non-reserved
 letters), skipped threads (`s`), rethink-pending items (`r`), and
 self-review threads are **never** resolved.
 
-Ask:
+Ask **only when the gate above fires**:
 > "Does this look correct? I will push {N} commits, post {M} **threaded
 > replies to individual review comments** (not a formal PR Review),
 > resolve {R} threads, and leave {L} threads open for follow-up.
@@ -1120,8 +1145,9 @@ question first:
 Default interpretation when ambiguous: the user means (a). Proceed with
 threaded replies unless they explicitly confirm (b).
 
-Wait for explicit confirmation. If "edit," ask what to change. If "abort,"
-stop without pushing or posting anything.
+When the gate fires, wait for explicit confirmation. If "edit," ask
+what to change. If "abort," stop without pushing or posting anything.
+When the gate does not fire, proceed straight to Step 8.
 
 ## Step 8: Push and Respond
 
