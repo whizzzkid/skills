@@ -21,7 +21,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.26-210720'
+  version: '2026.05.27-210401'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -116,6 +116,17 @@ changed, why it changed, and what alternatives existed.
 
 The goal is signal, not noise. Fewer high-quality comments beat many trivial
 ones.
+
+### Markdown preview link for large diffs
+
+When a changed file has a `.md` extension and the diff adds >50 lines,
+stage an inline comment on the first in-hunk line of that file:
+
+> Rendered preview — easier to read than the diff for large markdown changes:
+> `https://github.com/{owner}/{repo}/blob/{branch}/{path}`
+
+- Resolve `{branch}` from `gh pr view --json headRefName --jq .headRefName`.
+- Snap `line` to a hunk-valid position per Step 3.5 before POSTing.
 
 ## Step 2.5: Reconcile against existing self-review
 
