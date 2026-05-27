@@ -17,7 +17,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.22-065957'
+  version: '2026.05.26-225200'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -176,6 +176,29 @@ curl -s -X DELETE "${DD_API}/v1/dashboard/{dashboard_id}" "${DD_HEADERS[@]}"
 
 Get the existing dashboard, strip the `id` field, modify the title, and POST
 as a new dashboard.
+
+### Widget custom links — log-attribute template expansion
+
+**HARD RULE — use `{{@attr.value}}` for external URLs, `{{@attr}}` for
+Datadog search URLs.** Datadog log-attribute template expansion has two
+modes; mixing them produces broken links.
+
+- `{{@attribute}}` expands to the full Datadog facet filter string
+  `@attribute:value` (e.g., `@repo:{owner}/{repo}`). Use this only
+  when the link target is a Datadog search/log query URL that expects
+  the full filter.
+- `{{@attribute.value}}` expands to the raw value alone (e.g.,
+  `{owner}/{repo}`). Use this for every external URL — GitHub,
+  Jira, PagerDuty, Buildkite, internal tools.
+- `{{$template_var}}` returns empty when the dashboard template
+  variable is `*`. Do not depend on template variables to populate
+  external-URL parameters; key off log attributes instead.
+
+When authoring a custom link, classify the link target first:
+
+- External (anything off `*.datadoghq.com`) → `{{@attr.value}}`.
+- Datadog search/log URL → `{{@attr}}` is correct because the filter
+  prefix is what the URL needs.
 
 ---
 
