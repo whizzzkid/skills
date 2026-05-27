@@ -32,7 +32,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.26-203646'
+  version: '2026.05.27-232043'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -404,6 +404,21 @@ Take notes as you go. For each finding, annotate whether it overlaps an entry
 in the exclusion list from Phase 2. Mark overlapping findings as `[COVERED]`
 immediately — do not wait until Phase 5 to discover duplicates.
 
+### Verify PR description and commit-message claims
+
+Treat description accuracy as a separate review surface from code
+accuracy. A clean diff with a misleading description still ships
+misinformation that future readers act on.
+
+- For every specific claim in the PR description / commit message
+  (line ranges, file paths, attribute lists, "added X to each Y"
+  framing, before/after counts), verify against the actual diff.
+- Flag mismatches as `suggestion`-severity body notes even when the
+  code itself is correct.
+- Common failure modes: cited line range diverges from real range;
+  blanket framing ("each", "all") ignores intentional exceptions;
+  rationale references behavior the diff does not implement.
+
 ## File Access Rules
 
 **HARD RULE:** Write and Edit tools may ONLY target files under
@@ -416,6 +431,23 @@ Read, Glob, and Grep may access any path (read-only) for code investigation.
 
 Create a `.review-playground/` directory at the repository root. This is your
 workspace for experiments — **never commit these files**.
+
+### Documentation-only diff — substitute read-based analysis
+
+When every changed file is documentation, prompt/rule text, or
+non-executable fixture data (e.g., `.md`, prompt corpora, eval JSON,
+fixture-only `.tsx`/`.json`), skip the scratch-script and mutation-
+test experiments below and substitute a read-based adversarial
+analysis document written to `.review-playground/`.
+
+- Confirm there is no runnable code path the diff exercises before
+  invoking this escape hatch — a mixed diff still runs the full
+  playground for the executable portion.
+- The read-based analysis must still surface the adversarial
+  questions Phase 4 normally answers: ambiguity, contradictions,
+  missing-coverage cases, edge-case prompts.
+- Eval fixtures can be validated by reading the matcher logic and
+  tracing match behavior manually rather than executing it.
 
 Ensure `.review-playground/` is in `.gitignore`:
 
