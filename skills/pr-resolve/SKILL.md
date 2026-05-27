@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.27-225202'
+  version: '2026.05.27-232043'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -726,6 +726,22 @@ all source threads. Merge logic only fires when the *concern* is
 identical — two reviewers flagging the same line with different
 asks (one wants a rename, one wants extraction) stay separate
 suggestions.
+
+### Split multi-issue comments into per-item suggestions
+
+When a single reviewer comment contains multiple distinct sub-items
+(numbered list, separate paragraphs) and each sub-item has a
+different tradeoff (apply / skip / defer), split it into one
+suggestion block per sub-item — not a single bundled prompt.
+
+- Emit one `Comment {n}/{total}` consultation per sub-item in Step 5.
+- Renumber `{total}` to reflect the post-split count.
+- Merge sub-items only when the concern is identical and the
+  decision applies uniformly. Shared parent comment is not a merge
+  criterion.
+- Failure mode: bundling forces a single `(a)/(e)/(d)/(s)` answer
+  across items with different correct decisions, removing the
+  user's ability to differentiate.
 
 ### Treat multi-reviewer convergence as an incomplete-fix signal
 
