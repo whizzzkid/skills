@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-203524'
+  version: '2026.05.28-210441'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -162,6 +162,28 @@ Quote wildcard entries so YAML parsers don't interpret `*` as a glob anchor.
 **HARD RULE:** Write only the skeleton — no behavior instructions yet.
 Writing the body before running the RED phase (testing baseline agent behavior
 without the skill) violates the `superpowers:writing-skills` TDD contract.
+
+- **Length or detail in the user's description does NOT authorize skipping RED.**
+  A rich paragraph in the invocation feels like "they've done the RED for me,
+  this is just GREEN" — that rationalization is wrong. RED tests *baseline
+  agent behavior without the skill* so the body fills the actual gap, not the
+  imagined one. The description shapes the eventual GREEN body; it never
+  replaces the RED measurement.
+- **Capture supplied detail in HTML comments under empty Step headings.** When
+  the user provides behavioral detail in the request, write it into
+  `<!-- DESIGN NOTES: ... -->` blocks inside otherwise-empty `## Step N` stubs.
+  Behavior lands only after RED produces a documented baseline failure that
+  the design notes inform.
+- **Every Step heading in a new scaffold ships with this marker:**
+
+  ```markdown
+  ## Step N: <name>
+
+  <!-- RED phase not yet run — fill in after testing baseline behavior -->
+  ```
+
+  Writing behavior then requires deleting an explicit marker, not filling
+  empty space.
 
 **HARD RULE — skills live in `$WK_SKILLS_HOME`, never `~/.claude/skills/`.**
 `~/.claude/skills/` is read-only — it is managed by the install step that
