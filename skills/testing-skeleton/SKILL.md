@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-191933'
+  version: '2026.05.28-201600'
   internal: false
   model:
     openai: gpt-4.1
@@ -226,6 +226,14 @@ Avoid:
 Match the project's existing test framework, file layout, and
 naming convention. `wk-format` runs alongside; defer to its rules
 for style.
+
+### Nil-out consumed env vars in stubbed-ENV tests
+
+When a test replaces the process environment (e.g., `stub_const("ENV", ENV.to_h.merge(...).compact)` in RSpec, `monkeypatch.setenv` / `delenv` in pytest, equivalent harness patterns elsewhere), explicitly set every env var the code under test reads — including the ones the test does NOT want set — to `nil` / absent in the stub.
+
+- Grep the code under test for every `ENV[...]`, `ENV.fetch(...)`, `os.environ[...]`, `process.env.X` call. Each must appear in the stub, either with a chosen value or explicitly `nil`.
+- The `.compact` (or equivalent) step strips `nil` entries from the stub. With `.compact`, "not in the hash" means "read from the real environment" — which is exactly the CI-leakage trap. Either keep the `nil` entries in the stub hash without compacting, or use the framework's `delete_env` API explicitly.
+- Local pass + CI fail with messages like "expected nil, got URL" or "expected nil, got <token>" is the canonical signature of this leak — CI runners inject `BUILDKITE_*`, `GITHUB_*`, `CI`, `RUNNER_*`, and similar vars that the local shell does not.
 
 ---
 
