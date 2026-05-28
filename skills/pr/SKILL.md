@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.27-210401'
+  version: '2026.05.28-222230'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -145,6 +145,25 @@ git diff "$BEST_BASE...HEAD" --shortstat
 - If borderline or unclear, ask the user's preference.
 - Pass `$BEST_BASE` through to Step 2 — never re-detect or default
   back to `main`.
+
+### Check open PRs for a related spec before adding a new one
+
+When this branch adds a doc under `docs/specs/` (or equivalent),
+search open PRs for a spec in the same domain before treating the new
+doc as standalone — a parallel spec in another in-flight PR forces a
+later merge/consolidation request.
+
+```bash
+gh pr list --state open --json number,files \
+  --jq '.[] | {number, specs: [.files[].path | select(test("docs/specs"))]}' \
+  | grep -v '"specs":\[\]'
+```
+
+- If an open PR carries a spec for the same feature/domain, prefer
+  stacking onto it (extend the existing spec) over adding a parallel
+  doc. Surface the overlap to the user with both PR links.
+- Reuses the open-PR list already fetched for base detection — no
+  extra round trip.
 
 ## Step 2: Create Draft PR
 
