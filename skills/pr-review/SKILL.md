@@ -32,7 +32,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.27-232043'
+  version: '2026.05.28-210600'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -328,6 +328,21 @@ existing reviewer has raised.
 Build a list of `{name, file, line, signature, parameters, status}` where
 status is `new` or `modified` for each. These become the targets for
 adversarial playground testing in Phase 4.
+
+**Doc-relocation audience scan.** When the diff is a doc relocation (file
+imported from another repo or org, no code changed), run an additional
+adversarial pass on the new content:
+
+- Does the doc reference org-specific tooling names, command aliases, or
+  internal scripts that do not exist in the destination repo?
+- Does it cite task-tracker IDs, internal short-link prefixes, or memory
+  file names that resolve only in the source environment?
+- Does it back-reference files, paths, or sibling docs that were not
+  imported alongside it?
+- Flag each as a `suggestion`-severity inline comment so the author can
+  rewrite, gloss, or knowingly preserve the reference. Surface-level
+  audits (hard-coded absolute paths) catch shape; this scan catches
+  vocabulary portability.
 
 **Be adversarial.** Your job is to find what the author missed:
 - Bugs and logic errors
