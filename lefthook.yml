@@ -1,7 +1,12 @@
 pre-commit:
+  parallel: true
   commands:
     scrub-identifiers:
       run: .githooks/scrub-staged.sh
+    check-readme:
+      run: .githooks/check-readme.sh
+    check-skill-links:
+      run: .githooks/check-skill-links.sh
 
 post-merge:
   commands:
