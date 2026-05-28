@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-175307'
+  version: '2026.05.28-180416'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -1249,6 +1249,16 @@ artifact instead.
   indented bullet structure as the markdown version.
 - Inside the card, display the plain text in a monospace block so
   what the user sees matches what they paste.
+- **HARD RULE: HTML-encode `<` and `>` inside the monospace block.**
+  Write Slack mrkdwn `<url|text>` as `&lt;url|text&gt;` in the HTML
+  source. Raw angle brackets are parsed as tags and stripped from
+  both the rendered display and `textContent`/clipboard reads —
+  silently destroying every link. The browser renders entities as
+  visible `<` `>`; `textContent` returns the literal characters that
+  Slack mrkdwn requires.
+- Build the clipboard payload from `textContent` of the same encoded
+  block (or from a separate string the encoder emitted), never from
+  raw template literals that bypassed encoding.
 
 **Markdown rendering:** add a `## Standup Snippet` section as the last
 section before `## Notes`. The user copies directly from the rendered
