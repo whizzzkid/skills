@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-215544'
+  version: '2026.05.28-220733'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -514,6 +514,23 @@ assert behaviour.
 When making a significant architectural decision (new dependency, pattern
 change, technology choice, trade-off acceptance), create an ADR in
 `docs/adr/` using the format: title, status, context, decision, consequences.
+
+#### Content-lint hooks — scope to file class and diff
+
+When writing a pre-commit hook that flags a content pattern (bare
+references, banned tokens, style violations), scope it twice before
+wiring it in:
+
+- **File class.** Restrict to the file class the underlying rule
+  actually governs; exclude every other class explicitly. A rule about
+  navigable docs must not scan instruction files that use the flagged
+  pattern by design.
+- **Added lines only.** Prefer scanning `git diff --cached -U0` added
+  lines, not the whole staged file. A hook that flags pre-existing
+  content in a file the commit only touched once blocks unrelated work
+  and trains the author to `--no-verify` — which defeats the hook.
+- Smoke-test the new hook against a file that legitimately contains the
+  pattern but is out of scope, and confirm it does NOT fire.
 
 ### Provenance checks
 
