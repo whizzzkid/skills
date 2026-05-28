@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-181941'
+  version: '2026.05.28-183644'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -1104,11 +1104,11 @@ generated_at: {ISO_8601_UTC}
 
 ## Standup Snippet
 - 👈🏽 Yesterday:
-   - {achievement} <{url}|{text}>
+   - {achievement} {bare URL}
 - 👉🏽 Today:
-   - {priority} <{url}|{text}>
+   - {priority} {bare URL}
 - ✋🏽 Blockers:
-   - {blocker} <{url}|{text}>
+   - {blocker} {bare URL}
 
 ## Notes
 _Space for anything that comes up during the day._
@@ -1164,50 +1164,28 @@ Cards have subtle border/shadow, consistent padding, and rounded corners.
 
 Append a copy-paste-ready Slack standup at the end of `morning.md`
 **and** as a dedicated card in `morning.html`. The user posts this
-verbatim to a team standup channel every working day, so the format is
-constrained by Slack's paste behavior — not by markdown aesthetics.
+verbatim to a team standup channel every working day.
 
-**Format (markdown and HTML both):**
+**HARD RULE: Delegate formatting to `wk-slack §Standup Snippet`.**
 
-```
-- 👈🏽 Yesterday:
-   - {group label or single achievement} [if grouped, no link here]
-      - <{url}|{repo#number-or-text}>
-      - <{url}|{repo#number-or-text}>
-   - {achievement} <{url}|{repo#number-or-text}>
-- 👉🏽 Today:
-   - {priority} <{url}|{repo#number-or-text}>
-- ✋🏽 Blockers:
-   - {blocker} <{url}|{repo#number-or-text}>
-   - ... (omit the section entirely if no blockers)
-```
+- Invoke `wk-slack §Standup Snippet` via the Skill tool to produce
+  both the HTML payload (Context C — `ClipboardItem` + `text/html`
+  with nested `<ul><li>` and real `<a>` tags) and the plaintext
+  fallback (Context B — `-` bullets, bare URLs).
+- Do **not** re-implement the structural rules inline. wk-slack owns:
+  nested-`<ul>` structure, one-link-per-bullet, `repo#number` link
+  labels, the three formatting contexts, clipboard wiring, and the
+  privacy filter. Any inline duplication drifts out of sync.
+- Pass wk-slack the filtered Yesterday/Today/Blockers item set
+  produced by the source mapping below. wk-slack returns the HTML
+  and plaintext payloads ready to embed.
+- Embed the HTML payload as the "Standup Snippet" card at the top
+  of the dashboard (above the priorities card). Embed the plaintext
+  payload as the `## Standup Snippet` section just before `## Notes`
+  in `morning.md`.
 
-**HARD RULE: Slack mrkdwn link format only.** Emit every link as
-`<url|text>` — Slack's native mrkdwn syntax — never markdown
-`[text](url)`. Markdown link syntax pastes as literal brackets and
-parentheses; Slack mrkdwn renders as a clickable label on paste.
-Applies to both the markdown file and the HTML copy-to-clipboard
-payload. Bare URLs are acceptable only when no useful label exists
-(e.g., the URL itself is the most informative text).
+**Source mapping (wk-goodmorning owns this):**
 
-**HARD RULE:** Emoji lead characters (`👈🏽`, `👉🏽`, `✋🏽`) are mandatory
-on the Yesterday, Today, and Blockers bullets respectively. After
-writing the file, verify they are present:
-
-```bash
-grep -c "👈🏽" "$TODAY_DIR/morning.md"  # must be >= 1
-grep -c "👉🏽" "$TODAY_DIR/morning.md"  # must be >= 1
-```
-
-If either `grep` returns 0, the emoji were stripped (a known failure
-mode when writing files via bash heredoc — multi-byte sequences can be
-silently dropped by locale or shell encoding mismatches). Re-write the
-standup section using the Write tool or a `printf` approach that
-preserves UTF-8, then re-verify. Do not commit until all three emoji
-leads are confirmed present in both `morning.md` and the clipboard
-payload embedded in `morning.html`.
-
-**Source mapping:**
 - **Yesterday** → previous working day's `evening.md` `## Achievements`
   section. Pick 3-4 items with the highest visible impact (shipped/merged
   PRs, decisions led, blockers cleared, key meetings).
@@ -1223,64 +1201,27 @@ payload embedded in `morning.html`.
   a conflict/dependency. If none, omit the bullet entirely (do not emit
   an empty Blockers heading).
 
-**Source-link enforcement.** Every leaf bullet in
-Yesterday/Today/Blockers must include exactly one `<url|text>` link
-pointing to its primary artifact (PR, ticket, Slack thread, doc).
-Items with no external artifact (meeting debrief, synthesized
-priority) may omit the link but should still appear if they belong
-in the standup.
+**HARD RULE: Apply wk-slack's privacy filter before passing items
+to wk-slack.** Drop hiring/interview/candidate-pipeline items (or
+render interviews generically with no candidate name, CodeSignal /
+Greenhouse / scorecard links), personal HR/QPR/performance items,
+personal communications (farewell replies, DMs), and anything not
+yet decided as publicly shareable. The morning dashboard may keep
+filtered items privately; the standup may not. When uncertain,
+omit. (See `wk-slack §Standup Snippet → Standup privacy filter`.)
 
-**HARD RULE: One link per bullet.** Never place more than one
-`<url|text>` on a single bullet line. Multiple links on one line
-produce visual noise in Slack and make individual items hard to
-click. When N artifacts belong together (e.g., a batch of merged
-PRs, a set of PRs to review):
+**HARD RULE: Emoji-lead verification.** After writing both files,
+confirm `👈🏽`, `👉🏽`, and `✋🏽` are present in `morning.md`:
 
-- Emit a parent bullet with the group label and **no link**.
-- Sub-list each artifact as a child bullet carrying its single
-  `<url|text>`.
-- Never inline the group as "Merged: <a> <b> <c>" — always nest.
+```bash
+grep -c "👈🏽" "$TODAY_DIR/morning.md"  # must be >= 1
+grep -c "👉🏽" "$TODAY_DIR/morning.md"  # must be >= 1
+```
 
-**HARD RULE: GitHub PR/issue link label = `repo#number`.** Every
-GitHub PR or issue link emits its label as `repo#number` (e.g.,
-`somerepo#NNN`, `another-repo#NNN`). Bare `#NNN` is forbidden — the
-repo name is required for context, especially when the brief is
-pasted outside its original surface. Applies to every link in the
-brief, not just the standup snippet.
-
-**HTML rendering:**
-- Render the snippet inside its own card titled "Standup Snippet"
-  positioned at the top of the dashboard (above the priorities card)
-  so the user can grab it first thing.
-- Include a "Copy to clipboard" button that copies the **plain-text
-  payload with Slack mrkdwn `<url|text>` links** — not the rendered
-  HTML. Use `navigator.clipboard.writeText(plainText)` with the same
-  indented bullet structure as the markdown version.
-- Inside the card, display the plain text in a monospace block so
-  what the user sees matches what they paste.
-- **HARD RULE: HTML-encode `<` and `>` inside the monospace block.**
-  Write Slack mrkdwn `<url|text>` as `&lt;url|text&gt;` in the HTML
-  source. Raw angle brackets are parsed as tags and stripped from
-  both the rendered display and `textContent`/clipboard reads —
-  silently destroying every link. The browser renders entities as
-  visible `<` `>`; `textContent` returns the literal characters that
-  Slack mrkdwn requires.
-- Build the clipboard payload from `textContent` of the same encoded
-  block (or from a separate string the encoder emitted), never from
-  raw template literals that bypassed encoding.
-- **HARD RULE: Nested `<ul><li>` structure only.** Render the standup
-  as a single top-level `<ul>` whose `<li>` children are
-  Yesterday/Today/Blockers, each containing a child `<ul>` for its
-  sub-points (and a further-nested `<ul>` for grouped artifacts under
-  a parent bullet). Never emit Yesterday/Today/Blockers as `<p>`,
-  `<b>`, `<h*>`, or any flat-heading variant. Slack's `text/html`
-  clipboard paste preserves nesting only when the source HTML carries
-  real `<ul>/<li>` hierarchy; flat structures collapse to a single
-  indent level.
-
-**Markdown rendering:** add a `## Standup Snippet` section as the last
-section before `## Notes`. The user copies directly from the rendered
-file; `<url|text>` links ensure Slack-paste fidelity with clickable labels.
+If either returns 0, the emoji were stripped (multi-byte loss via
+bash heredoc encoding). Re-emit via the Write tool or `printf` that
+preserves UTF-8, re-verify, and do not commit until all three leads
+appear in both `morning.md` and the `morning.html` standup card.
 
 ### Open for review
 
