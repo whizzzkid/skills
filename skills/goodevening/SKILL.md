@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.13-003212'
+  version: '2026.05.28-183741'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -416,6 +416,25 @@ trends, and suggested improvement areas.
 
 **Wait for all 7 agents to complete.** Merge their results with
 `morning_baseline`.
+
+**HARD RULE: Delegate Slack-destined formatting to `wk-slack`.**
+
+- Any content this skill produces that may be posted, shared, or
+  pasted into Slack — share-outs, meeting follow-through, evening
+  carry-over items that feed tomorrow's standup `Yesterday`
+  section, channel announcements — must be formatted by invoking
+  `wk-slack` (or `wk-slack §Standup Snippet` for standup-shaped
+  content). Do not emit raw `<url|text>` strings, ad-hoc bullet
+  hierarchies, or inline link syntax in this skill's output.
+- This skill owns the **selection and content** of items (what
+  goes in, the narrative, authorship and privacy decisions).
+  wk-slack owns the **formatting** (link syntax, nesting, the three
+  Slack formatting contexts, clipboard wiring).
+- Items that will land in tomorrow's `morning.md` `## Achievements`
+  section (the Yesterday source) must be pre-filtered with
+  wk-slack's standup privacy filter (hiring/interview PII, personal
+  HR/QPR/performance items, personal communications) so tomorrow's
+  brief inherits a publishable set without re-filtering.
 
 ### 2a. Review morning progress
 
