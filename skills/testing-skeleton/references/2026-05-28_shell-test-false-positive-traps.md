@@ -6,6 +6,8 @@ source:
   - ~/.claude/memory/feedback_bash_n_false_positive.md
   - ~/.claude/memory/feedback_bats_grep_qv_false_positive.md
   - ~/.claude/memory/feedback_bats_line_comparison_grep_filter.md
+  - ~/.claude/memory/feedback_bats_marker_grep_anchor.md
+  - ~/.claude/memory/feedback_bats_sed_range_verify.md
 severity: low
 ---
 
@@ -33,5 +35,22 @@ Bash/bats test cheatsheet — false-positive traps when asserting on shell scrip
   ```
 
 - **`grep -n 'VAR' | cut -d: -f1` for line-ordering assertions** — the first hit is often an `echo`/comment mentioning the variable, not the conditional itself. Add a secondary filter that anchors to the conditional syntax (`-z`, `unset`, `\[\[`, etc.) so `cut` returns the guard line.
+
+- **`grep -n 'phrase' | head -1` for locating a code line** — matches comments containing the phrase before the executable line. Anchor to the executable form (`echo.*phrase`, `buildkite-agent.*`, an assignment), never a phrase shared with surrounding comments:
+
+  ```bash
+  # WRONG — matches a comment block above the echo
+  grep -n 'specific phrase' script.sh | head -1
+  # CORRECT — only matches the executable form
+  grep -n 'echo.*specific phrase' script.sh | head -1
+  ```
+
+- **`sed -n '/start/,/end/p'` with an unmatched end-marker** — sed silently emits from start to EOF when `/end/` never matches, so the range can be far broader than intended while the test still passes. After writing the extraction, verify the range size:
+
+  ```bash
+  sed -n '/start/,/end/p' file | wc -l   # compare to expected line count
+  ```
+
+  Anchor end-markers with `^...$` against a literal line in the target file.
 
 - **Why not promoted:** All four are narrow bash/bats recipes that require verbatim commands; aggregating them into a single one-off reference avoids bloating `wk-testing-skeleton`'s SKILL.md with language-specific anti-patterns.
