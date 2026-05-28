@@ -30,7 +30,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.05-180000'
+  version: '2026.05.28-195018'
   internal: false
   model:
     openai: gpt-4.1
@@ -191,6 +191,7 @@ Mandatory checks per kind of removed line:
 | Conditional that selects between two valid paths | Was the unselected path documented elsewhere? Is selecting one path always correct? |
 | A call site of an external API / CLI / DB query | Is that call now made elsewhere, with the same arguments and error handling? |
 | A test (deleted or renamed) | Does an equivalent assertion exist on the new shape? |
+| `warn` / `logger.*` / `puts` / `console.*` / `log.*` call inside a removed block | Is the diagnostic still emitted on the same code path? Collapsing a multi-line `unless`/`if` block into a guard clause routinely drops the warning, producing a silent debuggability regression even when behavior is otherwise preserved. |
 | Behavior narrowed to a specific arm / mode / branch (an unconditional read moved inside a conditional) | Do all existing tests still drive the unit through the arm that now owns the behavior? Tests pinned to the pre-narrowing invocation may pass coincidentally (default value matches) while no longer exercising the relocated code. Grep the test tree for the old invocation form and verify each test reaches the new code path. |
 
 A removed line that the refactor's kind does NOT predict (e.g., an
