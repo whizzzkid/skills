@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.13-003212'
+  version: '2026.05.28-175042'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -240,14 +240,22 @@ skip this step.
 
 ### Interview prep scaffolding
 
-Invoke `wk-cal §Interview Prep Scan` via the Skill tool before launching
-the parallel agents. This ensures prep and scorecard blocks are created on
-the calendar before Agent 3 fetches today's/tomorrow's events — so they
-appear correctly in the meeting timeline.
+**HARD RULE: Run the prep scan before Stage 1 launch — no exceptions.**
 
-The scan runs silently. Surface its output as an **Interview Scaffolding**
-section in the final morning brief only when blocks were created or when a
-conflict was found that needs manual action.
+- Invoke `wk-cal §Interview Prep Scan` via the Skill tool before launching
+  the Stage 1 parallel agents.
+- Run the scan even when an interview is already known from yesterday's
+  evening.md carry-over. The scan **writes** prep and scorecard blocks to
+  the calendar — it does not merely read data. Skipping because the
+  interview is "already known" leaves the calendar unscaffolded.
+- Run the scan even in auto mode and under time pressure. It is a gate,
+  not scaffolding.
+- After the scan returns, verify at least one prep or scorecard block
+  exists on the calendar for each interview surfaced (newly created or
+  pre-existing). If verification fails, re-run the scan before Stage 1.
+- The scan runs silently. Surface its output as an **Interview
+  Scaffolding** section in the final morning brief only when blocks were
+  created or when a conflict needs manual action.
 
 ---
 
@@ -1219,6 +1227,14 @@ must include at least one bare URL pointing to its primary artifact
 each URL space-separated on the same line. Items with no external
 artifact (e.g., a meeting debrief, a synthesized priority) may omit
 the URL but should still appear if they belong in the standup.
+
+**HARD RULE: Grouped bullets need one URL per artifact.** A bullet
+that summarizes N artifacts (e.g., "Merged 4 PRs: …", "Closed 3
+tickets: …") is valid only if it carries N space-separated bare URLs
+on the same line — one per artifact in the group. One URL for the
+whole group is a violation: the per-bullet check is satisfied at the
+artifact level, not the sentence level. If listing every URL makes
+the bullet unreadable, split into one bullet per artifact instead.
 
 **HTML rendering:**
 - Render the snippet inside its own card titled "Standup Snippet"
