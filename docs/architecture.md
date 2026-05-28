@@ -211,6 +211,6 @@ what the agent reads to decide whether to activate a skill.
 | `GITHUB_ORG` | gh, goodmorning, goodevening | Scope GitHub queries to org |
 | `DATADOG_API_KEY` | datadog | API access |
 | `DATADOG_APP_KEY` | datadog | Read/write access |
-| `WK_SKILLS_TEAM_SLACK` | team-hud | Slack channel ID for the team roster |
+| `WK_SKILLS_TEAM_SLACK_HANDLE` | team-hud | CSV of Slack usergroup handles; resolved to channels via cache |
 | `WK_SKILLS_TEAM_JIRA` | team-hud | Comma-separated Jira project keys |
 | `WK_SKILLS_TEAM_GITHUB` | team-hud | GitHub org or org/repo filter |

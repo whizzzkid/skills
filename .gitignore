@@ -1,3 +1,4 @@
 .claude/
 .bk.yaml
 .githooks/scrub-denylist.txt
+config/team-hud.yaml
