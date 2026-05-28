@@ -164,9 +164,9 @@ flowchart LR
 
 The cycle: **session → learn → retro → sharpen → better skills → next session**.
 
-- `wk-learn` is called at the end of each skill run with the skill's short name as argument.
-- `wk-retro` promotes session-level learnings to `~/.claude/memory/` for cross-session persistence.
-- `wk-sharpen` reads learning files and rewrites `SKILL.md` bodies to encode generalizable principles.
+- [`wk-learn`](learn/README.md) is called at the end of each skill run with the skill's short name as argument; writes a per-skill learning file to `$WK_SKILLS_HOME/learnings/skills/<name>/`.
+- [`wk-retro`](retro/README.md) writes the session narrative to `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md` (consumed by [`wk-sharpen`](sharpen/README.md)) and, when a promotable rule surfaces, adds the distilled rule to `~/.claude/memory/` — never the narrative itself.
+- [`wk-sharpen`](sharpen/README.md) reads learning files and rewrites `SKILL.md` bodies to encode generalizable principles.
 - All versions are CalVer (`YYYY.MM.DD-HHMMSS` UTC) — semver is forbidden.
 
 ---

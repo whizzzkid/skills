@@ -112,7 +112,7 @@ ad-hoc notes, agent transcripts, draft plans not yet distilled into
 context is unrecoverable. Run `wk-retro` against each merged
 worktree **before** calling `git wtr`.
 
-`wk-retro` writes to global memory (`~/.claude/memory/`). `wk-learn` is for skill-specific learnings (`$WK_SKILLS_HOME/learnings/skills/`) — do not substitute one for the other here.
+`wk-retro` writes the session narrative to `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md` (and only distilled rules, if any, to `~/.claude/memory/`). `wk-learn` is for skill-specific learnings under `$WK_SKILLS_HOME/learnings/skills/` — do not substitute one for the other here.
 
 ### Disposable paths — skip retro and clean without prompting
 

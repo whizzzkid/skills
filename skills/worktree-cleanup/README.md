@@ -34,10 +34,13 @@ flowchart TD
 
 ## Noteworthy
 
-- **HARD RULE: run `wk-retro` before `git wtr`** — worktrees may hold the only copy of
-  session notes or draft plans. Once removed, that context is unrecoverable.
-- **`wk-retro` vs `wk-learn` are not interchangeable here** — retro writes to global memory
-  (`~/.claude/memory/`); `wk-learn` writes skill-specific learnings. This step uses retro.
+- **HARD RULE: run [`wk-retro`](../retro/README.md) before `git wtr`** — worktrees may hold
+  the only copy of session notes or draft plans. Once removed, that context is unrecoverable.
+- **[`wk-retro`](../retro/README.md) vs [`wk-learn`](../learn/README.md) are not interchangeable
+  here** — retro writes the session narrative to
+  `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md` (and only distilled rules, if any, to
+  `~/.claude/memory/`); `wk-learn` writes skill-specific learnings under
+  `$WK_SKILLS_HOME/learnings/skills/`. This step uses retro.
 - **`git wtr` uses `-D` (force-delete)** regardless of merge status — never call it on an
   unconfirmed branch. When in doubt, classify as unmerged and let the user decide.
 - A branch is considered merged if **either** check passes (local `git branch --merged` OR
