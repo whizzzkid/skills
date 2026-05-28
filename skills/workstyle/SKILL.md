@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.15-232615'
+  version: '2026.05.28-201234'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -265,6 +265,21 @@ explicitly sets a different value.
 - **`[[ … ]]`** over `[ … ]` in bash.
 - **Heredoc** for multi-line strings; avoid concatenated `echo` chains.
 - **Named constants** for magic values at the top of the script.
+- **Probe capability, don't parse error text.** Detect support for a flag or feature by running it against a known-good input and branching on the exit code — never by grepping the stderr wording. Error strings differ between GNU coreutils, BSD/macOS, BusyBox, and library wrappers, so wording-based fallbacks fail closed on the variant they were supposed to handle.
+
+  ```bash
+  # WRONG — wording varies by vendor (BusyBox vs GNU vs macOS)
+  if tool -flag -- "$arg" 2>&1 | grep -q "invalid option"; then
+      fallback
+  fi
+
+  # CORRECT — capability probe
+  if tool -flag -- /known-good >/dev/null 2>&1; then
+      use_tool
+  else
+      fallback
+  fi
+  ```
 
 ---
 
