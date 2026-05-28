@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 # check-skill-links.sh — enforce CLAUDE.md Rule 3:
-#   inline mentions of wk-* skills in staged markdown files must use
-#   relative markdown links, not bare backtick references.
+#   inline mentions of wk-* skills in NAVIGABLE docs must use relative
+#   markdown links, not bare backtick references.
+#
+# SCOPE (per CLAUDE.md Rule 3): README.md files and top-level docs only.
+#   - skills/*/README.md   (inter-skill prose, "Noteworthy" bullets)
+#   - skills/README.md, README.md, docs/**.md  (top-level navigable docs)
+#
+# SKILL.md bodies are NOT in scope — they are runtime instructions to the
+# agent, not navigable documentation, and use bare `wk-foo` extensively
+# by design. Linkifying them would be noise.
 #
 # Allowed forms (must be linked):
 #   [`wk-foo`](../foo/README.md)
@@ -11,21 +19,23 @@
 # Blocked forms (bare backtick, no link):
 #   `wk-foo`     (not immediately preceded or followed by a link bracket)
 #
-# Exceptions — these are never flagged:
+# Exceptions — never flagged:
 #   - Fenced code blocks (``` ... ```)
 #   - HTML comments (<!-- ... -->)
 #   - YAML frontmatter (--- ... ---)
-#   - Mermaid click directives (they use their own syntax)
-#   - Lines in the SKILL.md `name:` frontmatter field
-#   - The SKILL.md `description:` field value
-#   - Lines matching `- wk-foo:` (skill list entries in system prompts)
-#   - Lines matching `wk-foo:` at start (YAML key form in allowed-tools)
+#   - Mermaid click directives
+#   - Skill-list entry lines (`- wk-foo:` / `wk-foo:` at column 0)
 
 set -euo pipefail
 
-# Collect staged *.md files (excluding .learned.md)
-staged_md=$(git diff --cached --name-only --diff-filter=ACMR \
-  | perl -ne 'print if m{\.md$} && !m{\.learned\.md$}')
+# Collect staged markdown IN SCOPE: README.md files and docs/*.md, never
+# SKILL.md, never *.learned.md.
+staged_md=$(git diff --cached --name-only --diff-filter=ACMR | perl -ne '
+  chomp;
+  next if m{\.learned\.md$};
+  next if m{/SKILL\.md$} || m{^SKILL\.md$};
+  print "$_\n" if m{(^|/)README\.md$} || m{^docs/.*\.md$};
+')
 
 [[ -z "$staged_md" ]] && exit 0
 

@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-190613'
+  version: '2026.05.28-215544'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -87,6 +87,22 @@ message is additive context or a specific step adjustment; it is never
 a license to run only part of the skill. Additional deliverables
 (learnings, summaries, explanations) come after the skill completes its
 full flow, not instead of it.
+
+**Batch independent tool calls into one response.** When the next
+several tool calls have no data dependency on each other, emit them in
+a single response as parallel `tool_use` blocks — never serialize them
+across turns.
+
+- Before sending a response with a tool call, ask: "Which other calls
+  will I need next that do not consume this call's output?" Batch all
+  of them now.
+- The recurring failure is probing variants one-at-a-time (two reads,
+  two API calls, two greps that differ only by argument) across
+  separate turns — each serialized call wastes a round-trip and prompt
+  cache.
+- The only exception is a genuine dependency: a later call's parameters
+  come from an earlier call's result. Even then, batch every
+  independent call within each step.
 
 ## Continuity Rules
 
