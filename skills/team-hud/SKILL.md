@@ -1,10 +1,11 @@
 ---
 name: wk-team-hud
 description: >-
-  Generate a heads-up display of what each team member is working on — surfacing
-  PRs, Jira tickets, Slack activity, announcements, shareouts, and emails. Invoked
-  in parallel by wk-goodmorning and wk-goodevening to produce the team activity
-  section of daily summaries. Can also be called directly for an on-demand snapshot.
+  [WIP — do not invoke] Generate a heads-up display of what each team member
+  is working on. Blocked: Slack MCP lacks `channels:read.members` /
+  `groups:read.members` scopes so roster cannot be fetched; Jira Team URL has
+  no MCP endpoint; Google Group has no MCP. Status pending re-auth or
+  contract pivot to explicit member CSV.
 argument-hint: '[--since <duration>]'
 allowed-tools:
   - Bash
@@ -27,19 +28,36 @@ allowed-tools:
   - "mcp__claude_ai_Glean__user_activity"
 model: sonnet
 effort: medium
-model-invocable: true
-user-invocable: true
+model-invocable: false
+user-invocable: false
+status: wip
 license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-220000'
+  version: '2026.05.28-221500'
   internal: false
   model:
     claude: claude-sonnet-4-6
 ---
 
 # Team HUD
+
+> **⚠️ Work in progress — do not invoke.**
+>
+> Blockers discovered during initial run:
+>
+> - **Slack roster fetch fails with `missing_scopes`** on both private and
+>   public channels. The MCP token needs `channels:read.members` and
+>   `groups:read.members` (re-auth required), or the contract must pivot to
+>   an explicit member CSV env var.
+> - **Jira Team URL** (`api.atlassian.com/public/teams/v1/teams/<id>/members`)
+>   is not exposed by the Jira MCP; same cache pattern as Slack would
+>   require a prompted CSV of accountIds.
+> - **Google Group URL** has no MCP endpoint at all; would need
+>   `gcloud identity groups` installed locally or a manual member CSV.
+>
+> Skill is non-invocable until at least one roster source works end-to-end.
 
 Generate a heads-up display for what each team member is actively working on,
 sourced live from Slack, Jira, GitHub, and email.
