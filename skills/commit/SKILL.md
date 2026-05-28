@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.20-191230'
+  version: '2026.05.28-200501'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -131,17 +131,18 @@ unless:
 
 ### Mise-managed repos
 
-If the project uses mise (has `.mise.toml` or `.tool-versions`), activate
-mise before pushing so that git hooks (lefthook, husky, etc.) can find
-mise-managed binaries:
+If the project uses mise (has `.mise.toml` or `.tool-versions`), invoke
+push (and any commit-time hook trigger) via `mise exec --` so git hooks
+(lefthook, husky, etc.) can find mise-managed binaries:
 
 ```bash
-eval "$(mise activate bash)" && git push
+mise exec -- git push
 ```
 
-Without activation, Bash tool sessions don't inherit the user's interactive
-shell, and hooks fail with "command not found" (exit 127) for tools like
-`lychee`, `shellcheck`, `bats`, etc.
+Never use `eval "$(mise activate bash)"` — the supported single-command
+form is `mise exec --`. Bash tool sessions don't inherit the user's
+interactive shell, so without `mise exec --` hooks fail with "command
+not found" (exit 127) for tools like `lychee`, `shellcheck`, `bats`, etc.
 
 ### Hook and verify rules
 
@@ -150,6 +151,23 @@ stop and ask the user to run the command manually.
 
 If a regular push is rejected, tell the user and ask how to proceed rather
 than automatically force-pushing.
+
+### Stage handoff-doc removal with the work it describes
+
+When applying an agent-written handoff document (e.g. `NEXT_PHASE.md`,
+`HANDOFF.md`, a planning markdown left by a prior session), delete the
+handoff file in the **same commit** that applies the work — not a
+separate cleanup commit.
+
+- The deletion is logically part of completing the handoff; a follow-up
+  commit produces a diff that only removes a markdown file.
+- A markdown-only commit triggers a full CI run on no real change,
+  wastes CI time, and can surface flaky failures unrelated to the work.
+
+```bash
+git add <implementation files> <handoff doc>
+git commit -m "feat: ✨ apply X (removes NEXT_PHASE.md handoff)"
+```
 
 ## Post-Push: PR Sync
 
