@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.08-182753'
+  version: '2026.05.28-191933'
   internal: false
   model:
     openai: gpt-4.1
@@ -74,6 +74,13 @@ Trigger ──► Classify the change ──► Plan paths
 5. **Coverage % is a lagging indicator.** Never write a test to
    raise a number; never skip a path because the number is already
    high.
+6. **Baseline the suite before appending tests.** Before adding tests
+   to an existing test file, run the file and confirm it currently
+   passes. If it is already failing, fix the pre-existing failure
+   first or place new tests in a standalone file. Appending to a
+   broken suite gives false confidence — your tests appear to fail
+   when the setup is broken, masking whether the new code is
+   actually tested.
 
 ---
 
