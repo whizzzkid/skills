@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-183741'
+  version: '2026.05.28-205011'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -45,6 +45,23 @@ Bootstrap ──► Parallel Fetch ──► Compile + Auto-resolve ──► Gr
 ---
 
 ## Stage 0: Bootstrap
+
+### HARD RULE — refuse to write sitrep into the skills repo
+
+Before computing `$TODAY_DIR`, refuse the run if `$PWD` is `$WK_SKILLS_HOME`
+(or any subdirectory of it). `sitrep/` output belongs in the project the
+sitrep describes, not in the skills repo itself — a misplaced run leaves a
+stray `sitrep/<YYYY>/...` directory in the skills tree.
+
+```bash
+case "$PWD" in
+  "$WK_SKILLS_HOME"|"$WK_SKILLS_HOME"/*)
+    echo "✗ refusing to run wk-goodevening inside the skills repo" >&2
+    echo "  cd to the project this sitrep is about and re-run." >&2
+    exit 1
+    ;;
+esac
+```
 
 ### Determine dates and paths
 

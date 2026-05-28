@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-183644'
+  version: '2026.05.28-205011'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -51,6 +51,21 @@ Bootstrap ──► Parallel Fetch (5 agents) ──► Auto-resolve ──► G
 Run these sequentially — they're fast and everything else depends on them.
 
 ### Determine dates and paths
+
+**HARD RULE — refuse to run inside the skills repo.** Before computing
+paths, abort if `$PWD` is `$WK_SKILLS_HOME` or any subdirectory of it.
+`sitrep/` output belongs in the project the brief describes; a misplaced
+run leaves a stray `sitrep/<YYYY>/...` tree in the skills repo.
+
+```bash
+case "$PWD" in
+  "$WK_SKILLS_HOME"|"$WK_SKILLS_HOME"/*)
+    echo "✗ refusing to run wk-goodmorning inside the skills repo" >&2
+    echo "  cd to the project this brief is about and re-run." >&2
+    exit 1
+    ;;
+esac
+```
 
 ```bash
 TODAY=$(date +%Y-%m-%d)
