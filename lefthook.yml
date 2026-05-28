@@ -1,3 +1,8 @@
+pre-commit:
+  commands:
+    scrub-identifiers:
+      run: .githooks/scrub-staged.sh
+
 post-merge:
   commands:
     install-skills:

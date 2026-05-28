@@ -1,2 +1,3 @@
 .claude/
 .bk.yaml
+.githooks/scrub-denylist.txt

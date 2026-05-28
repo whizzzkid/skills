@@ -1,0 +1,21 @@
+# Repo-local scrub denylist for .githooks/scrub-staged.sh.
+# Copy to scrub-denylist.txt (gitignored) and add patterns one per line.
+# Each line is a PCRE regex; prefix `(?i)` for case-insensitive matching.
+# Lines starting with # and blank lines are ignored.
+#
+# Examples (uncomment and edit for your org):
+#
+# Internal hosts
+# (?i)<your-company>\.atlassian\.net
+# (?i)<your-company>\.slack\.com
+# (?i)<your-company>\.lattice\.com
+#
+# Internal project / repo names not covered by $GITHUB_ORG
+# (?i)\b<internal-monorepo-name>\b
+# (?i)\b<internal-service-name>\b
+#
+# Slack thread / DM URL fragments
+# https://app\.slack\.com/client/T[A-Z0-9]+/[A-Z0-9]+
+#
+# Confluence / Notion internal pages
+# (?i)<your-company>\.atlassian\.net/wiki/spaces/
