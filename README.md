@@ -76,12 +76,18 @@ npx skills add whizzzkid/skills -s skill-name
 | `DATADOG_API_KEY` | datadog | Datadog API key for dashboard/monitor/SLO management. |
 | `DATADOG_APP_KEY` | datadog | Datadog application key (read/write access). |
 | `DATADOG_SITE` | datadog | Datadog site (optional, defaults to `datadoghq.com`). |
+| `WK_SKILLS_TEAM_SLACK` | team-hud | Slack channel ID for your team channel (used to resolve the team roster). |
+| `WK_SKILLS_TEAM_JIRA` | team-hud | Comma-separated Jira project keys to scope team activity queries (e.g., `ENG,DATA`). |
+| `WK_SKILLS_TEAM_GITHUB` | team-hud | GitHub org or `org/repo` filter to scope team PR/commit queries (e.g., `my-org`). |
 
 Add these to your shell profile (`~/.zshrc`, `~/.bashrc`):
 
 ```bash
 export WK_SKILLS_HOME="$HOME/gitc/skills"
 export GITHUB_ORG="your-org"
+export WK_SKILLS_TEAM_SLACK="C0XXXXXXXXX"   # team channel ID
+export WK_SKILLS_TEAM_JIRA="ENG,DATA"        # project keys
+export WK_SKILLS_TEAM_GITHUB="your-org"      # GitHub org
 ```
 
 ## Adding a New Skill
