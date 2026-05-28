@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.05-180000'
+  version: '2026.05.28-195018'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -123,6 +123,26 @@ docker run --rm <image> sh -c 'echo works'
 
 If the output shows an error about unknown commands or arguments, the
 ENTRYPOINT needs to be reset.
+
+## Verify the ENTRYPOINT Before Editing a Wrapper Script
+
+Before editing any script named `entrypoint.*`, `run.*`, `start.*`, or
+any file whose role *looks* like a container entrypoint, confirm the
+Dockerfile actually invokes it. Repos that ship a compiled binary
+(Rust, Go, etc.) as the production entrypoint frequently keep a
+same-named shell script for local-dev or legacy paths — editing the
+shell script produces a change that passes review but never runs in
+production.
+
+```bash
+grep -E '^(ENTRYPOINT|CMD)' Dockerfile
+```
+
+- The grep target — file path, binary name, or shell line — is the
+  real entrypoint. Confirm the file you are about to edit matches.
+- If a binary is named (e.g., `/usr/local/bin/foo`), find where it is
+  built from in the repo. The companion shell script is rarely the
+  production path.
 
 ## Declare Runtime Env Vars in the Dockerfile
 
