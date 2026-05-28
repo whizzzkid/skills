@@ -25,7 +25,7 @@ license: MIT
 group: communication
 metadata:
   author: whizzzkid
-  version: '2026.05.27-215205'
+  version: '2026.05.28-183517'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -112,6 +112,34 @@ Optional: what happens next or deadline.
 
 ---
 
+## Step 3a: Pick the right formatting context
+
+**HARD RULE — Slack has three formatting contexts. Pick the right
+one before writing anything; mixing them silently breaks links and
+structure.**
+
+- **Context A — Slack API / Bot messages (`chat.postMessage`):** use
+  Slack mrkdwn. Links: `<url|label>`. Bold: `*text*`. Italic:
+  `_text_`. Bullets: `-` at line start, 4-space indent for nesting.
+  Never use HTML tags — they post as literal text.
+- **Context B — Plain text typed or pasted into the compose box:**
+  bare URLs auto-linkify. Mrkdwn `*bold*` and `_italic_` render.
+  `<url|label>` does **not** render — it appears as literal angle
+  brackets. Use bare URLs when no label is available; otherwise use
+  Context C for clickable labels.
+- **Context C — Copy-to-clipboard from a web dashboard into compose
+  box:** write `text/html` to the clipboard via `ClipboardItem` with
+  real `<a href>` tags and nested `<ul><li>` structure. Slack's
+  desktop app respects the HTML MIME type on paste and renders
+  clickable labels with preserved indentation. `textContent`-only
+  copies strip every link.
+
+Default to Context C whenever generating a copy button on a
+dashboard. Use Context A only when posting via the Slack API. Use
+Context B only for ad-hoc plaintext drops.
+
+---
+
 ## Step 3: Apply formatting rules (mrkdwn — not Markdown)
 
 **HARD RULE — never use standard Markdown in Slack messages.** Slack
@@ -189,6 +217,84 @@ After sending, confirm:
 - Channel name
 - Permalink or message ts
 - Whether it was sent as a top-level message or thread reply
+
+---
+
+## Standup Snippet
+
+Canonical spec for the daily standup snippet rendered by
+wk-goodmorning (and any other caller). The snippet is a public team
+artifact — every rule below is a HARD RULE.
+
+**Structure (Context C — HTML for clipboard, bullets shown for
+illustration):**
+
+```
+- 👈🏽 Yesterday:
+  - {achievement} <a href="…">repo#NNN</a>
+  - {group label}:
+    - <a href="…">repo#NNN</a> — {short description}
+    - <a href="…">repo#NNN</a> — {short description}
+- 👉🏽 Today:
+  - {priority} <a href="…">repo#NNN</a>
+  - {group label}:
+    - <a href="…">repo#NNN</a> — {short description}
+- ✋🏽 Blockers:
+  - {blocker} <a href="…">{link label}</a>
+```
+
+- Yesterday, Today, Blockers are top-level `<li>` items of a single
+  `<ul>`. Sub-points are nested `<ul><li>` children. Never emit them
+  as `<p>`, `<b>`, or `<h*>` — flat headings collapse Slack's paste
+  indentation.
+- Each leaf bullet carries **at most one** external link. Multiple
+  artifacts → parent bullet (group label, no link) + one child
+  bullet per artifact, each carrying its single link.
+- GitHub PR/issue link labels are always `repo#number` (e.g.,
+  `somerepo#NNN`). Bare `#NNN` is forbidden — repo context is lost
+  on paste outside the original surface.
+- Emoji lead characters `👈🏽`, `👉🏽`, `✋🏽` are mandatory on the three
+  top-level bullets respectively.
+- Omit the Blockers `<li>` entirely when no blockers exist; do not
+  emit an empty heading.
+- Build the copy button with `ClipboardItem` writing `text/html`
+  with real `<a>` tags and `<ul><li>` nesting. Never copy
+  `textContent` only — it strips every link.
+
+### Standup privacy filter (HARD RULE)
+
+Apply this filter to every candidate item **before** it lands in the
+snippet. The morning/evening dashboard may keep filtered items
+privately; the standup may not.
+
+- Drop interview, hiring, or candidate-pipeline items in their
+  specific form. If an interview must appear, render generically
+  (e.g., "L4 SE candidate interview 12pm") — never include
+  candidate names, CodeSignal URLs, Greenhouse/scorecard links, or
+  any other hiring-pipeline PII.
+- Drop personal HR, performance, QPR, or compensation actions
+  (e.g., "QPR self-review window closes", "1:1 with manager").
+- Drop personal communications (farewell replies, DMs, condolences,
+  social-channel pings).
+- Drop anything the caller has flagged as private or has not yet
+  decided to share publicly.
+- When uncertain, omit. The standup is public; the dashboard is
+  private.
+
+### Caller contract
+
+When invoked as `wk-slack §Standup Snippet`, return:
+
+- The HTML payload (`<ul>…</ul>`) ready to embed in a dashboard card
+  and copy to clipboard via `ClipboardItem`.
+- The plaintext fallback (Context B) for the markdown brief, using
+  `-` bullets, 2-space indent for nesting, bare URLs.
+- The filtered-out items (so the caller can keep them in the
+  private dashboard).
+
+Callers (wk-goodmorning, wk-goodevening) must **not** re-implement
+the structure, link format, or privacy filter inline — invoke this
+section instead.
 
 ---
 
