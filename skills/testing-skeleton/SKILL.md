@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-201600'
+  version: '2026.05.28-203700'
   internal: false
   model:
     openai: gpt-4.1
@@ -226,6 +226,22 @@ Avoid:
 Match the project's existing test framework, file layout, and
 naming convention. `wk-format` runs alongside; defer to its rules
 for style.
+
+### Fixtures match the full expected schema
+
+When the unit consumes a structured payload (JSON, API response, hash, dataclass), the test fixture must include every field the schema requires — not just the subset the current test exercises.
+
+- Read the schema from production code paths, an OpenAPI/JSON-Schema spec, or other passing tests in the suite. Use those as the minimum field set in every new fixture.
+- Minimal stubs (only the fields the current assertion touches) create hidden coupling: as soon as another code path on the same struct branches on a previously-unused field, every test using the minimal fixture starts asserting on undefined behavior or crashing on `fetch`/key-access of the missing field.
+- Property-based / generated fixtures must constrain by the same schema; a randomized hash without required fields is no safer than a handwritten minimal one.
+
+### Verify the error string before coding a fallback that catches it
+
+When writing a fallback that discriminates on a specific tool error message (`if stderr matches "X" then fall back`), run the failing command against a real-enough environment first to capture the exact wording.
+
+- Error wording differs across tool versions and platforms; a guessed string makes the fallback either never fire or swallow unrelated failures.
+- This is the corollary of the "probe capability, don't parse error text" rule in `wk-workstyle`: if you must match on error text, derive it from observation, not intuition.
+- For git network errors, use `file://` URIs to activate the network code path in a local test instead of bare paths (which use the local protocol and emit different errors).
 
 ### Nil-out consumed env vars in stubbed-ENV tests
 
