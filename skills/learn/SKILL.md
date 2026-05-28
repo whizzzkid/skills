@@ -27,7 +27,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.27-210401'
+  version: '2026.05.28-220641'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -177,11 +177,34 @@ moment the user redirected the agent:
 - Permission denials surfaced as user prose (the user typed a
   rejection rather than clicking deny).
 
-Use `jq` to walk each `.jsonl`:
+Walk each `.jsonl` with `jq`. **Message text lives under
+`.message.content`, not `.content`** — the top-level object carries
+`.type` and `.message`, and `.message.content` is either a string or an
+array of typed blocks. Extracting from `.content` returns empty and the
+scan silently reports zero interruptions.
 
 ```bash
-jq -c 'select(.type == "user" or .type == "assistant")' "$f"
+# Select conversational turns, then pull text from the correct path.
+jq -rc '
+  select(.type == "user" or .type == "assistant") |
+  { type,
+    text: ( .message.content
+            | if type == "array" then (map(select(.type=="text") | .text) | join(" "))
+              elif type == "string" then .
+              else "" end ) }
+' "$f"
 ```
+
+- A transcript mixes many top-level `.type` values
+  (`attachment`, `system`, `last-prompt`, `file-history-snapshot`,
+  `permission-mode`, …). Only `user` / `assistant` carry conversation;
+  filter to those two, never assume the whole file is conversational.
+- **Zero-result guard:** if the selection yields zero `user` messages
+  across all transcripts, do NOT report "no interruptions" — the
+  extraction path is likely wrong for this schema version. Warn that
+  the transcript schema looks unrecognised and fall back to
+  reconstructing corrections from `git log` + commit messages, which
+  is schema-independent.
 
 Pair each interruption with the **immediately preceding assistant
 turn** — the tool call, file edit, or proposed action that triggered
