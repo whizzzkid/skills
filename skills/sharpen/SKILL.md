@@ -15,14 +15,14 @@ allowed-tools:
   - Edit
   - AskUserQuestion
 model: opus
-effort: medium
+effort: high
 model-invocable: true
 user-invocable: true
 license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.27-214705'
+  version: '2026.05.28-213801'
   model:
     openai: o3
     google: gemini-2.5-pro
