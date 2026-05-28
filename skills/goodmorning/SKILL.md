@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-205011'
+  version: '2026.05.28-210500'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -586,6 +586,24 @@ both.
 
 **Wait for all 5 agents to complete.** Merge their results with the
 `carry_over` dataset from Stage 0.
+
+**HARD RULE — cross-check every carry-over item against live state before
+surfacing.** A carry-over from a prior brief is a *stale assertion* until
+re-verified against this run's freshly-fetched data.
+
+- For each carry-over with a domain source (Lattice task, Jira ticket, PR,
+  email thread, calendar event), match it to the corresponding live record
+  fetched in Stage 1.
+- Drop the carry-over if the live record shows it is already completed, the
+  deadline has passed, or the status contradicts the carry-over claim
+  (e.g., the brief says "fill out QPR self-rating" but Lattice shows no
+  pending task for the user).
+- Pay closest attention to Lattice/review-cycle items — their status
+  changes outside the agent's visibility (cycle closes, submission
+  completes) and they go stale faster than tickets or PRs.
+- Carry-overs without a live source to cross-check against (free-text
+  reminders from evening.md) pass through but render with a freshness
+  warning.
 
 ### 2a. Interactive Triage
 
