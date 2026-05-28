@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.27-005500'
+  version: '2026.05.28-221015'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -203,6 +203,15 @@ same function body — refactors often remove the behavior but leave
 the comment. Update or delete the comment if false; stale comments
 asserting old behavior or describing removed intent are a top-3
 reviewer flag.
+
+**Claim-without-pinning-test check.** A comment can be accurate yet
+unverified. For each `always` / `only` / `never` / `must` claim — and
+especially type-coercion claims (JSON `false` vs string `"false"`,
+Ruby truthiness, Go `nil` vs zero-value, JS `0`/`""`/`null`) — grep the
+test suite for an `it` / `test` / `assert` block that exercises the
+exact condition the comment asserts. If none exists, flag
+`suggestion`: the invariant is correct today but silently brittle, and
+a reviewer bot will request the pinning test.
 
 ### 2.5 Hardcoded base / branch sweep
 
@@ -604,6 +613,38 @@ production code were inverted, deleted, or replaced with a no-op.
 - Blocker — the test provides zero coverage of the function under test.
 - Fix: construct the expected value independently of the input (literal
   array, hand-written sequence, or a known-good fixture).
+
+### 2.21 Numeric security-gate bounds sweep
+
+A numeric config field that gates a security control (approval
+threshold, LOC ceiling, rate limit, retry cap) with no upper bound lets
+an operator set it arbitrarily high and bypass the gate entirely
+(e.g., `max-lines: 999999` defeats a LOC-based approval gate).
+
+- Grep the diff for new numeric config identifiers: `Max`, `Limit`,
+  `Cap`, `Threshold`, `MaxLines`, `min`, `ceiling` introduced in a
+  config struct, schema, or YAML key.
+- For each, trace the consuming path and verify both: (a) a lower-bound
+  check (positive integer), and (b) a hard ceiling constant enforced
+  before the value gates the control.
+- Missing ceiling on a security-gating field is a `blocker`; missing
+  bound on a non-gating tunable is a `suggestion`.
+
+### 2.22 Pass-through wiring integration test
+
+When the diff changes a script or entrypoint to forward a new value
+from a structured artifact to a downstream call
+(`findings["x"]` → `run(param: findings["x"])`), unit tests on each end
+(serialization at the source, behavior at the sink) do not cover the
+wire itself — the key lookup and forward.
+
+- Detect the pattern: a new `<collection>["<key>"]` or `.get(<key>)`
+  read feeding a new argument to a downstream function/command in a
+  script or entrypoint.
+- Verify an integration/end-to-end test constructs a fixture with the
+  key set and asserts the downstream behavior fires.
+- Flag `suggestion` when both unit ends are covered but the wire is
+  not; the forwarding line is new code and needs its own coverage.
 
 After mechanical sweeps land their findings, dispatch a fresh subagent
 with no prior context to critique the diff. The subagent operates only
