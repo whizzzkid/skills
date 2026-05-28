@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-180416'
+  version: '2026.05.28-181941'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -1171,13 +1171,14 @@ constrained by Slack's paste behavior — not by markdown aesthetics.
 
 ```
 - 👈🏽 Yesterday:
-   - {achievement} <{url}|{text}> [<{url}|{text}> ...]
-   - ... (3-4 highest-impact items)
+   - {group label or single achievement} [if grouped, no link here]
+      - <{url}|{repo#number-or-text}>
+      - <{url}|{repo#number-or-text}>
+   - {achievement} <{url}|{repo#number-or-text}>
 - 👉🏽 Today:
-   - {priority} <{url}|{text}>
-   - ... (3-4 time-sensitive items, deadlines first)
+   - {priority} <{url}|{repo#number-or-text}>
 - ✋🏽 Blockers:
-   - {blocker} <{url}|{text}>
+   - {blocker} <{url}|{repo#number-or-text}>
    - ... (omit the section entirely if no blockers)
 ```
 
@@ -1222,22 +1223,30 @@ payload embedded in `morning.html`.
   a conflict/dependency. If none, omit the bullet entirely (do not emit
   an empty Blockers heading).
 
-**Source-link enforcement.** Every bullet in Yesterday/Today/Blockers
-must include at least one `<url|text>` link pointing to its primary
-artifact (PR, ticket, Slack thread, doc). Items with multiple
-artifacts list each `<url|text>` space-separated on the same line.
-Items with no external artifact (e.g., a meeting debrief, a
-synthesized priority) may omit the link but should still appear if
-they belong in the standup.
+**Source-link enforcement.** Every leaf bullet in
+Yesterday/Today/Blockers must include exactly one `<url|text>` link
+pointing to its primary artifact (PR, ticket, Slack thread, doc).
+Items with no external artifact (meeting debrief, synthesized
+priority) may omit the link but should still appear if they belong
+in the standup.
 
-**HARD RULE: Grouped bullets need one link per artifact.** A bullet
-that summarizes N artifacts (e.g., "Merged 4 PRs: …", "Closed 3
-tickets: …") is valid only if it carries N space-separated
-`<url|text>` links on the same line — one per artifact in the group.
-One link for the whole group is a violation: the per-bullet check is
-satisfied at the artifact level, not the sentence level. If listing
-every link makes the bullet unreadable, split into one bullet per
-artifact instead.
+**HARD RULE: One link per bullet.** Never place more than one
+`<url|text>` on a single bullet line. Multiple links on one line
+produce visual noise in Slack and make individual items hard to
+click. When N artifacts belong together (e.g., a batch of merged
+PRs, a set of PRs to review):
+
+- Emit a parent bullet with the group label and **no link**.
+- Sub-list each artifact as a child bullet carrying its single
+  `<url|text>`.
+- Never inline the group as "Merged: <a> <b> <c>" — always nest.
+
+**HARD RULE: GitHub PR/issue link label = `repo#number`.** Every
+GitHub PR or issue link emits its label as `repo#number` (e.g.,
+`somerepo#NNN`, `another-repo#NNN`). Bare `#NNN` is forbidden — the
+repo name is required for context, especially when the brief is
+pasted outside its original surface. Applies to every link in the
+brief, not just the standup snippet.
 
 **HTML rendering:**
 - Render the snippet inside its own card titled "Standup Snippet"
@@ -1259,6 +1268,15 @@ artifact instead.
 - Build the clipboard payload from `textContent` of the same encoded
   block (or from a separate string the encoder emitted), never from
   raw template literals that bypassed encoding.
+- **HARD RULE: Nested `<ul><li>` structure only.** Render the standup
+  as a single top-level `<ul>` whose `<li>` children are
+  Yesterday/Today/Blockers, each containing a child `<ul>` for its
+  sub-points (and a further-nested `<ul>` for grouped artifacts under
+  a parent bullet). Never emit Yesterday/Today/Blockers as `<p>`,
+  `<b>`, `<h*>`, or any flat-heading variant. Slack's `text/html`
+  clipboard paste preserves nesting only when the source HTML carries
+  real `<ul>/<li>` hierarchy; flat structures collapse to a single
+  indent level.
 
 **Markdown rendering:** add a `## Standup Snippet` section as the last
 section before `## Notes`. The user copies directly from the rendered
