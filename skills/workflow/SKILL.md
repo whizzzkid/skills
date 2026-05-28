@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.27-233512'
+  version: '2026.05.28-190613'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -711,6 +711,22 @@ or any other method.** This is non-negotiable. `wk-pr` handles:
 ### Post-push sync
 
 `wk-commit` handles PR description sync and stale comment resolution after every push. See `wk-commit` for the full Post-Push PR Sync rules.
+
+**HARD RULE: Auto-sync drifted artifacts — never ask permission to
+fix obvious drift.** After any push, significant code change, or
+approach pivot, audit every dependent artifact (PR title/body,
+self-review comments, ticket description, related docs) and update
+it in the same turn — without a "want me to update X?" prompt.
+
+- Asking permission to fix obvious drift wastes a turn and
+  surfaces decision fatigue for a non-decision.
+- Confirm only when the **content** of the sync is genuinely
+  ambiguous (e.g., the new description requires a judgment call
+  the user has not made yet). Never confirm the **decision** to
+  sync.
+- Applies to PR body (`wk-commit §Post-Push PR Sync`), self-review
+  comments (`wk-self-review` on approach pivots), Jira ticket
+  descriptions (`wk-jira`), and docs (`wk-docs`).
 
 ### Self-review sync on approach pivots
 
