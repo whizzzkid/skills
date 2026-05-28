@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.27-215726'
+  version: '2026.05.28-203524'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -163,6 +163,32 @@ Quote wildcard entries so YAML parsers don't interpret `*` as a glob anchor.
 Writing the body before running the RED phase (testing baseline agent behavior
 without the skill) violates the `superpowers:writing-skills` TDD contract.
 
+**HARD RULE — skills live in `$WK_SKILLS_HOME`, never `~/.claude/skills/`.**
+`~/.claude/skills/` is read-only — it is managed by the install step that
+syncs from the skills repo. Direct writes there bypass change management,
+versioning, and review.
+
+- Always scaffold into `$WK_SKILLS_HOME/skills/<name>/`.
+- If `$WK_SKILLS_HOME` is unset, stop and ask the user where the skills
+  repo lives — do not default to the installed path.
+
+**HARD RULE — model-invocation frontmatter.** Use `model-invocable: true`
+to mark a skill as model-invocable. Never use `disable-model-invocation:
+false` — it is a no-op (skills are model-invocable by default) and reads
+as misleading dead config. To opt out, set `disable-model-invocation: true`.
+
+**HARD RULE — sub-command state must define a deterministic fallback.**
+Any sub-command (e.g., `/wk-foo:bar`) that reads session-scoped state
+(active mode, active config, current context) must explicitly state the
+behavior when that state is absent.
+
+- Pick a default and document it in the skill body.
+- Emit a one-line confirmation in the sub-command output naming the
+  resolved state (`"compressing using mode: brief (default — no active
+  mode)"`).
+- Refusing or silently guessing are both wrong; the user cannot debug
+  either.
+
 ## Step 7: Show the scaffold and prompt
 
 Display the full scaffolded `SKILL.md` to the user. Then print:
@@ -188,6 +214,17 @@ cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5
 Must print `Done!`. If it prints `No skills found` or exits non-zero:
 - Re-run from the repo root (`$WK_SKILLS_HOME`)
 - Check that `name:` in frontmatter uses only letters, numbers, and hyphens
+
+**HARD RULE — `allowed-tools` must match the body two-way.** Before
+declaring the skill ready:
+
+- Grep the skill body for every tool-call pattern (`Bash(`, `Read(`,
+  `Edit(`, `WebFetch(`, `Skill(`, MCP tool names). Every match must
+  appear in `allowed-tools`.
+- Walk each `allowed-tools` entry in reverse — every entry must be
+  exercised by a concrete step in the body. Remove orphaned entries.
+- Missing entries fail silently at runtime. Orphaned entries grant
+  unnecessary permissions and rot into stale config.
 
 Confirm the skill appears in the registry:
 
