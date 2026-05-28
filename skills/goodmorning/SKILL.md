@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-175042'
+  version: '2026.05.28-175307'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -1104,11 +1104,11 @@ generated_at: {ISO_8601_UTC}
 
 ## Standup Snippet
 - 👈🏽 Yesterday:
-   - {achievement} {bare URL}
+   - {achievement} <{url}|{text}>
 - 👉🏽 Today:
-   - {priority} {bare URL}
+   - {priority} <{url}|{text}>
 - ✋🏽 Blockers:
-   - {blocker} {bare URL}
+   - {blocker} <{url}|{text}>
 
 ## Notes
 _Space for anything that comes up during the day._
@@ -1171,22 +1171,23 @@ constrained by Slack's paste behavior — not by markdown aesthetics.
 
 ```
 - 👈🏽 Yesterday:
-   - {achievement} {bare URL} [{bare URL} ...]
+   - {achievement} <{url}|{text}> [<{url}|{text}> ...]
    - ... (3-4 highest-impact items)
 - 👉🏽 Today:
-   - {priority} {bare URL}
+   - {priority} <{url}|{text}>
    - ... (3-4 time-sensitive items, deadlines first)
 - ✋🏽 Blockers:
-   - {blocker} {bare URL}
+   - {blocker} <{url}|{text}>
    - ... (omit the section entirely if no blockers)
 ```
 
-**HARD RULE:** Bare URLs only. Slack does not render markdown
-`[text](url)` syntax when pasted from the clipboard; it renders the
-literal brackets and parentheses. Always emit URLs as bare strings
-(Slack auto-linkifies them on paste). This applies to both the
-markdown file (so the user can copy from the source) and the HTML
-copy-to-clipboard payload.
+**HARD RULE: Slack mrkdwn link format only.** Emit every link as
+`<url|text>` — Slack's native mrkdwn syntax — never markdown
+`[text](url)`. Markdown link syntax pastes as literal brackets and
+parentheses; Slack mrkdwn renders as a clickable label on paste.
+Applies to both the markdown file and the HTML copy-to-clipboard
+payload. Bare URLs are acceptable only when no useful label exists
+(e.g., the URL itself is the most informative text).
 
 **HARD RULE:** Emoji lead characters (`👈🏽`, `👉🏽`, `✋🏽`) are mandatory
 on the Yesterday, Today, and Blockers bullets respectively. After
@@ -1222,34 +1223,36 @@ payload embedded in `morning.html`.
   an empty Blockers heading).
 
 **Source-link enforcement.** Every bullet in Yesterday/Today/Blockers
-must include at least one bare URL pointing to its primary artifact
-(PR, ticket, Slack thread, doc). Items with multiple artifacts list
-each URL space-separated on the same line. Items with no external
-artifact (e.g., a meeting debrief, a synthesized priority) may omit
-the URL but should still appear if they belong in the standup.
+must include at least one `<url|text>` link pointing to its primary
+artifact (PR, ticket, Slack thread, doc). Items with multiple
+artifacts list each `<url|text>` space-separated on the same line.
+Items with no external artifact (e.g., a meeting debrief, a
+synthesized priority) may omit the link but should still appear if
+they belong in the standup.
 
-**HARD RULE: Grouped bullets need one URL per artifact.** A bullet
+**HARD RULE: Grouped bullets need one link per artifact.** A bullet
 that summarizes N artifacts (e.g., "Merged 4 PRs: …", "Closed 3
-tickets: …") is valid only if it carries N space-separated bare URLs
-on the same line — one per artifact in the group. One URL for the
-whole group is a violation: the per-bullet check is satisfied at the
-artifact level, not the sentence level. If listing every URL makes
-the bullet unreadable, split into one bullet per artifact instead.
+tickets: …") is valid only if it carries N space-separated
+`<url|text>` links on the same line — one per artifact in the group.
+One link for the whole group is a violation: the per-bullet check is
+satisfied at the artifact level, not the sentence level. If listing
+every link makes the bullet unreadable, split into one bullet per
+artifact instead.
 
 **HTML rendering:**
 - Render the snippet inside its own card titled "Standup Snippet"
   positioned at the top of the dashboard (above the priorities card)
   so the user can grab it first thing.
 - Include a "Copy to clipboard" button that copies the **plain-text
-  payload with bare URLs** — not the rendered HTML. Use
-  `navigator.clipboard.writeText(plainText)` with the same indented
-  bullet structure as the markdown version.
+  payload with Slack mrkdwn `<url|text>` links** — not the rendered
+  HTML. Use `navigator.clipboard.writeText(plainText)` with the same
+  indented bullet structure as the markdown version.
 - Inside the card, display the plain text in a monospace block so
   what the user sees matches what they paste.
 
 **Markdown rendering:** add a `## Standup Snippet` section as the last
 section before `## Notes`. The user copies directly from the rendered
-file; bare URLs ensure Slack-paste fidelity.
+file; `<url|text>` links ensure Slack-paste fidelity with clickable labels.
 
 ### Open for review
 
