@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-192832'
+  version: '2026.05.29-210734'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -438,6 +438,19 @@ There is no fixed checklist. You decide what matters based on the actual changes
 Follow the code wherever it leads — if a changed function is called from 5
 places, read all 5. If a new dependency is added, evaluate it.
 
+### Allowlist and privilege changes — compare against siblings, not zero
+
+When the diff adds an entry to a security allowlist (exec allowlist,
+permission list, firewall rule, capability grant), judge it against the
+entries already present — not against an empty list.
+
+- Reflexive framing treats "added to allowlist = wider attack surface." That is
+  wrong when the new entry is strictly less capable than a sibling already
+  allowed.
+- Compare the new entry's capabilities to existing ones. If it is strictly less
+  privileged than an already-present entry, say so in the review body — it
+  anchors the security verdict to evidence and pre-empts reviewer alarm.
+
 ### Read framework source when local install is unavailable
 
 Worktree review environments often lack a full dependency install
@@ -551,6 +564,15 @@ analysis document written to `.review-playground/`.
   or local-only file/branch reference stated as a permanent fact. It resolves
   on one machine only and leaks personal environment structure. Fix: drop the
   path, use a repo-relative path, or replace with a generic description.
+- **Cited source-of-truth audit:** when a skill/config doc names a live code
+  file as authoritative ("see `{path}` — source of truth if anything here
+  drifts"), read that file and verify every constraint the doc states —
+  allowlist entries, character classes, field names, enum values — against the
+  live code. Treat any drift as a **blocker**: a doc that misstates an
+  allowlist or schema ships a broken config at user-invocation time, and
+  disclosure in the PR body does not fix the artifact users actually invoke.
+  Watch for claims satisfied only by a companion PR still open on another
+  branch — verify against the current branch's code, not the promised state.
 
 Ensure `.review-playground/` is in `.gitignore`:
 
@@ -1083,6 +1105,10 @@ never pure Confirmed outcomes (see Phase 5 HARD RULE).
   verdict, not the method.
 - **Structurally-obvious findings.** Never state "no X blockers" when the
   absence is structural (no code → no code bugs).
+- **Diff narration.** Never restate information the reader sees in the diff —
+  test counts, field/variable names, regex identifiers, list contents. Limit
+  the body to the verdict plus one non-obvious insight (a security or
+  architectural implication the diff does not make obvious).
 - **Bot re-narration.** Never restate what a bot already said, and never
   narrate bot-validation outcomes as fact ("Validated N findings from
   {bot} — all reproduced"). If a confirmed bot finding matters, address
