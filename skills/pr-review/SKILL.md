@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-070720'
+  version: '2026.05.29-073831'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -149,6 +149,12 @@ Scan the diff for changes that introduce or alter the project's architecture.
 When matched, run `wk-arch-review` and fold its findings into this review
 (Phase 3 prioritisation, Phase 5 comments, the summary).
 
+**HARD RULE — a spec/design doc is an unconditional trigger.** Any changed file
+matching `docs/(specs|adr|arch|design|rfc)/` invokes `wk-arch-review` **before
+Phase 3**, even when the diff contains no code. "Doc-only" is not a skip reason
+— a spec that misdescribes the system is as harmful as wrong code, and the spec
+is often the only place the architecture is stated.
+
 - **Trigger when any holds:**
   - A changed path is an architecture/design doc — case-insensitive match on
     `docs/(specs|adr|arch|design|rfc)/`, or a filename containing
@@ -167,7 +173,9 @@ When matched, run `wk-arch-review` and fold its findings into this review
 
 - Treat arch-review's 🔴/🟠 findings as blockers in Phase 5 — attach each to
   the relevant file/line, or the review body when it spans the change.
-- Skip silently when no trigger matches — most PRs are not architectural.
+- Skip silently only when **no** trigger matches — most code PRs are not
+  architectural. A doc-only diff is never a skip when it touches a spec/design
+  path.
 
 ## Phase 2: Existing Review Comments
 
@@ -490,6 +498,14 @@ analysis document written to `.review-playground/`.
   missing-coverage cases, edge-case prompts.
 - Eval fixtures can be validated by reading the matcher logic and
   tracing match behavior manually rather than executing it.
+- **Arithmetic audit:** cross-check every numeric literal in a table or
+  enumerated claim ("all six", counts, fixture floors) against the actual
+  items counted in the doc — a split or added section leaves stale counts.
+- **Local-path / personal-artifact audit:** flag as **blocker** any committed
+  absolute path containing a username, home directory, worktree/workspace dir,
+  or local-only file/branch reference stated as a permanent fact. It resolves
+  on one machine only and leaks personal environment structure. Fix: drop the
+  path, use a repo-relative path, or replace with a generic description.
 
 Ensure `.review-playground/` is in `.gitignore`:
 
