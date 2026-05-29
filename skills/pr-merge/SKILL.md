@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-062850'
+  version: '2026.05.29-071310'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -122,7 +122,7 @@ gh pr view {number} --json reviewDecision,reviews \
       repository(owner:$owner, name:$repo) {
         pullRequest(number:$number) {
           reviewThreads(first:100) {
-            nodes { isResolved isOutdated path line
+            nodes { id isResolved isOutdated path line
               comments(first:1) { nodes { author { login } body } }
             }
           }
@@ -133,10 +133,12 @@ gh pr view {number} --json reviewDecision,reviews \
           | map(select(.isResolved == false and .isOutdated == false))'
   ```
 
-- Count threads where `isResolved == false` AND `isOutdated == false`.
-- Exclude threads whose root-comment author is the PR author (self-review) —
-  those are not external reviewer feedback.
-- If **any** unresolved external thread exists, invoke
+- **HARD RULE — count ALL unresolved non-outdated threads, regardless of
+  author.** Do not filter out self-review threads. Branch protection has no
+  concept of "self-review"; every unresolved thread blocks the merge at the
+  platform level. Excluding self-authored threads passes the skill's own gate,
+  then GitHub rejects the merge with `base branch policy prohibits the merge`.
+- For unresolved threads authored by **reviewers or bots**, invoke
   [`wk-pr-resolve`](../pr-resolve/README.md) before proceeding — do not merge,
   do not block-and-stop:
 
@@ -144,10 +146,17 @@ gh pr view {number} --json reviewDecision,reviews \
   Skill(wk-pr-resolve, args="{number}")
   ```
 
-- Re-run the GraphQL query after `wk-pr-resolve` returns. Continue only when
-  zero unresolved external threads remain.
-- Failure mode: merging or halting on unresolved feedback strands the
-  reviewer's comments unaddressed in a merged PR.
+- `wk-pr-resolve` excludes self-review threads from triage, so it leaves
+  threads the PR author opened untouched. For any unresolved **self-review**
+  threads that remain, resolve them as a pre-merge cleanup — confirm with the
+  user, then mark each resolved by `id`:
+
+  ```bash
+  gh api graphql -f query='mutation($id:ID!){resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}' -F id=<threadId>
+  ```
+
+- Re-run the GraphQL query. Continue only when **zero** unresolved non-outdated
+  threads remain (any author).
 
 ## Step 5: Verify no open action items
 
