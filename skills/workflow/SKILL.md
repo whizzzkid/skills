@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-220733'
+  version: '2026.05.29-073833'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -975,6 +975,11 @@ after all code is complete:
 exceptions. Mandatory regardless of whether the task completed,
 partially completed, failed, or was abandoned. Auto mode does not
 exempt this phase. Skipping the retro is a workflow violation.
+
+**HARD RULE: Never ask whether to capture learnings.** Invoke `wk-learn`
+immediately after every skill run and after every user correction —
+unconditionally, the same as committing after a code change. Surfacing it as a
+question ("should I capture learnings for X?") is a violation; capture, don't ask.
 
 The retro:
 - Auto-invokes `wk-learn scan` to mine the session transcript for
