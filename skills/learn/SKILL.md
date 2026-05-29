@@ -27,7 +27,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-063141'
+  version: '2026.05.29-071753'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -130,6 +130,15 @@ severity: <low | medium | high>
 
 Use a 2–4 word kebab-case slug (e.g., `missing-null-check`,
 `wrong-api-endpoint`, `good-parallel-pattern`).
+
+**HARD RULE — scrub employer / org literals before writing.** A learning file
+is committed to a public repo; a literal employer or org name blocks the commit
+at `.githooks/scrub-staged.sh` and leaks identity.
+
+- Replace a literal employer/org token with `$EMPLOYER` or `$GITHUB_ORG`.
+- Parameterize the employer/org **segment of a path**, keeping the rest:
+  `~/gitc/<employer>/` → `~/gitc/$EMPLOYER`. Do not drop the path — the agent
+  resolves `$EMPLOYER` at run time.
 
 ## Step 4: Signal for distillation
 

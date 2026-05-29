@@ -176,6 +176,7 @@ dynamic, resolved from environment variables at runtime:
 Rules:
 - Never write an employer name, org name, or company slug as a literal string in any `SKILL.md`, `README.md`, `AGENTS.md`, script, or reference file.
 - Never commit learnings, notes, or reference files that contain a literal employer/org name. Scrub before committing: replace literals with `$EMPLOYER` or `$GITHUB_ORG`.
+- Parameterize the employer/org **segment of a path** instead of dropping the path: `~/gitc/<employer>/` → `~/gitc/$EMPLOYER` (and the same for a `$GITHUB_ORG` segment). The agent resolves the env var at run time, so the path still works.
 - Never embed an employer/org slug in MCP tool name patterns. Use a generic description instead (e.g. "search for a Google Calendar MCP tool via `ToolSearch`") — MCP tool names are environment-specific and cannot be predicted from a skill file.
 - If you encounter a literal employer or org name anywhere in the tree during a sharpen/edit pass, replace it in the same commit.
 

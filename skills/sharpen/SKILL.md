@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-213801'
+  version: '2026.05.29-071754'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -335,6 +335,11 @@ For each grep match in the proposed text:
 - **Replace** with the generic mechanism / placeholder — describe
   the *behavior* (what makes the case match the rule) instead of
   the *identity* (what the case is called).
+- **Parameterize, don't drop, real paths.** When a filesystem path
+  carries an employer/org segment, replace only that segment with
+  `$EMPLOYER` / `$GITHUB_ORG` and keep the structure:
+  `~/gitc/<employer>/` → `~/gitc/$EMPLOYER`. The agent resolves the
+  env var at run time, so the path stays usable.
 - **Justify inline** only when the literal token is required —
   stable API names like `PRRT_*`, verbatim error messages from an
   API (`422 "Line could not be resolved"`), framework-defined env
