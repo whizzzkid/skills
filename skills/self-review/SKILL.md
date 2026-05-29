@@ -13,6 +13,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
   - Write
+  - Skill
 model: opus
 effort: medium
 model-invocable: true
@@ -21,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.27-210401'
+  version: '2026.05.29-070721'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -127,6 +128,30 @@ stage an inline comment on the first in-hunk line of that file:
 
 - Resolve `{branch}` from `gh pr view --json headRefName --jq .headRefName`.
 - Snap `line` to a hunk-valid position per Step 3.5 before POSTing.
+
+### Architecture-level change → invoke [`wk-arch-review`](../arch-review/README.md)
+
+When the diff introduces or alters the project's architecture, run
+`wk-arch-review` first and use its findings to seed self-review context — the
+human reviewer needs the design rationale and known gotchas up front.
+
+- **Trigger when any holds:**
+  - A changed path is an architecture/design doc — case-insensitive match on
+    `docs/(specs|adr|arch|design|rfc)/`, or a filename containing
+    `architecture`, `design`, `spec`, `rfc`, `adr`, `hld`, `lld`, or `tech-spec`.
+  - The diff introduces infrastructure/topology change (new service, datastore,
+    queue, cache, external dependency, IaC), a trust-boundary/auth change, a
+    public API/contract change, or a migration that reshapes data ownership.
+- **Invoke** (changed doc path when one changed, else the PR):
+
+  ```
+  Skill(wk-arch-review, args="<changed-doc-path | PR number>")
+  ```
+
+- Fold the result in: post a top-level self-review note linking the design
+  rationale, and add inline comments on the components arch-review flagged
+  (SPOFs, unhappy paths, risky assumptions) so reviewers see them in context.
+- Skip silently when no trigger matches.
 
 ## Step 2.5: Reconcile against existing self-review
 

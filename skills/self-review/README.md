@@ -7,7 +7,7 @@
 | Mode | Trigger |
 |------|---------|
 | User-invocable | `/wk-self-review` or "self-review this PR" |
-| Model-invocable | automatic: invoked by `wk-pr` after CI passes |
+| Model-invocable | automatic: invoked by [`wk-pr`](../pr/README.md) after CI passes |
 
 ## How It Works
 
@@ -47,3 +47,7 @@ sequenceDiagram
   comments.
 - Signal over noise: design decisions, security-sensitive paths, and behavioral gotchas merit
   comments; formatting fixes and obvious renames do not.
+- **Architecture changes escalate to [`wk-arch-review`](../arch-review/README.md):** Step 2 detects
+  diffs that introduce/alter architecture (design docs, new services/datastores/IaC, trust-boundary
+  or API/contract changes, ownership-reshaping migrations), runs the review, and seeds self-review
+  context — a rationale note plus inline comments on the flagged SPOFs and risky assumptions.
