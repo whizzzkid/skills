@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-200501'
+  version: '2026.05.29-085948'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -169,6 +169,29 @@ git add <implementation files> <handoff doc>
 git commit -m "feat: ✨ apply X (removes NEXT_PHASE.md handoff)"
 ```
 
+## Prohibited Terms in Commit Messages
+
+**HARD RULE:** Never name prohibited or internal tokens (vendor codenames,
+internal project names, ticket-system prefixes on the denylist, etc.) in
+commit messages, PR titles, or issue text — even when the commit's purpose
+is to remove those tokens from files.
+
+- Commit messages are permanent git history; they survive any file-level
+  scrub. A "describe what was removed" message re-leaks the token into
+  history, defeating the cleanup.
+- Describe the change by **category**, not by token name:
+  - ✅ `chore: 🔧 scrub internal vendor codenames from committed files`
+  - ❌ `chore: 🔧 remove ACME_INTERNAL and project-X from files`
+- The same rule applies to PR descriptions, review comments, and issue
+  bodies — any text that touches a hosted service.
+
+### Enforcement
+
+If the repo ships a prohibited-terms file (commonly `.prohibited-terms`,
+`.denylist`, or similar gitignored config), the `commit-msg` hook should
+read it and block any message that matches. When installing or updating
+commit hooks, verify prohibited-term matching is included.
+
 ## Post-Push: PR Sync
 
 **HARD RULE:** After every successful push to a branch that has an open PR, the PR
@@ -303,6 +326,7 @@ If the user declines or the thresholds aren't met, leave history alone.
 | Hook failure | Stop, ask user to run manually |
 | Push succeeded + open PR exists | Run PR Sync — diff title/body vs branch, `gh pr edit` if drifted |
 | Push succeeded + no PR | Skip PR Sync silently |
+| Message names a prohibited token | Stop — rewrite using category description only |
 
 ---
 
