@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-073833'
+  version: '2026.05.29-192835'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -273,6 +273,25 @@ If a match exists, decide in the same commit whether to remove
 the prior version, replace it, or merge — never add alongside.
 Shadowed duplicates pass tests when the live copy is correct
 and silently corrupt behavior when the stale copy wins.
+
+### Spec pre-flight — extend an in-flight spec before creating a new one
+
+Before producing a new spec/design doc, check for a related spec already
+in flight on an open PR and extend it rather than landing a parallel file.
+
+- Grep open PRs for specs in the same feature area before planning a new
+  one:
+
+  ```bash
+  gh pr list --state open --json number,headRefName,files \
+    --jq '.[] | select(.files[].path | test("docs/specs/")) | {number, files: [.files[].path]}'
+  ```
+
+- If a related spec exists in an open PR, stack on that branch and extend
+  the existing doc. Only create a standalone spec when no related in-flight
+  spec exists.
+- Skipping this produces two parallel specs that the user later has to
+  merge by hand — a doc merge plus a rebase.
 
 ### Plan Presentation
 

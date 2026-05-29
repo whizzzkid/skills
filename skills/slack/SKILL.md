@@ -25,7 +25,7 @@ license: MIT
 group: communication
 metadata:
   author: whizzzkid
-  version: '2026.05.28-183517'
+  version: '2026.05.29-192834'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -132,7 +132,10 @@ structure.**
   real `<a href>` tags and nested `<ul><li>` structure. Slack's
   desktop app respects the HTML MIME type on paste and renders
   clickable labels with preserved indentation. `textContent`-only
-  copies strip every link.
+  copies strip every link. Fall back to
+  `navigator.clipboard.writeText(el.innerText)` when `ClipboardItem`
+  is unavailable (older browsers, insecure context) — labels degrade
+  to plain text but the copy still works.
 
 Default to Context C whenever generating a copy button on a
 dashboard. Use Context A only when posting via the Slack API. Use
