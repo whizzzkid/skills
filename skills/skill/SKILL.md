@@ -1,11 +1,11 @@
 ---
 name: wk-skill
 description: >-
-  Scaffold a new wk-* skill from the canonical template. Use when creating a
-  new skill from scratch — generates the directory, fills frontmatter, applies
-  best practices, hooks into wk-calver / wk-learn, and verifies installation.
-  Trigger phrases: "create a skill", "new skill", "bootstrap a skill",
-  "scaffold a skill", "/wk-skill <name>".
+  Create a new wk-* skill from scratch — generates the directory, fills
+  frontmatter, writes the full skill body and README, applies best practices,
+  hooks into wk-calver / wk-learn, and verifies installation. Trigger phrases:
+  "create a skill", "new skill", "bootstrap a skill", "scaffold a skill",
+  "/wk-skill <name>".
 argument-hint: '<skill-name> [description hint]'
 allowed-tools:
   - Bash
@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-210441'
+  version: '2026.05.29-070346'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -38,19 +38,19 @@ metadata:
 
 # Skill
 
-Scaffold a new `wk-*` skill from the canonical template, pull in any relevant
-field learnings, and wire up all infrastructure hooks.
+Create a new `wk-*` skill end to end — directory, frontmatter, full body,
+README, field learnings, and infrastructure hooks.
 
 ## When to Use
 
 - Creating a new skill from scratch
-- Bootstrapping a skill directory before writing its body
 - When `/wk-skill <name>` is invoked directly
 
-**REQUIRED BACKGROUND:** Read `superpowers:writing-skills` before filling in
-the skill body — the TDD RED-GREEN-REFACTOR cycle applies to all skill
-authoring. This skill creates the scaffold only; the body comes after the RED
-phase (baseline test without the skill).
+**Implement the full skill when asked.** Generate frontmatter plus a complete,
+runnable body and its README in one pass. Do not stop at a skeleton. Do not
+gate delivery on any test-first ceremony — write the skill, install it, commit
+it. Apply a RED-GREEN-REFACTOR hardening pass only if the user explicitly asks
+for one.
 
 ## Step 1: Check environment
 
@@ -91,8 +91,8 @@ Also grep for the skill name / topic across existing learnings:
 grep -rl "<name>" "$WK_SKILLS_HOME/learnings/" 2>/dev/null
 ```
 
-Read any matches. Surface key insights as a bullet list before scaffolding —
-these become the first draft of the "Common Mistakes" section.
+Read any matches. Surface key insights as a bullet list before writing the
+skill — these become the first draft of the "Common Mistakes" section.
 
 ## Step 4: Determine metadata
 
@@ -125,22 +125,35 @@ Invoke `wk-calver` to get the UTC timestamp for `metadata.version`.
 date -u '+%Y.%m.%d-%H%M%S'
 ```
 
-## Step 6: Scaffold the skill
+## Step 6: Write the skill
 
 ```bash
 mkdir -p "$WK_SKILLS_HOME/skills/<name>"
 ```
 
-Write `$WK_SKILLS_HOME/skills/<name>/SKILL.md` with:
+Write `$WK_SKILLS_HOME/skills/<name>/SKILL.md` with the **full body** — not a
+skeleton:
 - Frontmatter filled in from Steps 4–5, including `group: <group>` before `metadata:`
-- Skeleton body: `# <Title>`, `## When to Use`, `## Step 1`, `## Quick Reference`, `## Requirements`, `## Post-Completion`
+- Complete body: `# <Title>`, `## When to Use`, numbered `## Step N` sections
+  with concrete imperative instructions and runnable commands, `## Quick
+  Reference`, `## Requirements`, `## Post-Completion`.
+- Every Step carries real behavior — commands, checks, decision rules — derived
+  from the user's description and Step 3 learnings. Never leave
+  `<!-- DESIGN NOTES -->` or "RED phase not yet run" placeholders unless the
+  user explicitly requested a scaffold-only pass.
 - `## Post-Completion` always ends with:
   ```
   Invoke `wk-learn` with this skill's short name as the argument
   (e.g., `wk-learn <name>`).
   ```
-- If Step 3 surfaced learnings, add a pre-filled `## Common Mistakes` section
-  with those insights
+- If Step 3 surfaced learnings, add a `## Common Mistakes` section with those
+  insights.
+
+Write the sibling `$WK_SKILLS_HOME/skills/<name>/README.md` in the **same
+commit** (AGENTS.md README co-change rule). Follow the per-skill format in
+`skills/README.md`: `# wk-<name>` heading (matching the `name:` field), purpose,
+trigger, key phases/rules, and integration points. Add a row to
+`skills/README.md`'s table when the skill is in scope for the top-level index.
 
 **HARD RULE — MCP tools use wildcards, never employer-specific IDs.** When
 populating `allowed-tools` with MCP connector entries, replace the org/tenant
@@ -158,32 +171,6 @@ allowed-tools:
 
 This applies to all MCP tool patterns: `mcp__claude_ai_<Service>_*__<operation>`.
 Quote wildcard entries so YAML parsers don't interpret `*` as a glob anchor.
-
-**HARD RULE:** Write only the skeleton — no behavior instructions yet.
-Writing the body before running the RED phase (testing baseline agent behavior
-without the skill) violates the `superpowers:writing-skills` TDD contract.
-
-- **Length or detail in the user's description does NOT authorize skipping RED.**
-  A rich paragraph in the invocation feels like "they've done the RED for me,
-  this is just GREEN" — that rationalization is wrong. RED tests *baseline
-  agent behavior without the skill* so the body fills the actual gap, not the
-  imagined one. The description shapes the eventual GREEN body; it never
-  replaces the RED measurement.
-- **Capture supplied detail in HTML comments under empty Step headings.** When
-  the user provides behavioral detail in the request, write it into
-  `<!-- DESIGN NOTES: ... -->` blocks inside otherwise-empty `## Step N` stubs.
-  Behavior lands only after RED produces a documented baseline failure that
-  the design notes inform.
-- **Every Step heading in a new scaffold ships with this marker:**
-
-  ```markdown
-  ## Step N: <name>
-
-  <!-- RED phase not yet run — fill in after testing baseline behavior -->
-  ```
-
-  Writing behavior then requires deleting an explicit marker, not filling
-  empty space.
 
 **HARD RULE — skills live in `$WK_SKILLS_HOME`, never `~/.claude/skills/`.**
 `~/.claude/skills/` is read-only — it is managed by the install step that
@@ -211,23 +198,15 @@ behavior when that state is absent.
 - Refusing or silently guessing are both wrong; the user cannot debug
   either.
 
-## Step 7: Show the scaffold and prompt
+## Step 7: Present the skill
 
-Display the full scaffolded `SKILL.md` to the user. Then print:
+Display the completed `SKILL.md` and `README.md`, then continue directly to
+Step 8 (install) and Step 9 (commit) — the skill is ready to ship. Do not stop
+and wait for the user to "fill in the body"; the body is already written.
 
-> "Scaffold written to `skills/<name>/SKILL.md`.
->
-> **Next steps (follow `superpowers:writing-skills`):**
-> 1. RED — test a subagent on your scenario *without* the skill; document
->    exact rationalizations and failures.
-> 2. GREEN — fill in the skill body to address those specific failures.
-> 3. REFACTOR — identify new loopholes, add explicit counters, re-test.
->
-> Run `/wk-skill --install` after writing the body to verify and commit."
+## Step 8: Install and verify
 
-## Step 8: Install and verify (run after body is written)
-
-When the user has filled in the skill body and asks to install/verify:
+After writing the body and README (Step 6), install and verify:
 
 ```bash
 cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5
@@ -256,7 +235,7 @@ npx skills list -a=claude 2>/dev/null | grep "wk-<name>"
 
 ## Step 9: Commit
 
-Invoke `wk-commit` with message:
+Invoke `wk-commit` with the `SKILL.md` and `README.md` staged together:
 
 ```
 ✨ feat(skills): add wk-<name> skill
@@ -266,16 +245,16 @@ Invoke `wk-commit` with message:
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk-skill <name>` | Full scaffold + metadata prompts |
-| `/wk-skill <name> "description"` | Scaffold with pre-filled description |
-| `/wk-skill --install` | Skip scaffold, run Steps 8–9 on current dir |
+| `/wk-skill <name>` | Full implementation + metadata prompts |
+| `/wk-skill <name> "description"` | Implement with pre-filled description |
+| `/wk-skill --install` | Skip authoring, run Steps 8–9 on current dir |
 
 ## Requirements
 
 - `$WK_SKILLS_HOME` set to the skills repo root
 - Write access to `$WK_SKILLS_HOME/skills/`
 - `npx` available for install verification
-- `superpowers:writing-skills` read before filling in the skill body
+- `superpowers:writing-skills` (only for an explicitly-requested RED-GREEN-REFACTOR pass)
 
 ---
 
