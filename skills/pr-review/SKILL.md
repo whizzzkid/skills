@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-185709'
+  version: '2026.05.29-192832'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -313,6 +313,11 @@ acknowledging a "Fix applied" thread:
   playground (Phase 4), or — for non-executable concerns — re-read the
   changed code and confirm the specific failure mode the comment named is
   gone.
+- When the author's reply or fix asserts how the surrounding system
+  behaves ("the engine does no dispatch", "this path is advisory only"),
+  verify the claim against the relevant source file — not against the
+  spec/PR prose alone. Grep for the behavior the claim denies; absence in
+  the source validates the claim, presence refutes it.
 - If validation shows the issue persists, reclassify the thread as **Fix
   attempted, still wrong** and draft the follow-up instead.
 
