@@ -23,6 +23,7 @@ allowed-tools:
   - Write
   - Edit
   - Agent
+  - Skill
   - AskUserQuestion
 model: opus
 effort: high
@@ -32,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.28-210600'
+  version: '2026.05.29-070720'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -141,6 +142,32 @@ Thread the focus list through later phases:
 
 Before moving on, announce what you found:
 > "Reviewing PR #N: *title* — X files changed, Y commits. Base: `{base_branch}`. Author asks: {k} focus item(s). Let me dig in."
+
+### Detect architecture-level changes → invoke [`wk-arch-review`](../arch-review/README.md)
+
+Scan the diff for changes that introduce or alter the project's architecture.
+When matched, run `wk-arch-review` and fold its findings into this review
+(Phase 3 prioritisation, Phase 5 comments, the summary).
+
+- **Trigger when any holds:**
+  - A changed path is an architecture/design doc — case-insensitive match on
+    `docs/(specs|adr|arch|design|rfc)/`, or a filename containing
+    `architecture`, `design`, `spec`, `rfc`, `adr`, `hld`, `lld`, or `tech-spec`.
+  - The diff introduces infrastructure/topology change — new service, new
+    datastore/queue/cache, new external dependency on a hot path, IaC
+    (terraform/k8s/helm), or a deploy/runtime topology change.
+  - The diff changes a trust boundary, auth flow, or a public API/contract.
+  - A migration reshapes data ownership or the consistency model.
+- **Invoke** (pass the changed doc path when one changed, else the PR so
+  arch-review evaluates the design implied by the code):
+
+  ```
+  Skill(wk-arch-review, args="<changed-doc-path | PR number>")
+  ```
+
+- Treat arch-review's 🔴/🟠 findings as blockers in Phase 5 — attach each to
+  the relevant file/line, or the review body when it spans the change.
+- Skip silently when no trigger matches — most PRs are not architectural.
 
 ## Phase 2: Existing Review Comments
 

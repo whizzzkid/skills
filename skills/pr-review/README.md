@@ -52,3 +52,7 @@ flowchart TD
 - **Mutation testing of PR tests is built-in:** Phase 4 copies implementation files, mutates them (flip
   conditionals, hardcode returns), runs the PR's tests against the mutant, and flags tests that survive. A
   mutation-surviving test provides false confidence.
+- **Architecture changes escalate to [`wk-arch-review`](../arch-review/README.md):** Phase 1 detects diffs
+  that introduce/alter architecture (design docs, new services/datastores/IaC, trust-boundary or API/contract
+  changes, ownership-reshaping migrations) and folds its SPOF / unhappy-path / assumption findings into the
+  review as blockers.
