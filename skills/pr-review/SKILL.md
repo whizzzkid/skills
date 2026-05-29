@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-073831'
+  version: '2026.05.29-075502'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -840,7 +840,7 @@ validation outcome decides the reply, not the fact of duplication:
 
 | Phase 4 outcome | Phase 5 action |
 |-----------------|----------------|
-| **Confirmed** | **Skip silently per thread.** No inline reply and no per-thread body anchor. The bot thread already stands; a "yes the bot was right" line is noise. A single **collective acknowledgment line** in the review body (see "Compose the review body") is required when ≥ 1 bot finding was Confirmed — it tells the author the agent validated the bot rather than ignored it. Only reply per-thread if the playground surfaced new evidence the bot missed. |
+| **Confirmed** | **Skip silently per thread.** No inline reply and no per-thread body anchor. The bot thread already stands; a "yes the bot was right" line is noise. Do not narrate the confirmation in the review body — a "validated N findings" line is an antipattern (see "Compose the review body"). Address a confirmed bot finding only by its substance, and only when it changes the verdict. Only reply per-thread if the playground surfaced new evidence the bot missed. |
 | **Refuted** | Reply with `**Could not reproduce** — <counter-evidence>` + brief description of what was tested. Always reply — silent skip leaves the author guessing. |
 | **Inconclusive** AND agent independently flagged the same issue | Reply with the agent's own evidence + suggestion fix (the agent's verdict carries the thread). |
 | **Inconclusive** AND agent did not flag it | Leave the thread alone. Note in the Phase 5 summary so the user can override. |
@@ -852,13 +852,12 @@ is only justified when the agent has new evidence beyond confirming
 the bot's exact claim. Pure Confirmed outcomes get silent skip at the
 thread level: no inline reply, no per-thread body anchor.
 
-**Collective acknowledgment is required, not optional.** When ≥ 1 bot
-finding was Confirmed in Phase 4, the review body must carry one short
-line naming the bots and the count (e.g., `Validated N findings from
-{bot-a}, {bot-b} — all reproduced.`). This is body-level, not
-per-thread, and does not anchor to any specific thread. Silence at the
-body level leaves the author guessing whether the agent ran the bots'
-checks; one line resolves it without re-litigating each thread.
+**Do not narrate bot-validation in the body.** A "Validated N findings
+from {bot} — all reproduced" line is an antipattern — it states facts
+about other bots' work that add no value for the author. When a confirmed
+bot finding matters, address its **substance** in the body (what it means
+for the PR), never the fact of confirmation. Pure Confirmed outcomes get
+silent skip at both thread and body level.
 
 Reserve body anchors and live replies for:
 
@@ -1029,18 +1028,21 @@ Bot-thread counter-evidence notes (option (a) above) are folded in
 Only refuted or new-evidence cases earn a per-thread body anchor —
 never pure Confirmed outcomes (see Phase 5 HARD RULE).
 
-**Collective bot acknowledgment line.** When ≥ 1 bot finding was
-Confirmed in Phase 4, emit exactly one body-level line above the
-per-thread anchors (if any) and above the footer, of the form:
+**Review body antipatterns — never emit any of these:**
 
-- `Validated N findings from {bot-a}, {bot-b} — all reproduced.` when
-  every queued bot finding was Confirmed.
-- `Validated N findings from {bot-a}: M confirmed, K refuted, L
-  inconclusive.` when the outcomes are mixed.
-
-Omit the line only when zero bot findings were queued in Phase 2.
-Never name individual file:line pairs in this line — that is the
-per-thread anchor's job.
+- **Blast-radius pre-judgment.** Never state "blast radius is low/high"
+  before `wk-arch-review` has run; the arch pass determines blast radius,
+  not the diff type. "Doc-only" is a diff-surface fact, not a scope verdict.
+- **Process meta-commentary.** Never mention which skills or tools were
+  invoked (e.g. "I ran an architecture pass") — the author needs the
+  verdict, not the method.
+- **Structurally-obvious findings.** Never state "no X blockers" when the
+  absence is structural (no code → no code bugs).
+- **Bot re-narration.** Never restate what a bot already said, and never
+  narrate bot-validation outcomes as fact ("Validated N findings from
+  {bot} — all reproduced"). If a confirmed bot finding matters, address
+  its **substance** (what it means for the PR), not the fact of
+  confirmation.
 
 Every inline comment body also receives the canonical footer per
 `wk-gh` Step 4 — apply at payload-render time so no `comments[]`
