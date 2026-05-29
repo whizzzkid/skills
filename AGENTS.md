@@ -1,5 +1,23 @@
 # Agent Conventions
 
+## Source of Truth
+
+- **`AGENTS.md` is the single source of truth for all project conventions.**
+- `CLAUDE.md` is a thin pointer that imports this file — it carries no rules
+  of its own.
+- Never edit `CLAUDE.md` directly. A request to "write to", "update", "add
+  to", or "fix" `CLAUDE.md` means **edit `AGENTS.md`**.
+
+## Repeatable-Error Prevention
+
+- **Encode every hard check as a git commit hook.** When a mistake is caught
+  that could recur mechanically, add a pre-commit hook in `.githooks/` and
+  wire it into `lefthook.yml` — never rely on a written instruction alone.
+- A soft fix (a rule in a `SKILL.md` or `AGENTS.md`) is necessary but not
+  sufficient; pair it with a mechanical guard whenever the error is
+  detectable from the staged diff.
+- Document each hook in `.githooks/README.md`.
+
 ## Repository Structure
 
 - Skills live in `skills/<skill-name>/SKILL.md` — each skill has a `group:` frontmatter field indicating its logical group (`rituals`, `pull-request`, `tools`, `workflows`)
@@ -49,6 +67,11 @@ No exceptions; a SKILL.md update without a README.md update is an incomplete com
 **Rename/remove rule:** When a skill is renamed or removed, its `README.md` must be
 renamed/deleted in the same commit as the `SKILL.md` change.
 
+**New-skill rule:** Every new skill ships with its `README.md` in the **same
+commit** as the `SKILL.md` — never a follow-up. Confirm `skills/<name>/README.md`
+exists (matching the `name:` field per the drift check below) and add a row to
+`skills/README.md`'s table when the skill is in scope for the top-level index.
+
 **Root index rule:** `skills/README.md` (the top-level skills index) MUST be updated whenever:
 - A skill is added or removed
 - A skill's `group:` field changes
@@ -63,6 +86,50 @@ skill_name=$(grep '^name:' skills/<skill-name>/SKILL.md | awk '{print $2}')
 readme_heading=$(grep '^# wk-' skills/<skill-name>/README.md | head -1 | sed 's/^# //')
 [ "$skill_name" = "$readme_heading" ] || echo "DRIFT: $skill_name != $readme_heading"
 ```
+
+## Cross-Skill Claims
+
+Cross-skill prose (in any `README.md`, `SKILL.md`, or doc) must reflect what
+the target skill **actually does** — not what is assumed from memory. Before
+writing "`wk-foo` does X", grep the target skill:
+
+```bash
+grep -n "HARD RULE\|writes to\|destination" skills/<target>/SKILL.md
+```
+
+Memory-based assertions about other skills decay fast — verify, don't recall.
+(Example caught in the field: READMEs claimed `wk-retro` writes to
+`~/.claude/memory/`, but its narrative goes to
+`$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md`; only distilled rules
+reach memory.)
+
+## Inter-Skill Links
+
+In any markdown file inside this repo, an inline mention of another `wk-*`
+skill must be a relative link to that skill's README:
+
+```markdown
+- Bad:  See `wk-retro` for the retro flow.
+- Good: See [`wk-retro`](../retro/README.md) for the retro flow.
+```
+
+- Applies to all `skills/*/README.md` files, `skills/README.md`, and other
+  top-level docs.
+- Keep Mermaid `click` directives in sync with the inline links.
+- Use `../<name>/README.md` from a sibling skill's README, `./<name>/README.md`
+  from `skills/README.md`, and the full path from files outside `skills/`.
+- Enforced mechanically by `.githooks/check-skill-links.sh`.
+
+## WIP / Disabled Skills
+
+When a skill is marked WIP (`status: wip`, `model-invocable: false`,
+`user-invocable: false`):
+
+- Add a `> ⚠️ Work in progress` banner at the top of both `SKILL.md` and
+  `README.md`.
+- List the concrete blockers under a `## Blockers` section in the README so a
+  future session can pick it up cold.
+- Re-enabling requires bumping CalVer and dropping the banner in the same commit.
 
 ## Guidelines
 
