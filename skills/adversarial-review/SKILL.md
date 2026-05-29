@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.28-221015'
+  version: '2026.05.29-071312'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -424,6 +424,13 @@ are added to the verdict, not auto-fixed. Surface:
 - Nested ternaries.
 - Undocumented public functions or methods added in the diff.
 - Missing sad-path tests for new error-handling branches.
+- Untested nil/blank branch in presence-guarded builder methods. For any
+  new method that can return nil via `.presence` (or an equivalent
+  build-then-return-empty pattern like `if x.present? ; h[k]=x ; end ;
+  h.presence`), grep the spec for a test that stubs the controlling field
+  to nil/blank and asserts the method (or its caller) receives `nil`. Flag
+  `suggestion` when absent — the nil return path is behaviorally
+  significant and silently brittle without coverage.
 - Temporal dependencies in new async code.
 - Stale comments adjacent to modified code.
 - Empty `catch`/`rescue`/`except` blocks.
