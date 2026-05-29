@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.29-080746'
+  version: '2026.05.29-082627'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -154,7 +154,14 @@ the filesystem.
 
 Read, Glob, and Grep may access any path (read-only).
 
-## Step 3: Write Distilled Retro Entry
+## Step 3: Write Distilled Retro Entry (only if actionable)
+
+**HARD RULE — log only when there is an actionable finding.** Write a retro
+entry only when the session surfaced at least one skill-gap or improvement
+("what could've been better"). No skill-gap → write nothing; the real-time
+`wk-learn` captures already hold anything notable. Never add an entry just to
+record that a session ran. Retro-log volume should trend **down** as the system
+matures — a sparse log is success, not a gap to fill.
 
 **HARD RULE — destination is `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md`,
 never `~/.claude/memory/retro-log.md`.** The retrospect log is a skill-improvement
@@ -162,29 +169,28 @@ artifact; the memory store is for cross-session agent context.
 
 - Create the directory if missing: `mkdir -p "$WK_SKILLS_HOME/learnings/retrospect"`.
 - Append to today's file if it exists; otherwise create.
-- Each session adds one section: `## <HH:MM UTC> — <topic>`.
 
-**HARD RULE — distilled principles only, no narrative.** Each bullet is a one-
-sentence actionable rule, not a story. If a bullet describes *what happened* in
-a specific session, rewrite it as *what to do/avoid* in future sessions.
+**HARD RULE — no timestamps, no work narrative.** The section header is
+`## Session-N` and nothing else — never a time of day, never the task/topic,
+never what was built. The retro records *findings*, not *activity*. Derive N:
+
+```bash
+FILE="$WK_SKILLS_HOME/learnings/retrospect/$(date -u +%F).md"
+N=$(( $(grep -c '^## Session-' "$FILE" 2>/dev/null || echo 0) + 1 ))
+```
+
+**HARD RULE — distilled findings only, two buckets.** Each bullet is a one-
+sentence actionable rule, not a story. Use only these two sections; omit either
+if empty (and if both are empty, write nothing per the rule above):
 
 ```markdown
-## <HH:MM UTC> — <topic>
-
-### Corrections
-- [Rule the agent now follows because of a correction this session]
-
-### Approach
-- [Standing approach change derived from a mid-session redirect]
-
-### Skill gaps
-- [skill-name]: [one-sentence gap; will be folded by Step 4 wk-learn invocation]
-
-### Decisions
-- [Rule] — [one-clause rationale]
+## Session-N
 
 ### What worked
-- [Pattern worth reinforcing — phrased as a rule, not a story]
+- [pattern worth reinforcing as a rule]
+
+### What could've been better
+- [skill-name]: [one-sentence actionable gap — folded by Step 4 wk-learn]
 ```
 
 **HARD RULE — no internal references.** This is a **public** repo; the retro
@@ -214,6 +220,10 @@ fi
 # user-land absolute paths (home dir / worktree) must be anonymized
 if grep -nE '(/Users/|/home/)[a-z._-]+/|'"$HOME"'/' "$DRAFT" 2>/dev/null; then
   echo "FAIL: user-land absolute path in draft — anonymize to repo-relative or /tmp/agent/…"; exit 1
+fi
+# no time-of-day stamps — the header is Session-N, not a clock time
+if grep -nE '\b[0-9]{1,2}:[0-9]{2}\b|UTC' "$DRAFT" 2>/dev/null; then
+  echo "FAIL: timestamp in retro entry — use 'Session-N', not a time of day"; exit 1
 fi
 ```
 
@@ -265,7 +275,7 @@ learning file" section of the `wk-learn` skill — retro uses the same format.
 
 ### HARD RULE — invoke `wk-learn` per skill gap (do not stop at the log entry)
 
-For every bullet under **Skill gaps** or **Corrections** that names a skill,
+For every bullet under **What could've been better** that names a skill,
 invoke `wk-learn` in this same retro response — do not defer:
 
 ```
