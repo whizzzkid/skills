@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<!--
+  Architecture Review Playground — self-contained, dependency-free.
+  Regenerate per system by editing ONLY the DATA BLOCK below (NODES / EDGES /
+  FINDINGS). Everything else is generic.
+
+  Edge semantics: [a, b] means "a depends on b" (a needs b to function).
+  Failing b marks every node that transitively depends on b as impacted.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Architecture Review Playground</title>
+<style>
+  :root { --bg:#0f1115; --panel:#1a1d24; --ink:#e6e9ef; --muted:#9aa3b2;
+          --ok:#3fb950; --edge:#3a3f4b; --fail:#f85149; --impact:#d29922;
+          --accent:#58a6ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;
+         background:var(--bg); color:var(--ink); display:grid;
+         grid-template-columns:1fr 340px; grid-template-rows:auto 1fr auto;
+         height:100vh; }
+  header { grid-column:1/3; padding:12px 18px; border-bottom:1px solid var(--edge);
+           display:flex; align-items:center; gap:14px; }
+  header h1 { font-size:16px; margin:0; }
+  header .hint { color:var(--muted); font-size:12px; }
+  #stage { position:relative; overflow:auto; }
+  svg { width:100%; height:100%; display:block; }
+  .node rect { fill:var(--panel); stroke:var(--edge); stroke-width:1.5;
+               cursor:pointer; rx:8; }
+  .node.ok rect { stroke:var(--ok); }
+  .node.failed rect { fill:#3a1417; stroke:var(--fail); stroke-width:2.5; }
+  .node.impact rect { fill:#3a2d12; stroke:var(--impact); stroke-width:2; }
+  .node text { fill:var(--ink); font-size:12px; pointer-events:none;
+               text-anchor:middle; }
+  .node.selected rect { stroke:var(--accent); stroke-width:3; }
+  .edge { stroke:var(--edge); stroke-width:1.5; marker-end:url(#arrow); }
+  .edge.impact { stroke:var(--impact); }
+  aside { grid-row:2/3; background:var(--panel); border-left:1px solid var(--edge);
+          padding:16px; overflow:auto; }
+  aside h2 { font-size:13px; text-transform:uppercase; color:var(--muted);
+             letter-spacing:.05em; margin:0 0 8px; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px;
+          background:#222; margin:2px 4px 2px 0; }
+  .blast { color:var(--impact); font-weight:600; }
+  footer { grid-column:1/3; border-top:1px solid var(--edge); padding:12px 18px;
+           background:var(--panel); display:flex; gap:14px; align-items:flex-start; }
+  footer .sev { font-weight:700; margin-right:6px; }
+  button { background:#21262d; color:var(--ink); border:1px solid var(--edge);
+           border-radius:6px; padding:6px 12px; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  .reset { margin-left:auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Architecture Review Playground</h1>
+  <span class="hint">Click a component to inject a failure → downstream impact turns amber. Click again to recover.</span>
+  <button class="reset" onclick="reset()">Reset</button>
+</header>
+
+<div id="stage"><svg id="svg"></svg></div>
+
+<aside>
+  <h2>Component</h2>
+  <div id="detail"><p class="hint" style="color:var(--muted)">Select a node to inspect its role, dependencies, and blast radius.</p></div>
+</aside>
+
+<footer>
+  <div style="flex:1">
+    <h2 style="margin:0 0 4px;color:var(--muted);font-size:12px">Gotcha <span id="gidx"></span></h2>
+    <div id="gotcha"></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <button onclick="cycle(-1)">‹ Prev</button>
+    <button onclick="cycle(1)">Next ›</button>
+  </div>
+</footer>
+
+<script>
+/* ===================== DATA BLOCK (edit per system) ===================== */
+const SYSTEM = "Example: Order Service";
+const NODES = [
+  { id:"client",  label:"Client",        role:"User-facing app issuing orders." },
+  { id:"lb",      label:"Load Balancer",  role:"Routes traffic to API instances." },
+  { id:"api",     label:"Order API",      role:"Validates and orchestrates orders." },
+  { id:"queue",   label:"Order Queue",    role:"Buffers order events for workers." },
+  { id:"worker",  label:"Fulfilment Wkr", role:"Consumes queue, fulfils orders." },
+  { id:"db",      label:"Primary DB",     role:"System of record (single primary)." },
+  { id:"cache",   label:"Cache",          role:"Hot reads for product catalog." },
+  { id:"pay",     label:"Payments (3P)",  role:"External payment provider." },
+];
+// [a, b] => a depends on b
+const EDGES = [
+  ["lb","api"], ["client","lb"], ["api","db"], ["api","cache"], ["api","queue"],
+  ["api","pay"], ["worker","queue"], ["worker","db"],
+];
+const FINDINGS = [
+  { sev:"🔴 Critical", title:"Primary DB is a SPOF",
+    body:"Single primary with no documented replica/failover. Loss halts both API writes and worker fulfilment.",
+    rec:"Add a synchronous replica with automated failover; test failover under load." },
+  { sev:"🟠 High", title:"No idempotency on order creation",
+    body:"Queue redelivery can double-fulfil and double-charge.",
+    rec:"Require an idempotency key per order; dedupe at API and worker." },
+  { sev:"🟡 Medium", title:"Cache stampede risk",
+    body:"On cache eviction, all API instances hit the DB simultaneously.",
+    rec:"Add request coalescing + jittered TTLs." },
+];
+/* =================== END DATA BLOCK =================== */
+
+const svg = document.getElementById("svg");
+const NS = "http://www.w3.org/2000/svg";
+document.getElementById("title").textContent = "Architecture Review — " + SYSTEM;
+
+// dependency maps
+const deps = {}, rdeps = {};           // deps[a] = [b...]; rdeps[b] = [a...]
+NODES.forEach(n => { deps[n.id]=[]; rdeps[n.id]=[]; });
+EDGES.forEach(([a,b]) => { deps[a].push(b); rdeps[b].push(a); });
+
+// layer by longest dependency depth (nodes with no deps = layer 0)
+const layer = {};
+function depthOf(id, seen=new Set()) {
+  if (layer[id]!=null) return layer[id];
+  if (seen.has(id)) return 0; seen.add(id);
+  const d = deps[id].length ? 1 + Math.max(...deps[id].map(x=>depthOf(x,seen))) : 0;
+  return layer[id]=d;
+}
+NODES.forEach(n=>depthOf(n.id));
+const maxLayer = Math.max(...Object.values(layer));
+
+// position: dependencies to the RIGHT (higher layer = more depended-upon = right)
+const byLayer = {};
+NODES.forEach(n => (byLayer[layer[n.id]] ||= []).push(n));
+const COLW=190, ROWH=90, PADX=60, PADY=50, BW=140, BH=46;
+const pos = {};
+Object.entries(byLayer).forEach(([L, ns]) => {
+  ns.forEach((n,i) => { pos[n.id] = { x: PADX + (maxLayer-L)*COLW, y: PADY + i*ROWH }; });
+});
+const W = PADX*2 + (maxLayer+1)*COLW, H = PADY*2 + Math.max(...Object.values(byLayer).map(a=>a.length))*ROWH;
+svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+// arrow marker
+svg.innerHTML = `<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+  <path d="M0,0 L10,5 L0,10 z" fill="#3a3f4b"/></marker></defs>`;
+
+let failed = new Set(), selected = null;
+
+function impactedSet() {
+  // any node that transitively depends on a failed node is impacted
+  const impacted = new Set();
+  const visit = id => rdeps[id].forEach(p => { if (!impacted.has(p)) { impacted.add(p); visit(p); } });
+  failed.forEach(f => visit(f));
+  return impacted;
+}
+
+function render() {
+  const impacted = impactedSet();
+  [...svg.querySelectorAll(".edge,.node")].forEach(e=>e.remove());
+  // edges
+  EDGES.forEach(([a,b]) => {
+    const pa=pos[a], pb=pos[b];
+    const line=document.createElementNS(NS,"line");
+    line.setAttribute("x1", pa.x); line.setAttribute("y1", pa.y+BH/2);
+    line.setAttribute("x2", pb.x+BW); line.setAttribute("y2", pb.y+BH/2);
+    line.setAttribute("class","edge"+((failed.has(b)||impacted.has(a))?" impact":""));
+    svg.appendChild(line);
+  });
+  // nodes
+  NODES.forEach(n => {
+    const p=pos[n.id];
+    const g=document.createElementNS(NS,"g");
+    let cls="node ok";
+    if (failed.has(n.id)) cls="node failed";
+    else if (impacted.has(n.id)) cls="node impact";
+    if (selected===n.id) cls+=" selected";
+    g.setAttribute("class",cls);
+    g.setAttribute("transform",`translate(${p.x},${p.y})`);
+    g.innerHTML = `<rect width="${BW}" height="${BH}" rx="8"></rect>
+                   <text x="${BW/2}" y="${BH/2+4}">${n.label}</text>`;
+    g.onclick = () => { failed.has(n.id)?failed.delete(n.id):failed.add(n.id); selected=n.id; render(); detail(n.id); };
+    svg.appendChild(g);
+  });
+}
+
+function detail(id) {
+  const n = NODES.find(x=>x.id===id);
+  const impacted = (()=>{ const s=new Set(); const visit=k=>rdeps[k].forEach(p=>{if(!s.has(p)){s.add(p);visit(p);}}); visit(id); return [...s]; })();
+  document.getElementById("detail").innerHTML = `
+    <p style="font-weight:600;font-size:15px;margin:0 0 6px">${n.label}
+      ${failed.has(id)?'<span class="pill" style="background:#3a1417;color:#f85149">FAILED</span>':''}</p>
+    <p style="color:var(--muted);margin:0 0 12px">${n.role}</p>
+    <h2>Depends on</h2>
+    <div>${deps[id].length?deps[id].map(d=>`<span class="pill">${NODES.find(x=>x.id===d).label}</span>`).join(""):'<span class="hint" style="color:var(--muted)">nothing (leaf)</span>'}</div>
+    <h2 style="margin-top:12px">Blast radius if this fails</h2>
+    <div>${impacted.length?`<span class="blast">${impacted.length} component(s):</span> `+impacted.map(d=>`<span class="pill">${NODES.find(x=>x.id===d).label}</span>`).join(""):'<span class="hint" style="color:var(--muted)">no downstream dependents</span>'}</div>`;
+}
+
+let gi = 0;
+function showGotcha() {
+  const f = FINDINGS[gi];
+  document.getElementById("gidx").textContent = `${gi+1}/${FINDINGS.length}`;
+  document.getElementById("gotcha").innerHTML =
+    `<span class="sev">${f.sev}</span><b>${f.title}</b><br>${f.body}<br>
+     <span style="color:var(--accent)">→ ${f.rec}</span>`;
+}
+function cycle(d){ gi=(gi+d+FINDINGS.length)%FINDINGS.length; showGotcha(); }
+function reset(){ failed.clear(); selected=null; render(); document.getElementById("detail").innerHTML='<p class="hint" style="color:var(--muted)">Select a node to inspect its role, dependencies, and blast radius.</p>'; }
+
+render(); showGotcha();
+</script>
+</body>
+</html>

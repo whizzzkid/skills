@@ -60,18 +60,24 @@ finding is "none observed":
 
 `opus` — deep reasoning required; adversarial by design.
 
+## Reference Templates
+
+Bundled under `references/`, read by the skill at runtime:
+
+- `review-lenses.md` — exhaustive probe checklist for all 8 lenses.
+- `findings-report-template.md` — the findings-report skeleton.
+- `playground-template.html` — self-contained, dependency-free interactive
+  playground (failure injection, blast-radius sidebar, gotchas panel).
+
 ## Noteworthy
 
 - Step 3 output is findings only — no paraphrasing or praise padding
   (except a short "What the Design Gets Right" section for credibility).
-- Playground is generated inline; no external dependency.
+- Playground is self-contained and dependency-free; works offline.
 - "Out of scope" sections in the input doc are explicitly reviewed —
   they often contain the riskiest deferred decisions.
-- Related: [`wk-pr-review`](../pr-review/README.md) (code-level review),
-  [`wk-adversarial-review`](../adversarial-review/README.md) (pre-push
+- Auto-invoked by [`wk-pr-review`](../pr-review/README.md) when a diff changes
+  architecture/spec/design docs or fundamentally alters the project's
+  architecture.
+- Related: [`wk-adversarial-review`](../adversarial-review/README.md) (pre-push
   adversarial check).
-
-## Status
-
-⚠️ **RED phase not yet run.** Step bodies are DESIGN NOTES only — scaffold
-awaiting baseline testing before GREEN implementation.

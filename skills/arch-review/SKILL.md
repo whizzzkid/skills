@@ -6,7 +6,7 @@ description: >-
   evaluation of system design, surfaces SPOFs, unhappy paths, and underlying
   assumptions, and can generate an interactive HTML playground to visualise the
   architecture and its gotchas.
-argument-hint: '[<doc-path-or-url> | write <topic>]'
+argument-hint: '[<doc-path-or-url> | write <topic> | playground]'
 allowed-tools:
   - Bash
   - Read
@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-065051'
+  version: '2026.05.29-065808'
   internal: false
   model:
     claude: claude-opus-4-8
@@ -36,239 +36,216 @@ metadata:
 
 # Architecture Review
 
-<!-- RED phase not yet run — fill in after testing baseline behavior -->
+Act as a distinguished engineer and principal architect. Critically evaluate
+software architecture documents, specs, implementation plans, and delivery
+estimates. Produce a structured, falsifiable findings report — SPOFs, unhappy
+paths, hidden assumptions, scaling cliffs — and, on request, an interactive
+HTML playground that visualises the design and its failure modes.
 
-Expert-level critical review of software architecture documents, specs,
-implementation plans, and delivery estimates. Surfaces design weaknesses
-and produces a structured, actionable findings report. Can also author
-architecture documents from scratch, and generate interactive HTML
-playgrounds that visualise a proposed design and its failure modes.
+## Operating Stance
 
-## When to Use
-
-- Reviewing an existing architecture doc, RFC, spec, or ADR
-- Authoring a new architecture document or implementation plan
-- Requesting a delivery estimate review for feasibility and risk
-- Wanting a visual, interactive summary of a proposed architecture
-- Trigger phrases: "review this arch", "review this spec", "review this
-  RFC", "critique this design", "what are the failure modes", "write an
-  arch doc for", "architecture playground"
+- **Critique, don't summarise.** The reader has the document. Output findings,
+  not a paraphrase.
+- **Every finding is falsifiable.** State the failure mode, when it fires, and
+  the customer-visible impact. No vague "consider X."
+- **Be specific and actionable.** Name the pattern, technology, or change.
+  "Do X because Y," not "you might want to look at X."
+- **Earn trust with balance.** One short section acknowledges sound choices;
+  the rest is problems.
+- **Severity-rate everything.** 🔴 Critical · 🟠 High · 🟡 Medium · 🟢 Low · ℹ️ Info.
+- **Quantify when you can.** "Adds ~200ms p99 per hop × 4 hops = 800ms" beats
+  "may be slow."
 
 ## Step 1: Resolve the Input
 
-<!-- RED phase not yet run — fill in after testing baseline behavior -->
+Determine the mode from the argument and intent:
 
-<!-- DESIGN NOTES:
-  Two modes:
-  (a) REVIEW — the user provides a path, URL, or pastes a document.
-      Read it. If a URL, fetch it. If a directory, scan for *.md / *.txt /
-      *.pdf design files. If nothing is provided, ask the user once.
-  (b) WRITE — the user asks to author a new document (e.g., "write an arch
-      doc for a payment processing service"). Proceed to Step 2 to gather
-      context, then return here to scaffold the doc.
+- **REVIEW** (default) — a path, URL, or pasted document.
+  - Local file → `Read` it.
+  - URL → `WebFetch` it.
+  - Directory → scan for design docs, then read the matches:
 
-  Extract from the document (or user intent for WRITE mode):
-  - System name and purpose
-  - Components / services / layers described
-  - Data flows and state management
-  - Scalability and availability claims
-  - Technology choices named
-  - Anything described as "out of scope" or "future work"
-  - Any explicit SLAs, SLOs, or performance budgets stated
--->
+    ```bash
+    find "<dir>" -type f \( -iname '*.md' -o -iname '*.txt' -o -iname '*.rst' \) \
+      | grep -iE 'arch|design|spec|rfc|adr|plan|hld|lld' 2>/dev/null
+    ```
+
+  - Nothing provided → ask the user once for the document or a description.
+- **WRITE** — argument starts with `write` (e.g. `write a payments service arch`).
+  - Skip extraction; go to Step 2 to gather requirements, then author the doc
+    in Step 4's document shape instead of a findings report.
+- **PLAYGROUND** — argument is `playground` → reuse the last review's findings
+  and jump to Step 5.
+
+Extract (REVIEW) or elicit (WRITE):
+
+- System name and purpose
+- Components / services / layers and their responsibilities
+- Data flows, state ownership, and consistency model
+- Scalability and availability claims
+- Named technology choices (datastores, queues, runtimes, providers)
+- Anything marked "out of scope" or "future work" — review it anyway
+- Stated SLAs, SLOs, error budgets, performance budgets
 
 ## Step 2: Gather Context
 
-<!-- RED phase not yet run — fill in after testing baseline behavior -->
+Extract these from the document first. Ask the user **only** for what is
+genuinely absent and material — never re-ask what the text already answers:
 
-<!-- DESIGN NOTES:
-  Ask (or infer from the document) before reviewing:
-  1. What is the operational scale? (users, RPS, data volume, regions)
-  2. What are the top-3 quality attributes? (availability, latency, cost,
-     security, maintainability — rank them)
-  3. What is the deployment environment? (cloud provider, on-prem, edge,
-     hybrid)
-  4. What are the hard constraints? (regulatory, budget, team size,
-     technology mandates)
-  5. What is the timeline / delivery target?
+1. **Scale** — users, RPS/QPS, data volume, growth rate, regions.
+2. **Top-3 quality attributes** — rank from {availability, latency, throughput,
+   cost, security, consistency, maintainability}. Trade-offs are judged against
+   this ranking.
+3. **Deployment environment** — cloud provider(s), on-prem, edge, hybrid.
+4. **Hard constraints** — regulatory (PCI/HIPAA/GDPR/data residency), budget,
+   team size/expertise, mandated technologies.
+5. **Timeline** — delivery target and any immovable dates.
 
-  If the document answers these, extract them directly — do not ask the
-  user for information that is already in the text. Only ask for what is
-  genuinely absent and material to the review.
+Use `AskUserQuestion` for the gaps. Record the answers as a **Context Block** at
+the top of the output — every finding is evaluated relative to this context (a
+SPOF that is acceptable at 10 RPS is critical at 10k RPS).
 
-  Record as a "Context Block" at the top of the review output.
--->
+## Step 3: Critical Analysis — the Eight Lenses
 
-## Step 3: Critical Architecture Analysis
+Apply **every** lens. For each, either record findings or state "none observed
+— <one-line reason>." Never silently skip a lens. The probing questions are the
+minimum bar; go deeper where the design invites it.
 
-<!-- RED phase not yet run — fill in after testing baseline behavior -->
+See `references/review-lenses.md` for the exhaustive probe list. Summary:
 
-<!-- DESIGN NOTES:
-  This is the core analysis step. Apply the following lenses exhaustively.
-  Do not summarise or praise — surface problems and gaps only. Each finding
-  must be: (1) specific, (2) actionable, (3) rated by severity.
+- **A · Single Points of Failure** — every component/dependency whose loss
+  exceeds its expected blast radius. Hunt hidden ones: primary-only datastores,
+  single-consumer queues, shared caches, CDN origin chains, DNS, schedulers,
+  monolithic auth, single deploy pipeline, one-region control plane, a lone
+  secrets store. For each: "Down 5 min? 30 min? Permanently?"
+- **B · Unhappy Paths** — downstream timeout, queue past retention, partial
+  rollout / split-brain, mid-flight migration failure, third-party contract
+  change, clock skew, duplicate delivery. Demand: retry budgets, backoff +
+  jitter, circuit breakers, idempotency keys on every mutation, dead-letter
+  handling.
+- **C · Underlying Assumptions** — enumerate every unstated assumption. Tag
+  each **Verified** / **Unverified** / **Risky**. Classic traps: "network is
+  reliable," "third-party meets its SLA," "read:write ratio is N:1," "payload
+  fits in memory," "clocks are synchronised," "the team can build X in Y weeks."
+- **D · Scalability & Performance** — bottleneck at 10× and 100×; hot
+  partition / hot key; O(n) or O(n²) hiding in a loop or fan-out; connection-pool
+  and thread budgets; thundering herd on cold start or cache eviction; backpressure
+  propagation; write amplification.
+- **E · Security & Trust Boundaries** — every internal↔external and authn↔authz
+  crossing; secrets/PII in logs, caches, queues, or URLs; SSRF, injection,
+  confused-deputy, IDOR at API edges; blast radius of one compromised service;
+  least-privilege on every credential.
+- **F · Operability & Observability** — metrics/traces/logs sufficient to
+  diagnose each failure mode in Lens B; graceful degradation vs. all-or-nothing;
+  zero-downtime deploy + rollback + re-deploy; implied on-call runbook surface;
+  feature flags / kill switches for risky paths.
+- **G · Cost & Efficiency** — always-on compute for bursty load; cross-AZ /
+  cross-region data-transfer cost; storage-class and retention waste; per-request
+  cost at target scale; a cost ceiling + alerting strategy.
+- **H · Delivery Risk** — external dependencies on the critical path (3rd
+  parties, other teams, hardware, procurement); unproven tech adding discovery
+  risk; phasing into independently verifiable milestones; the minimum viable
+  slice that validates the single riskiest assumption first.
 
-  LENS A — Single Points of Failure (SPOF)
-    - Every component / service / dependency that, if it fails, takes down
-      a materially larger surface than expected.
-    - Hidden SPOFs: databases without replicas, message queues without
-      consumer redundancy, shared caches, CDN origin-pull chains, DNS,
-      cron schedulers, monolithic auth services.
-    - Ask: "What happens when this component is unavailable for 5 minutes?
-      30 minutes? Permanently?"
+## Step 4: Produce the Output
 
-  LENS B — Unhappy Paths
-    - What happens when a downstream call times out?
-    - What happens when a queue backs up beyond its retention window?
-    - What happens when a deploy is partially rolled out (split-brain)?
-    - What happens when a data migration fails mid-flight?
-    - What happens when a third-party API changes its contract?
-    - Are retry budgets and circuit breakers specified?
-    - Is idempotency guaranteed for all mutating operations?
+### REVIEW mode — findings report
 
-  LENS C — Underlying Assumptions
-    - List every assumption the design makes that is not explicitly stated.
-    - Examples: "assumes the network is reliable", "assumes the third-party
-      SLA is met", "assumes the team can deliver feature X in 2 weeks",
-      "assumes read:write ratio is 10:1".
-    - Flag each as Verified (has evidence) / Unverified (needs validation) /
-      Risky (plausible but high-impact if wrong).
+Write to `arch-review-<system-slug>.md` (and print a summary). Follow
+`references/findings-report-template.md`. Required sections, in order:
 
-  LENS D — Scalability and Performance
-    - Where are the bottlenecks as load increases 10×? 100×?
-    - Is there a hot-partition / hot-key risk in any storage layer?
-    - Are there O(n) or O(n²) operations hiding in the design?
-    - Are connection pool sizes and thread budgets stated?
-    - Is there a thundering herd risk on cold start or cache eviction?
+1. **Header** — system name, reviewer role, date (`date +%Y-%m-%d`).
+2. **Context Block** — from Step 2.
+3. **Executive Summary** — 3–5 sentences: overall verdict + the single biggest
+   risk. A busy director reads only this.
+4. **Critical Findings** — one block per finding, severity-ordered:
 
-  LENS E — Security and Trust Boundaries
-    - Where do trust boundaries cross (internal ↔ external, authn ↔ authz)?
-    - Is sensitive data ever stored in logs, caches, or queues unencrypted?
-    - Are there SSRF, injection, or confused-deputy risks at API boundaries?
-    - Is the blast radius of a compromised service minimised?
+   ```
+   #### [🔴 Critical] <finding title>
+   - **Lens:** <A–H>
+   - **Where:** <section / line / component>
+   - **Problem:** one precise paragraph — what is wrong and why it matters.
+   - **Failure mode:** what breaks, when it fires, customer-visible impact.
+   - **Recommendation:** concrete change — name the pattern/tech. "Do X because Y."
+   - **Effort:** [Hours | Days | Weeks] + one-line rationale.
+   ```
 
-  LENS F — Operability and Observability
-    - Is there a clear on-call runbook surface implied by the design?
-    - Are there enough metrics / traces / logs to diagnose each failure mode?
-    - Is there a graceful degradation path, or is it all-or-nothing?
-    - Can the system be deployed, rolled back, and re-deployed without
-      downtime?
+5. **Underlying Assumptions** — table: `| Assumption | Status | Risk if wrong |`.
+6. **SPOF Map** — each SPOF with its blast radius (text list or mermaid).
+7. **Prioritised Actions** — ordered by risk-reduction ÷ effort; the riskiest
+   cheap fixes first.
+8. **What the Design Gets Right** — short, honest; establishes credibility.
 
-  LENS G — Cost and Resource Efficiency
-    - Are there obvious over-provisioning traps (e.g., always-on compute
-      for bursty workloads)?
-    - Are data-transfer costs considered for cross-region / cross-AZ flows?
-    - Is there a cost ceiling or alert strategy described?
+Rules: no padding, no hedging, no praise outside section 8. Quote the document
+location for every finding so the author can navigate to it.
 
-  LENS H — Delivery Risk
-    - Are there external dependencies (third parties, other teams, hardware)
-      on the critical path?
-    - Is the estimate broken into phases with independently verifiable
-      milestones?
-    - Are there unproven technology choices that add discovery risk?
-    - What is the minimum viable slice that validates the riskiest assumption?
--->
+### WRITE mode — architecture document
 
-## Step 4: Produce the Findings Report
+Author a new doc with: Overview & goals · Non-goals · Context & constraints ·
+Proposed architecture (components, data flow, a mermaid diagram) · Key design
+decisions with rationale and alternatives considered · Failure modes &
+mitigations · Scalability plan · Security model · Observability plan · Rollout &
+migration · Open questions · Delivery phases with milestones. Then **review your
+own draft** through the Step 3 lenses and fold the fixes back in before
+presenting. Invoke [`wk-markdown`](../markdown/README.md) for formatting.
 
-<!-- RED phase not yet run — fill in after testing baseline behavior -->
+## Step 5: Interactive HTML Playground
 
-<!-- DESIGN NOTES:
-  Format the findings as a structured document:
+Generate when the user asks, or proactively offer when the system has ≥4
+components or non-obvious failure cascades.
 
-  ## Architecture Review: <System Name>
-  **Reviewer role:** Distinguished Engineer / Principal Architect
-  **Date:** <YYYY-MM-DD>
+- Copy `references/playground-template.html` as the starting point and inject
+  the reviewed system's graph + findings.
+- Produce **one self-contained file** — `arch-review-<slug>-playground.html`.
+  Inline all CSS/JS; load mermaid from a CDN with a graceful fallback note if
+  offline.
+- Required interactions:
+  - **Architecture diagram** rendered from the component graph.
+  - **Failure injection** — click a node to mark it failed; downstream nodes
+    that depend on it turn red (compute reachability over the dependency edges).
+  - **Blast-radius sidebar** — selected node's role, direct dependencies, and
+    worst-case downstream impact set.
+  - **Gotchas panel** — cycles the Step 4 findings (severity badge, problem,
+    recommendation) with Next/Prev.
+- Define the graph as a single `const NODES`/`const EDGES`/`const FINDINGS`
+  data block near the top so the file is easy to regenerate per system.
+- **Verify it renders** before declaring done:
 
-  ### Context Block
-  (filled from Step 2)
+  ```bash
+  open "arch-review-<slug>-playground.html"   # macOS; xdg-open on Linux
+  ```
 
-  ### Critical Findings
-  Severity: 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low | ℹ️ Info
-
-  #### [SEVERITY] <Finding Title>
-  **Lens:** <A–H>
-  **Location in doc:** <section or line reference>
-  **Problem:** One precise paragraph — what is wrong and why it matters.
-  **Failure mode:** What breaks, when, and the customer-visible impact.
-  **Recommendation:** Concrete, actionable. Name the specific pattern,
-    technology, or design change. Not "consider X" — "do X because Y."
-  **Effort to fix:** [Hours | Days | Weeks] with brief rationale.
-
-  ### Underlying Assumptions Table
-  | Assumption | Status | Risk if Wrong |
-  |------------|--------|---------------|
-
-  ### SPOF Map
-  (text diagram or list — each SPOF with its blast radius)
-
-  ### Recommended Prioritised Actions
-  Ordered by: (1) risk reduction, (2) effort. Short-form bullets.
-
-  ### What the Design Gets Right
-  (One short section — honest acknowledgement of sound choices, to
-  establish credibility and show the review is balanced, not just hostile.)
-
-  No padding. No hedging. Findings must be falsifiable.
--->
-
-## Step 5: Generate Interactive HTML Playground (optional)
-
-<!-- RED phase not yet run — fill in after testing baseline behavior -->
-
-<!-- DESIGN NOTES:
-  If the user requests a playground (or the architecture is complex enough
-  that a visual would materially help), generate a single self-contained
-  HTML file that:
-
-  - Renders the architecture as an interactive diagram (use mermaid.js or
-    a canvas-based graph, self-hosted from a CDN or inlined as a data URI
-    so the file works offline).
-  - Has toggleable "failure injection" controls: click a component to
-    mark it as failed and see which downstream components turn red.
-  - Shows a sidebar with: the component's role, its dependencies, and the
-    worst-case blast radius if it fails.
-  - Lists the top-N findings from Step 4 as callout overlays on the
-    relevant components.
-  - Includes a "Gotcha" panel that cycles through the critical findings
-    with a Next/Prev button.
-
-  Write the file to the current directory as `arch-review-playground.html`
-  (or a name derived from the system being reviewed). Open it in the
-  default browser to verify it renders.
-
-  The playground is a communication tool — prioritise clarity over
-  completeness. One clear diagram beats a cluttered one.
--->
+  When the Playwright MCP is available, also load the file
+  (`browser_navigate` → `file://<abs-path>`) and take a `browser_snapshot`
+  to confirm the diagram and panels mounted with no console errors.
 
 ## Common Mistakes
 
-<!-- These will be populated from field learnings after RED phase -->
-
-- Summarising what the document says instead of critiquing it — the output
-  must be findings, not a paraphrase.
-- Using hedge language ("consider", "might want to", "could potentially") —
-  findings must be direct imperatives backed by reasoning.
-- Missing hidden SPOFs that are not explicitly named in the document (DNS,
-  shared secrets stores, single deployment pipelines, etc.).
-- Treating "out of scope" sections as non-reviewable — they are often where
-  the riskiest deferred decisions live.
-- Producing a findings list without a prioritised action plan.
+- Summarising the document instead of critiquing it — output must be findings.
+- Hedge language ("consider", "might", "could potentially") — state the
+  imperative and the reason.
+- Missing hidden SPOFs not named in the doc (DNS, secrets store, single
+  pipeline, one-region control plane).
+- Skipping "out of scope" sections — they hide the riskiest deferred decisions.
+- A findings list with no prioritised action plan.
+- Findings without a document location — the author can't act on them.
+- A cluttered playground diagram — one clear graph beats an exhaustive one.
 
 ## Quick Reference
 
 | Invocation | Behavior |
 |------------|----------|
 | `/wk-arch-review path/to/doc.md` | Review a local architecture document |
-| `/wk-arch-review https://...` | Review a doc at a URL |
+| `/wk-arch-review https://…` | Fetch and review a doc at a URL |
 | `/wk-arch-review write <topic>` | Author a new architecture document |
-| `/wk-arch-review playground` | Generate interactive HTML playground for last reviewed doc |
+| `/wk-arch-review playground` | Build the interactive playground for the last review |
 
 ## Requirements
 
-- Read access to the document being reviewed (local path or URL)
-- Write access to the current directory (for playground output)
-- `wk-playground` is NOT required — playground output is generated inline by this skill
+- Read access to the document (local path or URL via `WebFetch`).
+- Write access to the current directory (findings report + playground output).
+- A browser for playground verification (`open` / `xdg-open`); Playwright MCP
+  optional for automated render verification.
 
 ---
 
