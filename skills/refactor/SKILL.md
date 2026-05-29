@@ -30,7 +30,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-195018'
+  version: '2026.05.29-061449'
   internal: false
   model:
     openai: gpt-4.1
@@ -197,6 +197,24 @@ Mandatory checks per kind of removed line:
 A removed line that the refactor's kind does NOT predict (e.g., an
 `ENV.fetch` removal during a rename) is **suspicious by default** —
 renames don't drop env reads.
+
+### Stale-literal check (constant → resolver / value-bearing rename)
+
+The removed-line audit misses this class — the stale copy is an
+**unchanged** line, not a removed one.
+
+- Run when a refactor replaces a named constant (or symbol) with a
+  resolver/function whose return value differs from a former literal.
+- Grep the **old literal value** across all files in scope — not just
+  the constant's identifier.
+  - Identifier-grep finds symbol references; it misses hardcoded copies
+    of the value in string-literal contexts (format strings, error
+    messages, logs).
+- Require every hit that is not a comment or test fixture to use the
+  resolver's return value, not the stale literal.
+- Failure mode: a stale literal in an error message shows users a
+  wrong/outdated value while every symbol reference looks correctly
+  updated.
 
 ---
 
