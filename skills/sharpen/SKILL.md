@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-071754'
+  version: '2026.05.29-210735'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -474,6 +474,8 @@ Do not return control to the user until all four checks pass:
 
 1. **Install:** `npx skills add . -g -y -a=claude 2>&1 | tail -5` from the repo root — must print `Done!`. Re-run from repo root if it prints `No skills found` or exits non-zero.
 2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated, including its `references/` additions; one chore commit for `.learned.md` renames + `.distilled-sources.log`); use `wk-commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
+   - **After a hook-blocked commit, re-check the index before the next group.** A `git commit` blocked by a pre-commit hook exits non-zero but leaves the staged set intact — the next group's `git add` then sweeps those files into one commit, merging two logical changes. Run `git status --short` after any blocked commit; fix the block and retry that exact commit first, or `git restore --staged <files>` before staging the next group.
+   - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link (`[wk-foo](../foo/README.md)`) from the first draft — bare skill names trip the link-check hook and force a re-commit.
 3. **Push once:** after all commits exist, push a single time. Single-skill runs may push immediately after their lone commit.
 4. **Clean tree:** `git status --short` must be empty — if anything remains, commit or stash it.
 
