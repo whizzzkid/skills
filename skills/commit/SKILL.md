@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-085948'
+  version: '2026.05.29-090339'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -111,6 +111,24 @@ All commits MUST be signed. Never use `--no-gpg-sign`, `-n`, or
 2. Tell the user: "Commit signing failed. Please check your GPG/SSH agent
    configuration and try again."
 3. Do not attempt any workaround that disables signing.
+
+### Preserve signatures when rewriting history
+
+History rewrites (rebase, amend, cherry-pick, squash, `filter-branch`)
+re-create commits and drop the original signature unless re-signed.
+
+- Re-sign every commit a rewrite touches — never let a rewrite emit
+  unsigned commits.
+- Confirm `commit.gpgsign=true` is active, or pass `-S` explicitly
+  (`git rebase -S`, `git commit --amend -S`). Never `--no-gpg-sign`.
+- Verify after any rewrite that every rewritten commit is still signed:
+
+  ```bash
+  git log --show-signature <base>..HEAD
+  ```
+
+- A rewritten commit that loses its signature drops verified status and
+  can fail branch protection that requires signed commits.
 
 ## Pushing
 
