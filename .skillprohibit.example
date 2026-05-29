@@ -1,0 +1,19 @@
+# .skillprohibit — prohibited terms for this PUBLIC repo.
+#
+# Copy this file to `.skillprohibit` (which is .gitignored) and add your real
+# terms there. The check-prohibited hook reads `.skillprohibit` and blocks any
+# staged diff line OR commit message that matches — files AND messages.
+#
+# One `grep -iE` (case-insensitive extended regex) pattern per line.
+# `#` comments and blank lines are ignored.
+#
+# Put internal/vendor codenames, ticket-board prefixes, internal hosts, and
+# legacy product names here. Keep generic CLI words (e.g. a plain "dry-run"
+# flag) OUT — match only the vendor/internal forms.
+#
+# Examples (replace with your real tokens in the gitignored .skillprohibit):
+#   <internal-project-codename>
+#   <vendor-bot-name>
+#   <jira-board-prefix>-[0-9]
+#   <internal-host>\.example\.net
+#   <legacy-company-name>

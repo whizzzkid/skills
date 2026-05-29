@@ -11,6 +11,13 @@ pre-commit:
       run: .githooks/check-learnings-dirs.sh
     check-ticket-refs:
       run: .githooks/check-ticket-refs.sh
+    check-prohibited:
+      run: .githooks/check-prohibited.sh
+
+commit-msg:
+  commands:
+    check-prohibited-msg:
+      run: .githooks/check-prohibited.sh {1}
 
 post-merge:
   commands:

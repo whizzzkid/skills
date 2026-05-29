@@ -2,6 +2,23 @@
 
 Wired through `lefthook.yml` at the repo root.
 
+## check-prohibited.sh — prohibited-terms guard (files + commit messages)
+
+Blocks any staged diff line **and** any commit message that matches a pattern in
+the gitignored `.skillprohibit` file. Runs in two lefthook stages:
+
+- `pre-commit` (no arg) — scans staged added diff lines.
+- `commit-msg` (message file arg) — scans the commit message body.
+
+`.skillprohibit` holds the real internal/vendor codenames, board prefixes,
+hosts, and legacy names (one `grep -iE` pattern per line). It is gitignored, so
+the term list never enters the repo — and neither does this hook embed any term.
+Copy `.skillprohibit.example` → `.skillprohibit` and add your tokens to enable.
+
+Rationale: file-level scrubbing misses commit messages, which are part of
+history. Describing a scrub by naming the scrubbed token re-leaks it; describe
+changes by category instead.
+
 ## check-ticket-refs.sh — internal ticket-ID guard
 
 Pre-commit hook that blocks staged added lines containing an internal tracker
