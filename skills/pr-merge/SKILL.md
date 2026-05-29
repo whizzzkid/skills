@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-071310'
+  version: '2026.05.29-072321'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -199,15 +199,32 @@ gh pr merge {number} --squash --delete-branch
 
   > "Delete the branch `{head}` after merge? (yes / no)"
 
-- After the command returns, confirm the merge succeeded:
+- **HARD RULE — never declare "Merge complete" until `state == "MERGED"`.**
+  `gh pr merge --auto` and merge-queue repos return success while the PR is
+  only *queued*; an immediate state check returns `OPEN`. Poll until merged or
+  ~60s timeout:
 
   ```bash
+  for i in $(seq 1 12); do
+    state=$(gh pr view {number} --json state --jq .state)
+    [ "$state" = "MERGED" ] && break
+    sleep 5
+  done
   gh pr view {number} --json state,mergeCommit --jq '{state, mergeCommit: .mergeCommit.oid}'
   ```
 
-  If `state != "MERGED"`, surface the error and stop.
+- On timeout (`state != "MERGED"`), re-fetch the blockers, stop, and do **not**
+  proceed to Step 7 — never log a null SHA as success:
 
-- Record `{merge_sha}` (the merge commit OID) for use in Step 7.
+  ```bash
+  gh pr view {number} --json mergeStateStatus,reviewDecision
+  # plus the Step 4 unresolved-threads query
+  ```
+
+  > "Auto-merge queued but PR has not merged after ~60s. Likely blockers:
+  > {unresolved threads / failed checks / changes requested}."
+
+- Record `{merge_sha}` (the merge commit OID) only once `state == "MERGED"`.
 
 ## Step 7: Transition the linked ticket
 
