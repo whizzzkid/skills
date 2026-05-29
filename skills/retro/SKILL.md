@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.27-225202'
+  version: '2026.05.29-080746'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -187,14 +187,19 @@ a specific session, rewrite it as *what to do/avoid* in future sessions.
 - [Pattern worth reinforcing — phrased as a rule, not a story]
 ```
 
-**HARD RULE — no employer / internal-project tokens.** Before writing, strip:
+**HARD RULE — no internal references.** This is a **public** repo; the retro
+captures principles, not the identity of the system. Before writing, strip:
 
 - The resolved value of `$EMPLOYER` and `$GITHUB_ORG` (env vars).
-- Any literal internal repo, service, or project name.
-- Reviewer logins, ticket IDs, commit SHAs, PR numbers, specific file paths.
+- Any internal or code-named repo, service, bot, or project.
+- Reviewer logins, ticket IDs, commit SHAs, PR numbers.
+- Hard-coded user-land file paths (home dirs, worktree paths, machine-local
+  absolute paths).
+- Secrets, tokens, credentials, or sensitive information.
 
-Replace with generic placeholders: `{owner}/{repo}`, `{service}`, "the file",
-"the reviewer", "the PR".
+Replace with generic placeholders: `{owner}/{repo}`, `{repo}`, `{bot}`,
+`{service}`, "the file", "the reviewer", "the PR". Anonymize a user-land path to
+repo-relative or `/tmp/agent/…` — never commit an absolute home/worktree path.
 
 ### Validation gate (run after composing the draft, before Write)
 
@@ -204,7 +209,11 @@ DRAFT=/tmp/retro-draft.$$
 DENY="$(printenv EMPLOYER):$(printenv GITHUB_ORG)"
 echo "$DENY" | tr ':' '\n' | grep -v '^$' > /tmp/retro-deny.$$
 if grep -iF -f /tmp/retro-deny.$$ "$DRAFT" 2>/dev/null; then
-  echo "FAIL: forbidden token in draft"; exit 1
+  echo "FAIL: forbidden employer/org token in draft"; exit 1
+fi
+# user-land absolute paths (home dir / worktree) must be anonymized
+if grep -nE '(/Users/|/home/)[a-z._-]+/|'"$HOME"'/' "$DRAFT" 2>/dev/null; then
+  echo "FAIL: user-land absolute path in draft — anonymize to repo-relative or /tmp/agent/…"; exit 1
 fi
 ```
 

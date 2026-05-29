@@ -18,6 +18,35 @@
   detectable from the staged diff.
 - Document each hook in `.githooks/README.md`.
 
+## Public Repo — No Internal References
+
+This repository is **public**. Never write or commit any of the following in
+**any** file — learnings, retros, references, docs, code, or commit messages:
+
+- Internal or code-named projects, services, bots, or repos.
+- Hard-coded user-land file paths (home dirs, worktree paths, any machine-local
+  absolute path).
+- Secrets, tokens, credentials, or other sensitive information.
+- Employer / organization names as literals (use the env-var mechanism in
+  Environment-Specific Identifiers).
+
+**The goal of every learning is the principle and root cause** — phrased so it
+improves a skill that is agnostic to the org, company, environment, or system it
+runs against. A lesson keyed to a specific internal name teaches one case; the
+generic mechanism teaches the class. Distill the principle; discard the identity.
+
+When a concrete token is unavoidable for the lesson to be legible, anonymize it:
+
+- Bot / reviewer → `{bot}` / `{reviewer}`; internal repo / project → `{repo}` /
+  `{project}`; service → `{service}`.
+- Employer / org path segment → `$EMPLOYER` / `$GITHUB_ORG` (resolved at run
+  time; see Environment-Specific Identifiers).
+- User-land path → repo-relative, or a generic placeholder (`/tmp/agent/…`,
+  `~/<workdir>/…`).
+
+`.githooks/scrub-staged.sh` enforces the employer/org denylist mechanically; the
+broader classes above are the author's responsibility — scrub before staging.
+
 ## Repository Structure
 
 - Skills live in `skills/<skill-name>/SKILL.md` — each skill has a `group:` frontmatter field indicating its logical group (`rituals`, `pull-request`, `tools`, `workflows`)

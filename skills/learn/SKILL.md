@@ -27,7 +27,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-071753'
+  version: '2026.05.29-080745'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -131,14 +131,28 @@ severity: <low | medium | high>
 Use a 2–4 word kebab-case slug (e.g., `missing-null-check`,
 `wrong-api-endpoint`, `good-parallel-pattern`).
 
-**HARD RULE — scrub employer / org literals before writing.** A learning file
-is committed to a public repo; a literal employer or org name blocks the commit
-at `.githooks/scrub-staged.sh` and leaks identity.
+**HARD RULE — scrub all internal references before writing.** A learning file
+is committed to a **public** repo. Capture the principle and root cause, never
+the identity of the system it happened on. Forbidden in any learning file:
 
-- Replace a literal employer/org token with `$EMPLOYER` or `$GITHUB_ORG`.
-- Parameterize the employer/org **segment of a path**, keeping the rest:
-  `~/gitc/<employer>/` → `~/gitc/$EMPLOYER`. Do not drop the path — the agent
-  resolves `$EMPLOYER` at run time.
+- Internal or code-named projects, services, bots, or repos.
+- Hard-coded user-land file paths (home dirs, worktree paths, machine-local
+  absolute paths).
+- Secrets, tokens, credentials, or sensitive information.
+- Employer / org names as literals (blocks the commit at
+  `.githooks/scrub-staged.sh`).
+
+Anonymize when a token is unavoidable for legibility:
+
+- Bot / reviewer → `{bot}` / `{reviewer}`; internal repo / project → `{repo}` /
+  `{project}`; service → `{service}`.
+- Employer/org token → `$EMPLOYER` / `$GITHUB_ORG`. Parameterize the **segment
+  of a path**, keeping the rest: `~/gitc/<employer>/` → `~/gitc/$EMPLOYER` (the
+  agent resolves it at run time — do not drop the path).
+- User-land path → repo-relative, or a generic placeholder (`/tmp/agent/…`).
+
+A learning that only makes sense with the internal name in it is not yet
+distilled — rewrite it as the org-agnostic mechanism.
 
 ## Step 4: Signal for distillation
 
