@@ -9,6 +9,8 @@ pre-commit:
       run: .githooks/check-skill-links.sh
     check-learnings-dirs:
       run: .githooks/check-learnings-dirs.sh
+    check-ticket-refs:
+      run: .githooks/check-ticket-refs.sh
 
 post-merge:
   commands:

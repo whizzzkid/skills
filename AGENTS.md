@@ -24,6 +24,7 @@ This repository is **public**. Never write or commit any of the following in
 **any** file — learnings, retros, references, docs, code, or commit messages:
 
 - Internal or code-named projects, services, bots, or repos.
+- Internal tracker / ticket IDs (board keys shaped `PREFIX-NNN`).
 - Hard-coded user-land file paths (home dirs, worktree paths, any machine-local
   absolute path).
 - Secrets, tokens, credentials, or other sensitive information.
@@ -39,13 +40,15 @@ When a concrete token is unavoidable for the lesson to be legible, anonymize it:
 
 - Bot / reviewer → `{bot}` / `{reviewer}`; internal repo / project → `{repo}` /
   `{project}`; service → `{service}`.
+- Internal ticket ID → `BOARD-NUM`.
 - Employer / org path segment → `$EMPLOYER` / `$GITHUB_ORG` (resolved at run
   time; see Environment-Specific Identifiers).
 - User-land path → repo-relative, or a generic placeholder (`/tmp/agent/…`,
   `~/<workdir>/…`).
 
-`.githooks/scrub-staged.sh` enforces the employer/org denylist mechanically; the
-broader classes above are the author's responsibility — scrub before staging.
+Mechanical enforcement: `.githooks/scrub-staged.sh` (employer/org denylist) and
+`.githooks/check-ticket-refs.sh` (ticket-shaped tokens). The remaining classes
+above are the author's responsibility — scrub before staging.
 
 ## Repository Structure
 

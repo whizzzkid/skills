@@ -2,6 +2,18 @@
 
 Wired through `lefthook.yml` at the repo root.
 
+## check-ticket-refs.sh — internal ticket-ID guard
+
+Pre-commit hook that blocks staged added lines containing an internal tracker
+ticket key. It detects the generic ticket shape `[A-Z]{2,}-[0-9]+` and rejects
+anything not on a small allowlist of public, standards-based tokens (`UTF-8`,
+`ISO-8601`, `SHA-256`, `RFC-NNN`, `BOARD-NNN`, …).
+
+No internal board name is embedded in the hook — embedding it would itself leak
+the name. New internal boards are caught automatically. Replace any real ticket
+key with the generic placeholder `BOARD-NUM`. If a genuine public standard trips
+it, add that token to `ALLOW` in the hook.
+
 ## check-learnings-dirs.sh — learnings directory naming guard
 
 Pre-commit hook that blocks any staged path under a `wk-`-prefixed
