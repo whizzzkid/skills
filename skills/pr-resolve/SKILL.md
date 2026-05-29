@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.27-232043'
+  version: '2026.05.29-071311'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -106,6 +106,14 @@ and manage the full resolution cycle from sync to summary.
    stale comments, PR-metadata drift — that this skill historically
    surfaced only after another reviewer round. Blocked verdict means no
    push; fix and re-invoke until clear.
+12. **Implement handoff documents before deleting them.** When the branch
+   contains a handoff doc — `RUN_LOCALLY.md`, `NEXT_PHASE.md`, `HANDOFF.md`,
+   `TODO.md`, or any filename whose name signals remaining work — read it
+   fully and implement every item it describes **before** removing it. Delete
+   it only in the same commit as the last implementation change, never as a
+   standalone cleanup. If the remaining work is large or spans repos, present
+   a plan to the user first. Deleting a handoff doc as "cleanup" silently
+   drops the work it tracked.
 
 ## Step 1: Identify the PR
 
@@ -702,6 +710,14 @@ and route it to the bulk-apply queue. Per-comment consultation is
 reserved for items with a real tradeoff — emitting `(a)/(e)/(d)/(s)`
 for a comment whose own rationale says there is nothing to skip
 forces the user to answer `a` for ceremony.
+
+**Severity is not a bypass.** A bot or reviewer finding marked Major /
+blocker / critical with an empty "no valid reason" skip rationale is
+still `obvious-fix` — apply it directly, do not emit a prompt. High
+severity raises the fix's *priority*, never the need for confirmation.
+The recurring failure is pattern-matching "bot finding + high severity"
+and routing to consultation despite the rationale; the rationale, not
+the severity, decides whether a prompt is owed.
 
 ### Merge duplicate findings on the same line
 
