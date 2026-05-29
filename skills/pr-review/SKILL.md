@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-075502'
+  version: '2026.05.29-185709'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -297,12 +297,30 @@ reply chain — all comments with `in_reply_to_id` pointing to the root.
 
 | Status | How to detect | Action |
 |--------|--------------|--------|
-| **Fix applied** | The file was modified after the comment, AND the concern raised in the comment is no longer present in the current code | Draft a follow-up: "Looks good — thanks for addressing this." |
+| **Fix applied** | The file was modified after the comment, AND the concern is no longer present in the current code | **Validate the fix before acknowledging** (see below). Only after validation passes, draft "Looks good — thanks for addressing this." and queue a 👍 reaction. |
 | **Fix attempted, still wrong** | The file was modified but the concern persists or was only partially addressed | Draft a follow-up explaining what's still off, referencing the current code |
-| **Author asked a question** | The last reply in the thread is from the PR author (not the user), AND it contains a question or request for clarification | Draft a response answering the question based on investigation of the current code |
+| **Deferred to a future ticket** | The author's reply defers the issue to a tracked ticket or follow-up PR (links a ticket, says "follow-up", "separate PR", "next sprint") | Queue a 👍 reaction to acknowledge — no reply needed. **Exception:** if the original comment was `blocker`-severity (correctness, security, data loss), do NOT just react — draft a polite nudge to address it in this PR (see "Nudge on critical deferrals"). |
+| **Author asked a question** | The last reply is from the PR author and contains a question or request for clarification | Draft a response that states the **concrete action or decision the answer requires** — grounded in current-code analysis — not a bare acknowledgment. |
 | **Author pushed back** | The last reply is from the author disagreeing or proposing an alternative | Draft a response acknowledging the pushback and either agreeing with reasoning or reiterating the concern with evidence |
 | **No response** | No replies from the author, no code changes addressing it | Leave as-is — the comment still stands |
 | **Already resolved** | Thread is marked resolved | Skip — no action needed |
+
+**Validate a claimed fix — do not trust the diff alone.** A modified file
+is evidence the author *tried*, not proof the concern is resolved. Before
+acknowledging a "Fix applied" thread:
+
+- Reproduce the original concern against the current code in the
+  playground (Phase 4), or — for non-executable concerns — re-read the
+  changed code and confirm the specific failure mode the comment named is
+  gone.
+- If validation shows the issue persists, reclassify the thread as **Fix
+  attempted, still wrong** and draft the follow-up instead.
+
+**Nudge on critical deferrals.** A `blocker`-severity concern deferred to a
+future ticket still ships the risk in this PR. Draft a follow-up that
+restates the risk in one clause and asks the author to consider fixing it
+in the same PR — politely, not as a demand. Non-blocker deferrals get the
+👍 reaction and nothing more.
 
 **Present follow-ups for approval:**
 
@@ -332,11 +350,33 @@ gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
   --method POST -f body="{follow_up_text}"
 ```
 
+After each reply posts, add the queued emoji reaction to the **root**
+comment of the thread. Use the canonical reactions API and emoji mapping
+in `wk-pr-resolve` ("Add emoji reaction after each reply") — `+1` (👍) for
+acknowledged fixes and deferrals. Reactions are fire-and-forget; a
+non-200 is logged and skipped.
+
 Resolve threads where fixes were acknowledged (with user consent per the
 existing hard rule). Leave all other threads open.
 
-**After follow-ups are posted, proceed to Phase 3** to investigate new
-issues.
+**Staging vs live — thread actions cannot ride in a pending review.**
+GitHub rejects `in_reply_to` on draft-review comments (422), and emoji
+reactions post immediately. Thread replies and reactions are therefore
+**live** actions, not pending. Honor "let me post it myself" by drafting
+the full follow-up set and posting replies + reactions only after explicit
+approval. New top-level findings from the holistic re-review still go into
+the pending (draft) review payload (Phase 6) as normal.
+
+**After follow-ups are posted, proceed to Phase 3** to run the complete
+holistic review on the current state of the PR. The re-review is not just
+loop-closing on old threads — investigate new issues across the whole diff.
+
+**Dedup re-review findings against your own prior threads.** A new finding
+that overlaps an existing thread — including one you opened on a prior
+review — becomes a follow-up reply on that thread, not a new top-level
+comment. Add the user's own prior comments to the Phase 2 exclusion list
+so Phase 5's no-duplicates HARD RULE covers them. Only genuinely new
+findings with no existing thread earn a new pending comment.
 
 ## Phase 3: Investigation
 
