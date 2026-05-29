@@ -24,7 +24,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.28-214754'
+  version: '2026.05.29-021645'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -76,6 +76,25 @@ merge, transition the linked ticket, and summarise follow-ups.
 -->
 
 ## Step 4: Verify all review threads are resolved
+
+**HARD RULE — route unresolved comments to [`wk-pr-resolve`](../pr-resolve/README.md) first.**
+
+- Detect unresolved review threads before any merge action (CI re-check,
+  approval check, the merge itself).
+- If **any** unresolved thread exists, invoke
+  [`wk-pr-resolve`](../pr-resolve/README.md) before proceeding — do not
+  merge, do not block-and-stop.
+
+  ```
+  Skill(wk-pr-resolve, args="<pr-number-or-url>")
+  ```
+
+- Re-run the unresolved-thread check after `wk-pr-resolve` returns.
+  Continue the merge only when zero unresolved threads remain.
+- Exclude self-review threads from the unresolved count per
+  `wk-pr-resolve`'s own exclusion rules — they are not reviewer feedback.
+- Failure mode: merging or halting on unresolved feedback strands the
+  reviewer's comments unaddressed in a merged PR.
 
 <!-- RED phase not yet run — fill in after testing baseline behavior -->
 
