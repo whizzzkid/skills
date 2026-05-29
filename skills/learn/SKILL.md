@@ -27,7 +27,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-220641'
+  version: '2026.05.29-063141'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -96,9 +96,16 @@ in CLAUDE.md or user instructions — the global rule applies to agent
 memory, not to skill learnings. If `$WK_SKILLS_HOME` is unset, stop
 and ask the user; never reroute to memory as a fallback.
 
-Set `SKILL_NAME` to the argument passed (e.g., `pr-review`). Then:
+Set `SKILL_NAME` to the argument passed (e.g., `pr-review`).
+
+**HARD RULE — strip a leading `wk-` before building the path.** The
+directory under `learnings/skills/` must match the skill's directory
+name in `skills/`, which never carries the `wk-` prefix (the prefix
+lives only in the `name:` frontmatter field). A caller that passes the
+full skill name (`wk-workflow`) must still land in `learnings/skills/workflow/`.
 
 ```bash
+SKILL_NAME="${SKILL_NAME#wk-}"   # normalize: directory never carries the prefix
 mkdir -p "$WK_SKILLS_HOME/learnings/skills/$SKILL_NAME"
 ```
 
@@ -235,7 +242,9 @@ in-flight action. When none fits, default to `wk-workflow`.
 
 For each classified interruption, write
 `$WK_SKILLS_HOME/learnings/skills/<skill-name>/<YYYY-MM-DD>_<slug>.md`
-using the same frontmatter and body shape as Step 3 above. Set
+using the same frontmatter and body shape as Step 3 above —
+including the Step 3 `wk-` strip so `<skill-name>` never carries the
+prefix. Set
 `type: correction` and `severity` based on impact (data loss / wrong
 artifact shipped → `high`; cosmetic / scope drift → `medium`; minor
 clarification → `low`).
