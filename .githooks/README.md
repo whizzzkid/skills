@@ -2,6 +2,20 @@
 
 Wired through `lefthook.yml` at the repo root.
 
+## check-learnings-dirs.sh — learnings directory naming guard
+
+Pre-commit hook that blocks any staged path under a `wk-`-prefixed
+directory in `learnings/skills/`. Directories there must match the
+unprefixed skill directory name in `skills/` — the `wk-` prefix lives
+only in the SKILL.md `name:` field.
+
+Root-cause guard for the [`wk-learn`](../skills/learn/README.md) bug
+where passing the full skill name (e.g.
+[`wk-workflow`](../skills/workflow/README.md)) created
+`learnings/skills/wk-workflow/` instead of `learnings/skills/workflow/`.
+The skill itself strips the prefix in Step 3; this hook enforces the
+invariant regardless of how the file was created.
+
 ## scrub-staged.sh — identifier leakage guard
 
 Pre-commit hook that blocks any staged diff containing:

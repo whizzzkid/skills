@@ -7,6 +7,8 @@ pre-commit:
       run: .githooks/check-readme.sh
     check-skill-links:
       run: .githooks/check-skill-links.sh
+    check-learnings-dirs:
+      run: .githooks/check-learnings-dirs.sh
 
 post-merge:
   commands:
