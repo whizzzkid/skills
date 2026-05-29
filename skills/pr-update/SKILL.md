@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.27-233512'
+  version: '2026.05.29-192833'
   internal: false
   model:
     openai: gpt-4.1
@@ -207,6 +207,22 @@ Auto mode picks the heuristic without prompting.
 ```bash
 git rebase "$BASE_REF"
 ```
+
+**Merged-parent branches: rebase `--onto` to skip already-merged commits.**
+When this branch was stacked on a parent branch that has since merged into
+the base, plain `git rebase "$BASE_REF"` replays the parent's commits too —
+producing add/add conflicts on files the parent introduced. Replay only
+this branch's own commits:
+
+```bash
+# tip SHA of the now-merged parent branch (the old fork point)
+git rebase --onto "$BASE_REF" <merged-parent-tip-sha>
+```
+
+- Detect the case: unexpected add/add conflicts on files this branch never
+  touched, right after a parent branch merged.
+- Find the parent tip via `git log --oneline` (the last commit before this
+  branch's own work) and re-run with `--onto`.
 
 If the rebase reports conflicts, drop into the **conflict
 resolution loop** (Stage 4). On clean rebase, jump to Stage 5.
