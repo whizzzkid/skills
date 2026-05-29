@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-065808'
+  version: '2026.05.29-073832'
   internal: false
   model:
     claude: claude-opus-4-8
@@ -127,6 +127,10 @@ See `references/review-lenses.md` for the exhaustive probe list. Summary:
   each **Verified** / **Unverified** / **Risky**. Classic traps: "network is
   reliable," "third-party meets its SLA," "read:write ratio is N:1," "payload
   fits in memory," "clocks are synchronised," "the team can build X in Y weeks."
+  For systems that declare behavior in config/frontmatter (e.g. `file_types:`,
+  routing/dispatch metadata), read the runtime to confirm the engine actually
+  consumes it — "the config gates behavior" is Unverified until the dispatch
+  code proves it, and specs often describe a capability the engine lacks.
 - **D · Scalability & Performance** — bottleneck at 10× and 100×; hot
   partition / hot key; O(n) or O(n²) hiding in a loop or fan-out; connection-pool
   and thread budgets; thundering herd on cold start or cache eviction; backpressure
