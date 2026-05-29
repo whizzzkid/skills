@@ -5,4 +5,4 @@
   - Reply via `/issues/{n}/comments` surface — most security/policy bots do not read inline review-comment replies.
   - Include the finding ID verbatim; malformed IDs cause silent rejection.
   - Map user decisions to the bot's vocabulary: false-positive → `fp`/`dismiss`; low-impact → `nit`/`acknowledge`; fixed → `resolved` or fall back to a SHA reference.
-  - Concrete example used in the skill: a security bot (`{bot}`) with `drs_<hex>` IDs and `fp` / `nit` actions — justified inline as a literal bot/API token.
+  - Concrete shape used in the skill: a security bot with `<prefix>_<hex>` finding IDs and `fp` / `nit` actions, written generically (`@<bot> <action> <finding-id>`) — no vendor name embedded, since the skill is tooling-agnostic.

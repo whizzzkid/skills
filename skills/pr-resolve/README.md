@@ -52,7 +52,7 @@ sequenceDiagram
   do not count — bots can post late.
 - **One commit per resolved comment:** Each triaged comment gets its own commit so reviewers can trace
   exactly which commit addresses which comment. All commits push together in Step 8 — no per-commit pushes.
-- **Adversarial-review gate before push:** Any commits produced in the session must pass `wk-adversarial-review`
+- **Adversarial-review gate before push:** Any commits produced in the session must pass [`wk-adversarial-review`](../adversarial-review/README.md)
   before Step 8's `git push`. Blocked means no push.
 - **Bot-native reply commands are preferred:** Before drafting a freeform reply to a bot finding, the skill
   checks the bot's documented command grammar (e.g., `@<bot> fp <id> <reason>`) and uses it.
@@ -62,6 +62,6 @@ sequenceDiagram
 - **HARD RULE — Step 9.4 feedback loop to adversarial-review (pre-CI-wait):** Every session emits one
   `wk-learn adversarial-review` per issue class surfaced. The capture runs **before** the Step 9.5 CI wait so
   the work happens in active foreground time rather than parked behind a background watch. Every reviewer-caught
-  finding is a coverage gap in pre-flight by definition; logging it forces the next `wk-sharpen` batch to fold
+  finding is a coverage gap in pre-flight by definition; logging it forces the next [`wk-sharpen`](../sharpen/README.md) batch to fold
   the detection into adversarial-review's mechanical sweeps. The Step 9.5 loop re-runs Step 9.4 for each cycle's
   newly-surfaced findings.

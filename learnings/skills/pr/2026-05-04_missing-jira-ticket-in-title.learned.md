@@ -7,7 +7,7 @@ severity: medium
 
 PR title must append `[JIRA-TICKET]` when the task originates from a Jira ticket.
 
-**What happened:** PR #NNN was created with title `feat({project}): ✨ configurable sandbox model via $AGENT_MODEL` — no Jira ticket number appended, even though the task explicitly referenced BOARD-NUM.
+**What happened:** PR #NNN was created with title `feat({scope}): ✨ configurable sandbox model via $AGENT_MODEL` — no Jira ticket number appended, even though the task explicitly referenced BOARD-NUM.
 
 **Root cause:** `wk-pr` Step 2 has no instruction to extract the Jira ticket number from the task description or branch name and append it to the PR title.
 

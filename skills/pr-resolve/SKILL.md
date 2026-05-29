@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-071311'
+  version: '2026.05.29-083142'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -572,8 +572,8 @@ noise to the thread.
     supported); otherwise drop a reply pointing to the SHA.
 - Include the finding ID verbatim. Bots reject the command when the
   ID is missing or malformed.
-- Concrete example — a security bot (`{bot}`)
-  publishes findings with IDs like `drs_<8-hex>` and accepts:
+- Concrete shape — a security bot that publishes findings with stable
+  IDs (e.g. `<prefix>_<hex>`) and accepts structured replies:
 
   ```
   @<bot> fp <finding-id> <reason>
