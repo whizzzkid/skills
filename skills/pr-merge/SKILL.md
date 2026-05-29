@@ -3,8 +3,9 @@ name: wk-pr-merge
 description: >-
   Use when ready to merge a PR — verifies CI is green, all reviews approved,
   all review comments (including self-review) resolved, no open action items,
-  then merges, transitions the linked ticket to its terminal state, and lists
-  any follow-ups or deferred action items.
+  then merges, transitions the linked ticket to its terminal state, lists
+  any follow-ups or deferred action items, captures a session retro, and
+  cleans up the merged worktree.
 argument-hint: '[<pr-number-or-url>]'
 allowed-tools:
   - Bash
@@ -25,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-060622'
+  version: '2026.05.29-062850'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -300,6 +301,35 @@ PR #{number} merged as {merge_sha} into `{base}`.
 If there are follow-ups, offer once:
 
 > "Want me to file these as GitHub issues or Jira tickets?"
+
+## Step 9: Capture session learnings
+
+- Invoke [`wk-retro`](../retro/README.md) to reflect on the full PR session —
+  implementation, review back-and-forth, and merge:
+
+  ```
+  Skill(wk-retro)
+  ```
+
+- Run after the merge succeeds — the session is complete and its decisions
+  are freshest now.
+- Failure mode: merging ends the session; ad-hoc context (design choices,
+  reviewer trade-offs) is lost if not distilled before the worktree is cleaned.
+
+## Step 10: Clean up the current worktree
+
+- Invoke [`wk-worktree-cleanup`](../worktree-cleanup/README.md) to remove the
+  worktree holding the just-merged branch:
+
+  ```
+  Skill(wk-worktree-cleanup, args="--current")
+  ```
+
+- Run only when the merge happened from inside a dedicated worktree for the PR
+  branch. `wk-worktree-cleanup` self-detects the main worktree and skips
+  cleanup there — never removes the repo root.
+- Step 9's `wk-retro` satisfies `wk-worktree-cleanup`'s pre-delete retro guard;
+  it will not re-run retro for the same session.
 
 ---
 

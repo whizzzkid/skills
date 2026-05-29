@@ -5,15 +5,22 @@ description: >-
   clean up worktrees, remove merged worktrees, tidy up branches, or prune
   stale worktrees. Lists all worktrees, checks merge status, removes merged
   ones, and reports unmerged ones for the user to decide.
+argument-hint: '[--current]'
 allowed-tools:
   - "Bash(git wtl:*)"
   - "Bash(git wtr:*)"
   - "Bash(git symbolic-ref:*)"
   - "Bash(git branch:*)"
   - "Bash(git worktree:*)"
+  - "Bash(git rev-parse:*)"
   - "Bash(gh pr list:*)"
   - "Bash(git log:*)"
+  - "Bash(git clean:*)"
+  - "Bash(git stash list:*)"
+  - "Bash(git status:*)"
   - "Bash(stat:*)"
+  - "Bash(cd:*)"
+  - "Bash(dirname:*)"
   - Skill
   - AskUserQuestion
 model: sonnet
@@ -24,7 +31,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.27-225202'
+  version: '2026.05.29-062851'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -44,7 +51,41 @@ so the user can decide what to do with them.
 
 - Git aliases configured: `git wtl`, `git wtr`
 - `gh` CLI authenticated (for checking PR merge status on GitHub)
-- Must be run from the main worktree (repo root), not from inside a worktree
+- Default mode runs from the main worktree (repo root). To clean the worktree
+  you are currently inside, use `--current` mode (below) — it handles the
+  chdir-to-main step `git worktree remove` requires.
+
+## Mode: clean the current worktree (`--current`)
+
+Invoked to remove the worktree the agent is **currently inside** — e.g., after
+[`wk-pr-merge`](../pr-merge/README.md) merges the PR for this worktree's branch.
+`git worktree remove` cannot remove the worktree that is the current working
+directory, so this mode chdir's to the main worktree first.
+
+```bash
+CURRENT_WT=$(git rev-parse --show-toplevel)
+MAIN_WT=$(dirname "$(git rev-parse --git-common-dir)")
+CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
+```
+
+- If `CURRENT_WT` equals `MAIN_WT`: not inside a linked worktree — report and
+  stop. Never remove the repo root.
+- Verify `CURRENT_BRANCH` is merged via Step 3's checks. If `unmerged` or
+  `unknown`, stop and ask the user — do not auto-remove unmerged work.
+- Run Step 4's retro + content-scan guard against `CURRENT_WT`. Skip retro if
+  it already ran this session (e.g., `wk-pr-merge` Step 9 invoked it).
+- After the guard confirms the worktree is clean, chdir to main and remove:
+
+  ```bash
+  cd "$MAIN_WT"
+  git -C "$CURRENT_WT" clean -fd      # only after disposable-paths gate
+  git worktree remove "$CURRENT_WT"
+  git branch -D "$CURRENT_BRANCH"
+  git worktree prune
+  ```
+
+- Report the removed worktree/branch and the new working directory
+  (`MAIN_WT`). Then stop — do not fall through to the full sibling scan.
 
 ## Step 1: List Worktrees
 
@@ -227,6 +268,7 @@ For unmerged worktrees, let the user know:
 | "clean up worktrees" | Full scan, remove merged, report unmerged |
 | "list worktrees" | Just run `git wtl` and show the output |
 | "remove worktree X" | Remove a specific worktree (confirm merge status first) |
+| `--current` | Clean the worktree you're inside (chdir to main, then remove) |
 
 ## Requirements
 
