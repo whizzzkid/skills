@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-073832'
+  version: '2026.05.29-075503'
   internal: false
   model:
     claude: claude-opus-4-8
@@ -161,7 +161,10 @@ Write to `arch-review-<system-slug>.md` (and print a summary). Follow
 1. **Header** — system name, reviewer role, date (`date +%Y-%m-%d`).
 2. **Context Block** — from Step 2.
 3. **Executive Summary** — 3–5 sentences: overall verdict + the single biggest
-   risk. A busy director reads only this.
+   risk. A busy director reads only this. Derive blast radius from the lens
+   findings (SPOFs, assumption failures, delivery risk), never from diff size
+   or "doc-only" — the analysis determines blast radius. State low blast radius
+   only with lens evidence behind it.
 4. **Critical Findings** — one block per finding, severity-ordered:
 
    ```
