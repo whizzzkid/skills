@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-210734'
+  version: '2026.06.01-221450'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -908,6 +908,7 @@ validation outcome decides the reply, not the fact of duplication:
 | Phase 4 outcome | Phase 5 action |
 |-----------------|----------------|
 | **Confirmed** | **Skip silently per thread.** No inline reply and no per-thread body anchor. The bot thread already stands; a "yes the bot was right" line is noise. Do not narrate the confirmation in the review body — a "validated N findings" line is an antipattern (see "Compose the review body"). Address a confirmed bot finding only by its substance, and only when it changes the verdict. Only reply per-thread if the playground surfaced new evidence the bot missed. |
+| **Confirmed but narrower than stated** | The playground reproduces the bot's failure only for a subset of the case the bot implied (e.g., a zero-iteration / empty-input edge the general case never hits). Reply with a **scope note**: `Confirmed for the case where X; does *not* apply when Y (verified in playground).` This is new evidence that materially narrows the bot's claim — it tells the author exactly what to fix and prevents over-amplifying the finding. |
 | **Refuted** | Reply with `**Could not reproduce** — <counter-evidence>` + brief description of what was tested. Always reply — silent skip leaves the author guessing. |
 | **Inconclusive** AND agent independently flagged the same issue | Reply with the agent's own evidence + suggestion fix (the agent's verdict carries the thread). |
 | **Inconclusive** AND agent did not flag it | Leave the thread alone. Note in the Phase 5 summary so the user can override. |
@@ -929,6 +930,8 @@ silent skip at both thread and body level.
 Reserve body anchors and live replies for:
 
 - **Refuted** — counter-evidence the bot missed.
+- **Confirmed but narrower than stated** — a scope note bounding what
+  was reproduced versus what was not.
 - **Inconclusive AND agent independently flagged the same issue** —
   the agent's own evidence carries the verdict.
 
