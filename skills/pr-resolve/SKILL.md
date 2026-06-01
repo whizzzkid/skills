@@ -36,7 +36,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-083142'
+  version: '2026.06.01-213737'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1224,6 +1224,37 @@ On `blocked`, address each blocker with a fresh atomic `wk-commit`,
 re-invoke the skill, and loop until clear. Never push past a blocker —
 that is the failure mode this gate exists to prevent.
 
+### Post-rewrite divergence guard (run before `git push`)
+
+Any history-rewriting operation performed **during** this session —
+`git commit --amend`, a fixup commit + `git rebase --autosquash`, an
+interactive rebase — invalidates the Step 2 reconcile, which ran
+*before* the rewrite. The rewritten local branch can now be both ahead
+of and behind the remote PR branch. Re-check divergence before pushing:
+
+```bash
+HEAD_BRANCH=$(gh pr view --json headRefName --jq .headRefName)
+git fetch origin "$HEAD_BRANCH" --quiet
+COUNTS=$(git rev-list --left-right --count "HEAD...origin/$HEAD_BRANCH")
+AHEAD=$(echo "$COUNTS" | cut -f1)
+BEHIND=$(echo "$COUNTS" | cut -f2)
+```
+
+- `BEHIND == 0` → fast-forward push is safe; proceed to **Push commits**.
+- `AHEAD > 0` **and** `BEHIND > 0` → diverged: the rewrite dropped
+  remote commits the local branch no longer contains. Do **not**
+  force-push (Hard Rule 4) and do **not** blindly rebase — recover by
+  cherry-picking the remote-only commits onto the rewritten local tip,
+  then re-check until `BEHIND == 0`:
+
+  ```bash
+  git cherry-pick $(git rev-list --reverse "HEAD..origin/$HEAD_BRANCH")
+  ```
+
+- If the cherry-pick conflicts, or the remote-only commits are
+  themselves rewritten versions of the same local changes (same diff,
+  different SHA), stop and surface to the user — do not guess.
+
 ### Push commits
 
 ```bash
@@ -1231,10 +1262,14 @@ git push
 ```
 
 If push is rejected as non-fast-forward, the remote PR branch moved
-during this session. Re-run the Step 2 reconcile (`git fetch origin`
-then `git rebase origin/{head_branch}`) and push again. Never
-force-push. If the rejection is for any other reason, tell the user
-and ask how to proceed.
+during this session. When no history was rewritten this session,
+re-run the Step 2 reconcile (`git fetch origin` then
+`git rebase origin/{head_branch}`) and push again. When history **was**
+rewritten this session, use the Post-rewrite divergence guard's
+cherry-pick recovery instead of rebasing — rebasing rewritten local
+history onto the remote duplicates or drops commits. Never force-push.
+If the rejection is for any other reason, tell the user and ask how to
+proceed.
 
 ## Step 8.5: Sync PR description (mandatory, immediately after push)
 
