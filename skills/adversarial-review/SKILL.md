@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-071312'
+  version: '2026.06.01-213736'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -435,13 +435,23 @@ are added to the verdict, not auto-fixed. Surface:
 - Stale comments adjacent to modified code.
 - Empty `catch`/`rescue`/`except` blocks.
 - Inline test helpers duplicating production source. For each new
-  `let`, `before`, fixture, or factory in a spec/test file that
-  defines a multi-line callable, grep the production source in the
-  diff for an identical or near-identical block (threshold: >3
-  identical non-trivial lines). Flag as `test-tautology` — stubs
-  applied to the copied body never exercise the real code, so the
-  test passes regardless of production drift. Fix: extract the
-  production code to a requireable module and import it.
+  `let`, `before`, fixture, factory, or shell heredoc that defines a
+  multi-line callable in a spec/test file, grep the production source
+  in the diff for a function of the same name or an identical /
+  near-identical block (threshold: >3 identical non-trivial lines).
+  Flag as `test-tautology` — stubs applied to the copied body never
+  exercise the real code, so the test passes regardless of production
+  drift. Fix: extract the production code to a requireable / sourceable
+  module and load it from both the production caller and the test.
+  - **Escalate to `blocker` when the duplicated function carries
+    security-sensitive logic** — symlink-escape guard, path-traversal
+    check, credential/secret redaction, auth or permission check. A
+    patch to the production guard then leaves the test validating stale
+    logic: the suite stays green while the real guard regresses.
+    Detection: grep test files for function definitions (`<name>()`,
+    `def <name>`, heredoc-defined functions) whose name also appears in
+    the diff's production source, then classify each duplicated body for
+    security-sensitive operations.
 - Bugfix-without-regression-test. For every commit whose subject
   matches `^(fix|bugfix|bug)[:(]`, enumerate the commit's changed
   files. If the source-side files changed without a paired
@@ -652,6 +662,29 @@ wire itself — the key lookup and forward.
   key set and asserts the downstream behavior fires.
 - Flag `suggestion` when both unit ends are covered but the wire is
   not; the forwarding line is new code and needs its own coverage.
+
+### 2.23 Seed-before-empty-collapse sweep
+
+A collection seeded or prepended with a non-empty value **before** an
+emptiness guard that collapses to a compact / "nothing to show" form
+silently defeats the guard. The seed alone makes the guard evaluate
+false, so the full template renders carrying only the decorative seed
+and no substantive content — the exact case the compact form existed to
+handle.
+
+- Grep the diff for a seed/prepend into a collection near an emptiness
+  collapse on that same collection:
+
+  ```bash
+  git diff "$BASE...HEAD" \
+    | grep -nE 'unshift|prepend|\.insert\(0,|^\+.*=\s*\[[^]]+\]\s*\+|\.all\?\s*\{.*empty\?|\.none\?|\.empty\?|\.blank\?'
+  ```
+
+- For each candidate, trace the path where no substantive content
+  exists. Verify the guard decides on **substantive content only** —
+  the seed / decoration must be added *after* the gate, not before it.
+- Flag as `blocker` when the seed can drive a "no substantive content"
+  path into rendering the full form instead of the compact one.
 
 After mechanical sweeps land their findings, dispatch a fresh subagent
 with no prior context to critique the diff. The subagent operates only
