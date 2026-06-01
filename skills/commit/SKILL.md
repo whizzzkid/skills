@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-090339'
+  version: '2026.06.01-215216'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -105,12 +105,34 @@ All commits MUST be signed. Never use `--no-gpg-sign`, `-n`, or
 `git -c commit.gpgsign=false`.
 
 **On signing failure** (errors like `gpg failed to sign the data`,
-`Couldn't get agent socket`, `failed to write commit object`):
+`Couldn't get agent socket`, `failed to write commit object`,
+`user.signingkey not set`):
 
 1. **Stop immediately.** Do not retry without signing.
-2. Tell the user: "Commit signing failed. Please check your GPG/SSH agent
+2. **Diagnose environment inheritance before touching any git config.**
+   Signing config is often delivered through `GIT_CONFIG_PARAMETERS` (a
+   git-native injection set in the user's interactive shell) that a
+   subprocess does not inherit — the config is present, just not visible
+   in this process.
+
+   ```bash
+   echo "$GIT_CONFIG_PARAMETERS"   # signing config present but not inherited?
+   ssh-add -l                       # agent holds the signing key?
+   ```
+
+3. If the key is loaded but the env is missing, run the commit through
+   the user's shell (which carries the env) or ask the user to run it
+   directly. Do not declare the environment broken.
+4. Tell the user: "Commit signing failed. Please check your GPG/SSH agent
    configuration and try again."
-3. Do not attempt any workaround that disables signing.
+5. Do not attempt any workaround that disables signing.
+
+**HARD RULE — never write git config to fix a signing failure.**
+`git config --global user.signingkey` and `git config --global gpg.*`
+writes are permanently destructive to env-based config management: they
+shadow the user's `GIT_CONFIG_PARAMETERS`-delivered config and persist
+as global state. Never run them without explicit user instruction —
+diagnose the env inheritance (step 2) instead.
 
 ### Preserve signatures when rewriting history
 
