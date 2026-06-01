@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **32 skills** organized into four groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules.
+> **44 skills** organized into four groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules.
 
 ---
 
@@ -67,7 +67,19 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-docs`](./docs/README.md) | Check and update documentation affected by code changes | User + Model |
 | [`wk-testing-skeleton`](./testing-skeleton/README.md) | Frame the test plan for any code change — behavioral over structural, happy+sad paths | Auto (before writing tests) |
 | [`wk-format`](./format/README.md) | Apply code-formatting preferences reconciled with repo lint config | Auto (before writing code) |
-| [`wk-workstyle`](./workstyle/README.md) | Code-quality gate — naming, docs, structure, async patterns, testing intent | Auto (before commit) |
+| [`wk-workstyle`](./workstyle/README.md) | Code-quality **orchestrator** — runs the project-style probe, routes to the `wk-workstyle-*` sub-skills | Auto (before commit) |
+| [`wk-workstyle-naming`](./workstyle-naming/README.md) | Naming gate — descriptive names, ALL_CAPS constants, boolean predicates, semantic-accuracy | Auto (on identifier edits) |
+| [`wk-workstyle-structure`](./workstyle-structure/README.md) | Layout & structure — guard clauses, nesting depth, magic values, duplication → wk-refactor | Auto (on control-flow edits) |
+| [`wk-workstyle-async`](./workstyle-async/README.md) | Async & concurrency — no temporal coupling, no unbounded chains, propagate errors | Auto (on async edits) |
+| [`wk-workstyle-docs`](./workstyle-docs/README.md) | Code docs — public-API docs, WHY-not-WHAT comments, mandatory stale-comment removal | Auto (on comment/doc edits) |
+| [`wk-workstyle-testing`](./workstyle-testing/README.md) | Testing intent — new-path coverage, behavior over implementation, mandatory sad paths | Auto (on test edits) |
+| [`wk-workstyle-error-handling`](./workstyle-error-handling/README.md) | Error handling — no silent swallow, operational vs programmer errors | Auto (on error-path edits) |
+| [`wk-workstyle-typescript`](./workstyle-typescript/README.md) | TS/JS idioms — const/no-var, no any, explicit return types, `??`/`?.`, `Promise.all` | Auto (on .ts/.js edits) |
+| [`wk-workstyle-python`](./workstyle-python/README.md) | Python idioms — type hints, f-strings, dataclass/TypedDict, pathlib, no mutable defaults | Auto (on .py edits) |
+| [`wk-workstyle-ruby`](./workstyle-ruby/README.md) | Ruby idioms — `?`/`!` naming, frozen_string_literal, guard returns, ASCII-only comments | Auto (on .rb edits) |
+| [`wk-workstyle-go`](./workstyle-go/README.md) | Go idioms — errors as values, `%w` wrapping, table-driven tests, no library panic, defer | Auto (on .go edits) |
+| [`wk-workstyle-rust`](./workstyle-rust/README.md) | Rust idioms — no unwrap/expect in prod, `&str` params, derive Debug, clippy::all, `///` docs | Auto (on .rs edits) |
+| [`wk-workstyle-shell`](./workstyle-shell/README.md) | Shell idioms — `set -euo pipefail`, quoted vars, `local`, capability-probe not error-parse | Auto (on .sh edits) |
 | [`wk-refactor`](./refactor/README.md) | Validate a refactor preserved behavior — removed-line audit, diff classification | User + Model |
 | [`wk-markdown`](./markdown/README.md) | Enforce 120-col line width, heading hierarchy, Mermaid diagrams, validated links | Auto (on .md edits) |
 | [`wk-concise`](./concise/README.md) | Reduce response verbosity — drop filler, keep technical precision | User: `/concise` |

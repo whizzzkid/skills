@@ -1,0 +1,84 @@
+---
+name: wk-workstyle-testing
+description: >-
+  Use when planning, writing, or editing tests for a code change — requires
+  coverage of every new function/branch, behavioral (not implementation)
+  assertions, and mandatory sad-path tests for every error branch. Auto-invoked
+  whenever the agent writes or modifies tests. Complements wk-testing-skeleton
+  (which frames the plan) by enforcing the quality gate. Project linter config
+  wins.
+argument-hint: '[scan|check <path>]'
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+model: sonnet
+effort: low
+model-invocable: true
+user-invocable: true
+license: MIT
+group: workflows
+metadata:
+  author: whizzzkid
+  version: '2026.06.01-224411'
+  internal: false
+  model:
+    openai: gpt-4.1-mini
+    google: gemini-2.5-flash
+    meta: llama-4-scout
+    kimi: k2
+    qwen: qwen3-30b
+    cursor: composer-2
+---
+
+# Workstyle — Testing Intent
+
+Enforces the test quality bar for every test the agent writes or edits —
+new-path coverage, behavioral assertions, and mandatory sad-path tests. Part of
+the `wk-workstyle` family. **Project settings are authoritative — this skill
+fills gaps only, never overrides.** When a linter/formatter config governs a
+rule below, that config wins; see `wk-workstyle` Step 0 for the
+project-style-authority probe.
+
+## When to Use
+
+Auto-invoked whenever the agent writes or modifies any test. Trigger contexts:
+
+- Adding tests for a new feature or newly introduced function/branch.
+- Writing a regression test for a bugfix.
+- Adding or updating tests to verify a refactor preserved behavior.
+- Adding sad-path / error-handling coverage.
+
+Relationship to `wk-testing-skeleton`: that skill frames the test *plan*
+(behavioral over structural, happy + sad paths, mutation check); this skill is
+the quality *gate* that confirms the written tests meet the bar. They are
+complementary — invoke testing-skeleton when planning, this when reviewing
+written tests.
+
+Manual: `/wk-workstyle-testing scan` (full working tree) · `/wk-workstyle-testing check <path>` (one file).
+
+## Rules
+
+- **Cover new lines.** For every function or branch added in the
+  diff, ask: does a test exercise this path? If the answer is no
+  and the code is non-trivial, add a test. Exceptions: one-off
+  scripts, migration runners, CLI entry-point scaffolding, trivial
+  delegators that are covered transitively.
+- **Tests assert behavior, not implementation.** Avoid tests that
+  assert internal state or private method calls. Test the
+  observable outcome.
+- **Sad-path tests are mandatory** for any error-handling branch.
+  A function that throws/returns-error with no corresponding test
+  is untested error handling.
+
+## Apply or Report
+
+- **Auto-fixable** (mechanical) → apply silently, note in the commit message.
+- **Requires judgment** → surface as a suggestion before committing: what the
+  finding is, where, and a concrete fix sketch.
+- **Conflicts with project config** → suppress; never fight the linter.
+
+## Post-Completion
+
+Invoke `wk-learn` with this skill's short name as the argument
+(e.g., `wk-learn workstyle-testing`).
