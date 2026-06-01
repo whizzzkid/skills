@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.01-213735'
+  version: '2026.06.01-235747'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -750,6 +750,34 @@ small," "this doesn't need a PR," or "just a quick fix" are red
 flags; if the rule applies, execute it. If the user pushes back
 asking why no PR was created, **open it without asking** — the
 Autonomy Rules table forbids the "would you like a PR?" question.
+
+### Detect repo convention before branching
+
+**"Branch first on the default branch" is a DEFAULT, not an absolute
+rule.** Some repos (solo-maintained, no review gate) commit straight to
+their default branch; auto-creating a feature branch there causes
+friction. Probe the repo's actual convention before branching:
+
+- Resolve the default branch dynamically; never assume a literal name:
+
+  ```bash
+  DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD --short | sed 's@^origin/@@')
+  REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+  ```
+
+- Gather evidence the repo is PR-gated vs commit-to-default:
+  - Branch protection (`gh api "repos/$REPO/branches/$DEFAULT/protection"`
+    — a 404 means no protection).
+  - `CODEOWNERS` present (`.github/`, repo root, or `docs/`) → review gate.
+  - Recent merge commits from feature branches
+    (`git log --oneline --merges -20` — near-empty flat history signals
+    direct-to-default commits).
+- **Branch only when evidence points to a PR-gated workflow** (protection,
+  CODEOWNERS, or a history of merged feature branches). Otherwise commit
+  straight to the default branch and skip the auto-branch + PR flow.
+- When signals conflict or are absent and the change is non-trivial,
+  branching is the safer default — but say why in one line rather than
+  branching silently.
 
 After code review passes, invoke `wk-pr` automatically. Do not ask for
 permission — the workflow prescribes it. **Never use raw `gh pr create`
