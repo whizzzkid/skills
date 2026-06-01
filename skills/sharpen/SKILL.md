@@ -20,9 +20,13 @@ model-invocable: true
 user-invocable: true
 license: MIT
 group: workflows
+env-vars:
+  - WK_SKILLS_HOME
+  - GITHUB_ORG
+  - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.05.29-210735'
+  version: '2026.06.01-220750'
   model:
     openai: o3
     google: gemini-2.5-pro

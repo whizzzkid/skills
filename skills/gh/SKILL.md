@@ -11,9 +11,11 @@ model: sonnet
 effort: low
 license: MIT
 group: tools
+env-vars:
+  - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.05.20-213935'
+  version: '2026.06.01-220749'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
