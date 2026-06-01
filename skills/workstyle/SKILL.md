@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.28-201234'
+  version: '2026.06.01-213734'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -102,6 +102,17 @@ explicitly sets a different value.
 - **Boolean variables and functions read as assertions.**
   `isLoading`, `hasPermission`, `canRetry` — not `loading`, `perm`,
   `retry`.
+- **Names must be semantically accurate, not just well-formatted.**
+  Verify each introduced identifier truthfully describes what its value
+  *means*, not merely what it *contains* — a name can pass every casing,
+  length, and abbreviation rule and still lie. Names that borrow domain
+  vocabulary (`blocker`, `critical`, `nitpick`, `error`, `warning`) must
+  match the field's actual definition: a bucket holding `minor + info`
+  findings named `nitpicks` is wrong, since minor issues are not
+  necessarily trivial. Prefer a name keyed to the real boundary
+  (`lowRiskCount` / `highRiskCount`). This is a **required gate**, not
+  advisory — surface an inaccurate-name finding even when formatting is
+  clean.
 
 ### Structure
 
