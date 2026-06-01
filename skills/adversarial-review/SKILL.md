@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.01-215218'
+  version: '2026.06.01-221449'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -436,6 +436,18 @@ are added to the verdict, not auto-fixed. Surface:
 - Nested ternaries.
 - Undocumented public functions or methods added in the diff.
 - Missing sad-path tests for new error-handling branches.
+- Branch-vs-test enumeration for every new multi-branch function (>2
+  return paths). A green suite does not imply full branch coverage — do
+  the math explicitly: count the function's distinct `return` / exit
+  paths, then count the named test cases that exercise it. Flag any
+  return path with no covering test.
+  - `blocker` when an uncovered path changes observable behavior
+    (different value, error, side effect); `suggestion` when paths are
+    behaviorally equivalent.
+  - Detection: count `return`/`raise`/`throw` statements in the new
+    function, then grep test files for test-name variants targeting that
+    function (`Test<Name>_*`, `describe('<Name>'`, `it '<case>'`) and
+    confirm the count covers each path.
 - Untested nil/blank branch in presence-guarded builder methods. For any
   new method that can return nil via `.presence` (or an equivalent
   build-then-return-empty pattern like `if x.present? ; h[k]=x ; end ;
