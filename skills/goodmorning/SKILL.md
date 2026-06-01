@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-210500'
+  version: '2026.06.01-171208'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -79,6 +79,33 @@ else
   # Fallback: previous calendar day (may be a weekend — used only when
   # goodevening has never run or the file is missing).
   YESTERDAY=$(date -v-1d +%Y-%m-%d 2>/dev/null || date -d "yesterday" +%Y-%m-%d)
+fi
+
+# Stale-marker cross-check. goodevening writes the marker; when the user
+# skips goodevening the marker freezes at an older day, so "yesterday"
+# silently anchors past intervening work. A sitrep day dir with
+# morning.md but no evening.md is an unambiguous "goodevening skipped"
+# signal — treat the most recent such day as the true last working day.
+# Bound the override to short consecutive-workday gaps (1–3 days); a
+# genuine weekend/holiday (>3 days) keeps the marker as-is.
+if [ -f "$LAST_WD_FILE" ]; then
+  GAP_DAYS=$(( ( $(date -jf %Y-%m-%d "$TODAY" +%s 2>/dev/null || date -d "$TODAY" +%s) \
+               - $(date -jf %Y-%m-%d "$YESTERDAY" +%s 2>/dev/null || date -d "$YESTERDAY" +%s) ) / 86400 ))
+  if [ "$GAP_DAYS" -ge 1 ] && [ "$GAP_DAYS" -le 3 ]; then
+    d="$YESTERDAY"; OVERRIDE=""
+    while :; do
+      d=$(date -v+1d -jf %Y-%m-%d "$d" +%Y-%m-%d 2>/dev/null || date -d "$d + 1 day" +%Y-%m-%d)
+      [ "$d" = "$TODAY" ] && break
+      CAND="$PWD/sitrep/$(echo "$d" | tr - /)"
+      [ -f "$CAND/morning.md" ] && [ ! -f "$CAND/evening.md" ] && OVERRIDE="$d"
+    done
+    if [ -n "$OVERRIDE" ]; then
+      echo "⚠️ last_working_day marker says $YESTERDAY but $OVERRIDE has a morning" >&2
+      echo "   brief with no evening wrap. Using $OVERRIDE as yesterday." >&2
+      echo "   Run wk-goodevening for $OVERRIDE to fill the gap." >&2
+      YESTERDAY="$OVERRIDE"
+    fi
+  fi
 fi
 
 # Today:     sitrep/<YYYY>/<MM>/<DD>/
