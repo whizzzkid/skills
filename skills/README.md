@@ -21,11 +21,11 @@ Skills activate automatically when the agent detects a matching context, or invo
 
 | Skill | Purpose | Invocation |
 |---|---|---|
-| `wk-goodmorning` | Prepare for your day — surfaces unread messages, meeting prep, PRs, and carry-over items | User: `/wk-goodmorning` |
-| `wk-goodevening` | Wrap up your workday — brag doc, Granola learnings, Lattice feedback, unfinished items | User: `/wk-goodevening` |
-| `wk-cal` | All Google Calendar operations — fetch, create in free slots, check availability, schedule prep blocks | User + Model |
-| `wk-retro` | Session retrospective — capture learnings and improve future sessions | User + Model |
-| `wk-self-perf` | Generate a self-performance review narrative from GitHub, Slack, Jira, Granola, and more | User: `/wk-self-perf <period>` |
+| [`wk-goodmorning`](./goodmorning/README.md) | Prepare for your day — surfaces unread messages, meeting prep, PRs, and carry-over items | User: `/wk-goodmorning` |
+| [`wk-goodevening`](./goodevening/README.md) | Wrap up your workday — brag doc, Granola learnings, Lattice feedback, unfinished items | User: `/wk-goodevening` |
+| [`wk-cal`](./cal/README.md) | All Google Calendar operations — fetch, create in free slots, check availability, schedule prep blocks | User + Model |
+| [`wk-retro`](./retro/README.md) | Session retrospective — capture learnings and improve future sessions | User + Model |
+| [`wk-self-perf`](./self-perf/README.md) | Generate a self-performance review narrative from GitHub, Slack, Jira, Granola, and more | User: `/wk-self-perf <period>` |
 
 ---
 
@@ -33,14 +33,15 @@ Skills activate automatically when the agent detects a matching context, or invo
 
 | Skill | Purpose | Invocation |
 |---|---|---|
-| `wk-pr` | Create a PR and manage the post-PR workflow — draft, CI poll, self-review, ready | User + Model |
-| `wk-pr-review` | Thorough adversarial code review with inline comments via GitHub API | User + Model |
-| `wk-pr-resolve` | Address review comments interactively — implement fixes, prepare responses | User + Model |
-| `wk-pr-update` | Update a PR branch from its base — rebase (<5 commits) or patch-replay | User + Model |
-| `wk-pr-break` | Split an oversized PR into a reviewable, individually-shippable stack | User + Model |
-| `wk-adversarial-review` | Pre-flight adversarial review before any push or PR transition | Auto (pre-push) |
-| `wk-self-review` | Post inline self-review comments documenting design decisions for human reviewers | User + Model |
-| `wk-jira` | Sync Jira ticket state with PR lifecycle — auto-transitions, description audit | Auto (on Jira key/URL) |
+| [`wk-pr`](./pr/README.md) | Create a PR and manage the post-PR workflow — draft, CI poll, self-review, ready | User + Model |
+| [`wk-pr-review`](./pr-review/README.md) | Thorough adversarial code review with inline comments via GitHub API | User + Model |
+| [`wk-pr-resolve`](./pr-resolve/README.md) | Address review comments interactively — implement fixes, prepare responses | User + Model |
+| [`wk-pr-update`](./pr-update/README.md) | Update a PR branch from its base — rebase (<5 commits) or patch-replay | User + Model |
+| [`wk-pr-break`](./pr-break/README.md) | Split an oversized PR into a reviewable, individually-shippable stack | User + Model |
+| [`wk-pr-takeover`](./pr-takeover/README.md) | Take over a PR from another author — overwrite or stack mode, full workflow, co-authorship | User + Model |
+| [`wk-adversarial-review`](./adversarial-review/README.md) | Pre-flight adversarial review before any push or PR transition | Auto (pre-push) |
+| [`wk-self-review`](./self-review/README.md) | Post inline self-review comments documenting design decisions for human reviewers | User + Model |
+| [`wk-jira`](./jira/README.md) | Sync Jira ticket state with PR lifecycle — auto-transitions, description audit | Auto (on Jira key/URL) |
 
 ---
 
@@ -48,12 +49,12 @@ Skills activate automatically when the agent detects a matching context, or invo
 
 | Skill | Purpose | Invocation |
 |---|---|---|
-| `wk-buildkite` | Buildkite CI — check status, investigate failures, view logs, monitor builds | User + Model |
-| `wk-datadog` | Create and manage Datadog dashboards, monitors, SLOs, and notebooks | User + Model |
-| `wk-docker` | Docker — build images, inspect containers, debug Dockerfiles, troubleshoot daemon | User + Model |
-| `wk-devcontainer` | Generate devcontainer for Rails/mise projects with Dockerfile, docker-compose, devcontainer.json | User + Model |
-| `wk-mise` | Manage mise tool versions — install, configure .mise.toml, diagnose missing tools | User + Model |
-| `wk-gh` | Scope all `gh` CLI operations to `$GITHUB_ORG` — auto-fires on any GitHub interaction | Auto (on gh CLI use) |
+| [`wk-buildkite`](./buildkite/README.md) | Buildkite CI — check status, investigate failures, view logs, monitor builds | User + Model |
+| [`wk-datadog`](./datadog/README.md) | Create and manage Datadog dashboards, monitors, SLOs, and notebooks | User + Model |
+| [`wk-docker`](./docker/README.md) | Docker — build images, inspect containers, debug Dockerfiles, troubleshoot daemon | User + Model |
+| [`wk-devcontainer`](./devcontainer/README.md) | Generate devcontainer for Rails/mise projects with Dockerfile, docker-compose, devcontainer.json | User + Model |
+| [`wk-mise`](./mise/README.md) | Manage mise tool versions — install, configure .mise.toml, diagnose missing tools | User + Model |
+| [`wk-gh`](./gh/README.md) | Scope all `gh` CLI operations to `$GITHUB_ORG` — auto-fires on any GitHub interaction | Auto (on gh CLI use) |
 
 ---
 
@@ -61,20 +62,20 @@ Skills activate automatically when the agent detects a matching context, or invo
 
 | Skill | Purpose | Invocation |
 |---|---|---|
-| `wk-workflow` | **Master orchestrator** — Plan → Implement → Test → Review → PR → CI → Retro | Auto (any dev task) |
-| `wk-commit` | Conventional commits with emoji, signing, and safe push | User + Model |
-| `wk-docs` | Check and update documentation affected by code changes | User + Model |
-| `wk-testing-skeleton` | Frame the test plan for any code change — behavioral over structural, happy+sad paths | Auto (before writing tests) |
-| `wk-format` | Apply code-formatting preferences reconciled with repo lint config | Auto (before writing code) |
-| `wk-workstyle` | Code-quality gate — naming, docs, structure, async patterns, testing intent | Auto (before commit) |
-| `wk-refactor` | Validate a refactor preserved behavior — removed-line audit, diff classification | User + Model |
-| `wk-markdown` | Enforce 120-col line width, heading hierarchy, Mermaid diagrams, validated links | Auto (on .md edits) |
-| `wk-concise` | Reduce response verbosity — drop filler, keep technical precision | User: `/concise` |
-| `wk-calver` | Generate CalVer version strings (YYYY.MM.DD-HHMMSS UTC) — replaces semver | Auto (on version bumps) |
-| `wk-learn` | Capture per-skill learnings after each run → `learnings/skills/{skill}/` | User + Model |
-| `wk-sharpen` | Distill field reports into SKILL.md improvements without overfitting on examples | User + Model |
-| `wk-skill` | Scaffold a new wk-* skill from the canonical template | User + Model |
-| `wk-worktree-cleanup` | Clean up git worktrees whose branches have been merged | User + Model |
+| [`wk-workflow`](./workflow/README.md) | **Master orchestrator** — Plan → Implement → Test → Review → PR → CI → Retro | Auto (any dev task) |
+| [`wk-commit`](./commit/README.md) | Conventional commits with emoji, signing, and safe push | User + Model |
+| [`wk-docs`](./docs/README.md) | Check and update documentation affected by code changes | User + Model |
+| [`wk-testing-skeleton`](./testing-skeleton/README.md) | Frame the test plan for any code change — behavioral over structural, happy+sad paths | Auto (before writing tests) |
+| [`wk-format`](./format/README.md) | Apply code-formatting preferences reconciled with repo lint config | Auto (before writing code) |
+| [`wk-workstyle`](./workstyle/README.md) | Code-quality gate — naming, docs, structure, async patterns, testing intent | Auto (before commit) |
+| [`wk-refactor`](./refactor/README.md) | Validate a refactor preserved behavior — removed-line audit, diff classification | User + Model |
+| [`wk-markdown`](./markdown/README.md) | Enforce 120-col line width, heading hierarchy, Mermaid diagrams, validated links | Auto (on .md edits) |
+| [`wk-concise`](./concise/README.md) | Reduce response verbosity — drop filler, keep technical precision | User: `/concise` |
+| [`wk-calver`](./calver/README.md) | Generate CalVer version strings (YYYY.MM.DD-HHMMSS UTC) — replaces semver | Auto (on version bumps) |
+| [`wk-learn`](./learn/README.md) | Capture per-skill learnings after each run → `learnings/skills/{skill}/` | User + Model |
+| [`wk-sharpen`](./sharpen/README.md) | Distill field reports into SKILL.md improvements without overfitting on examples | User + Model |
+| [`wk-skill`](./skill/README.md) | Scaffold a new wk-* skill from the canonical template | User + Model |
+| [`wk-worktree-cleanup`](./worktree-cleanup/README.md) | Clean up git worktrees whose branches have been merged | User + Model |
 
 ---
 
