@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.28-222230'
+  version: '2026.06.01-215217'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -127,6 +127,21 @@ Auto mode picks **A** — preserving the existing fork point is
 non-destructive and the stacked-PR convention covers the
 metadata. Picking **B** invokes `wk-pr-update` to rebase before
 proceeding.
+
+**Draft-base override.** Before defaulting to **A**, check whether
+`$BEST_BASE` is the head of an open PR still in **draft** state:
+
+```bash
+DRAFT=$(gh pr list --state open --head "$BEST_BASE" \
+          --json isDraft --jq '.[0].isDraft')
+```
+
+If `DRAFT == true`, the parent has not merged and stacking produces two
+PRs the reviewer must sequence — usually a false split where both
+changesets should land together. Surface the draft status in the prompt
+and **default auto mode to B** (retarget to `$DEFAULT_BRANCH`, include
+both changesets) instead of A. Stacking on a draft base then requires
+explicit user opt-in.
 
 ### Measure scope against the resolved base
 
