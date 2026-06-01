@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.01-213736'
+  version: '2026.06.01-215218'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -138,6 +138,11 @@ For every changed file, extract:
 - New / modified test functions and fixture files.
 - Removed lines (refactor delta — track separately; refactors must preserve
   behavior).
+- For movement / refactor diffs, annotate each changed line as
+  **net-new** vs **relocated** — a relocated line is identical to a line
+  present at `$MERGE_BASE` (the move changed its location, not its
+  content). This annotation gates the relocation-aware severity rule the
+  subagent applies below.
 - Touched documentation paths (`docs/`, `README*`, in-code help strings).
 
 Annotate the map with kind (`feature`, `bugfix`, `refactor`, `docs`,
@@ -289,6 +294,13 @@ sweep clear:
   / linter skill files under `skills/*/`, plugin `README*` and
   `SKILL.md` files — these are the most common homes for enumerated
   rule lists.
+- Treat a **rename** — even a behavior-preserving local-variable rename —
+  as a removed-term change. Run the variant grep across source, `docs/`,
+  **and test files** (test-function names, comments, error-label /
+  message strings), not just prose. The change most likely to skip this
+  sweep ("just a local rename") is exactly the one that leaves stale
+  spec mapping/word-choice tables and test labels referencing the old
+  name.
 
 Test-count sync is mandatory: count test functions in changed
 `*_spec.*` / `*.bats` / `*_test.*` files, grep specs for matching
@@ -686,6 +698,29 @@ handle.
 - Flag as `blocker` when the seed can drive a "no substantive content"
   path into rendering the full form instead of the compact one.
 
+### 2.24 Argument-injection / missing `--` separator sweep
+
+An external command invoked with a variable / array / glob expansion of
+attacker-influenceable names, with no `--` option terminator before the
+positional args, is an argument-injection (RCE) path: a basename like
+`-I.jsonl` or `--use-compress-program=evil` is parsed as an option, not
+a file. A realpath / symlink guard does **not** catch this — it
+validates the path, not the basename's option-likeness.
+
+- Grep the diff for option-parsing commands fed expanded names with no
+  `--` terminator:
+
+  ```bash
+  git diff "$BASE...HEAD" \
+    | grep -nE '\b(tar|rm|cp|mv|grep|chmod|chown|git|curl)\b[^|]*("\$\{[a-z_]+\[@\]|/\*)' \
+    | grep -v ' -- '
+  ```
+
+- For each hit, trace whether the expanded values originate from an
+  untrusted source (sandbox-writable dir, user upload, API payload).
+- Flag as `blocker` when the source is untrusted and no `--` precedes
+  the positional args; fix by inserting `--` before them.
+
 After mechanical sweeps land their findings, dispatch a fresh subagent
 with no prior context to critique the diff. The subagent operates only
 on `git diff "$BASE...HEAD"` and the surface map from Step 1.
@@ -702,6 +737,11 @@ The subagent must be:
 - **Refactor-aware.** For movement-dominated diffs, demand a
   removed-line audit — every removed line must have a corresponding
   relocated line or an explicit "intentionally dropped" rationale.
+- **Relocation-aware.** Before rating any finding a `blocker` in a
+  movement-dominated diff, check whether the flagged line existed
+  verbatim at `$MERGE_BASE`. A pre-existing issue carried unchanged by a
+  pure move was accepted before this branch — downgrade it to
+  `suggestion` or skip it. Do not bill the refactor for inherited debt.
 
 ### Categories to hunt
 
