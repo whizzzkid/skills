@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.01-215216'
+  version: '2026.06.01-235747'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -151,6 +151,36 @@ re-create commits and drop the original signature unless re-signed.
 
 - A rewritten commit that loses its signature drops verified status and
   can fail branch protection that requires signed commits.
+
+#### "No signature" can be a local-verification false alarm
+
+For SSH-signed commits, `git log --show-signature` reporting "No
+signature" (and `%G?` returning `N`) does **not** mean the commit is
+unsigned. It usually means `gpg.ssh.allowedSignersFile` is absent from
+the subprocess env (delivered via `GIT_CONFIG_PARAMETERS` in the
+interactive shell, not inherited here), so git has no public key to
+verify against — even though the commit object carries a valid signature.
+
+- Confirm the commit is actually signed before reacting — check the raw
+  object for the signature header:
+
+  ```bash
+  git cat-file commit HEAD   # signed if: gpgsig -----BEGIN SSH SIGNATURE-----
+  ```
+
+- If the `gpgsig` header is present, the commit IS signed. Never
+  re-commit, re-sign, or delay a push on a "No signature" report alone.
+- To verify locally, build a temp allowed-signers from the loaded key:
+
+  ```bash
+  git -c gpg.ssh.allowedSignersFile=<(ssh-add -L | \
+    awk -v e="$(git log -1 --format='%ce')" '{print e, $1, $2}') \
+    log -1 --show-signature
+  ```
+
+- The hosting service verifies against the account's registered keys
+  server-side, so a locally-unverifiable-but-signed commit still lands
+  as verified after push.
 
 ## Pushing
 
