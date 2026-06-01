@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-192835'
+  version: '2026.06.01-213735'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -317,9 +317,16 @@ steps produce commits. Example:
 Execute the plan step by step. After completing each step:
 
 1. **Run tests** — verify the step doesn't break anything
-2. **Invoke `wk-workstyle`** — apply code-quality gate to touched files
-   (naming, docs, structure, async patterns, testing intent). Auto-fires
-   before every commit; project settings are authoritative.
+2. **Invoke `wk-workstyle` — non-skippable commit gate (HARD RULE).**
+   Before every `wk-commit` on a code diff, call `Skill(wk-workstyle)`
+   to gate the commit on the code-quality pass (naming accuracy, docs,
+   structure, async patterns, testing intent). Project settings are
+   authoritative.
+   - Treat this exactly like the Phase 4 adversarial-review gate: no
+     size, scope, or "trivial fix" exemption. "Auto-invoked" in a
+     skill's own description is aspirational — the enforceable rule is
+     this explicit step in the calling workflow. A commit that skips
+     the gate is a workflow violation, not a shortcut.
 3. **Invoke `wk-docs`** — check for and update affected documentation (README,
    specs, ADRs, tutorials, reference docs). A feature commit without its
    documentation update is incomplete.
