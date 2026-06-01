@@ -75,6 +75,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-learn`](./learn/README.md) | Capture per-skill learnings after each run → `learnings/skills/{skill}/` | User + Model |
 | [`wk-sharpen`](./sharpen/README.md) | Distill field reports into SKILL.md improvements without overfitting on examples | User + Model |
 | [`wk-skill`](./skill/README.md) | Scaffold a new wk-* skill from the canonical template | User + Model |
+| [`wk-env`](./env/README.md) | Diagnose env-var availability; source `$HOME/.profile`, report missing vars | Auto (PreToolUse on Skill) + User |
 | [`wk-worktree-cleanup`](./worktree-cleanup/README.md) | Clean up git worktrees whose branches have been merged | User + Model |
 
 ---
