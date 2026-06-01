@@ -39,6 +39,10 @@ EMPTY=()
 
 while IFS= read -r var; do
   [ -z "$var" ] && continue
+  # Skip names that are not valid shell identifiers — defends the indirect
+  # expansion (${!var}) and the `bash -c` lookup below against a malformed
+  # frontmatter entry.
+  case "$var" in [!A-Za-z_]* | *[!A-Za-z0-9_]*) continue ;; esac
   if [ -z "${!var+x}" ] 2>/dev/null; then
     # Truly unset
     MISSING+=("$var")
