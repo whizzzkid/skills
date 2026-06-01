@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.01-221450'
+  version: '2026.06.01-235747'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -1073,12 +1073,17 @@ before the summary is presented.
 ### Compose the review body
 
 The review body is **the agent's verdict on the change as a whole**, not
-a summary of the inline comments. Write a concise impression of the PR,
-keyed to the change's overall shape:
+a summary of the inline comments. The body is for the **PR author**; the
+investigation log — what you verified, mutation results, contract checks —
+is for the **reviewer running the skill** and stays in TERMINAL output
+only. Never move verification rationale into the GitHub body.
 
-- **Clean, focused PR with no glaring issues:** praise the author and
-  write `LGTM 🚀`. Be specific about what's strong (clear naming, tight
-  tests, well-scoped change) — generic praise is worse than no praise.
+- **HARD RULE — LGTM is one line.** When the verdict is LGTM with no
+  blockers, the body is **one line max** (`LGTM 🚀` or equivalent),
+  followed only by the footer. Do not justify the verdict, list what's
+  strong, or narrate what you checked — that rationale goes to the
+  terminal, never the body. A multi-paragraph LGTM is the exact thing
+  authors strip.
 - **PR is too large or mixes concerns:** call it out and recommend
   splitting into smaller PRs. Sketch the natural split lines.
 - **PR has structural concerns spanning the whole change:** describe the
@@ -1086,8 +1091,12 @@ keyed to the change's overall shape:
   "logging is inconsistent across the new modules" goes in the body;
   individual missing log lines go inline.
 
-Use emojis where they aid scanning (✅ 🚀 🛠️ 🧪 ⚠️ 📦 🎯). Keep the body
-short — one to three short paragraphs.
+The two bullets above (too-large, structural concerns) apply only when
+there is something the author must act on — never to a clean LGTM.
+
+Use emojis where they aid scanning (✅ 🚀 🛠️ 🧪 ⚠️ 📦 🎯). Outside the
+one-line LGTM case, keep the body to at most one to three short
+paragraphs.
 
 **Always end the body with the canonical outbound footer from
 `wk-gh` Step 4.** Do not write a custom footer here; emit the
