@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.01-215217'
+  version: '2026.06.02-200532'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -63,6 +63,17 @@ a post-creation workflow that ensures quality before marking ready for review.
    A `blocked` verdict means no `gh pr create`, no `gh pr ready`, no
    push. Fix the blockers (each via `wk-commit`) and re-invoke until
    clear. No size or scope exemption.
+
+   **No-ask on review findings.** Findings from any mandatory pre-flight
+   review (`wk-adversarial-review`, and `wk-arch-review` when a spec or
+   design doc is in the diff) are mandatory to incorporate — never ask
+   "should I fold these in?". After the review returns, immediately act
+   on every finding against the artifact under review: fix blockers, fold
+   in improvements, update the doc/spec/code, then commit each via
+   `wk-commit`. Incorporation is not user-gated. Pause only when a single
+   finding is genuinely ambiguous and needs a design decision only the
+   user can make — then surface that one specific design question, never
+   a blanket "want me to incorporate these?".
 
 ## Step 1: Assess Scope
 
