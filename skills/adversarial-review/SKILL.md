@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.01-221449'
+  version: '2026.06.02-213351'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -351,6 +351,21 @@ verify the corresponding `docs/plans/`, `docs/adr/`, and in-code comment
 references are updated in the same branch. Logical-shape changes
 (conditional became unconditional, abstraction layer lifted, interface
 signature widened, state moved lifecycles) trigger this audit.
+
+### 2.9.1 Multi-mode interface smell (spec/interface diffs)
+
+When a spec/interface diff defines a struct/union/record whose fields are
+read by multiple distinct modes or consumer families — each consuming only
+a subset — flag it for review.
+
+- Trigger: a type with ≥4 fields where prose or comments tie subsets of
+  fields to different modes/consumers (judgment, not a pure grep).
+- Failure mode: as modes grow, every consumer accretes nil-guards for
+  inapplicable fields and compatibility stays implicit.
+- Raise as `suggestion`: ask whether compatibility should be explicit —
+  the consumer declares the fields it requires, or the producer declares
+  which consumers it supports — rather than every consumer tolerating
+  missing fields.
 
 ### 2.10 PR metadata sync
 
