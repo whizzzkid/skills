@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-075503'
+  version: '2026.06.02-200532'
   internal: false
   model:
     claude: claude-opus-4-8
@@ -153,6 +153,28 @@ See `references/review-lenses.md` for the exhaustive probe list. Summary:
 
 ## Step 4: Produce the Output
 
+### Document-quality gate (run first — applies to every doc this skill writes or edits)
+
+Before writing a findings report or authoring/editing a spec, enforce all six.
+See `references/2026-06-02_rfc-doc-quality-checklist.md`.
+
+- **Frontmatter:** emit machine-readable YAML frontmatter — `title`, `type`,
+  `status`, `author`, `created`, `last_updated`, `epic`, `reviewers`, `labels`,
+  `related` (each entry a title + resolvable path/url).
+- **Structure (Diátaxis):** separate explanation (why / motivation) from
+  reference (what / interfaces) from how-to (guide / tutorial); never blend them
+  in one section. Open with a short "How to read this" note mapping the sections.
+- **Diagrams:** never one giant diagram. Emit one high-level block/interaction
+  diagram showing every part and its contracts, then one detail diagram per major
+  block; label which detail diagram belongs to which section.
+- **Links:** every internal doc link must resolve on disk (`Read`/`Glob`) and
+  every ticket reference must exist; mark any not-yet-created artifact `TBD`
+  explicitly — never link a path that does not yet exist without the marker.
+- **Sizing:** never invent effort estimates; include them only when the user
+  supplied them, otherwise mark `TBD` or omit. No fabricated numbers.
+- **Incorporate, don't ask:** findings are mandatory to fold into the target
+  doc — apply them, then commit; do not ask whether to incorporate.
+
 ### REVIEW mode — findings report
 
 Write to `arch-review-<system-slug>.md` (and print a summary). Follow
@@ -174,7 +196,7 @@ Write to `arch-review-<system-slug>.md` (and print a summary). Follow
    - **Problem:** one precise paragraph — what is wrong and why it matters.
    - **Failure mode:** what breaks, when it fires, customer-visible impact.
    - **Recommendation:** concrete change — name the pattern/tech. "Do X because Y."
-   - **Effort:** [Hours | Days | Weeks] + one-line rationale.
+   - **Effort:** only if the user supplied sizing; otherwise `TBD`. Never fabricate.
    ```
 
 5. **Underlying Assumptions** — table: `| Assumption | Status | Risk if wrong |`.
