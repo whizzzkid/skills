@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.01-235747'
+  version: '2026.06.02-200532'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -733,6 +733,28 @@ or **suggestions-only**.
   never `gh pr ready`, never `gh pr create` on a blocked verdict.
 - **Suggestions only** — follow the skill's A/B/C prompt; auto mode
   defaults per the skill.
+
+#### Findings are incorporated, never offered
+
+**HARD RULE: Pre-flight review findings are mandatory actions, not options.**
+This applies to every gate that produces findings — `wk-adversarial-review`
+on code and `wk-arch-review` on specs, design docs, plans, or estimates.
+Once a gate returns findings, the agent acts on them; it does not ask the
+user "should I incorporate these?"
+
+- **Blockers** — fix immediately, commit each fix via `wk-commit`, then
+  re-run the same gate. Loop until the gate clears.
+- **Improvements / gaps** — incorporate into the artifact it concerns
+  (code for `wk-adversarial-review`, the doc for `wk-arch-review`), then
+  commit. Do not defer, downgrade, or surface them as an optional menu.
+- **Design-ambiguous findings** — when a finding turns on a genuine design
+  decision only the user can make, present that one specific design
+  question, wait for the answer, then act. Ask the design question — never
+  the meta-question "should I update this?".
+- The only pause is a real design decision the user owns. "Should I apply
+  the review's suggestions?" is not a design decision; framing
+  incorporation as user-gated is a workflow violation, the same class as
+  asking "should I commit?" or "would you like a PR?".
 
 **HARD RULE:** Every push, every PR transition (`gh pr create`,
 `gh pr ready`), and every force-push that leaves this machine runs
