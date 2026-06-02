@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.02-200532'
+  version: '2026.06.02-214847'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -292,6 +292,20 @@ in flight on an open PR and extend it rather than landing a parallel file.
   spec exists.
 - Skipping this produces two parallel specs that the user later has to
   merge by hand — a doc merge plus a rebase.
+
+### Rule-set doc sync probe
+
+When the diff modifies a check / validator / rule file, find authoring
+guides that enumerate the rule set by count and add them as explicit
+sync targets in the plan — before implementation starts.
+
+- Grep guides (README, `docs/how-to`, repository-check docs) for
+  count-enumerations of the rules: `"N things"`, `"three items"`,
+  numbered "you must include" lists.
+- A new rule turns an "N things" list stale; add each matching guide as
+  a numbered sync step so the count and the body stay aligned.
+- Skipping this lets the adversarial sweep catch the drift later instead
+  of the plan catching it up front.
 
 ### Plan Presentation
 
