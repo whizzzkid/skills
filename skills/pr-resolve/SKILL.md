@@ -5,6 +5,11 @@ description: >-
   implementing fixes, preparing response comments, and managing the full
   resolution cycle. Use when asked to resolve PR comments, address review
   feedback, fix PR issues, respond to reviewers, or handle PR conversations.
+  Also auto-activate on indirect references — "fix the comment", "there's a
+  description/comment issue", "address the feedback", "fix this on the PR" —
+  whenever an open PR exists on the current branch (one was created or worked
+  on earlier this session). Prefer activating over asking a clarifying
+  question; the open PR is the implied target.
 argument-hint: '[PR number or URL]'
 allowed-tools:
   - "Bash(gh pr view:*)"
@@ -36,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.01-213737'
+  version: '2026.06.02-221022'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1700,6 +1705,7 @@ Adversarial-review learnings were already emitted in Step 9.4
 |---------|----------|
 | "resolve PR comments" | Full workflow |
 | "address review feedback" | Full workflow |
+| "fix the comment" / "there's a description issue" (open PR on branch) | Auto-activate; treat the open PR as the target instead of asking |
 | "fix PR #{number}" | Full workflow for specific PR |
 | "respond to reviewers" | Full workflow with focus on replies |
 | Session ends | Capture adversarial-review learnings (Step 9.4, pre-CI-wait), then `wk-retro` (Step 11) |
