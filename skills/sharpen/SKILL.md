@@ -26,7 +26,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.01-220750'
+  version: '2026.06.03-182540'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -177,6 +177,14 @@ As you read, build a mental map of:
 - Tool usage patterns (API calls, CLI commands, query formats)
 
 This map is essential for Step 4 (drafting) and Step 5 (audit).
+
+**Partial reads do not satisfy Edit's read-before-write guard.** A Read
+that returns a truncated view of a large file (the harness pages files
+past its single-read line cap) leaves the file marked unread for Edit —
+the first Edit fails with "File has not been read yet" even though the
+target text was visible in the partial view. Before editing a region of
+a large skill, re-Read that region with a narrow `offset`/`limit` so the
+exact page registers as read.
 
 ## Step 3: Distill the Lesson
 
