@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.02-214847'
+  version: '2026.06.03-182539'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -328,6 +328,19 @@ steps produce commits. Example:
 
 ## Phase 2: Implement
 
+**Worktree preflight (before the first Edit/Write).** When sibling repo
+directories or multiple worktrees share one repo, confirm the cwd is the
+intended worktree before editing — an edit resolved against the wrong
+worktree gets blocked by the main-branch protect hook, forcing a reset
+and re-apply.
+
+```bash
+git rev-parse --abbrev-ref HEAD   # must equal the feature branch
+```
+
+If the current branch is not the intended feature branch, re-anchor to
+the correct worktree path before proceeding.
+
 Execute the plan step by step. After completing each step:
 
 1. **Run tests** — verify the step doesn't break anything
@@ -548,6 +561,22 @@ Symptoms that signal the wrong layer: duplicated ENV reads across
 sibling modules, `puts` in a function whose return value is what
 callers actually consume, tests that have to capture stdout to
 assert behaviour.
+
+#### External-API field validation — reuse the library's schema
+
+Before hardcoding an allowlist of an external API's field names (a
+permission set, enum, or supported-flag list), check whether the client
+library's types already encode it (struct tags, generated enums, schema
+constants). A parallel hand-maintained list is a maintenance trap — it
+silently drifts every time the upstream API adds or removes a field.
+
+- Prefer the library's own validation: strict decoding that rejects
+  unknown fields (`json.Decoder.DisallowUnknownFields` in Go, schema
+  `strict`/`forbid` modes elsewhere). The type's tags become the
+  allowlist, and upstream additions are picked up on dependency bump.
+- Hardcode a list only when no library type encodes it; when you must,
+  cite the upstream source and note the re-sync obligation on
+  dependency updates.
 
 #### Architecture Decision Records
 
