@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.01-224411'
+  version: '2026.06.03-182536'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -57,6 +57,25 @@ Manual: `/wk-workstyle-go scan` (full working tree) · `/wk-workstyle-go check <
 - **Unexported identifiers** for package-internal state; only export the minimal API.
 - **No `panic` in library code** — return an error.
 - **`defer` for cleanup** (close, unlock) immediately after acquire.
+
+## Pre-Commit Gate
+
+Run before invoking `wk-commit` on any change that touched `.go` files:
+
+```bash
+gofmt -l .
+```
+
+- Treat non-empty output as a **blocking finding, not a suggestion** —
+  `gofmt` reformats map literals to align values on the longest key, so a
+  hand-written `map[...]...` fails CI's `gofmt -l` check even when local
+  tests pass.
+- Run `gofmt -w` on every listed file, then re-run `gofmt -l .` to confirm
+  empty output before committing.
+- Editor / pre-commit-hook formatting does not apply inside an agent
+  session — run this check explicitly.
+- Substitute the project's pinned formatter (e.g., `gofumpt`) when its
+  config declares one; otherwise `gofmt` is the floor.
 
 ## Apply or Report
 
