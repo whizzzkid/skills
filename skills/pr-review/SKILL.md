@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.01-235747'
+  version: '2026.06.03-183330'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -208,6 +208,20 @@ Read the current file and compare the line to confirm. Categorize each comment:
 - **Stale (unclear):** The position is outdated but it is not obvious whether the
   issue was addressed. Leave these for the author or reviewer to handle.
 - **Active:** Still applies to the current code.
+
+### Identify stale review bodies
+
+Top-level review bodies (reviews with zero inline comments) have no
+position to invalidate, so the comment-staleness checks above never flag
+them — a body describing a superseded approach slips through as "active."
+
+- Cross-check each review body's described files/approach against the
+  **current** diff's changed-file set.
+- Mark a body `stale (superseded)` when it references files absent from
+  the current diff, or names an approach the PR no longer takes (the
+  branch was rewritten after the body was generated).
+- Do not carry a superseded body's framing into the verdict; note in the
+  summary that its claims describe a prior revision.
 
 ### Present and ask before resolving
 
@@ -539,6 +553,26 @@ Read, Glob, and Grep may access any path (read-only) for code investigation.
 
 Create a `.review-playground/` directory at the repository root. This is your
 workspace for experiments — **never commit these files**.
+
+### Environment prerequisite gate
+
+**HARD RULE:** Before running any playground experiment, confirm the
+prerequisites the diff exercises are available (container daemon,
+dependency install, database, language runtime). When any prerequisite
+fails:
+
+- **Stop immediately.** Do not proceed to Phase 5/6 with degraded
+  coverage.
+- Surface the failure to the user in the terminal with a concrete ask:
+
+  > "Local environment issue: {failure}. Please fix and re-run the review.
+  > Proceeding without a working env risks an incomplete or misleading
+  > review."
+
+- **Never disclose local environment state in any GitHub-posted surface.**
+  No review body, inline comment, or summary may mention that local tests
+  could not run, that a daemon was down, or that "CI is the arbiter." The
+  PR author must never see evidence of the reviewer's machine state.
 
 ### Documentation-only diff — substitute read-based analysis
 
