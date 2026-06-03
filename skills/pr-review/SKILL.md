@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.03-183330'
+  version: '2026.06.03-222019'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -193,6 +193,29 @@ gh api repos/{owner}/{repo}/pulls/{number}/comments \
 
 Skip comments where `in_reply_to_id` is set — those are reply chains, not
 top-level threads. Focus on root comments that anchor each conversation.
+
+### Fetch thread resolution state (re-review intake)
+
+The REST `/pulls/{number}/comments` endpoint carries **no** resolution
+state. On a re-review, query each thread's `isResolved` via GraphQL at
+intake — before planning any loop-closure work:
+
+```bash
+gh api graphql -f query='
+{ repository(owner:"{owner}", name:"{repo}") {
+    pullRequest(number:{number}) {
+      reviewThreads(first:100) {
+        nodes { id isResolved isOutdated comments(first:1){ nodes{ path body } } }
+} } } }'
+```
+
+- Annotate each thread with its `isResolved` / `isOutdated` state.
+- Skip loop-closure planning (acknowledgment replies, 👍 reactions,
+  resolve-with-consent prompts) for threads already `isResolved: true` —
+  GitHub considers them closed; they need no action.
+- Reserve re-review follow-up for threads that are open, or
+  resolved-but-the-fix-does-not-hold — verify the fix before trusting the
+  resolved flag.
 
 ### Identify stale comments
 
