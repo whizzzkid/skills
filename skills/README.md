@@ -51,6 +51,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 |---|---|---|
 | [`wk-buildkite`](./buildkite/README.md) | Buildkite CI — check status, investigate failures, view logs, monitor builds | User + Model |
 | [`wk-datadog`](./datadog/README.md) | Create and manage Datadog dashboards, monitors, SLOs, and notebooks | User + Model |
+| [`wk-colima`](./colima/README.md) | Colima — ensure VM is running before container ops, start with dynamic CPU, restart cleanly on failure | User + Model |
 | [`wk-docker`](./docker/README.md) | Docker — build images, inspect containers, debug Dockerfiles, troubleshoot daemon | User + Model |
 | [`wk-devcontainer`](./devcontainer/README.md) | Generate devcontainer for Rails/mise projects with Dockerfile, docker-compose, devcontainer.json | User + Model |
 | [`wk-mise`](./mise/README.md) | Manage mise tool versions — install, configure .mise.toml, diagnose missing tools | User + Model |
