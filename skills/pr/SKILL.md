@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.02-200532'
+  version: '2026.06.03-182535'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -74,6 +74,12 @@ a post-creation workflow that ensures quality before marking ready for review.
    finding is genuinely ambiguous and needs a design decision only the
    user can make — then surface that one specific design question, never
    a blanket "want me to incorporate these?".
+3. **Resolve the true base before any scope measurement or `gh pr create`.**
+   Run Step 1's merge-base distance detection unconditionally — never
+   assume the default branch, even for an "obviously simple" branch.
+   Creating against the wrong base pulls a parent branch's commits into
+   the diff and runs CI against the wrong target. When the resolved base
+   differs from the default, surface it before proceeding.
 
 ## Step 1: Assess Scope
 
