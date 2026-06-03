@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.02-213351'
+  version: '2026.06.03-182537'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -386,6 +386,14 @@ If a PR exists for the branch:
   updated to the replacement text — rename commits update code but
   leave the PR body stale because body edits are not part of the
   file diff.
+- Enumerated-rule scope audit: when a commit narrows or expands an
+  enumerated set (banned items, allowed items, supported flags), extract
+  the tokens removed from the set and grep the PR body for each. Confirm
+  the body's prose description of the set matches HEAD's current set. A
+  "restrict/narrow/relax X to only Y" commit updates the code and
+  reference docs but leaves the body's enumeration stale — the rename
+  audit misses it because the token is removed from a list inside a
+  surviving file, not via `--diff-filter=D`.
 - Rollout / operations section: when the diff touches production-
   facing surfaces (observability backend, deployment pipeline,
   schema migration, public API version path, monitoring, paging),
