@@ -38,7 +38,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.20-191230'
+  version: '2026.06.03-182538'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -176,9 +176,33 @@ mcp__claude_ai_Jira_Confluence__editJiraIssue   # for assignee
 mcp__claude_ai_Jira_Confluence__transitionJiraIssue  # for status
 ```
 
+Then run the **Active-sprint assignment** subroutine (defined below).
+
 Report in one line:
 
-> "Jira: {KEY} → In Progress, assigned @<user>."
+> "Jira: {KEY} → In Progress, assigned @<user>, sprint <name>."
+
+### Active-sprint assignment (subroutine)
+
+Invoked after the status transition in Stage 2 (→ In Progress) and
+Stage 4 (→ In Review). A ticket with no sprint lands in the backlog —
+invisible on the sprint board and absent from velocity tracking.
+
+- Find the active sprint on the ticket's project board:
+
+  ```
+  mcp__claude_ai_Jira_Confluence__searchJiraIssuesUsingJql(
+    jql="project = <PROJECT> AND sprint in openSprints()")
+  ```
+
+  Read the sprint field from any returned issue to get the active
+  sprint id.
+- Set it on the ticket via `editJiraIssue`. The sprint field id is
+  custom per instance (commonly `customfield_10020`) — resolve it from
+  issue/field metadata rather than assuming the number, then write the
+  value in the shape that field expects (often `[{ id: <sprintId> }]`).
+- Skip silently when no active sprint exists or the field is
+  unavailable — not every board runs sprints.
 
 ### Ticket description quality check
 
@@ -267,6 +291,9 @@ Do not regress: if the ticket is already `In Review` or further
 forward, leave it alone. If the only forward transition is `Done`,
 stop and ask — that means the board has no review state and Stage 4
 should be a no-op for this team.
+
+After the transition, run the **Active-sprint assignment** subroutine
+(Stage 2) so a ticket that skipped Stage 2 still lands on the board.
 
 Report once per state change:
 
