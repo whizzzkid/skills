@@ -13,7 +13,6 @@ env-vars:
 allowed-tools:
   - Skill
   - Agent
-  - AskUserQuestion
   - Read
   - Write
   - "Bash(date:*)"
@@ -23,12 +22,12 @@ allowed-tools:
   - "Bash(open:*)"
   - "Bash(pgrep:*)"
   - "Bash(silverbullet:*)"
+  - "Bash(docker compose:*)"
   - "Bash(git log:*)"
   - "Bash(git config:*)"
   - "Bash(gh search prs:*)"
   - "Bash(gh search issues:*)"
   - "Bash(gh api:*)"
-  - "Bash(gh issue create:*)"
   - "mcp__claude_ai_Slack_*__*"
   - "mcp__claude_ai_Gmail_*__*"
   - "mcp__claude_ai_Gcal_*__*"
@@ -46,7 +45,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.03-200337'
+  version: '2026.06.03-231822'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -65,7 +64,7 @@ in the browser throughout the day and a `snapshot.md` at close.
 
 ```
 start ──► Bootstrap ──► 5 parallel agents ──► Carry-over merge ──► live.md ──► open in browser
-end   ──► Read live.md ──► 7 parallel agents ──► Snapshot + scrub ──► open in browser
+end   ──► Read live.md ──► 7 parallel agents ──► Snapshot (history) + live.md (pending) ──► open
 ```
 
 ## Sub-commands
@@ -80,6 +79,49 @@ files are scoped to the SilverBullet workspace. Never write `morning.md`,
 `evening.md`, or any sitrep file into the current working directory or
 `$WK_SKILLS_HOME`.
 
+## HARD RULE — no interactive triage
+
+The user edits the live page directly in SilverBullet — triage happens in
+the document, not in the agent conversation.
+
+- Never call `AskUserQuestion` to keep/skip/resolve items. Write every
+  surfaced item unconditionally as a `[ ]` checkbox.
+- Both sub-commands are compile-only: gather → render → write → open.
+- The user resolves, annotates, or deletes items in the browser.
+
+## HARD RULE — SilverBullet markdown formatting
+
+SilverBullet extends CommonMark with inline hashtag parsing that runs over
+link text, so unescaped `#` corrupts links.
+
+- **Escape `#` in link text** with `\#` so it renders literally and does
+  not trigger the hashtag parser: `[repo\#NNN: title](url)`. An unescaped
+  `[repo#NNN](url)` gets mangled into a broken tag node.
+- **Use the full PR/issue title** in link text, formatted
+  `repo\#N: commit-style title` — never bare `repo\#N` (fragile and
+  uninformative).
+- **Every checklist item carries a link.** When no canonical URL exists,
+  set `link_unavailable: true` in the agent output and omit the item —
+  never surface a linkless checkbox.
+- **Nested checkboxes for multi-step items** — indent `  - [ ]` sub-tasks
+  under the parent (e.g., a meeting with prep sub-items).
+- **Sort each section** by urgency: overdue/ASAP first, then dated
+  ascending, then undated. Lead each item with an urgency marker — 🔴
+  (overdue/ASAP), 🟡 (due ≤3 days), 🟢 (later / no hard date).
+- **Format due-dates** as bold with a 📅 prefix: `**📅 2026-06-08**`.
+  Never bury a date in prose — it must be scannable at a glance.
+
+## HARD RULE — restart SilverBullet after a compose change
+
+When this skill (or any run) edits `docker-compose.yml` in `$SITREP_REPO`,
+restart the container immediately after `git push` succeeds so the running
+service matches the committed config:
+
+```bash
+docker compose down && docker compose up -d
+docker compose logs --tail=5   # confirm the new config is active
+```
+
 ## Step 0: Bootstrap (both sub-commands)
 
 ### Verify environment
@@ -93,7 +135,6 @@ TODAY=$(date +%Y-%m-%d)
 LIVE_FILE="$SITREP_REPO/$EMPLOYER/live.md"
 SNAPSHOT_DIR="$SITREP_REPO/$EMPLOYER/$(date +%Y)/$(date +%m)/$(date +%d)"
 SNAPSHOT_FILE="$SNAPSHOT_DIR/snapshot.md"
-LAST_WD_FILE="$SITREP_REPO/$EMPLOYER/.last_working_day"
 
 mkdir -p "$SITREP_REPO/$EMPLOYER" "$SNAPSHOT_DIR"
 ```
@@ -128,9 +169,11 @@ Read `$LIVE_FILE` if it exists and extract:
 - **Completed items** — checked `[x]` lines; surface as a count ("X items
   done yesterday") but do not carry forward.
 
-Resolve yesterday's date from `$LAST_WD_FILE` if it exists; otherwise use the
-previous calendar day. Cross-check open items against live external state
-during Stage 2 (a checked PR or resolved Jira ticket drops the carry-over).
+Resolve the previous working day from the existing `live.md` frontmatter
+`date:` field (it still holds the last run's date until this run overwrites
+it). There is no separate marker file. Cross-check open items against live
+external state during Stage 2 (a checked PR or resolved Jira ticket drops
+the carry-over).
 
 ### Stage 2: Parallel data gathering
 
@@ -165,35 +208,29 @@ Soft/hard block handling: same rules as `wk-goodmorning` — OAuth soft
 blocks degrade gracefully with an authorization CTA; missing MCP hard blocks
 pause everything and require the user to fix before continuing.
 
-### Stage 3: Triage open items
+### Stage 3: Compile open items (no triage)
 
 Merge agent results with carry-over items from Stage 1. Cross-check
 carry-overs against live state — drop any whose external record shows
 completion (PR merged, Jira ticket resolved, email chain closed).
 
-Run interactive triage **one group at a time, max 5 items per prompt**,
-with auto-resolution using the weekly memory file at
-`$SITREP_REPO/$EMPLOYER/.weekly_memory.md`. Per-item options and the `+m`
-modifier follow the same model as `wk-goodmorning` Stage 2a — see that
-skill for the full group/option table.
+Write every surviving item as a `[ ]` checkbox under its section — no
+interactive prompts (per the no-triage HARD RULE). The user triages in the
+browser.
 
-Groups (process in order, skip empty):
+Sections (in order, skip empty):
 
 1. Carry-over from previous live.md
 2. Today's Meeting Prep (from Granola past notes + agenda docs)
-3. Slack — Needs Response
-4. Slack — Follow-ups
-5. Email — Needs Response
-6. Email — Follow-ups
-7. GitHub — PRs to Review
-8. GitHub — Your PRs
-9. GitHub — Issues
-10. Jira — Tickets
-11. Jira — Mentions
-12. Confluence — Mentions
+3. Slack — Needs Response / Follow-ups
+4. Email — Needs Response / Follow-ups
+5. GitHub — PRs to Review / Your PRs / Issues
+6. Jira — Tickets / Mentions
+7. Confluence — Mentions
 
-Every item MUST have a source URL. FYI-only items (announcements, share-outs)
-appear as read-only bullets, never triaged.
+Every item MUST have a link or be omitted (`link_unavailable: true`).
+FYI-only items (announcements, share-outs) render as read-only bullets.
+Sort and mark urgency per the formatting HARD RULE.
 
 ### Stage 4: Write live.md
 
@@ -210,12 +247,12 @@ generated_at: {ISO_8601_UTC}
 # Live — {TODAY}
 
 ## Today's Focus
-- [ ] {priority 1} [source]
-- [ ] {priority 2} [source]
+- [ ] 🔴 {priority} — [{repo}\#{N}: {title}](url)
+- [ ] 🟡 {priority} due **📅 {YYYY-MM-DD}** — [{label}](url)
 ...
 
-## Carry-over from {LAST_WORKING_DAY}
-- [ ] {open item from yesterday} [source]
+## Carry-over from {PREV_WORKING_DAY}
+- [ ] {open item from yesterday} — [{label}](url)
 ...
 
 ## Calendar
@@ -223,43 +260,43 @@ generated_at: {ISO_8601_UTC}
 - Attendees: {list}
 - Last time: {Granola summary or "first occurrence"}
 - Agenda: {doc summary or "no doc"}
-- Prep: {what to review}
+- [ ] Prep: {what to review}
+  - [ ] {sub-task} — [{label}](url)
 
 ## Slack
 ### Needs Response
-- [ ] #{channel} — @{sender}: {summary} [link]
+- [ ] #{channel} — @{sender}: {summary} — [thread](url)
 ### Follow-ups
-- [ ] {your message, awaiting reply} [link]
+- [ ] {your message, awaiting reply} — [thread](url)
 ### Announcements
-- {summary} [link]
+- {summary} — [link](url)
 
 ## Email
 ### Needs Response
-- [ ] {subject} — {sender} [link]
+- [ ] {subject} — {sender} — [mail](url)
 ### Follow-ups
-- [ ] {subject} — sent {date}, no reply [link]
+- [ ] {subject} — sent **📅 {YYYY-MM-DD}**, no reply — [mail](url)
 
 ## GitHub
 ### PRs to Review
-- [ ] {repo}#{number} — {title} by @{author} [link]
+- [ ] [{repo}\#{N}: {title}](url) — by @{author}
 ### Your PRs
-- [ ] {repo}#{number} — {status} [link]
+- [ ] [{repo}\#{N}: {title}](url) — {status}
 ### Issues
-- [ ] {repo}#{number} — {title} [link]
+- [ ] [{repo}\#{N}: {title}](url)
 
 ## Jira & Confluence
 ### Assigned
-- [ ] {KEY}: {title} ({status}) [link]
+- [ ] {KEY}: {title} ({status}) — [link](url)
 ### Mentions
-- [ ] {KEY or page}: {summary} [link]
+- [ ] {KEY or page}: {summary} — [link](url)
 
 ## Notes
 _Add anything that comes up during the day._
 ```
 
-- Triage decisions apply: `[ ]` = will do, `[x]` = already done, omitted = skipped.
-- Every checkbox item carries an inline source link.
-- Priorities list carries the same inline links as the section items.
+- Every checkbox carries a link; escape `#` in link text (`repo\#N`).
+- Lead each item with an urgency marker; sort per the formatting HARD RULE.
 
 ### Stage 5: Open in browser
 
@@ -320,23 +357,25 @@ comments; Confluence mentions.
 **Agent 7 — DX:** engineering metrics (review turnaround, cycle time,
 deploy frequency) vs team/org averages; improvement actions.
 
-### Stage 3: Interactive resolution
+### Stage 3: Compile (no triage)
 
-Same model as `wk-goodevening` Stage 3. Groups (in order, skip empty):
+Merge agent results into two buckets — no interactive prompts (per the
+no-triage HARD RULE):
 
-1. Tomorrow's Meeting Prep
-2. Untracked Action Items
-3. Unanswered Slack
-4. Unanswered Email
-5. Unanswered Jira Comments
-6. Unanswered Confluence Mentions
-7. Lattice Feedback Requests
-8. Peer Feedback Opportunities
+- **Historical** (→ snapshot): completed `[x]` items, meeting notes,
+  achievements, feedback received, DX metrics, day stats.
+- **Pending** (→ live.md): tomorrow's meeting prep, untracked action items,
+  unanswered Slack/email/Jira/Confluence, Lattice feedback requests, peer
+  feedback opportunities, DX improvement actions, and every unchecked item
+  carried from today's `live.md`.
 
-Max 5 items per prompt. Auto-resolve via weekly memory
-(`$SITREP_REPO/$EMPLOYER/.weekly_memory.md`) then morning `live.md` decisions.
+The user resolves everything in the browser. Drop any item with no link.
 
 ### Stage 4: Write snapshot.md
+
+**Snapshot is a historical record only** — completed `[x]` items, meeting
+notes, achievements, DX metrics, day stats. **Never write a pending `[ ]`
+item into the snapshot** — all pending work goes to live.md (Stage 5).
 
 Write to `$SNAPSHOT_FILE`:
 
@@ -369,19 +408,10 @@ is a maintenance action — omit it.
 - {given / received}
 
 ## Meeting Notes
-{per-meeting summaries — decisions, action items, open questions}
-
-## Tomorrow's Prep
-- [ ] {time} — {meeting}: {prep action}
-
-## Carry-forward
-- [ ] {open item from live.md}: {context}
-
-## Feedback Queue
-- [ ] {Lattice request}: due {date}
+{per-meeting summaries — decisions made, action items, open questions}
 
 ## Issues Created Today
-- {repo}#{number}: {title} [link]
+- [{repo}\#{N}: {title}](url)
 
 ## DX Metrics
 | Metric | You | Team | Org | Trend |
@@ -390,8 +420,7 @@ is a maintenance action — omit it.
 | PR cycle time | | | | |
 | Deploy frequency | | | | |
 
-### Improvement Actions for Tomorrow
-- [ ] {specific action}: {rationale}
+(DX improvement actions are pending work — they go to live.md, not here.)
 
 ## Day Stats
 - Completed: {N} items  ·  Meetings: {N}  ·  PRs: {created}/{reviewed}/{merged}  ·  Commits: {N}
@@ -401,12 +430,14 @@ Append QPR-worthy items (feature ships, architectural decisions, cross-team
 wins, peer recognition) to
 `$SITREP_REPO/$EMPLOYER/QPR/brag-log.md` with a `🌟` marker.
 
-### Stage 5: Scrub live.md
+### Stage 5: Rewrite live.md (owns all pending work)
 
-Rewrite `$LIVE_FILE` keeping only open (`[ ]`) items. Remove all `[x]` lines
-and date-specific sections (Calendar, Announcements, FYIs). Preserve open items
-with their source links; group them under a `## Carry-forward` heading for
-tomorrow's `start` run to pick up.
+Rewrite `$LIVE_FILE` so it holds **every** pending item — the snapshot keeps
+none. Drop all `[x]` lines and date-specific FYI sections (Calendar,
+Announcements). Fold in every unchecked item plus the pending buckets from
+Stage 3: tomorrow's prep, unresolved follow-ups, Lattice feedback, peer
+feedback opportunities, DX improvement actions. Sort and mark urgency per
+the formatting HARD RULE.
 
 ```markdown
 ---
@@ -416,21 +447,29 @@ note: "Scrubbed {N} completed items — full record in snapshot"
 
 # Live — carry-forward from {TODAY}
 
+## Tomorrow's Meeting Prep
+- [ ] 🔴 {time} — {meeting}: prep
+  - [ ] {sub-task} — [{label}](url)
+
 ## Carry-forward
-- [ ] {open item 1} [source]
-- [ ] {open item 2} [source]
+- [ ] 🟡 {open item} due **📅 {YYYY-MM-DD}** — [{repo}\#{N}: {title}](url)
+- [ ] 🟢 {open item} — [{label}](url)
+
+## Follow-ups & Feedback
+- [ ] {unanswered Slack/email/Jira} — [{label}](url)
+- [ ] {Lattice request} due **📅 {YYYY-MM-DD}** — [link](url)
+
+## DX Improvement Actions
+- [ ] {action} — {rationale}
 
 ## Notes
 {preserved free-form notes, if any}
 ```
 
-### Stage 6: Write last_working_day marker
+There is **no** `.last_working_day` file — the `date:` frontmatter is the
+sole working-day marker.
 
-```bash
-echo "$TODAY" > "$LAST_WD_FILE"
-```
-
-### Stage 7: Open snapshot in browser
+### Stage 6: Open snapshot in browser
 
 ```bash
 open "http://localhost:$SITREP_PORT/$EMPLOYER/$(date +%Y)/$(date +%m)/$(date +%d)/snapshot"
@@ -451,13 +490,13 @@ Announce:
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk-sitrep start` | Workday start — data gather, triage, write live.md, open browser |
-| `/wk-sitrep end` | Workday end — data gather, snapshot, scrub live.md, open browser |
+| `/wk-sitrep start` | Workday start — data gather, compile, write live.md, open browser |
+| `/wk-sitrep end` | Workday end — data gather, snapshot (historical), rewrite live.md (pending), open browser |
 | `/wk-sitrep` (no arg) | Same as `start` (default) |
 | SilverBullet stopped | Auto-start via `silverbullet $SITREP_REPO &` |
 | Service auth fails | OAuth soft block: degrade with CTA; MCP hard block: stop |
 | No previous live.md | Skip carry-over; start fresh |
-| Item skipped 2+ days | Offer auto-skip rule in weekly memory |
+| docker-compose.yml changed | `docker compose down && up -d` after push |
 
 ## Requirements
 
