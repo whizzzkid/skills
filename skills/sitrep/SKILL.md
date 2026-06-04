@@ -19,6 +19,8 @@ allowed-tools:
   - "Bash(mkdir:*)"
   - "Bash(cat:*)"
   - "Bash(grep:*)"
+  - "Bash(find:*)"
+  - "Bash(test:*)"
   - "Bash(open:*)"
   - "Bash(pgrep:*)"
   - "Bash(silverbullet:*)"
@@ -49,7 +51,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.04-192059'
+  version: '2026.06.04-192826'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -465,6 +467,11 @@ The user resolves everything in the browser. Drop any item with no link.
 notes, achievements, DX metrics, day stats. **Never write a pending `[ ]`
 item into the snapshot** — all pending work goes to live.md (Stage 5).
 
+**Idempotency:** if `$SNAPSHOT_FILE` already exists (a second `end` run the
+same day), re-read it and merge — append newly-completed items and meeting
+notes rather than blindly overwriting. Never drop achievements captured by
+the earlier run.
+
 Write to `$SNAPSHOT_FILE`:
 
 ```markdown
@@ -587,6 +594,38 @@ git -C "$SITREP_REPO" commit -m "chore(sitrep): 📸 end $TODAY — {N} done, {M
 git -C "$SITREP_REPO" push
 ```
 
+### Stage 8: Distill accumulated learnings
+
+End-of-day mirror of `wk-goodevening` Stage 5 — fold the day's skill
+learnings before they pile up. Skip silently if `$WK_SKILLS_HOME` is unset
+or no unprocessed files exist.
+
+```bash
+test -n "$WK_SKILLS_HOME" && \
+  find "$WK_SKILLS_HOME/learnings/skills" -name "*.md" \
+    ! -name "*.learned.md" -type f 2>/dev/null | head -20
+```
+
+- For each unprocessed learning, invoke `wk-sharpen` with the file as input.
+- Process highest-severity first; cap at 5 per run, carry the rest.
+- `wk-sharpen` renames each absorbed file to `.learned.md` — do not rename
+  here.
+
+## QPR season awareness
+
+Surface a quarterly-review nudge once per day during QPR windows; never
+block on it.
+
+- **`start`** — when today is in a QPR prep window (the last two weeks of
+  Jan / Apr / Jul / Oct) AND `$SITREP_REPO/$EMPLOYER/QPR/brag-log.md` has
+  recent entries, add a `📋 QPR Prep` banner atop live.md pointing to
+  `/wk-self-perf quarter`.
+- **`end`** — during QPR seasons (Feb / Aug), add a `📋 QPR Season` banner
+  to the snapshot reminding the user to capture the day's achievements via
+  `/wk-self-perf quarter`.
+- QPR-worthy achievements continue to accrue to `QPR/brag-log.md` with a
+  `🌟` marker (Stage 4) regardless of season.
+
 ---
 
 ## Quick Reference
@@ -599,6 +638,8 @@ git -C "$SITREP_REPO" push
 | Write live.md / snapshot | Re-read the file first; preserve `[x]`; prefer `Edit` over `Write` |
 | Jira agent | Full open-ticket sweep, not just today's activity; backlog collapsed |
 | Merged PR + open ticket | Auto-transition to Done, render as `[x]` auto-action |
+| End of day | Distill unprocessed learnings via `wk-sharpen` (Stage 8) |
+| QPR window/season | `📋` banner on live.md (start) / snapshot (end); brag-log accrues 🌟 |
 | SilverBullet stopped | Auto-start via `silverbullet $SITREP_REPO &` |
 | Service auth fails | OAuth soft block: degrade with CTA; MCP hard block: stop |
 | No previous live.md | Skip carry-over; start fresh |
