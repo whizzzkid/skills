@@ -23,6 +23,10 @@ allowed-tools:
   - "Bash(pgrep:*)"
   - "Bash(silverbullet:*)"
   - "Bash(docker compose:*)"
+  - "Bash(gh pr view:*)"
+  - "Bash(git add:*)"
+  - "Bash(git commit:*)"
+  - "Bash(git push:*)"
   - "Bash(git log:*)"
   - "Bash(git config:*)"
   - "Bash(gh search prs:*)"
@@ -45,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.03-231822'
+  version: '2026.06.04-192059'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -63,8 +67,8 @@ generation, no per-day output directories, just a `live.md` page you edit
 in the browser throughout the day and a `snapshot.md` at close.
 
 ```
-start ──► Bootstrap ──► 5 parallel agents ──► Carry-over merge ──► live.md ──► open in browser
-end   ──► Read live.md ──► 7 parallel agents ──► Snapshot (history) + live.md (pending) ──► open
+start ──► Bootstrap ──► 5 agents ──► auto-transition ──► live.md (+standup) ──► open ──► commit/push
+end   ──► Read live.md ──► 7 agents ──► Snapshot (history) + live.md (pending) ──► open ──► commit/push
 ```
 
 ## Sub-commands
@@ -202,11 +206,40 @@ commands require `--owner="$GITHUB_ORG"`. ToolSearch: `"github"`.
 
 **Agent 5 — Jira + Confluence:** assigned tickets needing action; ticket
 mentions awaiting reply; Confluence mentions and announcements. ToolSearch:
-`"jira"`, `"confluence"`.
+`"jira"`, `"confluence"`. Run the **full open-ticket sweep** (below), not
+just today's activity.
 
 Soft/hard block handling: same rules as `wk-goodmorning` — OAuth soft
 blocks degrade gracefully with an authorization CTA; missing MCP hard blocks
 pause everything and require the user to fix before continuing.
+
+#### Jira full open-ticket sweep
+
+The today's-activity queries miss the ambient backlog. Always run a third
+JQL for **all** open assigned tickets:
+
+```
+assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC
+```
+
+- Surface in the daily checklist: tickets `In Review` / `Ready for Review`
+  / `Blocked` / `On Deck`, any with a past-due date, and any whose linked
+  PR merged but the ticket is still open (transition candidates).
+- Collapse no-activity / no-due-date tickets into a `## 🗂 Jira backlog`
+  section — present once, not as actionable checkboxes.
+
+### Stage 2b: Auto-transition merged-PR tickets
+
+Run after the agents return, before writing live.md — close the loop on
+tickets the user already finished:
+
+- For each Agent 5 ticket with `status` in `In Review` / `Ready for Review`
+  and a linked PR, check merge state: `gh pr view <url> --json state,merged,mergedAt`.
+- When the PR is `merged: true` within the last 14 days, fetch the
+  project's transitions and `transitionJiraIssue` the ticket to `Done`.
+- Render the result as a checked `[x]` item under a `## 🤖 Auto-Actions`
+  section with `✅ auto-transitioned to Done by agent` — never as an open
+  `[ ]` TODO. No prompt (per the no-triage HARD RULE).
 
 ### Stage 3: Compile open items (no triage)
 
@@ -234,7 +267,13 @@ Sort and mark urgency per the formatting HARD RULE.
 
 ### Stage 4: Write live.md
 
-Overwrite `$LIVE_FILE` with today's live page:
+**Re-read `$LIVE_FILE` immediately before writing** — minutes elapsed while
+agents ran, and the user may have checked items in the browser. Preserve
+every `[x]` line; never overwrite a checked item with an unchecked one.
+Prefer `Edit` (anchored, fails loudly if the file moved) over a full `Write`
+overwrite wherever the structure allows.
+
+Write today's live page:
 
 ```markdown
 ---
@@ -291,12 +330,43 @@ generated_at: {ISO_8601_UTC}
 ### Mentions
 - [ ] {KEY or page}: {summary} — [link](url)
 
-## Notes
+## 📣 Standup Snippet
+{see Stage 4b}
+
+## 📝 Notes
 _Add anything that comes up during the day._
 ```
 
 - Every checkbox carries a link; escape `#` in link text (`repo\#N`).
 - Lead each item with an urgency marker; sort per the formatting HARD RULE.
+
+### Stage 4b: Standup snippet
+
+Append a `## 📣 Standup Snippet` section just before `## 📝 Notes`. Delegate
+formatting to `wk-slack §Standup Snippet`; this skill owns selection.
+
+- **Yesterday** → yesterday's snapshot `## Achievements`, top 3–4 wins.
+  Apply the authorship filter (author / co-author / primary approving
+  reviewer only — merging another's PR is not an achievement).
+- **Today** → today's 🔴 ASAP items, top 3–4, deadline-first.
+- **Blockers** → items flagged `BLOCKED` or a dependency conflict; omit the
+  heading entirely if none.
+- Apply `wk-slack §Standup privacy filter` — drop hiring/interview/candidate
+  items, personal HR/performance items, anything not publicly shareable.
+
+```
+## 📣 Standup Snippet
+
+- 👈🏽 Yesterday:
+   - {achievement} {bare URL}
+- 👉🏽 Today:
+   - {priority} {bare URL}
+- ✋🏽 Blockers:
+   - {blocker} {bare URL}
+```
+
+Verify `👈🏽` and `👉🏽` survive the write (multi-byte emoji loss check);
+re-emit via the Write tool if either is missing.
 
 ### Stage 5: Open in browser
 
@@ -312,6 +382,20 @@ Announce:
 >
 > {X} items to action, {Y} meetings today, {Z} carry-overs from yesterday.
 > Check off items in the browser as you go — they sync to `$LIVE_FILE`."
+
+### Stage 6: Commit and push
+
+Unconditional — same as the browser-open step, no prompt. The skill is
+self-contained; do not rely on project-level CLAUDE.md to commit output.
+
+```bash
+git -C "$SITREP_REPO" add "$LIVE_FILE"
+git -C "$SITREP_REPO" commit -m "chore(sitrep): 📋 start $TODAY — {N} items, {M} meetings"
+git -C "$SITREP_REPO" push
+```
+
+Fold any auto-actions (Jira transitions) into the same commit, or a
+follow-up `chore(sitrep): ✅ {action}`.
 
 ---
 
@@ -352,7 +436,11 @@ contributions (decisions communicated, threads unblocked).
 feedback received.
 
 **Agent 6 — Jira + Confluence:** Jira activity today; unanswered Jira
-comments; Confluence mentions.
+comments; Confluence mentions. Also run the **full open-ticket sweep**
+(`assignee = currentUser() AND statusCategory != Done`) — surface
+actionable statuses (In Review / Blocked / On Deck), past-due tickets, and
+merged-PR-but-open transition candidates; collapse the rest into a backlog
+section.
 
 **Agent 7 — DX:** engineering metrics (review turnaround, cycle time,
 deploy frequency) vs team/org averages; improvement actions.
@@ -432,6 +520,11 @@ wins, peer recognition) to
 
 ### Stage 5: Rewrite live.md (owns all pending work)
 
+**Re-read `$LIVE_FILE` immediately before rewriting** — the user may have
+edited it in the browser since Stage 1. Preserve every `[x]` line; merge
+newly-checked items into the snapshot's done set rather than re-surfacing
+them as open.
+
 Rewrite `$LIVE_FILE` so it holds **every** pending item — the snapshot keeps
 none. Drop all `[x]` lines and date-specific FYI sections (Calendar,
 Announcements). Fold in every unchecked item plus the pending buckets from
@@ -462,7 +555,7 @@ note: "Scrubbed {N} completed items — full record in snapshot"
 ## DX Improvement Actions
 - [ ] {action} — {rationale}
 
-## Notes
+## 📝 Notes
 {preserved free-form notes, if any}
 ```
 
@@ -484,15 +577,28 @@ Announce:
 >
 > live.md scrubbed — {N} open items remain for tomorrow."
 
+### Stage 7: Commit and push
+
+Unconditional — no prompt; do not rely on project-level CLAUDE.md.
+
+```bash
+git -C "$SITREP_REPO" add "$LIVE_FILE" "$SNAPSHOT_FILE"
+git -C "$SITREP_REPO" commit -m "chore(sitrep): 📸 end $TODAY — {N} done, {M} carried forward"
+git -C "$SITREP_REPO" push
+```
+
 ---
 
 ## Quick Reference
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk-sitrep start` | Workday start — data gather, compile, write live.md, open browser |
-| `/wk-sitrep end` | Workday end — data gather, snapshot (historical), rewrite live.md (pending), open browser |
+| `/wk-sitrep start` | Gather → auto-transition merged-PR tickets → compile → write live.md (+ standup) → open → commit/push |
+| `/wk-sitrep end` | Gather → snapshot (historical) → rewrite live.md (pending) → open → commit/push |
 | `/wk-sitrep` (no arg) | Same as `start` (default) |
+| Write live.md / snapshot | Re-read the file first; preserve `[x]`; prefer `Edit` over `Write` |
+| Jira agent | Full open-ticket sweep, not just today's activity; backlog collapsed |
+| Merged PR + open ticket | Auto-transition to Done, render as `[x]` auto-action |
 | SilverBullet stopped | Auto-start via `silverbullet $SITREP_REPO &` |
 | Service auth fails | OAuth soft block: degrade with CTA; MCP hard block: stop |
 | No previous live.md | Skip carry-over; start fresh |
