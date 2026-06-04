@@ -1,14 +1,13 @@
 ---
 name: wk-goodmorning
 description: >-
-  Prepare for your day by connecting to Slack, Gmail, Calendar, Granola,
-  Google Drive, and GitHub. Surfaces unread messages needing response,
-  follow-ups on sent messages, meeting prep with agenda docs and past notes,
-  PRs/issues needing attention, and yesterday's carry-over action items.
-  Produces a structured morning.md and an interactive morning.html dashboard.
-  Use at the start of your workday.
+  [DEPRECATED — superseded by wk-sitrep] Morning workday-prep ritual. Replaced
+  by `/wk-sitrep start`, which covers the same Slack/Gmail/Calendar/Granola/
+  GitHub/Jira gathering, carry-over, meeting prep, and standup snippet without
+  HTML generation. Retained only as the canonical agent-spec reference that
+  wk-sitrep links to; not user-invocable.
 model-invocable: false
-user-invocable: true
+user-invocable: false
 allowed-tools:
   - Skill
   - Agent
@@ -19,7 +18,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.01-171208'
+  version: '2026.06.04-192828'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -30,6 +29,11 @@ metadata:
 ---
 
 # Good Morning
+
+> **⚠️ DEPRECATED — superseded by [`wk-sitrep`](../sitrep/README.md).** Use
+> `/wk-sitrep start` for the daily morning routine. This skill is retained
+> only as the agent-spec reference that `wk-sitrep` Stage 2 links to (the
+> parallel data-gathering agent definitions). Do not invoke it directly.
 
 Daily preparation skill that connects to all your work tools in parallel,
 gathers what needs your attention, triages items interactively, and

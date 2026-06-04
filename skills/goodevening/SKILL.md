@@ -1,14 +1,13 @@
 ---
 name: wk-goodevening
 description: >-
-  Wrap up your workday — review morning progress, write a brag document of
-  the day's achievements, capture meeting learnings from Granola, check
-  Lattice for pending feedback requests, surface peer feedback opportunities
-  from today's interactions, track unfinished action items as GitHub/Jira
-  issues, audit unanswered Slack and email messages, and create an
-  evening.md for tomorrow's morning brief. Use at the end of your workday.
+  [DEPRECATED — superseded by wk-sitrep] Evening workday-wrap ritual. Replaced
+  by `/wk-sitrep end`, which covers the same brag doc, Granola/Lattice/DX
+  gathering, peer-feedback, unfinished-item tracking, snapshot, and end-of-day
+  learnings distillation without HTML generation. Retained only as the
+  canonical agent-spec reference that wk-sitrep links to; not user-invocable.
 model-invocable: false
-user-invocable: true
+user-invocable: false
 allowed-tools:
   - Skill
   - Agent
@@ -19,7 +18,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-205011'
+  version: '2026.06.04-192829'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -30,6 +29,11 @@ metadata:
 ---
 
 # Good Evening
+
+> **⚠️ DEPRECATED — superseded by [`wk-sitrep`](../sitrep/README.md).** Use
+> `/wk-sitrep end` for the daily wrap-up routine. This skill is retained only
+> as the agent-spec reference that `wk-sitrep` Stage 2 links to (the parallel
+> data-gathering agent definitions). Do not invoke it directly.
 
 Daily wrap-up skill that reviews your day, documents achievements, captures
 meeting insights, ensures nothing falls through the cracks, and prepares

@@ -22,8 +22,8 @@ Skills activate automatically when the agent detects a matching context, or invo
 | Skill | Purpose | Invocation |
 |---|---|---|
 | [`wk-sitrep`](./sitrep/README.md) | Unified daily ops log — SilverBullet live.md replaces goodmorning + goodevening with no HTML generation | User: `/wk-sitrep [start\|end]` |
-| [`wk-goodmorning`](./goodmorning/README.md) | Prepare for your day — surfaces unread messages, meeting prep, PRs, and carry-over items | User: `/wk-goodmorning` |
-| [`wk-goodevening`](./goodevening/README.md) | Wrap up your workday — brag doc, Granola learnings, Lattice feedback, unfinished items | User: `/wk-goodevening` |
+| [`wk-goodmorning`](./goodmorning/README.md) | ⚠️ DEPRECATED — use [`wk-sitrep`](./sitrep/README.md) `start`. Retained as agent-spec reference only | — |
+| [`wk-goodevening`](./goodevening/README.md) | ⚠️ DEPRECATED — use [`wk-sitrep`](./sitrep/README.md) `end`. Retained as agent-spec reference only | — |
 | [`wk-cal`](./cal/README.md) | All Google Calendar operations — fetch, create in free slots, check availability, schedule prep blocks | User + Model |
 | [`wk-retro`](./retro/README.md) | Session retrospective — capture learnings and improve future sessions | User + Model |
 | [`wk-self-perf`](./self-perf/README.md) | Generate a self-performance review narrative from GitHub, Slack, Jira, Granola, and more | User: `/wk-self-perf <period>` |
