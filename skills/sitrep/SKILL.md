@@ -51,7 +51,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.04-192826'
+  version: '2026.06.05-230547'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -111,9 +111,11 @@ link text, so unescaped `#` corrupts links.
   never surface a linkless checkbox.
 - **Nested checkboxes for multi-step items** — indent `  - [ ]` sub-tasks
   under the parent (e.g., a meeting with prep sub-items).
-- **Sort each section** by urgency: overdue/ASAP first, then dated
-  ascending, then undated. Lead each item with an urgency marker — 🔴
-  (overdue/ASAP), 🟡 (due ≤3 days), 🟢 (later / no hard date).
+- **Sort each section** by a composite key: priority/severity (highest
+  first), then staleness (longest pending first), then due-date (soonest
+  first), then undated. Lead each item with an urgency marker — 🔴
+  (overdue/ASAP), 🟡 (due ≤3 days), 🟢 (later / no hard date) — and append
+  `⏳ {N}d` when the item has been pending on the user beyond 7 days.
 - **Format due-dates** as bold with a 📅 prefix: `**📅 2026-06-08**`.
   Never bury a date in prose — it must be scannable at a glance.
 
@@ -229,6 +231,27 @@ assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC
   PR merged but the ticket is still open (transition candidates).
 - Collapse no-activity / no-due-date tickets into a `## 🗂 Jira backlog`
   section — present once, not as actionable checkboxes.
+
+#### Cross-tracker pending-on-me sweep
+
+The per-tracker agents (GitHub, Jira, and any other connected tracker —
+e.g. Asana, Linear) each return assigned items. Fold them into one
+pending-on-me view with status-change and staleness detection before
+compiling:
+
+- **Flag status changes since the last run.** Compare each carry-over
+  item's current status against the status recorded in the previous
+  `live.md` (Jira items carry `({status})`). Prefix changed items with
+  `🔁 {old}→{new}` (e.g. `In Progress→Blocked`) so transitions are visible.
+- **Flag staleness.** Compute `age = today − (assigned-date or
+  last-status-change)`; append `⏳ {N}d` to any item pending on the user
+  beyond 7 days so long-stalled work surfaces.
+- **Read priority/severity** from each tracker's native field — Jira
+  `priority`, GitHub `P0` / `severity:*` labels, the tracker's equivalent.
+  Items with no priority field sort lowest.
+- **Apply to every connected tracker**, not just Jira. Skip a tracker only
+  when its MCP is absent (soft block — degrade with a CTA, never silently
+  drop the tracker).
 
 ### Stage 2b: Auto-transition merged-PR tickets
 
@@ -637,6 +660,7 @@ block on it.
 | `/wk-sitrep` (no arg) | Same as `start` (default) |
 | Write live.md / snapshot | Re-read the file first; preserve `[x]`; prefer `Edit` over `Write` |
 | Jira agent | Full open-ticket sweep, not just today's activity; backlog collapsed |
+| Assigned tickets | Cross-tracker sweep: flag 🔁 status changes + ⏳ staleness; sort by priority → age → due-date |
 | Merged PR + open ticket | Auto-transition to Done, render as `[x]` auto-action |
 | End of day | Distill unprocessed learnings via `wk-sharpen` (Stage 8) |
 | QPR window/season | `📋` banner on live.md (start) / snapshot (end); brag-log accrues 🌟 |
