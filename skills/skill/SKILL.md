@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-070346'
+  version: '2026.06.05-190456'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -197,6 +197,20 @@ behavior when that state is absent.
   mode)"`).
 - Refusing or silently guessing are both wrong; the user cannot debug
   either.
+
+**HARD RULE — supersede parity audit.** When the user frames the new
+skill as replacing, superseding, or deprecating existing skills
+("replaces X", "instead of X", "deprecate X once this ships"), audit
+each named skill for feature parity before declaring the new skill done.
+
+- Read each superseded skill's `SKILL.md` and extract its stage/feature
+  list.
+- Confirm the new skill covers each feature, or record an explicit,
+  intentional exclusion in the body — features left implicit surface
+  one-by-one across later runs, each forcing a follow-up sharpen pass.
+- Keep the deprecated file when the new skill links to it as a spec
+  source — deprecation marks it superseded; deletion orphans the
+  reference.
 
 ## Step 7: Present the skill
 
