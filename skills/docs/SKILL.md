@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.02-200532'
+  version: '2026.06.05-190456'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -60,6 +60,14 @@ find docs/ -name '*.md' 2>/dev/null | head -50
 
 For each doc found, check if the current changes affect it. If so, update it
 to reflect the new state. Update only docs the changes have made inaccurate — leave correct docs alone.
+
+**New configurable surface → mandatory doc, unprompted.** When the change adds
+a new YAML config field, env var, JSON output field, or CLI flag, write or
+update the user-facing doc (README, repository guide) in the same session — do
+not wait for the user to ask.
+
+- For a new config-schema section, also add a `docs/specs/` entry (context,
+  decision, data flow, config reference) per Step 4's quality gate.
 
 ## Step 2: Bootstrap if Missing
 
