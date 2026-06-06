@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.06-000520'
+  version: '2026.06.06-002241'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -80,6 +80,13 @@ a post-creation workflow that ensures quality before marking ready for review.
    Creating against the wrong base pulls a parent branch's commits into
    the diff and runs CI against the wrong target. When the resolved base
    differs from the default, surface it before proceeding.
+4. **Derive behavioral claims from the implementation, never narrate from
+   intent.** Before finalizing any PR-body section describing behavioral
+   rules, conditions, thresholds, or severity — re-read the source file and
+   verify each claim against it. Quote a check's severity ladder directly
+   from the file; never paraphrase from memory. A claim broader or narrower
+   than the code (e.g. dropping a scope qualifier like "project-wide")
+   misleads reviewers from the first draft, before any drift.
 
 ## Step 1: Assess Scope
 
