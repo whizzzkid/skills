@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.03-182535'
+  version: '2026.06.06-000520'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -252,6 +252,14 @@ When using a repo template:
   heading) if the template does not already include one.
 - If the template contains sections irrelevant to the current changes, fill
   them with "N/A" or a brief note explaining why they don't apply.
+- **Guarantee a verification section.** After populating the template,
+  confirm it carries a Testing / Test plan / verification section. If
+  none exists, append `## Testing` listing the concrete checks run
+  (commands + outcomes: linters/formatters clean, hooks run locally,
+  CI/pipeline template render, manual steps). Treat a missing
+  verification section as drift to fix before `gh pr create` — a
+  description-check bot otherwise flags "Testing section missing" and
+  forces a second cycle.
 
 ### Simple PR (fallback — no repo template found)
 
