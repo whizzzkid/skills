@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.03-182539'
+  version: '2026.06.06-002242'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1099,6 +1099,12 @@ exempt this phase. Skipping the retro is a workflow violation.
 immediately after every skill run and after every user correction —
 unconditionally, the same as committing after a code change. Surfacing it as a
 question ("should I capture learnings for X?") is a violation; capture, don't ask.
+
+**HARD RULE: `gh pr ready` is not a session terminus.** After every
+`gh pr ready` succeeds, the very next action is `Skill(wk-retro)` — no user
+prompt, no asking. Marking ready feels like the end; the workflow contract
+says the retro is. Treat it like `wk-commit` after a code change: automatic,
+non-negotiable. "Work is done" != "workflow is done".
 
 The retro:
 - Auto-invokes `wk-learn scan` to mine the session transcript for
