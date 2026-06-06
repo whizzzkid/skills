@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.02-221022'
+  version: '2026.06.06-002243'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1698,6 +1698,11 @@ Invoke `wk-retro` to capture session-level learnings. This is
 mandatory — do not skip even if the session was short or routine.
 Adversarial-review learnings were already emitted in Step 9.4
 (before CI wait); this step covers session-level reflection only.
+
+A narrow user directive ("fix the description, mark for review") defines
+*what* to do, not *when* to stop — Step 11 fires on every session
+completion regardless of how scoped the instruction was. User directives
+set the task; the skill's workflow sets how to finish it.
 
 ## Quick Reference
 
