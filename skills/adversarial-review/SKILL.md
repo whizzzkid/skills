@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.03-182537'
+  version: '2026.06.06-000519'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -448,6 +448,18 @@ Inspect the repo's pre-push hook config (`.lefthook.yml`,
 `.husky/pre-push`, `.git/hooks/pre-push`, `bin/ci`). Enumerate every
 gate the hook runs. Confirm each has been run locally against the
 current HEAD. Passing one suite does not imply the others pass.
+
+**Multi-phase wiring check.** When a hook-config command's tag or name
+declares it runs in more than one hook phase (dual-phase enforcement,
+e.g. pre-commit *and* pre-push), verify the config actually wires every
+claimed phase — not just the one the command was authored under:
+
+- Confirm the shared definition is anchored (YAML `&anchor`) under the
+  phase it is defined in.
+- Confirm every other claimed phase references that anchor (`*anchor`)
+  or repeats the command.
+- Flag as `blocker` when a phase named in the tag has no corresponding
+  entry — the command claims enforcement it never delivers.
 
 ### 2.15 Workstyle pass
 
