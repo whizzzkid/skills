@@ -11,6 +11,10 @@ allowed-tools:
   - Write
   - Edit
   - Skill
+  - "mcp__*playwright*__browser_navigate"
+  - "mcp__*playwright*__browser_take_screenshot"
+  - "mcp__*playwright*__browser_evaluate"
+  - "mcp__*playwright*__browser_click"
 model: sonnet
 effort: medium
 model-invocable: true
@@ -19,7 +23,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.08-185717'
+  version: '2026.06.08-190213'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -41,6 +45,31 @@ discovered during dashboard development so future work does not re-discover them
 - Debugging rendering anomalies (content missing, CSS not applying, handlers
   not firing)
 - Migrating content from markdown tables to HTML div layouts
+
+## Local Setup (docker-compose)
+
+Minimal no-auth, localhost-only deployment for a personal workspace:
+
+```yaml
+services:
+  silverbullet:
+    image: ghcr.io/silverbulletmd/silverbullet:2.8.1
+    restart: unless-stopped
+    environment:
+      - SB_USER=
+    volumes:
+      - ./space:/space
+    ports:
+      - "127.0.0.1:7487:3000"
+```
+
+- `SB_USER=` (empty) disables auth — correct for local-only use.
+- `SB_USER=user:password` enables HTTP Basic Auth — add only when asked.
+- Bind to `127.0.0.1`, never `0.0.0.0`, without auth — an open port on a
+  network-accessible address is a security risk.
+- Pin the image tag (`2.8.1`), never `latest` — SilverBullet has breaking
+  changes between minor versions.
+- The host workspace directory maps to `/space` inside the container.
 
 ## Critical Constraints Reference
 
@@ -277,6 +306,32 @@ Key selectors for `space-style` rules:
 CSS `:has()` is fully supported — use it for parent-based state styling without
 JavaScript.
 
+## Step 6: Verify Changes Visually
+
+**HARD RULE:** After any CSS or HTML change, verify in a browser — a file diff
+does not prove the running instance renders correctly. SilverBullet's
+service worker, IndexedDB cache, CodeMirror live preview, and HTML widget
+scoping all sit between the file and what the user sees.
+
+Run this loop (Playwright MCP, or browser console for steps 1/3/4):
+
+1. **Force style sync** if `space-style` changed — see Step 4 write-back.
+2. **Screenshot** the full page (`browser_take_screenshot`) — confirms layout
+   (e.g., 3 columns actually render, not 1).
+3. **Inspect the DOM** (`browser_evaluate`) — a screenshot misses hidden state:
+
+   ```javascript
+   window.getComputedStyle(el).display  // did the CSS apply?
+   el.getAttribute('onclick')           // did the handler survive sanitization?
+   el.disabled                          // is the element unexpectedly disabled?
+   ```
+
+4. **Test interactivity** — `.click()` a checkbox span, then re-read the page
+   (`window.client.space.readPage`) to confirm the toggle persisted to file.
+
+Key Playwright MCP tools: `browser_navigate`, `browser_take_screenshot`,
+`browser_evaluate`, `browser_click`.
+
 ## Common Mistakes
 
 Distilled from field reports on all known failure modes:
@@ -291,6 +346,8 @@ Distilled from field reports on all known failure modes:
 - **`location.reload()` after style change** → stale CSS; use write-back + hard reload.
 - **`.sitrep-col br { display: none }`** → collapses all text in column including meetings.
 - **Non-unique `data-t` values** → checkbox toggle replaces the wrong item in source.
+- **Shipping a CSS/HTML change without a browser screenshot** → file looks right, render is wrong (single column, collapsed lines, disabled handlers).
+- **`SB_USER` unset on a `0.0.0.0` bind** → workspace exposed without auth.
 
 ## Quick Reference
 
