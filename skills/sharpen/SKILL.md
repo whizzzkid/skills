@@ -26,7 +26,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.08-190214'
+  version: '2026.06.08-224637'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -296,6 +296,18 @@ agent needs it.
 **Contradictory rules:** An edit in one section that conflicts with an
 existing rule elsewhere. Resolve the conflict — update or remove the
 stale instruction.
+
+- Check the current run's own edits and the most recent
+  `.distilled-sources.log` entries for the target skill, not just old
+  prose — the freshest rules are the most likely to be reversed by a
+  newer learning (format/approach churn lands as a cohort of same-day
+  learnings).
+- When a higher-severity or newer learning reverses a recent rule,
+  replace it and record the supersession in the new reference file's
+  `Supersedes:` line — never leave both rules live.
+- When a learning's mechanism is large enough to be its own domain,
+  extract it to a sibling skill and have the consuming skill delegate,
+  rather than duplicating the mechanics inline.
 
 **Redundant tool usage:** The same API call or CLI command shown in
 multiple places with slightly different flags or jq filters. Consolidate
