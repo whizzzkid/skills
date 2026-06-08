@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-070721'
+  version: '2026.06.08-171648'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -84,6 +84,31 @@ Skill(wk-gh)
   posts ship without org scoping and without the canonical footer.
 - The prose HARD RULE alone does not gate execution; this numbered
   step does. Treat Step 0 as a precondition for Step 1, not advice.
+
+## Step 0.5: Pre-flight the pending-review POST permission
+
+The pending review is created with a `POST` to
+`repos/{owner}/{repo}/pulls/{n}/reviews` under the user's identity.
+In auto mode the permission classifier blocks GitHub writes that lack
+an explicit allow rule — and it blocks at Step 4, after the payload is
+built, wasting the work.
+
+- Check whether the write permission is already granted before building
+  the payload:
+
+  ```bash
+  grep -rE 'gh api repos/.*/pulls/.*/reviews' ~/.claude/settings.json .claude/settings*.json 2>/dev/null
+  ```
+
+- If no match, surface a one-line prompt to add it, then proceed (the
+  classifier still gates the actual POST — this just warns early):
+
+  > Self-review posts a pending review via
+  > `gh api repos/*/pulls/*/reviews` (POST). Add that to allowed Bash
+  > commands to avoid a mid-flow block.
+
+- Never downgrade to a published `.../comments` call to dodge the
+  prompt — that violates the pending-review HARD RULE above.
 
 ## Step 1: Gather Context
 
