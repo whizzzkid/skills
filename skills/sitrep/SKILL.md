@@ -51,7 +51,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.08-171650'
+  version: '2026.06.08-190802'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -91,7 +91,8 @@ The user edits the live page directly in SilverBullet — triage happens in
 the document, not in the agent conversation.
 
 - Never call `AskUserQuestion` to keep/skip/resolve items. Write every
-  surfaced item unconditionally as a ⬜ item in live.md's table cells.
+  surfaced item unconditionally as a `data-done="false"` checkbox span in
+  the appropriate `live.md` column.
 - Both sub-commands are compile-only: gather → render → write → open.
 - The user resolves, annotates, or deletes items in the browser.
 
@@ -110,10 +111,10 @@ link text, so unescaped `#` corrupts links.
   set `link_unavailable: true` in the agent output and omit the item —
   never surface a linkless checkbox.
 - **Checkbox syntax (`- [ ]`, nested `  - [ ]`) is for `snapshot.md` and
-  other normal pages only** — `live.md` is a table and uses ⬜/✅ glyphs
-  per the 3-column-table HARD RULE below. In normal pages, indent
-  `  - [ ]` sub-tasks under the parent (e.g., a meeting with prep
-  sub-items).
+  other normal pages only** — `live.md` uses HTML `<span>` checkboxes with
+  `data-done` attributes per the HTML-layout HARD RULE below. In normal
+  pages, indent `  - [ ]` sub-tasks under the parent (e.g., a meeting with
+  prep sub-items).
 - **Sort each section** by a composite key: priority/severity (highest
   first), then staleness (longest pending first), then due-date (soonest
   first), then undated. Lead each item with an urgency marker — 🔴
@@ -122,51 +123,54 @@ link text, so unescaped `#` corrupts links.
 - **Format due-dates** as bold with a 📅 prefix: `**📅 2026-06-08**`.
   Never bury a date in prose — it must be scannable at a glance.
 
-## HARD RULE — render live.md as one 3-column table
+## HARD RULE — render live.md as an HTML div 3-column layout
 
-SilverBullet 2.x renders pages through CodeMirror live preview (no reading
-mode), so a single markdown table styled by `space-style` CSS is the only
-layout that reliably yields a full-width, themed, multi-column dashboard.
+`live.md` is an HTML flexbox layout with interactive `<span>` checkboxes —
+NOT a markdown table. Markdown table cells cannot hold SilverBullet's
+interactive task widgets, so the table format only ever yielded read-only
+⬜/✅ glyphs. The HTML div layout supports `<span onclick>` checkboxes that
+persist state to the file.
+
+**Invoke [`wk-silverbullet`](../silverbullet/README.md) for the layout
+mechanics** — HTML-block blank-line rule, span-checkbox pattern, onclick
+handler, `window.client` API, `space-style` CSS, and force-reload. This
+skill owns content selection; `wk-silverbullet` owns rendering.
+
 Both `start` and `end` write `live.md` as frontmatter + `# Live — {DATE}` +
-ONE 3-column table. (Failed alternatives are catalogued in `references/`.)
+ONE `<div class="sitrep-row">` containing three `<div class="sitrep-col">`.
 
-- **Structure:** one header row, one separator row, one data row of 3
-  cells. Markdown tables require single-line rows — put each cell's entire
-  content on its one row line, segments joined with `<br>`.
-- **Header:** `| 🗓 Context & Conversations | 📡 Action Feed | 📋 Standup & Notes |`.
-- **Task state uses `⬜`/`✅` glyphs, never `- [ ]`** — checkbox syntax
-  renders as literal text inside a table cell. Keep urgency markers
-  🔴🟡🟢🟠 inline.
-- **Never put a widget object (`widget.html()`, `widget.new{}`, e.g.
-  `sitrep.standupBox(...)`) inside a table cell.** A `${...}` expression
-  that returns a widget object serializes its Lua fields (`HTML`,
-  `_ISWIDGET`) as a nested markdown data table instead of rendering —
-  SilverBullet has no inline-widget handler for table cells. Widgets
-  render only as a **standalone line** expression outside any table.
-  - In-cell content that must be selectable/monospace: use inline
-    backtick code spans per line, not a widget.
-  - When a copy button is required, emit the
-    `${sitrep.standupBox(...)}` call on its own line below the table,
-    clearly labeled — never in a cell.
-- **Cell sub-headers** use `**bold**`; separate every line within a cell
-  with `<br>`.
-- **Escape `#` as `\#` in link text** (already required above) — inside a
-  cell a broken link spills its raw URL and overlaps the column, so the
-  failure is worse than in prose.
+- **No blank lines inside any `<div>`** — CommonMark ends the HTML block at
+  the first blank line, collapsing the layout to one column. Every line
+  inside a column is contiguous.
+- **Actionable items use `<span class="st-item">` with a nested
+  `<span class="st-cb" data-t="tN" data-done="false" onclick="HANDLER">`** —
+  never `- [ ]` (renders as literal text in an HTML block) and never
+  `<input type="checkbox">` (SilverBullet disables it). See the checkbox-span
+  format below.
+- **`data-t` is a unique sequential ID per item per page** (`t1`…`tN`) — the
+  onclick handler locates the item by this key, so collisions toggle the
+  wrong item.
+- **Auto-action items already done at generation** start `data-done="true"`.
+  Nested sub-items use `class="st-item st-nested"`.
+- **Non-actionable content** (meeting lines, section headers, the standup
+  block) is plain text / inline markdown — no checkbox span.
+- **Escape `#` as `\#` in link text** (already required above) — a broken
+  link spills its raw URL and overlaps the column.
 - **Styling is stable infra, not daily output.** Keep all CSS/Lua in a
   separate `#meta` page `$EMPLOYER/sitrep-style.md`; never regenerate it
-  daily — only rewrite `live.md`. That page holds:
-  - a `space-style` block: full-width (`:root{--editor-width:100%}` +
-    `.cm-content{max-width:100%!important}` + scroller padding),
-    `table{width:100%;table-layout:fixed;border-spacing:0.6rem}` with
-    `td,th{width:33.33%;vertical-align:top}`, neon-dark scoped to
-    `html[data-theme="dark"]`;
-  - a `space-lua` block forcing dark at boot:
-    `event.listen{name="editor:init",run=function() editor.setUiOption("darkMode",true) end}`.
-- **`space-style`/`space-lua` re-index on reload only.** After editing the
-  style page, reload in a browser and screenshot to confirm CSS applied —
-  do not assume. (Theme attr is `html[data-theme="light"|"dark"]`; width is
-  the `--editor-width` var, default 800px.)
+  daily — only rewrite `live.md`. That page holds the `space-style` block
+  (flexbox `.sitrep-row`/`.sitrep-col`, `.st-cb`/`.st-item` checkbox styling,
+  `.st-item + br { display: none }`, `.sb-frontmatter { display: none }`,
+  full-width `--editor-width`, neon-dark scoped to `html[data-theme="dark"]`)
+  and a `space-lua` block forcing dark at boot.
+- **After editing the style page, force a reload and screenshot to confirm**
+  — never assume CSS applied (per `wk-silverbullet` Step 4 + Step 6).
+
+### Checkbox-span format
+
+```html
+<span class="st-item"><span class="st-cb" data-t="tN" data-done="false" onclick="var d=this.dataset.done==='true',t=this.dataset.t,q=String.fromCharCode(34);this.dataset.done=String(!d);window.client.space.readPage('$EMPLOYER/live').then(function(pg){var c=pg.text,s='data-t='+q+t+q+' data-done='+q+(d?'true':'false')+q,n='data-t='+q+t+q+' data-done='+q+String(!d)+q;return window.client.space.writePage('$EMPLOYER/live',c.replace(s,n))})"></span> Item text [link](url)</span>
+```
 
 ## HARD RULE — restart SilverBullet after a compose change
 
@@ -222,10 +226,11 @@ pgrep -f "silverbullet" > /dev/null 2>&1 && echo "running" || echo "stopped"
 
 Read `$LIVE_FILE` if it exists and extract:
 
-- **Open items** — unchecked ⬜ items (or legacy `[ ]` lines); these
-  become today's carry-over.
-- **Completed items** — checked ✅ items (or legacy `[x]` lines); surface
-  as a count ("X items done yesterday") but do not carry forward.
+- **Open items** — `data-done="false"` spans (or legacy ⬜ / `[ ]` lines);
+  these become today's carry-over.
+- **Completed items** — `data-done="true"` spans (or legacy ✅ / `[x]`
+  lines); surface as a count ("X items done yesterday") but do not carry
+  forward.
 
 Resolve the previous working day from the existing `live.md` frontmatter
 `date:` field (it still holds the last run's date until this run overwrites
@@ -322,12 +327,12 @@ Merge agent results with carry-over items from Stage 1. Cross-check
 carry-overs against live state — drop any whose external record shows
 completion (PR merged, Jira ticket resolved, email chain closed).
 
-Write every surviving item as a ⬜ item in the appropriate column cell per
-the 3-column-table HARD RULE — no interactive prompts (per the no-triage
-HARD RULE). The user triages in the browser.
+Write every surviving item as a `data-done="false"` checkbox span in the
+appropriate column per the HTML-layout HARD RULE — no interactive prompts
+(per the no-triage HARD RULE). The user triages in the browser.
 
-Content inventory (gather all; map to columns per the table HARD RULE; skip
-empty):
+Content inventory (gather all; map to columns per the HTML-layout HARD RULE;
+skip empty):
 
 1. Carry-over from previous live.md
 2. Today's Meeting Prep (from Granola past notes + agenda docs)
@@ -344,15 +349,15 @@ Sort and mark urgency per the formatting HARD RULE.
 ### Stage 4: Write live.md
 
 **Re-read `$LIVE_FILE` immediately before writing** — minutes elapsed while
-agents ran, and the user may have checked items in the browser. Preserve
-every ✅ item (legacy `[x]`); never overwrite a checked item with an
-unchecked one.
-Prefer `Edit` (anchored, fails loudly if the file moved) over a full `Write`
-overwrite wherever the structure allows.
+agents ran, and the user may have toggled items in the browser. Preserve
+every `data-done="true"` span; never overwrite a done item with a pending
+one. Prefer `Edit` (anchored, fails loudly if the file moved) over a full
+`Write` overwrite wherever the structure allows.
 
-Write today's live page as ONE 3-column table per the 3-column-table HARD
-RULE. Frontmatter + heading, then header row, separator, and a single data
-row of 3 cells:
+Write today's live page as ONE `<div class="sitrep-row">` of three
+`<div class="sitrep-col">` per the HTML-layout HARD RULE. NO blank lines
+inside any `<div>`. Assign each actionable item a unique sequential
+`data-t` (`t1`…`tN`).
 
 ```markdown
 ---
@@ -364,63 +369,71 @@ generated_at: {ISO_8601_UTC}
 
 # Live — {TODAY}
 
-| 🗓 Context & Conversations | 📡 Action Feed | 📋 Standup & Notes |
-| --- | --- | --- |
-| {col1} | {col2} | {col3} |
+<div class="sitrep-row">
+<div class="sitrep-col">
+{col1}
+</div>
+<div class="sitrep-col">
+{col2}
+</div>
+<div class="sitrep-col">
+{col3}
+</div>
+</div>
 ```
 
-Each cell is ONE physical line; build its content by joining segments with
-`<br>` (shown multi-line here for legibility):
+Use the checkbox-span format from the HARD RULE for every `⬜` item below
+(`HANDLER` = the onclick from that section); section headers and meeting
+lines are plain inline markdown.
 
-- **col1 — Calendar + Slack + Email:**
-
-  ```
-  **🗓 Calendar**<br>**{time} — {meeting}** · {attendees}<br>{Granola last-time / "first occurrence"} · {agenda or "no doc"}<br>⬜ Prep: {what to review} — [{label}](url)<br>**💬 Slack**<br>⬜ \#{channel} @{sender}: {summary} — [thread](url)<br>{your awaiting-reply follow-up} — [thread](url)<br>📣 {announcement} — [link](url)<br>**📧 Email**<br>⬜ {subject} — {sender} — [mail](url)<br>⬜ {subject} sent **📅 {YYYY-MM-DD}**, no reply — [mail](url)
-  ```
-
-- **col2 — ASAP + Auto-Actions + GitHub + Jira:**
-
-  ```
-  **🔴 ASAP**<br>⬜ 🔴 {item} — [{repo}\#{N}: {title}](url)<br>⬜ 🟡 {item} due **📅 {YYYY-MM-DD}** — [{label}](url)<br>**⚙️ Auto-Actions**<br>✅ {merged-PR ticket transition}<br>**🐙 GitHub — PRs to Review**<br>⬜ [{repo}\#{N}: {title}](url) — @{author}<br>**Your PRs**<br>⬜ [{repo}\#{N}: {title}](url) — {status}<br>**📋 Jira**<br>⬜ {KEY}: {title} ({status}) — [link](url)<br>⬜ {KEY or page}: {mention summary} — [link](url)
-  ```
-
-- **col3 — Standup + This Week + Notes + Backlog:**
-
-  ```
-  **📣 Standup Snippet**<br>{see Stage 4b}<br>**📆 This Week**<br>⬜ {goal / milestone}<br>**📝 Notes**<br>_Add anything that comes up during the day._<br>**🗂 Backlog (carry-over from {PREV_WORKING_DAY})**<br>⬜ {open item} — [{label}](url)
-  ```
+- **col1 — Calendar + Slack + Email:** `**🗓 Calendar**` · meeting lines
+  (plain) · `Prep` checkbox spans · `**💬 Slack**` needs-response checkbox
+  spans + awaiting-reply follow-ups · `📣` announcements (plain) ·
+  `**📧 Email**` needs-response checkbox spans.
+- **col2 — ASAP + Auto-Actions + GitHub + Jira:** `**🔴 ASAP**` checkbox
+  spans (urgency marker inline) · `**⚙️ Auto-Actions**` items as
+  `data-done="true"` spans · `**🐙 GitHub**` PRs-to-review / your-PRs
+  checkbox spans · `**📋 Jira**` ticket + mention checkbox spans.
+- **col3 — Meta + Standup + This Week + Notes + Backlog:**
+  `<div class="st-meta">📅 {DATE} · {EMPLOYER} · {SKILL_VERSION} · {HH:MM} UTC</div>`
+  · `**📣 Standup Snippet**` copy block (see Stage 4b) · `**📆 This Week**`
+  goal spans · `**📝 Notes**` placeholder · `**🗂 Backlog (carry-over from
+  {PREV_WORKING_DAY})**` checkbox spans.
 
 - Every item carries a link; escape `#` in link text (`repo\#N`).
 - Lead each item with an urgency marker; sort per the formatting HARD RULE.
-- Use ⬜/✅ glyphs (not `- [ ]`) and join every cell line with `<br>`.
+- Verify the render in a browser per `wk-silverbullet` Step 6 before finishing.
 
 ### Stage 4b: Standup snippet
 
-Append a `## 📣 Standup Snippet` section just before `## 📝 Notes`. Delegate
-formatting to `wk-slack §Standup Snippet`; this skill owns selection.
+Render the standup inside col3 as a copy block — a `<pre>` (selectable
+monospace) with a Copy button. The `<pre>` renders inline in an HTML block;
+a `<button>` is NOT disabled the way `<input>` is, so the copy onclick works.
+Delegate snippet formatting to `wk-slack §Standup Snippet`; this skill owns
+selection.
+
+```html
+<div class="st-copy-block"><button class="st-copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.innerText)">Copy</button><pre class="st-standup">{standup text}</pre></div>
+```
 
 - **Yesterday** → yesterday's snapshot `## Achievements`, top 3–4 wins.
   Apply the authorship filter (author / co-author / primary approving
   reviewer only — merging another's PR is not an achievement).
 - **Today** → today's 🔴 ASAP items, top 3–4, deadline-first.
 - **Blockers** → items flagged `BLOCKED` or a dependency conflict; omit the
-  heading entirely if none.
+  line entirely if none.
 - Apply `wk-slack §Standup privacy filter` — drop hiring/interview/candidate
   items, personal HR/performance items, anything not publicly shareable.
+- Standup text inside the `<pre>` (newlines preserved by `<pre>`):
 
-```
-## 📣 Standup Snippet
+  ```
+  👈🏽 Yesterday: {achievement} {bare URL}
+  👉🏽 Today: {priority} {bare URL}
+  ✋🏽 Blockers: {blocker} {bare URL}
+  ```
 
-- 👈🏽 Yesterday:
-   - {achievement} {bare URL}
-- 👉🏽 Today:
-   - {priority} {bare URL}
-- ✋🏽 Blockers:
-   - {blocker} {bare URL}
-```
-
-Verify `👈🏽` and `👉🏽` survive the write (multi-byte emoji loss check);
-re-emit via the Write tool if either is missing.
+- Verify `👈🏽` and `👉🏽` survive the write (multi-byte emoji loss check);
+  re-emit via the Write tool if either is missing.
 
 ### Stage 5: Open in browser
 
@@ -459,9 +472,10 @@ follow-up `chore(sitrep): ✅ {action}`.
 
 Read `$LIVE_FILE`. Extract:
 
-- **Completed items** — ✅ items (or legacy `[x]` lines) across all cells.
-- **Open items** — ⬜ items (or legacy `[ ]` lines); these become
-  tomorrow's carry-over.
+- **Completed items** — `data-done="true"` spans (or legacy ✅ / `[x]`
+  lines) across all columns.
+- **Open items** — `data-done="false"` spans (or legacy ⬜ / `[ ]` lines);
+  these become tomorrow's carry-over.
 - **Notes** — free-form content under `## Notes`.
 - **Standup data** — today's focus and meetings for the brag doc.
 
@@ -505,12 +519,17 @@ deploy frequency) vs team/org averages; improvement actions.
 Merge agent results into two buckets — no interactive prompts (per the
 no-triage HARD RULE):
 
-- **Historical** (→ snapshot): completed `[x]` items, meeting notes,
-  achievements, feedback received, DX metrics, day stats.
+- **Historical** (→ snapshot): done items — `data-done="true"` spans in
+  `live.md` — plus meeting notes, achievements, feedback received, DX
+  metrics, day stats.
 - **Pending** (→ live.md): tomorrow's meeting prep, untracked action items,
   unanswered Slack/email/Jira/Confluence, Lattice feedback requests, peer
-  feedback opportunities, DX improvement actions, and every unchecked item
-  carried from today's `live.md`.
+  feedback opportunities, DX improvement actions, and every pending
+  (`data-done="false"`) span carried from today's `live.md`.
+
+Detect done vs pending by the `data-done` attribute — NOT `✅`/`⬜` glyphs or
+`[x]`/`[ ]` syntax (those no longer exist in this format). Extract each item's
+display text from the span's trailing content.
 
 The user resolves everything in the browser. Drop any item with no link.
 
@@ -581,20 +600,19 @@ wins, peer recognition) to
 ### Stage 5: Rewrite live.md (owns all pending work)
 
 **Re-read `$LIVE_FILE` immediately before rewriting** — the user may have
-edited it in the browser since Stage 1. Preserve every ✅ item (legacy
-`[x]`); merge newly-checked items into the snapshot's done set rather than
-re-surfacing them as open.
+edited it in the browser since Stage 1. Merge `data-done="true"` spans into
+the snapshot's done set rather than re-surfacing them as open.
 
 Rewrite `$LIVE_FILE` so it holds **every** pending item — the snapshot keeps
-none. Drop all ✅ items (legacy `[x]`) and date-specific FYI content
-(Calendar, Announcements). Fold in every unchecked item plus the pending
-buckets from
-Stage 3: tomorrow's prep, unresolved follow-ups, Lattice feedback, peer
-feedback opportunities, DX improvement actions. Sort and mark urgency per
-the formatting HARD RULE.
+none. Drop all `data-done="true"` spans and date-specific FYI content
+(Calendar, Announcements, the standup block). Fold in every pending
+(`data-done="false"`) span plus the pending buckets from Stage 3: tomorrow's
+prep, unresolved follow-ups, Lattice feedback, peer feedback opportunities,
+DX improvement actions. Re-number `data-t` sequentially from `t1`. Sort and
+mark urgency per the formatting HARD RULE.
 
-Rewrite as the same 3-column table per the 3-column-table HARD RULE — same
-header, one data row, ⬜/✅ glyphs, `<br>`-joined cells:
+Rewrite as the same HTML div 3-column layout per the HTML-layout HARD RULE —
+checkbox spans, NO blank lines inside any `<div>`:
 
 ```markdown
 ---
@@ -604,31 +622,26 @@ note: "Scrubbed {N} completed items — full record in snapshot"
 
 # Live — carry-forward from {TODAY}
 
-| 🗓 Context & Conversations | 📡 Action Feed | 📋 Standup & Notes |
-| --- | --- | --- |
-| {col1} | {col2} | {col3} |
+<div class="sitrep-row">
+<div class="sitrep-col">
+{col1}
+</div>
+<div class="sitrep-col">
+{col2}
+</div>
+<div class="sitrep-col">
+{col3}
+</div>
+</div>
 ```
 
-Each cell is ONE physical line; join segments with `<br>` (shown
-multi-line here for legibility):
-
-- **col1 — Tomorrow's Meeting Prep:**
-
-  ```
-  **🗓 Tomorrow's Meeting Prep**<br>⬜ 🔴 {time} — {meeting}: prep<br>⬜ {sub-task} — [{label}](url)
-  ```
-
-- **col2 — Carry-forward + Follow-ups & Feedback + DX:**
-
-  ```
-  **📌 Carry-forward**<br>⬜ 🟡 {open item} due **📅 {YYYY-MM-DD}** — [{repo}\#{N}: {title}](url)<br>⬜ 🟢 {open item} — [{label}](url)<br>**🔁 Follow-ups & Feedback**<br>⬜ {unanswered Slack/email/Jira} — [{label}](url)<br>⬜ {Lattice request} due **📅 {YYYY-MM-DD}** — [link](url)<br>**🛠 DX Improvement Actions**<br>⬜ {action} — {rationale}
-  ```
-
-- **col3 — Notes:**
-
-  ```
-  **📝 Notes**<br>{preserved free-form notes, if any}
-  ```
+- **col1 — Tomorrow's Meeting Prep:** `**🗓 Tomorrow's Meeting Prep**` ·
+  meeting lines (plain) · prep checkbox spans.
+- **col2 — Carry-forward + Follow-ups & Feedback + DX:** `**📌 Carry-forward**`
+  checkbox spans · `**🔁 Follow-ups & Feedback**` checkbox spans (unanswered
+  Slack/email/Jira, Lattice requests) · `**🛠 DX Improvement Actions**`
+  checkbox spans.
+- **col3 — Notes:** `**📝 Notes**` + preserved free-form notes (plain).
 
 There is **no** `.last_working_day` file — the `date:` frontmatter is the
 sole working-day marker.
