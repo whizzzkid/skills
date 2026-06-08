@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.03-222019'
+  version: '2026.06.08-224638'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -596,6 +596,12 @@ fails:
   No review body, inline comment, or summary may mention that local tests
   could not run, that a daemon was down, or that "CI is the arbiter." The
   PR author must never see evidence of the reviewer's machine state.
+- **Name evidence as "verified locally", never the playground.** When
+  surfacing verification in an author-facing comment or review body, say
+  "verified locally" (or "verified against upstream source") — never the
+  `.review-playground/` directory, playground scripts, or "experiment"
+  artifacts. The playground is internal scaffolding; naming it leaks agent
+  internals meaningless to the author.
 
 ### Documentation-only diff — substitute read-based analysis
 
