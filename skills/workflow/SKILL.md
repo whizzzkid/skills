@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.06-002242'
+  version: '2026.06.08-171649'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -306,6 +306,20 @@ sync targets in the plan — before implementation starts.
   a numbered sync step so the count and the body stay aligned.
 - Skipping this lets the adversarial sweep catch the drift later instead
   of the plan catching it up front.
+
+### Tool-swap flag-parity probe
+
+When the plan swaps one tool for another in the same role (formatter,
+linter, bundler, compiler, transpiler), add a planning step that probes
+whether the replacement's defaults match the replaced tool's behavior.
+
+- Ask: does the replacement need flags to reproduce the prior tool's
+  output? Identify each gap-closing flag in the plan, not at review time.
+- Pay special attention to tools with CWD-sensitive or module-aware
+  behavior — defaults can differ between a local invocation and CI even
+  when the binary is identical.
+- Skipping this lets the adversarial sweep catch a behavioral divergence
+  that should have been a checklist item up front.
 
 ### Plan Presentation
 
@@ -1070,6 +1084,18 @@ The loop exits when:
 
 After a green exit, resume the `wk-pr` post-creation workflow: self-review
 (`wk-self-review`), automated feedback triage, and mark ready.
+
+**HARD RULE — verify every test-plan checkbox before updating the PR
+description.** After CI goes green, loop over every unchecked test-plan
+item and run its verification command now.
+
+- A box that can be verified must be verified. "I didn't happen to run
+  this" is not a reason to leave it unchecked — run it.
+- Leave a box unchecked only when verification is genuinely impossible
+  (live production environment, third-party credentials not on hand) —
+  and note why.
+- Deferring to the user to notice an unchecked-but-runnable box is a
+  workflow failure.
 
 ---
 
