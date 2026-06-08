@@ -26,7 +26,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.03-182540'
+  version: '2026.06.08-190214'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -488,6 +488,7 @@ Do not return control to the user until all four checks pass:
 2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated, including its `references/` additions; one chore commit for `.learned.md` renames + `.distilled-sources.log`); use `wk-commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
    - **After a hook-blocked commit, re-check the index before the next group.** A `git commit` blocked by a pre-commit hook exits non-zero but leaves the staged set intact — the next group's `git add` then sweeps those files into one commit, merging two logical changes. Run `git status --short` after any blocked commit; fix the block and retry that exact commit first, or `git restore --staged <files>` before staging the next group.
    - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link (`[wk-foo](../foo/README.md)`) from the first draft — bare skill names trip the link-check hook and force a re-commit.
+   - **Stage a `.learned.md` rename by adding only the new `.learned.md` path** (plus `.distilled-sources.log`) — never enumerate the pre-rename `.md` path. When the source learning was untracked (freshly mirrored from the inbox, or never committed), there is no deletion to stage, and `git add` of the missing old path aborts the whole staging with `fatal: pathspec ... did not match any files`.
 3. **Push once:** after all commits exist, push a single time. Single-skill runs may push immediately after their lone commit.
 4. **Clean tree:** `git status --short` must be empty — if anything remains, commit or stash it.
 
