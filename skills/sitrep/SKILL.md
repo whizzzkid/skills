@@ -51,7 +51,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.06-003727'
+  version: '2026.06.08-171650'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -137,6 +137,17 @@ ONE 3-column table. (Failed alternatives are catalogued in `references/`.)
 - **Task state uses `⬜`/`✅` glyphs, never `- [ ]`** — checkbox syntax
   renders as literal text inside a table cell. Keep urgency markers
   🔴🟡🟢🟠 inline.
+- **Never put a widget object (`widget.html()`, `widget.new{}`, e.g.
+  `sitrep.standupBox(...)`) inside a table cell.** A `${...}` expression
+  that returns a widget object serializes its Lua fields (`HTML`,
+  `_ISWIDGET`) as a nested markdown data table instead of rendering —
+  SilverBullet has no inline-widget handler for table cells. Widgets
+  render only as a **standalone line** expression outside any table.
+  - In-cell content that must be selectable/monospace: use inline
+    backtick code spans per line, not a widget.
+  - When a copy button is required, emit the
+    `${sitrep.standupBox(...)}` call on its own line below the table,
+    clearly labeled — never in a cell.
 - **Cell sub-headers** use `**bold**`; separate every line within a cell
   with `<br>`.
 - **Escape `#` as `\#` in link text** (already required above) — inside a
