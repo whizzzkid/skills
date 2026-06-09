@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.09-173918'
+  version: '2026.06.09-223655'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -164,9 +164,14 @@ single highest-frequency reviewer flag.
 - Credential / token / secret in `stderr|2>&1|>&2|cat.*ERR`.
 - Null / sentinel guard added on one branch — every sibling branch.
 - Input validation added at one entry point — every other entry point.
+- API token expanded inside a `curl -H "Authorization: Bearer $VAR"`
+  argument — visible to `ps aux` on multi-user hosts (a different
+  exposure path than stderr leakage). Flag `blocker`; write the header to
+  a `chmod 600` temp file and pass `-H @file`.
 
 ```bash
 git diff "$BASE...HEAD" | grep -nE 'redact|mask|sanitize|escape|sanitis'
+git diff "$BASE...HEAD" | grep -nE 'curl[^|]*-H[^|]*\$\{?[A-Z_]+'
 ```
 
 Every hit must be addressed or explicitly excluded in the verdict.
@@ -806,6 +811,63 @@ validates the path, not the basename's option-likeness.
 - Flag as `blocker` when the source is untrusted and no `--` precedes
   the positional args; fix by inserting `--` before them.
 
+### 2.25 Trap-handler collision sweep
+
+`bash trap` REPLACES the prior handler on a signal — it does not append.
+A second `trap` on an overlapping signal silently disables the first's
+cleanup (e.g. a later temp-file cleanup trap dropping an earlier one).
+
+- When the diff adds `trap '...' <signals>`, grep the **whole file**
+  (not just the hunk) for other `trap` calls sharing any signal:
+
+  ```bash
+  grep -nE "^[[:space:]]*trap '" <file>
+  ```
+
+- Flag `blocker` when two traps share a signal; require a single combined
+  trap or a trap-append helper.
+
+### 2.26 Capture-variable promotion check
+
+A new `FOO=$(...)` capture whose value must reach a canonical downstream
+variable is a silent-unset bug when the `CANONICAL=$FOO` promotion is
+missing — later blocks read an unset name.
+
+```bash
+git diff "$BASE...HEAD" | grep -nE '^\+[A-Z_]+=\$\('
+```
+
+- A capture used only for a same-block guard is fine.
+- One feeding a canonical name referenced in later hunks must carry the
+  `CANONICAL=$FOO` assignment before the block ends. Flag `blocker` when
+  the canonical name is read downstream but never assigned.
+
+### 2.27 N-parallel-block symmetry sweep
+
+When the diff hardens one block in a group of structurally-parallel blocks
+(multiple inference / validation / guard blocks that each capture-then-
+check an external call), a fix applied to only one sibling drives
+multi-round review loops — the next round re-flags the identical class in
+each remaining sibling.
+
+- Identify repeated `VAR=$(cmd); EXIT=$?; <guard>; CANONICAL=$VAR` shapes.
+- Build a symmetry matrix: for each guard / capture / assignment present
+  in any block, verify it is present in ALL siblings.
+- Flag any guard present in a strict subset of the parallel blocks, unless
+  the asymmetry is documented as intentional.
+
+### 2.28 CI-payload commit-field foreign-SHA check
+
+A `commit` field in a CI trigger payload names the **pipeline** repo's
+SHA. Setting it from a foreign repository's target SHA makes the build
+fail at clone — the SHA does not exist in the pipeline repo.
+
+- When the diff changes a `commit` field in a CI trigger payload, check
+  whether the value comes from an env var representing a foreign repo's
+  SHA (typically prefixed `REVIEW_`, `TARGET_`, `SOURCE_`).
+- Flag `blocker`: a foreign-repo SHA used as the pipeline `commit` field
+  is always wrong.
+
 After mechanical sweeps land their findings, dispatch a fresh subagent
 with no prior context to critique the diff. The subagent operates only
 on `git diff "$BASE...HEAD"` and the surface map from Step 1.
@@ -958,6 +1020,9 @@ On a blocked verdict:
 
 1. Caller addresses each blocker, committing each fix individually
    via `wk-commit` (one fix per commit, atomic, conventional format).
+   When a blocker names one of N structurally-parallel blocks, fix every
+   sibling in the same round (sweep 2.27) — partial application re-flags
+   the identical class on the next sibling next round.
 2. Re-invoke `wk-adversarial-review`. The skill re-runs Steps 1–5
    against the new HEAD.
 3. Loop until clear, max 3 cycles. After 3 cycles, stop and surface to
