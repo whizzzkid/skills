@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.09-172926'
+  version: '2026.06.09-233105'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -310,6 +310,18 @@ dropped before reaching the container.
 Walk every layer when adding or renaming a var. Where the pipeline build
 script has a spec, add `expect(config['env']).to include('VAR')` so a future
 omission is caught by tests, not a silently-broken build.
+
+## Pinning a CI step to a mirrored image
+
+An internal registry mirror may be **pre-seeded**, not pull-through —
+referencing a new image path fails at `docker pull` with "repository does
+not exist in the registry" even when sibling `library/*` images resolve.
+
+- Verify the exact repository exists under the mirror before pinning a
+  step to it — do not assume other working `library/*` images prove a
+  pull-through cache.
+- When the repo is absent, reuse an image already referenced in the
+  pipeline and install the extra toolchain into it, pinned + checksummed.
 
 ## Opening in Browser
 
