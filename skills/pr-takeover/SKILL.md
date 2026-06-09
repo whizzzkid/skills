@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.01-193031'
+  version: '2026.06.09-172926'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -65,11 +65,19 @@ Accept: `wk-pr-takeover <pr-number-or-url> [--stack]`
 
 - If `--stack` is present → **stack mode** (create new branch on top).
 - Otherwise → **overwrite mode** (continue directly on the existing branch).
-- If no PR argument is provided, ask: "Which PR are you taking over? Provide a
-  number or URL."
+- If no PR argument is provided, infer the target from the current branch
+  before prompting — only fall through to the prompt when none is found:
+
+  ```bash
+  PR_NUMBER=$(gh pr view --json number --jq .number 2>/dev/null)
+  ```
+
+  If a PR is found, surface it and confirm: "Taking over PR #N
+  (<title>) on the current branch — continue?" Ask "Which PR are you
+  taking over? Provide a number or URL." only when no PR resolves.
 
 ```bash
-# Resolve PR number from URL if needed
+# Resolve PR number from an explicit URL/number argument
 PR_URL="$1"
 PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
 ```
