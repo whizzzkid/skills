@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.09-172926'
+  version: '2026.06.09-173918'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -192,6 +192,23 @@ added in the diff, trace upstream transforms (jq filters, trim, decode,
 type coercion). If an upstream transform already eliminates the
 sentinel, the guard is dead code. Flag the dead-code path **and** any
 test fixture that simulates the impossible producer output.
+
+**Guard-completeness probe (jq falsy output).** Tracing that a guard is
+*reachable* is not enough — trace whether it captures **every** form of
+the invalid sentinel. When a `[ -z "$VAR" ]` / empty-string guard reads
+`$VAR` from a `jq` filter, check whether the filter can emit a non-empty
+falsy literal: `jq .field` emits the 4-char string `"null"` for a JSON
+null field (not empty), and `"false"` / `"0"` for other falsy values. An
+empty-string guard passes `"null"` straight through to the downstream
+call. Detection:
+
+```bash
+git diff "$BASE...HEAD" | grep -nE '\[ -z "\$[A-Z_]+" \]'
+```
+
+Flag `blocker` when the guarded var is `jq`-sourced and `null` reaches a
+downstream API/SHA consumer; require `[ -z "$VAR" ] || [ "$VAR" = null ]`
+or a `// empty` jq fallback.
 
 ### 2.4 Comment accuracy pass
 
@@ -961,8 +978,14 @@ skill, not this one. This skill is a **gate**, not an actor.
 
 1. **No push without clear verdict.** Every push, every `gh pr ready`,
    every force-push runs this skill first. Auto mode does not bypass.
-2. **Mechanical sweeps run unconditionally.** Even on docs-only diffs.
-   Test-count sync and cross-doc enumeration land most often there.
+2. **Mechanical sweeps AND the adversarial subagent dispatch run
+   unconditionally.** Even on docs-only diffs. A `.md` file that is a
+   skill instruction or executable specification is code — logic errors
+   in it fail at runtime exactly as source would. The "docs-only"
+   exemption never skips the subagent dispatch for instruction/spec
+   files; it applies only to changelog entries, plain prose, and files
+   with no executable logic. Test-count sync and cross-doc enumeration
+   land most often on docs diffs.
 3. **Findings are diff-anchored.** Every comment must map to a line in
    the commentable set. Lines outside the diff become file-level or
    verdict-body notes — never silently dropped.
