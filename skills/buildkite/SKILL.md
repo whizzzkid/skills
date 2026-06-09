@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.13-190000'
+  version: '2026.06.09-172926'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -98,8 +98,9 @@ Buildkite URL when `bk` is available.
   ```
 
 - When the user pastes a Buildkite URL, parse `pipeline` and `build` from
-  the path and call `bk build view -p <pipeline> -b <build-number>`. Do not
-  `WebFetch` the URL — the HTML view omits structured job data.
+  the path and call `bk build view -p <pipeline> <build-number>` — the build
+  number is a positional argument; `-b` is `--branch`, not the build number.
+  Do not `WebFetch` the URL — the HTML view omits structured job data.
 - Fall back to the REST API via `curl` only when `bk` is unavailable **and**
   the user explicitly approves the fallback.
 
@@ -125,9 +126,13 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | \
               {name: .name, state: .state, exit_status: .exit_status}]}'
 ```
 
-Adjust the `jq` filter for the specific need (e.g., swap `-b <branch>` for
-`<build-number>` when targeting a specific build; change the `select` predicate
-to filter by different states).
+Adjust the `jq` filter for the specific need (change the `select` predicate
+to filter by different states). To target a specific build, pass the build
+number as a **positional** argument — `bk build view -p <pipeline>
+<build-number> --json` — never pass it to `-b`. On `bk build view`, `-b` is
+`--branch`; passing a build number to it resolves to `null`, which breaks the
+`jq` pipe with "Invalid numeric literal". (Note the overload: on `bk job log`,
+`-b` / `--build-number` *is* the build number.)
 
 ## Checking Build Status
 
@@ -137,8 +142,9 @@ Use the canonical build query (see above), selecting failed/broken jobs.
 
 ### Specific Build
 
-Use the canonical build query with `<build-number>` in place of `-b <branch>`,
-filtering on `.type == "script"` jobs.
+Pass the build number positionally — `bk build view -p <pipeline>
+<build-number> --json` — filtering on `.type == "script"` jobs. Never pass
+the build number to `-b` (that flag selects a branch).
 
 ## Understanding Build States
 
