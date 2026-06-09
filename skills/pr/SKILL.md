@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.06-002241'
+  version: '2026.06.09-233105'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -387,6 +387,10 @@ X" thought as a continue signal, not a stop signal:
 | Updated an upstream tracking issue | Continue to Step 3. |
 
 After the draft PR is created (or after pushing new commits to an existing PR):
+
+- **Open it in the browser first** — run `gh pr view --web` as soon as
+  `gh pr create` succeeds so the user sees the PR without clicking the
+  URL. Skip only in a headless / non-interactive session.
 
 1. **Update PR description** — Review the existing description to ensure it
    still covers all changes. If it has drifted, update with `gh pr edit`.
