@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.06-000519'
+  version: '2026.06.09-172926'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -217,6 +217,13 @@ test suite for an `it` / `test` / `assert` block that exercises the
 exact condition the comment asserts. If none exists, flag
 `suggestion`: the invariant is correct today but silently brittle, and
 a reviewer bot will request the pinning test.
+
+**Warn-without-mechanism check.** When a doc, comment, or instruction
+claims it will "warn", "notify", or "alert" the user, confirm an explicit
+output step backs the claim. A parenthetical "(warn the user)" with no
+imperative output block reads as optional and is routinely omitted at
+runtime. Flag `suggestion`: convert the claim into an explicit output
+instruction or a required step.
 
 ### 2.5 Hardcoded base / branch sweep
 
@@ -424,6 +431,20 @@ calls), require either:
   (gated network, user-only credentials).
 
 Unverified API-shape changes are a recurring source of follow-up PRs.
+
+**Error-schema verification.** When the diff adds a check for an
+error-carrying key against an external API response, verify the API's
+actual error schema before clearing it. Asserting the wrong key (checking
+`error` when the API returns `{"message": ...}`) silently skips both the
+success and the failure branch — no output renders, and the failure looks
+like a no-op.
+
+```bash
+git diff "$BASE...HEAD" | grep -nE '"(error|err|errors|message)"'
+```
+
+Each hit must be backed by the API's documented error shape or a recorded
+error response — never an assumed key name.
 
 ### 2.12 Self-review surface check
 
