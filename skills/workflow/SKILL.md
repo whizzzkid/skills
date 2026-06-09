@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.08-171649'
+  version: '2026.06.09-172926'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -292,6 +292,18 @@ in flight on an open PR and extend it rather than landing a parallel file.
   spec exists.
 - Skipping this produces two parallel specs that the user later has to
   merge by hand — a doc merge plus a rebase.
+
+### New-capability probe — extend an existing skill before scaffolding a new one
+
+Before scaffolding a new skill, command, or entry point, ask whether the
+capability is a new verb on a noun an existing skill already owns.
+
+- If it is a subcommand / mode of an existing skill (`/foo bar`, not
+  `/foo-bar`), add a routing mode to that skill.
+- Scaffold a standalone skill only for a genuinely distinct workflow —
+  different argument shape, tool set, or user mental model.
+- Skipping this builds a parallel entry point the user later asks you to
+  revert and fold back in.
 
 ### Rule-set doc sync probe
 
