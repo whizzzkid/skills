@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.09-223655'
+  version: '2026.06.09-233105'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -189,6 +189,21 @@ for f in $(git diff "$BASE...HEAD" --name-only | grep -E '\.(sh|bash|py|rb|ts|js
   find "$dir" -maxdepth 1 -type f
 done | sort -u
 ```
+
+**Toolchain-invocation siblings.** When a build/correctness flag or env
+is added to one toolchain invocation, grep the **whole repo** for every
+sibling invocation of that toolchain and require each to apply or
+explicitly justify the same flag.
+
+- A fix on one `go build` / `go run` / `go test` (or any compiler/builder)
+  call site that misses analogous call sites is a partial fix — CI runs
+  the missed ones.
+- Prefer a top-of-script `export <TOOL>FLAGS=...` over per-call flags so
+  every invocation inherits the fix.
+- Treat "works locally" as weak evidence when the behavior is
+  environment-dependent (e.g. a linked git worktree suppresses Go VCS
+  stamping that a fresh CI clone does not) — reproduce in a clone-like
+  environment before clearing.
 
 ### 2.3 Reachability trace on new guards
 
@@ -867,6 +882,21 @@ fail at clone — the SHA does not exist in the pipeline repo.
   SHA (typically prefixed `REVIEW_`, `TARGET_`, `SOURCE_`).
 - Flag `blocker`: a foreign-repo SHA used as the pipeline `commit` field
   is always wrong.
+
+### 2.29 curl silent-mode transport-error sweep
+
+`curl -s` (without `-S`) suppresses curl's own transport diagnostics
+(DNS, TLS, connection refused) AND leaves stdout empty — a downstream
+body-error parser then prints a misleading empty-reason message instead
+of the real network failure.
+
+```bash
+git diff "$BASE...HEAD" | grep -nE 'curl[[:space:]]+(-[a-zA-Z]*s)\b' | grep -vE 'sS|Ss'
+```
+
+- Flag any `curl -s` whose response is later parsed for errors.
+- Require `-sS` plus an exit-status check to separate transport failures
+  from API-level errors.
 
 After mechanical sweeps land their findings, dispatch a fresh subagent
 with no prior context to critique the diff. The subagent operates only
