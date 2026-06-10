@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.08-224638'
+  version: '2026.06.10-191558'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -310,6 +310,20 @@ top-level comments on the same line; the validation queue is the
 mechanism by which bot findings get either confirmed (with a
 suggestion fix) or refuted (with counter-evidence) instead of being
 silently ignored.
+
+**Verify the path is wired before accepting a bot's severity.** Reproducing
+the *mechanism* is not enough — a mechanically-correct finding on a code path
+that nothing reaches in the shipped configuration is not a live blocker. For
+each bot finding, also grep for the **trigger** that activates the affected
+path (an env var set in a compose/CI file, a live caller, a production config)
+before assigning severity.
+
+- Trigger present → severity as found.
+- Trigger absent (dormant / not-yet-wired path) → downgrade to "Confirmed but
+  narrower than stated"; do not echo the bot's Blocker verbatim.
+- Bonus check: when the PR edits a doc comment describing a mechanism, verify
+  the comment still agrees with the code it points at — a freshly-edited-but-
+  now-contradictory comment is a clean finding bots routinely miss.
 
 ### Build exclusion list
 
