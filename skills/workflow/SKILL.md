@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.10-210048'
+  version: '2026.06.10-235203'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -53,6 +53,13 @@ If the task will result in any of these, this workflow is active:
 **There is no opt-out.** The agent follows the phases in order. Skipping
 phases, reordering phases, or substituting ad-hoc commands for prescribed
 skills is a violation.
+
+**Session resumption is a fresh start, not a continuation.** When a session
+resumes mid-task — context compaction, context-window rollover, or a
+"continue where we left off" prompt — invoke this workflow before any write
+action, exactly as for a new task. Workflow activation status does not carry
+across the resume boundary; identifying pending work and executing it without
+re-invoking the workflow is a violation.
 
 ## Autonomy Rules
 
@@ -349,6 +356,32 @@ whether the replacement's defaults match the replaced tool's behavior.
   when the binary is identical.
 - Skipping this lets the adversarial sweep catch a behavioral divergence
   that should have been a checklist item up front.
+
+### Multi-deliverable scope probe
+
+When the prompt lists ≥2 distinct deliverables that could each stand alone
+as a separate commit or PR, confirm granularity before planning.
+
+- Surface them as a numbered list and ask: "Treat these as one PR or
+  separate?" — before entering the planning phase.
+- This is distinct from the acceptance-criteria / scope-boundary grills: a
+  bundle of N tasks reads as a clear requirement but hides a granularity
+  decision only the user can make.
+- Skipping it risks planning all N in parallel, then a mid-flight
+  "forget what I said" scope reset.
+
+### Producer-audit probe
+
+When the plan switches a consumer from a named-file lookup
+(`statSync(file)`) to a directory scan (`readdirSync(dir)` / glob), audit
+the upstream producer first.
+
+- Grep the build/compile script that populates the directory and list
+  every file it writes — never assume the directory holds exactly the
+  expected set.
+- Add a filter step that explicitly includes or excludes each file type
+  (e.g., a tarball emitted alongside individual binaries would otherwise
+  be published as an unintended entity).
 
 ### Plan Presentation
 
@@ -704,6 +737,17 @@ Every task MUST have tests covering:
   `gofmt -l` only checks files present when it ran. Introducing a new toolchain
   is especially prone: run its full new gate set verbatim immediately before
   push, covering every file in the final diff.
+
+### mise-managed test invocation
+
+In a mise-managed repo (`.mise.toml` present), a `GemNotFound` (or missing
+tool) on `bundle exec` / `bin/rspec` is a setup gap, not an exploration
+problem.
+
+- Run `bin/setup` first (it installs gems at the mise-scoped path) — never
+  a `find ~` sweep for the install location.
+- Invoke test commands via `mise exec -- <cmd>` so the mise-managed runtime
+  and bundler are in scope.
 
 ### Shell-script structure tests (awk/grep pitfalls)
 
