@@ -51,7 +51,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.08-190802'
+  version: '2026.06.10-175114'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -424,12 +424,20 @@ selection.
   line entirely if none.
 - Apply `wk-slack §Standup privacy filter` — drop hiring/interview/candidate
   items, personal HR/performance items, anything not publicly shareable.
-- Standup text inside the `<pre>` (newlines preserved by `<pre>`):
+- Standup text inside the `<pre>` follows `wk-slack §Standup Snippet`'s
+  plaintext fallback exactly: day markers are top-level `•` bullets, every
+  achievement/priority/blocker is its own indented `  •` sub-bullet. One item
+  per line — never concatenate multiple items on one line with `·` or any
+  separator, and never render a day marker as a bare label.
 
   ```
-  👈🏽 Yesterday: {achievement} {bare URL}
-  👉🏽 Today: {priority} {bare URL}
-  ✋🏽 Blockers: {blocker} {bare URL}
+  • 👈🏽 Yesterday:
+    • {achievement} {bare URL}
+    • {achievement} {bare URL}
+  • 👉🏽 Today:
+    • {priority} {bare URL}
+  • ✋🏽 Blockers:
+    • {blocker} {bare URL}
   ```
 
 - Verify `👈🏽` and `👉🏽` survive the write (multi-byte emoji loss check);
@@ -530,6 +538,21 @@ no-triage HARD RULE):
 Detect done vs pending by the `data-done` attribute — NOT `✅`/`⬜` glyphs or
 `[x]`/`[ ]` syntax (those no longer exist in this format). Extract each item's
 display text from the span's trailing content.
+
+**Cross-validate `data-done="false"` items against external state before
+treating them as carry-over.** The user often actions an item without toggling
+its checkbox in the browser, so `data-done` undercounts completions. For each
+pending span, check whether the Stage 2 agents' data shows it already done:
+
+- GitHub — the item's PR/issue is merged or closed.
+- Jira — the linked ticket moved to a Done status category.
+- Calendar — a prep item whose meeting already occurred (attended).
+- Slack — the referenced thread was replied to.
+
+Move every externally-confirmed item to the Historical bucket as done. In the
+Stage 6 summary, report detected-done vs user-checked-done counts separately so
+the user sees what was inferred. When evidence is ambiguous, leave the item
+pending — never fabricate a completion.
 
 The user resolves everything in the browser. Drop any item with no link.
 
@@ -656,7 +679,7 @@ Announce:
 
 > "Snapshot written: http://localhost:$SITREP_PORT/$EMPLOYER/$(date +%Y)/$(date +%m)/$(date +%d)/snapshot
 >
-> Today: {N} done, {M} carried forward, {P} meetings documented.
+> Today: {N} done ({U} you checked + {D} detected from GitHub/Jira/Calendar/Slack), {M} carried forward, {P} meetings documented.
 > {brag_highlight — single most impactful item}
 >
 > live.md scrubbed — {N} open items remain for tomorrow."
