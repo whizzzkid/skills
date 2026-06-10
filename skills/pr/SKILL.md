@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.09-233105'
+  version: '2026.06.10-222926'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -166,6 +166,20 @@ changesets should land together. Surface the draft status in the prompt
 and **default auto mode to B** (retarget to `$DEFAULT_BRANCH`, include
 both changesets) instead of A. Stacking on a draft base then requires
 explicit user opt-in.
+
+**Merged-base check.** Before targeting any explicitly-named base branch —
+a `wk-pr` base argument, or a reviewed branch chosen for a follow-up PR —
+verify it is not already merged. Auto-detection only scans `--state open`
+PRs, so a merged branch never enters the candidate set; the explicit-base
+path has no such guard.
+
+```bash
+gh pr view "$BASE_CANDIDATE" --json state --jq .state
+```
+
+If `state == "MERGED"`, the branch is gone and the follow-up must target
+`$DEFAULT_BRANCH`. Retarget to `$DEFAULT_BRANCH`, notify the user, and never
+push to a merged branch.
 
 ### Measure scope against the resolved base
 
