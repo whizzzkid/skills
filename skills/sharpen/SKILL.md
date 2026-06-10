@@ -28,7 +28,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.10-191556'
+  version: '2026.06.10-222927'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -381,6 +381,12 @@ replacements **longest-first**. A short replacement applied first corrupts
 every longer token that contains it (`foo`→`x` turns `foo-bar` into
 `x-bar` before the `foo-bar` rule can match). Sort the map by descending
 token length before applying.
+
+- **Self-corruption guard.** When the replacement map — or its before→after
+  examples in help text — is itself a committed artifact a later map run can
+  re-process, write the "before" tokens as non-matching placeholders (`<n>`,
+  `{slug}`). A literal example token gets rewritten on the next pass, turning
+  `before → after` into `after → after`.
 
 **Cohort check.** When the user calls out an overfit on a recent
 edit, treat it as a signal that other recent edits likely carry
