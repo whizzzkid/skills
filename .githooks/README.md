@@ -66,6 +66,19 @@ without forcing a sweep of pre-existing references.
 Root-cause guard for absolute home paths (e.g. `/Users/<name>/...`) leaking a
 username into committed content and git history.
 
+## check-usernames.sh — human @-mention guard
+
+Pre-commit hook that blocks a human `@username` (reviewer / teammate login) in
+committed prose. Scans added lines outside fenced code blocks; flags a bare
+`@handle` unless it is an allowlisted generic token, a version ref (`@v4`), a
+file/email/scope (`@x.json`, `user@host`, `@org/pkg`), or in the ALLOW list in
+the hook (placeholders like `@reviewer`/`@user`, CSS at-rules, decorators).
+
+- Fix a flagged mention by anonymizing: reviewer login -> `{reviewer}`,
+  teammate -> `{user}`, PR author -> `{author}`.
+- A genuine non-human at-token gets added to the hook's `ALLOW` list.
+- Exempt: `.githooks/*` (the hooks list tokens literally) and binary/lock files.
+
 ## check-learnings-dirs.sh — learnings directory naming guard
 
 Pre-commit hook that blocks any staged path under a `wk-`-prefixed

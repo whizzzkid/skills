@@ -9,6 +9,8 @@ pre-commit:
       run: .githooks/check-readme-index.sh
     check-relative-paths:
       run: .githooks/check-relative-paths.sh
+    check-usernames:
+      run: .githooks/check-usernames.sh
     check-skill-links:
       run: .githooks/check-skill-links.sh
     check-learnings-dirs:
