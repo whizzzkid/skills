@@ -1,7 +1,7 @@
 ---
 class: principle
 date: 2026-05-25
-source: observed from real Slack messages ({user}, #code-reviews, #your-team, 2026-05)
+source: observed from real Slack messages (2026-05)
 ---
 
 - **Heading pattern:** `:topical-emoji: *Subject — Context subtitle*` — em-dash separates noun from context; emoji chosen for the subject, not decoration.

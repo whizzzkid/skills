@@ -3,3 +3,5 @@
 .githooks/scrub-denylist.txt
 .skillprohibit
 config/team-hud.yaml
+.distilled-sources.log
+.distilled-memories
