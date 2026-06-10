@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.06-002243'
+  version: '2026.06.10-191557'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -486,6 +486,24 @@ ask the user before generating another fix:
 
 - Do not auto-pick. The thrash gate is user-driven; silent loop continuation
   is the failure mode this rule exists to prevent.
+
+**Convergence gate — rising totals or reversed fixes.** The per-pair counter
+above misses a second non-convergence pattern: the bot's **total** active
+findings stop falling. Track total active findings per round and watch for
+reversals:
+
+- If `count(round N) >= count(round N-1)` for **two consecutive rounds**, the
+  review is generating new reviewable surface as fast as it is closing it.
+- If any new finding **contradicts a previously-accepted fix** this session
+  (e.g., demands `mktemp` one round, calls it over-engineered the next) or
+  re-raises a suggestion the author explicitly rejected, that is terminal
+  thrash regardless of count.
+- On either signal, present the merge-vs-continue decision to the user instead
+  of entering another fix cycle:
+
+  > "Bot findings are not converging (counts rising / a new finding reverses an
+  > accepted fix). Pick: (a) merge now, (b) one more targeted round, (c) dismiss
+  > the reversing finding with rationale."
 
 ### Order of processing
 
