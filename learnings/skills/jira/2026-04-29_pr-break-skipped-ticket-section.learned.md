@@ -7,7 +7,7 @@ severity: medium
 
 When wk-pr-break splits a PR into a stack of child PRs, the wk-jira `## Ticket` section is silently dropped from every child PR description.
 
-**What happened:** Splitting PR #NNN into children #80/#81/#82, each child PR description was generated with only `Refs BOARD-NUM` / `Closes BOARD-NUM` mentions in body prose and a `[BOARD-NUM]` title suffix. None had the canonical wk-jira `## Ticket` block (`[BOARD-NUM](https://<org>.atlassian.net/browse/BOARD-NUM) — <ticket summary>`) at the top of the description. The user had to ask for a manual fix on all four PRs (the original plus three children).
+**What happened:** Splitting PR #NNN into children #NNN/#NNN/#NNN, each child PR description was generated with only `Refs BOARD-NUM` / `Closes BOARD-NUM` mentions in body prose and a `[BOARD-NUM]` title suffix. None had the canonical wk-jira `## Ticket` block (`[BOARD-NUM](https://<org>.atlassian.net/browse/BOARD-NUM) — <ticket summary>`) at the top of the description. The user had to ask for a manual fix on all four PRs (the original plus three children).
 
 **Root cause:** wk-jira's Stage 3 ("Description reference") is enforced by wk-pr's PR-creation flow but not by wk-pr-break's Stage 4 plan template or Stage 7 execution. The pr-break skill's child-PR description template only mentions Jira keys in the title-suffix routing rule and the prose `Refs/Closes` annotation rule — it never invokes the `## Ticket` section requirement. wk-jira itself has no defensive check that fires when descriptions lack the section, so child PRs slip through.
 

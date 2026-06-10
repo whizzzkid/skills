@@ -7,7 +7,7 @@ severity: medium
 
 Standup snippet bundled multiple merged PRs into one bullet without bare URLs for each.
 
-**What happened:** The "Yesterday" standup bullet listed four merged PRs (#156, #161, #163, #166) in a single sentence with no URLs. The skill's HARD RULE requires "every bullet in Yesterday/Today/Blockers must include at least one bare URL pointing to its primary artifact" and "if it maps to multiple artifacts, include all of them space-separated."
+**What happened:** The "Yesterday" standup bullet listed four merged PRs (#NNN, #NNN, #NNN, #NNN) in a single sentence with no URLs. The skill's HARD RULE requires "every bullet in Yesterday/Today/Blockers must include at least one bare URL pointing to its primary artifact" and "if it maps to multiple artifacts, include all of them space-separated."
 
 **Root cause:** When multiple merged PRs are grouped into a single summary bullet (e.g., "Merged 4 PRs: X, Y, Z, W"), the URL-enforcement logic is applied at the bullet level — one URL satisfies the rule — rather than per-artifact. The grouping itself obscures that each PR needs its own URL.
 

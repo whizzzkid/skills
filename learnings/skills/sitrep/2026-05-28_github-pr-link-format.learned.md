@@ -7,7 +7,7 @@ severity: low
 
 GitHub PR links must always be labeled as `repo#number`, never bare `#number`.
 
-**What happened:** Standup snippet rendered PR links as `<a href="...">#156</a>` with just the number as the label, losing repo context when pasted into Slack.
+**What happened:** Standup snippet rendered PR links as `<a href="...">#NNN</a>` with just the number as the label, losing repo context when pasted into Slack.
 
 **Root cause:** When grouping multiple PRs from the same repo, the generator dropped the repo prefix to save space, producing ambiguous bare `#NNN` links.
 

@@ -19,7 +19,7 @@ A second related gap: the skill doesn't distinguish between **verified facts** (
    - Granola note → link to `granola://meeting/<id>` or include `(Granola: {meeting} {date})` inline
    - Slack DM/thread → permalink (already covered)
    - evening.md / morning.md carry-over → cite as `(carry-over from {YYYY-MM-DD})` linking to the relative file path
-   - Agent-derived inference (e.g., "{repo}#NNN superseded by #82?") → mark with `(inferred)` and link both PRs
+   - Agent-derived inference (e.g., "{repo}#NNN superseded by #NNN?") → mark with `(inferred)` and link both PRs
 
 2. **Add a "claim confidence" annotation** to action items extracted from meeting notes:
    - `(verified: <link>)` for items with a concrete external artifact
