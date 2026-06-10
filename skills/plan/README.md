@@ -1,0 +1,75 @@
+# wk-plan
+
+> Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
+
+## Invocation
+
+| Mode | Trigger |
+|------|---------|
+| User-invocable | `/wk-plan <task description>` |
+| Model-invocable | automatic when [wk-workflow](../workflow/README.md) Phase 1 begins; or when the user says "plan this", "let's plan", "make a plan for…" |
+
+## How It Works
+
+```mermaid
+flowchart TD
+    A[Task received] --> B{Ambiguous?}
+    B -- yes --> C[Step 0: Grill — AskUserQuestion max 4]
+    C --> D{Resolved?}
+    D -- no --> C
+    D -- yes --> E
+    B -- no --> E[Step 1: Research — parallel agents]
+    E --> F[Step 2: Multi-persona analysis\nImplementor · Reviewer · Security · Ops · Product]
+    F --> G{Unresolved concerns?}
+    G -- scope conflict --> C
+    G -- missing step --> H
+    G -- out of scope --> H
+    H[Step 3: Draft plan with phase + agent markers] --> I[Step 4: Validate\nrequirements · agent-readiness · parallelism · commits]
+    I --> J{Flags raised?}
+    J -- yes --> H
+    J -- no --> K[Step 5: Present + wait for approval]
+    K --> L{Approved?}
+    L -- no --> H
+    L -- yes --> M[Hand off to workflow for execution]
+```
+
+## Plan Format
+
+Every plan produced by this skill uses explicit markers:
+
+```
+### Phase A: <Title>  [PARALLEL]
+
+**Step A1**  [AGENT-READY]
+- Goal: …
+- Artifacts out: …
+- Instructions: 1. … 2. …
+- Commit after: feat(scope): message
+```
+
+| Marker | Meaning |
+|---|---|
+| `[PARALLEL]` | All steps in this phase run concurrently |
+| `[SEQUENTIAL]` | Each step waits for the previous |
+| `[AGENT-READY]` | Agent can complete autonomously |
+| `[AGENT-GUIDED]` | Agent executes, reports back before continuing |
+| `[HUMAN-IN-LOOP]` | User decision required before step completes |
+
+## Noteworthy
+
+- **HARD RULE:** Do not start executing any step until the user explicitly approves the plan — silence is not approval.
+- **HARD RULE:** Stop at Step 0 when requirements are vague, missing acceptance criteria, or conflicting — planning a wrong requirement produces more rework than grilling.
+- **Parallelism default:** Steps that don't share a write target and don't have a data dependency go in the same parallel phase. Sequential ordering must be justified.
+- **Mandatory 8 elements:** Every plan must include implementation steps, commit boundaries, docs updates, testing, adversarial review, PR offer, CI fix loop, and session retro — the plan is invalid without all 8.
+- **Multi-persona pass:** The plan is validated from Implementor, Reviewer, Security, Ops, and Product perspectives. Every concern is either addressed by a step or explicitly excluded with a rationale.
+- **[wk-workflow](../workflow/README.md) integration:** Phase 1 calls `Skill(wk-plan)` instead of inline planning. An approved plan from this session short-circuits the workflow's own planning step.
+- **Model:** Uses Fable/Mythos-class models (`claude-fable-5`, `o3`, `gemini-2.5-pro`) for deep multi-persona reasoning.
+
+## Integration Points
+
+| Skill | Relationship |
+|---|---|
+| [wk-workflow](../workflow/README.md) | Phase 1 delegates to this skill; executes the approved plan |
+| [wk-jira](../jira/README.md) | Step 1 Agent B fetches ticket acceptance criteria via Stage 0 |
+| [wk-adversarial-review](../adversarial-review/README.md) | Every plan includes an adversarial review step pre-push |
+| [wk-arch-review](../arch-review/README.md) | Invoked when the plan touches system architecture |
