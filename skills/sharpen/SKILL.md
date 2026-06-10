@@ -28,7 +28,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.10-182800'
+  version: '2026.06.10-191556'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -373,6 +373,14 @@ For each grep match in the proposed text:
   API (`422 "Line could not be resolved"`), framework-defined env
   vars (`CLAUDE_PROJECT_DIR`), or explicitly placeholder strings
   in `{like-this}` or `<like-this>` form.
+
+**Replacement-order rule.** When the proposed edit (or a scrub /
+`git filter-repo` / `sed` replacement map) replaces multiple tokens
+where one is a substring of another (`foo` ⊂ `foo-bar`), order the
+replacements **longest-first**. A short replacement applied first corrupts
+every longer token that contains it (`foo`→`x` turns `foo-bar` into
+`x-bar` before the `foo-bar` rule can match). Sort the map by descending
+token length before applying.
 
 **Cohort check.** When the user calls out an overfit on a recent
 edit, treat it as a signal that other recent edits likely carry
