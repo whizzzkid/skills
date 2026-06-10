@@ -48,7 +48,7 @@ if [[ ${#violations[@]} -gt 0 ]]; then
   printf '%s\n' "${violations[@]}" >&2
   echo "" >&2
   echo "Genericize the number before committing:" >&2
-  echo "  #600 -> #NNN ; repo#NNN -> repo#NNN ; pulls/{n} -> pulls/{n}." >&2
+  echo "  a bare PR number -> #NNN ; repo#<n> -> repo#NNN ; pulls/<n> -> pulls/{n}." >&2
   echo "A real CSS hex colour belongs inside a fenced code block (then it passes)." >&2
   exit 1
 fi
