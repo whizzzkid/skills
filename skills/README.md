@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **44 skills** organized into four groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules.
+> **56 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
 
 ---
 
@@ -27,6 +27,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-cal`](./cal/README.md) | All Google Calendar operations — fetch, create in free slots, check availability, schedule prep blocks | User + Model |
 | [`wk-retro`](./retro/README.md) | Session retrospective — capture learnings and improve future sessions | User + Model |
 | [`wk-self-perf`](./self-perf/README.md) | Generate a self-performance review narrative from GitHub, Slack, Jira, Granola, and more | User: `/wk-self-perf <period>` |
+| [`wk-team-hud`](./team-hud/README.md) | ⚠️ WIP — heads-up display of team activity; blocked on Slack/Jira/Group roster access | — |
 
 ---
 
@@ -40,9 +41,18 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-pr-update`](./pr-update/README.md) | Update a PR branch from its base — rebase (<5 commits) or patch-replay | User + Model |
 | [`wk-pr-break`](./pr-break/README.md) | Split an oversized PR into a reviewable, individually-shippable stack | User + Model |
 | [`wk-pr-takeover`](./pr-takeover/README.md) | Take over a PR from another author — overwrite or stack mode, full workflow, co-authorship | User + Model |
+| [`wk-pr-merge`](./pr-merge/README.md) | Merge a PR once CI is green, reviews approved, threads resolved — transition ticket, retro, cleanup | User + Model |
 | [`wk-adversarial-review`](./adversarial-review/README.md) | Pre-flight adversarial review before any push or PR transition | Auto (pre-push) |
 | [`wk-self-review`](./self-review/README.md) | Post inline self-review comments documenting design decisions for human reviewers | User + Model |
 | [`wk-jira`](./jira/README.md) | Sync Jira ticket state with PR lifecycle — auto-transitions, description audit | Auto (on Jira key/URL) |
+
+---
+
+### 💬 Communication — outbound messaging
+
+| Skill | Purpose | Invocation |
+|---|---|---|
+| [`wk-slack`](./slack/README.md) | Compose and send Slack messages — announcements, review requests, status updates — in mrkdwn | User + Model |
 
 ---
 
@@ -57,6 +67,8 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-devcontainer`](./devcontainer/README.md) | Generate devcontainer for Rails/mise projects with Dockerfile, docker-compose, devcontainer.json | User + Model |
 | [`wk-mise`](./mise/README.md) | Manage mise tool versions — install, configure .mise.toml, diagnose missing tools | User + Model |
 | [`wk-gh`](./gh/README.md) | Scope all `gh` CLI operations to `$GITHUB_ORG` — auto-fires on any GitHub interaction | Auto (on gh CLI use) |
+| [`wk-curl`](./curl/README.md) | Transport-safe curl idioms — `-sS`, exit-status capture, token hygiene on any parsed HTTP call | Auto (on curl use) |
+| [`wk-silverbullet`](./silverbullet/README.md) | Create/edit/debug SilverBullet pages, widgets, dashboards — HTML blocks, checkboxes, space-style CSS | Auto (on SilverBullet work) |
 
 ---
 
@@ -65,6 +77,8 @@ Skills activate automatically when the agent detects a matching context, or invo
 | Skill | Purpose | Invocation |
 |---|---|---|
 | [`wk-workflow`](./workflow/README.md) | **Master orchestrator** — Plan → Implement → Test → Review → PR → CI → Retro | Auto (any dev task) |
+| [`wk-plan`](./plan/README.md) | Grill → research → multi-persona validation → numbered, agent-parallelizable plan (Fable-class) | Auto (workflow Phase 1) + User |
+| [`wk-arch-review`](./arch-review/README.md) | Critical evaluation of architecture docs, specs, plans, estimates — SPOFs, unhappy paths, assumptions | User + Model |
 | [`wk-commit`](./commit/README.md) | Conventional commits with emoji, signing, and safe push | User + Model |
 | [`wk-docs`](./docs/README.md) | Check and update documentation affected by code changes | User + Model |
 | [`wk-testing-skeleton`](./testing-skeleton/README.md) | Frame the test plan for any code change — behavioral over structural, happy+sad paths | Auto (before writing tests) |
