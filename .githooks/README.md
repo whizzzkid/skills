@@ -31,6 +31,25 @@ the name. New internal boards are caught automatically. Replace any real ticket
 key with the generic placeholder `BOARD-NUM`. If a genuine public standard trips
 it, add that token to `ALLOW` in the hook.
 
+## check-readme-index.sh — skill-index sync guard
+
+Pre-commit hook that keeps both skill indexes in lockstep with the `skills/`
+tree, enforcing AGENTS.md § README Maintenance "Root index rule". It runs only
+when the staged set touches a skill's `SKILL.md` (added, modified, renamed, or
+**deleted**) or either index file, then verifies:
+
+- Every `skills/<name>/` directory (except `_template`) has a row in **both**
+  the root [README.md](../README.md) (`[<name>](skills/<name>/)`) and the
+  canonical [skills/README.md](../skills/README.md)
+  (`` [`wk-<name>`](./<name>/README.md) ``).
+- Neither index links to a skill directory that no longer exists (orphan row
+  left behind by a rename or removal).
+
+This closes the gap that `check-readme.sh` (sibling-README existence only) does
+not cover: a new skill landing without an index row, or a removed skill leaving
+a dangling row. [`wk-skill`](../skills/skill/README.md) Step 6 writes both rows
+at add time; this hook enforces the invariant regardless of author.
+
 ## check-learnings-dirs.sh — learnings directory naming guard
 
 Pre-commit hook that blocks any staged path under a `wk-`-prefixed
