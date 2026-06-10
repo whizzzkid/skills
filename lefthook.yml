@@ -7,6 +7,8 @@ pre-commit:
       run: .githooks/check-readme.sh
     check-readme-index:
       run: .githooks/check-readme-index.sh
+    check-relative-paths:
+      run: .githooks/check-relative-paths.sh
     check-skill-links:
       run: .githooks/check-skill-links.sh
     check-learnings-dirs:

@@ -50,6 +50,22 @@ not cover: a new skill landing without an index row, or a removed skill leaving
 a dangling row. [`wk-skill`](../skills/skill/README.md) Step 6 writes both rows
 at add time; this hook enforces the invariant regardless of author.
 
+## check-relative-paths.sh — machine-absolute path guard
+
+Pre-commit hook that blocks machine-absolute or home-rooted paths in committed
+content. Scans only **added** lines of the staged diff, so it catches new leaks
+without forcing a sweep of pre-existing references.
+
+- Blocked in an added line: `/Users/<...>`, `/home/<...>`, `/root/<...>`, and
+  bare `~/<...>`.
+- Allowed: `$HOME`, `${HOME}`, `$WK_SKILLS_HOME`, `$CLAUDE_PROJECT_DIR`, any
+  other `$VAR` / `${VAR}` env-var-rooted path, and repo-relative paths.
+- Exempt: `.githooks/*` (these hooks and their docs define the patterns
+  literally) and binary/lock files.
+
+Root-cause guard for absolute home paths (e.g. `/Users/<name>/...`) leaking a
+username into committed content and git history.
+
 ## check-learnings-dirs.sh — learnings directory naming guard
 
 Pre-commit hook that blocks any staged path under a `wk-`-prefixed
