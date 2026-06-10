@@ -21,6 +21,9 @@ allowed-tools:
   - "Bash(grep:*)"
   - "Bash(find:*)"
   - "Bash(test:*)"
+  - "Bash(jq:*)"
+  - "Bash(sed:*)"
+  - "Bash(printf:*)"
   - "Bash(open:*)"
   - "Bash(pgrep:*)"
   - "Bash(silverbullet:*)"
@@ -51,7 +54,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.10-175114'
+  version: '2026.06.10-222928'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -183,6 +186,50 @@ docker compose down && docker compose up -d
 docker compose logs --tail=5   # confirm the new config is active
 ```
 
+## Dismissed registry (cross-run de-dup)
+
+Items the user resolves vanish from `live.md` at `end`, but the next
+`start`'s fresh agent sweep re-discovers the same Slack thread, PR, or prep
+block and re-surfaces it. A week-scoped `.jsonl` registry records dismissed
+keys so `start` filters them out.
+
+- **File:** `$WEEK_MEM_FILE` —
+  `$SITREP_REPO/$EMPLOYER/.dismissed/$YEAR-W$WEEK.jsonl`, one JSON object per
+  line, scoped to the ISO week (`date +%V`). Defined in Step 0.
+- **Key — one logical action, not one resource.** Use the most
+  action-specific URL available (calendar event, direct scorecard link,
+  sub-path anchor) over a shared resource root. When distinct workflow stages
+  share a resource URL (prep → attend → debrief → scorecard), append a
+  deterministic action slug: `{url}#action=<slug>`.
+  - A bare resource URL collapses separate stages into one entry — dismissing
+    prep silently suppresses the still-open follow-up.
+- **Write — `jq`-constructed only, never raw interpolation.** Strip markdown
+  escapes, build the object with `jq -n`, then validate the file still parses;
+  roll back the last line on failure.
+  - Bash interpolation into JSON strings produces invalid JSON when a title
+    carries a non-JSON escape (e.g. SilverBullet's `\#` link-text escape), and
+    every subsequent `jq` read fails — silently disabling the whole filter.
+
+```bash
+title=$(printf '%s' "$raw_title" | sed 's/\\#/#/g')   # strip markdown escapes
+jq -nc --arg key "$key" --arg type "$type" --arg title "$title" \
+   --arg at "$TODAY" --arg because "$reason" --arg week "$YEAR-W$WEEK" \
+   '{key:$key,type:$type,title:$title,dismissed_at:$at,dismissed_because:$because,week:$week}' \
+   >> "$WEEK_MEM_FILE"
+if ! jq -r '.key' "$WEEK_MEM_FILE" >/dev/null 2>&1; then
+  echo "ERROR: $WEEK_MEM_FILE failed to parse after write — removing last line"
+  sed -i '' '$d' "$WEEK_MEM_FILE"
+fi
+```
+
+- **Filter (`start`):** drop any gathered or carry-over item whose key is
+  already in this week's registry.
+
+```bash
+is_dismissed() { [ -f "$WEEK_MEM_FILE" ] && jq -e --arg k "$1" \
+  'select(.key==$k)' "$WEEK_MEM_FILE" >/dev/null 2>&1; }
+```
+
 ## Step 0: Bootstrap (both sub-commands)
 
 ### Verify environment
@@ -193,11 +240,13 @@ test -n "$EMPLOYER"    || { echo "EMPLOYER is not set"; exit 1; }
 SITREP_PORT="${SITREP_PORT:-3000}"
 
 TODAY=$(date +%Y-%m-%d)
+YEAR=$(date +%Y); WEEK=$(date +%V)
 LIVE_FILE="$SITREP_REPO/$EMPLOYER/live.md"
 SNAPSHOT_DIR="$SITREP_REPO/$EMPLOYER/$(date +%Y)/$(date +%m)/$(date +%d)"
 SNAPSHOT_FILE="$SNAPSHOT_DIR/snapshot.md"
+WEEK_MEM_FILE="$SITREP_REPO/$EMPLOYER/.dismissed/$YEAR-W$WEEK.jsonl"
 
-mkdir -p "$SITREP_REPO/$EMPLOYER" "$SNAPSHOT_DIR"
+mkdir -p "$SITREP_REPO/$EMPLOYER" "$SNAPSHOT_DIR" "$(dirname "$WEEK_MEM_FILE")"
 ```
 
 ### Verify SilverBullet is running
@@ -326,6 +375,10 @@ tickets the user already finished:
 Merge agent results with carry-over items from Stage 1. Cross-check
 carry-overs against live state — drop any whose external record shows
 completion (PR merged, Jira ticket resolved, email chain closed).
+
+Then drop any gathered or carry-over item whose key `is_dismissed` for the
+current week (per the Dismissed registry section) — this suppresses items the
+user already resolved in a prior run that the fresh sweep re-discovered.
 
 Write every surviving item as a `data-done="false"` checkbox span in the
 appropriate column per the HTML-layout HARD RULE — no interactive prompts
@@ -626,6 +679,11 @@ wins, peer recognition) to
 edited it in the browser since Stage 1. Merge `data-done="true"` spans into
 the snapshot's done set rather than re-surfacing them as open.
 
+**Record dismissed keys before scrubbing.** For each `data-done="true"` span
+being dropped, write its key to `$WEEK_MEM_FILE` via the Dismissed registry
+write pattern (action-specific key, `jq`-constructed, validate-on-write) so
+the next `start`'s fresh sweep does not re-surface the resolved item.
+
 Rewrite `$LIVE_FILE` so it holds **every** pending item — the snapshot keeps
 none. Drop all `data-done="true"` spans and date-specific FYI content
 (Calendar, Announcements, the standup block). Fold in every pending
@@ -689,7 +747,7 @@ Announce:
 Unconditional — no prompt; do not rely on project-level CLAUDE.md.
 
 ```bash
-git -C "$SITREP_REPO" add "$LIVE_FILE" "$SNAPSHOT_FILE"
+git -C "$SITREP_REPO" add "$LIVE_FILE" "$SNAPSHOT_FILE" "$WEEK_MEM_FILE"
 git -C "$SITREP_REPO" commit -m "chore(sitrep): 📸 end $TODAY — {N} done, {M} carried forward"
 git -C "$SITREP_REPO" push
 ```
@@ -739,6 +797,7 @@ block on it.
 | Jira agent | Full open-ticket sweep, not just today's activity; backlog collapsed |
 | Assigned tickets | Cross-tracker sweep: flag 🔁 status changes + ⏳ staleness; sort by priority → age → due-date |
 | Merged PR + open ticket | Auto-transition to Done, render as ✅ auto-action |
+| Resolved item re-discovered | Dismissed registry filters it out; `jq`-write + validate, action-specific key |
 | End of day | Distill unprocessed learnings via `wk-sharpen` (Stage 8) |
 | QPR window/season | `📋` banner on live.md (start) / snapshot (end); brag-log accrues 🌟 |
 | SilverBullet stopped | Auto-start via `silverbullet $SITREP_REPO &` |
@@ -752,6 +811,7 @@ block on it.
 - `$EMPLOYER` — org slug used for path scoping (e.g., `acme`)
 - `$SITREP_PORT` — SilverBullet port (default: `3000`)
 - `$GITHUB_ORG` — org scope for `gh` commands
+- `jq` — JSON construction/validation for the dismissed registry
 - `silverbullet` CLI installed and able to serve `$SITREP_REPO`
 - All MCP servers required by `wk-goodmorning` / `wk-goodevening`
 
