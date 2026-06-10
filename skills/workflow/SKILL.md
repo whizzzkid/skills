@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.10-180421'
+  version: '2026.06.10-210048'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -699,6 +699,11 @@ Every task MUST have tests covering:
   suites can assert on the same source with different matchers; passing
   one does not imply the others pass. Inspect the hook config to enumerate
   every gate, do not assume the suite you ran during dev is the full set.
+- Re-run every gate against **final HEAD**, not a mid-session snapshot. A file
+  added after an earlier local lint run silently skips it — a formatter like
+  `gofmt -l` only checks files present when it ran. Introducing a new toolchain
+  is especially prone: run its full new gate set verbatim immediately before
+  push, covering every file in the final diff.
 
 ### Shell-script structure tests (awk/grep pitfalls)
 
