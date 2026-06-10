@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.09-172926'
+  version: '2026.06.10-180421'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -140,6 +140,23 @@ If any step is ambiguous, ask the user before claiming completion.
 ---
 
 ## Phase 1: Plan
+
+**HARD RULE — invoke `wk-plan` before any planning.** Phase 1 delegates
+entirely to `wk-plan`:
+
+```
+Skill(wk-plan, args="<task from session context>")
+```
+
+- If `wk-plan` was already run this session and the user approved the plan,
+  skip Phase 1 entirely and execute the approved plan.
+- If `wk-plan` surfaced unanswered questions (Step 0 grill), stop here and
+  resolve them before proceeding.
+- Do not re-plan inline if `wk-plan` has already produced an approved plan —
+  that creates two plans and both get followed partially.
+
+The following sub-sections remain valid as supplementary rules during
+`wk-plan`'s Step 1 research phase and Step 3 draft validation.
 
 ### Jira ticket pre-flight
 
