@@ -7,7 +7,7 @@ severity: medium
 
 Self-review threads with non-author replies are silently dropped, hiding real reviewer feedback.
 
-**What happened:** On a PR, `{reviewer}` (human reviewer) replied inside a thread whose root comment was a self-review from the PR author. The current exclusion rule ("skip if root comment author == PR author") correctly skipped the thread for triage, but provided no signal to the user that a human reviewer's suggestion was living inside it. I had to notice it manually and flag it in the final summary; a less attentive run would have silently ignored legitimate feedback.
+**What happened:** On a PR, a human reviewer (`{reviewer}`) replied inside a thread whose root comment was a self-review from the PR author. The current exclusion rule ("skip if root comment author == PR author") correctly skipped the thread for triage, but provided no signal to the user that a human reviewer's suggestion was living inside it. I had to notice it manually and flag it in the final summary; a less attentive run would have silently ignored legitimate feedback.
 
 **Root cause:** Step 3 "Filter active comments" treats self-review threads as wholly excluded and emits no per-thread notice when non-author replies exist in them. The skill only separates threads into "human reviewer / bot / self-review" at the thread-root level.
 
