@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.10-234102'
+  version: '2026.06.10-235203'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -945,6 +945,20 @@ git diff "$BASE...HEAD" | grep -nE 'curl[[:space:]]+(-[a-zA-Z]*s)\b' | grep -vE 
 - Flag any `curl -s` whose response is later parsed for errors.
 - Require `-sS` plus an exit-status check to separate transport failures
   from API-level errors.
+
+### 2.30 Committed-artifact freshness after source fix
+
+A committed compiled/generated artifact built from changed source goes
+stale when the source is fixed but the artifact is not regenerated — a CI
+freshness check then fails one round after a clear verdict.
+
+- After any source fix, grep the diff for source whose build produces a
+  committed artifact: `.wasm`, `//go:generate` / `go:embed` targets,
+  generated code, build output whitelisted via `.gitignore` exceptions.
+- For each hit, add an explicit "rebuild and re-commit the artifact" step
+  to the fix plan **before** issuing the clear verdict.
+- Flag a fixed source file with an un-regenerated sibling artifact as a
+  blocker.
 
 After mechanical sweeps land their findings, dispatch a fresh subagent
 with no prior context to critique the diff. The subagent operates only
