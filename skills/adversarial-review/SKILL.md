@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.09-233105'
+  version: '2026.06.10-234102'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -168,10 +168,18 @@ single highest-frequency reviewer flag.
   argument — visible to `ps aux` on multi-user hosts (a different
   exposure path than stderr leakage). Flag `blocker`; write the header to
   a `chmod 600` temp file and pass `-H @file`.
+- Credential passed as a CLI flag **value** (`--password=$X`,
+  `--http-password=$X`, `-p $X`, `wget --password`) in source **or
+  documentation code fences** — lands in `/proc/<pid>/cmdline`, visible to
+  any local user via `ps`. Scan docs and shell, not just the diff source.
+  Flag `blocker`; safe alternatives: `curl -u` (scrubs `-u` from argv),
+  `--netrc`, or a `chmod 600` header/credentials file.
 
 ```bash
 git diff "$BASE...HEAD" | grep -nE 'redact|mask|sanitize|escape|sanitis'
 git diff "$BASE...HEAD" | grep -nE 'curl[^|]*-H[^|]*\$\{?[A-Z_]+'
+grep -rnE -- '--password=|--http-password=|-p[= ]\$|wget .*--(password|user)' \
+  docs/ README* scripts/ .buildkite/ 2>/dev/null
 ```
 
 Every hit must be addressed or explicitly excluded in the verdict.
@@ -261,6 +269,17 @@ output step backs the claim. A parenthetical "(warn the user)" with no
 imperative output block reads as optional and is routinely omitted at
 runtime. Flag `suggestion`: convert the claim into an explicit output
 instruction or a required step.
+
+**Source-comment URL cross-check.** When a source file's top-of-file or
+inline comment carries a download/API URL, grep README and docs for the
+same hostname/path and confirm they agree with the documented access
+mechanism. Flag `blocker` on divergence — auth-gated/private repos are
+prone to this (a public-URL comment copied from an example while the real
+download requires an authenticated CLI lookup).
+
+```bash
+grep -rnoE 'https?://[^"'"'"' )]+' scripts/ .buildkite/ src/ 2>/dev/null | sort -u
+```
 
 ### 2.5 Hardcoded base / branch sweep
 
@@ -387,6 +406,13 @@ grep -rnE "common to (every|all)|tagged on (every|all)|present in (every|all)|ap
 
 Flag any call site that omits the claimed field as a blocker
 (spec-vs-implementation divergence).
+
+Undocumented credential vars in doc shell blocks: for every `$VAR` /
+`${VAR}` used in a `curl -u`, `Authorization:`, or other auth-passing
+pattern inside a documentation shell fence, verify the variable is defined
+or annotated (inline comment, prose above the block, or a Prerequisites
+section) within the same doc. A ported snippet with opaque credential var
+names gives copy-pasting users a silent auth failure. Flag `suggestion`.
 
 ### 2.9 Design-pivot doc audit
 
@@ -710,9 +736,18 @@ project with a CI pipeline.
 5. Missing forwarding is a **blocker** — the symptom only surfaces when
    the feature is expected to fire (runtime null-read + default
    fallback). Build stays green.
-6. Exempt env names matching the platform's auto-injection prefix
-   (e.g., `BUILDKITE_*`, `GITHUB_*`, `CI_*`) — no explicit forwarding
-   required.
+6. Exempt platform auto-injection prefixes (`BUILDKITE_*`, `GITHUB_*`,
+   `CI_*`) **only for native steps** where the agent env passes straight
+   through. A `docker_compose` (or any container) plugin forwards **only**
+   vars in its `env:` list — an auto-injected prefix read *inside the
+   container* is still null unless explicitly listed. Do not exempt
+   prefixes for containerized steps.
+7. When the diff **adds a new pipeline template**, extract every
+   platform-native var the invoked script reads — including fallbacks
+   already in the baseline, not just net-new reads — and check each against
+   the new template's `env:` list. A `BUILDKITE_*` var read via fallback
+   but absent from a newly-added template is a blocker (dead inside the
+   container).
 
 One-liner detection sketch:
 
@@ -747,6 +782,19 @@ production code were inverted, deleted, or replaced with a no-op.
 - Blocker — the test provides zero coverage of the function under test.
 - Fix: construct the expected value independently of the input (literal
   array, hand-written sequence, or a known-good fixture).
+
+No-op `&& true` after `||`: grep changed test files for `&& true` on a
+line that also contains `||`:
+
+```bash
+git diff "$BASE...HEAD" -- '*.bats' '*_test.*' '*_spec.*' \
+  | grep -nE '^\+.*\|\|.*&& true'
+```
+
+Bash `||` / `&&` are equal-precedence and left-associative, so a trailing
+`&& true` forces the whole compound to exit 0 — the test can never fail.
+Blocker. Fix: rewrite the fail path as `... || (echo "diagnostic" && false)`
+so the inner `false` propagates as the compound's exit status.
 
 ### 2.21 Numeric security-gate bounds sweep
 
