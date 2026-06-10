@@ -15,7 +15,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.01-224411'
+  version: '2026.06.10-191554'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -50,7 +50,13 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
 - **`[[ … ]]`** over `[ … ]` in bash.
 - **Heredoc** for multi-line strings; avoid concatenated `echo` chains.
 - **Named constants** for magic values at the top of the script.
-- **Probe capability, don't parse error text.** Detect support for a flag or feature by running it against a known-good input and branching on the exit code — never by grepping the stderr wording. Error strings differ between GNU coreutils, BSD/macOS, BusyBox, and library wrappers, so wording-based fallbacks fail closed on the variant they were supposed to handle.
+- **Target bash 3.2** for any hook or script that may run under the macOS
+  system bash (`/bin/bash`). Avoid bash-4+ builtins — `mapfile`/`readarray`,
+  associative arrays (`declare -A`), `${var^^}`/`${var,,}` case conversion,
+  negative array indices. Replace `mapfile -t arr < <(cmd)` with
+  `while IFS= read -r x; do …; done <<< "$(cmd)"`. Verify with
+  `/bin/bash script.sh` (3.2) before committing — `mapfile: command not found`
+  is the classic 4-only failure. Detect support for a flag or feature by running it against a known-good input and branching on the exit code — never by grepping the stderr wording. Error strings differ between GNU coreutils, BSD/macOS, BusyBox, and library wrappers, so wording-based fallbacks fail closed on the variant they were supposed to handle.
 
   ```bash
   # WRONG — wording varies by vendor (BusyBox vs GNU vs macOS)
