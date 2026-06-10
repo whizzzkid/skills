@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.04-192829'
+  version: '2026.06.10-175113'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -199,11 +199,17 @@ gcal.get_free_busy(
   ```
 - If busy → note the conflict; do not create.
 
-**B. 30-min Interview Scorecard block** as soon as possible after the interview.
+**B. 30–45-min Interview Scorecard block** as soon as possible after the interview.
 
+**HARD RULE:** The scorecard is always a **booked calendar event**, never a
+checkbox or to-do item in any caller's dashboard. Create the event here via
+the calendar MCP before the caller renders its summary. A scorecard surfaced
+as a checkbox is a defect — the user must not have to schedule it themselves.
+
+Allow 30–45 minutes; under 30 is not enough time to complete a scorecard.
 First try immediately after (`interview_end` → `interview_end + 30min`).
 If busy, scan forward in 30-min increments through the rest of the working day.
-Pick the first free 30-min slot:
+Pick the first free slot of at least 30 minutes:
 ```
 summary:     "📋 Interview Scorecard — {interview_title}"
 description: "Complete the interview scorecard while it's fresh."
