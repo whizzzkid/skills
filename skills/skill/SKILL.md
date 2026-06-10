@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.10-182114'
+  version: '2026.06.10-191555'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -153,6 +153,13 @@ Write the sibling `$WK_SKILLS_HOME/skills/<name>/README.md` in the **same
 commit** (AGENTS.md README co-change rule). Follow the per-skill format in
 `skills/README.md`: `# wk-<name>` heading (matching the `name:` field), purpose,
 trigger, key phases/rules, and integration points.
+
+- **Linkify every `wk-*` mention in the README from the first draft** — even
+  an illustrative or placeholder `wk-<name>` example. Write
+  `[wk-<name>](../<name>/README.md)`, or drop the backticks (plain
+  `wk-<name>`). A bare backticked `` `wk-foo` `` trips the `check-skill-links`
+  pre-commit hook and forces a re-commit. The skill's own name in the `#`
+  heading is exempt.
 
 **HARD RULE — sync BOTH skill indexes in the same commit.** A new skill is not
 done until it has a row in **both** index files. There is no "when in scope"
