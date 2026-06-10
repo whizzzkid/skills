@@ -79,6 +79,21 @@ the hook (placeholders like `@reviewer`/`@user`, CSS at-rules, decorators).
 - A genuine non-human at-token gets added to the hook's `ALLOW` list.
 - Exempt: `.githooks/*` (the hooks list tokens literally) and binary/lock files.
 
+## check-pr-numbers.sh — internal PR/issue number guard
+
+Pre-commit hook that blocks committing internal PR / issue / run numbers in
+markdown. Scans added lines of `*.md`:
+
+- Path forms (`pulls/NN`, `issues/NN`, `runs/NN`) are blocked everywhere.
+- Bare `#NN` / `PR #NN` are blocked only outside fenced code blocks, so CSS hex
+  colours (`#39ff14`, `#222`) inside ```css fences pass.
+- Fix by genericizing: `#600` -> `#NNN`, `repo#NNN` -> `repo#NNN`,
+  `pulls/{n}` -> `pulls/{n}`. A real hex colour belongs inside a code fence.
+- Exempt: `.githooks/*`.
+
+Pairs with the wk-learn / wk-retro scrub rules (which strip PR numbers at
+authoring time); this hook is the mechanical backstop.
+
 ## check-learnings-dirs.sh — learnings directory naming guard
 
 Pre-commit hook that blocks any staged path under a `wk-`-prefixed

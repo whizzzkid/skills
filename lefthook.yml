@@ -11,6 +11,8 @@ pre-commit:
       run: .githooks/check-relative-paths.sh
     check-usernames:
       run: .githooks/check-usernames.sh
+    check-pr-numbers:
+      run: .githooks/check-pr-numbers.sh
     check-skill-links:
       run: .githooks/check-skill-links.sh
     check-learnings-dirs:
