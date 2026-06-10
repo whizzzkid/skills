@@ -97,17 +97,28 @@ or integration points — the corresponding `README.md` MUST be updated in the *
 No exceptions; a SKILL.md update without a README.md update is an incomplete commit.
 
 **Rename/remove rule:** When a skill is renamed or removed, its `README.md` must be
-renamed/deleted in the same commit as the `SKILL.md` change.
+renamed/deleted in the same commit as the `SKILL.md` change, and its row must be
+removed from **both** index files (below) in that same commit.
 
 **New-skill rule:** Every new skill ships with its `README.md` in the **same
 commit** as the `SKILL.md` — never a follow-up. Confirm `skills/<name>/README.md`
 exists (matching the `name:` field per the drift check below) and add a row to
-`skills/README.md`'s table when the skill is in scope for the top-level index.
+**both** index files (below) in the same commit.
 
-**Root index rule:** `skills/README.md` (the top-level skills index) MUST be updated whenever:
-- A skill is added or removed
-- A skill's `group:` field changes
-- A skill's one-line `description:` changes materially
+**Dual-index rule:** There are **two** skill index files and both MUST stay in
+sync with the `skills/` tree:
+
+- `skills/README.md` — canonical owned index (grouped tables, header skill/group
+  counts). Link form: `` [`wk-<name>`](./<name>/README.md) ``.
+- `README.md` — root landing-page mirror. Link form: `[<name>](skills/<name>/)`.
+
+Update **both** whenever a skill is added, removed, renamed, has its `group:`
+change, or has its one-line `description:` change materially. `_template/` is
+the only directory excluded. The `check-readme-index` pre-commit hook
+(`.githooks/check-readme-index.sh`) enforces this mechanically: it blocks any
+commit where a `skills/<name>/` dir lacks a row in either index, or either index
+carries an orphan row for a directory that no longer exists. `wk-skill` Step 6
+writes both rows at add time.
 
 **Drift check (pre-sharpen gate):** Before any `wk-sharpen` commit lands, verify the modified
 `SKILL.md`'s `name:` frontmatter value matches the `# wk-*` heading in its `README.md`. If they
