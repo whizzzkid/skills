@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.01-220751'
+  version: '2026.06.10-175115'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -112,6 +112,22 @@ full skill name (`wk-workflow`) must still land in `learnings/skills/workflow/`.
 SKILL_NAME="${SKILL_NAME#wk-}"   # normalize: directory never carries the prefix
 mkdir -p "$WK_SKILLS_HOME/learnings/skills/$SKILL_NAME"
 ```
+
+**HARD RULE — route tool-specific findings to a `wk-<tool>` skill, not the
+calling skill.** When a learning is specific to a named CLI tool, command, or
+external app (`curl`, `jq`, `gh`, `bk`, `docker`, `git`, `aws`, …) rather than
+to a workflow step, set `SKILL_NAME` to that tool (e.g., `curl`), not the skill
+that happened to surface it. Tool quirks recur across many skills and must be
+self-contained and auto-loadable.
+
+- Pick the tool over the workflow whenever the fix is "use flag X / avoid
+  pattern Y with tool Z" — it generalizes beyond the run that found it.
+- A new `wk-<tool>` skill is worth creating once it would hold ≥2 distinct
+  non-obvious findings for that tool; it must declare `model-invocable: true`
+  so the agent auto-loads it whenever it is about to invoke that tool.
+- Routing a `curl` quirk under the review skill that caught it (or under
+  `wk-workflow`) buries it from every future `curl` user — that is the
+  failure this rule prevents.
 
 Write to `$WK_SKILLS_HOME/learnings/skills/$SKILL_NAME/<YYYY-MM-DD>_<slug>.md`:
 
@@ -256,6 +272,7 @@ For every interruption, decide which skill needs to learn from it:
 | `git rebase` / `git merge` / base-branch sync | `wk-pr-update` |
 | Resolving reviewer threads | `wk-pr-resolve` |
 | `bk` CLI / Buildkite URLs | `wk-buildkite` |
+| `curl` / `jq` / `gh` / `git` / `aws` tool quirk | `wk-<tool>` (per the tool-routing HARD RULE) |
 | `docker` commands / Dockerfile edits | `wk-docker` |
 | Writing tests / mocks / fixtures | `wk-testing-skeleton` |
 | Editing a `SKILL.md` | `wk-sharpen` |
