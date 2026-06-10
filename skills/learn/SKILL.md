@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.10-175115'
+  version: '2026.06.10-194634'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -161,11 +161,18 @@ the identity of the system it happened on. Forbidden in any learning file:
 - Secrets, tokens, credentials, or sensitive information.
 - Employer / org names as literals (blocks the commit at
   `.githooks/scrub-staged.sh`).
+- **PR / issue / run numbers** (`#<n>`, `pulls/<n>`, `repo#<n>`) — internal
+  identifiers that pin a learning to a specific work item; blocked by
+  `.githooks/check-pr-numbers.sh`.
+- **Human usernames / reviewer logins** (`@handle`) — identify a real
+  person; blocked by `.githooks/check-usernames.sh`.
 
 Anonymize when a token is unavoidable for legibility:
 
-- Bot / reviewer → `{bot}` / `{reviewer}`; internal repo / project → `{repo}` /
-  `{project}`; service → `{service}`.
+- Bot / reviewer → `{bot}` / `{reviewer}`; human user → `{user}` / `{author}`;
+  internal repo / project → `{repo}` / `{project}`; service → `{service}`.
+- PR / issue number → `#NNN` (or `repo#NNN`); GitHub path → `pulls/{n}`,
+  `issues/{n}`, `runs/{n}`. Capture the lesson, never the work-item ID.
 - Employer/org token → `$EMPLOYER` / `$GITHUB_ORG`. Parameterize the **segment
   of a path**, keeping the rest: `~/gitc/<employer>/` → `~/gitc/$EMPLOYER` (the
   agent resolves it at run time — do not drop the path).
