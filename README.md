@@ -125,9 +125,18 @@ export WK_SKILLS_TEAM_GITHUB="your-org"         # GitHub org
 
 ## Adding a New Skill
 
-1. Copy `skills/_template/` to `skills/your-skill-name/`
-2. Edit `SKILL.md` with your skill's name, description, and instructions
-3. See [docs/how-to/creating-a-skill.md](docs/how-to/creating-a-skill.md) for the full guide
+Invoke the [`skill`](skills/skill/) skill — it scaffolds the directory, writes
+the full `SKILL.md` body + `README.md`, wires CalVer/learn hooks, syncs **both**
+index tables, installs, and verifies:
+
+```
+/wk-skill <name> "Use when … (one-sentence description)"
+```
+
+[`wk-skill`](skills/skill/) keeps this table and [skills/README.md](skills/README.md) in sync on
+every add; the `check-readme-index` pre-commit hook blocks any commit that
+drifts. See [docs/how-to/creating-a-skill.md](docs/how-to/creating-a-skill.md)
+for the manual fallback and the full guide.
 
 ## Documentation
 
