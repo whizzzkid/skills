@@ -54,5 +54,6 @@ flowchart TD
   Source 2 path; the memory file itself is never renamed (only the materialized learning is).
 - **Improve mode** requires explicit phased user approval even in auto mode — suite-scale
   refactoring is high blast-radius and can never be applied silently.
-- The `.distilled-sources.log` prevents re-processing memory files across runs; `--force`
-  flag bypasses it for full rescans.
+- The gitignored `.distilled-memories` marker prevents re-distilling the same global memory
+  across runs (`--force` bypasses it); learnings track their own processed state via the
+  `.learned.md` rename — there is no `.distilled-sources.log`.

@@ -134,9 +134,11 @@ For every learning surfaced this run, before doing anything else:
     severity items (one-off classification does not apply at this
     severity — if it is high enough to flag, it is high enough to
     encode).
-  - The `.distilled-sources.log` entry must record `distilled` (never
-    `partial`, never `already-covered` without citing the existing
-    SKILL.md line numbers that prove full coverage).
+  - The processed-state record must show full distillation — the
+    `.learned.md` rename for a learning, or the `.distilled-memories`
+    entry for a memory — never `partial`, never `already-covered`
+    without citing the existing SKILL.md line numbers that prove full
+    coverage.
   - The rename to `.learned.md` happens only after the SKILL.md edit is
     written and the version bumped.
 - If a high-severity learning is classified `already-covered`, the
@@ -240,7 +242,7 @@ SKILL.md grows unbounded if every one-off lands inline.
 Classify as `principle` when **any** of:
 
 - The same pattern appears in ≥ 2 prior learnings, memories, or
-  `.distilled-sources.log` entries for this skill.
+  `.learned.md` archives for this skill.
 - The failure mode would surface on every invocation that touches
   the affected step (not gated on uncommon inputs).
 - The fix is a check or rule expressible in one bullet without
@@ -299,8 +301,8 @@ agent needs it.
 existing rule elsewhere. Resolve the conflict — update or remove the
 stale instruction.
 
-- Check the current run's own edits and the most recent
-  `.distilled-sources.log` entries for the target skill, not just old
+- Check the current run's own edits and the most recent `.learned.md`
+  files for the target skill, not just old
   prose — the freshest rules are the most likely to be reversed by a
   newer learning (format/approach churn lands as a cohort of same-day
   learnings).
@@ -375,7 +377,7 @@ For each grep match in the proposed text:
 **Cohort check.** When the user calls out an overfit on a recent
 edit, treat it as a signal that other recent edits likely carry
 the same class of overfit. Audit every sharpen edit made in the
-current session (and the last few in `.distilled-sources.log`)
+current session (and the last few `.learned.md` files)
 for the same pattern before considering the issue closed —
 overfits travel in cohorts because the source learnings often
 cite the same incident's tokens.
@@ -499,10 +501,10 @@ agent needs, no more.
 Do not return control to the user until all four checks pass:
 
 1. **Install:** `npx skills add . -g -y -a=claude 2>&1 | tail -5` from the repo root — must print `Done!`. Re-run from repo root if it prints `No skills found` or exits non-zero.
-2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated, including its `references/` additions; one chore commit for `.learned.md` renames + `.distilled-sources.log`); use `wk-commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
+2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated, including its `references/` additions; one chore commit for `.learned.md` renames); use `wk-commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
    - **After a hook-blocked commit, re-check the index before the next group.** A `git commit` blocked by a pre-commit hook exits non-zero but leaves the staged set intact — the next group's `git add` then sweeps those files into one commit, merging two logical changes. Run `git status --short` after any blocked commit; fix the block and retry that exact commit first, or `git restore --staged <files>` before staging the next group.
    - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link (`[wk-foo](../foo/README.md)`) from the first draft — bare skill names trip the link-check hook and force a re-commit.
-   - **Stage a `.learned.md` rename by adding only the new `.learned.md` path** (plus `.distilled-sources.log`) — never enumerate the pre-rename `.md` path. When the source learning was untracked (freshly mirrored from the inbox, or never committed), there is no deletion to stage, and `git add` of the missing old path aborts the whole staging with `fatal: pathspec ... did not match any files`.
+   - **Stage a `.learned.md` rename by adding only the new `.learned.md` path** — never enumerate the pre-rename `.md` path. When the source learning was untracked (freshly mirrored from the inbox, or never committed), there is no deletion to stage, and `git add` of the missing old path aborts the whole staging with `fatal: pathspec ... did not match any files`.
 3. **Push once:** after all commits exist, push a single time. Single-skill runs may push immediately after their lone commit.
 4. **Clean tree:** `git status --short` must be empty — if anything remains, commit or stash it.
 
@@ -634,8 +636,9 @@ or confirmed approach that could improve a skill.
 
 **HARD RULE — never rename memory files.** The `.learned.md` suffix is a
 **repo learnings** convention (Source 2 only). Memory files in
-`~/.claude/memory/` always keep their original `.md` name; their
-processed state is tracked exclusively by `.distilled-sources.log`.
+`$HOME/.claude/memory/` always keep their original `.md` name; their
+processed state is tracked exclusively by the gitignored
+`.distilled-memories` marker (see Tracking below).
 Renaming a memory file breaks `MEMORY.md` index links and orphans the
 content from cross-session recall. The materialized learning file
 (below) is a separate repo artifact that **does** follow the Source 2
@@ -670,39 +673,38 @@ explicit instructions about how a skill should behave** (e.g., "when
 reviewing PRs, always check..." or "the morning brief should...").
 Skip memories that are purely informational context.
 
-### Tracking: `.distilled-sources.log`
+### Tracking processed sources
 
-Maintain a log at `$WK_SKILLS_HOME/.distilled-sources.log` to track
-which sources have been processed. This prevents re-reading the same
-memory files on every run.
+Two source classes, two tracking mechanisms — there is **no**
+`.distilled-sources.log` (removed; it accumulated machine-absolute paths
+that leaked into history).
 
-**Format:** one line per processed source, tab-separated:
-
-```
-<date>\t<source-path>\t<action>\t<target-skill>
-2026-04-21\t~/.claude/memory/feedback_testing.md\tdistilled\twk-workflow
-2026-04-21\t~/.claude/memory/user_role.md\tskipped\t—
-2026-04-21\tlearnings/skills/pr-review/2026-04-21_stale-diff.md\tdistilled\twk-pr-review
-```
-
-**Before processing any source**, check if its path appears in the log.
-If it does AND the file's modification time is not newer than the log
-entry date, skip it. If the file was modified after the log entry, it
-has new content — reprocess it.
+- **Learnings (Source 1 & 2)** — processed state is the `.learned.md`
+  rename itself. A file ending `.learned.md` is done; a plain `*.md`
+  under `learnings/skills/` is unprocessed. No separate ledger.
+- **Memories (Source 3)** — tracked by a gitignored marker at
+  `$WK_SKILLS_HOME/.distilled-memories` (one memory-file path per line).
+  The memory file in `$HOME/.claude/memory/` is never renamed, so this
+  marker is the only record that it was distilled.
 
 ```bash
-# Create log if it doesn't exist
-touch "$WK_SKILLS_HOME/.distilled-sources.log"
+# Marker is gitignored — never committed (it lists machine-local paths).
+MARKER="$WK_SKILLS_HOME/.distilled-memories"
+touch "$MARKER"
 
-# Check if a source was already processed
-grep -qF "$source_path" "$WK_SKILLS_HOME/.distilled-sources.log"
+# Skip a memory already distilled:
+grep -qF "$memory_path" "$MARKER" && continue
+
+# After materializing the memory as a learning (Source 3 step 4) and
+# distilling it, record it:
+echo "$memory_path" >> "$MARKER"
 ```
 
-**After processing**, append an entry to the log.
+**Reprocess on change:** if a memory file's mtime is newer than its
+marker entry, treat it as having new content and reprocess.
 
-**Force reprocessing:** If the user explicitly asks to revisit memories
-(e.g., `/wk-sharpen --scan --force` or "rescan all memories"), ignore
-the log and process everything.
+**Force reprocessing:** on `/wk-sharpen --scan --force` (or "rescan all
+memories"), ignore the marker and process everything.
 
 ### Batch mode presentation
 
@@ -812,7 +814,8 @@ and proceed; push happens once at the end of the run, not between phases.
 - Read/write/delete access to `~/.claude/skills/learnings/` (global learnings
   inbox — files are moved into the repo tree, then removed from the inbox)
 - Read/write access to `$WK_SKILLS_HOME/learnings/` (for batch mode)
-- Read/write access to `$WK_SKILLS_HOME/.distilled-sources.log`
+- Read/write access to `$WK_SKILLS_HOME/.distilled-memories` (gitignored
+  memory-distillation marker)
 
 ---
 
