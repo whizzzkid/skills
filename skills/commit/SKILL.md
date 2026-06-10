@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.01-235747'
+  version: '2026.06.10-205059'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -94,10 +94,31 @@ feat(scope): ✨ description of the change
 
 Optional body with more detail.
 
+Assisted-by: <Tool/Agent Name> <version>
 Co-Authored-By: Agent Name <noreply@example.com>
 EOF
 )"
 ```
+
+### Mandatory footer trailer — `Assisted-by:`
+
+**HARD RULE — every agent-created commit carries an `Assisted-by:` trailer.**
+This skill is model-invocable, so any commit it produces is agent-created.
+
+- Append to the footer (the trailer block after the blank line that ends the
+  body):
+
+  ```
+  Assisted-by: <Tool/Agent Name> <version>
+  ```
+
+- Fill both fields from the **running agent**: the tool/CLI name and its model
+  or release version (e.g., `Assisted-by: Claude Code (claude-opus-4-8)`).
+- Emit one `Assisted-by:` line per distinct agent that materially authored the
+  commit; place it alongside any `Co-Authored-By:` / `Generated with` trailers.
+- Omit it only for a purely human-authored commit with no agent involvement.
+- Never invent a version — if the running version is unknown, use the tool name
+  alone (`Assisted-by: <Tool/Agent Name>`).
 
 ## Commit Signing
 
