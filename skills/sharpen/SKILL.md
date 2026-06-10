@@ -13,6 +13,8 @@ allowed-tools:
   - Glob
   - Write
   - Edit
+  - Bash
+  - Skill
   - AskUserQuestion
 model: opus
 effort: high
@@ -26,7 +28,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.08-224637'
+  version: '2026.06.10-182800'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -556,8 +558,9 @@ specific incident.
 (`principle` vs `one-off`) → Draft (skip for `one-off`) → Audit for
 overlap/bloat → Present with cleanup → Apply → Verify & commit
 
-**Batch mode:** Scan learnings + memories → Filter by log → Process each
-via single mode → Rename learnings to `.learned.md` → Update log
+**Batch mode:** Scan learnings + memories → Filter by log → Materialize each
+memory as a learning via `wk-learn` → Process each via single mode → Rename
+learnings to `.learned.md` → Update log
 
 **Improve mode:** Inventory scope → Parallel audit → Consolidate findings →
 Phased proposal (user approval per phase) → Apply → Verify & commit
@@ -634,18 +637,33 @@ or confirmed approach that could improve a skill.
 `~/.claude/memory/` always keep their original `.md` name; their
 processed state is tracked exclusively by `.distilled-sources.log`.
 Renaming a memory file breaks `MEMORY.md` index links and orphans the
-content from cross-session recall.
+content from cross-session recall. The materialized learning file
+(below) is a separate repo artifact that **does** follow the Source 2
+`.learned.md` convention — only the memory file itself is never renamed.
+
+**HARD RULE — materialize every external memory as a learning file via
+`wk-learn` before distilling it.** Memory files live outside the repo and
+are not version-controlled; distilling one straight into a `SKILL.md`
+leaves no reviewable provenance beyond a one-line log entry. Route the
+memory through the same learning artifact every other source produces.
 
 For each feedback memory:
-1. Check if it's already been processed (see tracking below)
-2. Read the content — extract the rule, the "Why" line, and the
-   "How to apply" line
+1. Check if it's already been processed (see tracking below).
+2. Read the content — extract the rule, the **Why** line, and the
+   **How to apply** line.
 3. Determine which skill (if any) the feedback applies to — match by
-   topic, tool name, or workflow phase mentioned
-4. If a matching skill is found, run the normal sharpen workflow to
-   distill the feedback into the skill
-5. If no skill matches (the feedback is about general behavior, not a
-   specific skill), skip it — global memory already covers general rules
+   topic, tool name, or workflow phase mentioned. If none matches, skip
+   it — global memory already covers general behavior.
+4. Invoke `Skill(wk-learn, args="<matched-skill>")` to write
+   `learnings/skills/<skill>/<YYYY-MM-DD>_<slug>.md` carrying the rule,
+   **Why**, and **How to apply**, with `type:` derived from the memory
+   (`correction` / `pattern`) and an estimated `severity:`.
+5. Distill that new learning file through the **Source 2 path** — run the
+   normal sharpen workflow (Steps 2–7) against the learning file, then
+   rename it to `.learned.md` once folded in. Never distill the memory
+   file directly; the learning file is the unit of work.
+6. Log the memory file as `distilled` (the memory file itself is never
+   renamed, per the HARD RULE above).
 
 **Only process `user` or `project` type memories if they contain
 explicit instructions about how a skill should behave** (e.g., "when
