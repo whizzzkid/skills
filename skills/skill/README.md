@@ -33,11 +33,14 @@ flowchart TD
 
 ## Noteworthy
 
-- **HARD RULE: skeleton only** — the scaffold writes no behavior instructions. The body must
-  be written only after the RED phase (test baseline agent behavior without the skill), per the
-  `superpowers:writing-skills` TDD contract.
+- **Full implementation in one pass** — the skill writes complete, runnable body + README, not
+  a skeleton. A RED-GREEN-REFACTOR hardening pass runs only when the user explicitly asks for one.
+- **HARD RULE: sync both indexes** — a new skill is not done until it has a row in **both**
+  `README.md` (root mirror) and `skills/README.md` (canonical), in the same commit. The
+  `check-readme-index` pre-commit hook blocks the commit otherwise; removal/rename must clear
+  both rows too.
 - The `wk-` prefix lives in the `name:` frontmatter field only — the **directory name** strips
-  it (e.g., skill name `wk-foo` → directory `skills/foo/`).
+  it (e.g., skill name `wk-<name>` → directory `skills/<name>/`).
 - Step 3 surfaces unprocessed learnings relevant to the new skill's topic, which become the
   first draft of a `## Common Mistakes` section if matches are found.
 - **Three model tiers** with specific model mappings: `sonnet` (most skills), `opus` (deep

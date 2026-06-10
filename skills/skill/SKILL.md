@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.05-190456'
+  version: '2026.06.10-182114'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -152,8 +152,28 @@ skeleton:
 Write the sibling `$WK_SKILLS_HOME/skills/<name>/README.md` in the **same
 commit** (AGENTS.md README co-change rule). Follow the per-skill format in
 `skills/README.md`: `# wk-<name>` heading (matching the `name:` field), purpose,
-trigger, key phases/rules, and integration points. Add a row to
-`skills/README.md`'s table when the skill is in scope for the top-level index.
+trigger, key phases/rules, and integration points.
+
+**HARD RULE — sync BOTH skill indexes in the same commit.** A new skill is not
+done until it has a row in **both** index files. There is no "when in scope"
+exemption — every published skill (everything except `_template/`) appears in
+both:
+
+- `skills/README.md` (canonical owned index) — add a row to the matching group
+  table: `` | [`wk-<name>`](./<name>/README.md) | <purpose> | <invocation> | ``.
+  Add a new group section if the skill's `group:` has no table yet. Bump the
+  skill-count and group-count in the header line.
+- `README.md` (root landing-page mirror) — add a row to the matching group:
+  `` | [<name>](skills/<name>/) | <description> | ``.
+
+The `check-readme-index` pre-commit hook blocks the commit if either row is
+missing, so a skipped index is caught mechanically — add both up front.
+
+**Removal / rename obligation.** This skill only *adds*. When a skill is
+removed or renamed, the same commit MUST delete or update its row in **both**
+indexes (and the header counts) — the `check-readme-index` hook flags an orphan
+row pointing at a directory that no longer exists. A material `group:` or
+`description:` change likewise updates both indexes.
 
 **HARD RULE — MCP tools use wildcards, never employer-specific IDs.** When
 populating `allowed-tools` with MCP connector entries, replace the org/tenant
