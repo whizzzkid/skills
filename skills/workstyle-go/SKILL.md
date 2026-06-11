@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.03-182536'
+  version: '2026.06.11-222027'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -76,6 +76,17 @@ gofmt -l .
   session — run this check explicitly.
 - Substitute the project's pinned formatter (e.g., `gofumpt`) when its
   config declares one; otherwise `gofmt` is the floor.
+- **After renaming or widening a struct field's type, re-run `goimports`
+  on the whole file — `gofmt` is not sufficient.** `gofmt` realigns only
+  the changed line; `goimports` recomputes the widest type name across the
+  struct and realigns every sibling field's tag column. A file edited by
+  format-on-save (`gofmt`) is locally clean but globally misaligned, and
+  CI's `goimports -l` fails. When the project runs `goimports` in CI
+  (standard for repos with internal imports), format with it explicitly:
+
+  ```bash
+  goimports -local github.com/$GITHUB_ORG/<repo> -w <file>
+  ```
 
 ## Apply or Report
 
