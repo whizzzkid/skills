@@ -93,6 +93,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [refactor](skills/refactor/) | Validate that a refactor preserved behavior — diffs merge-base vs post-refactor, audits removed lines |
 | [markdown](skills/markdown/) | Enforce 120-column width, heading hierarchy, Mermaid diagrams, and link validation |
 | [mermaid](skills/mermaid/) | Author Mermaid diagrams that render on GitHub — `<br/>` not `\n`, quoted labels, supported types |
+| [find-cli](skills/find-cli/) | Enforce PWD-scoped, targeted `find` invocations; capture slow/failing calls as learnings |
 | [concise](skills/concise/) | Reduce response verbosity and token usage — brief/dense modes, on-demand context compression |
 | [calver](skills/calver/) | Generate CalVer version strings in YYYY.MM.DD-HHMMSS format (auto-invoked on any version bump) |
 | [learn](skills/learn/) | Post-completion learning capture — writes structured learning files for wk-sharpen distillation |
