@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-222029'
+  version: '2026.06.11-230337'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1053,6 +1053,13 @@ The subagent must be:
   verbatim at `$MERGE_BASE`. A pre-existing issue carried unchanged by a
   pure move was accepted before this branch — downgrade it to
   `suggestion` or skip it. Do not bill the refactor for inherited debt.
+- **Introduction-claim verification.** Before rating a "newly
+  introduced" behavioral change (added flag, changed value, new call) a
+  `blocker`, grep the removed (`-`) lines of the **same hunk** for that
+  flag/value. If the removed block already carried it, the behavior is
+  unchanged — the claim is a false positive; log it and dismiss.
+  "Before" behavior lives in the `-` lines, not the `+` lines; a claim
+  built only on `+` lines is unverified.
 
 ### Categories to hunt
 
