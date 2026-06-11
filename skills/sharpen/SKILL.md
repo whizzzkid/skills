@@ -28,7 +28,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.11-184739'
+  version: '2026.06.11-190717'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -463,6 +463,25 @@ without bloating the SKILL.md itself.
 - The mechanical overfit scan (Step 5) applies to reference files too —
   they are part of the proposed edit set.
 
+### Sync skill README, diagrams, and repo-level docs
+
+A SKILL.md edit that changes described behavior strands every doc surface
+that describes the skill — the same drift this skill warns reviewers about.
+Propagate the change in the same pass.
+
+- Skip when the edit changed no described behavior (typo, internal rule
+  clarification with no new step/phase/trigger). `one-off`-class edits
+  never reach here — they touch no SKILL.md.
+- **Skill README** — update `skills/{skill-name}/README.md` when a step,
+  phase, trigger, or argument shape changed. Update any Mermaid diagram in
+  it to match the new flow (`wk-markdown` governs diagram + link rules).
+- **Repo index** — when the skill's one-line description changed, edit its
+  row in **both** `README.md` (root) and `skills/README.md`; the
+  `check-readme-index` hook blocks a commit where the two drift.
+- **Repo docs** — invoke `wk-docs` to scan `docs/` when the edit changed
+  cross-skill behavior or a documented workflow; update what drifted.
+- Stage these doc edits in the same commit group as the SKILL.md change.
+
 ### Drift check
 
 Before exiting Step 7, scan the full SKILL.md for drift between
@@ -515,7 +534,7 @@ agent needs, no more.
 Do not return control to the user until all four checks pass:
 
 1. **Install:** `npx skills add . -g -y -a=claude 2>&1 | tail -5` from the repo root — must print `Done!`. Re-run from repo root if it prints `No skills found` or exits non-zero.
-2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated, including its `references/` additions; one chore commit for `.learned.md` renames); use `wk-commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
+2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated, including its `references/` additions, README/diagram updates, and any repo-index or `docs/` edits; one chore commit for `.learned.md` renames); use `wk-commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
    - **After a hook-blocked commit, re-check the index before the next group.** A `git commit` blocked by a pre-commit hook exits non-zero but leaves the staged set intact — the next group's `git add` then sweeps those files into one commit, merging two logical changes. Run `git status --short` after any blocked commit; fix the block and retry that exact commit first, or `git restore --staged <files>` before staging the next group.
    - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link (`[wk-foo](../foo/README.md)`) from the first draft — bare skill names trip the link-check hook and force a re-commit.
    - **Stage a `.learned.md` rename by adding only the new `.learned.md` path** — never enumerate the pre-rename `.md` path. When the source learning was untracked (freshly mirrored from the inbox, or never committed), there is no deletion to stage, and `git add` of the missing old path aborts the whole staging with `fatal: pathspec ... did not match any files`.
