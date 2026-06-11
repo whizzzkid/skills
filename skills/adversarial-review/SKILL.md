@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-002506'
+  version: '2026.06.11-003336'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -345,6 +345,11 @@ sweep clear:
   neighbor doc for the concept's other names).
 - Run one grep per variant. A single hit in any variant is a stale-doc
   blocker.
+- Grep `spec/`, `test/`, and `*_spec.*` / `*_test.*` globs for any removed
+  or replaced **string literal**, not just `docs/` and `README*`. Structure
+  tests assert exact source content (`include("…")`, `grep -q '…'`); a
+  changed literal leaves a stale assertion. A hit in a spec/test file is a
+  blocker — the assertion is pinned to the old form and fails CI.
 - Treat **spec tables** as first-class sweep targets — terms often
   appear as row labels (`| Clean-state output line | … |`) that prose
   greps miss. Grep table-row syntax explicitly:
