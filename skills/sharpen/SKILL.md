@@ -28,7 +28,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.11-190717'
+  version: '2026.06.11-191436'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -475,6 +475,12 @@ Propagate the change in the same pass.
 - **Skill README** — update `skills/{skill-name}/README.md` when a step,
   phase, trigger, or argument shape changed. Update any Mermaid diagram in
   it to match the new flow (`wk-markdown` governs diagram + link rules).
+- **README version** — bump the `**Version:**` line in the skill's
+  `README.md` to the same CalVer just written to `metadata.version`. README
+  and SKILL.md versions stay in lockstep. Add the line under the tagline if
+  the README lacks it.
+- The `check-readme-sync` pre-commit hook blocks any commit that stages a
+  `skills/*/SKILL.md` without its sibling `README.md` — stage both together.
 - **Repo index** — when the skill's one-line description changed, edit its
   row in **both** `README.md` (root) and `skills/README.md`; the
   `check-readme-index` hook blocks a commit where the two drift.

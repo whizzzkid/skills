@@ -2,6 +2,8 @@
 
 > Improve a skill based on field reports or incident retrospectives without overfitting on specific examples.
 
+**Version:** `2026.06.11-191436`
+
 ## Invocation
 
 | Mode | Trigger |
