@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.01-224411'
+  version: '2026.06.11-193514'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -59,6 +59,12 @@ Manual: `/wk-workstyle-naming scan` (full working tree) · `/wk-workstyle-naming
   indices (`i`, `j`, `k`) in trivial loops. Avoid abbreviations
   (`userCount` not `usrCnt`, `initialize` not `init` in method
   names).
+  - Full names apply in **all scopes** — test code, one-off locals, inline
+    temporaries — not just production or public APIs. There is no
+    test-local or temporary exemption.
+  - Initialisms (`ci`, `cb`, `ts`) and ad-hoc aliases are always wrong
+    unless they are the established project convention
+    (`caseInsensitiveCases`, not `ciCases`).
 - **Constants in ALL_CAPS** (unless project convention differs, e.g.
   Go exported identifiers use PascalCase, Rust uses SCREAMING_SNAKE).
   Never hardcode a string or number that recurs or carries semantic
