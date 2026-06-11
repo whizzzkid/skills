@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.08-171648'
+  version: '2026.06.11-002507'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -217,6 +217,19 @@ line). On overlap:
 
 Resolve the prior thread only if its rationale is now **stale** —
 never just because the new comment restates it.
+
+**Approach-pivot thread audit.** When new commits change a feature's
+logical approach (the wk-workflow design-pivot trigger), audit existing
+self-review threads independently of any new proposed comment — a pivot
+leaves a thread that silently contradicts the new code even when nothing
+new is being said about that path.
+
+- Fetch unresolved self-review threads on the changed files.
+- Flag any whose rationale describes the **old** approach (e.g., explaining
+  serialization after a switch to parallel execution).
+- Resolve each stale thread and repost updated rationale anchored to the
+  new commit. Treat "approach changed, self-review not updated" exactly as a
+  stale code comment.
 
 Spec files are usually the canonical home for design rationale;
 implementation-file notes should either add NEW context (tradeoff
