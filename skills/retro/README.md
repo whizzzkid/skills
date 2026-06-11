@@ -2,12 +2,14 @@
 
 > Run a session retrospective to capture learnings and improve future sessions.
 
+**Version:** `2026.06.11-192012`
+
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
 | User-invocable | `/wk-retro` or `/wk-retro "topic"` |
-| Model-invocable | automatic: end of every session via `wk-workflow` Phase 8 |
+| Model-invocable | automatic: end of every session via [`wk-workflow`](../workflow/README.md) Phase 8 |
 
 ## How It Works
 
@@ -43,4 +45,4 @@ flowchart TD
   actionable rule — never copy narrative into memory files.
 - A Stop hook (`scripts/suggest-retro.sh`) is available for install but is opt-in; the skill
   works fine as a manual invocation.
-- Skipping retro at session end is a `wk-workflow` violation, not just a suggestion.
+- Skipping retro at session end is a [`wk-workflow`](../workflow/README.md) violation, not just a suggestion.

@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.29-082627'
+  version: '2026.06.11-192012'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -212,6 +212,9 @@ repo-relative or `/tmp/agent/…` — never commit an absolute home/worktree pat
 ```bash
 DRAFT=/tmp/retro-draft.$$
 # write the proposed entry to $DRAFT first
+# Guard: an empty/unset $DRAFT appends nothing and passes every grep below
+# silently — fail loudly instead of writing a blank entry.
+[[ -s "$DRAFT" ]] || { echo "FAIL: draft is empty — refusing to append a blank retro entry"; exit 1; }
 DENY="$(printenv EMPLOYER):$(printenv GITHUB_ORG)"
 echo "$DENY" | tr ':' '\n' | grep -v '^$' > /tmp/retro-deny.$$
 if grep -iF -f /tmp/retro-deny.$$ "$DRAFT" 2>/dev/null; then
