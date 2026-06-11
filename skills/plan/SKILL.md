@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.10-180158'
+  version: '2026.06.11-183438'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -108,6 +108,19 @@ Agent D — Prior art and patterns
 
 Collect all agent results before Step 2. Treat contradictions between agents
 as a signal to probe further, not a reason to guess.
+
+### File-role sanity check
+
+When the user tags a file by path **and** describes its role in prose, read
+the tagged file's actual purpose and compare it to the description before
+accepting it as a plan target.
+
+- If the file's content contradicts the described role and a sibling in the
+  same directory is a better match, surface the mismatch before drafting:
+  "The file you tagged does X — you described one that does Y; did you mean
+  `{better-match}`?"
+- Accepting a mis-tagged file at face value plans changes to the wrong file
+  and wastes the run.
 
 ---
 
