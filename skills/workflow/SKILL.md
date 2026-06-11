@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-003337'
+  version: '2026.06.11-185508'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -31,7 +31,8 @@ from within this workflow at the prescribed point. Follow this sequence exactly.
 
 ```
 Plan -> Implement (commit per step + docs) -> Test (happy/sad/edge)
-  -> Refactor-Opportunity Scan -> Review (adversarial agent)
+  -> Refactor-Opportunity Scan -> Live Preview (frontend only)
+  -> Review (adversarial agent)
   -> PR (wk-pr) -> CI Fix Loop -> Self-Review -> Docs Audit -> Retro
 ```
 
@@ -394,10 +395,11 @@ steps produce commits. Example:
 3. Update docs/specs/ADR       -> commit (or fold into step 1/2 if small)
 4. Run full test suite
 5. Refactor-opportunity scan (Phase 3.5)
-6. Adversarial review (`wk-adversarial-review`)
-7. Offer to create PR
-8. CI fix loop (auto-fix until green or bail after 3 attempts)
-9. Session retro
+6. Frontend live preview (Phase 3.6 — frontend changes only)
+7. Adversarial review (`wk-adversarial-review`)
+8. Offer to create PR
+9. CI fix loop (auto-fix until green or bail after 3 attempts)
+10. Session retro
 ```
 
 ---
@@ -857,10 +859,45 @@ on a follow-up PR.
   zero opportunities is a valid outcome. Record "refactor scan: no
   opportunities" in the Phase 8 retro so the audit happened on paper.
 
+## Phase 3.6: Frontend Live Preview
+
+Run only when the diff changes browser-rendered UI. Launch the app and
+exercise the change in a real browser before the pre-push gate — unit
+tests do not catch render, layout, or interaction regressions.
+
+### Trigger
+
+- Run when the diff touches rendered surface — client components,
+  templates/views, styles, or client-side routes
+  (`.tsx/.jsx/.vue/.svelte/.html/.css/.scss`, view/component/template
+  directories).
+- Skip for backend-only, config-only, or docs-only diffs — record
+  "frontend preview: N/A" in the Phase 8 retro.
+
+### Steps
+
+- Launch the app via the `run` skill (or the project's documented
+  dev-server command).
+- Drive every changed view in a real browser with the Playwright tools
+  (`mcp__plugin_playwright_playwright__browser_navigate`, `_click`,
+  `_fill_form`, `_snapshot`) — exercise the happy path of each at minimum.
+- Capture a snapshot of each changed surface as evidence; read
+  `browser_console_messages` and surface any console errors.
+- Treat a load failure, a console error on the changed surface, or a
+  broken interaction as a Phase 4 blocker — fix before proceeding.
+
+### Hand off, then continue in the background
+
+- Leave the app and browser running; give the user the URL for manual
+  testing. Do not close the session.
+- Do not block on the user's manual test — once the preview is live and
+  handed off, continue Phase 4 onward while the user inspects.
+
 ## Phase 4: Adversarial Review
 
-After implementation is complete, tests pass, and the Phase 3.5
-refactor scan has landed (or recorded "no opportunities"), invoke
+After implementation is complete, tests pass, the Phase 3.5 refactor scan
+has landed (or recorded "no opportunities"), and — for frontend changes —
+the Phase 3.6 live preview is running, invoke
 `wk-adversarial-review`.
 The skill is the **sole authority** for pre-push critique — do not approximate
 it with an inline subagent, ad-hoc grep pass, or "quick check".
