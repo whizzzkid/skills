@@ -2,6 +2,8 @@
 
 > Adversarial pre-flight review of the current branch before anything leaves the machine.
 
+**Version:** `2026.06.11-200611`
+
 ## Invocation
 
 | Mode | Trigger |
@@ -33,4 +35,4 @@ flowchart TD
 - **14 mechanical sweeps run unconditionally** before any LLM reasoning: vulnerability-class, sibling-script, reachability, comment accuracy, hardcoded-base, version-pin, signature-widening, cross-doc enumeration, design-pivot, PR metadata sync, external-call reproduction, self-review surface, raw-API bypass, and pre-push gate compliance.
 - **Playground validation is mandatory** for any runtime-behavior claim — findings that cannot be reproduced in `.review-playground/` are downgraded from `blocker` to `question`.
 - **Fix loop caps at 3 cycles.** After 3 blocked rounds on the same axis, the skill surfaces to the user — repeated recurrence means the diagnosis or design is wrong, not just the fix.
-- **This skill is a gate, not an actor.** It never pushes, never posts PR comments, never edits the PR — those actions belong to the calling skill (`wk-pr`, `wk-workflow`, `wk-pr-resolve`).
+- **This skill is a gate, not an actor.** It never pushes, never posts PR comments, never edits the PR — those actions belong to the calling skill ([`wk-pr`](../pr/README.md), [`wk-workflow`](../workflow/README.md), [`wk-pr-resolve`](../pr-resolve/README.md)).

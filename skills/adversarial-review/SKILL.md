@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-183436'
+  version: '2026.06.11-200611'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -77,9 +77,22 @@ Resolve base -> Enumerate surface -> Mechanical sweeps
 "only docs" are red flags, not exemptions. A docs-only commit can still
 contradict an enumerated test count in a spec; run the skill anyway.
 
+**This is a per-feature gate, not a per-commit gate.** Run once on the
+**complete** implementation before the push that publishes it — not after
+each incremental commit of a multi-commit change. The caller batches its
+commits locally and gates once; reviewing partial work review-by-review
+turns one pass into a slow commit→review→fix loop that rediscovers the next
+unimplemented site each round.
+
 The skill is **idempotent within a session** — if no new commits have
 landed since the last clear verdict, re-invocation is a no-op that
 prints the prior verdict.
+
+**Scope a re-review to the new diff.** When new commits land after a clear
+verdict (CI fixes, follow-up commits), run the sweeps against the diff
+**since the cleared SHA** recorded in `.review-playground/.cleared-{SHA}.json`
+(`git diff <cleared-sha>..HEAD`), not the full branch surface. Re-sweeping
+unchanged, already-cleared code is wasted work.
 
 ## Style Rules
 
