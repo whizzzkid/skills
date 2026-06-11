@@ -5,6 +5,8 @@ pre-commit:
       run: .githooks/scrub-staged.sh
     check-readme:
       run: .githooks/check-readme.sh
+    check-readme-sync:
+      run: .githooks/check-readme-sync.sh
     check-readme-index:
       run: .githooks/check-readme-index.sh
     check-relative-paths:

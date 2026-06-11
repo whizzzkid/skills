@@ -50,6 +50,19 @@ not cover: a new skill landing without an index row, or a removed skill leaving
 a dangling row. [`wk-skill`](../skills/skill/README.md) Step 6 writes both rows
 at add time; this hook enforces the invariant regardless of author.
 
+## check-readme-sync.sh — README co-update guard
+
+Pre-commit hook that blocks any commit staging a `skills/<name>/SKILL.md`
+without its sibling `skills/<name>/README.md` in the **same** commit. This
+keeps each README (and its `**Version:**` line) from drifting away from the
+`SKILL.md` it documents.
+
+Distinct from `check-readme.sh`, which only requires the README to **exist**:
+this hook requires it to be **co-staged** on every SKILL.md change.
+[`wk-sharpen`](../skills/sharpen/README.md) Step 7 bumps the README version and
+syncs changed steps/diagram before committing; this hook enforces it regardless
+of author.
+
 ## check-relative-paths.sh — machine-absolute path guard
 
 Pre-commit hook that blocks machine-absolute or home-rooted paths in committed
