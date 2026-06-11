@@ -28,7 +28,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.10-222927'
+  version: '2026.06.11-184739'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -632,8 +632,16 @@ For each unprocessed learning:
    mv "$file" "${file%.md}.learned.md"
    ```
 
-Process highest-severity learnings first. If more than 5 exist, process
-5 and report the rest for the next run.
+Process every unprocessed learning — no per-run cap.
+
+- Order by severity (highest first), but do not stop after a fixed count.
+- Walk learnings one-by-one; run the full single-mode workflow (Steps 2–7)
+  on each.
+- Confirm the distilled principle is encoded in the target skill before
+  renaming to `.learned.md` — a rename without the rule folded in orphans
+  the lesson (the source incident recurs and the fix is re-discovered).
+- A fixed cap defers the remaining learnings indefinitely and lets the
+  inbox grow unbounded — process the whole queue each run.
 
 ### Source 3: Global memory files
 
