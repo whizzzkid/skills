@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.10-191557'
+  version: '2026.06.11-003335'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -69,7 +69,9 @@ and manage the full resolution cycle from sync to summary.
    dismissed (option `d`), or a finding was deferred to a tracked ticket
    (option `t`). Never resolve follow-up questions (non-reserved letters
    like `f`), skipped threads (`s`), rethink-pending items (`r`), or
-   self-review threads.
+   self-review threads — except submitted self-review threads at
+   merge-readiness (branch protection counts them; see Step 7 Resolution
+   rule).
 4. **Never force-push.** Use regular `git push` only.
 5. **Never commit without attempting verification** (build/lint/test). If
    verification is unavailable or fails, inform the user before proceeding.
@@ -84,6 +86,12 @@ and manage the full resolution cycle from sync to summary.
    OR the current user. Both are "self" — the PR author's own notes are
    not reviewer feedback, and the current user's prior comments are their
    own observations being acted on, not external review.
+   - **Merge-readiness carve-out (resolution only).** Resolve the author's
+     own **submitted** (non-pending) self-review threads at the end of the
+     cycle — branch protection counts every unresolved thread regardless of
+     authorship, so leaving them open blocks merge. This is resolution
+     only: still never triage, reply to, or suggest fixes for them. Pending
+     (draft) self-reviews are never resolved (see the pending pre-check).
    - **User-touched reviewer threads — narrow follow-up allowed.** On a
      reviewer or bot thread where the root is **not** self but the
      current user has already posted a reply, the agent may post one
@@ -619,6 +627,10 @@ include reasoning for both applying and discarding:
 **Reply chain:** {summary of any replies, or "none"}
 
 **Suggested fix:** {What to change — concrete code diff or snippet}
+{When the finding's anchor file differs from the file that actually needs
+the change, lead with: "Fix is in `{file-to-change}` — `{anchor-file}` is
+already correct and needs no change." — so the user does not wonder whether
+both files need editing.}
 
 **Why this fix:** {What problem it solves, what the reviewer is concerned
 about, and why this approach addresses it}
@@ -1205,6 +1217,18 @@ a tracked ticket (`t`). Threads with follow-up questions (non-reserved
 letters), skipped threads (`s`), rethink-pending items (`r`), and
 self-review threads are **never** resolved.
 
+**Merge-readiness exception — submitted self-review threads.** At the end
+of the cycle, resolve the author's own self-review threads that are
+`isResolved == false` on a **submitted** (non-pending) review:
+
+- Branch protection counts every unresolved thread regardless of
+  authorship, so unresolved self-review notes block merge.
+- Query `reviewThreads` for `isResolved == false` where the root comment
+  author is the PR author, then `resolveReviewThread` each.
+- Resolution only — never triage, reply, or suggest fixes (Hard Rule 8).
+- Never resolve threads from a **pending** (draft) self-review — the
+  pending pre-check governs those.
+
 Ask **only when the gate above fires**:
 > "Does this look correct? I will push {N} commits, post {M} **threaded
 > replies to individual review comments** (not a formal PR Review),
@@ -1239,6 +1263,11 @@ When the gate does not fire, proceed straight to Step 8.
 **Only after explicit user confirmation.**
 
 ### Adversarial-review gate (run before `git push`)
+
+Read the diff surface directly with `git diff "$BASE...HEAD"` to set up
+this gate — never run `git status` as a context-gathering step here. The
+commit step already resolved working-tree state; `git status` at review
+time reads as aimless exploration.
 
 Invoke `wk-adversarial-review` against the new commits introduced in
 this session (`$BASE...HEAD`). Push is **conditional** on a `clear`
