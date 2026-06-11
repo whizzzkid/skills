@@ -54,7 +54,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.10-222928'
+  version: '2026.06.11-183435'
   model:
     openai: gpt-4.1
     google: gemini-2.5-pro
@@ -287,6 +287,19 @@ it). There is no separate marker file. Cross-check open items against live
 external state during Stage 2 (a checked PR or resolved Jira ticket drops
 the carry-over).
 
+**Read the previous working day's snapshot before any standup compilation.**
+Resolve `$PREV_SNAPSHOT_FILE`
+(`$SITREP_REPO/$EMPLOYER/<YYYY>/<MM>/<DD>/snapshot.md` for the resolved
+previous working day) and read it. Its `## Achievements / ### Code & PRs` is
+the **primary** source for the standup's Yesterday section — session memory
+is a high-level summary that silently drops the full PR list. Fall back to
+session memory only when the file is genuinely absent.
+
+**HARD RULE — never assert a file is missing without a filesystem check.**
+Before stating "no snapshot" / "X not found", run `ls` / `Read` / `find` on
+the path. If the check was not run, the correct statement is "I have not
+read X" — never "X is missing." "I did not read it" ≠ "it does not exist."
+
 ### Stage 2: Parallel data gathering
 
 Launch 5 agents in parallel. Include the **subagent contract** from
@@ -469,7 +482,8 @@ selection.
 <div class="st-copy-block"><button class="st-copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.innerText)">Copy</button><pre class="st-standup">{standup text}</pre></div>
 ```
 
-- **Yesterday** → yesterday's snapshot `## Achievements`, top 3–4 wins.
+- **Yesterday** → `$PREV_SNAPSHOT_FILE`'s `## Achievements` (read in Stage 1),
+  top 3–4 wins — never reconstruct from session memory when the file exists.
   Apply the authorship filter (author / co-author / primary approving
   reviewer only — merging another's PR is not an achievement).
 - **Today** → today's 🔴 ASAP items, top 3–4, deadline-first.
