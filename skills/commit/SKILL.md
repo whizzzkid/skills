@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-183437'
+  version: '2026.06.11-200611'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -264,6 +264,22 @@ separate cleanup commit.
 git add <implementation files> <handoff doc>
 git commit -m "feat: ✨ apply X (removes NEXT_PHASE.md handoff)"
 ```
+
+### Verify the staged set before a grouped commit
+
+`git commit` commits the **whole index**, not only the paths named in the
+preceding `git add`. Anything already staged — a prior `git mv`, an earlier
+`git add` — rides into the commit and merges two logical groups.
+
+- Before each grouped commit, confirm the staged set is exactly the intended
+  group:
+
+  ```bash
+  git diff --cached --name-only
+  ```
+
+- Unstage strays with `git restore --staged <paths>` (or `git stash`) before
+  committing. Treat `git mv` as already-staged.
 
 ## Prohibited Terms in Commit Messages
 
