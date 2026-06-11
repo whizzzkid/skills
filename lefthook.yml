@@ -19,6 +19,8 @@ pre-commit:
       run: .githooks/check-skill-links.sh
     check-learnings-dirs:
       run: .githooks/check-learnings-dirs.sh
+    check-learning-filenames:
+      run: .githooks/check-learning-filenames.sh
     check-ticket-refs:
       run: .githooks/check-ticket-refs.sh
     check-prohibited:

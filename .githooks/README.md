@@ -121,6 +121,20 @@ where passing the full skill name (e.g.
 The skill itself strips the prefix in Step 3; this hook enforces the
 invariant regardless of how the file was created.
 
+## check-learning-filenames.sh — learning filename format guard
+
+Pre-commit hook that blocks any staged `learnings/skills/<skill>/*.md`
+whose basename does not match `YYYY-MM-DD_<kebab-name>.learned.md`:
+
+- Date prefix at the start, underscore separator before the name.
+- Lowercase kebab name (`a-z`, `0-9`, hyphens).
+- `.learned.md` suffix — distilled. A plain `.md` is unprocessed and must be
+  distilled (and renamed) before commit.
+
+Enforces the convention used across the learnings corpus so batch-mode
+[`wk-sharpen`](../skills/sharpen/README.md) can rely on the `.learned.md`
+rename as the sole processed-state marker.
+
 ## scrub-staged.sh — identifier leakage guard
 
 Pre-commit hook that blocks any staged diff containing:
