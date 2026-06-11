@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-222028'
+  version: '2026.06.11-230339'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -490,12 +490,17 @@ ask the user before generating another fix:
   or when the user picks a follow-up ticket.
 - Three re-fires signals one of: the fix is wrong, the bot has a stale snapshot,
   or the concern is structural and not fixable in this PR.
-- On the 3rd re-fire, present:
+- On the 3rd re-fire, present the re-fire count and all four options:
 
   > "Bot has re-raised `<concern_class>` under `<path_prefix>` 3 times. Pick:
   > (a) investigate root cause now, (b) defer to follow-up ticket, (c) dismiss
-  > with rationale on the thread."
+  > with rationale on the thread, (d) apply the bot's fix now."
 
+- Lean toward (d) when the re-fired fix is clean and low-risk and the concern
+  is structurally valid — repeated re-fires signal the concern is unaddressed
+  at the structural level, not that the bot is stuck. Dismiss-with-rationale
+  silences one round; bots re-evaluate from the current source every push, so
+  the same finding returns until the structure changes.
 - Do not auto-pick. The thrash gate is user-driven; silent loop continuation
   is the failure mode this rule exists to prevent.
 
