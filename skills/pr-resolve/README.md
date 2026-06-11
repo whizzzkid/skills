@@ -3,6 +3,8 @@
 > Address PR review comments interactively — implement fixes, draft responses, and manage the full resolution
 > cycle from branch sync through push, CI polling, and session retro.
 
+**Version:** `2026.06.11-222028`
+
 ## Invocation
 
 | Mode | Trigger |
@@ -60,7 +62,7 @@ sequenceDiagram
 - **Self-review threads are excluded:** Threads where the root comment was authored by the PR author OR the
   current user are skipped for triage and resolution — they are not reviewer feedback.
 - **HARD RULE — Step 9.4 feedback loop to adversarial-review (pre-CI-wait):** Every session emits one
-  `wk-learn adversarial-review` per issue class surfaced. The capture runs **before** the Step 9.5 CI wait so
+  [`wk-learn`](../learn/README.md) adversarial-review per issue class surfaced. The capture runs **before** the Step 9.5 CI wait so
   the work happens in active foreground time rather than parked behind a background watch. Every reviewer-caught
   finding is a coverage gap in pre-flight by definition; logging it forces the next [`wk-sharpen`](../sharpen/README.md) batch to fold
   the detection into adversarial-review's mechanical sweeps. The Step 9.5 loop re-runs Step 9.4 for each cycle's

@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-190431'
+  version: '2026.06.11-222028'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -440,7 +440,11 @@ A comment is **active** if:
   the file at the referenced path and line)
 
 Skip truly outdated comments where the code has been rewritten and the
-concern no longer applies. Note these as "auto-skipped" in the summary.
+concern no longer applies. Note these as "auto-skipped" in the summary
+**and resolve the thread via `resolveReviewThread`** — confirming the
+concern is gone is not enough; an unresolved outdated thread still counts
+toward the PR's open-thread total and reads as outstanding feedback to
+branch protection and reviewers.
 
 ### Surface feedback hidden in self-review threads
 
