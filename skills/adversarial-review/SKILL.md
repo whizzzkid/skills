@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.10-235203'
+  version: '2026.06.11-002506'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -960,9 +960,34 @@ freshness check then fails one round after a clear verdict.
 - Flag a fixed source file with an un-regenerated sibling artifact as a
   blocker.
 
+### 2.31 jq permissive `else .` passthrough
+
+A jq type-dispatch expression with a bare `else .` fallback passes every
+unlisted input shape through unchanged — including objects, which `jq -r`
+renders as multi-line pretty-printed JSON (garbage output). Structurally
+it is an unguarded passthrough for unexpected types.
+
+```bash
+git diff "$BASE...HEAD" | grep -nE '^\+.*\belse[[:space:]]+\.[[:space:]]+end'
+```
+
+- Flag any added `else . end` in a jq expression (not `else empty`) as a
+  candidate for review — verify all non-listed types produce acceptable
+  `jq -r` output.
+- Canonical safe pattern for string-only extraction:
+  `if type=="array" then .[] elif type=="string" then . else empty end`.
+
 After mechanical sweeps land their findings, dispatch a fresh subagent
 with no prior context to critique the diff. The subagent operates only
 on `git diff "$BASE...HEAD"` and the surface map from Step 1.
+
+- Pipe `git diff "$BASE...HEAD"` output **directly** into the subagent
+  prompt — never hand-transcribe the diff inline. Manual transcription
+  introduces artifacts (duplicated lines, dropped hunks) the subagent then
+  flags as false blockers, burning a fix cycle.
+- If length limits force an inline excerpt, verify it against the file
+  first (grep for duplicated lines / confirm hunk boundaries) before
+  dispatch.
 
 The subagent must be:
 
@@ -1120,6 +1145,13 @@ On a blocked verdict:
 3. Loop until clear, max 3 cycles. After 3 cycles, stop and surface to
    the user — repeated blocker recurrence on the same axis means the
    diagnosis or design is off, not the fix.
+
+**Artifact-rebuild fix after a rebase — do not autosquash into a mid-chain
+commit.** `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>` replays
+the whole chain from `<base>`, re-exposing every already-resolved conflict.
+When a post-rebase fix (e.g., a stale rebuilt artifact) needs committing,
+amend it into a standalone conventional commit (`git commit --amend` for the
+message) rather than folding it mid-chain.
 
 ---
 
