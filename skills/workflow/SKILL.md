@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-185840'
+  version: '2026.06.11-192012'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -468,6 +468,18 @@ the old shape:
    spec/plan/README that quantifies or lists tests must be
    updated in the same commit so counts and bullets stay in sync
    with the test file.
+
+### New-file spec-table sync
+
+When a commit **adds a new file** (e.g., an extracted base class or helper
+module), update the spec's New Files / Modified Files tables in the **same
+commit** — treat the table entry as part of the file's creation, not deferred
+docs cleanup.
+
+- A new file landing without its spec-table row leaves the spec stale until
+  the adversarial cross-doc sweep flags it, forcing an extra fix commit.
+- Check the spec table on every refactor commit that creates or moves a file,
+  not only on behavior changes.
 
 ### Test enumeration sync
 

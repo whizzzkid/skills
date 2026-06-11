@@ -2,6 +2,8 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
+**Version:** `2026.06.11-192012`
+
 ## Invocation
 
 | Mode | Trigger |
@@ -46,5 +48,5 @@ flowchart TD
   spec, plan, inline comments, test names, and any ADR in the same commit. No deferred rewrites.
 - **CI fix loop** has a 3-attempt limit with an axis-of-variation check: attempts 1 and 2 on
   the same axis require broadening to a different axis on attempt 3, not "the same thing harder."
-- **Phase 8 (`wk-retro`) is non-negotiable** — mandatory regardless of task outcome, even if
+- **Phase 8 ([`wk-retro`](../retro/README.md)) is non-negotiable** — mandatory regardless of task outcome, even if
   the session was short or nothing interesting happened.
