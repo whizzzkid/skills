@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-003335'
+  version: '2026.06.11-190431'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1373,6 +1373,25 @@ Items to verify in the body before deciding "no drift":
 
 This mirrors the `wk-pr` rule: after every push to a branch with an
 existing PR, the description must be updated.
+
+### Also re-check self-review and docs drift after the same push
+
+The PR body is not the only artifact a fresh push can strand — the
+agent's own submitted self-review comments and the docs touched this
+session drift just as readily. Check both on **every** push, same
+cadence as the body sync above.
+
+- **Self-review threads.** Re-read every **submitted** self-review
+  comment the agent posted on this PR. When a fix this session changed
+  the code a comment describes, reply to that thread with the correction
+  (or resolve it if now moot) — a self-review rationale describing the
+  pre-fix design misleads reviewers.
+- **Docs.** Invoke `wk-docs` against the files touched this session. When
+  a fix changed behavior, signatures, or config that docs/specs/README
+  describe, update them — never leave docs describing the pre-fix shape.
+- Doc or self-review fixes that need a code change land as a follow-up
+  commit and re-enter the Step 9.5 push/CI loop — do not skip them
+  because the push already happened.
 
 ## Step 8.6: Post replies, reactions, and resolve threads
 
