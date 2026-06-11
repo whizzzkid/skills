@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-003336'
+  version: '2026.06.11-183436'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1003,6 +1003,11 @@ The subagent must be:
 - **Naming-aware.** Vague names (`data`, `temp`, `result`), inconsistent
   casing, misleading names, names diverging from surrounding style.
 - **Diff-sensitive.** Stricter on net-new code and public API surfaces.
+- **Coverage-aware (test-only commits).** When a commit adds/changes only
+  tests, enumerate the distinct code paths through each function under test
+  (e.g. each branch a `dirname`/conditional produces) and verify at least
+  one new test exercises each. Flag any unexercised path as a `suggestion` —
+  test-presence alone does not prove path coverage.
 - **Refactor-aware.** For movement-dominated diffs, demand a
   removed-line audit — every removed line must have a corresponding
   relocated line or an explicit "intentionally dropped" rationale.
