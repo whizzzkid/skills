@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.10-205059'
+  version: '2026.06.11-183437'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -213,6 +213,11 @@ request — it is the tail of the commit sequence.
 If something would block the push (branch protection, no upstream
 branch, rejection), report it explicitly to the user. Never silently
 skip the push.
+
+When pre-push hooks run, emit a one-line note before `git push` that hooks
+may take ~30s, then report the result when it returns. Silence during a
+long hook run reads as a frozen session and invites a "is this stuck?"
+interrupt.
 
 Always use regular `git push`. Never use `--force` or `--force-with-lease`
 unless:
