@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.10-235203'
+  version: '2026.06.11-002505'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -993,6 +993,12 @@ via `wk-self-review` before returning control.
 **HARD RULE:** Before any **rework** of a PR's branch — force-push, restructure,
 content rewrite, big rebase, scope change — fetch and reconcile
 against the PR's actual base **and** the default branch:
+
+- Resolve the PR base **before proposing or planning a rebase target**, not
+  only at rework time. `gh pr view --json baseRefName --jq .baseRefName` is
+  authoritative — never assume the default branch, and never compute a
+  `<default>..HEAD` range before confirming the PR's base (a branch with a
+  non-default base gets rebased onto the wrong target otherwise).
 
 ```bash
 PR_NUM=$(gh pr view --json number --jq .number)
