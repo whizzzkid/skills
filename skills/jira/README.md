@@ -2,6 +2,8 @@
 
 > Coordinate Jira ticket state with the development lifecycle and surface Jira context whenever the agent encounters a Jira artifact.
 
+**Version:** `2026.06.11-192012`
+
 ## Invocation
 
 | Mode | Trigger |

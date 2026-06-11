@@ -38,7 +38,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.03-182538'
+  version: '2026.06.11-192012'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -418,6 +418,10 @@ there is no delete API.
 **HARD RULE:** Never call a Jira write method on user-initiated work without
 explicit approval of the proposed change set. Auto mode does not exempt —
 Jira items are visible to the whole team.
+
+- Default `issueTypeName` to `"Story"` when creating an issue. Pick a
+  different type only when the context names one (`Bug`, `Task`, `Epic`).
+  Never fall back to `"Task"` as a generic default.
 
 | Operation | Confirmation required | Command pattern |
 |-----------|----------------------|-----------------|
