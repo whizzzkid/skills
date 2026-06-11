@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-185508'
+  version: '2026.06.11-185840'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -33,7 +33,8 @@ from within this workflow at the prescribed point. Follow this sequence exactly.
 Plan -> Implement (commit per step + docs) -> Test (happy/sad/edge)
   -> Refactor-Opportunity Scan -> Live Preview (frontend only)
   -> Review (adversarial agent)
-  -> PR (wk-pr) -> CI Fix Loop -> Self-Review -> Docs Audit -> Retro
+  -> PR (wk-pr) -> CI Fix Loop -> Self-Review
+  -> Resolve Comments (loop until clear) -> Docs Audit -> Retro
 ```
 
 ---
@@ -219,7 +220,9 @@ contain these elements — if any are missing, add them before executing:
 5. **Adversarial review step** — invoke `wk-adversarial-review` to gate the push
 6. **PR offer** — ask the user if they want a PR
 7. **CI fix loop** — monitor CI, auto-diagnose and fix failures, re-push
-8. **Session retro** — `wk-retro` at end of session (non-negotiable)
+8. **Review-comment resolution loop** — after CI green, loop `wk-pr-resolve`
+   until all PR review threads are resolved (across runs)
+9. **Session retro** — `wk-retro` at end of session (non-negotiable)
 
 ### Commit Granularity
 
@@ -399,7 +402,8 @@ steps produce commits. Example:
 7. Adversarial review (`wk-adversarial-review`)
 8. Offer to create PR
 9. CI fix loop (auto-fix until green or bail after 3 attempts)
-10. Session retro
+10. Review-comment resolution loop (`wk-pr-resolve` until all threads clear)
+11. Session retro
 ```
 
 ---
@@ -1235,6 +1239,38 @@ item and run its verification command now.
 
 ---
 
+## Phase 6.5: Review-Comment Resolution Loop
+
+After CI exits green (Phase 6) and the PR is marked ready, drive every open
+review comment to resolution before merge. Reviewers comment asynchronously —
+a single resolve pass strands every comment added afterward and stalls the
+merge.
+
+### Loop
+
+- Poll the PR for unresolved review threads:
+
+  ```bash
+  gh pr view "$PR" --json reviewDecision,reviewThreads \
+    --jq '[.reviewThreads[]? | select(.isResolved==false)] | length'
+  ```
+
+- While any unresolved thread remains, invoke `wk-pr-resolve` to address it.
+- Re-poll after every `wk-pr-resolve` pass — new comments may have arrived
+  while the prior pass ran.
+- Re-enter Phase 6 if a resolving commit turns CI red — never leave the PR red.
+- Exit only when zero unresolved threads remain **and** CI is still green.
+
+### Across multiple runs
+
+- Treat the loop as spanning sessions — reviewers may comment hours later.
+- When waiting on reviewer input, self-pace with a polling wakeup rather than
+  exiting; re-check on each wake.
+- On any later invocation that finds the PR open with unresolved threads,
+  resume from the poll step — do not treat the PR as done until threads clear.
+
+---
+
 ## Phase 7: Documentation Audit
 
 Documentation is woven into every commit during Phase 2, but do a final audit
@@ -1348,6 +1384,7 @@ Use this as a final gate before claiming work is complete:
 - [ ] CI fix loop exited green (all checks passing)
 - [ ] PR description reflects current branch state
 - [ ] Self-review posted highlighting critical changes only
+- [ ] All PR review threads resolved (`wk-pr-resolve` loop exited clean)
 - [ ] Version pins are exact (no `latest`, `^`, `~`)
 - [ ] Scripts have correct file permissions
 - [ ] Diagrams use Mermaid, not ASCII art
