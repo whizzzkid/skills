@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-002505'
+  version: '2026.06.11-003337'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -800,6 +800,21 @@ or two-stage accordingly.
    The same trap applies to two-stage pipelines like
    `grep -v X | grep -qv Y` — the second stage still passes
    trivially.
+
+### Behavioral tests must reach the guarded branch
+
+A security-guard test that never enters the guarded branch passes
+vacuously — the guard branch and the early-exit branch may both exit 0.
+
+- `[[ -f "$x" ]]` follows symlinks and tests the **resolved target**. A
+  symlink to a non-existent file returns false, so a symlink-escape test
+  whose target is absent fires the "no file found" branch instead of the
+  escape-rejection guard — exiting 0 without ever exercising the guard.
+- Point symlink-escape tests at a file guaranteed to exist on every test
+  OS (`/etc/passwd`, present on macOS and Linux) — never one that may be
+  absent (e.g. `/etc/hostname` is absent on macOS).
+- After writing a guard test, confirm it fails when the guard is removed; a
+  test that passes both with and without the guard is vacuous.
 
 ---
 
