@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-192012'
+  version: '2026.06.11-200611'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -450,6 +450,24 @@ Execute the plan step by step. After completing each step:
 Never batch multiple steps into one commit. Never defer documentation to the
 end. Never skip tests between commits.
 
+### Cross-cutting change: enumerate sites, then implement all before review
+
+For a change that touches a recurring pattern across the codebase
+(normalization, rename, added required field, schema change), enumerate
+**every** affected site before writing the first line — then implement all,
+then run adversarial review once.
+
+```bash
+grep -rn '<pattern>' <src-dirs>   # the complete site map, before any edit
+```
+
+- Without a full site map, each adversarial-review round reveals the next
+  missed site — the slow loop Phase 4's per-feature rule exists to prevent.
+- Incremental commits within the feature are still fine; the gate runs once
+  after the **whole** site map is implemented, not after the first site.
+- Commit sequence: enumerate sites → implement all → commit → review once →
+  fix residuals in ≤1 follow-up.
+
 ### Design pivots travel with their docs
 
 **HARD RULE:** When a commit changes the **logical structure** of a feature —
@@ -755,6 +773,11 @@ Every task MUST have tests covering:
   `gofmt -l` only checks files present when it ran. Introducing a new toolchain
   is especially prone: run its full new gate set verbatim immediately before
   push, covering every file in the final diff.
+- **Validate transformations with a formerly-failing input.** After
+  implementing a normalization / case-fold / coercion / matching feature,
+  exercise at least one input that *used* to fail and must now succeed — in
+  the UI or test output. Positive-only checks cannot prove the transform was
+  applied; only a once-failing case turned passing proves it.
 
 ### mise-managed test invocation
 
@@ -917,6 +940,20 @@ the Phase 3.6 live preview is running, invoke
 `wk-adversarial-review`.
 The skill is the **sole authority** for pre-push critique — do not approximate
 it with an inline subagent, ad-hoc grep pass, or "quick check".
+
+**HARD RULE — adversarial review is a per-feature gate, not a per-commit
+gate.** Run it once on the **complete** logical change, then push. "Logical
+change" = the whole feature across every affected site, not each file touched.
+
+- Do not push-and-review after each incremental commit of a multi-commit
+  change — that produces a slow commit→review→fix loop where each review
+  rediscovers the next unimplemented site.
+- Batch the feature's commits locally; run the gate once before the first
+  publishing push; fix residuals in **at most one** follow-up commit, then
+  re-run once.
+- On CI-fix or follow-up pushes the gate re-runs, but scoped to the diff
+  since the last clear verdict (it is idempotent on an unchanged HEAD) — so
+  a green-then-one-fix cycle is cheap, not a full re-sweep.
 
 `wk-adversarial-review` runs mechanical sweeps for the issue classes
 reviewers and bots historically flag (vulnerability-class fixes left on
