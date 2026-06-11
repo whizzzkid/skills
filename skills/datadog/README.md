@@ -13,15 +13,15 @@
 
 ```mermaid
 flowchart TD
-    A[Check DATADOG_API_KEY\nDATADOG_APP_KEY] -->|Missing| B[Ask user to export keys\nfrom Org Settings]
+    A[Check DATADOG_API_KEY<br/>DATADOG_APP_KEY] -->|Missing| B[Ask user to export keys<br/>from Org Settings]
     A -->|Present| C{Resource type}
-    C -->|Dashboard| D[GET /v1/dashboard\nPOST/PUT /v1/dashboard/id]
-    C -->|Monitor| E[GET /v1/monitor\nPOST/PUT /v1/monitor/id\nPOST mute/unmute]
-    C -->|SLO| F[GET /v1/slo\nPOST/PUT /v1/slo/id\nGET /v1/slo/id/history]
-    C -->|Notebook| G[GET /v1/notebooks\nPOST/PUT /v1/notebooks/id]
+    C -->|Dashboard| D[GET /v1/dashboard<br/>POST/PUT /v1/dashboard/id]
+    C -->|Monitor| E[GET /v1/monitor<br/>POST/PUT /v1/monitor/id<br/>POST mute/unmute]
+    C -->|SLO| F[GET /v1/slo<br/>POST/PUT /v1/slo/id<br/>GET /v1/slo/id/history]
+    C -->|Notebook| G[GET /v1/notebooks<br/>POST/PUT /v1/notebooks/id]
     D & E & F & G -->|DELETE| H[Confirm with user first]
     H -->|Confirmed| I[curl DELETE]
-    D & E & F & G -->|Write| J[Write payload.json to cwd\ncurl POST/PUT\nParse response with jq]
+    D & E & F & G -->|Write| J[Write payload.json to cwd<br/>curl POST/PUT<br/>Parse response with jq]
 ```
 
 ## Noteworthy

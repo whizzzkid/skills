@@ -16,10 +16,10 @@ flowchart TD
     A[Version needed] --> B[Run: date -u '+%Y.%m.%d-%H%M%S']
     B --> C[Use output verbatim]
     C --> D{Context}
-    D -->|SKILL.md metadata| E["metadata:\n  version: 'YYYY.MM.DD-HHMMSS'"]
+    D -->|SKILL.md metadata| E["metadata:<br/>  version: 'YYYY.MM.DD-HHMMSS'"]
     D -->|package.json / pyproject.toml| F["version: 'YYYY.MM.DD-HHMMSS'"]
     D -->|Dockerfile tag| G["image:YYYY.MM.DD-HHMMSS"]
-    D -->|Multiple artifacts| H[Call date -u once per artifact\nNever reuse a timestamp]
+    D -->|Multiple artifacts| H[Call date -u once per artifact<br/>Never reuse a timestamp]
 ```
 
 ## Noteworthy

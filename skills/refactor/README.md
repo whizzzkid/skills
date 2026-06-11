@@ -8,7 +8,7 @@
 | Mode | Trigger |
 |------|---------|
 | User-invocable | `/wk-refactor [pr-number-or-url]` |
-| Model-invocable | Automatic on: after `wk-pr-update` rebase/patch-replay, after `wk-pr-resolve` conflict resolution, after extract/move/rename/split operations, or before `gh pr ready` on a movement-dominated diff |
+| Model-invocable | Automatic on: after [`wk-pr-update`](../pr-update/README.md) rebase/patch-replay, after [`wk-pr-resolve`](../pr-resolve/README.md) conflict resolution, after extract/move/rename/split operations, or before `gh pr ready` on a movement-dominated diff |
 
 ## How It Works
 
@@ -16,7 +16,7 @@
 flowchart TD
     A[Stage 0: Classify refactor kind] --> B{Diff shape matches kind?}
     B -->|no| C[Surface mismatch — stop]
-    B -->|yes| D[Stage 1: Two-axis diff\nmerge-base and base branch]
+    B -->|yes| D[Stage 1: Two-axis diff<br/>merge-base and base branch]
     D --> E[Stage 2: Removed-line audit per file]
     E --> F{Line shape?}
     F --> G[ENV lookups]
@@ -46,7 +46,7 @@ flowchart TD
 - **Behavior narrowed into a conditional is a special case:** An unconditional read moved inside an `if` may
   pass all tests if default values coincide with test inputs. Stage 2 checks test invocations still drive the
   code through the arm that now owns the behavior.
-- **Auto-invoked by three skills:** `wk-pr-update` (post-rebase/replay), `wk-pr-resolve` (post-conflict),
-  and `wk-pr` (before `gh pr ready` on movement-dominated diffs). Manual invocation is also supported.
+- **Auto-invoked by three skills:** [`wk-pr-update`](../pr-update/README.md) (post-rebase/replay), [`wk-pr-resolve`](../pr-resolve/README.md) (post-conflict),
+  and [`wk-pr`](../pr/README.md) (before `gh pr ready` on movement-dominated diffs). Manual invocation is also supported.
 - **Report is PR-pasteable:** Stage 5 output is formatted as a `## Refactor audit` block suitable for the PR
   description so reviewers see what was checked.

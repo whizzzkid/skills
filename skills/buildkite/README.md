@@ -18,12 +18,12 @@ flowchart TD
     A[Resolve pipeline + build] --> B{bk CLI available?}
     B -->|No| C[Ask user to install bk]
     B -->|Yes| D[Auth pre-flight check]
-    D -->|401/403| E[Stop: tell user to run\nbk auth login]
-    D -->|OK| F[Canonical build query\nbk build view --json]
+    D -->|401/403| E[Stop: tell user to run<br/>bk auth login]
+    D -->|OK| F[Canonical build query<br/>bk build view --json]
     F --> G{Goal}
-    G -->|Status check| H[Filter failed/broken jobs\nReport summary]
-    G -->|Investigate failure| I[Step 1: overall status\nStep 2: fetch job logs\nStep 3: classify exit code\nStep 4: check if pre-existing on main]
-    G -->|Monitor after push| J[bk build view → state\nReport running/passed/failed]
+    G -->|Status check| H[Filter failed/broken jobs<br/>Report summary]
+    G -->|Investigate failure| I[Step 1: overall status<br/>Step 2: fetch job logs<br/>Step 3: classify exit code<br/>Step 4: check if pre-existing on main]
+    G -->|Monitor after push| J[bk build view → state<br/>Report running/passed/failed]
     G -->|Cancel build| K{Inside build?}
     K -->|Yes| L[buildkite-agent build cancel]
     K -->|No| M[REST API PUT .../cancel]

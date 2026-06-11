@@ -21,12 +21,12 @@ flowchart TD
     D -- no --> C
     D -- yes --> E
     B -- no --> E[Step 1: Research — parallel agents]
-    E --> F[Step 2: Multi-persona analysis\nImplementor · Reviewer · Security · Ops · Product]
+    E --> F[Step 2: Multi-persona analysis<br/>Implementor · Reviewer · Security · Ops · Product]
     F --> G{Unresolved concerns?}
     G -- scope conflict --> C
     G -- missing step --> H
     G -- out of scope --> H
-    H[Step 3: Draft plan with phase + agent markers] --> I[Step 4: Validate\nrequirements · agent-readiness · parallelism · commits]
+    H[Step 3: Draft plan with phase + agent markers] --> I[Step 4: Validate<br/>requirements · agent-readiness · parallelism · commits]
     I --> J{Flags raised?}
     J -- yes --> H
     J -- no --> K[Step 5: Present + wait for approval]

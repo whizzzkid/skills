@@ -15,19 +15,19 @@
 
 ```mermaid
 flowchart TD
-    A[Stage files] --> B[Build commit message\naction + scope + emoji + body]
-    B --> C[git commit via HEREDOC\nsigned, no --no-verify]
-    C -->|Signing failure| D[Stop: tell user to fix\nGPG/SSH agent]
-    C -->|Hook failure| E[Stop: ask user to\nrun hook manually]
+    A[Stage files] --> B[Build commit message<br/>action + scope + emoji + body]
+    B --> C[git commit via HEREDOC<br/>signed, no --no-verify]
+    C -->|Signing failure| D[Stop: tell user to fix<br/>GPG/SSH agent]
+    C -->|Hook failure| E[Stop: ask user to<br/>run hook manually]
     C -->|Success| F{Mise-managed repo?}
-    F -->|Yes| G[eval mise activate bash\nthen git push]
+    F -->|Yes| G[eval mise activate bash<br/>then git push]
     F -->|No| H[git push]
-    G & H -->|Rejected| I[Report rejection\nAsk how to proceed]
+    G & H -->|Rejected| I[Report rejection<br/>Ask how to proceed]
     G & H -->|Success| J{Open PR exists?}
     J -->|No| K[Done]
-    J -->|Yes| L[PR Sync: compare title+body\nvs post-push branch state]
+    J -->|Yes| L[PR Sync: compare title+body<br/>vs post-push branch state]
     L -->|No drift| M[Report: already in sync]
-    L -->|Drift detected| N[gh pr edit with refreshed\ntitle + body]
+    L -->|Drift detected| N[gh pr edit with refreshed<br/>title + body]
     N --> O[Report: PR updated]
 ```
 

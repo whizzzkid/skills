@@ -13,12 +13,12 @@
 
 ```mermaid
 flowchart TD
-    A[Audit project first] --> B[Read .buildkite/docker/compose.yml\nconfig/database.yml\n.ruby-version\nGemfile services]
-    B --> C[Write Dockerfile\nFROM ghcr.io/jdx/mise pinned\nBUNDLE_PATH env vars\nNo PATH wiring]
-    C --> D[Write docker-compose.yml\ncontext:..\nbundle-cache volume\nCONFIG__ overrides from CI\ndepends_on healthcheck]
-    D --> E[Write devcontainer.json\npostCreateCommand: bundle install + db:create\nrubyLsp.rubyVersionManager: mise]
-    E --> F[Update mise.toml\nauto_install = true\nruby version matches .ruby-version]
-    F --> G[Validate: run postCreateCommand\nCheck common failure modes]
+    A[Audit project first] --> B[Read .buildkite/docker/compose.yml<br/>config/database.yml<br/>.ruby-version<br/>Gemfile services]
+    B --> C[Write Dockerfile<br/>FROM ghcr.io/jdx/mise pinned<br/>BUNDLE_PATH env vars<br/>No PATH wiring]
+    C --> D[Write docker-compose.yml<br/>context:..<br/>bundle-cache volume<br/>CONFIG__ overrides from CI<br/>depends_on healthcheck]
+    D --> E[Write devcontainer.json<br/>postCreateCommand: bundle install + db:create<br/>rubyLsp.rubyVersionManager: mise]
+    E --> F[Update mise.toml<br/>auto_install = true<br/>ruby version matches .ruby-version]
+    F --> G[Validate: run postCreateCommand<br/>Check common failure modes]
 ```
 
 ## Noteworthy

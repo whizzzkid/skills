@@ -95,7 +95,7 @@ flowchart TD
 
 ## Memory Sources: Two Input Channels for Sharpen
 
-`wk-sharpen` pulls from two sources in batch mode:
+[`wk-sharpen`](../skills/sharpen/README.md) pulls from two sources in batch mode:
 
 ```mermaid
 flowchart LR
@@ -138,14 +138,14 @@ the platform in use — no code changes needed to switch providers.
 
 ```mermaid
 flowchart LR
-    SK[SKILL.md\nmodel: opus]
+    SK[SKILL.md<br/>model: opus]
     SK --> CC[Claude Code → claude-opus-4-7]
     SK --> OA[OpenAI → o3]
     SK --> GG[Google → gemini-2.5-pro]
     SK --> ME[Meta → llama-4-maverick]
     SK --> CU[Cursor → composer-2]
 
-    SK2[SKILL.md\nmodel: sonnet]
+    SK2[SKILL.md<br/>model: sonnet]
     SK2 --> CC2[Claude Code → claude-sonnet-4-6]
     SK2 --> OA2[OpenAI → gpt-4.1-mini]
     SK2 --> GG2[Google → gemini-2.5-flash]
@@ -163,24 +163,24 @@ keep costs low. High-reasoning skills (pr-review, sharpen, workflow) use
 
 | Skill | Tier | Role |
 |-------|------|------|
-| `wk-workflow` | opus | Master orchestration — invokes all others |
-| `wk-pr-review` | opus | Thorough adversarial code review |
-| `wk-sharpen` | opus | Distill learnings → improve skills |
-| `wk-pr-resolve` | sonnet | Address reviewer feedback interactively |
-| `wk-pr` | sonnet | Create and manage pull requests |
-| `wk-commit` | sonnet | Conventional commits with signing |
-| `wk-self-review` | sonnet | Post design-decision comments on own PR |
-| `wk-retro` | sonnet | Session retrospective → global memory |
-| `wk-goodmorning` | sonnet | Daily brief — Slack, Gmail, Calendar, GitHub |
-| `wk-goodevening` | sonnet | End-of-day wrap-up and action tracking |
-| `wk-buildkite` | sonnet | CI investigation and log reading |
-| `wk-docs` | sonnet | Keep documentation in sync with code |
-| `wk-mise` | sonnet | Runtime version management |
-| `wk-docker` | sonnet | Image builds, daemon issues |
-| `wk-datadog` | sonnet | Dashboards, monitors, SLOs |
-| `wk-gh` | sonnet | GitHub CLI scoped to org |
-| `wk-calver` | sonnet | Generate CalVer version strings |
-| `wk-worktree-cleanup` | sonnet | Prune merged git worktrees |
+| [`wk-workflow`](../skills/workflow/README.md) | opus | Master orchestration — invokes all others |
+| [`wk-pr-review`](../skills/pr-review/README.md) | opus | Thorough adversarial code review |
+| [`wk-sharpen`](../skills/sharpen/README.md) | opus | Distill learnings → improve skills |
+| [`wk-pr-resolve`](../skills/pr-resolve/README.md) | sonnet | Address reviewer feedback interactively |
+| [`wk-pr`](../skills/pr/README.md) | sonnet | Create and manage pull requests |
+| [`wk-commit`](../skills/commit/README.md) | sonnet | Conventional commits with signing |
+| [`wk-self-review`](../skills/self-review/README.md) | sonnet | Post design-decision comments on own PR |
+| [`wk-retro`](../skills/retro/README.md) | sonnet | Session retrospective → global memory |
+| [`wk-goodmorning`](../skills/goodmorning/README.md) | sonnet | Daily brief — Slack, Gmail, Calendar, GitHub |
+| [`wk-goodevening`](../skills/goodevening/README.md) | sonnet | End-of-day wrap-up and action tracking |
+| [`wk-buildkite`](../skills/buildkite/README.md) | sonnet | CI investigation and log reading |
+| [`wk-docs`](../skills/docs/README.md) | sonnet | Keep documentation in sync with code |
+| [`wk-mise`](../skills/mise/README.md) | sonnet | Runtime version management |
+| [`wk-docker`](../skills/docker/README.md) | sonnet | Image builds, daemon issues |
+| [`wk-datadog`](../skills/datadog/README.md) | sonnet | Dashboards, monitors, SLOs |
+| [`wk-gh`](../skills/gh/README.md) | sonnet | GitHub CLI scoped to org |
+| [`wk-calver`](../skills/calver/README.md) | sonnet | Generate CalVer version strings |
+| [`wk-worktree-cleanup`](../skills/worktree-cleanup/README.md) | sonnet | Prune merged git worktrees |
 
 ---
 

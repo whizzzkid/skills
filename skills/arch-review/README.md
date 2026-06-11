@@ -20,12 +20,12 @@ modes.
 
 ```mermaid
 flowchart TD
-    A([User invokes]) --> B[Step 1: Resolve input\nREVIEW or WRITE mode]
-    B --> C[Step 2: Gather context\nscale, constraints, quality attrs]
-    C --> D[Step 3: Critical analysis\n8 lenses A–H]
-    D --> E[Step 4: Findings report\nSPOF map, assumptions table,\nprioritised actions]
-    E --> F{Playground\nrequested?}
-    F -->|yes| G[Step 5: Interactive HTML\nfailure-injection diagram]
+    A([User invokes]) --> B[Step 1: Resolve input<br/>REVIEW or WRITE mode]
+    B --> C[Step 2: Gather context<br/>scale, constraints, quality attrs]
+    C --> D[Step 3: Critical analysis<br/>8 lenses A–H]
+    D --> E[Step 4: Findings report<br/>SPOF map, assumptions table,<br/>prioritised actions]
+    E --> F{Playground<br/>requested?}
+    F -->|yes| G[Step 5: Interactive HTML<br/>failure-injection diagram]
     F -->|no| H([Done])
     G --> H
 ```

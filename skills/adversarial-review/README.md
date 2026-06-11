@@ -20,8 +20,8 @@ flowchart TD
     C --> D[Spawn adversarial subagent]
     D --> E[Playground validation]
     E --> F{Verdict}
-    F -->|Clear| G[Write .cleared-SHA.json\nHand back to caller]
-    F -->|Blockers| H[Print blocker list\nRefuse to proceed]
+    F -->|Clear| G[Write .cleared-SHA.json<br/>Hand back to caller]
+    F -->|Blockers| H[Print blocker list<br/>Refuse to proceed]
     F -->|Suggestions only| I[AskUser: fix/clear/defer]
     H --> J[Caller fixes → re-invoke]
     J --> C
