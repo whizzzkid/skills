@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.09-233105'
+  version: '2026.06.11-192012'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -58,6 +58,22 @@ build status, investigating failures, viewing logs, and monitoring builds.
 - Monitoring builds after a git push
 - Viewing build logs or job details
 - Any CI-related task (use Buildkite tools, NOT GitHub tools)
+
+## HARD RULE: investigate only your own branches
+
+Before debugging a PR's CI failure, verify the PR's branch is one the agent
+created in this engagement (this session or a prior session on the same
+ticket). When it is not, stop — do not investigate or change it.
+
+```bash
+gh pr view "$PR" --json headRefName,author --jq '.headRefName + " (@" + .author.login + ")"'
+```
+
+- When the branch is unfamiliar, tell the user and stop:
+  > "PR #{N} is on `{branch}` which isn't a branch I worked on — I shouldn't
+  > debug it."
+- A user saying "PR #{N} is failing" is not authorization to touch an
+  unrelated PR — the branch/author check gates the work, not the request.
 
 ## Auth Error Handling
 
