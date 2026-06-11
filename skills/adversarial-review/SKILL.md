@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-200611'
+  version: '2026.06.11-222029'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -994,6 +994,30 @@ git diff "$BASE...HEAD" | grep -nE '^\+.*\belse[[:space:]]+\.[[:space:]]+end'
   `jq -r` output.
 - Canonical safe pattern for string-only extraction:
   `if type=="array" then .[] elif type=="string" then . else empty end`.
+
+### 2.32 Go struct-tag realignment after type widening
+
+When a Go diff widens a struct field's type name (short type → longer
+named type), `gofmt` reformats only the changed line, leaving sibling
+fields' tag columns aligned to the old narrower width. `goimports`
+recomputes the widest type across the whole struct and realigns every
+field — so a file that passes local `gofmt`/format-on-save still fails
+CI's `goimports -l`. The gap is invisible until CI.
+
+- Detect changed `.go` files whose diff adds a field line with a
+  capitalized type token (the type-widening shape), then run
+  `goimports -l` on each:
+
+  ```bash
+  git diff "$BASE...HEAD" -- '*.go' \
+    | grep -nE '^\+[[:space:]]+[A-Z][A-Za-z]+[[:space:]]+[A-Z][A-Za-z]+[[:space:]]' \
+    | awk -F: '{print $1}' | sort -u \
+    | xargs -r -I{} goimports -local "$MODULE" -l {}
+  ```
+
+- Any file in the output is a `blocker` — format it (`goimports -w`)
+  before the push is cleared. `$MODULE` is the module path from `go.mod`.
+- Skip when the repo has no `go.mod` or CI runs only `gofmt`.
 
 After mechanical sweeps land their findings, dispatch a fresh subagent
 with no prior context to critique the diff. The subagent operates only
