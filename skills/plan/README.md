@@ -2,6 +2,8 @@
 
 > Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
 
+**Version:** `2026.06.11-192012`
+
 ## Invocation
 
 | Mode | Trigger |

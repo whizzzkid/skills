@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-183438'
+  version: '2026.06.11-192012'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -61,9 +61,16 @@ Scan the task description for these ambiguity signals:
 | Undefined inputs | "fix the issue" without a ticket or repro | Yes |
 | Vague degree | "make it better", "clean this up" | Yes |
 | Missing "what must NOT change" | new feature touching shared code | Yes |
+| ≥2 distinct deliverables bundled | "add X, fix Y, and refactor Z" | Yes — confirm granularity |
 
 When ≥1 signal fires, ask the minimum set of questions (max 4) to unblock.
 Use `AskUserQuestion` rather than prose so the user can answer efficiently.
+
+**Multi-deliverable granularity.** When the prompt lists ≥2 deliverables that
+could each stand alone (own ticket, commit, or PR), surface them as a numbered
+list and ask "one PR or separate?" **before** planning. A bundle of N tasks
+reads as a clear requirement but hides a granularity decision only the user
+owns; a single deliverable with sub-tasks does not trigger this.
 
 Structure each question with a concrete `header` label. Good question forms:
 
