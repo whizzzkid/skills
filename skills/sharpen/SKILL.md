@@ -28,7 +28,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.11-191436'
+  version: '2026.06.11-192615'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -479,6 +479,10 @@ Propagate the change in the same pass.
   `README.md` to the same CalVer just written to `metadata.version`. README
   and SKILL.md versions stay in lockstep. Add the line under the tagline if
   the README lacks it.
+  - When first adding the Version line to an existing README, pre-convert any
+    bare `wk-*` mention to a relative link (`[wk-foo](../foo/README.md)`) in
+    the same edit — touching the README pulls the whole file through the
+    `check-skill-links` hook, which blocks on pre-existing bare links.
 - The `check-readme-sync` pre-commit hook blocks any commit that stages a
   `skills/*/SKILL.md` without its sibling `README.md` — stage both together.
 - **Repo index** — when the skill's one-line description changed, edit its
