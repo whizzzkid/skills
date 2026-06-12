@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.29-072321'
+  version: '2026.06.12-020126'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -185,13 +185,19 @@ echo "{body}" | grep -nE '^\s*- \[ \]'
 gh pr merge {number} --squash --delete-branch
 ```
 
-- Default to squash merge. If the repo's branch-protection settings require
-  a merge commit or rebase, use `--merge` or `--rebase` accordingly:
+- **HARD RULE — always attempt squash first.** Run the `--squash` command
+  above on every merge. Fall back only when it **fails** — non-zero exit
+  (squash disallowed by branch protection, or a merge error).
+- On squash failure, detect the repo's allowed methods and retry with the
+  next best alternative, in order **`--rebase` then `--merge`** (first
+  allowed wins — rebase keeps linear history; merge commit is the universal
+  fallback):
 
   ```bash
-  # Detect repo merge settings if needed:
   gh api repos/{owner}/{repo} --jq '{allow_squash_merge, allow_merge_commit, allow_rebase_merge}'
   ```
+
+- Never switch away from squash when the squash command succeeds.
 
 - `--delete-branch` deletes the head branch after merge. If the repo has
   "delete branch on merge" disabled and the user has not expressed a
