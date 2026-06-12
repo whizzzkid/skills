@@ -202,10 +202,16 @@ This applies to all skills, including `_template`.
 After adding or updating any skill, always run:
 
 ```bash
-npx skills add . -g -y -a=claude
+scripts/install-skills.sh
 ```
 
-This reinstalls all skills globally for the agent. Never skip this step.
+This reinstalls all skills globally for the agent (`npx skills add . -g -y
+-a=claude`) **and** registers the skill-shipped hooks into
+`$HOME/.claude/settings.json` via `scripts/register-hooks.sh` (idempotent;
+declared in `scripts/hooks-manifest.json`). Never skip this step — running bare
+`npx skills add` installs the skills but leaves new hooks unwired, so a fresh
+machine silently runs without scope-guard and the env/concise hooks. When a new
+skill ships a hook, add it to `scripts/hooks-manifest.json` in the same change.
 
 ## Environment-Specific Identifiers
 

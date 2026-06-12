@@ -5,7 +5,27 @@
 - Node.js installed
 - An AI coding agent that supports the [Agent Skills spec](https://github.com/vercel-labs/skills)
 
-## Install All Skills
+## Full Install (skills + hooks) — recommended
+
+```bash
+git clone git@github.com:whizzzkid/skills.git "$HOME/gitc/skills"
+cd "$HOME/gitc/skills"
+scripts/install-skills.sh
+```
+
+This installs every skill globally **and** registers the skill-shipped hooks
+(scope-guard, env-var check, concise reminder, profile sourcing) into
+`$HOME/.claude/settings.json`. It is idempotent — re-run it after `git pull` to
+pick up new skills and any newly-declared hooks without duplicating entries (a
+`.bak` of the settings file is written). Hooks are declared in
+`scripts/hooks-manifest.json`; add an entry there when a new skill ships a hook
+that must be wired into `settings.json` on every machine.
+
+The `npx skills add` commands below install skills **only** — they do not wire
+up hooks, so scope-guard and the env/concise hooks stay inactive. Use the full
+install above unless you specifically want skills without their hooks.
+
+## Install All Skills (skills only, no hooks)
 
 ```bash
 npx skills add whizzzkid/skills

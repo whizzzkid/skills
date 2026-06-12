@@ -4,14 +4,28 @@ Personal agent skills for AI coding assistants. Compatible with the [Agent Skill
 
 ## Installation
 
+**Recommended — full install (skills + hooks).** Clone the repo and run the
+install script. This installs every skill **and** registers the skill-shipped
+hooks (scope-guard, env-var check, concise reminder, profile sourcing) into
+`$HOME/.claude/settings.json`:
+
 ```bash
-npx skills add whizzzkid/skills
+git clone git@github.com:whizzzkid/skills.git "$HOME/gitc/skills"
+cd "$HOME/gitc/skills"
+scripts/install-skills.sh
 ```
 
-Install a specific skill:
+`scripts/install-skills.sh` is idempotent — safe to re-run after `git pull` to
+pick up new skills and any newly-declared hooks. Hook registration is driven by
+[`scripts/hooks-manifest.json`](scripts/hooks-manifest.json); re-running never
+duplicates entries and preserves existing settings (a `.bak` is written).
+
+**Lightweight — skills only (no hooks).** Pulls skills from GitHub but does
+**not** wire up hooks, so scope-guard and the env/concise hooks stay inactive:
 
 ```bash
-npx skills add whizzzkid/skills -s skill-name
+npx skills add whizzzkid/skills            # all skills
+npx skills add whizzzkid/skills -s skill-name   # a specific skill
 ```
 
 ## Available Skills
