@@ -2,7 +2,7 @@
 
 > Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
 
-**Version:** `2026.06.12-021628`
+**Version:** `2026.06.12-122250`
 
 ## Invocation
 
@@ -24,8 +24,9 @@ flowchart TD
     E --> F[Step 2: Multi-persona analysis<br/>Implementor · Reviewer · Security · Ops · Product]
     F --> G{Unresolved concerns?}
     G -- scope conflict --> C
-    G -- missing step --> H
-    G -- out of scope --> H
+    G -- missing step --> S
+    G -- out of scope --> S
+    S[Step 2.5: Simplest-viable scope gate<br/>drop unrequested mechanism · generality · hardening · breadth] --> H
     H[Step 3: Draft plan with phase + agent markers] --> I[Step 4: Validate<br/>requirements · agent-readiness · parallelism · commits]
     I --> J{Flags raised?}
     J -- yes --> H

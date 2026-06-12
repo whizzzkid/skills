@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021628'
+  version: '2026.06.12-122250'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -171,6 +171,46 @@ perspective to be acceptable?"**
 - If it reveals a scope conflict → go back to Step 0 and re-clarify.
 - If it is explicitly out of scope → record it as an exclusion with a
   one-line rationale in the plan's Exclusions section.
+
+---
+
+## Step 2.5: Simplest-Viable Scope Gate
+
+**HARD RULE:** The plan implements the **simplest approach that satisfies
+the stated requirement** — never a more capable, more general, or more
+defensive one the user did not ask for. This gate is the single biggest
+source of mid-task corrections ("did I ask you to implement that? why are
+you overcomplicating this?") — catch it in the plan, not at review.
+
+Before drafting, list every approach the plan would introduce that the
+user did **not** name, and justify or drop each:
+
+- **Unrequested mechanism** — an auth scheme, transport, caching layer,
+  retry/fallback chain, or config surface the task did not mention
+  (`netrc`, a temp-file credential dance, a generic wrapper). If the
+  task is "fetch X" and X has a one-line call, plan the one-line call.
+- **Unrequested generality** — a parameterized/abstracted solution where
+  a concrete one was asked for. Apply the Rule of Three: do not
+  generalize on the first instance.
+- **Unrequested hardening** — defensive guards, validation, or error
+  recovery for inputs the task does not put in scope.
+- **Unrequested breadth** — touching files, modules, or systems outside
+  the named target.
+
+For each item that survives, add a one-line rationale to the plan. For
+each that does not, drop it. **When an unrequested approach seems
+necessary but you are not certain the user wants it, surface it as a
+`[HUMAN-IN-LOOP]` decision with the simplest alternative stated — do not
+silently bake it into the plan.**
+
+### Search-scope boundary
+
+The plan's research and implementation steps stay **inside the project
+root**. Never plan a filesystem-root search (`find /`, `grep -r /`) or
+reads outside the repo / bundle path — grep within the project, or the
+tool-managed dependency path (`bundle show`, `mise where`). A step that
+reaches outside the repo is a scope-gate violation unless the task
+explicitly requires it.
 
 ---
 
@@ -350,6 +390,9 @@ script, or execute manually step by step.
 
 - **Planning before grilling.** A plan built on a vague requirement
   produces rework. Step 0 is non-skippable.
+- **Overcomplicating past the ask.** Planning an unrequested auth scheme,
+  abstraction, or defensive layer reads as progress but invites "did I ask
+  for that?". Step 2.5 is non-skippable — plan the simplest viable path.
 - **Sequential by default.** Most steps can run in parallel. Declare
   dependencies explicitly — don't let caution serialize the work.
 - **Vague agent instructions.** `[AGENT-READY]` steps with "investigate
