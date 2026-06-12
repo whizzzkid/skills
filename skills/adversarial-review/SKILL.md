@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-230337'
+  version: '2026.06.12-000220'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -1018,6 +1018,31 @@ CI's `goimports -l`. The gap is invisible until CI.
 - Any file in the output is a `blocker` — format it (`goimports -w`)
   before the push is cleared. `$MODULE` is the module path from `go.mod`.
 - Skip when the repo has no `go.mod` or CI runs only `gofmt`.
+
+### 2.33 Truthy-but-unparseable fallback-bypass sweep
+
+A two-store redundancy that branches on the **raw** value's presence
+(`if raw`) rather than the **parsed** result silently skips the fallback
+when the primary returns a non-nil but unparseable value. The parser
+returns nil, but the `else` (fallback) branch is unreachable because
+`raw` is truthy — the redundancy is defeated for exactly the
+malformed-input case it existed to handle.
+
+- Grep the diff for a presence-guarded parse with a fallback in the
+  `else`:
+
+  ```bash
+  git diff "$BASE...HEAD" \
+    | grep -nE 'if +\w+.*\n.*(Integer|parseInt|to_i|Float|JSON\.parse|strconv)' 
+  ```
+
+- Flag `blocker` when the guard tests raw presence but the parser can
+  return nil/error for a non-nil input, and the `else` holds the
+  fallback. Correct shape: parse first, then fall back on the parsed
+  result — `parsed = raw && parse(raw); parsed || fallback`.
+- Require a paired test: stub the primary to return an invalid (non-nil)
+  value AND the fallback to return a real value; assert the real value
+  reaches the caller. Absent that test, the contract is unverified.
 
 After mechanical sweeps land their findings, dispatch a fresh subagent
 with no prior context to critique the diff. The subagent operates only
