@@ -15,7 +15,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021644'
+  version: '2026.06.12-215843'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -63,6 +63,10 @@ Manual: `/wk-workstyle-typescript scan` (full working tree) · `/wk-workstyle-ty
 - **Destructure at the call site** when using ≥ 3 fields from an object.
 - **`Promise.all` for independent async operations;** never sequential
   `await` when operations don't depend on each other.
+- **`//` on every continuation line of a multi-line comment.** After
+  editing a `//` block, verify each continuation line still starts with
+  `//` — a dropped prefix turns the line into a bare expression or label
+  that `node --check` accepts but that throws at runtime.
 
 ## Apply or Report
 
