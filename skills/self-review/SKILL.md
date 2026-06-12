@@ -14,7 +14,7 @@ allowed-tools:
   - AskUserQuestion
   - Write
   - Skill
-model: opus
+model: sonnet
 effort: medium
 model-invocable: true
 user-invocable: true
@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-002507'
+  version: '2026.06.12-021632'
   model:
     openai: o3
     google: gemini-2.5-pro

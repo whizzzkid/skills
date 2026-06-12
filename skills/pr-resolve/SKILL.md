@@ -33,7 +33,7 @@ allowed-tools:
   - Edit
   - Write
   - AskUserQuestion
-model: opus
+model: sonnet
 effort: medium
 model-invocable: true
 user-invocable: true
@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-013537'
+  version: '2026.06.12-021630'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
