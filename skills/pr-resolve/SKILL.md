@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021630'
+  version: '2026.06.12-123000'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -523,6 +523,16 @@ reversals:
   > the reversing finding with rationale."
 
 ### Order of processing
+
+**HARD RULE — triage every comment before applying any fix.** Classify
+the entire comment set first (accept / push-back / defer, with the
+concrete fix sketch per item), then apply the accepted fixes as one
+batched pass — still one commit per comment (Hard Rule 7), but **push
+once at the end**, not after each fix. Do not loop comment-by-comment
+fix→push→next: that pattern ("why are you not triaging the issues first
+and then applying together?") multiplies CI runs, re-bases the same file
+repeatedly, and loses the chance to dedup or sequence overlapping fixes.
+Triage all → group accepted fixes by file → commit each → push once.
 
 Process bot reviews first (they often flag actionable issues like style
 violations, security concerns, or code suggestions), then human reviewer
