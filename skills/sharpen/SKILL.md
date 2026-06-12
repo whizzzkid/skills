@@ -28,7 +28,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.12-004136'
+  version: '2026.06.12-020611'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -634,7 +634,7 @@ specific incident.
 |---------|----------|
 | `/wk-sharpen pr-review incident.md` | Read incident, distill lesson, audit full skill, propose update |
 | `/wk-sharpen commit "agent skipped signing"` | Distill verbal report, audit, propose skill improvement |
-| `/wk-sharpen` (no args) | Batch mode — scan learnings + memories, distill all |
+| `/wk-sharpen` (no args) | Batch mode — scan learnings + memories + retrospects, distill all |
 | `/wk-sharpen --scan --force` | Batch mode — reprocess everything, ignore log |
 | `/wk-sharpen improve [scope]` | Improve mode — refactor and prune accumulated entropy |
 
@@ -642,18 +642,18 @@ specific incident.
 (`principle` vs `one-off`) → Draft (skip for `one-off`) → Audit for
 overlap/bloat → Present with cleanup → Apply → Verify & commit
 
-**Batch mode:** Scan learnings + memories → Filter by log → Materialize each
-memory as a learning via `wk-learn` → Process each via single mode → Rename
-learnings to `.learned.md` → Update log
+**Batch mode:** Scan learnings + memories + retrospects → Filter by marker →
+Materialize each memory/retro lesson as a learning via `wk-learn` → Process
+each via single mode → Rename learnings to `.learned.md` → Update markers
 
 **Improve mode:** Inventory scope → Parallel audit → Consolidate findings →
 Phased proposal (user approval per phase) → Apply → Verify & commit
 
-## Batch Mode: Scan Learnings and Memories
+## Batch Mode: Scan Learnings, Memories, and Retrospects
 
 When invoked without a specific incident (e.g., `/wk-sharpen` with no
 arguments, or `/wk-sharpen --scan`), sharpen enters batch mode — scanning
-three sources for distillable material.
+four sources for distillable material.
 
 ### Source 1: Global learnings inbox
 
@@ -763,9 +763,34 @@ explicit instructions about how a skill should behave** (e.g., "when
 reviewing PRs, always check..." or "the morning brief should...").
 Skip memories that are purely informational context.
 
+### Source 4: Session retrospects
+
+`wk-retro` writes dated retros to `$WK_SKILLS_HOME/learnings/retrospect/`.
+Their "What could've been better" bullets are distillable lessons — often
+naming a skill — that no other source captures. Scan them every batch run.
+
+```bash
+find "$WK_SKILLS_HOME/learnings/retrospect" -name "*.md" -type f 2>/dev/null
+```
+
+- Read each file's "What could've been better" (and any "What worked" bullet
+  that asserts a reusable practice). Extract each skill-applicable lesson.
+- Match each lesson to a skill by name/tool/phase. Skip lessons with no
+  matching skill.
+- Materialize each matched lesson as a learning via
+  `Skill(wk-learn, args="<matched-skill>")`, then distill it through the
+  **Source 2 path** (Steps 2–7) and rename that learning to `.learned.md`.
+- **HARD RULE — never rename or edit a retrospect file.** It is a dated log,
+  like a memory file. The materialized learning is the unit of work.
+- A lesson whose learning slug already exists in `learnings/skills/<skill>/`
+  is already distilled — skip it (the learning file's existence is the dedup).
+- Track processed retrospect files in the gitignored marker
+  `$WK_SKILLS_HOME/.distilled-retrospects`; reprocess a file when its mtime
+  is newer than the marker (retros gain sessions through the day).
+
 ### Tracking processed sources
 
-Two source classes, two tracking mechanisms — there is **no**
+Source classes track their processed state differently — there is **no**
 `.distilled-sources.log` (removed; it accumulated machine-absolute paths
 that leaked into history).
 
@@ -776,6 +801,9 @@ that leaked into history).
   `$WK_SKILLS_HOME/.distilled-memories` (one memory-file path per line).
   The memory file in `$HOME/.claude/memory/` is never renamed, so this
   marker is the only record that it was distilled.
+- **Retrospects (Source 4)** — tracked by a gitignored marker at
+  `$WK_SKILLS_HOME/.distilled-retrospects`. The retrospect file is never
+  renamed; reprocess when its mtime is newer than the marker entry.
 
 ```bash
 # Marker is gitignored — never committed (it lists machine-local paths).
@@ -794,7 +822,7 @@ echo "$memory_path" >> "$MARKER"
 marker entry, treat it as having new content and reprocess.
 
 **Force reprocessing:** on `/wk-sharpen --scan --force` (or "rescan all
-memories"), ignore the marker and process everything.
+memories"), ignore both markers and process everything.
 
 ### Batch mode presentation
 
@@ -804,6 +832,7 @@ Present a summary before processing:
 >
 > **Learnings:** {N} unprocessed files found
 > **Memories:** {M} feedback memories found ({P} new, {Q} already processed)
+> **Retrospects:** {R} retro files scanned ({S} new/changed)
 >
 > Processing {total} items..."
 
@@ -906,6 +935,9 @@ and proceed; push happens once at the end of the run, not between phases.
 - Read/write access to `$WK_SKILLS_HOME/learnings/` (for batch mode)
 - Read/write access to `$WK_SKILLS_HOME/.distilled-memories` (gitignored
   memory-distillation marker)
+- Read access to `$WK_SKILLS_HOME/learnings/retrospect/` and read/write
+  access to `$WK_SKILLS_HOME/.distilled-retrospects` (gitignored
+  retrospect-distillation marker)
 
 ---
 

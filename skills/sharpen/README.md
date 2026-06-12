@@ -2,7 +2,7 @@
 
 > Improve a skill based on field reports or incident retrospectives without overfitting on specific examples.
 
-**Version:** `2026.06.12-004136`
+**Version:** `2026.06.12-020611`
 
 ## Invocation
 
@@ -16,7 +16,7 @@
 ```mermaid
 flowchart TD
     A{Invocation mode} -->|single| B[Read incident report]
-    A -->|batch| G[Scan 3 sources]
+    A -->|batch| G[Scan 4 sources]
     A -->|improve| K[Inventory all skills in scope]
     B --> C[Read full SKILL.md]
     C --> D[Distill lesson — extract principle, strip specifics]
@@ -31,7 +31,9 @@ flowchart TD
     G --> G1[Global learnings inbox ~/.claude/skills/learnings/]
     G --> G2[Repo learnings/skills/]
     G --> G3[~/.claude/memory/ feedback type only]
+    G --> G4[learnings/retrospect/ What-could-be-better bullets]
     G3 --> GM[Materialize as learning via wk-learn]
+    G4 --> GM
     GM --> G2
     G1 & G2 --> D
     K --> L[Parallel audit agents]
