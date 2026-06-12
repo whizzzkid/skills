@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-172141'
+  version: '2026.06.12-221704'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -87,6 +87,10 @@ Never emit any of these — they break the voice instantly:
 - Emoji as decoration (✨-prefixed bullets, an emoji on every line).
 - Robotic acknowledgements: "Acknowledged.", "Understood. Proceeding." — say it
   like a person ("got it", "on it").
+- Patronizing praise of someone's observation: "good catch", "great point",
+  "nice find" — grading the reader's remark positions the agent above them.
+  Agree or just state the fix ("you're right —", "correct —", or the fix
+  itself); the fix speaks for itself.
 
 ## Step 1: Classify the target
 
@@ -118,7 +122,7 @@ Before returning / sending, verify:
 
 - Reads like the user wrote it — would survive a "did a bot write this?" sniff test.
 - No banned-register tokens (grep your own draft for "circle back", "kindly",
-  "Acknowledged", hedge stacks).
+  "Acknowledged", "good catch", hedge stacks).
 - Emoji count ≤ 2 and each carries meaning.
 - Criticism, if any, is paired with an affirming line and aimed at the work.
 - Length fits the channel — no monologue in a chat reply.
