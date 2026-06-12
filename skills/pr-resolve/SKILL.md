@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-123000'
+  version: '2026.06.12-215844'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -521,6 +521,23 @@ reversals:
   > "Bot findings are not converging (counts rising / a new finding reverses an
   > accepted fix). Pick: (a) merge now, (b) one more targeted round, (c) dismiss
   > the reversing finding with rationale."
+
+### All-Minor bulk-dismiss gate
+
+Before entering the per-item triage loop, check the active-finding severities:
+
+- When **every** active finding is Minor severity and each has a plausible
+  skip rationale, offer one bulk action first:
+
+  > "All {N} findings are Minor. Bulk dismiss all, or triage individually?
+  > (a) dismiss all  (b) triage individually"
+
+- On `a`: post a dismissal reply per finding, resolve all threads, skip the
+  per-item loop entirely.
+- Enter the per-item loop only when at least one finding is Major/Critical
+  **or** any finding lacks a plausible skip rationale.
+- Forcing a full per-item pass when nothing is above Minor is the friction
+  this gate removes — the user reaches for "dismiss all and merge" anyway.
 
 ### Order of processing
 

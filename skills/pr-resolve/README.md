@@ -3,7 +3,7 @@
 > Address PR review comments interactively — implement fixes, draft responses, and manage the full resolution
 > cycle from branch sync through push, CI polling, and session retro.
 
-**Version:** `2026.06.12-123000`
+**Version:** `2026.06.12-215844`
 
 ## Invocation
 
