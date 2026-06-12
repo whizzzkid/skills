@@ -5,11 +5,8 @@ description: >-
   smaller, reviewable, individually-shippable PRs. Reads the PR description,
   every comment surface (review threads, summaries, issue comments), the
   full diff, related learnings, and any linked tickets, then proposes a
-  split plan obeying five invariants: (1) all child PRs together reproduce
-  the original functionality; (2) each child PR builds and tests pass in
-  isolation; (3) the stack order makes each change make sense on its own;
-  (4) every child PR's description names its blockers and follow-up work;
-  (5) the split prioritizes reviewer digestibility, not raw line count.
+  split plan where each child PR builds and passes in isolation, is ordered
+  to stand alone, and prioritizes reviewer digestibility over raw line count.
   Use when asked to "split this PR", "break down this PR", "make smaller
   PRs from this", or when wk-pr-review flags a PR as too large to review.
 argument-hint: '[<pr-number-or-url>]'
@@ -36,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.05.20-191230'
+  version: '2026.06.12-015811'
   internal: false
   model:
     openai: gpt-4.1

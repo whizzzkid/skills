@@ -3,12 +3,14 @@
 > Split a large PR into a stack of smaller, individually-shippable PRs without losing functionality, breaking
 > review continuity, or shipping a half-finished state on any intermediate branch.
 
+**Version:** `2026.06.12-015811`
+
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
 | User-invocable | `/wk-pr-break [pr-number-or-url]` |
-| Model-invocable | Automatic on: "split this PR", "break down this PR", "make smaller PRs from this", or when `wk-pr-review` flags a PR as too large |
+| Model-invocable | Automatic on: "split this PR", "break down this PR", "make smaller PRs from this", or when [`wk-pr-review`](../pr-review/README.md) flags a PR as too large |
 
 ## How It Works
 
