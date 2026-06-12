@@ -12,3 +12,6 @@ Verify the diff string passed to the adversarial subagent matches `git diff` out
 **Root cause:** The diff was written inline into the agent prompt rather than taken directly from `git diff "$BASE...HEAD"` output. Manual transcription introduced the duplication.
 
 **Suggested fix:** Always pipe `git diff "$BASE...HEAD"` output directly into the subagent prompt rather than transcribing it manually. If inline embedding is necessary (length limits), verify the embedded snippet against the actual file with a quick grep for duplicated lines before dispatch.
+
+## Additional evidence
+A second instance: an inline diff excerpt omitted the `fnmatch` function body (context truncation), causing the subagent to flag an "empty function" as a blocker. The file on disk was correct. The false positive required a hex-dump verification pass to dismiss. Root cause and fix are the same as above — always use `git diff "$BASE...HEAD"` directly, never reconstruct inline.
