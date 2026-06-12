@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-215844'
+  version: '2026.06.12-221705'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -64,6 +64,12 @@ and manage the full resolution cycle from sync to summary.
    `wk-gh` Step 4 — applied at payload-render time.
 1. **Never push without explicit user confirmation.**
 2. **Never post reply comments without explicit user confirmation.**
+   - **HARD RULE — gate every outbound reply body through `Skill(wk-tone)`
+     before it is drafted or posted.** Reply/dismissal bodies are prose
+     posted as the user; route each through `wk-tone` so banned register
+     (e.g. "good catch") never ships. A post-hoc tone correction on a live
+     comment is visible and embarrassing — apply the voice before the
+     payload renders, alongside the `wk-gh` footer (rule 0).
 3. **Only resolve threads you actually worked on.** A thread is resolvable
    only if a fix was applied (option `a`/`e`), a comment was explicitly
    dismissed (option `d`), or a finding was deferred to a tracked ticket
