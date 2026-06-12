@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **58 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
+> **59 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
 
 ---
 
@@ -101,6 +101,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-mermaid`](./mermaid/README.md) | Author Mermaid diagrams that render on GitHub — `<br/>` not `\n`, quoted labels, supported types | Auto (on mermaid blocks) |
 | [`wk-find-cli`](./find-cli/README.md) | Enforce PWD-scoped, targeted `find` invocations; capture slow/failing calls as learnings | Auto (before `find` commands) |
 | [`wk-concise`](./concise/README.md) | Reduce response verbosity — drop filler, keep technical precision | User: `/concise` |
+| [`wk-tone`](./tone/README.md) | Apply the user's voice (encouraging, energetic, humorous, intent-emoji) to messages drafted on their behalf | Auto (posting as the user) + User |
 | [`wk-calver`](./calver/README.md) | Generate CalVer version strings (YYYY.MM.DD-HHMMSS UTC) — replaces semver | Auto (on version bumps) |
 | [`wk-learn`](./learn/README.md) | Capture per-skill learnings after each run → `learnings/skills/{skill}/` | User + Model |
 | [`wk-sharpen`](./sharpen/README.md) | Distill field reports into SKILL.md improvements without overfitting on examples | User + Model |
