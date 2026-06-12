@@ -2,6 +2,8 @@
 
 > Reduce response verbosity and token usage while preserving technical accuracy.
 
+**Version:** `2026.06.12-022206`
+
 ## Invocation
 
 | Mode | Trigger |

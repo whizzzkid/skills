@@ -23,7 +23,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.08-182836'
+  version: '2026.06.12-022206'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -66,6 +66,22 @@ agents, see **Default Activation** below.
 ---
 
 ## Mode Rules
+
+### Reasoning brevity (both modes)
+
+Concise governs the model's **internal reasoning**, not just the visible
+reply — the per-turn hook reminder carries a THINK-BRIEFLY / THINK-MINIMALLY
+clause for this.
+
+- Keep internal deliberation short — reason just enough to reach a correct
+  answer, then act.
+- Do not re-derive facts already established this session, restate the
+  prompt back, or narrate a plan internally before doing the obvious step.
+- Act once the path is clear; reserve long reasoning for genuinely ambiguous
+  or high-risk work (the same exemptions as the output caps).
+- The hook can only *steer* reasoning length. The hard lever is the
+  harness reasoning/thinking budget — lower it (or pick a lower-effort
+  model) when internal-monologue token cost stays high despite the nudge.
 
 ### brief (default)
 
