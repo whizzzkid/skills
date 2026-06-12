@@ -2,7 +2,7 @@
 
 > Improve a skill based on field reports or incident retrospectives without overfitting on specific examples.
 
-**Version:** `2026.06.12-020611`
+**Version:** `2026.06.12-154608`
 
 ## Invocation
 
@@ -60,5 +60,6 @@ flowchart TD
 - **Improve mode** requires explicit phased user approval even in auto mode — suite-scale
   refactoring is high blast-radius and can never be applied silently.
 - The gitignored `.distilled-memories` marker prevents re-distilling the same global memory
-  across runs (`--force` bypasses it); learnings track their own processed state via the
-  `.learned.md` rename — there is no `.distilled-sources.log`.
+  across runs (`--force` bypasses it); learnings **and retrospects** track their own processed
+  state via the `.learned.md` rename — no marker. Retros are write-once per-session files, so
+  the rename can never orphan later content (a new session writes a new file).

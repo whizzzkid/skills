@@ -28,7 +28,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.12-020611'
+  version: '2026.06.12-154608'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -642,9 +642,11 @@ specific incident.
 (`principle` vs `one-off`) → Draft (skip for `one-off`) → Audit for
 overlap/bloat → Present with cleanup → Apply → Verify & commit
 
-**Batch mode:** Scan learnings + memories + retrospects → Filter by marker →
+**Batch mode:** Scan learnings + memories + retrospects → Filter (`.learned.md`
+rename for learnings/retros, `.distilled-memories` marker for memories) →
 Materialize each memory/retro lesson as a learning via `wk-learn` → Process
-each via single mode → Rename learnings to `.learned.md` → Update markers
+each via single mode → Rename learnings **and retros** to `.learned.md` →
+Update the memory marker
 
 **Improve mode:** Inventory scope → Parallel audit → Consolidate findings →
 Phased proposal (user approval per phase) → Apply → Verify & commit
@@ -765,28 +767,43 @@ Skip memories that are purely informational context.
 
 ### Source 4: Session retrospects
 
-`wk-retro` writes dated retros to `$WK_SKILLS_HOME/learnings/retrospect/`.
-Their "What could've been better" bullets are distillable lessons — often
-naming a skill — that no other source captures. Scan them every batch run.
+`wk-retro` writes one **write-once file per session** to
+`$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>_session-<N>.md`. Their "What
+could've been better" bullets are distillable lessons — often naming a skill —
+that no other source captures. Because each file is write-once, process it
+exactly like a Source 2 learning: distill, then rename to `.learned.md`.
+
+Scan for unprocessed retrospect files:
 
 ```bash
-find "$WK_SKILLS_HOME/learnings/retrospect" -name "*.md" -type f 2>/dev/null
+find "$WK_SKILLS_HOME/learnings/retrospect" -name "*.md" \
+  ! -name "*.learned.md" -type f 2>/dev/null
 ```
 
-- Read each file's "What could've been better" (and any "What worked" bullet
-  that asserts a reusable practice). Extract each skill-applicable lesson.
-- Match each lesson to a skill by name/tool/phase. Skip lessons with no
-  matching skill.
-- Materialize each matched lesson as a learning via
-  `Skill(wk-learn, args="<matched-skill>")`, then distill it through the
-  **Source 2 path** (Steps 2–7) and rename that learning to `.learned.md`.
-- **HARD RULE — never rename or edit a retrospect file.** It is a dated log,
-  like a memory file. The materialized learning is the unit of work.
+For each unprocessed retrospect file:
+1. Read each "What could've been better" (and any "What worked" bullet that
+   asserts a reusable practice). Extract each skill-applicable lesson.
+2. Match each lesson to a skill by name/tool/phase. Skip lessons with no
+   matching skill.
+3. Materialize each matched lesson as a learning via
+   `Skill(wk-learn, args="<matched-skill>")`, then distill it through the
+   **Source 2 path** (Steps 2–7) and rename that learning to `.learned.md`.
+4. After every lesson in the file is distilled — or the file holds no
+   skill-applicable lesson — rename the retrospect file itself:
+   ```bash
+   mv "$file" "${file%.md}.learned.md"
+   ```
+
+- The `.learned.md` rename IS the processed-state record — no marker, no mtime
+  compare. A plain `*.md` under `learnings/retrospect/` is unprocessed; a
+  `.learned.md` is done.
+- The rename can never orphan later content: retros are write-once per session,
+  so a new session writes a new file that scans as unprocessed. (This reverses
+  the prior immutable-log model, where appending sessions to one daily file
+  hid new content behind an already-distilled marker.)
 - A lesson whose learning slug already exists in `learnings/skills/<skill>/`
-  is already distilled — skip it (the learning file's existence is the dedup).
-- Track processed retrospect files in the gitignored marker
-  `$WK_SKILLS_HOME/.distilled-retrospects`; reprocess a file when its mtime
-  is newer than the marker (retros gain sessions through the day).
+  is already distilled — skip materializing it again (the learning file is the
+  dedup), but still rename the retrospect once its lessons are all accounted for.
 
 ### Tracking processed sources
 
@@ -797,13 +814,14 @@ that leaked into history).
 - **Learnings (Source 1 & 2)** — processed state is the `.learned.md`
   rename itself. A file ending `.learned.md` is done; a plain `*.md`
   under `learnings/skills/` is unprocessed. No separate ledger.
+- **Retrospects (Source 4)** — same as learnings: processed state is the
+  `.learned.md` rename. Each retro is a write-once per-session file, so a
+  plain `*.md` under `learnings/retrospect/` is unprocessed and a
+  `.learned.md` is done. No marker, no mtime compare.
 - **Memories (Source 3)** — tracked by a gitignored marker at
   `$WK_SKILLS_HOME/.distilled-memories` (one memory-file path per line).
   The memory file in `$HOME/.claude/memory/` is never renamed, so this
   marker is the only record that it was distilled.
-- **Retrospects (Source 4)** — tracked by a gitignored marker at
-  `$WK_SKILLS_HOME/.distilled-retrospects`. The retrospect file is never
-  renamed; reprocess when its mtime is newer than the marker entry.
 
 ```bash
 # Marker is gitignored — never committed (it lists machine-local paths).
@@ -822,7 +840,9 @@ echo "$memory_path" >> "$MARKER"
 marker entry, treat it as having new content and reprocess.
 
 **Force reprocessing:** on `/wk-sharpen --scan --force` (or "rescan all
-memories"), ignore both markers and process everything.
+memories"), ignore the `.distilled-memories` marker and reprocess every
+memory. For learnings and retrospects, force mode re-reads `.learned.md`
+files as candidates rather than skipping them.
 
 ### Batch mode presentation
 
@@ -832,7 +852,7 @@ Present a summary before processing:
 >
 > **Learnings:** {N} unprocessed files found
 > **Memories:** {M} feedback memories found ({P} new, {Q} already processed)
-> **Retrospects:** {R} retro files scanned ({S} new/changed)
+> **Retrospects:** {R} retro files found ({S} unprocessed)
 >
 > Processing {total} items..."
 
@@ -935,9 +955,8 @@ and proceed; push happens once at the end of the run, not between phases.
 - Read/write access to `$WK_SKILLS_HOME/learnings/` (for batch mode)
 - Read/write access to `$WK_SKILLS_HOME/.distilled-memories` (gitignored
   memory-distillation marker)
-- Read access to `$WK_SKILLS_HOME/learnings/retrospect/` and read/write
-  access to `$WK_SKILLS_HOME/.distilled-retrospects` (gitignored
-  retrospect-distillation marker)
+- Read/write access to `$WK_SKILLS_HOME/learnings/retrospect/` (retrospect
+  files are renamed to `.learned.md` once distilled, like learnings)
 
 ---
 
