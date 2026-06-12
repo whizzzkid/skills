@@ -13,3 +13,6 @@ skill: wk-pr-resolve
 - **Where:** Step 5 per-comment loop — new HARD RULE "triage every comment,
   THEN implement; never mid-triage", strengthening the prior already-covered
   guidance into an explicit gate.
+- **Escalation:** Important (recurred 2026-06-12) — recurred again after the
+  HARD RULE landed; bumped to notch 2 (`**Important:**`) per the wk-sharpen
+  re-violation ladder. Next recurrence → "Very important".

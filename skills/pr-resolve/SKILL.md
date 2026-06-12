@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-003055'
+  version: '2026.06.12-013537'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -956,9 +956,10 @@ per-comment decisions when multiple prompts share one response slot.
 If you feel pulled to batch ("to save round-trips", "they're all the
 same category"), do not — one per message, always.
 
-**HARD RULE — triage every comment, THEN implement; never mid-triage.**
-An `(a)`/`(e)` reply **records** the fix into `fixes_to_apply` — it is not
-a signal to start work.
+**HARD RULE — Important — triage every comment, THEN implement; never
+mid-triage.** This rule has already recurred after being added — it is the
+single most-violated rule in this skill. An `(a)`/`(e)` reply **records** the
+fix into `fixes_to_apply` — it is not a signal to start work.
 
 - Do not read files, write code, or commit for an accepted comment until
   **every** item in `judgment_required[]` has a recorded decision.
@@ -1750,10 +1751,13 @@ already-addressed echoes:
 3. Re-enter Steps 6–9 for the second cycle.
 4. Re-enter Step 9.5 again after the second push.
 
-Exit the loop only when CI passes **and** the post-CI fetch surfaces
-no new genuinely-unresolved comments. Cap at three iterations per
-session — beyond that, surface to the user that the PR is in a
-review-thrash loop and ask how to proceed.
+**Important:** Exit the loop only when CI passes **and** the post-CI fetch
+surfaces no new genuinely-unresolved comments. "CI green" alone is NOT the
+terminal condition — the contract is "CI green AND zero unresolved threads".
+Never stop and return control just because CI happened to pass; re-fetch all
+three surfaces and loop. (This rule has recurred — stopping at CI-green is a
+repeated failure.) Cap at three iterations per session — beyond that, surface
+to the user that the PR is in a review-thrash loop and ask how to proceed.
 
 ## Step 10: Final Summary
 
