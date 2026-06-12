@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-200611'
+  version: '2026.06.12-122600'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -83,6 +83,22 @@ has already approved the workflow by using it. Minimize interruptions:
 - A code review finding requires a design decision (not just a fix)
 - The user explicitly said to pause or check in at a specific point
 - Destructive or shared-state actions (force push, production deploy)
+
+**HARD RULE — when you solicit feedback, block on it.** The moment you
+ask the user a question, request a review, or say you'll wait for input,
+**stop**. Do not implement, edit, or push past that point until the user
+answers. Asking for feedback, implementing your own guess, and then
+asking again ("you asked for feedback, implemented it, and then asked for
+feedback again") wastes the turn and overwrites the very decision you
+solicited.
+
+- A question you intend to act on is a barrier, not a courtesy line —
+  end the turn after asking.
+- This is distinct from Auto Mode: auto mode means *don't ask
+  permission for the workflow's own steps*. It never licenses
+  answering your own open question to the user.
+- If you can proceed without the answer, you did not need to ask —
+  either ask and wait, or don't ask and proceed. Never both.
 
 **Skill invocation is mandatory.** When this workflow says "invoke
 `wk-commit`" or "invoke `wk-pr`", the agent MUST use the Skill tool to
@@ -632,6 +648,30 @@ the registry or release page. Do not guess.
 
 Always use named capture groups: `(?<year>\d{4})` not `(\d{4})`. This
 applies to all languages — no exceptions.
+
+#### Bash invocation discipline
+
+The Bash tool resets the working directory between calls and shell
+state does not persist. Two patterns recur in the transcripts as
+wasted round-trips and avoidable permission prompts:
+
+- **No `cd` per command.** Re-`cd`-ing into the same directory on every
+  call is dead weight, and a bare `cd` can trip a permission prompt.
+  Use absolute paths or `git -C <repo>` / tool-native `--cwd` flags
+  instead. When a sequence genuinely needs a shared cwd, chain it in
+  one call (`cd X && a && b`), never one `cd` per turn.
+- **Never hardcode the base branch.** `git diff main...HEAD` assumes
+  `main`; resolve the base dynamically before any diff/merge-base/rebase
+  range:
+
+  ```bash
+  BASE=$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null \
+    || git symbolic-ref refs/remotes/origin/HEAD --short | sed 's@^origin/@@')
+  git diff "$(git merge-base HEAD "origin/$BASE")...HEAD"
+  ```
+
+  A stacked PR's base is a non-default branch — a hardcoded `main`
+  range produces a wrong diff and a rebase onto the wrong target.
 
 #### File Permissions
 
