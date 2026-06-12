@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.10-191558'
+  version: '2026.06.12-162234'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -104,6 +104,9 @@ Collect and internalize:
 - List of changed files and their scope
 - Commit history on this branch
 - The base branch to understand what's being merged into
+- The overall change size (lines changed, file count). A large PR (several
+  hundred lines, or many unrelated concerns) earns a PR-stack recommendation
+  in the review body (Phase 6).
 
 ### Extract author review focus from the PR description
 
@@ -122,7 +125,7 @@ Phases 3–5.
   - Self-flagged uncertainty ("I'm not sure about the locking
     strategy", "FIXME: revisit this before merge").
 - Capture each ask as `{topic, files, question, severity-hint}` —
-  `severity-hint` is `blocker` when the author flags correctness or
+  `severity-hint` is `concern` when the author flags correctness or
   security, `suggestion` otherwise.
 - Drop boilerplate that is not a review ask: test-plan checkboxes,
   rollout notes, "closes #N" lines, screenshots, automation blocks.
@@ -171,7 +174,7 @@ is often the only place the architecture is stated.
   Skill(wk-arch-review, args="<changed-doc-path | PR number>")
   ```
 
-- Treat arch-review's 🔴/🟠 findings as blockers in Phase 5 — attach each to
+- Treat arch-review's 🔴/🟠 findings as concerns in Phase 5 — attach each to
   the relevant file/line, or the review body when it spans the change.
 - Skip silently only when **no** trigger matches — most code PRs are not
   architectural. A doc-only diff is never a skip when it touches a spec/design
@@ -313,7 +316,7 @@ silently ignored.
 
 **Verify the path is wired before accepting a bot's severity.** Reproducing
 the *mechanism* is not enough — a mechanically-correct finding on a code path
-that nothing reaches in the shipped configuration is not a live blocker. For
+that nothing reaches in the shipped configuration is not a live concern. For
 each bot finding, also grep for the **trigger** that activates the affected
 path (an env var set in a compose/CI file, a live caller, a production config)
 before assigning severity.
@@ -350,7 +353,7 @@ reply chain — all comments with `in_reply_to_id` pointing to the root.
 |--------|--------------|--------|
 | **Fix applied** | The file was modified after the comment, AND the concern is no longer present in the current code | **Validate the fix before acknowledging** (see below). Only after validation passes, draft "Looks good — thanks for addressing this." and queue a 👍 reaction. |
 | **Fix attempted, still wrong** | The file was modified but the concern persists or was only partially addressed | Draft a follow-up explaining what's still off, referencing the current code |
-| **Deferred to a future ticket** | The author's reply defers the issue to a tracked ticket or follow-up PR (links a ticket, says "follow-up", "separate PR", "next sprint") | Queue a 👍 reaction to acknowledge — no reply needed. **Exception:** if the original comment was `blocker`-severity (correctness, security, data loss), do NOT just react — draft a polite nudge to address it in this PR (see "Nudge on critical deferrals"). |
+| **Deferred to a future ticket** | The author's reply defers the issue to a tracked ticket or follow-up PR (links a ticket, says "follow-up", "separate PR", "next sprint") | Queue a 👍 reaction to acknowledge — no reply needed. **Exception:** if the original comment was `concern`-severity (correctness, security, data loss), do NOT just react — draft a polite nudge to address it in this PR (see "Nudge on critical deferrals"). |
 | **Author asked a question** | The last reply is from the PR author and contains a question or request for clarification | Draft a response that states the **concrete action or decision the answer requires** — grounded in current-code analysis — not a bare acknowledgment. |
 | **Author pushed back** | The last reply is from the author disagreeing or proposing an alternative | Draft a response acknowledging the pushback and either agreeing with reasoning or reiterating the concern with evidence |
 | **No response** | No replies from the author, no code changes addressing it | Leave as-is — the comment still stands |
@@ -372,10 +375,10 @@ acknowledging a "Fix applied" thread:
 - If validation shows the issue persists, reclassify the thread as **Fix
   attempted, still wrong** and draft the follow-up instead.
 
-**Nudge on critical deferrals.** A `blocker`-severity concern deferred to a
+**Nudge on critical deferrals.** A `concern`-severity issue deferred to a
 future ticket still ships the risk in this PR. Draft a follow-up that
 restates the risk in one clause and asks the author to consider fixing it
-in the same PR — politely, not as a demand. Non-blocker deferrals get the
+in the same PR — politely, not as a demand. Lower-severity deferrals get the
 👍 reaction and nothing more.
 
 **Present follow-ups for approval:**
@@ -636,7 +639,7 @@ analysis document written to `.review-playground/`.
 - **Arithmetic audit:** cross-check every numeric literal in a table or
   enumerated claim ("all six", counts, fixture floors) against the actual
   items counted in the doc — a split or added section leaves stale counts.
-- **Local-path / personal-artifact audit:** flag as **blocker** any committed
+- **Local-path / personal-artifact audit:** flag as a **concern** any committed
   absolute path containing a username, home directory, worktree/workspace dir,
   or local-only file/branch reference stated as a permanent fact. It resolves
   on one machine only and leaks personal environment structure. Fix: drop the
@@ -645,7 +648,7 @@ analysis document written to `.review-playground/`.
   file as authoritative ("see `{path}` — source of truth if anything here
   drifts"), read that file and verify every constraint the doc states —
   allowlist entries, character classes, field names, enum values — against the
-  live code. Treat any drift as a **blocker**: a doc that misstates an
+  live code. Treat any drift as a **concern**: a doc that misstates an
   allowlist or schema ships a broken config at user-invocation time, and
   disclosure in the PR body does not fix the artifact users actually invoke.
   Watch for claims satisfied only by a companion PR still open on another
@@ -871,18 +874,30 @@ What does NOT go inline:
 Praise and overall verdict belong in the **review body** (Phase 6), not
 inline. Inline noise dilutes the actionable signal.
 
+### Review posture — approve with concerns, do not block
+
+- Default to approving the PR with concerns the author resolves, not to
+  blocking the merge. The reviewer rarely blocks.
+- Never use the word "blocker" in author-facing text — use "concern" or
+  "limitation".
+- When the review surfaces many concerns, add one affirming line in the
+  review body so the author is not discouraged (e.g. "Everything here is
+  fixable — don't fret it"). State it once, never per comment.
+
 ### Tone
 
-Terse and constructive. Each comment is one or two sentences of
-actionable feedback. No filler, no hedging, no restating the diff.
-Frame non-blockers as "candidate for a follow-up" rather than demands.
+- Encouraging and constructive, never robotic — each comment is one or two
+  sentences of actionable feedback. No filler, no hedging, no restating the diff.
+- Frame non-critical items as "candidate for a follow-up" rather than demands.
 
 ### Severity
 
 Tag each comment with a severity prefix:
 
-- **`blocker:`** Must be fixed before merge. Reserve for critical bugs, security
-  issues, data loss risks, or broken functionality. Use sparingly.
+- **`concern:`** Important to address before merge — critical bugs, security
+  issues, data loss risks, or broken functionality. Flag it as a concern the
+  author resolves and approve-with-concerns; never frame it as a merge block.
+  Use sparingly.
 - **`suggestion:`** Good for a follow-up change. Style nits, naming improvements,
   refactoring ideas, pedantic observations, potential optimizations.
 - **`question:`** Genuine uncertainty about intent or behavior. Ask the author
@@ -967,13 +982,17 @@ benefit from independent verification, human reviewers do not.
 
 **Duplicate of a human reviewer's comment:**
 
-- **Skip it.** The existing thread already carries the human's
-  voice; a second voice agreeing is noise.
-- If your investigation adds **new information** the original
-  reviewer missed, reply to the existing thread instead of creating
-  a new comment.
-- If the existing comment is **wrong or incomplete**, reply with a
-  correction rather than posting a parallel comment.
+- **Validate, then skip the parallel comment.** Confirm the human's
+  concern holds against the current code. If it does, do not post a
+  second voice agreeing — the thread already carries it.
+- When your independent finding **agrees** and a related concern of
+  yours touches the same code, annotate that comment `Also fix concerns
+  from @{reviewer}` instead of restating theirs.
+- If your investigation adds **new information** the original reviewer
+  missed, reply to the existing thread instead of a new comment.
+- If your findings **disagree** (the existing comment is wrong or
+  incomplete), reply with a correction and evidence rather than a
+  parallel comment.
 
 **Bot reviewer comments** (commenter `user.type` == `Bot`, or login
 ends in `[bot]`):
@@ -1067,7 +1086,7 @@ the review addresses it before presenting comments.
 
 - Local answer (a specific file/line): post an inline comment with
   severity `question` reframed as an answer, or `suggestion` /
-  `blocker` when the answer surfaces an issue.
+  `concern` when the answer surfaces an issue.
 - Cross-cutting answer (spans files or whole change): add a short
   named section to the review body (Phase 6) — `Re: <author's
   question>` — with the verdict and evidence.
@@ -1083,7 +1102,7 @@ present-for-approval summary can show coverage at a glance.
 Show a numbered summary of all proposed comments:
 
 ```
-1. [blocker] src/auth.ts:42 — Session token not invalidated on logout
+1. [concern] src/auth.ts:42 — Session token not invalidated on logout
 2. [suggestion] src/utils.ts:18 — Consider renaming `processData` to something more specific
 3. [praise] src/cache.ts:91 — Nice use of LRU eviction here
 4. [question] src/api.ts:33 — Is this timeout intentional or a leftover from debugging?
@@ -1109,7 +1128,7 @@ loop checkpoint is the GitHub Submit button, not a terminal prompt.
 ### Pre-summary opt-out
 
 The user can request edits or skips by saying so **before** the Phase 5
-summary is presented (e.g., "drop suggestions, only blockers" or
+summary is presented (e.g., "drop suggestions, only concerns" or
 "don't post anything"). Once the summary is shown, the agent proceeds
 to create the pending review without a separate A/B/C gate — edits and
 skips happen in the GitHub UI on the draft.
@@ -1156,13 +1175,14 @@ is for the **reviewer running the skill** and stays in TERMINAL output
 only. Never move verification rationale into the GitHub body.
 
 - **HARD RULE — LGTM is one line.** When the verdict is LGTM with no
-  blockers, the body is **one line max** (`LGTM 🚀` or equivalent),
+  concerns, the body is **one line max** (`LGTM 🚀` or equivalent),
   followed only by the footer. Do not justify the verdict, list what's
   strong, or narrate what you checked — that rationale goes to the
   terminal, never the body. A multi-paragraph LGTM is the exact thing
   authors strip.
-- **PR is too large or mixes concerns:** call it out and recommend
-  splitting into smaller PRs. Sketch the natural split lines.
+- **PR is too large or mixes concerns:** recommend the author split it into
+  multiple PRs and **stack** them (a PR stack), and sketch the natural split
+  lines. Frame it as a suggestion that makes review easier, not a demand.
 - **PR has structural concerns spanning the whole change:** describe the
   pattern, not the individual instances (those go inline). E.g.,
   "logging is inconsistent across the new modules" goes in the body;
@@ -1192,7 +1212,7 @@ never pure Confirmed outcomes (see Phase 5 HARD RULE).
 - **Process meta-commentary.** Never mention which skills or tools were
   invoked (e.g. "I ran an architecture pass") — the author needs the
   verdict, not the method.
-- **Structurally-obvious findings.** Never state "no X blockers" when the
+- **Structurally-obvious findings.** Never state "no X concerns" when the
   absence is structural (no code → no code bugs).
 - **Diff narration.** Never restate information the reader sees in the diff —
   test counts, field/variable names, regex identifiers, list contents. Limit

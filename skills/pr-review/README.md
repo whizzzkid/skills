@@ -3,6 +3,8 @@
 > Thorough, adversarial code review of a GitHub PR — investigates changed code deeply, builds a playground to
 > validate assumptions via experiments, and posts a pending review for human submission.
 
+**Version:** `2026.06.12-162234`
+
 ## Invocation
 
 | Mode | Trigger |
@@ -55,4 +57,4 @@ flowchart TD
 - **Architecture changes escalate to [`wk-arch-review`](../arch-review/README.md):** Phase 1 detects diffs
   that introduce/alter architecture (design docs, new services/datastores/IaC, trust-boundary or API/contract
   changes, ownership-reshaping migrations) and folds its SPOF / unhappy-path / assumption findings into the
-  review as blockers.
+  review as concerns.
