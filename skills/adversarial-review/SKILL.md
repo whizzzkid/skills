@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-000220'
+  version: '2026.06.12-013539'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -500,6 +500,13 @@ If a PR exists for the branch:
   `suggestion` for internal-only telemetry; `blocker` when the
   change affects customer-visible behavior or dashboards owned
   by another team.
+- **PR-body staleness is a post-push fix, not a push-gating blocker.**
+  Record every stale-body finding above as a post-push TODO — do not
+  update the body before pushing. The body describes what is live in the
+  PR, and commits are not live until pushed; updating first inverts the
+  causal order. Sequence: push → update body to reflect new HEAD →
+  re-fetch comment surfaces. The finding still blocks marking the PR
+  ready, just not the push itself.
 
 ### 2.11 External-call reproduction gate
 
