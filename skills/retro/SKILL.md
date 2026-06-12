@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.12-024027'
+  version: '2026.06.12-154608'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -67,7 +67,7 @@ GLOBAL_MEMORY="$HOME/.claude/memory"
 GLOBAL_CLAUDE="$HOME/.claude/CLAUDE.md"
 ```
 
-- Retro entries go to `$RETRO_LOG_DIR/<YYYY-MM-DD>.md` — never to `~/.claude/memory/`.
+- Retro entries go to `$RETRO_LOG_DIR/<YYYY-MM-DD>_session-<N>.md` — one **write-once file per session**, never to `$HOME/.claude/memory/`.
 - Memory writes in Step 4 still target `$GLOBAL_MEMORY` for cross-session agent context (rules, preferences). The retrospect log carries only distilled session principles.
 
 ## Step 1: Review Session Context
@@ -163,20 +163,27 @@ entry only when the session surfaced at least one skill-gap or improvement
 record that a session ran. Retro-log volume should trend **down** as the system
 matures — a sparse log is success, not a gap to fill.
 
-**HARD RULE — destination is `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md`,
-never `~/.claude/memory/retro-log.md`.** The retrospect log is a skill-improvement
-artifact; the memory store is for cross-session agent context.
+**HARD RULE — one write-once file per session at
+`$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>_session-<N>.md`,
+never `$HOME/.claude/memory/retro-log.md`.** The retrospect log is a
+skill-improvement artifact; the memory store is for cross-session agent context.
 
+- Write a **new** file for this session — never append to an existing session
+  file. A write-once file is distilled exactly once and renamed `.learned.md`
+  by `wk-sharpen`; appending later sessions to a shared daily file orphans
+  their content (the file is already distilled and never re-read).
 - Create the directory if missing: `mkdir -p "$WK_SKILLS_HOME/learnings/retrospect"`.
-- Append to today's file if it exists; otherwise create.
 
-**HARD RULE — no timestamps, no work narrative.** The section header is
+**HARD RULE — no timestamps, no work narrative.** The in-file header is
 `## Session-N` and nothing else — never a time of day, never the task/topic,
-never what was built. The retro records *findings*, not *activity*. Derive N:
+never what was built. The retro records *findings*, not *activity*. Derive N
+from today's existing session-file count (processed or not) and never reuse a
+filename:
 
 ```bash
-FILE="$WK_SKILLS_HOME/learnings/retrospect/$(date -u +%F).md"
-N=$(( $(grep -c '^## Session-' "$FILE" 2>/dev/null || echo 0) + 1 ))
+DIR="$WK_SKILLS_HOME/learnings/retrospect"; DAY=$(date -u +%F)
+N=$(( $(ls "$DIR/${DAY}_session-"*.md 2>/dev/null | wc -l | tr -d ' ') + 1 ))
+FILE="$DIR/${DAY}_session-${N}.md"
 ```
 
 **HARD RULE — distilled findings only, two buckets.** Each bullet is a one-
@@ -234,7 +241,8 @@ fi
 ```
 
 - Stop and rewrite the offending bullet if validation fails.
-- Append to the dated file only after validation passes.
+- Write the new per-session file (`$FILE`) only after validation passes —
+  `cp "$DRAFT" "$FILE"`. Never append to an existing session file.
 
 ## Step 4: Promote — Distill and Route Globally
 
