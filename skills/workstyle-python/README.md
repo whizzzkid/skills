@@ -2,6 +2,8 @@
 
 > Enforces idiomatic, type-safe Python style on every `.py` file the agent writes or edits.
 
+**Version:** `2026.06.12-021638`
+
 ## Invocation
 
 | Mode | Trigger |

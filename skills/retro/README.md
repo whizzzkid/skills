@@ -2,7 +2,7 @@
 
 > Run a session retrospective to capture learnings and improve future sessions.
 
-**Version:** `2026.06.11-192012`
+**Version:** `2026.06.12-021631`
 
 ## Invocation
 

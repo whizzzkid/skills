@@ -4,6 +4,8 @@
 > split between operational errors (handle gracefully) and programmer errors
 > (fail fast).
 
+**Version:** `2026.06.12-021635`
+
 ## Invocation
 
 | Mode | Trigger |

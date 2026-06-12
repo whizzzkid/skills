@@ -21,7 +21,7 @@ allowed-tools:
   - Edit
   - Skill
   - AskUserQuestion
-model: sonnet
+model: haiku
 effort: low
 model-invocable: true
 user-invocable: true
@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.11-192012'
+  version: '2026.06.12-021631'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash

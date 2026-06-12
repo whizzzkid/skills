@@ -3,6 +3,8 @@
 > Documentation-comment gate — requires public-API docs, WHY-not-WHAT decision
 > comments, and mandatory removal of stale comments when editing adjacent code.
 
+**Version:** `2026.06.12-021634`
+
 ## Invocation
 
 | Mode | Trigger |

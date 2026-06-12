@@ -12,7 +12,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
-model: sonnet
+model: haiku
 effort: low
 model-invocable: true
 user-invocable: true
@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.01-224411'
+  version: '2026.06.12-021643'
   internal: false
   model:
     openai: gpt-4.1-mini

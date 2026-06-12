@@ -2,6 +2,8 @@
 
 > Enforces safe, idiomatic shell-script conventions on every shell file the agent writes or edits.
 
+**Version:** `2026.06.12-021641`
+
 ## Invocation
 
 | Mode | Trigger |

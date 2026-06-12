@@ -18,7 +18,7 @@ allowed-tools:
   - "mcp__claude_ai_Jira_*__addCommentToJiraIssue"
   - "mcp__claude_ai_Jira_*__getTransitionsForJiraIssue"
   - "mcp__claude_ai_Jira_*__searchJiraIssuesUsingJql"
-model: sonnet
+model: haiku
 effort: medium
 model-invocable: false
 user-invocable: true
@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-020126'
+  version: '2026.06.12-021629'
   internal: false
   model:
     claude: claude-sonnet-4-6
