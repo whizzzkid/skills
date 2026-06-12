@@ -1,0 +1,23 @@
+{
+  "_comment": "Declarative manifest of Claude Code hooks this repo's skills require. Consumed by register-hooks.sh, which merges these into $HOME/.claude/settings.json idempotently (keyed on the exact command string). Add an entry here when a skill ships a hook that must be wired into settings.json on every machine.",
+  "PreToolUse": [
+    {
+      "matcher": "Bash",
+      "command": "jq -c --arg prefix \"source $HOME/.claude/profile.sh >/dev/null 2>&1; \" '{hookSpecificOutput: {hookEventName: \"PreToolUse\", updatedInput: (.tool_input | .command = ($prefix + .command))}}'"
+    },
+    {
+      "matcher": "Skill",
+      "command": "$HOME/.agents/skills/wk-env/hooks/check-skill-env-vars.sh"
+    },
+    {
+      "matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit",
+      "command": "$HOME/.agents/skills/wk-scope-guard/hooks/scope-guard.sh"
+    }
+  ],
+  "UserPromptSubmit": [
+    {
+      "matcher": "",
+      "command": "$HOME/.agents/skills/wk-concise/hooks/concise-reminder.sh"
+    }
+  ]
+}

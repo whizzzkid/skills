@@ -50,8 +50,13 @@ flowchart TD
 
 - Hook: `skills/scope-guard/hooks/scope-guard.sh` (installed to
   `$HOME/.agents/skills/wk-scope-guard/hooks/`)
-  Registered in `$HOME/.claude/settings.json` → `hooks.PreToolUse`
+  Registered in `$HOME/.claude/settings.json` → `hooks.PreToolUse` via
+  `scripts/register-hooks.sh` (declared in `scripts/hooks-manifest.json`)
 - Tests: `skills/scope-guard/tests/scope-guard.bats` (18 cases)
+
+To wire this (and every other skill-shipped hook) into a fresh machine, run
+`scripts/install-skills.sh` — it installs the skills and then calls
+`register-hooks.sh` to merge the manifest into `settings.json` idempotently.
 
 ## Related
 
