@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021631'
+  version: '2026.06.12-024027'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -210,14 +210,17 @@ repo-relative or `/tmp/agent/…` — never commit an absolute home/worktree pat
 ### Validation gate (run after composing the draft, before Write)
 
 ```bash
-DRAFT=/tmp/retro-draft.$$
+# Use a FIXED temp path, not $$ — each Bash tool call is a new subprocess,
+# so $$ differs between the write call and a later read/sed call and the
+# file is not found. A fixed slug survives across tool invocations.
+DRAFT=/tmp/retro-draft-wkretro.md
 # write the proposed entry to $DRAFT first
 # Guard: an empty/unset $DRAFT appends nothing and passes every grep below
 # silently — fail loudly instead of writing a blank entry.
 [[ -s "$DRAFT" ]] || { echo "FAIL: draft is empty — refusing to append a blank retro entry"; exit 1; }
 DENY="$(printenv EMPLOYER):$(printenv GITHUB_ORG)"
-echo "$DENY" | tr ':' '\n' | grep -v '^$' > /tmp/retro-deny.$$
-if grep -iF -f /tmp/retro-deny.$$ "$DRAFT" 2>/dev/null; then
+echo "$DENY" | tr ':' '\n' | grep -v '^$' > /tmp/retro-deny-wkretro.txt
+if grep -iF -f /tmp/retro-deny-wkretro.txt "$DRAFT" 2>/dev/null; then
   echo "FAIL: forbidden employer/org token in draft"; exit 1
 fi
 # user-land absolute paths (home dir / worktree) must be anonymized
