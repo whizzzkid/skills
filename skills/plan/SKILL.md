@@ -16,7 +16,7 @@ allowed-tools:
   - Grep
   - Glob
   - Skill
-model: fable
+model: opus
 effort: high
 model-invocable: true
 user-invocable: true
@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-192012'
+  version: '2026.06.12-021628'
   model:
     openai: o3
     google: gemini-2.5-pro
