@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-200611'
+  version: '2026.06.12-122800'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -313,6 +313,15 @@ state and updated if they have drifted. No exceptions.
 Drift signals to a reviewer that the agent shipped without re-reading
 its own work. The PR is the source of truth for everyone except the
 author — leaving it stale silently changes what reviewers approve.
+
+**HARD RULE — push first, then sync the body. Never the reverse.** The
+PR body's commit SHAs, ref links, and "current behavior" narrative are
+only correct *after* the push lands. Editing the body before pushing
+("why are you updating the PR body before push?") bakes in stale refs you
+then have to re-edit — two round-trips for one sync. The order is
+fixed: run the full pre-push gate → `git push` → detect drift → edit the
+body. Any branch-ref-dependent step (body sync, "Closes #N" verification,
+self-review SHA links) waits for the push.
 
 ### Step 1: Detect whether a PR exists
 
