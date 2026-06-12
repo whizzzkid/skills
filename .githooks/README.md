@@ -135,6 +135,20 @@ Enforces the convention used across the learnings corpus so batch-mode
 [`wk-sharpen`](../skills/sharpen/README.md) can rely on the `.learned.md`
 rename as the sole processed-state marker.
 
+## check-retro-filenames.sh — retrospect filename format guard
+
+Pre-commit hook that blocks any staged `learnings/retrospect/*.md` whose
+basename does not match `YYYY-MM-DD_<kebab-name>[.learned].md`:
+
+- Date prefix at the start, underscore separator before the slug.
+- Lowercase kebab slug (`a-z`, `0-9`, hyphens), e.g. `session-1`.
+- Plain `.md` is an unprocessed session (write-once); `.learned.md` is distilled.
+- Legacy per-day files (`YYYY-MM-DD.md`, no slug) are grandfathered.
+
+[`wk-retro`](../skills/retro/README.md) writes one file per session so each
+retrospect is write-once — distilled and renamed to `.learned.md` by batch-mode
+[`wk-sharpen`](../skills/sharpen/README.md), exactly like a learning file.
+
 ## scrub-staged.sh — identifier leakage guard
 
 Pre-commit hook that blocks any staged diff containing:

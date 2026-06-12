@@ -21,6 +21,8 @@ pre-commit:
       run: .githooks/check-learnings-dirs.sh
     check-learning-filenames:
       run: .githooks/check-learning-filenames.sh
+    check-retro-filenames:
+      run: .githooks/check-retro-filenames.sh
     check-ticket-refs:
       run: .githooks/check-ticket-refs.sh
     check-prohibited:
