@@ -41,7 +41,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.11-230339'
+  version: '2026.06.12-003055'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -956,7 +956,18 @@ per-comment decisions when multiple prompts share one response slot.
 If you feel pulled to batch ("to save round-trips", "they're all the
 same category"), do not — one per message, always.
 
-### Record each decision (do not execute yet)
+**HARD RULE — triage every comment, THEN implement; never mid-triage.**
+An `(a)`/`(e)` reply **records** the fix into `fixes_to_apply` — it is not
+a signal to start work.
+
+- Do not read files, write code, or commit for an accepted comment until
+  **every** item in `judgment_required[]` has a recorded decision.
+- Begin implementation only at Step 6, after the "After all decisions
+  collected" gate confirms all comments are triaged.
+- A single `a` is a recorded decision, not a go-signal — diving into a
+  refactor after the first acceptance skips the remaining comments and
+  fragments one resolution into multiple pushes (the repeated failure
+  this rule exists to stop).
 
 **(a) Apply suggested fix:**
 - Record in `fixes_to_apply` list: `{path, line, description, code_change, threadId, commentId}`
