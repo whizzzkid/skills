@@ -28,7 +28,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.11-192615'
+  version: '2026.06.12-004136'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -144,7 +144,9 @@ For every learning surfaced this run, before doing anything else:
 - If a high-severity learning is classified `already-covered`, the
   classification must cite specific existing SKILL.md line numbers
   that prove every rule in the learning is encoded — per the
-  "full-read before `already-covered`" HARD RULE.
+  "full-read before `already-covered`" HARD RULE — AND escalate the
+  cited rule one notch per the "re-violation escalation" HARD RULE
+  (a recurrence on a covered rule means the rule is not steering).
 - Treat unrecognized log actions (anything not in
   `distilled | partial | already-covered | skipped`) as `unverified` and
   re-audit.
@@ -222,6 +224,43 @@ existing rule/bullet in the target skill.
   classify as `partial` and distill the missing parts.
 - Cite the specific existing lines that already encode each
   bullet — "topic exists in the skill" is not a coverage proof.
+
+### HARD RULE: re-violation escalation — `already-covered` is NOT "done"
+
+A fresh learning describing an incident the skill **already covers** is
+proof the agent is **not honoring** the existing rule. Renaming it
+`.learned.md` with a citation and stopping there guarantees recurrence —
+the rule's emphasis is too weak to steer behavior. Each recurrence MUST
+raise the rule's emphasis by exactly **one notch**.
+
+- Skip escalation only when the learning predates the rule (it was
+  captured before the rule existed). Otherwise the recurrence is real —
+  escalate.
+- Find the existing rule in the target skill. Raise its emphasis marker
+  one notch up this ladder, then re-commit the strengthened rule:
+
+  1. baseline prose rule (no marker)
+  2. `**Important:**`
+  3. `**Very important:**`
+  4. `**CRITICAL:**`
+  5. `**HIGH-PRIORITY:**`
+  6. `**HIGHER-PRIORITY:**`
+  7. `**VERY-HIGH-PRIORITY:**`
+  8. Ladder exhausted → rewrite the section so the rule is structurally
+     impossible to skip (a gate, a checklist item, a restructured step).
+     Emphasis words alone have failed; change the structure, not the
+     adjective.
+
+- Severity words (notches 2–4, title-case bold) escalate to priority
+  words (notches 5–7, UPPERCASE bold) — uppercase + priority framing
+  steers more forcefully than a lowercase severity adjective.
+- One notch per recurrence — never jump levels. The notch is the
+  steering dose; spend only what the evidence demands.
+- The emphasis marker in the SKILL.md rule IS the live ladder state.
+  Record the bump in the rule's reference file:
+  `Escalation: <new-level> (recurred YYYY-MM-DD)`.
+- Treat an escalation as a `principle` edit: bump `metadata.version` and
+  commit the strengthened rule even though no new rule was added.
 
 ### Classify: principle vs one-off
 
