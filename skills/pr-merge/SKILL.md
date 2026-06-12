@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021629'
+  version: '2026.06.12-024026'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -182,9 +182,15 @@ echo "{body}" | grep -nE '^\s*- \[ \]'
 ## Step 6: Merge the PR
 
 ```bash
-gh pr merge {number} --squash --delete-branch
+gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
 ```
 
+- **Always pass `--repo "$GITHUB_ORG/{repo}"`** — it forces GitHub
+  API-only behavior and skips local branch manipulation. Without it,
+  `gh pr merge --delete-branch` runs a local checkout of the base branch
+  and fails inside a git worktree where the base is already checked out
+  elsewhere (`fatal: '<base>' is already used by worktree at ...`). The
+  `--repo` form is idempotent in both worktree and regular checkouts.
 - **HARD RULE — always attempt squash first.** Run the `--squash` command
   above on every merge. Fall back only when it **fails** — non-zero exit
   (squash disallowed by branch protection, or a merge error).
