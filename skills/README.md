@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **59 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
+> **60 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
 
 ---
 
@@ -107,6 +107,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-sharpen`](./sharpen/README.md) | Distill field reports into SKILL.md improvements without overfitting on examples | User + Model |
 | [`wk-skill`](./skill/README.md) | Scaffold a new wk-* skill from the canonical template | User + Model |
 | [`wk-env`](./env/README.md) | Diagnose env-var availability; source `$HOME/.profile`, report missing vars | Auto (PreToolUse on Skill) + User |
+| [`wk-scope-guard`](./scope-guard/README.md) | PreToolUse hook — block out-of-repo searches (`find /`), warn on Edit/Write outside the project root | Auto (PreToolUse on Bash/Edit) + User |
 | [`wk-worktree-cleanup`](./worktree-cleanup/README.md) | Clean up git worktrees whose branches have been merged | User + Model |
 
 ---

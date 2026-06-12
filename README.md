@@ -101,6 +101,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [sharpen](skills/sharpen/) | Improve skills based on field reports by extracting principles without overfitting on examples |
 | [skill](skills/skill/) | Scaffold a new wk-* skill from the canonical template, syncing both README indexes |
 | [env](skills/env/) | Diagnose env-var availability; source `$HOME/.profile`, report missing vars |
+| [scope-guard](skills/scope-guard/) | PreToolUse hook that blocks out-of-repo searches and warns on Edit/Write outside the project root |
 | [worktree-cleanup](skills/worktree-cleanup/) | Clean up merged git worktrees and report unmerged ones |
 
 ## Environment Variables
