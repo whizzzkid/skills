@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-222027'
+  version: '2026.06.12-013538'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -65,6 +65,13 @@ Run before invoking `wk-commit` on any change that touched `.go` files:
 ```bash
 gofmt -l .
 ```
+
+- **The gate is per-commit, not per-session.** Re-run it immediately before
+  **every** commit that touched a `.go` file — a clean check earlier in the
+  session does not carry forward past the next edit.
+- Re-run regardless of edit type: adding, widening, OR **removing** a struct
+  tag all shift gofmt's alignment columns (a dropped tag leaves trailing
+  inline comments aligned to a now-gone column; gofmt collapses them).
 
 - Treat non-empty output as a **blocking finding, not a suggestion** —
   `gofmt` reformats map literals to align values on the longest key, so a
