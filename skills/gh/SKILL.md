@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.06.01-220749'
+  version: '2026.06.12-024025'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -119,10 +119,17 @@ Every write surface above must:
 
 ## Step 4: Outbound message footer
 
-**HARD RULE:** Every message this agent posts to GitHub on the user's
-behalf must end with the canonical footer below, verbatim. The footer
+**HARD RULE — Important:** Every message this agent posts to GitHub on the
+user's behalf must end with the canonical footer below, verbatim. The footer
 attributes the automation and gives the user a feedback channel —
 silent posts erode trust and make automated activity hard to audit.
+
+- **Paste the literal footer block below into the payload at render time —
+  never hand-write or paraphrase the attribution.** Composing an ad-hoc
+  string (e.g. a `Assisted by Claude Code (model)` line) at payload-build
+  time defeats the verbatim guarantee and ships a non-canonical footer.
+  Read this block from the skill and inject it; do not reconstruct it from
+  memory.
 
 ```
 ---
