@@ -269,36 +269,7 @@ copy/paste into a TodoWrite list or a PLAN.md artifact.
 
 ### Plan format
 
-```
-## Plan: <task title>
-
-**Scope:** <one-sentence boundary — what is in and out>
-**Done when:** <acceptance criteria — measurable, not aspirational>
-**Parallel budget:** <N> independent agents can run simultaneously
-
----
-
-### EXCLUSIONS
-- <item>: <one-line rationale for excluding>
-
----
-
-### Phase <letter>: <Phase Title>  [PARALLEL | SEQUENTIAL]
-
-> PARALLEL — all steps in this phase run concurrently.
-> SEQUENTIAL — each step depends on the previous one completing.
-
-**Step <letter><n>**  [AGENT-READY | AGENT-GUIDED | HUMAN-IN-LOOP]
-- **Goal:** <what this step achieves — one sentence>
-- **Artifacts out:** <files changed / docs written / tests added>
-- **Instructions:**
-  1. <concrete imperative>
-  2. <concrete imperative>
-  ...
-- **Commit after this step:** `<type>(<scope>): <message>`
-
-...
-```
+Write the plan as a fenced block with: task title, scope boundary, measurable done criteria, parallel budget, exclusions, then numbered phases. Each step carries a marker (`AGENT-READY`, `AGENT-GUIDED`, or `HUMAN-IN-LOOP`), a goal, artifacts out, numbered imperatives, and a commit message.
 
 ### Step markers
 
@@ -306,35 +277,29 @@ Every step must carry exactly one marker:
 
 | Marker | Meaning |
 |---|---|
-| `[AGENT-READY]` | Agent can complete this step autonomously without user input |
-| `[AGENT-GUIDED]` | Agent executes, then reports back before the next step starts |
-| `[HUMAN-IN-LOOP]` | A user decision is required before the step can complete |
+| `[AGENT-READY]` | Agent completes autonomously |
+| `[AGENT-GUIDED]` | Agent executes, then reports back |
+| `[HUMAN-IN-LOOP]` | User decision required |
 
 ### Parallelism rules
 
-- **Default to parallel phases.** If two steps do not share a write target
-  and neither's output is another's input, they go in the same parallel phase.
-- **Declare a sequential dependency explicitly.** Write `SEQUENTIAL — depends
-  on Phase <letter>` when the ordering is load-bearing.
-- **Never serialize for tidiness.** Sequential ordering must be justified by
-  a data or file dependency, not by preference for linear presentation.
-- **Maximum phase depth.** If the plan has more than 5 phases, look for
-  steps that can be collapsed or run earlier. Depth > 5 is a smell for
-  over-specification.
+- **Default to parallel phases.** Steps without shared write targets or data dependencies run concurrently.
+- **Declare sequential dependencies explicitly.** Write `SEQUENTIAL — depends on Phase <letter>` when ordering is load-bearing.
+- **Never serialize for tidiness.** Sequential ordering must be justified by a data or file dependency.
+- **Maximum phase depth.** If the plan has more than 5 phases, look for steps that can be collapsed or run earlier.
 
 ### Mandatory plan elements
 
-Every plan must contain these elements before it is valid. If any are
-missing, add them before Step 4:
+Every plan must contain these elements before it is valid:
 
 1. Implementation steps covering the full scope
-2. A commit boundary after each meaningful unit of work
-3. A documentation update step (`wk-docs`) for every changed behavior
-4. A testing step: happy path, sad path, edge cases
-5. An adversarial review step (`wk-adversarial-review`) before push
-6. A PR offer step
-7. A CI fix loop step (monitor + auto-diagnose up to 3 rounds)
-8. A session retro step (`wk-retro`)
+2. Commit boundary after each meaningful unit
+3. Documentation update step (`wk-docs`) for every changed behavior
+4. Testing step: happy path, sad path, edge cases
+5. Adversarial review step (`wk-adversarial-review`) before push
+6. PR offer step
+7. CI fix loop step (monitor + auto-diagnose up to 3 rounds)
+8. Session retro step (`wk-retro`)
 
 ### Commit granularity
 
@@ -345,132 +310,74 @@ Prefer the smallest possible commits. Each commit must:
 - Include documentation updates for any behavior it introduces or changes
 - Be immediately committable via `wk-commit`
 
-If a step is too large for a single commit, split it into sub-steps with
-their own commit boundaries. When in doubt, split.
+If a step is too large for a single commit, split it into sub-steps with their own commit boundaries.
 
 ### Prefactor probe — lift before extending
 
-Before writing a new caller of an existing pattern, lift the shared logic
-and migrate the existing caller first. The new caller then delegates to the
-helper plus its new behavior. Order: **lift → migrate → extend**, not
-"extend now, refactor later".
+Before writing a new caller of an existing pattern, lift the shared logic and migrate the existing caller first. Order: **lift → migrate → extend**.
 
-Trigger phrases / signals that should fire the probe during planning:
+Trigger phrases / signals:
 
-- "another <X>"
-- "similar to <X>"
-- "like the <X> version"
-- The new feature is a verb the codebase already implements:
-  "post a comment", "validate <format>", "fetch <resource>",
-  "open a build", "render <view>"
+- "another <X>", "similar to <X>", "like the <X> version"
+- The new feature is a verb the codebase already implements
 - The new caller will live in a different file from the existing one
 
 When the probe fires:
 
-1. **Grep** for the operation across the codebase. Read both call sites
-   end-to-end, not just the function signatures.
-2. **Identify the duplicated prologue/epilogue** — validation, error
-   handling, logging, retries, formatting. The behavioral core is often
-   small; the ceremony around it is what duplicates.
-3. **Lift** the duplicated portion into a helper module/function in the
-   same `lib/`-equivalent location, with **one** consolidated test file.
-4. **Migrate** the existing caller onto the helper as a separate commit,
-   with all existing tests still passing.
-5. **Then extend** — implement the new caller as a thin wrapper that
-   delegates to the helper plus its new behavior.
+1. **Grep** for the operation across the codebase. Read both call sites end-to-end.
+2. **Identify the duplicated prologue/epilogue** — validation, error handling, logging, retries, formatting.
+3. **Lift** the duplicated portion into a helper module/function in the same `lib/`-equivalent location.
+4. **Migrate** the existing caller onto the helper as a separate commit.
+5. **Then extend** — implement the new caller as a thin wrapper that delegates to the helper plus its new behavior.
 
-The plan must list these as numbered steps before the new-feature step,
-not after. The migration commit on the existing caller is reviewable in
-isolation; the new caller's diff ends up small and reads as new behavior,
-not as duplicated prologue.
-
-If grep returns no existing caller, the probe is a no-op — proceed with
-the new feature directly.
+The plan must list these as numbered steps before the new-feature step. If grep returns no existing caller, the probe is a no-op.
 
 ### Intra-file duplication probe
 
-Before adding any new block to a large mixed-content file (>200 lines,
-especially `.erb`, `.html`, `.vue`, `.svelte`, or any template that
-interleaves multiple languages), grep the file itself for the function
-name, event name, selector, or feature keyword first.
+Before adding any new block to a large mixed-content file (>200 lines, especially `.erb`, `.html`, `.vue`, `.svelte`, or any template that interleaves multiple languages), grep the file itself for the function name, event name, selector, or feature keyword first.
 
 ```bash
 grep -nE '<feature-keyword>|<function-name>|<event-name>' "$FILE"
 ```
 
-If a match exists, decide in the same commit whether to remove the prior
-version, replace it, or merge — never add alongside. Shadowed duplicates
-pass tests when the live copy is correct and silently corrupt behavior when
-the stale copy wins.
+If a match exists, decide in the same commit whether to remove the prior version, replace it, or merge — never add alongside.
 
 ### Spec pre-flight — extend an in-flight spec before creating a new one
 
-Before producing a new spec/design doc, check for a related spec already
-in flight on an open PR and extend it rather than landing a parallel file.
+Before producing a new spec/design doc, check for a related spec already in flight on an open PR and extend it rather than landing a parallel file.
 
-- Grep open PRs for specs in the same feature area before planning a new one:
-
-  ```bash
-  gh pr list --state open --json number,headRefName,files \
-    --jq '.[] | select(.files[].path | test("docs/specs/")) | {number, files: [.files[].path]}'
-  ```
-
-- If a related spec exists in an open PR, stack on that branch and extend
-  the existing doc.
+- Grep open PRs for specs in the same feature area before planning a new one.
+- If a related spec exists in an open PR, stack on that branch and extend the existing doc.
 - Create a standalone spec only when no related in-flight spec exists.
-- Do not skip this probe — two parallel specs become a doc merge plus a
-  rebase.
 
 ### New-capability probe — extend an existing skill before scaffolding a new one
 
-Before scaffolding a new skill, command, or entry point, ask whether the
-capability is a new verb on a noun an existing skill already owns.
+Before scaffolding a new skill, command, or entry point, ask whether the capability is a new verb on a noun an existing skill already owns.
 
-- Add a routing mode to that skill when it is a subcommand / mode of an
-  existing skill (`/foo bar`, not `/foo-bar`).
-- Scaffold a standalone skill only for a genuinely distinct workflow —
-  different argument shape, tool set, or user mental model.
-- Do not build a parallel entry point the user later asks you to revert
-  and fold back in.
+- Add a routing mode to that skill when it is a subcommand / mode of an existing skill (`/foo bar`, not `/foo-bar`).
+- Scaffold a standalone skill only for a genuinely distinct workflow — different argument shape, tool set, or user mental model.
 
 ### Rule-set doc sync probe
 
-When the diff modifies a check / validator / rule file, find authoring
-guides that enumerate the rule set by count and add them as explicit sync
-targets in the plan — before implementation starts.
+When the diff modifies a check / validator / rule file, find authoring guides that enumerate the rule set by count and add them as explicit sync targets in the plan — before implementation starts.
 
-- Grep guides (README, `docs/how-to`, repository-check docs) for
-  count-enumerations of the rules: `"N things"`, `"three items"`,
-  numbered "you must include" lists.
-- Add each matching guide as a numbered sync step so the count and the
-  body stay aligned.
-- Do not let the adversarial sweep catch the drift later.
+- Grep guides (README, `docs/how-to`, repository-check docs) for count-enumerations of the rules: `"N things"`, `"three items"`, numbered "you must include" lists.
+- Add each matching guide as a numbered sync step so the count and the body stay aligned.
 
 ### Tool-swap flag-parity probe
 
-When the plan swaps one tool for another in the same role (formatter,
-linter, bundler, compiler, transpiler), add a planning step that probes
-whether the replacement's defaults match the replaced tool's behavior.
+When the plan swaps one tool for another in the same role (formatter, linter, bundler, compiler, transpiler), add a planning step that probes whether the replacement's defaults match the replaced tool's behavior.
 
-- Ask: does the replacement need flags to reproduce the prior tool's
-  output?
+- Ask: does the replacement need flags to reproduce the prior tool's output?
 - Identify each gap-closing flag in the plan, not at review time.
-- Pay special attention to tools with CWD-sensitive or module-aware
-  behavior — defaults can differ between a local invocation and CI even
-  when the binary is identical.
-- Do not let the adversarial sweep catch a behavioral divergence that
-  should have been a checklist item up front.
+- Pay special attention to tools with CWD-sensitive or module-aware behavior.
 
 ### Producer-audit probe
 
-When the plan switches a consumer from a named-file lookup (`statSync(file)`)
-to a directory scan (`readdirSync(dir)` / glob), audit the upstream producer
-first.
+When the plan switches a consumer from a named-file lookup (`statSync(file)`) to a directory scan (`readdirSync(dir)` / glob), audit the upstream producer first.
 
-- Grep the build/compile script that populates the directory and list every
-  file it writes.
+- Grep the build/compile script that populates the directory and list every file it writes.
 - Add a filter step that explicitly includes or excludes each file type.
-- Do not assume the directory holds exactly the expected set.
 
 ---
 
@@ -541,11 +448,11 @@ in wk-workflow if wk-plan has already produced an approved plan this session.
 ## Plan Notation Reference
 
 ```
-[PARALLEL]       — phase header: all steps in this phase run concurrently
+[PARALLEL]       — phase header: all steps run concurrently
 [SEQUENTIAL]     — phase header: each step waits for the previous
 [AGENT-READY]    — step: agent executes autonomously
 [AGENT-GUIDED]   — step: agent executes, reports back before next
-[HUMAN-IN-LOOP]  — step: user decision required before step completes
+[HUMAN-IN-LOOP]  — step: user decision required
 ⚠️ MISSING:       — validation flag: gap in plan coverage
 ```
 
@@ -559,48 +466,21 @@ in wk-workflow if wk-plan has already produced an approved plan this session.
 Skill(wk-plan, args="<task from session context>")
 ```
 
-If wk-plan was already run this session and an approved plan exists,
-wk-workflow skips its own planning and executes the approved plan directly.
+If wk-plan was already run this session and an approved plan exists, wk-workflow skips its own planning and executes the approved plan directly. When invoked directly (`/wk-plan`), the output is a standalone plan that the user can then hand to wk-workflow, a multi-agent Workflow script, or execute manually step by step.
 
-When wk-plan is invoked directly (`/wk-plan`), the output is a standalone
-plan that the user can then hand to wk-workflow, a multi-agent Workflow
-script, or execute manually step by step.
-
----
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---|---|
-| `/wk-plan <task>` | Full grill → research → persona → plan → approval |
-| `/wk-plan` (no args) | Uses current session context as the task description |
-| `Skill(wk-plan)` from wk-workflow | Replaces Phase 1 inline planning |
-| Ambiguous / vague task | Stops at Step 0 and asks ≤4 clarifying questions |
-| All requirements clear | Skips Step 0 grill, proceeds directly to research |
 
 ---
 
 ## Common Mistakes
 
-- **Planning before grilling.** A plan built on a vague requirement
-  produces rework. Step 0 is non-skippable.
-- **Overcomplicating past the ask.** Planning an unrequested auth scheme,
-  abstraction, or defensive layer reads as progress but invites "did I ask
-  for that?". Step 2.5 is non-skippable — plan the simplest viable path.
-- **Sequential by default.** Most steps can run in parallel. Declare
-  dependencies explicitly — don't let caution serialize the work.
-- **Vague agent instructions.** `[AGENT-READY]` steps with "investigate
-  and fix" instructions will stall. Every AGENT-READY step must have
-  numbered imperatives an agent can execute cold.
-- **Missing exclusions.** Persona concerns that are "out of scope" but
-  not recorded will resurface as reviewer comments. Write them down.
-- **Executing before approval.** The plan is a contract. Starting before
-  the user approves it means executing the wrong contract.
-- **Ignoring the Jira ticket.** Acceptance criteria in the ticket override
-  the verbal task description. Always fetch the ticket before planning.
-- **Not re-running wk-plan after scope change.** If the user interrupts
-  mid-execution to add scope, re-invoke wk-plan on the new scope rather
-  than patching the running plan inline.
+- **Planning before grilling.** A plan built on a vague requirement produces rework.
+- **Overcomplicating past the ask.** Plan the simplest viable path; surface unrequested approaches as `[HUMAN-IN-LOOP]`.
+- **Sequential by default.** Declare dependencies explicitly — don't let caution serialize the work.
+- **Vague agent instructions.** Every `[AGENT-READY]` step must have numbered imperatives.
+- **Missing exclusions.** Persona concerns that are out of scope but not recorded will resurface as reviewer comments.
+- **Executing before approval.** The plan is a contract. Starting before approval means executing the wrong contract.
+- **Ignoring the Jira ticket.** Acceptance criteria in the ticket override the verbal task description.
+- **Not re-running wk-plan after scope change.** If the user interrupts mid-execution to add scope, re-invoke wk-plan on the new scope.
 
 ---
 
