@@ -2,7 +2,7 @@
 
 > Adversarial pre-flight review of the current branch before anything leaves the machine.
 
-**Version:** `2026.06.12-013539`
+**Version:** `2026.06.14-183842`
 
 ## Invocation
 
@@ -15,9 +15,9 @@
 
 ```mermaid
 flowchart TD
-    A[Resolve base branch] --> B[Enumerate diff surface]
-    B --> C[14 mechanical sweeps]
-    C --> D[Spawn adversarial subagent]
+    A[Resolve base branch] --> B[Build diff surface map]
+    B --> C[Run 33 mechanical sweeps]
+    C --> D[Spawn fresh adversarial subagent]
     D --> E[Playground validation]
     E --> F{Verdict}
     F -->|Clear| G[Write .cleared-SHA.json<br/>Hand back to caller]
@@ -32,7 +32,8 @@ flowchart TD
 
 - **No opt-out exists.** "Small fix", "trivial", and "docs-only" are explicitly named red flags, not exemptions — even a docs commit can contradict test counts in a spec.
 - **Idempotent within a session** — if no new commits land since the last clear verdict, re-invocation is a no-op that prints the prior clearance record (keyed by HEAD SHA).
-- **14 mechanical sweeps run unconditionally** before any LLM reasoning: vulnerability-class, sibling-script, reachability, comment accuracy, hardcoded-base, version-pin, signature-widening, cross-doc enumeration, design-pivot, PR metadata sync, external-call reproduction, self-review surface, raw-API bypass, and pre-push gate compliance.
+- **33 mechanical sweeps run unconditionally** before any LLM reasoning, grouped into a compact sweep catalog that preserves security, sibling parity, guard correctness, docs/spec sync, contract widening, pipeline forwarding, test quality, and runtime-portability checks.
+- **Fresh adversarial subagent** — the diff is piped directly, never hand-transcribed; the subagent stays coverage-aware, refactor-aware, relocation-aware, and introduction-claim-aware.
 - **Playground validation is mandatory** for any runtime-behavior claim — findings that cannot be reproduced in `.review-playground/` are downgraded from `blocker` to `question`.
 - **Fix loop caps at 3 cycles.** After 3 blocked rounds on the same axis, the skill surfaces to the user — repeated recurrence means the diagnosis or design is wrong, not just the fix.
 - **This skill is a gate, not an actor.** It never pushes, never posts PR comments, never edits the PR — those actions belong to the calling skill ([`wk-pr`](../pr/README.md), [`wk-workflow`](../workflow/README.md), [`wk-pr-resolve`](../pr-resolve/README.md)).
