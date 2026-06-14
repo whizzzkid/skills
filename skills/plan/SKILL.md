@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-122250'
+  version: '2026.06.14-090215'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -86,8 +86,55 @@ Proceed to Step 1 only when every blocker is resolved.
 
 ## Step 1: Research — Parallel context gathering
 
-Dispatch parallel `Agent` calls to build the context map before planning.
-Select the relevant agents for the task type (not all are needed every time).
+### Gate 1: Jira ticket pre-flight
+
+Before any exploration — `Read`, `Grep`, or `Agent` dispatch — check whether
+a Jira ticket exists for the work.
+
+- Treat a Jira URL or key in the user's prompt as a confirmed ticket.
+- Invoke `wk-jira` Stage 0+1+2 before drafting the plan when a ticket exists.
+- Put ticket acceptance criteria and linked specs in the plan before
+  exploration starts.
+- Ask the user once if the ticket status is unknown.
+- Do not surface the ticket after exploration is underway.
+
+### Gate 2: Investigate user-provided artifacts first
+
+Before spawning exploration `Agent` calls, scan the user's most recent
+message for concrete references:
+
+- URLs
+- PR numbers
+- File paths
+- Error messages with line/column
+- Build IDs
+- Stack frames
+
+When a concrete artifact is present:
+
+- Fetch or read it directly first (`gh pr diff`, `Read`, `gh run view`,
+  `bk build view`, etc.).
+- For GitHub comment or review URLs, fetch the comment body before any
+  codebase grep:
+
+  ```bash
+  gh api repos/{owner}/{repo}/{pulls|issues}/comments/{id}
+  ```
+
+- Before writing any HTTP client, SDK wrapper, or API integration for a
+  third-party service, survey available MCP tools for that service name.
+- Prefer the MCP when the use case is interactive and the call must run
+  inside a Claude session.
+- Build a client only when the call must run outside a Claude session, and
+  document that reason in the plan.
+- Spawn parallel exploration agents only when no concrete artifact exists
+  or the artifact is exhausted and gaps remain.
+- Treat parallel `Agent` dispatch as a higher-cost fallback, not the
+  default.
+
+Dispatch parallel `Agent` calls to build the context map after the gates
+above clear. Select the relevant agents for the task type (not all are
+needed every time).
 
 ```
 // Agent roles — dispatch the subset that applies:
@@ -289,11 +336,147 @@ missing, add them before Step 4:
 7. A CI fix loop step (monitor + auto-diagnose up to 3 rounds)
 8. A session retro step (`wk-retro`)
 
+### Commit granularity
+
+Prefer the smallest possible commits. Each commit must:
+
+- Do exactly one logical thing
+- Pass all tests and CI in isolation
+- Include documentation updates for any behavior it introduces or changes
+- Be immediately committable via `wk-commit`
+
+If a step is too large for a single commit, split it into sub-steps with
+their own commit boundaries. When in doubt, split.
+
+### Prefactor probe — lift before extending
+
+Before writing a new caller of an existing pattern, lift the shared logic
+and migrate the existing caller first. The new caller then delegates to the
+helper plus its new behavior. Order: **lift → migrate → extend**, not
+"extend now, refactor later".
+
+Trigger phrases / signals that should fire the probe during planning:
+
+- "another <X>"
+- "similar to <X>"
+- "like the <X> version"
+- The new feature is a verb the codebase already implements:
+  "post a comment", "validate <format>", "fetch <resource>",
+  "open a build", "render <view>"
+- The new caller will live in a different file from the existing one
+
+When the probe fires:
+
+1. **Grep** for the operation across the codebase. Read both call sites
+   end-to-end, not just the function signatures.
+2. **Identify the duplicated prologue/epilogue** — validation, error
+   handling, logging, retries, formatting. The behavioral core is often
+   small; the ceremony around it is what duplicates.
+3. **Lift** the duplicated portion into a helper module/function in the
+   same `lib/`-equivalent location, with **one** consolidated test file.
+4. **Migrate** the existing caller onto the helper as a separate commit,
+   with all existing tests still passing.
+5. **Then extend** — implement the new caller as a thin wrapper that
+   delegates to the helper plus its new behavior.
+
+The plan must list these as numbered steps before the new-feature step,
+not after. The migration commit on the existing caller is reviewable in
+isolation; the new caller's diff ends up small and reads as new behavior,
+not as duplicated prologue.
+
+If grep returns no existing caller, the probe is a no-op — proceed with
+the new feature directly.
+
+### Intra-file duplication probe
+
+Before adding any new block to a large mixed-content file (>200 lines,
+especially `.erb`, `.html`, `.vue`, `.svelte`, or any template that
+interleaves multiple languages), grep the file itself for the function
+name, event name, selector, or feature keyword first.
+
+```bash
+grep -nE '<feature-keyword>|<function-name>|<event-name>' "$FILE"
+```
+
+If a match exists, decide in the same commit whether to remove the prior
+version, replace it, or merge — never add alongside. Shadowed duplicates
+pass tests when the live copy is correct and silently corrupt behavior when
+the stale copy wins.
+
+### Spec pre-flight — extend an in-flight spec before creating a new one
+
+Before producing a new spec/design doc, check for a related spec already
+in flight on an open PR and extend it rather than landing a parallel file.
+
+- Grep open PRs for specs in the same feature area before planning a new one:
+
+  ```bash
+  gh pr list --state open --json number,headRefName,files \
+    --jq '.[] | select(.files[].path | test("docs/specs/")) | {number, files: [.files[].path]}'
+  ```
+
+- If a related spec exists in an open PR, stack on that branch and extend
+  the existing doc.
+- Create a standalone spec only when no related in-flight spec exists.
+- Do not skip this probe — two parallel specs become a doc merge plus a
+  rebase.
+
+### New-capability probe — extend an existing skill before scaffolding a new one
+
+Before scaffolding a new skill, command, or entry point, ask whether the
+capability is a new verb on a noun an existing skill already owns.
+
+- Add a routing mode to that skill when it is a subcommand / mode of an
+  existing skill (`/foo bar`, not `/foo-bar`).
+- Scaffold a standalone skill only for a genuinely distinct workflow —
+  different argument shape, tool set, or user mental model.
+- Do not build a parallel entry point the user later asks you to revert
+  and fold back in.
+
+### Rule-set doc sync probe
+
+When the diff modifies a check / validator / rule file, find authoring
+guides that enumerate the rule set by count and add them as explicit sync
+targets in the plan — before implementation starts.
+
+- Grep guides (README, `docs/how-to`, repository-check docs) for
+  count-enumerations of the rules: `"N things"`, `"three items"`,
+  numbered "you must include" lists.
+- Add each matching guide as a numbered sync step so the count and the
+  body stay aligned.
+- Do not let the adversarial sweep catch the drift later.
+
+### Tool-swap flag-parity probe
+
+When the plan swaps one tool for another in the same role (formatter,
+linter, bundler, compiler, transpiler), add a planning step that probes
+whether the replacement's defaults match the replaced tool's behavior.
+
+- Ask: does the replacement need flags to reproduce the prior tool's
+  output?
+- Identify each gap-closing flag in the plan, not at review time.
+- Pay special attention to tools with CWD-sensitive or module-aware
+  behavior — defaults can differ between a local invocation and CI even
+  when the binary is identical.
+- Do not let the adversarial sweep catch a behavioral divergence that
+  should have been a checklist item up front.
+
+### Producer-audit probe
+
+When the plan switches a consumer from a named-file lookup (`statSync(file)`)
+to a directory scan (`readdirSync(dir)` / glob), audit the upstream producer
+first.
+
+- Grep the build/compile script that populates the directory and list every
+  file it writes.
+- Add a filter step that explicitly includes or excludes each file type.
+- Do not assume the directory holds exactly the expected set.
+
 ---
 
 ## Step 4: Validate the Plan
 
-Before presenting, run a validation checklist against the draft plan:
+Before presenting, run a validation checklist against the draft plan.
 
 **Requirement coverage**
 - Every clarified requirement (Step 0) maps to ≥1 step.
@@ -307,14 +490,25 @@ Before presenting, run a validation checklist against the draft plan:
 
 **Parallelism**
 - No sequential ordering exists that is not justified by a dependency.
-- The parallel budget number in the header equals the maximum width
-  of any parallel phase.
+- The parallel budget number in the header equals the maximum width of any
+  parallel phase.
 
 **Commit map**
 - Every phase or step boundary has a commit. No phase ends without one.
 
 **Mandatory elements**
 - All 8 mandatory elements from Step 3 are present and numbered.
+
+**Probe coverage**
+- Jira ticket pre-flight cleared or asked once.
+- User-provided artifacts were read before agent dispatch.
+- Prefactor probe ran when an existing pattern is reused.
+- Intra-file duplication probe ran for large mixed-content files.
+- Spec pre-flight ran before creating a new spec/design doc.
+- New-capability probe ran before scaffolding a new skill or entry point.
+- Rule-set doc sync probe ran when rule files change.
+- Tool-swap flag-parity probe ran when tools are swapped.
+- Producer-audit probe ran when named-file lookup becomes directory scan.
 
 Flag every validation failure inline in the draft (`⚠️ MISSING: …`).
 Resolve all flags before Step 5.
@@ -350,7 +544,7 @@ in wk-workflow if wk-plan has already produced an approved plan this session.
 [PARALLEL]       — phase header: all steps in this phase run concurrently
 [SEQUENTIAL]     — phase header: each step waits for the previous
 [AGENT-READY]    — step: agent executes autonomously
-[AGENT-GUIDED]   — step: agent executes, reports back before next step
+[AGENT-GUIDED]   — step: agent executes, reports back before next
 [HUMAN-IN-LOOP]  — step: user decision required before step completes
 ⚠️ MISSING:       — validation flag: gap in plan coverage
 ```

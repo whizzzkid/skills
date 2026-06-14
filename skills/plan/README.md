@@ -2,7 +2,7 @@
 
 > Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
 
-**Version:** `2026.06.12-122250`
+**Version:** `2026.06.14-090215`
 
 ## Invocation
 
@@ -20,14 +20,14 @@ flowchart TD
     C --> D{Resolved?}
     D -- no --> C
     D -- yes --> E
-    B -- no --> E[Step 1: Research — parallel agents]
+    B -- no --> E[Step 1: Research — gates + parallel agents]
     E --> F[Step 2: Multi-persona analysis<br/>Implementor · Reviewer · Security · Ops · Product]
     F --> G{Unresolved concerns?}
     G -- scope conflict --> C
     G -- missing step --> S
     G -- out of scope --> S
     S[Step 2.5: Simplest-viable scope gate<br/>drop unrequested mechanism · generality · hardening · breadth] --> H
-    H[Step 3: Draft plan with phase + agent markers] --> I[Step 4: Validate<br/>requirements · agent-readiness · parallelism · commits]
+    H[Step 3: Draft plan with probes<br/>prefactor · intra-file · spec · capability · docs · tool parity · producer] --> I[Step 4: Validate<br/>requirements · agent-readiness · parallelism · commits · probes]
     I --> J{Flags raised?}
     J -- yes --> H
     J -- no --> K[Step 5: Present + wait for approval]
@@ -58,6 +58,26 @@ Every plan produced by this skill uses explicit markers:
 | `[AGENT-GUIDED]` | Agent executes, reports back before continuing |
 | `[HUMAN-IN-LOOP]` | User decision required before step completes |
 
+## Research Gates
+
+Before agent dispatch, clear these gates in order:
+
+- **Jira ticket pre-flight** — resolve ticket status before any exploration.
+- **User-provided artifacts first** — read URLs, PRs, files, build IDs, or stack frames before spawning agents.
+- **MCP-before-client check** — prefer MCP for interactive third-party calls when available.
+
+## Planning Probes
+
+Run these probes during research and validation:
+
+- **Prefactor probe** — lift shared logic before adding a new caller of an existing pattern.
+- **Intra-file duplication probe** — grep large mixed-content files before adding a new block.
+- **Spec pre-flight** — extend an in-flight spec on an open PR before creating a new one.
+- **New-capability probe** — add a mode to an existing skill before scaffolding a standalone skill.
+- **Rule-set doc sync probe** — sync authoring guides that enumerate rule counts.
+- **Tool-swap flag-parity probe** — verify replacement tool defaults and flags.
+- **Producer-audit probe** — audit upstream producers before switching from named-file lookup to directory scan.
+
 ## Noteworthy
 
 - **HARD RULE:** Do not start executing any step until the user explicitly approves the plan — silence is not approval.
@@ -73,6 +93,6 @@ Every plan produced by this skill uses explicit markers:
 | Skill | Relationship |
 |---|---|
 | [wk-workflow](../workflow/README.md) | Phase 1 delegates to this skill; executes the approved plan |
-| [wk-jira](../jira/README.md) | Step 1 Agent B fetches ticket acceptance criteria via Stage 0 |
+| [wk-jira](../jira/README.md) | Step 1 pre-flight fetches ticket acceptance criteria via Stage 0+1+2 |
 | [wk-adversarial-review](../adversarial-review/README.md) | Every plan includes an adversarial review step pre-push |
 | [wk-arch-review](../arch-review/README.md) | Invoked when the plan touches system architecture |
