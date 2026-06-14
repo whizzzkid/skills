@@ -1,12 +1,12 @@
 ---
 name: wk-sharpen
 description: >-
-  Improve a skill based on field reports or incident retrospectives. Extracts
-  generalizable principles from specific failures without overfitting on
-  examples, then prunes skill bloat and condenses prose into crisp, nested
-  instructions. Use when updating skills after agent runs surfaced gaps, errors,
-  behavioral issues, or simplification opportunities. Prevents embedding
-  specific file names, line numbers, or project details into skill instructions.
+  Improve and de-bloat skills based on field reports or incident retrospectives.
+  Extracts generalizable principles from specific failures without overfitting on
+  examples, then condenses prose into crisp, nested instructions. Use when
+  updating skills after agent runs surfaced gaps, errors, behavioral issues, or
+  simplification opportunities. Prevents embedding specific file names, line
+  numbers, or project details into skill instructions.
 argument-hint: '[skill-name] [incident-file or description]'
 allowed-tools:
   - Read
@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.14-092503'
+  version: '2026.06.14-095327'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -41,13 +41,13 @@ metadata:
 
 # Sharpen
 
-Improve a skill based on field reports without overfitting on specific examples.
+Improve and de-bloat skills based on field reports or incident retrospectives.
 Extracts the **principle** behind a failure and updates the skill to prevent the
 behavior, not just the specific instance.
 
 ## When to Use
 
-- Another agent ran a skill and encountered errors or gaps
+- Another agent ran a skill and hit an error or gap
 - A field report describes what went wrong during skill execution
 - A retrospective identifies a behavioral pattern worth preventing
 - You're about to edit a skill based on a specific incident
@@ -56,9 +56,7 @@ behavior, not just the specific instance.
 ### HARD RULE: invocation routing — `wk-learn` vs `wk-sharpen`
 
 `wk-sharpen` rewrites `SKILL.md` files. `wk-learn` only writes to
-`learnings/`. Direct skill edits without explicit user consent are
-out of scope — the skills repo is effectively read-only unless the
-user explicitly authorizes a sharpen pass.
+`learnings/`. Direct skill edits without explicit user consent are out of scope.
 
 - Route to `wk-learn` (capture only, no skill edits):
   - "make a learning"
@@ -70,30 +68,17 @@ user explicitly authorizes a sharpen pass.
   - "apply this to the skill"
   - "update the skill now"
   - explicit `/wk-sharpen` invocation
-- Ambiguous phrasing ("learn from this and sharpen") defaults to
-  `wk-learn`. Ask before promoting to `wk-sharpen`.
+- Ambiguous phrasing ("learn from this and sharpen") defaults to `wk-learn`. Ask before promoting to `wk-sharpen`.
 
 ## Style Rules for Every Edit
 
-Every edit you write into a target skill must follow these rules. They apply
-to new content **and** to any cleanup of existing prose touched during audit.
-
-- **Bullets over prose.** Default to bulleted lists. Use a paragraph only
-  when the rule cannot be split into discrete imperatives without loss.
-- **Imperative voice.** Each bullet starts with a verb: "Run", "Verify",
-  "Reject", "Skip", "Re-fetch". No "you should" / "we recommend" / "it is
-  important to".
-- **One rule per bullet.** Do not chain "and / and / and". Split into
-  separate bullets.
-- **Crisp.** Strip hedging ("typically", "usually", "may want to"). State
-  the rule. State the failure mode in one clause.
-- **Instructional, not explanatory.** Tell the agent what to **do**, not
-  what the rule is **about**. The "why" sits in a single trailing
-  sub-bullet or parenthetical, not a paragraph.
-- **Concrete commands** belong in fenced code blocks. Do not paraphrase a
-  command in prose when the command itself is shorter.
-- **No essays.** A section that runs past four bullets either splits into
-  named sub-sections or trims to the load-bearing rules.
+- **Bullets over prose.** Use paragraphs only when a rule cannot be split without loss.
+- **Imperative voice.** Start bullets with verbs like "Run", "Verify", "Reject", "Skip", "Re-fetch".
+- **One rule per bullet.** Split chained instructions.
+- **Crisp.** Strip hedging and state the failure mode in one clause.
+- **Instructional, not explanatory.** Put the "why" in one trailing sub-bullet or parenthetical.
+- **Concrete commands** belong in fenced code blocks.
+- **No essays.** Split any section that grows past four bullets.
 
 ## Core Rule: Extract Principles, Not Examples
 
@@ -115,208 +100,99 @@ Every inline comment must target a line that exists in the diff. Lines
 not in the diff will cause a 422 error from the GitHub API.
 ```
 
-The anti-pattern embeds the incident's specific files and line numbers. The
-correct pattern teaches the **mechanism** and **failure mode** without
-naming the specific occurrence.
+- Remove specific file names, line numbers, project context, and reviewer / commit names.
+- Keep error codes, API behavior, and structural patterns.
 
 ## IMPORTANT — high-severity learnings are not optional
 
-**You keep forgetting this.** A learning with `severity: high` (or higher)
-MUST land in the target skill before the source file is renamed to
-`.learned.md`. Renaming without folding the rule into `SKILL.md` orphans
-the lesson — the original incident recurs and the agent re-discovers the
-same fix from scratch.
-
-For every learning surfaced this run, before doing anything else:
-
 - Read the frontmatter and extract `severity`.
-- If `severity: high` (or higher), treat as a **MUST-FOLD** item:
-  - The lesson lands in SKILL.md as a new rule, HARD RULE, or new
-    sub-step. Reference-file-only routing is forbidden for high-
-    severity items (one-off classification does not apply at this
-    severity — if it is high enough to flag, it is high enough to
-    encode).
-  - The processed-state record must show full distillation — the
-    `.learned.md` rename for a learning, or the `.distilled-memories`
-    entry for a memory — never `partial`, never `already-covered`
-    without citing the existing SKILL.md line numbers that prove full
-    coverage.
-  - The rename to `.learned.md` happens only after the SKILL.md edit is
-    written and the version bumped.
-- If a high-severity learning is classified `already-covered`, the
-  classification must cite specific existing SKILL.md line numbers
-  that prove every rule in the learning is encoded — per the
-  "full-read before `already-covered`" HARD RULE — AND escalate the
-  cited rule one notch per the "re-violation escalation" HARD RULE
-  (a recurrence on a covered rule means the rule is not steering).
-- Treat unrecognized log actions (anything not in
-  `distilled | partial | already-covered | skipped`) as `unverified` and
-  re-audit.
-
-When in doubt on a high-severity item, escalate — ask the user before
-renaming. Silent rename without coverage is the failure mode this
-annotation exists to prevent.
+- If `severity: high` (or higher), treat the item as **MUST-FOLD**:
+  - Land the lesson in `SKILL.md` as a new rule, HARD RULE, or sub-step.
+  - Reference-file-only routing is forbidden.
+  - The processed-state record must show full distillation.
+  - Rename to `.learned.md` only after the edit and version bump land.
+- If a high-severity learning is `already-covered`, cite the exact existing lines that
+  prove full coverage and escalate the rule one notch.
+- Treat unrecognized log actions as `unverified` and re-audit.
+- When in doubt, ask before renaming.
 
 ## Step 1: Read the Incident Report
 
-If given a file path, read it. If given a verbal description, internalize it.
-
-Extract:
-- What the agent was supposed to do
-- What went wrong (error, unexpected behavior, user correction)
-- What specific artifacts failed (file names, line numbers, API responses)
-- Root cause (why it failed)
+- Read the file path if given; otherwise internalize the verbal description.
+- Extract:
+  - What the agent was supposed to do
+  - What went wrong
+  - Which artifacts failed
+  - Root cause
 
 ## Step 2: Read the Full Skill
 
-Determine which skill needs updating. If ambiguous, ask the user.
-
-**Read the entire skill file** — not just the section you plan to edit.
-You need the full picture to avoid introducing overlaps or contradictions.
-
-```bash
-cat skills/{skill-name}/SKILL.md
-```
-
-As you read, build a mental map of:
-- Every hard rule and where it's stated
-- Every phase/step and what it covers
-- Recurring themes or instructions that appear in multiple places
-- Tool usage patterns (API calls, CLI commands, query formats)
-
-This map is essential for Step 4 (drafting) and Step 5 (audit).
-
-**Partial reads do not satisfy Edit's read-before-write guard.** A Read
-that returns a truncated view of a large file (the harness pages files
-past its single-read line cap) leaves the file marked unread for Edit —
-the first Edit fails with "File has not been read yet" even though the
-target text was visible in the partial view. Before editing a region of
-a large skill, re-Read that region with a narrow `offset`/`limit` so the
-exact page registers as read.
+- Determine which skill needs updating. If ambiguous, ask the user.
+- Read the entire `SKILL.md`, not just the target section.
+- Build a mental map of:
+  - Hard rules
+  - Phase / step coverage
+  - Recurring themes
+  - Tool usage patterns
+- Partial reads do not satisfy the edit guard. Re-read narrow ranges when needed.
 
 ## Step 3: Distill the Lesson
 
-Transform the incident into a **generalizable principle**.
-
-Ask:
-- What **behavior** needs to change?
-- What **check** or **mechanism** was missing?
-- What **failure mode** should the agent anticipate going forward?
-
-Remove:
-- Specific file names (e.g., `trust-boundaries.md` → "the file")
-- Specific line numbers (e.g., `line 232` → "the target line")
-- Project-specific context (e.g., `PB3 anchor` → "the referenced anchor")
-- Names of reviewers, PRs, or commits
-
-Keep:
-- Error codes and messages (e.g., `422 "Line could not be resolved"`)
-- API behavior (e.g., "REST API rejects PENDING")
-- Structural patterns (e.g., "lines not in the diff")
+- Transform the incident into a generalizable principle.
+- Ask:
+  - What behavior needs to change?
+  - What check or mechanism was missing?
+  - What failure mode should the agent anticipate?
+- Remove specifics; keep mechanisms.
 
 ### HARD RULE: full-read before `already-covered`
 
-Mark a learning `already-covered` only after reading the full
-learning file and matching every rule/bullet in it against an
-existing rule/bullet in the target skill.
-
-- Match at the rule/bullet level, not the topic level. Two
-  surface overlaps do not prove full coverage.
-- If any line teaches something the skill does not yet encode,
-  classify as `partial` and distill the missing parts.
-- Cite the specific existing lines that already encode each
-  bullet — "topic exists in the skill" is not a coverage proof.
+- Mark a learning `already-covered` only after reading the full file and matching every rule / bullet.
+- Match at the rule level, not the topic level.
+- If any rule is missing, classify as `partial` and distill the missing part.
+- Cite exact existing lines that prove coverage.
 
 ### HARD RULE: re-violation escalation — `already-covered` is NOT "done"
 
-A fresh learning describing an incident the skill **already covers** is
-proof the agent is **not honoring** the existing rule. Renaming it
-`.learned.md` with a citation and stopping there guarantees recurrence —
-the rule's emphasis is too weak to steer behavior. Each recurrence MUST
-raise the rule's emphasis by exactly **one notch**.
-
-- Skip escalation only when the learning predates the rule (it was
-  captured before the rule existed). Otherwise the recurrence is real —
-  escalate.
-- Find the existing rule in the target skill. Raise its emphasis marker
-  one notch up this ladder, then re-commit the strengthened rule:
-
-  1. baseline prose rule (no marker)
+- A fresh learning that repeats an existing rule proves the rule is not steering.
+- Escalate by exactly one notch:
+  1. baseline prose rule
   2. `**Important:**`
   3. `**Very important:**`
   4. `**CRITICAL:**`
   5. `**HIGH-PRIORITY:**`
   6. `**HIGHER-PRIORITY:**`
   7. `**VERY-HIGH-PRIORITY:**`
-  8. Ladder exhausted → rewrite the section so the rule is structurally
-     impossible to skip (a gate, a checklist item, a restructured step).
-     Emphasis words alone have failed; change the structure, not the
-     adjective.
-
-- Severity words (notches 2–4, title-case bold) escalate to priority
-  words (notches 5–7, UPPERCASE bold) — uppercase + priority framing
-  steers more forcefully than a lowercase severity adjective.
-- One notch per recurrence — never jump levels. The notch is the
-  steering dose; spend only what the evidence demands.
-- The emphasis marker in the SKILL.md rule IS the live ladder state.
-  Record the bump in the rule's reference file:
-  `Escalation: <new-level> (recurred YYYY-MM-DD)`.
-- Treat an escalation as a `principle` edit: bump `metadata.version` and
-  commit the strengthened rule even though no new rule was added.
+  8. restructure the section so the rule is structurally impossible to skip
+- Record the bump in the reference file.
+- Treat an escalation as a principle edit and bump `metadata.version`.
 
 ### Classify: principle vs one-off
 
-**HARD RULE:** Before drafting any SKILL.md edit, classify the distilled
-lesson as `principle` or `one-off`. Routing is different for each —
-SKILL.md grows unbounded if every one-off lands inline.
-
-- `principle` — the failure mode generalizes; the rule applies on
-  most invocations of the skill or to a recurring class of input.
-  Route: fold into SKILL.md (proceed to Step 4) AND write a
-  reference file recording provenance.
-- `one-off` — the scenario is narrow, repo-specific, tool-version-
-  specific, or unlikely to recur; the rule does not generalize
-  cleanly to most agent runs.
-  Route: write a reference file ONLY (see Step 7 reference rules).
-  Do NOT edit SKILL.md. Do NOT bump `metadata.version`.
-
-Classify as `principle` when **any** of:
-
-- The same pattern appears in ≥ 2 prior learnings, memories, or
-  `.learned.md` archives for this skill.
-- The failure mode would surface on every invocation that touches
-  the affected step (not gated on uncommon inputs).
-- The fix is a check or rule expressible in one bullet without
-  naming specific tools, versions, or repos.
-
-Classify as `one-off` when **any** of:
-
-- The fix requires a verbatim recipe that only works for one tool
-  version, runtime, or repo layout.
-- The failure mode only fires under a configuration the agent
-  rarely encounters.
-- The user described it explicitly as a corner case or a one-time
-  workaround.
-- Distilling the principle leaves nothing actionable that is not
-  already covered by existing rules in the skill.
-
-Record the classification in the run report and in the reference
-file's frontmatter (`class: principle` or `class: one-off`). When
-ambiguous, ask the user once before proceeding.
+- `principle` — the failure mode generalizes. Route to `SKILL.md` plus a reference file.
+- `one-off` — the scenario is narrow, repo-specific, or unlikely to recur. Route to a reference file only.
+- Classify as `principle` when any of these are true:
+  - The pattern appears in ≥ 2 prior learnings, memories, or `.learned.md` archives.
+  - The failure mode would surface on every invocation that touches the affected step.
+  - The fix is expressible in one bullet without naming specific tools, versions, or repos.
+- Classify as `one-off` when any of these are true:
+  - The fix requires a verbatim recipe that only works for one tool version or repo layout.
+  - The failure mode only fires under a rare configuration.
+  - The user described it as a corner case or one-time workaround.
+  - Distilling the principle leaves nothing actionable that is not already covered.
+- Record the classification in the run report and in the reference file frontmatter.
+- When ambiguous, ask once.
 
 ## Step 4: Draft the Skill Update
 
-**Skip Step 4 entirely for `one-off`-class lessons.** Jump to Step 7
-and write the reference file only — no SKILL.md edit, no version bump.
-For `principle`-class lessons, continue here.
-
-Locate where in the skill the lesson belongs:
-- **New step?** Add a new heading in the relevant phase.
-- **Missing check?** Insert a validation step before the problematic action.
-- **Wrong instruction?** Edit the existing text to correct the behavior.
-- **New rule?** Add a "HARD RULE:" block if it's a must-never-break constraint.
-
-**Format the update as instructions, not narrative:**
+- Skip Step 4 for `one-off` lessons.
+- For `principle` lessons, continue.
+- Locate the edit target:
+  - New step
+  - Missing check
+  - Wrong instruction
+  - New HARD RULE
+- Format the update as instructions, not narrative:
 
 ```markdown
 ### [Step name]
@@ -330,262 +206,127 @@ Locate where in the skill the lesson belongs:
 
 ## Step 5: Audit the Full Skill
 
-**Before presenting changes**, re-read the entire skill with your
-proposed edit mentally applied. Check for:
-
-**Overlapping instructions:** Two sections that teach the same behavior
-in different words. Merge them — keep the clearer version, delete the
-other. If they're in different phases, keep the one closest to where the
-agent needs it.
-
-**Contradictory rules:** An edit in one section that conflicts with an
-existing rule elsewhere. Resolve the conflict — update or remove the
-stale instruction.
-
-- Check the current run's own edits and the most recent `.learned.md`
-  files for the target skill, not just old
-  prose — the freshest rules are the most likely to be reversed by a
-  newer learning (format/approach churn lands as a cohort of same-day
-  learnings).
-- When a higher-severity or newer learning reverses a recent rule,
-  replace it and record the supersession in the new reference file's
-  `Supersedes:` line — never leave both rules live.
-- When a learning's mechanism is large enough to be its own domain,
-  extract it to a sibling skill and have the consuming skill delegate,
-  rather than duplicating the mechanics inline.
-
-**Redundant tool usage:** The same API call or CLI command shown in
-multiple places with slightly different flags or jq filters. Consolidate
-to one canonical form, or extract to a shared pattern referenced by name.
-
-**Bloated sections:** Steps that have grown beyond what the executing
-agent needs. If a section has more than 3-4 paragraphs of prose for a
-single action, tighten it. Instructions should be imperative and
-scannable — not essays.
-
-**Stale references:** Sections that reference steps, phases, or
-variables that have been renamed or removed in prior edits.
-
-**Orphaned label artifacts:** When removing a tool, permission, or
-config line, scan for the adjacent label comment that introduced it
-(e.g., a `# Learning capture` header above an `allowed-tools` entry,
-a section heading above a removed code block). A label with no
-following content is dead text — remove it in the same edit.
-
-If the audit surfaces cleanup beyond your original edit, bundle the
-cleanup into the same change. Do not leave known debt for a future pass.
+- Re-read the entire skill with the proposed edit mentally applied.
+- Check for:
+  - Overlap
+  - Contradiction
+  - Redundant tool usage
+  - Bloated sections
+  - Stale references
+  - Orphaned label artifacts
+- Merge overlapping instructions.
+- Resolve contradictions.
+- Consolidate repeated API calls or CLI commands.
+- Tighten sections that run past four bullets.
+- Remove dead labels left by earlier edits.
+- Bundle cleanup into the same change.
 
 ### Mechanical overfit scan
 
-**HARD RULE:** Before Step 6 presents the diff, run a checklist-driven grep
-against the **proposed edit text** — not against memory or intent.
-"Does this look overfitted?" answered by the same brain that just
-wrote the overfit defaults to "looks fine to me." A categorical
-scan converts the audit from vibes-level to code-level.
-
-For every category below, grep the proposed addition. Each match
-must either be replaced with a generic mechanism / placeholder
-**or** explicitly justified inline.
-
-| Category | Patterns / signals | Replace with |
-|----------|--------------------|--------------|
-| Reviewer / bot logins | `[bot]`, `@[a-z0-9_-]+`, named automation, "bots like X" | `{reviewer}`, "review-automation bots that <mechanism>" |
-| Organization prefixes | known org tokens, `<org>-managed`, `<org>-*-default` runner names | "an organization-managed runner group", "an org allowlist" |
-| Employer / internal project names | `$EMPLOYER`, `$GITHUB_ORG`, or any literal employer name, internal repo name, or internal service name (e.g., the actual company name or monorepo name as a string) | `{owner}/{repo}`, `{service}`, "the repo", "the project" — use `$EMPLOYER`/`$GITHUB_ORG` only when referencing the env var itself, never the resolved value |
-| Specific ticket IDs | `[A-Z]+-\d+` outside placeholder examples | `[BOARD-NUM]` or remove |
-| Specific repo / file / package names | concrete project names that don't generalize | "the file", "the repo", "the package" |
-| Line numbers / SHAs / PR numbers | `:\d+`, short SHAs, `#\d+` outside template slots | "the target line", "the commit", "the PR" |
-| Specific tool versions | exact versions cited when the failure pattern is version-agnostic | "a version that introduces <change>" |
-| Concrete person names | reviewer / committer names | "the reviewer", "the author" |
-| Hardcoded branch names | `main`, `master`, `develop` literal in `git diff/log/merge-base/rebase` commands or prose | `<base>` placeholder + dynamic resolution (e.g., `gh pr view --json baseRefName --jq .baseRefName`) — stacked PRs have non-default bases |
-
-For each grep match in the proposed text:
-
-- **Replace** with the generic mechanism / placeholder — describe
-  the *behavior* (what makes the case match the rule) instead of
-  the *identity* (what the case is called).
-- **Parameterize, don't drop, real paths.** When a filesystem path
-  carries an employer/org segment, replace only that segment with
-  `$EMPLOYER` / `$GITHUB_ORG` and keep the structure:
-  `~/gitc/<employer>/` → `~/gitc/$EMPLOYER`. The agent resolves the
-  env var at run time, so the path stays usable.
-- **Justify inline** only when the literal token is required —
-  stable API names like `PRRT_*`, verbatim error messages from an
-  API (`422 "Line could not be resolved"`), framework-defined env
-  vars (`CLAUDE_PROJECT_DIR`), or explicitly placeholder strings
-  in `{like-this}` or `<like-this>` form.
-
-**Replacement-order rule.** When the proposed edit (or a scrub /
-`git filter-repo` / `sed` replacement map) replaces multiple tokens
-where one is a substring of another (`foo` ⊂ `foo-bar`), order the
-replacements **longest-first**. A short replacement applied first corrupts
-every longer token that contains it (`foo`→`x` turns `foo-bar` into
-`x-bar` before the `foo-bar` rule can match). Sort the map by descending
-token length before applying.
-
-- **Self-corruption guard.** When the replacement map — or its before→after
-  examples in help text — is itself a committed artifact a later map run can
-  re-process, write the "before" tokens as non-matching placeholders (`<n>`,
-  `{slug}`). A literal example token gets rewritten on the next pass, turning
-  `before → after` into `after → after`.
-
-**Cohort check.** When the user calls out an overfit on a recent
-edit, treat it as a signal that other recent edits likely carry
-the same class of overfit. Audit every sharpen edit made in the
-current session (and the last few `.learned.md` files)
-for the same pattern before considering the issue closed —
-overfits travel in cohorts because the source learnings often
-cite the same incident's tokens.
-
-The category list lives in this skill and grows as new categories
-surface. When a new overfit type bites, add a row.
+- Before presenting the diff, grep the proposed edit text against these categories:
+  - Reviewer / bot logins
+  - Organization prefixes
+  - Employer / internal project names
+  - Specific ticket IDs
+  - Specific repo / file / package names
+  - Line numbers / SHAs / PR numbers
+  - Specific tool versions
+  - Concrete person names
+  - Hardcoded branch names
+- Replace each match with a generic mechanism or placeholder.
+- Parameterize real paths instead of dropping them.
+- Justify inline only when the literal token is required.
+- Apply replacement maps longest-first.
+- When the user calls out an overfit, audit the whole cohort for the same pattern.
 
 ## Step 6: Present for Review
 
-Show the user:
-1. The distilled principle (what you learned)
-2. The specific edit location (which phase/section)
-3. The proposed diff
-4. **Any cleanup found during audit** — list what you consolidated,
-   removed, or tightened and why
-
-Wait for approval before editing the skill file.
+- Show the user:
+  1. Distilled principle
+  2. Edit location
+  3. Proposed diff
+  4. Cleanup found during audit
+- Wait for approval before editing.
 
 ## Step 7: Apply the Update
 
-After approval, edit the files:
-
-- Edit `skills/{skill-name}/SKILL.md` with the new content **and** every
-  audit cleanup item — do not defer cleanup to a follow-up pass.
-- Verify each new or edited section follows the **Style Rules** above
-  (bullets, imperative voice, one rule per bullet, no essays).
-- Write distilled context to `skills/{skill-name}/references/` (see below).
-- Bump `metadata.version` to a fresh CalVer (`YYYY.MM.DD-HHMMSS`, UTC) —
-  patch for fixes, minor for new steps. Never reuse a version string.
-- Re-read the final file end-to-end to confirm coherence and absence of
-  drift (see "Drift check" below).
-
-Step 7 is **edits only**. Committing happens in Step 8.
+- Edit `skills/{skill-name}/SKILL.md` and every audit cleanup item.
+- Verify each new or edited section follows the style rules.
+- Write distilled context to `skills/{skill-name}/references/`.
+- Bump `metadata.version` to a fresh CalVer.
+- Re-read the final file end-to-end.
+- Commit happens in Step 8.
 
 ### Write distilled references to `skills/{name}/references/`
 
-The target skill's prose teaches the agent **what to do**. The
-`references/` directory teaches the agent **what was learned and why**,
-without bloating the SKILL.md itself.
-
-- Create the directory if missing:
-
-  ```bash
-  mkdir -p skills/{skill-name}/references
-  ```
-
-- For each distilled learning, write one short reference file:
-  `references/{YYYY-MM-DD}_{slug}.md`. Both classes get a reference;
-  the file shape differs by class.
-  - One learning per file. Do not concatenate multiple incidents.
-  - Frontmatter: `class: principle` or `class: one-off` (mandatory).
-  - File body: 5–15 lines for `principle`; up to 30 lines for
-    `one-off` (it carries the full context since SKILL.md does not).
-    Bullets only.
-  - **`principle` required sections:** **Rule** (one line), **Why**
-    (one line, the failure mode), **Where** (one line, which Step /
-    HARD RULE in SKILL.md it landed in).
-  - **`one-off` required sections:** **Scenario** (one line, the
-    narrow condition), **Symptom** (one line, what fails), **Fix**
-    (concrete recipe — verbatim commands allowed since SKILL.md will
-    not carry them), **Why not promoted** (one line citing the
-    one-off classification criterion that matched).
-  - No incident-specific tokens that the SKILL.md edit already
-    stripped (filenames, line numbers, reviewer logins, SHAs) —
-    exception: `one-off` files may keep tokens that the recipe
-    requires verbatim, since they are not generalizing.
-- Do not link references from SKILL.md prose. They are an index for
-  future sharpen runs and audits, not runtime documentation.
-- The mechanical overfit scan (Step 5) applies to reference files too —
-  they are part of the proposed edit set.
+- Create the directory if missing.
+- Write one short reference file per learning.
+- Frontmatter:
+  - `class: principle` or `class: one-off`
+- `principle` files:
+  - **Rule**
+  - **Why**
+  - **Where**
+- `one-off` files:
+  - **Scenario**
+  - **Symptom**
+  - **Fix**
+  - **Why not promoted**
+- Do not link references from `SKILL.md`.
+- Run the overfit scan on reference files too.
 
 ### Sync skill README, diagrams, and repo-level docs
 
-A SKILL.md edit that changes described behavior strands every doc surface
-that describes the skill — the same drift this skill warns reviewers about.
-Propagate the change in the same pass.
-
-- Skip when the edit changed no described behavior (typo, internal rule
-  clarification with no new step/phase/trigger). `one-off`-class edits
-  never reach here — they touch no SKILL.md.
-- **Skill README** — update `skills/{skill-name}/README.md` when a step,
-  phase, trigger, or argument shape changed. Update any Mermaid diagram in
-  it to match the new flow (`wk-markdown` governs diagram + link rules).
-- **README version** — bump the `**Version:**` line in the skill's
-  `README.md` to the same CalVer just written to `metadata.version`. README
-  and SKILL.md versions stay in lockstep. Add the line under the tagline if
-  the README lacks it.
-  - When first adding the Version line to an existing README, pre-convert any
-    bare `wk-*` mention to a relative link (`[wk-foo](../foo/README.md)`) in
-    the same edit — touching the README pulls the whole file through the
-    `check-skill-links` hook, which blocks on pre-existing bare links.
-- The `check-readme-sync` pre-commit hook blocks any commit that stages a
-  `skills/*/SKILL.md` without its sibling `README.md` — stage both together.
-- **Repo index** — when the skill's one-line description changed, edit its
-  row in **both** `README.md` (root) and `skills/README.md`; the
-  `check-readme-index` hook blocks a commit where the two drift.
-- **Repo docs** — invoke `wk-docs` to scan `docs/` when the edit changed
-  cross-skill behavior or a documented workflow; update what drifted.
-- Stage these doc edits in the same commit group as the SKILL.md change.
+- Update `skills/{skill-name}/README.md` when a step, phase, trigger, or argument shape changed.
+- Update any Mermaid diagram to match the new flow.
+- Bump the README version to the same CalVer as `metadata.version`.
+- When first adding the Version line to an existing README, pre-convert bare `wk-*` mentions to relative links.
+- Update both index files when the one-line description changes.
+- Invoke `wk-docs` when the edit changes cross-skill behavior or documented workflow.
+- Stage doc edits with the SKILL.md change.
 
 ### Drift check
 
-Before exiting Step 7, scan the full SKILL.md for drift between
-iterations. Multi-edit runs accumulate stale content fast.
-
-- Frontmatter `description` still matches what the skill actually does
-  after every edit in this run.
+- Frontmatter `description` still matches the behavior.
 - `argument-hint` matches the current argument shape.
-- `allowed-tools` lists every tool the new edits reference (and no
-  orphaned entries).
-- Quick-reference table, Trigger table, and Step list at the top match
-  the section headings in the body — no renamed Steps left referenced
-  by the old name.
-- Cross-references between Steps (`see Step N`, `per the rule above`)
-  still resolve to the correct targets.
-- Examples in SKILL.md that demonstrate the fixed behavior (good vs
-  bad) reflect the **post-edit** behavior, not the pre-edit one.
+- `allowed-tools` lists every tool the new edits reference.
+- Quick-reference table, Trigger table, and Step list match the body.
+- Cross-references still resolve.
+- Examples reflect the post-edit behavior.
+- Fix every drift item in the same pass.
 
-Fix every drift item in the same edit pass.
+## Step 7.5: De-bloat Pass (concision gate)
 
-## Step 7.5: Refactor and Simplify Pass (concision gate)
-
-- Invoke `wk-refactor` against the edited SKILL.md and any new `references/` files.
 - Search for simplification opportunities before and after the functional edit.
 - Convert dense paragraphs to structured nested bullets when the rule remains complete and actionable.
 - Remove redundancy, dead labels, and explanatory filler.
 - Preserve every rule, failure mode, and command.
-- Reject refactor suggestions that drop a HARD RULE, error code, or failure-mode explanation.
-- Re-run the **Drift check** in Step 7 after refactor edits land.
-- Keep the final SKILL.md as short as possible without losing coverage.
+- Reject edits that drop a HARD RULE, error code, or failure-mode explanation.
+- Re-run the Drift check after de-bloat edits land.
+- Keep the final `SKILL.md` as short as possible without losing coverage.
 
 ## Step 8: Verify and Commit (terminal gate)
 
-Do not return control to the user until all four checks pass:
+Do not return control until all four checks pass:
 
-1. **Install:** `npx skills add . -g -y -a=claude 2>&1 | tail -5` from the repo root — must print `Done!`. Re-run from repo root if it prints `No skills found` or exits non-zero.
-2. **Commit:** every dirty file in a commit. In batch/multi-phase runs, group by logical change (one commit per skill updated, including its `references/` additions, README/diagram updates, and any repo-index or `docs/` edits; one chore commit for `.learned.md` renames); use `wk-commit` conventional format with classifier emojis (🦾 🛡️ 🔧). Commit as each change lands — do not pause between commits or phases.
-   - **After a hook-blocked commit, re-check the index before the next group.** A `git commit` blocked by a pre-commit hook exits non-zero but leaves the staged set intact — the next group's `git add` then sweeps those files into one commit, merging two logical changes. Run `git status --short` after any blocked commit; fix the block and retry that exact commit first, or `git restore --staged <files>` before staging the next group.
-   - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link (`[wk-foo](../foo/README.md)`) from the first draft — bare skill names trip the link-check hook and force a re-commit.
-   - **Stage a `.learned.md` rename by adding only the new `.learned.md` path** — never enumerate the pre-rename `.md` path. When the source learning was untracked (freshly mirrored from the inbox, or never committed), there is no deletion to stage, and `git add` of the missing old path aborts the whole staging with `fatal: pathspec ... did not match any files`.
-3. **Push once:** after all commits exist, push a single time. Single-skill runs may push immediately after their lone commit.
-4. **Clean tree:** `git status --short` must be empty — if anything remains, commit or stash it.
+1. **Install:** `npx skills add . -g -y -a=claude 2>&1 | tail -5` from the repo root — must print `Done!`.
+2. **Commit:** every dirty file in a commit. Use `wk-commit` conventional format with classifier emojis.
+   - Re-check the index after any hook-blocked commit.
+   - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link.
+   - Stage a `.learned.md` rename by adding only the new `.learned.md` path.
+3. **Push once:** after all commits exist, push a single time.
+4. **Clean tree:** `git status --short` must be empty.
 
-Report: one line per skill updated (name, new version, principle distilled), then confirm tree clean, installed, pushed. Silence after edits is a violation of this gate.
+Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
 ## Anti-Patterns to Avoid
 
-| Anti-pattern | Why it's wrong | Correct approach |
-|--------------|----------------|------------------|
-| Embedding specific file names | Teaches one case, not the pattern | Describe the type of file or the check |
-| Referencing specific line numbers | Meaningless to future users | Describe the line's role or position |
-| Copying error descriptions verbatim | May include incident-specific context | Extract the error code and failure mode |
-| Adding "if file is X, do Y" | Overfits on one repo | Add a general rule that covers all repos |
+| Anti-pattern | Correct approach |
+|---|---|
+| Embedding specific file names | Describe the type of file or the check |
+| Referencing specific line numbers | Describe the line's role or position |
+| Copying error descriptions verbatim | Extract the error code and failure mode |
+| Adding "if file is X, do Y" | Add a general rule that covers all repos |
 
 ## Example: Good vs Bad
 
@@ -611,323 +352,129 @@ If a line is missing, move the comment to a nearby valid line or the
 review body.
 ```
 
-The good version teaches **what to check** and **why** without naming the
-specific incident.
-
 ## Quick Reference
 
 | Trigger | Behavior |
-|---------|----------|
+|---|---|
 | `/wk-sharpen pr-review incident.md` | Read incident, distill lesson, audit full skill, propose update |
 | `/wk-sharpen commit "agent skipped signing"` | Distill verbal report, audit, propose skill improvement |
 | `/wk-sharpen` (no args) | Batch mode — scan learnings + memories + retrospects, distill all |
 | `/wk-sharpen --scan --force` | Batch mode — reprocess everything, ignore log |
 | `/wk-sharpen improve [scope]` | Improve mode — refactor and prune accumulated entropy |
 
-**Single mode:** Read report → Read full skill → Distill → Classify
-(`principle` vs `one-off`) → Draft (skip for `one-off`) → Audit for
-overlap/bloat → Present with cleanup → Apply → Verify & commit
+**Single mode:** Read report → Read full skill → Distill → Classify → Draft → Audit → Present → Apply → Verify & commit
 
-**Batch mode:** Scan learnings + memories + retrospects → Filter (`.learned.md`
-rename for learnings/retros, `.distilled-memories` marker for memories) →
-Materialize each memory/retro lesson as a learning via `wk-learn` → Process
-each via single mode → Rename learnings **and retros** to `.learned.md` →
-Update the memory marker
+**Batch mode:** Scan learnings + memories + retrospects → Filter → Materialize each
+memory/retro lesson as a learning via `wk-learn` → Process each via single mode →
+Rename learnings **and retros** to `.learned.md` → Update the memory marker
 
-**Improve mode:** Inventory scope → Parallel audit → Consolidate findings →
-Phased proposal (user approval per phase) → Apply → Verify & commit
+**Improve mode:** Inventory scope → Parallel audit → Consolidate findings → Phased
+proposal (user approval per phase) → Apply → Verify & commit
 
 ## Batch Mode: Scan Learnings, Memories, and Retrospects
 
-When invoked without a specific incident (e.g., `/wk-sharpen` with no
-arguments, or `/wk-sharpen --scan`), sharpen enters batch mode — scanning
-four sources for distillable material.
+When invoked without a specific incident, sharpen enters batch mode.
 
 ### Source 1: Global learnings inbox
 
-- Mirror unprocessed learnings from `~/.claude/skills/learnings/` into the
-  repo's tracked tree before distilling. Global captures land outside the
-  repo and must be version-controlled here to log as `.learned.md`.
-- Skip the entire source if the directory does not exist.
-- For each `*.md` (excluding `*.learned.md`) under the inbox:
-  - Resolve destination as `$WK_SKILLS_HOME/learnings/skills/<relative-path>`
-    preserving sub-directory structure.
-  - Skip the copy if the destination already exists (already mirrored).
-  - Copy the file, then delete the inbox original so the inbox stays
-    drained:
-
-    ```bash
-    inbox=~/.claude/skills/learnings
-    [ -d "$inbox" ] || exit 0
-    find "$inbox" -name "*.md" ! -name "*.learned.md" -type f | while read -r src; do
-      rel="${src#$inbox/}"
-      dest="$WK_SKILLS_HOME/learnings/skills/$rel"
-      [ -e "$dest" ] && continue
-      mkdir -p "$(dirname "$dest")"
-      cp "$src" "$dest" && rm "$src"
-    done
-    ```
-
-- After mirroring, fall through to Source 2 — the copied files are now
-  unprocessed learnings in the repo tree and get distilled there.
+- Mirror unprocessed learnings from `$HOME/.claude/skills/learnings/` into the repo tree before distilling.
+- Skip the source if the directory does not exist.
+- For each `*.md` under the inbox:
+  - Resolve destination as `$WK_SKILLS_HOME/learnings/skills/<relative-path>`.
+  - Skip if the destination already exists.
+  - Copy the file, then delete the inbox original.
+- Fall through to Source 2.
 
 ### Source 2: Repo learnings directory
 
-Scan `$WK_SKILLS_HOME/learnings/skills/` for unprocessed files:
-
-```bash
-find "$WK_SKILLS_HOME/learnings/skills" -name "*.md" \
-  ! -name "*.learned.md" -type f 2>/dev/null
-```
-
-For each unprocessed learning:
-1. Read the file — extract skill name, type, severity, suggested fix
-2. Run the normal sharpen workflow (Steps 2-7) using the learning as input
-3. After the skill is updated, rename to `.learned.md`:
-   ```bash
-   mv "$file" "${file%.md}.learned.md"
-   ```
-
-Process every unprocessed learning — no per-run cap.
-
-- Order by severity (highest first), but do not stop after a fixed count.
-- Walk learnings one-by-one; run the full single-mode workflow (Steps 2–7)
-  on each.
-- Confirm the distilled principle is encoded in the target skill before
-  renaming to `.learned.md` — a rename without the rule folded in orphans
-  the lesson (the source incident recurs and the fix is re-discovered).
-- A fixed cap defers the remaining learnings indefinitely and lets the
-  inbox grow unbounded — process the whole queue each run.
+- Scan `$WK_SKILLS_HOME/learnings/skills/` for unprocessed files.
+- For each unprocessed learning:
+  1. Read the file.
+  2. Run the normal sharpen workflow using the learning as input.
+  3. Rename to `.learned.md`.
+- Process every unprocessed learning.
+- Order by severity.
+- Walk learnings one-by-one.
+- Confirm the distilled principle is encoded before renaming.
 
 ### Source 3: Global memory files
 
-Scan `~/.claude/memory/` for memory files that contain skill-applicable
-feedback or corrections:
-
-```bash
-find ~/.claude/memory -name "*.md" -type f 2>/dev/null
-```
-
-**Only process memories of type `feedback`.** Read each file's frontmatter
-— if `type: feedback`, the memory likely contains a behavioral correction
-or confirmed approach that could improve a skill.
-
-**HARD RULE — never rename memory files.** The `.learned.md` suffix is a
-**repo learnings** convention (Source 2 only). Memory files in
-`$HOME/.claude/memory/` always keep their original `.md` name; their
-processed state is tracked exclusively by the gitignored
-`.distilled-memories` marker (see Tracking below).
-Renaming a memory file breaks `MEMORY.md` index links and orphans the
-content from cross-session recall. The materialized learning file
-(below) is a separate repo artifact that **does** follow the Source 2
-`.learned.md` convention — only the memory file itself is never renamed.
-
-**HARD RULE — materialize every external memory as a learning file via
-`wk-learn` before distilling it.** Memory files live outside the repo and
-are not version-controlled; distilling one straight into a `SKILL.md`
-leaves no reviewable provenance beyond a one-line log entry. Route the
-memory through the same learning artifact every other source produces.
-
-For each feedback memory:
-1. Check if it's already been processed (see tracking below).
-2. Read the content — extract the rule, the **Why** line, and the
-   **How to apply** line.
-3. Determine which skill (if any) the feedback applies to — match by
-   topic, tool name, or workflow phase mentioned. If none matches, skip
-   it — global memory already covers general behavior.
-4. Invoke `Skill(wk-learn, args="<matched-skill>")` to write
-   `learnings/skills/<skill>/<YYYY-MM-DD>_<slug>.md` carrying the rule,
-   **Why**, and **How to apply**, with `type:` derived from the memory
-   (`correction` / `pattern`) and an estimated `severity:`.
-5. Distill that new learning file through the **Source 2 path** — run the
-   normal sharpen workflow (Steps 2–7) against the learning file, then
-   rename it to `.learned.md` once folded in. Never distill the memory
-   file directly; the learning file is the unit of work.
-6. Log the memory file as `distilled` (the memory file itself is never
-   renamed, per the HARD RULE above).
-
-**Only process `user` or `project` type memories if they contain
-explicit instructions about how a skill should behave** (e.g., "when
-reviewing PRs, always check..." or "the morning brief should...").
-Skip memories that are purely informational context.
+- Scan `$HOME/.claude/memory/` for memory files that contain skill-applicable feedback or corrections.
+- Only process memories of type `feedback`.
+- Read each file's frontmatter.
+- Determine which skill the feedback applies to.
+- Materialize each matched memory as a learning via `wk-learn`.
+- Distill that new learning through the Source 2 path.
+- Log the memory file as `distilled`.
+- Only process `user` or `project` type memories if they contain explicit instructions about how a skill should behave.
 
 ### Source 4: Session retrospects
 
-`wk-retro` writes one **write-once file per session** to
-`$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>_session-<N>.md`. Their "What
-could've been better" bullets are distillable lessons — often naming a skill —
-that no other source captures. Because each file is write-once, process it
-exactly like a Source 2 learning: distill, then rename to `.learned.md`.
-
-Scan for unprocessed retrospect files:
-
-```bash
-find "$WK_SKILLS_HOME/learnings/retrospect" -name "*.md" \
-  ! -name "*.learned.md" -type f 2>/dev/null
-```
-
-For each unprocessed retrospect file:
-1. Read each "What could've been better" (and any "What worked" bullet that
-   asserts a reusable practice). Extract each skill-applicable lesson.
-2. Match each lesson to a skill by name/tool/phase. Skip lessons with no
-   matching skill.
-3. Materialize each matched lesson as a learning via
-   `Skill(wk-learn, args="<matched-skill>")`, then distill it through the
-   **Source 2 path** (Steps 2–7) and rename that learning to `.learned.md`.
-4. After every lesson in the file is distilled — or the file holds no
-   skill-applicable lesson — rename the retrospect file itself:
-   ```bash
-   mv "$file" "${file%.md}.learned.md"
-   ```
-
-- The `.learned.md` rename IS the processed-state record — no marker, no mtime
-  compare. A plain `*.md` under `learnings/retrospect/` is unprocessed; a
-  `.learned.md` is done.
-- The rename can never orphan later content: retros are write-once per session,
-  so a new session writes a new file that scans as unprocessed. (This reverses
-  the prior immutable-log model, where appending sessions to one daily file
-  hid new content behind an already-distilled marker.)
-- A lesson whose learning slug already exists in `learnings/skills/<skill>/`
-  is already distilled — skip materializing it again (the learning file is the
-  dedup), but still rename the retrospect once its lessons are all accounted for.
+- Scan `$WK_SKILLS_HOME/learnings/retrospect` for unprocessed retrospect files.
+- Read each "What could've been better" and any "What worked" bullet that asserts a reusable practice.
+- Match each lesson to a skill by name/tool/phase.
+- Materialize each matched lesson as a learning via `wk-learn`.
+- Distill it through the Source 2 path and rename it to `.learned.md`.
+- After every lesson in the file is distilled, rename the retrospect file itself.
+- A lesson whose slug already exists is already distilled.
 
 ### Tracking processed sources
 
-Source classes track their processed state differently — there is **no**
-`.distilled-sources.log` (removed; it accumulated machine-absolute paths
-that leaked into history).
-
-- **Learnings (Source 1 & 2)** — processed state is the `.learned.md`
-  rename itself. A file ending `.learned.md` is done; a plain `*.md`
-  under `learnings/skills/` is unprocessed. No separate ledger.
-- **Retrospects (Source 4)** — same as learnings: processed state is the
-  `.learned.md` rename. Each retro is a write-once per-session file, so a
-  plain `*.md` under `learnings/retrospect/` is unprocessed and a
-  `.learned.md` is done. No marker, no mtime compare.
-- **Memories (Source 3)** — tracked by a gitignored marker at
-  `$WK_SKILLS_HOME/.distilled-memories` (one memory-file path per line).
-  The memory file in `$HOME/.claude/memory/` is never renamed, so this
-  marker is the only record that it was distilled.
-
-```bash
-# Marker is gitignored — never committed (it lists machine-local paths).
-MARKER="$WK_SKILLS_HOME/.distilled-memories"
-touch "$MARKER"
-
-# Skip a memory already distilled:
-grep -qF "$memory_path" "$MARKER" && continue
-
-# After materializing the memory as a learning (Source 3 step 4) and
-# distilling it, record it:
-echo "$memory_path" >> "$MARKER"
-```
-
-**Reprocess on change:** if a memory file's mtime is newer than its
-marker entry, treat it as having new content and reprocess.
-
-**Force reprocessing:** on `/wk-sharpen --scan --force` (or "rescan all
-memories"), ignore the `.distilled-memories` marker and reprocess every
-memory. For learnings and retrospects, force mode re-reads `.learned.md`
-files as candidates rather than skipping them.
+- **Learnings (Source 1 & 2):** processed state is the `.learned.md` rename.
+- **Retrospects (Source 4):** same as learnings.
+- **Memories (Source 3):** tracked by a gitignored marker at `$WK_SKILLS_HOME/.distilled-memories`.
+- Reprocess on change.
+- Force reprocessing on `/wk-sharpen --scan --force`.
 
 ### Batch mode presentation
 
-Present a summary before processing:
-
-> "Scanning for distillable material...
->
-> **Learnings:** {N} unprocessed files found
-> **Memories:** {M} feedback memories found ({P} new, {Q} already processed)
-> **Retrospects:** {R} retro files found ({S} unprocessed)
->
-> Processing {total} items..."
-
-After processing, report results:
-
-> "Batch distillation complete:
-> - {count} skills updated
-> - {count} learnings absorbed (.learned.md)
-> - {count} memories distilled (logged)
-> - {count} skipped (already processed / no matching skill)"
+- Present a summary before processing:
+  - Learnings count
+  - Memories count
+  - Retrospects count
+  - Processing count
+- After processing, report:
+  - Skills updated
+  - Learnings absorbed
+  - Memories distilled
+  - Skipped items
 
 ## Improve Mode: Refactor and Optimize
 
-When invoked as `/wk-sharpen improve [scope]`, sharpen enters improve mode —
-a cross-cutting refactor pass that prunes accumulated entropy from the skill
-suite rather than processing new incident evidence.
+Use `/wk-sharpen improve [scope]` for suite-level cleanup, not incident-specific fixes.
 
-`[scope]` is one of:
-- omitted / `all` — every skill in `skills/`
-- `<skill-name>` — deep-clean a single skill
-- glob pattern (e.g., `pr-*`) — clean a named cluster
-
-### Step 1: Inventory pass
-
-Read every skill in scope. Build a per-skill map of: hard rules, phases/steps,
-recurring sections, and any cross-skill references. This map drives the audit.
-
-### Step 2: Parallel audit dispatch
-
-Spawn cluster-grouped agents (typically 4–6 in parallel) to find:
-- Duplicate or overlapping instructions (within and across skills)
-- Overfit residue per the mechanical overfit categories in this skill
-- Bloated sections (>3–4 paragraphs for a single action)
-- Cross-skill duplication — boilerplate blocks (e.g., Post-Completion Learning
-  Capture) or repeated patterns (shared API auth flows, GraphQL queries) that
-  could be referenced once
-- Stale or contradictory references
-- Missing structure (where a table or HARD RULE would compress prose)
-
-### Step 3: Optional external research
-
-Dispatch one agent to search for best-practice patterns the suite hasn't
-adopted (Anthropic skill docs, public skill repos, community discussions).
-Filter to non-obvious, actionable insights that survive overfit scrutiny.
-
-### Step 4: Consolidate findings
-
-Merge all agent reports. Deduplicate findings cited by multiple agents. Group
-by skill and by cross-cutting theme. Rank by leverage:
-- **High** — clear win with no information loss
-- **Low** — nitpick or style preference
-
-### Step 5: Phased proposal to user
-
-Present findings as a phased plan rather than a single mass diff:
-- **Phase A** — extract shared boilerplate to referenced fragments
-- **Phase B** — per-skill deduplication and bloat trimming
-- **Phase C** — cross-skill consolidation
-- **Phase D** — apply external best-practice insights that survived review
-
-For each phase: list affected skills, the change shape, and the risk. **Wait
-for explicit user approval per phase.** Even in auto mode, mass edits across
-multiple skills are high blast-radius and require confirmation.
-
-### Step 6: Apply approved phase
-
-Run the Step 5 single-mode audit (overlap, contradiction, redundancy, bloat,
-stale, overfit) on each per-skill edit before saving. Apply edits. Bump each
-skill's `metadata.version` (CalVer).
-
-### Step 7: Verify and commit
-
-Same terminal gate as other modes: install (`npx skills add . -g -y -a=claude`),
-group commits per skill or per phase, push, final clean-tree check.
-Per-phase commits are not blocking gates — land each phase's commits
-and proceed; push happens once at the end of the run, not between phases.
+- Set `[scope]` to omitted / `all`, `<skill-name>`, or a glob pattern.
+- Inventory every skill in scope.
+- Build a per-skill map of hard rules, phases/steps, recurring sections, and cross-skill references.
+- Audit for:
+  - duplicate or overlapping instructions
+  - overfit residue
+  - bloated sections
+  - cross-skill duplication
+  - stale or contradictory references
+  - missing structure
+- Optionally research best-practice patterns that survive overfit scrutiny.
+- Consolidate findings by skill and cross-cutting theme.
+- Rank by leverage:
+  - **High** — clear win with no information loss
+  - **Low** — nitpick or style preference
+- Present phased proposals for suite-scale changes.
+  - **Phase A** — extract shared boilerplate to referenced fragments
+  - **Phase B** — per-skill deduplication and bloat trimming
+  - **Phase C** — cross-skill consolidation
+  - **Phase D** — apply external best-practice insights that survived review
+- Wait for explicit user approval per phase.
+- Apply approved edits with the single-mode audit.
+- Bump each skill's `metadata.version`.
+- Commit per skill or phase, then push once at the end.
 
 ### Hard rules for improve mode
 
-- **No information loss.** Remove a rule only if (a) it is provably duplicated
-  elsewhere with identical semantics, or (b) a stricter rule added later
-  supersedes it. Otherwise the rule moves rather than disappears.
-- **Phased approval required.** Auto mode does not short-circuit this —
-  suite-scale refactoring is too risky to apply silently.
-- **Cohort overfit scan applies.** Every proposed edit goes through the
-  mechanical overfit scan before presentation.
-- **Capture insights.** When external research surfaces a useful pattern, add
-  it to the overfit-categories table or as a new rule in `wk-sharpen` so the
-  next improve run has it as baseline.
+- **No information loss.** Remove a rule only if it is provably duplicated elsewhere or superseded by a stricter rule.
+- **Phased approval required.** Auto mode does not short-circuit this.
+- **Cohort overfit scan applies.** Every proposed edit goes through the mechanical overfit scan.
+- **Capture insights.** When external research surfaces a useful pattern, add it to the
+  overfit-categories table or as a new rule in `wk-sharpen`.
 
 ---
 
@@ -935,14 +482,11 @@ and proceed; push happens once at the end of the run, not between phases.
 
 - Read access to the skill file being improved
 - Edit access to `skills/{skill-name}/SKILL.md`
-- Read access to `~/.claude/memory/` (for batch mode)
-- Read/write/delete access to `~/.claude/skills/learnings/` (global learnings
-  inbox — files are moved into the repo tree, then removed from the inbox)
-- Read/write access to `$WK_SKILLS_HOME/learnings/` (for batch mode)
-- Read/write access to `$WK_SKILLS_HOME/.distilled-memories` (gitignored
-  memory-distillation marker)
-- Read/write access to `$WK_SKILLS_HOME/learnings/retrospect/` (retrospect
-  files are renamed to `.learned.md` once distilled, like learnings)
+- Read access to `$HOME/.claude/memory/` (for batch mode)
+- Read/write/delete access to `$HOME/.claude/skills/learnings/`
+- Read/write access to `$WK_SKILLS_HOME/learnings/`
+- Read/write access to `$WK_SKILLS_HOME/.distilled-memories`
+- Read/write access to `$WK_SKILLS_HOME/learnings/retrospect`
 
 ---
 

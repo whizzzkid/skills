@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.06.14-092503`
+**Version:** `2026.06.14-095327`
 
 ## Invocation
 
@@ -59,7 +59,7 @@ flowchart TD
   Source 2 path; the memory file itself is never renamed (only the materialized learning is).
 - **Improve mode** requires explicit phased user approval even in auto mode — suite-scale
   refactoring is high blast-radius and can never be applied silently.
-- **Concision pass** scans for simplification opportunities and converts dense paragraphs to
+- **De-bloat pass** scans for simplification opportunities and converts dense paragraphs to
   nested bullets without dropping rules.
 - The gitignored `.distilled-memories` marker prevents re-distilling the same global memory
   across runs (`--force` bypasses it); learnings **and retrospects** track their own processed
