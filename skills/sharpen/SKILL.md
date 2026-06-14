@@ -3,9 +3,10 @@ name: wk-sharpen
 description: >-
   Improve a skill based on field reports or incident retrospectives. Extracts
   generalizable principles from specific failures without overfitting on
-  examples. Use when updating skills after agent runs surfaced gaps, errors, or
-  behavioral issues. Prevents embedding specific file names, line numbers, or
-  project details into skill instructions.
+  examples, then prunes skill bloat and condenses prose into crisp, nested
+  instructions. Use when updating skills after agent runs surfaced gaps, errors,
+  behavioral issues, or simplification opportunities. Prevents embedding
+  specific file names, line numbers, or project details into skill instructions.
 argument-hint: '[skill-name] [incident-file or description]'
 allowed-tools:
   - Read
@@ -28,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.12-154608'
+  version: '2026.06.14-092503'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -50,6 +51,7 @@ behavior, not just the specific instance.
 - A field report describes what went wrong during skill execution
 - A retrospective identifies a behavioral pattern worth preventing
 - You're about to edit a skill based on a specific incident
+- A skill needs simplification or bloat reduction without losing critical rules
 
 ### HARD RULE: invocation routing — `wk-learn` vs `wk-sharpen`
 
@@ -551,32 +553,16 @@ iterations. Multi-edit runs accumulate stale content fast.
 
 Fix every drift item in the same edit pass.
 
-## Step 7.5: Refactor Pass (concision gate)
+## Step 7.5: Refactor and Simplify Pass (concision gate)
 
-Once every learning queued for the run has been folded into the target
-skill, run a refactor pass on the **edited file** before committing. Do
-not skip even when each individual edit looked tight in isolation —
-multi-edit runs accumulate redundancy across sections that no single
-edit can see.
-
-- Invoke `wk-refactor` against the edited SKILL.md and any new
-  `references/` files:
-
-  ```
-  Skill(wk-refactor, args="skills/{skill-name}/SKILL.md")
-  ```
-
-- Apply only refactor suggestions that **preserve every rule** —
-  consolidating duplicates, collapsing nested prose into bullets,
-  removing dead labels left by earlier edits.
-- Reject any suggestion that drops a HARD RULE, an error code, or a
-  failure-mode explanation. Concision must not cost coverage.
-- After refactor edits land, re-run the **Drift check** in Step 7 — a
-  refactor that renames a Step or merges sections can re-introduce
-  drift the prior pass cleared.
-
-The goal is: the final SKILL.md contains exactly what the executing
-agent needs, no more.
+- Invoke `wk-refactor` against the edited SKILL.md and any new `references/` files.
+- Search for simplification opportunities before and after the functional edit.
+- Convert dense paragraphs to structured nested bullets when the rule remains complete and actionable.
+- Remove redundancy, dead labels, and explanatory filler.
+- Preserve every rule, failure mode, and command.
+- Reject refactor suggestions that drop a HARD RULE, error code, or failure-mode explanation.
+- Re-run the **Drift check** in Step 7 after refactor edits land.
+- Keep the final SKILL.md as short as possible without losing coverage.
 
 ## Step 8: Verify and Commit (terminal gate)
 

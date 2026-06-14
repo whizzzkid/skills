@@ -104,7 +104,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-tone`](./tone/README.md) | Apply the user's voice (encouraging, energetic, humorous, intent-emoji) to messages drafted on their behalf | Auto (posting as the user) + User |
 | [`wk-calver`](./calver/README.md) | Generate CalVer version strings (YYYY.MM.DD-HHMMSS UTC) — replaces semver | Auto (on version bumps) |
 | [`wk-learn`](./learn/README.md) | Capture per-skill learnings after each run → `learnings/skills/{skill}/` | User + Model |
-| [`wk-sharpen`](./sharpen/README.md) | Distill field reports into SKILL.md improvements without overfitting on examples | User + Model |
+| [`wk-sharpen`](./sharpen/README.md) | Distill field reports and prune skill bloat without overfitting on examples | User + Model |
 | [`wk-skill`](./skill/README.md) | Scaffold a new wk-* skill from the canonical template | User + Model |
 | [`wk-env`](./env/README.md) | Diagnose env-var availability; source `$HOME/.profile`, report missing vars | Auto (PreToolUse on Skill) + User |
 | [`wk-scope-guard`](./scope-guard/README.md) | PreToolUse hook — block out-of-repo searches (`find /`), warn on Edit/Write outside the project root | Auto (PreToolUse on Bash/Edit) + User |
@@ -183,7 +183,7 @@ flowchart LR
     LEARN --> FILES["learnings/skills/<br/>{skill}/*.md"]
     SESSION --> RETRO["wk-retro<br/>aggregates session<br/>learnings"]
     RETRO --> MEM["~/.claude/memory/<br/>persistent context"]
-    FILES --> SHARPEN["wk-sharpen<br/>distills patterns<br/>without overfitting"]
+    FILES --> SHARPEN["wk-sharpen<br/>distills patterns<br/>prunes bloat"]
     MEM --> SHARPEN
     SHARPEN --> SKILL["SKILL.md rewritten<br/>new version shipped"]
     SKILL --> SESSION
@@ -200,7 +200,7 @@ The cycle: **session → learn → retro → sharpen → better skills → next 
 
 - [`wk-learn`](learn/README.md) is called at the end of each skill run with the skill's short name as argument; writes a per-skill learning file to `$WK_SKILLS_HOME/learnings/skills/<name>/`.
 - [`wk-retro`](retro/README.md) writes the session narrative to `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md` (consumed by [`wk-sharpen`](sharpen/README.md)) and, when a promotable rule surfaces, adds the distilled rule to `~/.claude/memory/` — never the narrative itself.
-- [`wk-sharpen`](sharpen/README.md) reads learning files and rewrites `SKILL.md` bodies to encode generalizable principles.
+- [`wk-sharpen`](sharpen/README.md) reads learning files and rewrites `SKILL.md` bodies to encode generalizable principles and prune bloat.
 - All versions are CalVer (`YYYY.MM.DD-HHMMSS` UTC) — semver is forbidden.
 
 ---
