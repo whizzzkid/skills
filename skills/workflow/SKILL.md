@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.14-090215'
+  version: '2026.06.14-180157'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -26,1196 +26,414 @@ metadata:
 
 # Workflow
 
-Master orchestration for all development tasks. Every `wk-*` skill is invoked
-from within this workflow at the prescribed point. Follow this sequence exactly.
+Master orchestration for development tasks. Follow this sequence exactly:
 
 ```
-Plan -> Implement (commit per step + docs) -> Test (happy/sad/edge)
-  -> Refactor-Opportunity Scan -> Live Preview (frontend only)
-  -> Review (adversarial agent)
-  -> PR (wk-pr) -> CI Fix Loop -> Self-Review
-  -> Resolve Comments (loop until clear) -> Docs Audit -> Retro
+Plan -> Implement (commit per step + docs) -> Test -> Refactor Scan
+  -> Live Preview (frontend only) -> Adversarial Review -> PR
+  -> CI Fix Loop -> Resolve Comments -> Docs Audit -> Retro
 ```
 
 ---
 
 ## Mandatory Activation
 
-**This workflow fires on EVERY task that will produce code changes, a
-commit, or a pull request.** There are no exceptions. The agent does not
-get to decide whether a task is "too small" or "just a quick fix."
+This workflow fires on EVERY task that will produce code changes, a commit, a push, a PR, or a CI build from a code change. No opt-out, no “too small” exemption.
 
-If the task will result in any of these, this workflow is active:
-- A new or modified file in the repository
-- A git commit
-- A push to a remote branch
-- A pull request (new or updated)
-- A CI build triggered by a code change
+Session resumption is a fresh start. Before any write action after context compaction, rollover, or “continue where we left off”, invoke `wk-workflow` again.
 
-**There is no opt-out.** The agent follows the phases in order. Skipping
-phases, reordering phases, or substituting ad-hoc commands for prescribed
-skills is a violation.
+### Autonomy Rules
 
-**Session resumption is a fresh start, not a continuation.** When a session
-resumes mid-task — context compaction, context-window rollover, or a
-"continue where we left off" prompt — invoke this workflow before any write
-action, exactly as for a new task. Workflow activation status does not carry
-across the resume boundary; identifying pending work and executing it without
-re-invoking the workflow is a violation.
-
-## Autonomy Rules
-
-**Execute the workflow without asking permission at each step.** The user
-has already approved the workflow by using it. Minimize interruptions:
+Execute the workflow without asking permission at each step.
 
 | Situation | Do this | Do NOT do this |
-|-----------|---------|----------------|
-| Ready to commit | Invoke `wk-commit` | Ask "shall I commit?" |
-| Tests pass, review clean | Invoke `wk-pr` | Ask "would you like a PR?" |
-| CI fails | Enter fix loop automatically | Ask "should I investigate?" |
-| Adversarial review blocks | Fix blockers, re-invoke `wk-adversarial-review` | Ask "should I fix these?" |
-| Docs need updating | Invoke `wk-docs` | Ask "should I update docs?" |
-| Session ending | Invoke `wk-retro` | Ask "should I do a retro?" |
+|---|---|---|
+| Ready to commit | Invoke `wk-commit` | Ask “shall I commit?” |
+| Tests pass, review clean | Invoke `wk-pr` | Ask “would you like a PR?” |
+| CI fails | Enter fix loop automatically | Ask “should I investigate?” |
+| Review blocks | Fix blockers, re-invoke `wk-adversarial-review` | Ask “should I fix these?” |
+| Docs need updating | Invoke `wk-docs` | Ask “should I update docs?” |
+| Session ending | Invoke `wk-retro` | Ask “should I do a retro?” |
 
-**Only stop and ask the user when:**
-- The plan is ambiguous and multiple valid approaches exist
-- A CI failure persists after 3 fix attempts
-- A code review finding requires a design decision (not just a fix)
-- The user explicitly said to pause or check in at a specific point
-- Destructive or shared-state actions (force push, production deploy)
+Stop and ask only when the plan is ambiguous, CI persists after 3 attempts, a finding requires a user-owned design decision, the user explicitly requested a pause/check-in, or a destructive/shared-state action is required.
 
-**HARD RULE — when you solicit feedback, block on it.** The moment you
-ask the user a question, request a review, or say you'll wait for input,
-**stop**. Do not implement, edit, or push past that point until the user
-answers. Asking for feedback, implementing your own guess, and then
-asking again ("you asked for feedback, implemented it, and then asked for
-feedback again") wastes the turn and overwrites the very decision you
-solicited.
+When you solicit feedback, block on it: end the turn after asking and do not implement past that point until answered.
 
-- A question you intend to act on is a barrier, not a courtesy line —
-  end the turn after asking.
-- This is distinct from Auto Mode: auto mode means *don't ask
-  permission for the workflow's own steps*. It never licenses
-  answering your own open question to the user.
-- If you can proceed without the answer, you did not need to ask —
-  either ask and wait, or don't ask and proceed. Never both.
+Skill invocation is mandatory. Use the Skill tool for prescribed skills; do not approximate with raw commands. Run the invoked skill’s full flow; user prose is additive context, not a license to skip parts.
 
-**Skill invocation is mandatory.** When this workflow says "invoke
-`wk-commit`" or "invoke `wk-pr`", the agent MUST use the Skill tool to
-call the skill — not approximate the behavior by running raw commands.
-The skills contain rules, guards, and conventions that raw commands skip.
+Batch independent tool calls in one response whenever possible.
 
-**Run the full skill flow.** When a skill is invoked — whether called
-from this workflow or triggered directly by the user — execute the
-skill's entire prescribed workflow in order. User prose in the same
-message is additive context or a specific step adjustment; it is never
-a license to run only part of the skill. Additional deliverables
-(learnings, summaries, explanations) come after the skill completes its
-full flow, not instead of it.
+### Continuity Rules
 
-**Batch independent tool calls into one response.** When the next
-several tool calls have no data dependency on each other, emit them in
-a single response as parallel `tool_use` blocks — never serialize them
-across turns.
+The Phase 1 plan is the session contract.
 
-- Before sending a response with a tool call, ask: "Which other calls
-  will I need next that do not consume this call's output?" Batch all
-  of them now.
-- The recurring failure is probing variants one-at-a-time (two reads,
-  two API calls, two greps that differ only by argument) across
-  separate turns — each serialized call wastes a round-trip and prompt
-  cache.
-- The only exception is a genuine dependency: a later call's parameters
-  come from an earlier call's result. Even then, batch every
-  independent call within each step.
-
-## Continuity Rules
-
-The plan presented in Phase 1 is the contract for the session. Two
-recurring failure modes corrode that contract — handle both explicitly.
-
-### On user interruption mid-plan
-
-When the user interrupts to add, redirect, or reprioritize:
-
-1. **Stop** before executing the new ask.
-2. **Update the active plan/TodoWrite list** — insert the new work, keep
-   every unfinished prior item visible. The new ask adds to the plan; it
-   does not replace the remaining steps.
-3. **Re-state** the new top of the plan in one line.
-4. **Resume** from the earliest incomplete item — which may be the new
-   ask, but only if it is genuinely the next step.
-
-The natural drift after an interruption is to execute the new ask and
-then continue from "whatever was last on screen" — which is the new
-ask, not the original plan. The update-first rule prevents that drift.
-
-### Final completeness gate
-
-Before declaring the task complete, re-read the full plan and confirm
-that **every numbered step** is either (a) finished or (b) explicitly
-deferred or removed by the user. "The code shipped" is not the same as
-"the plan is done." Polish steps — `wk-self-review`, `wk-docs`,
-`wk-retro`, the CI verification — are part of the contract; silently
-skipping them is a violation even when they feel optional after a
-successful merge.
-
-If any step is ambiguous, ask the user before claiming completion.
+- On interruption mid-plan: stop, update the active plan/TodoWrite list, re-state the new top item in one line, resume from the earliest incomplete item.
+- Final completeness gate: before claiming completion, re-read the plan and ensure every numbered step is finished or explicitly deferred/removed.
 
 ---
 
 ## Phase 1: Plan
 
-**HARD RULE — invoke `wk-plan` before any planning.** Phase 1 delegates
-entirely to `wk-plan`:
+**HARD RULE:** invoke `wk-plan` before any planning:
 
 ```
 Skill(wk-plan, args="<task from session context>")
 ```
 
-- If `wk-plan` was already run this session and the user approved the plan,
-  skip Phase 1 entirely and execute the approved plan.
-- If `wk-plan` surfaced unanswered questions (Step 0 grill), stop here and
-  resolve them before proceeding.
-- Do not re-plan inline if `wk-plan` has already produced an approved plan —
-  that creates two plans and both get followed partially.
+- If `wk-plan` already produced an approved plan this session, skip Phase 1 and execute it.
+- If `wk-plan` surfaced unanswered questions, resolve them before proceeding.
+- Do not re-plan inline after an approved plan exists.
 
 ---
 
 ## Phase 2: Implement
 
-**Worktree preflight (before the first Edit/Write).** When sibling repo
-directories or multiple worktrees share one repo, confirm the cwd is the
-intended worktree before editing — an edit resolved against the wrong
-worktree gets blocked by the main-branch protect hook, forcing a reset
-and re-apply.
+Before the first Edit/Write, confirm the cwd is the intended worktree:
 
 ```bash
-git rev-parse --abbrev-ref HEAD   # must equal the feature branch
+git rev-parse --abbrev-ref HEAD
 ```
 
-If the current branch is not the intended feature branch, re-anchor to
-the correct worktree path before proceeding.
+Execute the plan step by step. After each step:
 
-Execute the plan step by step. After completing each step:
+1. Run tests.
+2. Invoke `wk-workstyle` before every code commit — no size exemption.
+3. Invoke `wk-docs` for affected docs; config-schema additions land with `docs/specs/` in the same or next commit.
+4. Invoke `wk-commit`.
 
-1. **Run tests** — verify the step doesn't break anything
-2. **Invoke `wk-workstyle` — non-skippable commit gate (HARD RULE).**
-   Before every `wk-commit` on a code diff, call `Skill(wk-workstyle)`
-   to gate the commit on the code-quality pass (naming accuracy, docs,
-   structure, async patterns, testing intent). Project settings are
-   authoritative.
-   - Treat this exactly like the Phase 4 adversarial-review gate: no
-     size, scope, or "trivial fix" exemption. "Auto-invoked" in a
-     skill's own description is aspirational — the enforceable rule is
-     this explicit step in the calling workflow. A commit that skips
-     the gate is a workflow violation, not a shortcut.
-3. **Invoke `wk-docs`** — check for and update affected documentation (README,
-   specs, ADRs, tutorials, reference docs). A feature commit without its
-   documentation update is incomplete.
-   - **Config-schema additions** (new YAML field, new env var, new JSON
-     output field, new CLI flag) MUST land with a `docs/specs/` entry
-     in the same or immediately following commit — never deferred.
-     The entry covers context, decision, data flow, and a config
-     reference. Reference docs that enumerate the schema get the new
-     field in the same commit.
-4. **Invoke `wk-commit`** — create a signed, conventional commit with emoji
+Never batch multiple plan steps into one commit, defer docs, or skip tests between commits.
 
-Never batch multiple steps into one commit. Never defer documentation to the
-end. Never skip tests between commits.
+### Cross-cutting changes
 
-### Cross-cutting change: enumerate sites, then implement all before review
+For normalization, renames, required fields, schema changes, or similar recurring patterns:
 
-For a change that touches a recurring pattern across the codebase
-(normalization, rename, added required field, schema change), enumerate
-**every** affected site before writing the first line — then implement all,
-then run adversarial review once.
+1. Enumerate every affected site before writing:
 
-```bash
-grep -rn '<pattern>' <src-dirs>   # the complete site map, before any edit
-```
+   ```bash
+   grep -rn '<pattern>' <src-dirs>
+   ```
 
-- Without a full site map, each adversarial-review round reveals the next
-  missed site — the slow loop Phase 4's per-feature rule exists to prevent.
-- Incremental commits within the feature are still fine; the gate runs once
-  after the **whole** site map is implemented, not after the first site.
-- Commit sequence: enumerate sites → implement all → commit → review once →
-  fix residuals in ≤1 follow-up.
+2. Implement all sites.
+3. Commit.
+4. Run adversarial review once.
+5. Fix residuals in ≤1 follow-up commit.
 
 ### Design pivots travel with their docs
 
-**HARD RULE:** When a commit changes the **logical structure** of a feature —
-not just a bug fix or polish, but a redirect of *how* the feature
-works — the same commit MUST update every artifact that described
-the old shape:
+When a commit changes the logical structure of a feature, update every artifact that described the old shape in the same commit:
 
-1. The design spec (`docs/specs/`-equivalent for the project).
-2. The implementation plan (`docs/plans/`-equivalent).
-3. Inline code comments referencing the old approach.
-4. Test names / test file comments referencing the old approach.
-5. Any ADR (`docs/adr/`) that captured the original decision —
-   either update it or add a successor ADR superseding it.
-6. Spec sections that **enumerate** tests by count, name, or
-   bullet list. When a test is added, removed, or renamed, every
-   spec/plan/README that quantifies or lists tests must be
-   updated in the same commit so counts and bullets stay in sync
-   with the test file.
+- design spec (`docs/specs/`-equivalent)
+- implementation plan (`docs/plans/`-equivalent)
+- inline comments referencing the old approach
+- test names/comments referencing the old approach
+- ADR (`docs/adr/`) or successor
+- spec sections enumerating tests by count/name/bullet
 
-### New-file spec-table sync
+Triggers: conditional became unconditional, helper lifted/inlined/replaced, paths merged/split, interface signature changed, state lifecycle moved.
 
-When a commit **adds a new file** (e.g., an extracted base class or helper
-module), update the spec's New Files / Modified Files tables in the **same
-commit** — treat the table entry as part of the file's creation, not deferred
-docs cleanup.
+### File/table/test sync
 
-- A new file landing without its spec-table row leaves the spec stale until
-  the adversarial cross-doc sweep flags it, forcing an extra fix commit.
-- Check the spec table on every refactor commit that creates or moves a file,
-  not only on behavior changes.
+- New file: update the spec’s New Files / Modified Files tables in the same commit.
+- Test added/removed/renamed: grep specs/plans/READMEs for the test file/function and count phrases before committing; update hits in the same commit.
+- Major spec rewrite: add a STATUS UPDATE banner citing the commit SHA and schedule the full rewrite as a follow-up commit on the same branch.
 
-### Test enumeration sync
+### External-call reproduction before fix
 
-**HARD RULE:** Whenever a commit adds, removes, or renames a test, before
-committing run a grep for the test file or function name across
-spec/plan/README artifacts:
-
-```bash
-grep -rn '<test_file_basename>\|<new_test_function_name>' \
-  docs/ README.md 2>/dev/null
-```
-
-Also grep for **count phrases** that reference the test set
-(e.g., `"\d+ tests"`, `"covers \w+ scenarios"`, or any phrasing
-that quantifies the test surface) in the files that own the
-test description. Any hit must be
-updated in the same commit. The invariant is: spec test counts
-and bullet lists always match the actual test file. A one-line
-diff to the spec costs nothing now and saves a separate review
-round later.
-
-If the spec needs a major rewrite (pseudocode blocks, sequence
-diagrams, etc.) and that rewrite would dwarf the code commit,
-add a **STATUS UPDATE** banner to the top of the doc citing the
-commit SHA and a one-paragraph summary of the redirect, then
-schedule the full rewrite as a follow-up commit on the **same
-branch** (not a follow-up PR). The banner keeps the doc honest
-while the rewrite lands.
-
-Triggers that mean "this is a design pivot, not a polish":
-
-- A conditional became unconditional (or vice versa).
-- A layered helper was lifted, inlined, or replaced by a
-  different abstraction.
-- Two paths merged into one, or one path split into two.
-- An interface signature changed (params added/removed/reordered).
-- A piece of state moved to a different lifecycle (per-request →
-  global, per-call → cached, etc.).
-
-Reviewers and bots reliably catch cross-doc inconsistency on the
-next round and require a separate response commit. Folding the
-doc update into the pivot commit is one round; deferring is two.
-
-### External-call reproduction before fix and commit
-
-**HARD RULE:** Before writing a fix for any failing external API or CLI
-call, reproduce the failure locally and read the response body. Before
-committing the fix, rerun the same call locally and confirm it now
-returns success.
-
-- Reproduce first. Construct a minimal local invocation (curl, equivalent CLI) using the exact parameters the failing call used.
-- Read the response body — most APIs name the missing or invalid field directly.
-- Reject status-code-only diagnosis. A 4xx attributed to one cause ("branch missing", "auth expired") is often a different cause ("required field absent"); guessing produces a second PR after the first fix lands on the wrong root cause.
-- Rerun the local invocation with the fix applied before `wk-commit`. Only commit after the call returns 2xx.
-- When the agent cannot reproduce locally (missing token, gated network, user-only credentials), pause before `wk-commit` and offer the user the exact command to run plus the success criterion. Commit after the user confirms — committing an unverified API-shape change forces a follow-up PR when the live call still fails.
+Before fixing a failing external API/CLI call, reproduce locally with exact parameters and read the response body. Before committing, rerun the same call and confirm 2xx. If local reproduction is impossible, pause before commit with the exact command and success criterion.
 
 ### Signature widening pre-flight
 
-When adding a non-optional parameter to a public function or a
-required field to a public struct/type, grep every caller and
-initializer **before** running tests. Compile errors from a
-widened signature are deterministic and enumerable upfront — let
-the test runner discover them and you waste a cycle per missed
-site, plus any test that doesn't even reach the changed code.
-
-```bash
-grep -rn '<TypeName>\s*{'  src/ tests/   # struct/record initializers
-grep -rn '<FunctionName>(' src/ tests/   # function/method calls
-```
-
-Fix every site in the same commit as the signature change, then
-run tests once. This applies to any language where adding a
-required field/param is a build-breaking change (Rust, Go, Kotlin,
-TypeScript with strict types, etc.) — not just to the language
-that surfaced the lesson.
+When adding a non-optional public parameter or required public field, grep every caller/initializer before tests, fix every site in the same commit, then run tests.
 
 ### `replace_all` scope pre-flight
 
-**HARD RULE:** Before using `replace_all: true` on an Edit, grep the
-target string across the file and confirm every occurrence should
-receive the same replacement.
-
-- Run `grep -nE '<target>' <file>` and read every hit.
-- If any occurrence requires a different value, a different surrounding
-  context, or must remain unchanged (test stubs, fixture data, doc
-  examples, commented-out reference), reject `replace_all` and use
-  targeted single-occurrence edits instead.
-- Same-string different-meaning is the recurring failure: production
-  call sites and test stubs share a function name but expect different
-  arg shapes; a blanket `replace_all` corrupts the test stub silently.
-- The rule applies to any tooling equivalent (`sed -i`, IDE refactor
-  across file, multi-cursor select-all) — verify the match set before
-  letting the edit fire.
+Before using `replace_all: true`, grep the target string across the file and confirm every occurrence should receive the same replacement. Reject if any occurrence needs a different value/context or must remain unchanged.
 
 ### Same-semantic-class audit on coercions
 
-**HARD RULE:** When applying a coercion (`.to_s`, `.to_i`, `&.`, `String()`,
-`Number()`, optional-chaining, null-coalescing, etc.) to one argument or
-field, audit every argument of the same semantic class in the same pass.
-
-- Semantic class = role + nullability + type shape (e.g., "external ID,
-  nullable, string-or-int"; "count, non-nullable, int"; "timestamp,
-  optional, string-or-Time").
-- Grep the surrounding parameter list / constructor / call site for siblings
-  matching the same class; apply the same coercion to all in the same commit.
-- The recurring failure is fixing the immediately visible case while a
-  sibling of the same class one line over still carries the original bug —
-  adversarial review catches it pre-push, but only on the lucky pass.
-- This rule applies to any "fix one of N similar things" edit, not just
-  coercions: same-class guards, same-class redactions, same-class retry
-  wrappers, same-class logging.
+When applying a coercion (`.to_s`, `.to_i`, `&.`, `String()`, `Number()`, optional-chaining, null-coalescing) to one argument/field, audit every argument of the same semantic class (role + nullability + type shape) in the same pass. This applies to same-class guards, redactions, retry wrappers, and logging.
 
 ### Code Standards
 
-Apply these standards to ALL code written during implementation:
+Apply these standards to ALL code:
 
-#### Version Pinning
-
-Always pin to exact versions. Never use `latest`, `stable`, `nightly`, or
-unpinned tags. This applies everywhere:
-
-- Dockerfile `FROM` images: `rust:1.94.0-slim-bookworm` not `rust:latest`
-- `mise.toml` / `.tool-versions`: `rust = "1.94.0"`
-- GitHub Actions: `@v4` for official actions, commit SHAs for non-verified
-- Git clones in Dockerfiles: pin to a commit hash
-- Package managers: exact version, no `^` or `~` ranges
-
-When adding a dependency or toolchain, verify the latest stable release via
-the registry or release page. Do not guess.
-
-#### Regular Expressions
-
-Always use named capture groups: `(?<year>\d{4})` not `(\d{4})`. This
-applies to all languages — no exceptions.
-
-#### Bash invocation discipline
-
-The Bash tool resets the working directory between calls and shell
-state does not persist. Two patterns recur in the transcripts as
-wasted round-trips and avoidable permission prompts:
-
-- **No `cd` per command.** Re-`cd`-ing into the same directory on every
-  call is dead weight, and a bare `cd` can trip a permission prompt.
-  Use absolute paths or `git -C <repo>` / tool-native `--cwd` flags
-  instead. When a sequence genuinely needs a shared cwd, chain it in
-  one call (`cd X && a && b`), never one `cd` per turn.
-- **Never hardcode the base branch.** `git diff main...HEAD` assumes
-  `main`; resolve the base dynamically before any diff/merge-base/rebase
-  range:
+- **Version pins:** exact versions everywhere. No `latest`, `stable`, `nightly`, unpinned tags, `^`, or `~`. Dockerfile `FROM`, `mise.toml` / `.tool-versions`, GitHub Actions, git clones in Dockerfiles, and package managers must pin exact versions or official-action semver majors.
+- **Regexes:** named capture groups: `(?<year>\d{4})`.
+- **Bash:** no `cd` per command; use absolute paths or `git -C <repo>`. Resolve base dynamically:
 
   ```bash
-  BASE=$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null \
-    || git symbolic-ref refs/remotes/origin/HEAD --short | sed 's@^origin/@@')
+  BASE=$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null || git symbolic-ref refs/remotes/origin/HEAD --short | sed 's@^origin/@@')
   git diff "$(git merge-base HEAD "origin/$BASE")...HEAD"
   ```
 
-  A stacked PR's base is a non-default branch — a hardcoded `main`
-  range produces a wrong diff and a rebase onto the wrong target.
-
-#### File Permissions
-
-Ensure executable scripts have `chmod +x` before committing. Scripts that are
-only `source`d remain 644. Check neighboring files for the project's
-convention.
-
-#### Diagrams
-
-Use Mermaid over ASCII art in all markdown files. Choose the right type:
-
-| Diagram type | Use for |
-|--------------|---------|
-| `flowchart` / `graph` | System flows, data flows, pipelines |
-| `sequenceDiagram` | Request/response, API interactions |
-| `classDiagram` | Type hierarchies, trait relationships |
-| `stateDiagram-v2` | State machines, lifecycle diagrams |
-
-#### Layer responsibility — side effects live at the entrypoint
-
-Before adding I/O (`puts`, `print`, `console.log`, file writes, env
-reads, network calls) to a module, classify the module's
-responsibility:
-
-- **Decision / pure** — returns a value, no observable effect on the
-  outside world. Library, model, calculator, mapper, validator,
-  serializer, predicate.
-- **Side-effecting / entrypoint** — CLI script, HTTP handler, job
-  runner, controller, view. Owns rendering, logging, env access, and
-  external calls.
-
-Side effects belong only in entrypoint layers. When the data is
-needed elsewhere, return it; do not log it from a decision module
-and parse the log upstream. ENV reads in a decision module are the
-same anti-pattern — the entrypoint reads ENV and passes the value
-down.
-
-Symptoms that signal the wrong layer: duplicated ENV reads across
-sibling modules, `puts` in a function whose return value is what
-callers actually consume, tests that have to capture stdout to
-assert behaviour.
-
-#### External-API field validation — reuse the library's schema
-
-Before hardcoding an allowlist of an external API's field names (a
-permission set, enum, or supported-flag list), check whether the client
-library's types already encode it (struct tags, generated enums, schema
-constants). A parallel hand-maintained list is a maintenance trap — it
-silently drifts every time the upstream API adds or removes a field.
-
-- Prefer the library's own validation: strict decoding that rejects
-  unknown fields (`json.Decoder.DisallowUnknownFields` in Go, schema
-  `strict`/`forbid` modes elsewhere). The type's tags become the
-  allowlist, and upstream additions are picked up on dependency bump.
-- Hardcode a list only when no library type encodes it; when you must,
-  cite the upstream source and note the re-sync obligation on
-  dependency updates.
-
-#### Architecture Decision Records
-
-When making a significant architectural decision (new dependency, pattern
-change, technology choice, trade-off acceptance), create an ADR in
-`docs/adr/` using the format: title, status, context, decision, consequences.
-
-#### Content-lint hooks — scope to file class and diff
-
-When writing a pre-commit hook that flags a content pattern (bare
-references, banned tokens, style violations), scope it twice before
-wiring it in:
-
-- **File class.** Restrict to the file class the underlying rule
-  actually governs; exclude every other class explicitly. A rule about
-  navigable docs must not scan instruction files that use the flagged
-  pattern by design.
-- **Added lines only.** Prefer scanning `git diff --cached -U0` added
-  lines, not the whole staged file. A hook that flags pre-existing
-  content in a file the commit only touched once blocks unrelated work
-  and trains the author to `--no-verify` — which defeats the hook.
-- Smoke-test the new hook against a file that legitimately contains the
-  pattern but is out of scope, and confirm it does NOT fire.
-
-### Provenance checks
-
-**Reuse hygiene.** Patterns lifted from neighboring files are not portable by default.
-Before copying a fallback chain, default, or conditional, trace each variable:
-1. **Where is it set?** — secrets manager, pipeline env, bootstrap script, calling tool.
-2. **What code path sets it?** — does that path reach the new location?
-3. **Does the value mean the same thing in the new context?** — if not, adapt; don't copy verbatim.
-
-Cross-script copies are especially hazardous — each script tends to have a different invocation environment. Ask or grep for setters before reusing.
-
-**Error-string discriminators.** When a fallback decides whether to recover by matching a specific error message (e.g., `grep -q "some error text"`), reproduce the failure against a real-enough fixture and capture the exact text before writing the catch. Error wording changes between tool versions; a stale discriminator either swallows real failures silently or never fires on the intended case. Use a minimal throwaway fixture (for git, prefer `file://` URIs over bare paths so network-protocol code paths actually run) and write the verification before writing the catch clause.
-
-**Environment variables in docs.** Whenever code or docs introduce or reference an env var, document: where it is stored, who can edit that store, how a change propagates, and what the default is if unset. Operators need to know how to change the value without a code deploy.
-
-### Two-sided flow survey
-
-Before designing a new gate, filter, or guardrail, survey the codebase
-and docs for related caller-side conditions on the same concept
-(labels, flags, opt-in markers, conditions). Gates often have two
-sides: a caller condition (who is allowed to trigger) and a callee
-enforcement (what the callee accepts). The two sides must tell a
-coherent story — which is authoritative, which is advisory, what
-happens when they disagree. Surfacing the caller side late forces a
-redesign mid-implementation; surfacing it first folds it into the
-original design.
+- **File permissions:** executable scripts `chmod +x`; source-only scripts 644.
+- **Diagrams:** Mermaid over ASCII. Use `flowchart`/`graph` for flows, `sequenceDiagram` for request/response, `classDiagram` for type hierarchies, `stateDiagram-v2` for state machines.
+- **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
+- **External API fields:** reuse the client library schema/types when available; hardcode allowlists only when no library type encodes them, and cite the upstream source plus re-sync obligation.
+- **ADRs:** create `docs/adr/` records for significant architectural decisions: title, status, context, decision, consequences.
+- **Content-lint hooks:** scope to the file class and added lines only; smoke-test against an out-of-scope file that legitimately contains the pattern.
+- **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace each variable’s source, path, and meaning in the new context.
+- **Error-string discriminators:** reproduce the failure against a real-enough fixture and capture exact text before matching on it.
+- **Env vars in docs:** document where stored, who can edit it, propagation, and unset default.
+- **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 
 ---
 
 ## Phase 3: Test
 
-Before moving to code review, verify comprehensive test coverage exists.
+Before code review, verify coverage and pass all checks.
 
-### Required Test Paths
+Required paths:
 
-Every task MUST have tests covering:
+- **Happy path** — expected successful flow works end to end.
+- **Sad path** — failures, invalid input, missing data, and error conditions handled gracefully.
+- **Edge cases** — boundaries, empty collections, null/undefined fields, concurrency, large inputs, off-by-one errors.
 
-- **Happy path** — the expected, successful flow works end to end
-- **Sad path** — failures, invalid input, missing data, and error conditions
-  are handled gracefully
-- **Edge cases** — boundary values, empty collections, null/undefined fields,
-  concurrent access, large inputs, off-by-one errors, and any scenario that
-  is easy to overlook
+Verification:
 
-### Verification
+- All tests pass before code review.
+- Each commit passes tests independently.
+- Project linter/type checker passes.
+- Full pre-push gate passes before any `git push`; inspect hook config to enumerate every gate.
+- Re-run every gate against final HEAD, not a mid-session snapshot.
+- Validate transformations with a formerly-failing input.
 
-- All tests MUST pass before proceeding to code review
-- Each commit on the branch should pass tests independently — run the suite
-  after each commit to confirm
-- If the project has a linter or type checker, those must also pass
-- Run the **full pre-push gate the repo defines** before any `git push` —
-  every test suite, lint, and type check the repo wires into pre-push
-  (e.g., `lefthook run pre-push`, `bin/ci`, `make check`). Independent
-  suites can assert on the same source with different matchers; passing
-  one does not imply the others pass. Inspect the hook config to enumerate
-  every gate, do not assume the suite you ran during dev is the full set.
-- Re-run every gate against **final HEAD**, not a mid-session snapshot. A file
-  added after an earlier local lint run silently skips it — a formatter like
-  `gofmt -l` only checks files present when it ran. Introducing a new toolchain
-  is especially prone: run its full new gate set verbatim immediately before
-  push, covering every file in the final diff.
-- **Validate transformations with a formerly-failing input.** After
-  implementing a normalization / case-fold / coercion / matching feature,
-  exercise at least one input that *used* to fail and must now succeed — in
-  the UI or test output. Positive-only checks cannot prove the transform was
-  applied; only a once-failing case turned passing proves it.
+In a mise-managed repo, `GemNotFound` on `bundle exec` / `bin/rspec` is a setup gap. Run `bin/setup`, then invoke tests via `mise exec -- <cmd>`.
 
-### mise-managed test invocation
+Shell-script structure tests:
 
-In a mise-managed repo (`.mise.toml` present), a `GemNotFound` (or missing
-tool) on `bundle exec` / `bin/rspec` is a setup gap, not an exploration
-problem.
+- Anchor awk end-ranges to full lines.
+- Use two-stage awk when duplicate branch labels exist.
+- Use `! grep -q 'pattern'` for negative assertions; `grep -qv` is a false-positive trap.
+- Before range-based assertions, scan for string literals containing the end-range keyword and duplicate branch labels.
 
-- Run `bin/setup` first (it installs gems at the mise-scoped path) — never
-  a `find ~` sweep for the install location.
-- Invoke test commands via `mise exec -- <cmd>` so the mise-managed runtime
-  and bundler are in scope.
-
-### Shell-script structure tests (awk/grep pitfalls)
-
-When writing bats or grep/awk assertions against a shell script's source
-(e.g., "does this branch contain a call to `X`?"), awk range patterns
-(`/start/,/end/`) are **substring matches, not token matches**. Two
-failure modes recur:
-
-1. **End-range terminated inside a string literal.** Bare shell keywords
-   like `fi`, `done`, or `esac` as end-range patterns will match any line
-   containing that substring — including `"All CI checks passed after N
-   fix retries"`. Always anchor end-ranges to a full line:
-
-   ```bash
-   awk '/RETRY_NOUN=/,/^[[:space:]]*fi[[:space:]]*$/'
-   ```
-
-2. **Duplicate branch labels match the wrong block.** When a script has
-   multiple `case` statements with identical branch labels (e.g.,
-   `failed)` in both an emoji-mapping case and a PR-comment case),
-   single-stage awk matches the first occurrence. Use two-stage awk —
-   outer stage scopes to the correct block via a unique anchor, inner
-   stage scopes to the branch:
-
-   ```bash
-   awk '/Unique anchor comment/,/esac/' "$SCRIPT" \
-       | awk '/failed\)/,/;;/' | grep -q 'THING'
-   ```
-
-Before writing any range-based assertion, scan the target script for
-(a) string literals that contain the planned end-range keyword as a
-substring, and (b) duplicate branch labels across case blocks. Anchor
-or two-stage accordingly.
-
-3. **`grep -qv` is a false-positive trap for negative assertions.**
-   `grep -qv 'pattern'` exits 0 when **any** line in the input does
-   not match — which is almost always true for multi-line output.
-   The assertion passes trivially and never fires on the intended
-   case. Use `! grep -q 'pattern'` instead, which fails (non-zero)
-   if the pattern appears anywhere.
-
-   ```bash
-   # WRONG — passes whenever any other line exists
-   echo "$output" | grep -qv 'exit 1'
-
-   # CORRECT — fails if exit 1 appears anywhere
-   ! echo "$output" | grep -q 'exit 1'
-   ```
-
-   The same trap applies to two-stage pipelines like
-   `grep -v X | grep -qv Y` — the second stage still passes
-   trivially.
-
-### Behavioral tests must reach the guarded branch
-
-A security-guard test that never enters the guarded branch passes
-vacuously — the guard branch and the early-exit branch may both exit 0.
-
-- `[[ -f "$x" ]]` follows symlinks and tests the **resolved target**. A
-  symlink to a non-existent file returns false, so a symlink-escape test
-  whose target is absent fires the "no file found" branch instead of the
-  escape-rejection guard — exiting 0 without ever exercising the guard.
-- Point symlink-escape tests at a file guaranteed to exist on every test
-  OS (`/etc/passwd`, present on macOS and Linux) — never one that may be
-  absent (e.g. `/etc/hostname` is absent on macOS).
-- After writing a guard test, confirm it fails when the guard is removed; a
-  test that passes both with and without the guard is vacuous.
+Behavioral guard tests must reach the guarded branch. `[[ -f "$x" ]]` follows symlinks; point symlink-escape tests at `/etc/passwd` and confirm the test fails when the guard is removed.
 
 ---
 
 ## Phase 3.5: Refactor-Opportunity Scan
 
-After tests pass and before invoking `wk-adversarial-review`, scan the
-diff and its neighbouring code for refactor and reuse opportunities.
-This is a deliberate readability/dedup pass, not a behavior change —
-catch the duplication and clarity wins while the diff is fresh, not
-on a follow-up PR.
+After tests pass and before adversarial review, scan the diff and neighboring code for refactor/reuse opportunities.
 
-- Re-read the full diff once: `git diff $(git merge-base HEAD "$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null || echo origin/HEAD)")...HEAD`.
-- For every new/modified function, helper, constant, or block, scan
-  the **neighbouring surface** — the same file, sibling files in the
-  same directory, and any module the diff imports from. Grep for:
-  - Existing helpers, constants, or types that already do what the
-    new code does (reuse candidate).
-  - Repeated literals (strings, numbers, regexes) that should be a
-    named constant.
-  - Near-duplicate blocks (≥ 3 similar lines) within the diff or
-    against neighbours — candidates for extraction.
-  - Long conditional chains or nested blocks that an early return,
-    guard clause, or lookup table would flatten.
-  - Re-implemented patterns the language/framework already provides
-    (stdlib utility, builtin, idiom).
-- For each opportunity, classify:
-  - **Apply now** — reuse an existing helper, replace a literal with
-    an existing constant, lift a near-duplicate into a helper that
-    both sites can call. Land as one commit before Phase 4.
-  - **Defer with note** — refactor is real but expands scope beyond
-    the current change; capture as a TODO in the PR description's
-    "Follow-ups" section and move on.
-  - **Skip** — no real win, or the abstraction would be premature
-    (`Rule of Three`: don't extract on the second occurrence alone
-    unless the duplication is load-bearing).
-- Behavior-preservation rule: a refactor commit lands only when tests
-  still pass against the post-refactor code. Re-run the suite after
-  every Apply-now change.
-- The scan is mandatory but its **output** is not — a clean diff with
-  zero opportunities is a valid outcome. Record "refactor scan: no
-  opportunities" in the Phase 8 retro so the audit happened on paper.
+For every new/modified function, helper, constant, or block, scan same file, sibling files, and imported modules for existing helpers/constants/types, repeated literals, near-duplicate blocks (≥3 similar lines), long conditional chains, nested blocks, and re-implemented language/framework patterns.
+
+Classify each opportunity:
+
+- **Apply now** — reuse existing helper/constant, lift near-duplicate into a helper, flatten conditionals. Land as one commit before Phase 4.
+- **Defer with note** — real but out-of-scope; add TODO to PR “Follow-ups”.
+- **Skip** — no real win or premature abstraction.
+
+Re-run tests after every Apply-now change. A clean diff is valid; record “refactor scan: no opportunities” in Phase 8.
+
+---
 
 ## Phase 3.6: Frontend Live Preview
 
-Run only when the diff changes browser-rendered UI. Launch the app and
-exercise the change in a real browser before the pre-push gate — unit
-tests do not catch render, layout, or interaction regressions.
+Run only when the diff changes browser-rendered UI: client components, templates/views, styles, or client-side routes (`.tsx/.jsx/.vue/.svelte/.html/.css/.scss` and view/component/template dirs).
 
-### Trigger
+- Launch the app via the `run` skill or documented dev-server command.
+- Drive every changed view in a real browser with Playwright tools; exercise happy paths.
+- Capture snapshots and console messages.
+- Treat load failure, console error on the changed surface, or broken interaction as a Phase 4 blocker.
+- Leave app/browser running and hand off the URL; continue Phase 4 onward while the user inspects.
 
-- Run when the diff touches rendered surface — client components,
-  templates/views, styles, or client-side routes
-  (`.tsx/.jsx/.vue/.svelte/.html/.css/.scss`, view/component/template
-  directories).
-- Skip for backend-only, config-only, or docs-only diffs — record
-  "frontend preview: N/A" in the Phase 8 retro.
+Skip backend/config/docs-only diffs and record “frontend preview: N/A” in Phase 8.
 
-### Steps
-
-- Launch the app via the `run` skill (or the project's documented
-  dev-server command).
-- Drive every changed view in a real browser with the Playwright tools
-  (`mcp__plugin_playwright_playwright__browser_navigate`, `_click`,
-  `_fill_form`, `_snapshot`) — exercise the happy path of each at minimum.
-- Capture a snapshot of each changed surface as evidence; read
-  `browser_console_messages` and surface any console errors.
-- Treat a load failure, a console error on the changed surface, or a
-  broken interaction as a Phase 4 blocker — fix before proceeding.
-
-### Hand off, then continue in the background
-
-- Leave the app and browser running; give the user the URL for manual
-  testing. Do not close the session.
-- Do not block on the user's manual test — once the preview is live and
-  handed off, continue Phase 4 onward while the user inspects.
+---
 
 ## Phase 4: Adversarial Review
 
-After implementation is complete, tests pass, the Phase 3.5 refactor scan
-has landed (or recorded "no opportunities"), and — for frontend changes —
-the Phase 3.6 live preview is running, invoke
-`wk-adversarial-review`.
-The skill is the **sole authority** for pre-push critique — do not approximate
-it with an inline subagent, ad-hoc grep pass, or "quick check".
+After implementation, tests, refactor scan, and frontend preview (if applicable), invoke `wk-adversarial-review`.
 
-**HARD RULE — adversarial review is a per-feature gate, not a per-commit
-gate.** Run it once on the **complete** logical change, then push. "Logical
-change" = the whole feature across every affected site, not each file touched.
+**HARD RULE:** adversarial review is a per-feature gate, not a per-commit gate. Run once on the complete logical change, then push. Do not push-and-review after each incremental commit. Fix residuals in ≤1 follow-up commit, then re-run once.
 
-- Do not push-and-review after each incremental commit of a multi-commit
-  change — that produces a slow commit→review→fix loop where each review
-  rediscovers the next unimplemented site.
-- Batch the feature's commits locally; run the gate once before the first
-  publishing push; fix residuals in **at most one** follow-up commit, then
-  re-run once.
-- On CI-fix or follow-up pushes the gate re-runs, but scoped to the diff
-  since the last clear verdict (it is idempotent on an unchanged HEAD) — so
-  a green-then-one-fix cycle is cheap, not a full re-sweep.
+`wk-adversarial-review` returns **clear**, **blocked**, or **suggestions-only**.
 
-`wk-adversarial-review` runs mechanical sweeps for the issue classes
-reviewers and bots historically flag (vulnerability-class fixes left on
-one site, sibling-script drift, dead defensive guards, comment-accuracy,
-hardcoded base branches, version pins, signature widening, cross-doc
-enumeration sync, design-pivot doc drift, PR-metadata drift,
-external-call reproduction, raw-API bypass, pre-push gate compliance),
-then spawns a fresh adversarial subagent, then validates runtime claims
-in a playground. It returns one of three verdicts: **clear**, **blocked**,
-or **suggestions-only**.
+- **Clear** — proceed to Phase 5.
+- **Blocked** — fix each blocker via `wk-commit`, re-invoke until clear. Never push, `gh pr ready`, or `gh pr create` on a blocked verdict.
+- **Suggestions only** — follow the skill’s A/B/C prompt.
 
-### After Verdict
+Pre-flight review findings are mandatory actions, not options. Incorporate blockers/improvements into the relevant artifact and commit. Only pause for a genuine user-owned design decision.
 
-- **Clear** — proceed to Phase 5 (PR).
-- **Blocked** — fix each blocker (one commit per fix via `wk-commit`),
-  then re-invoke `wk-adversarial-review`. Loop until clear. Never push,
-  never `gh pr ready`, never `gh pr create` on a blocked verdict.
-- **Suggestions only** — follow the skill's A/B/C prompt; auto mode
-  defaults per the skill.
-
-#### Findings are incorporated, never offered
-
-**HARD RULE: Pre-flight review findings are mandatory actions, not options.**
-This applies to every gate that produces findings — `wk-adversarial-review`
-on code and `wk-arch-review` on specs, design docs, plans, or estimates.
-Once a gate returns findings, the agent acts on them; it does not ask the
-user "should I incorporate these?"
-
-- **Blockers** — fix immediately, commit each fix via `wk-commit`, then
-  re-run the same gate. Loop until the gate clears.
-- **Improvements / gaps** — incorporate into the artifact it concerns
-  (code for `wk-adversarial-review`, the doc for `wk-arch-review`), then
-  commit. Do not defer, downgrade, or surface them as an optional menu.
-- **Design-ambiguous findings** — when a finding turns on a genuine design
-  decision only the user can make, present that one specific design
-  question, wait for the answer, then act. Ask the design question — never
-  the meta-question "should I update this?".
-- The only pause is a real design decision the user owns. "Should I apply
-  the review's suggestions?" is not a design decision; framing
-  incorporation as user-gated is a workflow violation, the same class as
-  asking "should I commit?" or "would you like a PR?".
-
-**HARD RULE:** Every push, every PR transition (`gh pr create`,
-`gh pr ready`), and every force-push that leaves this machine runs
-`wk-adversarial-review` first. There is no size, scope, or "docs-only"
-exemption.
+**HARD RULE:** every push, every PR transition (`gh pr create`, `gh pr ready`), and every force-push that leaves this machine runs `wk-adversarial-review` first. No size/docs-only exemption.
 
 ---
 
 ## Phase 5: PR
 
-**HARD RULE:** Every push to a branch that has no open PR invokes
-`wk-pr` automatically. No size exemption — a one-line fix is the
-same as a 500-line feature for this rule. Phrases like "this is
-small," "this doesn't need a PR," or "just a quick fix" are red
-flags; if the rule applies, execute it. If the user pushes back
-asking why no PR was created, **open it without asking** — the
-Autonomy Rules table forbids the "would you like a PR?" question.
+**HARD RULE:** every push to a branch with no open PR invokes `wk-pr` automatically. No size exemption.
 
-### Detect repo convention before branching
+### Repo convention before branching
 
-**"Branch first on the default branch" is a DEFAULT, not an absolute
-rule.** Some repos (solo-maintained, no review gate) commit straight to
-their default branch; auto-creating a feature branch there causes
-friction. Probe the repo's actual convention before branching:
+Branching is the default, not an absolute. Probe first:
 
-- Resolve the default branch dynamically; never assume a literal name:
+- Resolve default branch dynamically.
+- Gather PR-gated evidence: branch protection, `CODEOWNERS`, recent feature-branch merge commits.
+- Branch only when evidence points to PR-gated workflow; otherwise commit straight to default and skip auto-PR.
+- If signals conflict/are absent for a non-trivial change, branch and say why in one line.
 
-  ```bash
-  DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD --short | sed 's@^origin/@@')
-  REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
-  ```
-
-- Gather evidence the repo is PR-gated vs commit-to-default:
-  - Branch protection (`gh api "repos/$REPO/branches/$DEFAULT/protection"`
-    — a 404 means no protection).
-  - `CODEOWNERS` present (`.github/`, repo root, or `docs/`) → review gate.
-  - Recent merge commits from feature branches
-    (`git log --oneline --merges -20` — near-empty flat history signals
-    direct-to-default commits).
-- **Branch only when evidence points to a PR-gated workflow** (protection,
-  CODEOWNERS, or a history of merged feature branches). Otherwise commit
-  straight to the default branch and skip the auto-branch + PR flow.
-- When signals conflict or are absent and the change is non-trivial,
-  branching is the safer default — but say why in one line rather than
-  branching silently.
-
-After code review passes, invoke `wk-pr` automatically. Do not ask for
-permission — the workflow prescribes it. **Never use raw `gh pr create`
-or any other method.** This is non-negotiable. `wk-pr` handles:
-
-- Draft creation (always starts as draft)
-- Stacked PRs when the diff exceeds ~30 lines
-- CI polling (waits for green before proceeding)
-- Self-review via `wk-self-review` — posts inline comments on **critical
-  changes only**: design decisions, non-obvious logic, security-sensitive
-  paths, behavioral changes. No noise, no trivial comments. Self-review
-  is a **pending review** even when there is only one comment to make —
-  never substitute raw `gh api .../comments` calls (those publish
-  immediately and skip the human-in-the-loop checkpoint)
-- Automated review feedback triage
-- Marking ready for review
+After code review passes, invoke `wk-pr`; never use raw `gh pr create`. `wk-pr` handles draft creation, stacked PRs, CI polling, self-review, feedback triage, and marking ready.
 
 ### Post-push sync
 
-`wk-commit` handles PR description sync and stale comment resolution after every push. See `wk-commit` for the full Post-Push PR Sync rules.
+`wk-commit` handles PR description sync and stale comment resolution after every push.
 
-**HARD RULE: Auto-sync drifted artifacts — never ask permission to
-fix obvious drift.** After any push, significant code change, or
-approach pivot, audit every dependent artifact (PR title/body,
-self-review comments, ticket description, related docs) and update
-it in the same turn — without a "want me to update X?" prompt.
+**HARD RULE:** auto-sync drifted artifacts — never ask permission to fix obvious drift. After any push, significant code change, or approach pivot, audit PR title/body, self-review comments, ticket description, and related docs; update them in the same turn. Confirm only when sync content is genuinely ambiguous.
 
-- Asking permission to fix obvious drift wastes a turn and
-  surfaces decision fatigue for a non-decision.
-- Confirm only when the **content** of the sync is genuinely
-  ambiguous (e.g., the new description requires a judgment call
-  the user has not made yet). Never confirm the **decision** to
-  sync.
-- Applies to PR body (`wk-commit §Post-Push PR Sync`), self-review
-  comments (`wk-self-review` on approach pivots), Jira ticket
-  descriptions (`wk-jira`), and docs (`wk-docs`).
+After any implementation-approach pivot, resolve stale self-review threads and post fresh comments via `wk-self-review`.
 
-### Self-review sync on approach pivots
-
-**HARD RULE:** After any push that changes the implementation **approach**
-(not just polish), resolve pending self-review threads that reference
-the old design and post fresh self-review comments for the new design
-via `wk-self-review` before returning control.
-
-- "Approach pivot" = the mechanism, API, data flow, or abstraction
-  changed — not a rename, comment tweak, or formatting pass.
-- Self-review comments rationalising the old design mislead
-  reviewers exactly as a stale PR body does. PR-body sync alone is
-  insufficient on a pivot.
-- Resolve the stale threads explicitly (do not just let them
-  scroll off); post the replacement comments in the same
-  `wk-self-review` invocation.
-
-### Pre-rework fetch
-
-**HARD RULE:** Before any **rework** of a PR's branch — force-push, restructure,
-content rewrite, big rebase, scope change — fetch and reconcile
-against the PR's actual base **and** the default branch:
-
-- Resolve the PR base **before proposing or planning a rebase target**, not
-  only at rework time. `gh pr view --json baseRefName --jq .baseRefName` is
-  authoritative — never assume the default branch, and never compute a
-  `<default>..HEAD` range before confirming the PR's base (a branch with a
-  non-default base gets rebased onto the wrong target otherwise).
+Before reworking a PR branch — force-push, restructure, content rewrite, big rebase, scope change — fetch and reconcile against the PR’s actual base and default branch. Resolve PR base before proposing a rebase target; never assume default.
 
 ```bash
 PR_NUM=$(gh pr view --json number --jq .number)
 BASE=$(gh pr view "$PR_NUM" --json baseRefName --jq .baseRefName)
-DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD --short \
-          | sed 's@^origin/@@')
+DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD --short | sed 's@^origin/@@')
 
 git fetch origin "$BASE" "$DEFAULT" --quiet
 
-# If the resolved base advanced, integrate before reworking
-LOCAL_MB=$(git merge-base HEAD "origin/$BASE")  # $BASE resolved from PR above
+LOCAL_MB=$(git merge-base HEAD "origin/$BASE")
 REMOTE_TIP=$(git rev-parse "origin/$BASE")
 if [ "$LOCAL_MB" != "$REMOTE_TIP" ]; then
   Skill(wk-pr-update, args="$BASE")
 fi
 ```
 
-Reworking on a stale base produces conflicts that are 100%
-predictable from remote state and 100% avoidable with the fetch.
-The cost is a few seconds; the cost of a force-push that
-immediately reports `CONFLICTING` is a forced second cycle plus
-visible churn. Never assume `main` is the relevant upstream — for
-stacked PRs the base is a non-default branch that mutates
-independently.
-
 ---
 
 ## Phase 6: CI Fix Loop
 
-After the PR is created (or after any push to a PR branch), enter an
-automated monitor-diagnose-fix loop. **Do not mark the PR ready or proceed
-to self-review until this loop exits green.**
+After PR creation or any push to a PR branch, monitor, diagnose, and fix CI until green. Do not mark ready while CI is red.
 
-```
-┌─────────────────────────────────────────────┐
-│              CI FIX LOOP                    │
-│                                             │
-│  Poll CI ──► Green? ──yes──► Exit loop      │
-│     │                                       │
-│     └─ Failing? ──► Diagnose ──► Fix ──►    │
-│         │            (wk-buildkite)   │     │
-│         │                             │     │
-│         │    ◄── commit (wk-commit) ◄─┘     │
-│         │    ◄── push                       │
-│         │    ◄── update PR description      │
-│         │                                   │
-│         └─ Re-enter loop ───────────────────┘
-│                                             │
-│  Bail after MAX_ATTEMPTS (3) ──► ask user   │
-└─────────────────────────────────────────────┘
-```
+- Use `gh pr checks --watch --fail-fast` for generic checks.
+- Use `wk-buildkite` for Buildkite.
+- Run long watches in the background and continue with independent work.
+- Never end a turn announcing a holding pattern.
 
-### Step 1: Poll CI Status
-
-After each push, poll the CI status for the PR's HEAD commit. Use the
-GitHub checks API or `wk-buildkite` depending on the project's CI system:
-
-```bash
-# GitHub Actions / generic checks
-gh pr checks --watch --fail-fast
-
-# Buildkite (if applicable)
-# Use wk-buildkite to check build status
-```
-
-**Run watch commands in the background.** Any CI poll that may block for
-more than ~30 seconds (`gh pr checks --watch`, `bk build watch`, similar
-loops) MUST be issued as a backgrounded Bash tool call
-(`run_in_background: true`). The orchestrator continues with other plan
-steps — self-review preparation, docs audit, retro setup — in parallel.
-The runtime sends a completion notification when the watch exits. Only
-foreground a status check when the next step genuinely depends on the
-result (e.g., immediately before `gh pr ready`). Do not stall the rest
-of the workflow on a foregrounded watch.
-
-**Never end a turn announcing a holding pattern.** After issuing a
-backgrounded watch, return control immediately with the next concrete
-step or a question — never close out with "CI watch running, will
-continue when green." The runtime fires a completion notification
-when the watch exits; a holding-pattern sign-off forces the user to
-re-prompt and defeats the purpose of running in the background.
-
-### Step 2: Diagnose Failures
-
-When CI fails, read the actual logs first — use `wk-buildkite` for Buildkite or `gh run view --log-failed` for GitHub Actions. Never guess.
-
-**Classify the failure before generating fix candidates:**
+Read actual logs first.
 
 | Failure type | Action |
-|--------------|--------|
-| Code failure (test/lint/type/build) | Diagnose root cause; apply fix-candidate ordering below |
-| Flaky test (unrelated to PR) | Re-trigger once; if same test fails again, treat as real |
-| Infrastructure (timeout/OOM/runner down) | Re-trigger; if persistent, inform user — no code fix |
+|---|---|
+| Code failure | Diagnose root cause; apply the smallest fix |
+| Flaky test | Re-trigger once; if it repeats, treat as real |
+| Infrastructure | Re-trigger; if persistent, inform user — no code fix |
 
-**Diagnosis discipline — cross-reference repo standards first:**
+Diagnosis rules:
 
-| Error signal | Check this rule |
-|--------------|----------------|
-| `no version is set`, `couldn't resolve latest`, `unknown tag` | Version-pinning (`latest`/unpinned dep) |
-| `auth failed`, `unauthorized`, `expired token` | Env-var / secrets provenance docs |
-| `permission denied` on a script | File-permissions (`chmod +x` on executables) |
-| `command not found` for a project tool | Tool-version manifest (`mise.toml`, `.tool-versions`) |
-| New third-party Action on org-managed runner | Prefer `actions/*` or non-action install; ask user before adding new third-party action |
+| Error signal | Check |
+|---|---|
+| `no version is set`, `couldn't resolve latest`, `unknown tag` | Version-pinning rule |
+| `auth failed`, `unauthorized`, `expired token` | Env-var / secrets provenance |
+| `permission denied` on a script | Executable bit (`chmod +x`) |
+| `command not found` for a project tool | Tool manifest (`mise.toml`, `.tool-versions`) |
+| New third-party Action on org-managed runner | Prefer `actions/*` or non-action install; ask before adding |
 
-If the error matches a repo rule, the first fix candidate is "comply with that rule" — not a backend change or workaround.
+Fix and re-push:
 
-### Step 3: Fix and Re-push
+1. Apply minimal targeted fix.
+2. Run failing gate locally.
+3. Commit via `wk-commit`.
+4. Push normally — never force-push unless explicitly required.
+5. Update PR description via `wk-commit`.
+6. Re-enter loop.
 
-For code failures:
-
-1. **Fix the issue** — apply the minimal, targeted fix (see ordering below)
-2. **Run tests locally** — verify the fix passes before pushing
-3. **Commit via `wk-commit`** — one fix per commit, conventional format
-4. **Push** — regular `git push`, never force-push
-5. **Update PR description** — `gh pr edit` to reflect the fix
-6. **Re-enter the loop** — go back to Step 1
-
-#### Fix-candidate ordering
-
-Order fixes from smallest input change to largest stack change:
+Fix-candidate ordering:
 
 | Priority | Candidate | Notes |
-|----------|-----------|-------|
-| 1 | Version downgrade (one minor/patch) | When dep upgrade is proximate cause; smaller diff than backend swap |
-| 2 | Repo-rule compliance | Comply with the violated rule — usually a one-line config change |
-| 3 | Same-tool config tweak | Adjust `mise.toml`, `.lychee.toml`, `tsconfig.json` before swapping tools |
-| 4 | Same-tool backend/option change | Switch backend, installer flag, or runner option within existing tool |
-| 5 | Tool-stack change | Removing/replacing a user-named tool — **requires explicit confirmation** |
+|---:|---|---|
+| 1 | Version downgrade | One minor/patch when dep upgrade is proximate cause |
+| 2 | Repo-rule compliance | Usually one-line config change |
+| 3 | Same-tool config tweak | Tool config before tool swap |
+| 4 | Same-tool backend/option change | Backend, installer flag, or runner option within existing tool |
+| 5 | Tool-stack change | Removing/replacing a user-named tool requires explicit confirmation |
 
-**Coupled config rule:** When changing a tool's version (bump or revert), audit all config files that tool reads (`.rubocop.yml`, `tsconfig.json`, lockfiles, etc.) in the same commit. A version change without a coupled-config check ships fine in isolation and breaks the next run.
+Rules:
 
-**Hard rule:** Before any level-5 change, stop and ask the user — do not silently remove a named tool. Even in auto mode, dropping a user-named tool exceeds the autonomy budget.
+- Coupled config rule: when changing a tool version, audit every config file that tool reads in the same commit.
+- CI-only fix evidence: prove the concrete environment delta and keep the fix scoped to it.
+- If failure was caused by stale base, integrate latest base first.
+- Full local pre-push gate must pass before any push.
+- If CI cannot be reproduced locally, inspect the full remote log before changing code.
 
-### Loop Limits
+Loop limits:
 
-- **Maximum 3 fix attempts** per CI run. After 3 consecutive failures, stop
-  and ask the user:
-  > "CI has failed 3 times after fixes. Here's what I've tried:
-  > 1. {fix 1 — what and why}
-  > 2. {fix 2 — what and why}
-  > 3. {fix 3 — what and why}
-  >
-  > The current failure is: {description}. How would you like to proceed?"
-- **Do not loop indefinitely.** Three targeted attempts is enough to surface
-  whether the issue is fixable by the agent or needs human judgment
-- **Each attempt must be different.** Never retry the exact same fix. If
-  the same failure persists after a fix, the diagnosis was wrong — re-read
-  the logs and try a different approach
-- **Axis-of-variation check before attempt 3.** Before pushing the third
-  fix attempt, write a one-line restatement of the axis being varied
-  (e.g., "I'm varying the install backend", "I'm varying the binary
-  path"). If attempts 1 and 2 are on the same axis, **broaden** — try a
-  different axis on attempt 3 (version regression, tool choice,
-  dependency removal), not "the same thing harder." Different surface
-  errors on the same axis are still the same axis. A genuinely
-  different axis is the only thing that converts the 3-attempt limit
-  into a useful bailout instead of three wasted CI runs.
+- Maximum 3 fix attempts per CI run.
+- Each attempt must differ from prior attempts.
+- Before attempt 3, state the axis being varied; if prior attempts varied the same axis, broaden.
+- After 3 failures, stop and hand off with what was tried and the current failure.
 
-### Exit Conditions
+Exit when all checks pass, max attempts are reached, or infrastructure/flaky failure is confirmed. After green, resume `wk-pr` post-creation: self-review, automated feedback triage, and mark ready.
 
-The loop exits when:
-
-1. **All checks pass** — proceed to self-review and marking ready
-2. **Max attempts reached** — hand off to user
-3. **Infrastructure/flaky failure confirmed** — inform user, optionally
-   re-trigger, do not block on it
-
-After a green exit, resume the `wk-pr` post-creation workflow: self-review
-(`wk-self-review`), automated feedback triage, and mark ready.
-
-**HARD RULE — verify every test-plan checkbox before updating the PR
-description.** After CI goes green, loop over every unchecked test-plan
-item and run its verification command now.
-
-- A box that can be verified must be verified. "I didn't happen to run
-  this" is not a reason to leave it unchecked — run it.
-- Leave a box unchecked only when verification is genuinely impossible
-  (live production environment, third-party credentials not on hand) —
-  and note why.
-- Deferring to the user to notice an unchecked-but-runnable box is a
-  workflow failure.
+**HARD RULE:** verify every test-plan checkbox before updating the PR description. Run every runnable verification command; leave a box unchecked only when genuinely impossible and note why.
 
 ---
 
 ## Phase 6.5: Review-Comment Resolution Loop
 
-After CI exits green (Phase 6) and the PR is marked ready, drive every open
-review comment to resolution before merge. Reviewers comment asynchronously —
-a single resolve pass strands every comment added afterward and stalls the
-merge.
+After CI exits green and the PR is marked ready, drive every open review comment to resolution before merge.
 
-### Loop
-
-- Poll the PR for unresolved review threads:
-
-  ```bash
-  gh pr view "$PR" --json reviewDecision,reviewThreads \
-    --jq '[.reviewThreads[]? | select(.isResolved==false)] | length'
-  ```
-
-- While any unresolved thread remains, invoke `wk-pr-resolve` to address it.
-- Re-poll after every `wk-pr-resolve` pass — new comments may have arrived
-  while the prior pass ran.
-- Re-enter Phase 6 if a resolving commit turns CI red — never leave the PR red.
-- Exit only when zero unresolved threads remain **and** CI is still green.
-
-### Across multiple runs
-
-- Treat the loop as spanning sessions — reviewers may comment hours later.
-- When waiting on reviewer input, self-pace with a polling wakeup rather than
-  exiting; re-check on each wake.
-- On any later invocation that finds the PR open with unresolved threads,
-  resume from the poll step — do not treat the PR as done until threads clear.
+- Poll unresolved review threads.
+- While any remain, invoke `wk-pr-resolve`.
+- Re-poll after every pass — new comments may arrive.
+- Re-enter Phase 6 if a resolving commit turns CI red.
+- Exit only when zero unresolved threads remain and CI is green.
+- Treat the loop as spanning sessions; resume from the poll step on later invocations.
 
 ---
 
 ## Phase 7: Documentation Audit
 
-Documentation is woven into every commit during Phase 2, but do a final audit
-after all code is complete:
+Final audit after all code is complete:
 
-1. Invoke `wk-docs` for a full scan of affected documentation
-2. Verify the README reflects any user-facing changes
-3. Create or update ADRs for significant architectural decisions made
-4. Update specs if behavior changed from what was originally specified
-5. Ensure the `docs/` index (`docs/README.md`) is current
-6. If the project has no `docs/` folder, `wk-docs` bootstraps one with:
-   `plans/`, `specs/`, `adr/`, `tutorials/`, `examples/`
+1. Invoke `wk-docs`.
+2. Verify README reflects user-facing changes.
+3. Create/update ADRs for significant architectural decisions.
+4. Update specs if behavior changed.
+5. Ensure `docs/README.md` is current.
+6. If no `docs/` folder exists, `wk-docs` bootstraps `plans/`, `specs/`, `adr/`, `tutorials/`, `examples/`.
 
 ---
 
 ## Phase 8: Session Retro — NON-NEGOTIABLE
 
-**HARD RULE: At the end of EVERY session, invoke `wk-retro`.** No
-exceptions. Mandatory regardless of whether the task completed,
-partially completed, failed, or was abandoned. Auto mode does not
-exempt this phase. Skipping the retro is a workflow violation.
+**HARD RULE:** at the end of every session, invoke `wk-retro`. No exceptions.
 
-**HARD RULE: Never ask whether to capture learnings.** Invoke `wk-learn`
-immediately after every skill run and after every user correction —
-unconditionally, the same as committing after a code change. Surfacing it as a
-question ("should I capture learnings for X?") is a violation; capture, don't ask.
+**HARD RULE:** never ask whether to capture learnings. Invoke `wk-learn` immediately after every skill run and every user correction.
 
-**HARD RULE: `gh pr ready` is not a session terminus.** After every
-`gh pr ready` succeeds, the very next action is `Skill(wk-retro)` — no user
-prompt, no asking. Marking ready feels like the end; the workflow contract
-says the retro is. Treat it like `wk-commit` after a code change: automatic,
-non-negotiable. "Work is done" != "workflow is done".
+**HARD RULE:** `gh pr ready` is not a session terminus. After every successful `gh pr ready`, the next action is `Skill(wk-retro)`.
 
-The retro:
-- Auto-invokes `wk-learn scan` to mine the session transcript for
-  every user interruption / redirect, classify each by affected
-  skill, and write per-skill learning files (Step 1.5 of `wk-retro`).
-- Reviews what happened across 5 lenses (mistakes, corrections, gaps,
-  decisions, successes), informed by the scan's findings.
-- Writes a dated entry to the global retro log.
-- Distills findings into actionable rules and promotes them globally
-  to `~/.claude/memory/` so ALL future sessions benefit.
-
-There is no "the session was too short" or "nothing interesting happened."
-Run the retro.
+The retro scans the session, classifies interruptions/redirects by affected skill, writes per-skill learning files, reviews mistakes/corrections/gaps/decisions/successes, writes a dated entry to the global retro log, and promotes actionable rules globally.
 
 ---
 
 ## Environment Guardrails
 
-### AWS / ECR
-
-When encountering `authorization failed`, `no basic auth credentials`,
-`ExpiredToken`, or `Unable to locate credentials`: prompt the user to run
-`aws sso login` to refresh credentials. Do not retry without valid creds.
-
-### Docker
-
-When encountering `Cannot connect to the Docker daemon`, `docker.sock: no
-such file or directory`, or `Is the docker daemon running?`: prompt the user
-to start Docker Desktop or Colima (`colima start`). Use `wk-docker` for
-Docker-related work.
-
-### Configuration
-
-Always add permission rules, settings, and MCP servers to
-`~/.claude/settings.json` (global), not `.claude/settings.local.json`
-(project-scoped), unless intentionally local. For MCP servers, use
-`--scope user`. Never add MCPs to `~/.claude.json` (the state file).
-
-### CI Failures
-
-Use `wk-buildkite` when investigating CI failures. Do not guess at CI
-issues — read the actual logs.
+- **AWS / ECR:** on auth/credential errors, prompt for `aws sso login`; do not retry without valid creds.
+- **Docker:** on daemon/socket errors, prompt for Docker Desktop or Colima; use `wk-docker`.
+- **Configuration:** add permission rules, settings, and MCP servers to `$HOME/.claude/settings.json` (global), not `.claude/settings.local.json`, unless intentionally local. For MCP servers, use `--scope user`. Never add MCPs to `$HOME/.claude.json`.
+- **CI:** use `wk-buildkite` for Buildkite; read actual logs, do not guess.
 
 ---
 
 ## Skill Reference
 
-All `wk-*` skills and when to invoke them during this workflow:
-
 | Skill | When | Phase |
-|-------|------|-------|
-| `wk-commit` | After completing each implementation step; CI fix commits | 2, 6 |
-| `wk-workstyle` | Code-quality gate before every commit on a code diff | 2 |
-| `wk-docs` | With each commit and during final audit | 2, 7 |
-| `wk-pr` | When creating or updating a pull request | 5 |
+|---|---|---|
+| `wk-plan` | Every non-trivial task before implementation | 1 |
+| `wk-commit` | After each implementation step; CI fix commits | 2, 6 |
+| `wk-workstyle` | Code-quality gate before every commit | 2 |
+| `wk-docs` | With each commit and final audit | 2, 7 |
+| `wk-pr` | Creating/updating a pull request | 5 |
 | `wk-self-review` | Invoked automatically by `wk-pr` after CI passes | 5 |
-| `wk-buildkite` | Diagnosing CI failures in the fix loop | 6 |
+| `wk-buildkite` | Diagnosing Buildkite CI failures | 6 |
 | `wk-adversarial-review` | Pre-flight gate before every push / PR transition | 4, 5, 6 |
-| `wk-pr-update` | Rebasing / syncing a PR branch with its base | 5, 6 |
-| `wk-pr-review` | When reviewing someone else's PR | — |
-| `wk-pr-resolve` | When addressing review feedback on your PR | — |
-| `wk-learn` | Post-completion learning capture (end of any skill run) | any |
-| `wk-retro` | End of every session (mandatory) | 8 |
-| `wk-docker` | When working with Docker/containers | any |
-| `wk-datadog` | When managing observability resources | any |
-| `wk-worktree-cleanup` | When cleaning up merged worktrees | any |
+| `wk-pr-update` | Rebasing/syncing a PR branch with its base | 5, 6 |
+| `wk-pr-review` | Reviewing someone else's PR | — |
+| `wk-pr-resolve` | Addressing review feedback on your PR | — |
+| `wk-learn` | Post-completion learning capture | any |
+| `wk-retro` | End of every session | 8 |
+| `wk-docker` | Docker/containers | any |
+| `wk-datadog` | Observability resources | any |
+| `wk-worktree-cleanup` | Cleaning up merged worktrees | any |
 
 ---
 
@@ -1224,24 +442,24 @@ All `wk-*` skills and when to invoke them during this workflow:
 Use this as a final gate before claiming work is complete:
 
 - [ ] Every commit is atomic and passes tests/CI independently
-- [ ] `wk-workstyle` pass completed on all touched files (naming, docs, structure, coverage)
+- [ ] `wk-workstyle` pass completed on all touched files
 - [ ] Documentation updated alongside each code change
 - [ ] Tests cover happy path, sad path, and edge cases
 - [ ] `wk-adversarial-review` returned a clear verdict against current HEAD
-- [ ] CI fix loop exited green (all checks passing)
+- [ ] CI fix loop exited green
 - [ ] PR description reflects current branch state
-- [ ] Self-review posted highlighting critical changes only
-- [ ] All PR review threads resolved (`wk-pr-resolve` loop exited clean)
-- [ ] Version pins are exact (no `latest`, `^`, `~`)
+- [ ] Self-review posted for critical changes only
+- [ ] All PR review threads resolved
+- [ ] Version pins are exact
 - [ ] Scripts have correct file permissions
 - [ ] Diagrams use Mermaid, not ASCII art
-- [ ] Regex uses named capture groups
+- [ ] Regexes use named capture groups
 - [ ] ADRs created for significant architectural decisions
 - [ ] Session retro completed via `wk-retro`
-- [ ] Every numbered plan step is finished or explicitly deferred — not "most" or "the important ones"
+- [ ] Every numbered plan step is finished or explicitly deferred
 
 ---
 
 ## Post-Completion
 
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn workflow`).
+Invoke `wk-learn workflow`.

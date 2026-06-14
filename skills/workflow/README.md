@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.06.14-090215`
+**Version:** `2026.06.14-180157`
 
 ## Invocation
 
@@ -15,13 +15,12 @@
 
 ```mermaid
 flowchart TD
-    A[Phase 1: wk-plan] --> A1[Grill ambiguities]
-    A1 --> A2[Research gates + planning probes]
-    A2 --> A3[Present numbered plan + wait for approval]
-    A3 --> B[Phase 2: Implement]
+    A[Phase 1: wk-plan] --> B[Phase 2: Implement]
     B --> B1[Each step: tests → wk-workstyle → wk-docs → wk-commit]
     B1 --> C[Phase 3: Test — happy + sad + edge]
-    C --> D[Phase 4: wk-adversarial-review]
+    C --> C1[Phase 3.5: refactor/reuse scan]
+    C1 --> C2[Phase 3.6: frontend live preview when UI changes]
+    C2 --> D[Phase 4: wk-adversarial-review]
     D --> E{Verdict}
     E -->|blocked| F[Fix blockers via wk-commit → re-invoke]
     F --> D
@@ -29,13 +28,15 @@ flowchart TD
     G --> H[Phase 6: CI Fix Loop — max 3 attempts]
     H --> I{CI green?}
     I -->|no — 3 attempts| J[Stop + ask user]
-    I -->|yes| K[Phase 7: wk-docs final audit]
-    K --> L[Phase 8: wk-retro — NON-NEGOTIABLE]
+    I -->|yes| K[Phase 6.5: resolve review comments]
+    K --> L[Phase 7: wk-docs final audit]
+    L --> M[Phase 8: wk-retro — NON-NEGOTIABLE]
     click A href "../plan/README.md" _blank
     click D href "../adversarial-review/README.md" _blank
     click G href "../pr/README.md" _blank
-    click K href "../docs/README.md" _blank
-    click L href "../retro/README.md" _blank
+    click K href "../pr-resolve/README.md" _blank
+    click L href "../docs/README.md" _blank
+    click M href "../retro/README.md" _blank
 ```
 
 ## Noteworthy
@@ -44,6 +45,9 @@ flowchart TD
   named red flags. If a diff will be produced, the full workflow applies.
 - **Skill invocation is mandatory** via the `Skill` tool — approximating skill behavior with
   raw commands skips guards and conventions that the skills contain.
+- **Progressive disclosure:** the skill is debloated under 500 lines. Phase 1 delegates to
+  [`wk-plan`](../plan/README.md), and later phases invoke focused skills instead of inlining their full
+  rule sets.
 - **Phase 1 delegates to [`wk-plan`](../plan/README.md)** — all planning gates and probes live there:
   Jira pre-flight, user-provided artifact first, prefactor probe, intra-file duplication probe,
   spec pre-flight, new-capability probe, rule-set doc sync probe, tool-swap flag-parity probe,
