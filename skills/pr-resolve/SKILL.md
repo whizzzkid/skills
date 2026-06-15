@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-060528'
+  version: '2026.06.15-092804'
 ---
 
 # PR Resolve
@@ -349,13 +349,9 @@ Every suggestion must include reasoning for applying and discarding:
 **Reviewer:** @{user} {bot_badge}
 **Comment:** {body}
 **Reply chain:** {summary of any replies, or "none"}
-
-**Suggested fix:** {concrete code change or snippet}
-
+**Suggested fix:** {code change or snippet}
 **Why this fix:** {problem solved and reviewer concern addressed}
-
-**Why this could be skipped:** {false positive, already handled elsewhere,
-out of scope, stylistic preference, or "No valid reason to skip"}
+**Why skip:** {false positive, already handled, out of scope, style, or "No valid reason to skip"}
 ```
 
 Where `{bot_badge}` is `🤖 (bot)` if the commenter is a bot, omitted otherwise.
@@ -454,37 +450,34 @@ two or more consultation prompts in one message.
 
 ### Decision handling
 
-**(a) Apply suggested fix:**
-- Record in `fixes_to_apply`: `{path, line, description, code_change, threadId, commentId}`
-- Draft reply: "Fixed — {brief explanation}"
-- Mark for `resolve_after_push`
+For each reserved decision, record exactly one outcome:
 
-**(e) Edit the suggested fix:**
-- Ask how to adjust the fix.
-- Record the user's refinement in `fixes_to_apply`.
-- Draft the adjusted reply.
-- Mark for `resolve_after_push`.
-
-**(d) Dismiss:**
-- Ask why the comment is being dismissed.
-- Record the dismissal reason.
-- Draft reply: "Dismissed — {reason}".
-- Mark for `resolve_after_push`.
-
-**(t) Defer to ticket:**
-- Ask for the ticket URL or key.
-- Record in `deferrals`: `{path, line, ticket_url, ticket_key, threadId, commentId}`.
-- Draft reply: "Tracked in [{ticket_key}]({ticket_url}) — will address in a follow-up."
-- Mark for `resolve_after_push`.
-
-**(s) Skip:**
-- Record in `skipped`.
-- Leave the thread open and untouched.
-
-**(r) Rethink:**
-- Re-read the comment, surrounding code, and referenced context.
-- Produce a deeper analysis with alternative fixes and risks.
-- Re-present the same comment with the same reserved options.
+- `a` Apply
+  - Record in `fixes_to_apply`: `{path, line, description, code_change, threadId, commentId}`.
+  - Draft "Fixed — {brief explanation}".
+  - Mark `resolve_after_push`.
+- `e` Edit
+  - Ask how to adjust the fix.
+  - Record the refinement in `fixes_to_apply`.
+  - Draft the adjusted reply.
+  - Mark `resolve_after_push`.
+- `d` Dismiss
+  - Ask why.
+  - Record the dismissal reason.
+  - Draft "Dismissed — {reason}".
+  - Mark `resolve_after_push`.
+- `t` Defer
+  - Ask for the ticket URL or key.
+  - Record in `deferrals`: `{path, line, ticket_url, ticket_key, threadId, commentId}`.
+  - Draft "Tracked in [{ticket_key}]({ticket_url}) — will address in a follow-up."
+  - Mark `resolve_after_push`.
+- `s` Skip
+  - Record in `skipped`.
+  - Leave the thread open and untouched.
+- `r` Rethink
+  - Re-read the comment, surrounding code, and referenced context.
+  - Produce deeper analysis with alternatives and risks.
+  - Re-present the same comment with the same reserved options.
 
 ### After all decisions collected
 
@@ -521,14 +514,9 @@ git diff "origin/$BASE...HEAD" | grep -nE '<class-pattern>' \
 
 Pattern hints:
 
-| Class | Grep pattern |
-|---|---|
-| Credential / token in stderr | `git (clone\|fetch\|push)`, `curl`,
-  `wget`, `>&2`, `2>&1` minus already-redacted lines |
-| Missing input validation | validated symbol plus every entry point |
-| Unhandled exception | exception type plus every call site |
-| Race condition / TOCTOU | resource path plus every read-then-write site |
-| Missing retry / timeout | call type plus every external call site |
+- Credential/token leaks: grep shell commands and stderr redirections, then subtract already-redacted lines.
+- Validation/exception/retry gaps: grep the affected symbol plus every entry or call site.
+- Race/TOCTOU: grep the resource path plus every read-then-write site.
 
 ### For each fix
 
@@ -682,27 +670,18 @@ gh api repos/{owner}/{repo}/issues/{number}/comments \
 
 Prefix issue-comment replies with a quote of the original comment.
 
-Immediately add an emoji reaction to the original comment:
-
-| Triage | Reaction |
-|---|---|
-| `a` or `e` | `+1` |
-| `d` | `-1` |
-| `f` | `heart` |
-| `t` | `+1` |
-| `s` or `r` | no reaction |
-
-Reaction failures are fire-and-forget; log and continue.
+Immediately add an emoji reaction to the original comment: `+1` for
+`a`, `e`, or `t`; `-1` for `d`; `heart` for follow-up questions; no reaction
+for `s` or `r`. Reaction failures are fire-and-forget; log and continue.
 
 If an inline reply returns HTTP 404, log the failure and keep the thread in
 `resolve_after_push`. REST comment IDs can be invalidated by force-push or bot
 review replacement; GraphQL thread IDs are stable. Resolve via GraphQL thread
 ID. If GraphQL resolution also fails, drop the thread and continue.
 
-Refresh bot thread IDs before posting bot replies when bot reviewers are
-present. Re-run the GraphQL reviewThreads query against post-push HEAD and
-match by `(path, line, root_comment.body_excerpt)`. If a bot finding was
-dropped, skip the reply.
+Refresh bot thread IDs before posting bot replies: re-run the GraphQL
+reviewThreads query against post-push HEAD and match by `(path, line,
+root_comment.body_excerpt)`. Skip replies for dropped findings.
 
 Resolve threads with GraphQL:
 
@@ -746,11 +725,10 @@ abort and ask whether to resolve them now.
 surfaced before entering the CI wait. Do not skip for short or routine
 sessions. If zero findings were active, emit one baseline-holding learning.
 
-Classify processed comments into issue classes such as vulnerability-class
-drift, stale comment/doc drift, dead defensive guard, hardcoded default,
-cross-doc enumeration miss, design-pivot doc drift, signature widening miss,
-raw-API bypass, external-call shape change without reproduction, comment
-accuracy drift, or a new candidate class.
+Classify processed comments into generic issue classes such as security,
+validation, exception handling, race/TOCTOU, retry/timeout, defensive/dead
+guard, API/external-call shape, docs/rationale drift, comment accuracy drift,
+or a new candidate class.
 
 For each non-empty class, invoke:
 
