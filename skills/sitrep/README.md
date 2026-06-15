@@ -1,9 +1,10 @@
 # wk-sitrep
 
+**Version:** `2026.06.14-193553`
+
 Unified daily ops log backed by a SilverBullet workspace. Replaces
-[wk-goodmorning](../goodmorning/README.md) and
-[wk-goodevening](../goodevening/README.md) — no HTML generation, no
-per-day output directories.
+the former morning and evening standalone skills — no standalone HTML files,
+no per-day live directories, and dated snapshots at close.
 
 ## Sub-commands
 
@@ -31,8 +32,8 @@ No interactive triage — the user resolves items directly in SilverBullet.
 - **SilverBullet formatting** — `#` in link text is escaped (`repo\#N`),
   links use full PR titles, items sort by urgency (🔴/🟡/🟢) with
   `**📅 date**` due-dates.
-- **No HTML** — SilverBullet renders the markdown in the browser; no
-  `morning.html` or `evening.html` is generated.
+- **SilverBullet rendering** — no standalone HTML files are generated;
+  `live.md` contains SilverBullet HTML blocks that the browser renders.
 - **SilverBullet server** — the skill verifies the server is running and
   starts it (`silverbullet $SITREP_REPO`) if not.
 
@@ -48,10 +49,9 @@ No interactive triage — the user resolves items directly in SilverBullet.
 ## Integrations
 
 - Data gathering delegates to the same 5 (start) / 7 (end) parallel agents
-  as [wk-goodmorning](../goodmorning/README.md) /
-  [wk-goodevening](../goodevening/README.md).
+  as the former morning and evening standalone skills.
 - QPR-worthy achievements are appended to
-  `$EMPLOYER/QPR/brag-log.md` — consumed by
+  `$SITREP_REPO/$EMPLOYER/QPR/brag-log.md` — consumed by
   [wk-self-perf](../self-perf/README.md).
 - When SilverBullet runs via Docker, a `docker-compose.yml` change is
   followed by `docker compose down && up -d` after push.

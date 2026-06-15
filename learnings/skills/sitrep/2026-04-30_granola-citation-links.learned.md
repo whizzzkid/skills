@@ -18,7 +18,7 @@ A second related gap: the skill doesn't distinguish between **verified facts** (
 1. **Extend the source-link rule** in Stage 2 to require citations for ALL priority and action items, including internal sources:
    - Granola note → link to `granola://meeting/<id>` or include `(Granola: {meeting} {date})` inline
    - Slack DM/thread → permalink (already covered)
-   - evening.md / morning.md carry-over → cite as `(carry-over from {YYYY-MM-DD})` linking to the relative file path
+    - sitrep snapshot.md / morning.md carry-over → cite as `(carry-over from {YYYY-MM-DD})` linking to the relative file path
    - Agent-derived inference (e.g., "{repo}#NNN superseded by #NNN?") → mark with `(inferred)` and link both PRs
 
 2. **Add a "claim confidence" annotation** to action items extracted from meeting notes:
@@ -34,4 +34,4 @@ A second related gap: the skill doesn't distinguish between **verified facts** (
 
 6. **Auto mode is not a license to silently resolve uncertainty.** When agent data contains a vague single-source claim that becomes a "hard deadline" or "critical priority," the skill should either (a) demote it to "claim: ..." in the rendered output, or (b) surface a confirmation prompt to the user even in auto mode for items flagged as `unverified-but-promoted-to-priority`. The current behavior — flatten everything into authoritative priorities and skip prompting — accumulates errors. Add an exception to the "non-interactive / auto mode" rules: auto mode skips routine triage, but high-impact unverified claims still warrant a single confirmation. User feedback verbatim: "you've stopped confirming with me regarding what is happening and that is causing issues."
 
-This applies equally to wk-goodevening — meeting follow-through items in evening.md should carry Granola URLs back to the source meeting, and unverified meeting claims should be flagged not promoted.
+This applies equally to wk-sitrep end — meeting follow-through items in snapshot.md should carry Granola URLs back to the source meeting, and unverified meeting claims should be flagged not promoted.

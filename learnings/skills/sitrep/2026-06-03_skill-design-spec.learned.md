@@ -8,7 +8,7 @@ severity: high
 Design spec for a new `wk-sitrep` skill — a unified daily ops log backed by a
 SilverBullet workspace instead of generated HTML/markdown files.
 
-**What it replaces:** `wk-goodmorning` + `wk-goodevening` as standalone skills;
+**What it replaces:** `wk-goodmorning` and the former evening sitrep flow as standalone skills;
 eliminates the morning-triage step and all HTML-generation steps, since
 SilverBullet renders markdown in the browser live.
 
@@ -42,7 +42,7 @@ SilverBullet renders markdown in the browser live.
 - Scrub `live.md`: remove completed checkboxes, keep open items for tomorrow's
   carry-over.
 - Update brag doc and any Lattice feedback-request stubs (everything
-  `wk-goodevening` does).
+  wk-sitrep end does).
 - Confirm snapshot written and live.md pruned.
 
 **SilverBullet integration notes:**
@@ -55,5 +55,5 @@ SilverBullet renders markdown in the browser live.
   and optionally start it (`silverbullet $SITREP_REPO`) if not.
 
 **Suggested fix / next step:** Build via `wk-skill sitrep` using this spec as
-the body source. Reference `goodmorning/SKILL.md` and `goodevening/SKILL.md`
-for the data-fetching steps rather than copy-pasting them inline.
+the body source. Reference `goodmorning/SKILL.md` and the former evening sitrep
+flow for the data-fetching steps rather than copy-pasting them inline.

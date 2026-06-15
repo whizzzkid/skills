@@ -7,27 +7,27 @@ severity: high
 
 Stale `last_working_day` marker causes yesterday's anchor to skip an entire working day.
 
-**What happened:** The `last_working_day` marker is written by wk-goodevening. When the
-user skips running goodevening, the marker stays frozen at the last evening-wrapped day.
+**What happened:** The `last_working_day` marker is written by wk-sitrep end. When the
+user skips running wk-sitrep end, the marker stays frozen at the last wrapped day.
 The next morning brief blindly trusts the marker, anchors "yesterday" to the wrong day,
 and the standup `👈🏽 Yesterday` section re-reports already-posted achievements while
 carry-overs miss all the intervening day's work.
 
 **Root cause:** Stage 0 bootstrap treats `last_working_day` as authoritative with no
 cross-check against what day directories actually exist in `sitrep/`. A day that has
-`morning.md` but no `evening.md` is an unambiguous signal that goodevening was skipped —
+`morning.md` but no `snapshot.md` is an unambiguous signal that wk-sitrep end was skipped —
 the skill never inspects for this pattern.
 
 **Suggested fix:** After reading `last_working_day`, scan for sitrep day directories
 between that date and today. For each intervening directory, check:
 - Has `morning.md` or `morning.html` → was a working day
-- Has no `evening.md` → goodevening was skipped
+- Has no `snapshot.md` → wk-sitrep end was skipped
 
 If any such directory is found, treat the **most recent directory with `morning.md`** as
 the true last working day instead of the marker. Warn the user:
 
 > "⚠️ `last_working_day` marker says {marker_date} but {newer_date} has a morning brief
-> with no evening wrap. Using {newer_date} as yesterday. Run `wk-goodevening` for
+> with no evening wrap. Using {newer_date} as yesterday. Run `wk-sitrep end` for
 > {newer_date} to fill the gap."
 
 **Scope constraint (user-specified):** Only apply this override for consecutive-workday
