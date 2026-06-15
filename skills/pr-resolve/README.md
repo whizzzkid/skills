@@ -51,6 +51,9 @@ sequenceDiagram
 - **HARD RULE — one comment per message in Step 5:** Auto mode does not
   collapse the consultation loop. Each `judgment-required` item gets its own
   prompt + response cycle; batching is never allowed.
+- **Dismissal reuses the presented rationale:** A `d` Dismiss reuses the Step 4
+  `Why skip` rationale already shown for that comment — no re-ask — prompting only
+  when that rationale is empty or to edit it.
 - **Three comment surfaces are mandatory:** Inline review comments, review
   summary bodies, and PR conversation (issue) comments must all be fetched
   every run. Cached results from a prior invocation in the same session do not
