@@ -3,7 +3,7 @@
 > Thorough, adversarial code review of a GitHub PR — investigates changed code deeply, builds a playground to
 > validate assumptions via experiments, and posts a pending review for human submission.
 
-**Version:** `2026.06.12-162234`
+**Version:** `2026.06.14-193553`
 
 ## Invocation
 
@@ -29,22 +29,19 @@ flowchart TD
     K --> L[Deduplicate against exclusion list]
     L --> M[Validate comment positions against diff]
     M --> N[Present numbered summary for approval]
-    N --> O{User choice A/B/C}
-    O -->|A approved| P[Phase 6: POST pending review via gh api]
-    O -->|B edit| N
-    O -->|C skip| N
-    P --> Q[Open html_url in browser]
+    N --> O[Phase 6: POST pending review unless user pauses]
+    O --> P[Open html_url in browser]
 ```
 
 ## Noteworthy
 
-- **HARD RULE — never post without explicit user confirmation:** The pending review is created only after the
-  user picks option `A` verbatim. Consent from earlier in the session does not carry forward.
+- **HARD RULE — never submit without explicit user confirmation:** The pending review is created after the
+  Phase 5 summary unless the user explicitly pauses; the user still submits it from the GitHub UI.
 - **Playground is write-sandboxed:** Write and Edit tools may only target `.review-playground/` — never
   production files. The directory is gitignored automatically.
 - **Bot findings go through playground validation before reply:** Every active bot comment is reproduced in a
-  playground script and classified as Confirmed, Refuted, or Inconclusive. Confirmed findings get silent skip
-  (the bot thread already stands); only Refuted findings earn a reply with counter-evidence.
+  playground script and classified as Confirmed, Refuted, or Inconclusive. Confirmed findings get silent skip;
+  confirmed-but-narrower, refuted, and agent-backed inconclusive cases get replies with new evidence.
 - **`in_reply_to` is invalid in draft review payloads:** The GitHub REST API rejects it with 422. Bot-thread
   replies must either be folded into the review body or posted as live replies — they cannot be embedded in
   the `comments[]` array of the pending review.

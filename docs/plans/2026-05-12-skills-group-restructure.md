@@ -4,7 +4,7 @@
 
 **Goal:** Reorganize 31 skills from a flat `skills/<name>/` layout into four logical groups (`rituals/`, `pull-request/`, `tools/`, `workflows/`) and mirror that structure in `learnings/skills/`.
 
-**Architecture:** Each skill moves from `skills/<name>/SKILL.md` to `skills/<group>/<name>/SKILL.md`. The `name:` frontmatter field and invocation syntax (`/wk-<name>`) are unchanged — `npx skills` uses the `name:` field, not the directory path. The `wk-learn` argument in every `Post-Completion` section is updated to `<group>/<name>` so learnings land in the right nested path. Existing learnings files are migrated to match.
+**Architecture:** Each skill moves from `skills/<name>/SKILL.md` to `skills/<group>/<name>/SKILL.md`. The `name:` frontmatter field and invocation syntax (`/wk-<name>`) are unchanged — `npx skills` uses the `name:` field, not the directory path. The [`wk-learn`](../../skills/learn/README.md) argument in every `Post-Completion` section is updated to `<group>/<name>` so learnings land in the right nested path. Existing learnings files are migrated to match.
 
 **Tech Stack:** `git mv`, `sed`/`Edit` for SKILL.md edits, `npx skills add .` for registry refresh
 
@@ -17,7 +17,6 @@ skills/
 ├── _template/          (stays at root — internal, no group)
 ├── rituals/            (time-bounded routines: daily bookends + reviews)
 │   ├── cal/
-│   ├── goodevening/
 │   ├── goodmorning/
 │   ├── retro/
 │   └── self-perf/
@@ -55,9 +54,9 @@ skills/
 ## What Does NOT Change
 
 - `name:` frontmatter in every SKILL.md (invocation stays `/wk-buildkite` etc.)
-- Cross-skill references (`wk-commit`, `wk-pr`, `wk-learn` in skill bodies) — these use `name:`, not path
-- `wk-learn` logic — already does `mkdir -p "$WK_SKILLS_HOME/learnings/skills/$SKILL_NAME"`, so passing `tools/buildkite` just creates the right subpath
-- `wk-sharpen` learnings scan — already uses recursive `find "$WK_SKILLS_HOME/learnings/skills" -name "*.md"`, handles nesting fine
+- Cross-skill references ([`wk-commit`](../../skills/commit/README.md), [`wk-pr`](../../skills/pr/README.md), [`wk-learn`](../../skills/learn/README.md) in skill bodies) — these use `name:`, not path
+- [`wk-learn`](../../skills/learn/README.md) logic — already does `mkdir -p "$WK_SKILLS_HOME/learnings/skills/$SKILL_NAME"`, so passing `tools/buildkite` just creates the right subpath
+- [`wk-sharpen`](../../skills/sharpen/README.md) learnings scan — already uses recursive `find "$WK_SKILLS_HOME/learnings/skills" -name "*.md"`, handles nesting fine
 
 ## What Changes
 
@@ -102,7 +101,7 @@ cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -3
 npx skills list -a=claude 2>/dev/null | grep "wk-test-nested-verify"
 ```
 
-Expected: `wk-test-nested-verify` appears in the list.
+Expected: wk-test-nested-verify appears in the list.
 
 - [ ] **Step 3: Remove temp skill**
 
@@ -140,7 +139,6 @@ mkdir -p "$WK_SKILLS_HOME/skills/workflows"
 ```bash
 cd "$WK_SKILLS_HOME"
 git mv skills/cal             skills/rituals/cal
-git mv skills/goodevening     skills/rituals/goodevening
 git mv skills/goodmorning     skills/rituals/goodmorning
 git mv skills/retro           skills/rituals/retro
 git mv skills/self-perf       skills/rituals/self-perf
@@ -244,7 +242,6 @@ The mapping is:
 | Old | New |
 |---|---|
 | `wk-learn cal` | `wk-learn rituals/cal` |
-| `wk-learn goodevening` | `wk-learn rituals/goodevening` |
 | `wk-learn goodmorning` | `wk-learn rituals/goodmorning` |
 | `wk-learn retro` | `wk-learn rituals/retro` |
 | `wk-learn self-perf` | `wk-learn rituals/self-perf` |
@@ -281,7 +278,7 @@ The mapping is:
 cd "$WK_SKILLS_HOME"
 
 # rituals
-for skill in cal goodevening goodmorning retro self-perf; do
+for skill in cal goodmorning retro self-perf; do
   sed -i '' "s/wk-learn $skill$/wk-learn rituals\/$skill/" "skills/rituals/$skill/SKILL.md"
 done
 
@@ -379,7 +376,7 @@ mkdir -p "$WK_SKILLS_HOME/learnings/skills/workflows"
 ```bash
 cd "$WK_SKILLS_HOME/learnings/skills"
 # Only move dirs that exist
-for skill in goodevening goodmorning retro; do
+for skill in goodmorning retro; do
   [ -d "$skill" ] && git mv "$skill" "rituals/$skill"
 done
 # cal, self-perf have no learnings yet — nothing to move
@@ -551,7 +548,6 @@ The table currently has paths like `[buildkite](skills/buildkite/)`. Each must u
 [docker](skills/docker/)             → [docker](skills/tools/docker/)
 [docs](skills/docs/)                 → [docs](skills/workflows/docs/)
 [gh](skills/gh/)                     → [gh](skills/tools/gh/)
-[goodevening](skills/goodevening/)   → [goodevening](skills/rituals/goodevening/)
 [goodmorning](skills/goodmorning/)   → [goodmorning](skills/rituals/goodmorning/)
 [mise](skills/mise/)                 → [mise](skills/tools/mise/)
 [pr](skills/pr/)                     → [pr](skills/pull-request/pr/)
@@ -649,9 +645,8 @@ cd "$WK_SKILLS_HOME" && eval "$(mise activate bash)" && git push
 |---|---|
 | `npx skills` doesn't scan nested dirs | Task 1 verifies this before any moves |
 | Skill invocation breaks (`/wk-buildkite` stops working) | `name:` field unchanged; invocation uses name not path |
-| wk-learn writes to wrong path | `$SKILL_NAME` is the arg; passing `tools/buildkite` creates the right nested path automatically |
-| wk-sharpen misses learnings | Its `find` is already recursive — no change needed |
-| Cross-skill references break | All use `wk-name` form (name field) not path — unchanged |
-| `.distilled-sources.log` path entries stale | Log entries are already `.learned.md` files; new unprocessed learnings land in new paths; no functional issue |
-| wk-skill scaffolds into wrong location | Task 5 updates wk-skill to prompt for group |
+| [`wk-learn`](../../skills/learn/README.md) writes to wrong path | `$SKILL_NAME` is the arg; passing `tools/buildkite` creates the right nested path automatically |
+| [`wk-sharpen`](../../skills/sharpen/README.md) misses learnings | Its `find` is already recursive — no change needed |
+| Cross-skill references break | All use [`wk-name`](../../skills/README.md) form (name field) not path — unchanged |
+| [`wk-skill`](../../skills/skill/README.md) scaffolds into wrong location | Task 5 updates wk-skill to prompt for group |
 | AGENTS.md/README.md links 404 | Task 6 + Task 7 Step 4 verification |

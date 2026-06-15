@@ -283,7 +283,7 @@ For every interruption, decide which skill needs to learn from it:
 | `docker` commands / Dockerfile edits | `wk-docker` |
 | Writing tests / mocks / fixtures | `wk-testing-skeleton` |
 | Editing a `SKILL.md` | `wk-sharpen` |
-| Morning / evening dashboards | `wk-goodmorning` / `wk-goodevening` |
+| Daily sitrep dashboards | `wk-sitrep` |
 | No specific skill — general agent behavior | `wk-workflow` |
 
 When two skills could fit, prefer the one closest to the agent's

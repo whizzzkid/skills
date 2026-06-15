@@ -7,7 +7,7 @@
 | Mode | Trigger |
 |------|---------|
 | User-invocable | "schedule a meeting", "check my calendar", "find time for X", "do I have interviews" |
-| Model-invocable | automatic on: [`wk-goodmorning`](../goodmorning/README.md) (interview prep scan), [`wk-goodevening`](../goodevening/README.md) (tomorrow preview) |
+| Model-invocable | automatic on: [`wk-sitrep`](../sitrep/README.md) `start` (interview prep scan) and `end` (tomorrow preview) |
 
 ## How It Works
 
@@ -34,5 +34,5 @@ flowchart TD
 - **Working hours are 9am–6pm** in the user's local timezone; lunch (12–1pm) is soft-protected with a scheduling penalty, never a hard block.
 - **Debrief interviews skip the scorecard block** — debrief sessions are already the scorecard discussion, so only the 15-min prep block is created.
 - **Slot ranking uses a penalty system** — conflicts add +3 per attendee, back-to-back adds +1, lunch window adds +2; lowest penalty wins with earlier-in-day as tiebreaker.
-- **All calendar-touching skills delegate here** — [`wk-goodmorning`](../goodmorning/README.md) and [`wk-goodevening`](../goodevening/README.md) call this skill rather than calling the Gcal MCP directly.
+- **All calendar-touching skills delegate here** — [`wk-sitrep`](../sitrep/README.md) calls this skill rather than calling the Gcal MCP directly.
 - **Scorecard blocks scan forward in 30-min increments** if the immediate post-interview slot is busy; if no same-day slot exists, it flags to the user rather than silently skipping.

@@ -226,7 +226,7 @@ After sending, confirm:
 ## Standup Snippet
 
 Canonical spec for the daily standup snippet rendered by
-wk-goodmorning (and any other caller). The snippet is a public team
+wk-sitrep start (and any other caller). The snippet is a public team
 artifact — every rule below is a HARD RULE.
 
 **Structure (Context C — HTML for clipboard, bullets shown for
@@ -295,7 +295,7 @@ When invoked as `wk-slack §Standup Snippet`, return:
 - The filtered-out items (so the caller can keep them in the
   private dashboard).
 
-Callers (wk-goodmorning, wk-goodevening) must **not** re-implement
+Callers (wk-sitrep) must **not** re-implement
 the structure, link format, or privacy filter inline — invoke this
 section instead.
 

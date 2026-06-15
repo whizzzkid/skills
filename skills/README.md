@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **60 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
+> **59 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
 
 ---
 
@@ -21,9 +21,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 
 | Skill | Purpose | Invocation |
 |---|---|---|
-| [`wk-sitrep`](./sitrep/README.md) | Unified daily ops log — SilverBullet live.md replaces goodmorning + goodevening with no HTML generation | User: `/wk-sitrep [start\|end]` |
-| [`wk-goodmorning`](./goodmorning/README.md) | ⚠️ DEPRECATED — use [`wk-sitrep`](./sitrep/README.md) `start`. Retained as agent-spec reference only | — |
-| [`wk-goodevening`](./goodevening/README.md) | ⚠️ DEPRECATED — use [`wk-sitrep`](./sitrep/README.md) `end`. Retained as agent-spec reference only | — |
+| [`wk-sitrep`](./sitrep/README.md) | Unified daily ops log — SilverBullet live.md replaces the former morning and evening standalone skills with no HTML generation | User: `/wk-sitrep [start\|end]` |
 | [`wk-cal`](./cal/README.md) | All Google Calendar operations — fetch, create in free slots, check availability, schedule prep blocks | User + Model |
 | [`wk-retro`](./retro/README.md) | Session retrospective — capture learnings and improve future sessions | User + Model |
 | [`wk-self-perf`](./self-perf/README.md) | Generate a self-performance review narrative from GitHub, Slack, Jira, Granola, and more | User: `/wk-self-perf <period>` |

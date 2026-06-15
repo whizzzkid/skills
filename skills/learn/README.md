@@ -36,5 +36,5 @@ flowchart TD
 - **Scan mode mines session transcripts:** `wk-learn scan` parses `~/.claude/projects/` `.jsonl` transcripts for `[Request interrupted by user]` markers and stop-word user messages, then classifies each by the skill involved.
 - **HARD RULE — strip incident-specific tokens:** Learning files must not contain session IDs, transcript paths, exact timestamps, or verbatim user prose naming third parties. The principle is distilled, not the incident.
 - **Deduplication before write:** Scan mode checks for existing `(skill, slug)` files including `.learned.md` archives. Duplicate findings append a `## Additional evidence` bullet rather than creating a parallel file.
-- **`.learned.md` extension signals absorption:** After `wk-sharpen` distills a learning into a skill, `wk-goodevening` renames the file from `.md` to `.learned.md` so it is never re-processed.
-- **Feeds `wk-goodevening` Stage 5:** Learnings accumulate during the day and are batch-distilled at end-of-day when `wk-goodevening` invokes `wk-sharpen` on unprocessed files.
+- **`.learned.md` extension signals absorption:** After [`wk-sharpen`](../sharpen/README.md) distills a learning into a skill, the owning skill renames the file from `.md` to `.learned.md` so it is never re-processed.
+- **Feeds batch distillation:** Learnings accumulate during the day and are batch-distilled when [`wk-sharpen`](../sharpen/README.md) runs on unprocessed files.

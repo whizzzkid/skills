@@ -112,7 +112,7 @@ Launch **7 agents in parallel**. Each writes its output to a file in
 
 ### Subagent contract (mandatory)
 
-> See [`skills/goodmorning/references/subagent-contract.md`](../goodmorning/references/subagent-contract.md)
+> See [`wk-sitrep`](../sitrep/SKILL.md#stage-2-parallel-data-gathering)
 > for the base contract. Prepend verbatim to every agent prompt, then append these
 > self-perf-specific additions:
 
@@ -456,14 +456,14 @@ Announce:
 ## Stage 4: Distill Learnings into Daily Sitreps
 
 After synthesis, check if meaningful patterns from this period should inform
-daily operations. For each pattern, evaluate whether it belongs in goodmorning
-or goodevening:
+daily operations. For each pattern, evaluate whether it belongs in the daily
+sitrep:
 
 | Pattern | Add to |
 |---------|--------|
-| A recurring impact signal worth tracking daily | goodevening brag section |
-| A type of work worth preparing for in the morning | goodmorning context section |
-| A metric that should be monitored | DX section of goodevening |
+| A recurring impact signal worth tracking daily | sitrep end brag/snapshot section |
+| A type of work worth preparing for in the morning | wk-sitrep start context section |
+| A metric that should be monitored | DX section of sitrep end |
 
 **QPR brag log:** Append notable accomplishments to the QPR running log:
 
