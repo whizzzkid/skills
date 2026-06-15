@@ -1,16 +1,17 @@
 # wk-pr-resolve
 
-> Address PR review comments interactively — implement fixes, draft responses, and manage the full resolution
-> cycle from branch sync through push, CI polling, and session retro.
+> Address PR review comments interactively — implement fixes, draft responses,
+> and manage the full resolution cycle from branch sync through push, CI
+> polling, and session retro.
 
-**Version:** `2026.06.12-221705`
+**Version:** `2026.06.15-060528`
 
 ## Invocation
 
 | Mode | Trigger |
-|------|---------|
+|---|---|
 | User-invocable | `/wk-pr-resolve [PR number or URL]` |
-| Model-invocable | Automatic on: "resolve PR comments", "address review feedback", "fix PR #{N}", or "respond to reviewers" |
+| Model-invocable | Automatic on PR resolve triggers |
 
 ## How It Works
 
@@ -31,8 +32,8 @@ sequenceDiagram
         U->>S: Decision
     end
     S->>U: Step 5 — after-decisions summary (obvious + accepted)
-    S->>S: Step 6 — apply unified queue, verify, commit (one commit per fix)
-    S->>U: Step 7 — full summary, ask for confirmation
+    S->>S: Step 6 — apply unified queue, verify, commit (one commit per triage unit)
+    S->>U: Step 7 — full summary, ask for confirmation only if decisions were ambiguous
     U->>S: Proceed
     S->>S: wk-adversarial-review gate
     S->>GH: Step 8 — push, post replies, resolve threads
@@ -44,26 +45,33 @@ sequenceDiagram
 
 ## Noteworthy
 
-- **HARD RULE — Step 5 is execution-free:** Obvious-fix items are **queued** into `fixes_to_apply`, not
-  auto-applied mid-Step-5. Triage finishes (obvious bulk-queue → judgment-required per-comment loop) before
-  Step 6 executes the unified queue — one commit per fix.
-- **HARD RULE — one comment per message in Step 5:** Auto mode does not collapse the consultation loop. Each
-  `judgment-required` item gets its own prompt + response cycle; batching is never allowed.
-- **Three comment surfaces are mandatory:** Inline review comments, review summary bodies, and PR conversation
-  (issue) comments must all be fetched every run. Cached results from a prior invocation in the same session
-  do not count — bots can post late.
-- **One commit per resolved comment:** Each triaged comment gets its own commit so reviewers can trace
-  exactly which commit addresses which comment. All commits push together in Step 8 — no per-commit pushes.
-- **Adversarial-review gate before push:** Any commits produced in the session must pass [`wk-adversarial-review`](../adversarial-review/README.md)
-  before Step 8's `git push`. Blocked means no push.
-- **Bot-native reply commands are preferred:** Before drafting a freeform reply to a bot finding, the skill
-  checks the bot's documented command grammar (e.g., `@<bot> fp <id> <reason>`) and uses it.
-  Generic replies leave findings open and add noise.
-- **Self-review threads are excluded:** Threads where the root comment was authored by the PR author OR the
-  current user are skipped for triage and resolution — they are not reviewer feedback.
-- **HARD RULE — Step 9.4 feedback loop to adversarial-review (pre-CI-wait):** Every session emits one
-  [`wk-learn`](../learn/README.md) adversarial-review per issue class surfaced. The capture runs **before** the Step 9.5 CI wait so
-  the work happens in active foreground time rather than parked behind a background watch. Every reviewer-caught
-  finding is a coverage gap in pre-flight by definition; logging it forces the next [`wk-sharpen`](../sharpen/README.md) batch to fold
-  the detection into adversarial-review's mechanical sweeps. The Step 9.5 loop re-runs Step 9.4 for each cycle's
-  newly-surfaced findings.
+- **HARD RULE — Step 5 is execution-free:** Obvious-fix items are **queued**
+  into `fixes_to_apply`, not auto-applied mid-Step-5. Triage finishes before
+  Step 6 executes the unified queue.
+- **HARD RULE — one comment per message in Step 5:** Auto mode does not
+  collapse the consultation loop. Each `judgment-required` item gets its own
+  prompt + response cycle; batching is never allowed.
+- **Three comment surfaces are mandatory:** Inline review comments, review
+  summary bodies, and PR conversation (issue) comments must all be fetched
+  every run. Cached results from a prior invocation in the same session do not
+  count — bots can post late.
+- **One commit per triage unit:** Step 4's final merge/split decision defines
+  the commit unit, so reviewers can trace each resolved finding without
+  bundling unrelated comments. All commits push together in Step 8.
+- **Adversarial-review gate before push:** Any commits produced in the session
+  must pass [`wk-adversarial-review`](../adversarial-review/README.md) before
+  Step 8's `git push`. Blocked means no push.
+- **Bot-native reply commands are preferred:** Before drafting a freeform reply
+  to a bot finding, the skill checks the bot's documented command grammar and
+  uses it. Generic replies leave findings open and add noise.
+- **Self-review threads are excluded:** Threads where the root comment was
+  authored by the PR author or the current user are skipped for triage and
+  resolution — they are not reviewer feedback.
+- **HARD RULE — Step 9.4 feedback loop to adversarial-review (pre-CI-wait):**
+  Every session emits one [`wk-learn`](../learn/README.md) adversarial-review
+  per issue class surfaced. The capture runs **before** the Step 9.5 CI wait so
+  the work happens in active foreground time. Every reviewer-caught finding is
+  a coverage gap in pre-flight by definition; logging it forces the next
+  [`wk-sharpen`](../sharpen/README.md) batch to fold the detection into
+  adversarial-review's mechanical sweeps. The Step 9.5 loop re-runs Step 9.4
+  for each cycle's newly surfaced findings.
