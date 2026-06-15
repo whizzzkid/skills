@@ -6,3 +6,4 @@ config/team-hud.yaml
 .distilled-sources.log
 .distilled-memories
 .distilled-retrospects
+.review-playground/

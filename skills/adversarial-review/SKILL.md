@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.14-183842'
+  version: '2026.06.15-190033'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -149,6 +149,8 @@ Run every sweep unconditionally. Use the first matching severity; escalate when 
 | 2.31 | Added jq `else .` | Grep jq type-dispatch fallbacks. | Suggestion | Use `else empty` or prove all unlisted types render acceptably. |
 | 2.32 | Go type widening | Run `goimports -l` on changed Go files when repo has `go.mod` and CI runs goimports. | Blocker | Run goimports before clear. |
 | 2.33 | Raw-presence parse fallback | Grep parse-with-fallback shapes. | Blocker | Parse first; fallback on parsed result; add invalid-primary test. |
+| 2.34 | Spec/doc claim about implementation routing (which method a gate calls, which path bypasses a hook) | Grep the PR review thread for reviewer statements describing the same routing. | Blocker | A reviewer who read the source is ground truth; resolve any contradiction before asserting an inferred claim. |
+| 2.35 | Diff changes a structured return-type requirement in one doc section | Grep the whole document for every field comment that stores that value; confirm shape and vocabulary match. | Blocker | Update lagging field comments; keep one canonical name per value across all sections. |
 
 ## Step 3: Fresh Adversarial Subagent
 
@@ -202,13 +204,45 @@ fix-sketch: concrete code or command, not narrative
 
 Create `.review-playground/` only if needed; never commit a `.gitignore` entry for it. Confine writes to that directory.
 
-- Write one script per runtime-behavior finding.
-- Drive each script with the production runtime.
-- Run every interpreter in the project/runtime matrix; flag missing runtimes.
+- Write one script per runtime-behavior finding; drive each with the production runtime.
 - Mutation-test each new test: flip a conditional, hardcode a return, swap args, remove an assertion. If green, mark the test fake.
-- Use a standalone playground when the app cannot boot; fetch pinned upstream source and replicate method signatures.
-- For producer/consumer layout changes, populate a staging dir with the real producer layout and run the consumer end-to-end.
+- Use a standalone playground when the app cannot boot. Fetch pinned upstream source and replicate method signatures; cite the SHA/tag:
+
+  ```bash
+  gh api "repos/{owner}/{repo}/contents/{path}?ref={tag-or-sha}" --jq '.content' | base64 -d
+  ```
+
 - Downgrade unreproduced runtime claims from `blocker` to `question`.
+
+### Runtime matrix
+
+Run every interpreter the diff exercises, not whatever is first on `PATH`; flag any missing runtime for CI rather than silently skipping.
+
+| Diff includes | Run under |
+|---|---|
+| `*.sh`, `*.bash`, `Brewfile`, shebanged shell | macOS bash 3.2 and modern bash; flag bash 4+ idioms. |
+| `*.py` | each Python version in `requires-python` or CI. |
+| `*.js`, `*.ts`, `package.json` engines change | each Node version in `engines.node`, `.nvmrc`, or CI. |
+| `*.rb`, `Gemfile.lock` | each Ruby version in `.ruby-version` or CI. |
+| `Dockerfile`, GH Actions matrix | each `runs-on` / base image listed. |
+
+### Specialized checks (apply when the diff shape matches)
+
+- **Producer→consumer layout:** populate a staging dir with the real producer layout; run the consumer end-to-end. Verify path/key match, recursion depth, fixture placement, cleanup-after-consume ordering.
+- **Cluster promotion/dedup:** test that the guard checks the chosen representative, not just the iteration anchor; iterate in reverse and non-sequential order.
+- **Interface contract change:** run old shapes through new code and new shapes through old consumers.
+- **Allowlist/privilege add:** compare the new entry against existing siblings, not an empty list; note when it is strictly less privileged than a present entry.
+
+### Documentation / prose / compression diffs — read-based analysis
+
+When every changed file is docs, prompt/rule text, or non-executable fixture data, skip scratch scripts and substitute a read-based adversarial pass under `.review-playground/`:
+
+- Cover ambiguity, contradictions, missing cases, and edge-case prompts.
+- Cross-check every numeric count in tables/enumerated claims against the actual items.
+- **Compression/debloat diffs:** verify rule survival by *substance*, not by counting `HARD RULE` (or similar) labels — labels are trimmed first even when the rule they tagged is preserved, so label-count deltas are noise in either direction. Enumerate each gate the commit claims to preserve and content-grep it against the new file. With `grep -E`, write alternation as `a|b`; `\|` matches a literal pipe and silently returns zero (a false "missing gate").
+- **Relocations:** flag org-specific tooling names, command aliases, internal script names, tracker IDs, short-link prefixes, or source-only paths that do not exist in the destination repo; fix back-references to un-imported files.
+- Flag committed absolute/home/worktree paths, local-only branches, or personal artifacts stated as permanent facts.
+- When a doc names a live code file as authoritative, read that file and verify the stated constraints against the current branch.
 
 ## Step 6: Verdict and Records
 
