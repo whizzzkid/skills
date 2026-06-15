@@ -1,0 +1,209 @@
+# PR Resolve — Command Reference
+
+Verbatim command blocks and the suggestion format, relocated from `SKILL.md`
+to keep the skill body lean. Every command here is load-bearing; use exactly.
+
+## Step 1 — Identify the PR
+
+```bash
+gh pr view --json number,title,body,baseRefName,headRefName,url,headRefOid
+```
+
+Co-author detection:
+
+```bash
+PR_AUTHOR=$(gh pr view --json author --jq '.author.login')
+CURRENT_USER=$(gh api user --jq '.login')
+```
+
+## Step 2 — Sync branch
+
+Reconcile the remote PR branch first (keeps next push fast-forward, avoids a
+divergent second merge commit):
+
+```bash
+git fetch origin
+HEAD_BRANCH=$(gh pr view --json headRefName --jq .headRefName)
+
+if [ -n "$(git log --oneline HEAD..origin/$HEAD_BRANCH 2>/dev/null)" ]; then
+  git rebase "origin/$HEAD_BRANCH"
+fi
+```
+
+Integrate the base branch — merge-aware pre-check (plain-merge when HEAD already
+contains a base merge and `$BEHIND` is small):
+
+```bash
+BASE=$(gh pr view --json baseRefName --jq .baseRefName)
+git fetch origin "$BASE"
+BEHIND=$(git rev-list --count "HEAD..origin/$BASE")
+LAST_BASE_MERGE=$(git log --merges --first-parent --pretty=format:%H \
+  | while read sha; do
+      if git merge-base --is-ancestor "$sha^2" "origin/$BASE" 2>/dev/null; then
+        echo "$sha"; break
+      fi
+    done)
+if [ -n "$LAST_BASE_MERGE" ] && [ "$BEHIND" -le 5 ]; then
+  git merge "origin/$BASE"
+fi
+```
+
+## Step 3 — Fetch unresolved comments
+
+Build the comment map (GraphQL for unresolved threads, REST for full details):
+
+```bash
+# Inline comments
+gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate \
+  --jq '.[] | {id, node_id, path, line, original_line, position, body,
+    user: .user.login, user_type: .user.type,
+    author_association: .author_association, updated_at, in_reply_to_id}'
+
+# Review summary bodies
+gh api repos/{owner}/{repo}/pulls/{number}/reviews --paginate \
+  --jq '.[] | select(.body != null and .body != "") |
+    {id, state, body, user: .user.login, user_type: .user.type, submitted_at}'
+
+# PR conversation comments
+gh api repos/{owner}/{repo}/issues/{number}/comments --paginate \
+  --jq '.[] | {id, node_id, body, user: .user.login,
+    user_type: .user.type, author_association: .author_association,
+    created_at, updated_at}'
+```
+
+Pre-check pending self-reviews (a pending review blocks reply posting with HTTP
+422):
+
+```bash
+CURRENT_USER=$(gh api user --jq '.login')
+PENDING_REVIEW_ID=$(gh api repos/{owner}/{repo}/pulls/{number}/reviews \
+  | jq --arg u "$CURRENT_USER" -r \
+  '.[] | select(.state == "PENDING" and .user.login == $u) | .id')
+```
+
+Submit it as `COMMENT` before posting any reply:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{number}/reviews/$PENDING_REVIEW_ID/events \
+  --method POST -f event=COMMENT
+```
+
+## Step 4 — Suggestion format
+
+Every suggestion includes reasoning for applying and discarding:
+
+```
+### Comment {n}/{total}: {path}:{line}
+**Reviewer:** @{user} {bot_badge}
+**Comment:** {body}
+**Reply chain:** {summary of any replies, or "none"}
+**Suggested fix:** {code change or snippet}
+**Why this fix:** {problem solved and reviewer concern addressed}
+**Why skip:** {false positive, already handled, out of scope, style, or "No valid reason to skip"}
+```
+
+`{bot_badge}` is `🤖 (bot)` for bots, omitted otherwise. Be honest in the skip
+rationale; if no good skip reason exists, say so.
+
+## Step 6 — Issue-class scan before each fix
+
+```bash
+BASE=$(gh pr view --json baseRefName --jq .baseRefName)
+git diff "origin/$BASE...HEAD" | grep -nE '<class-pattern>' \
+  | grep -v '<already-fixed-pattern>'
+```
+
+Commit (one commit per triage unit; omit the trailer in non-co-author sessions):
+
+```bash
+git add {files}
+git commit -m "$(cat <<'EOF'
+fix(scope): 🐛 {brief description}
+
+Addresses review comment by @{reviewer} on {path}:{line}
+
+Co-authored-by: {pr_author_name} <{pr_author_email}>
+EOF
+)"
+```
+
+Record the full SHA immediately, then build the clickable reply link (never infer
+the full SHA from a short SHA):
+
+```bash
+FULL_SHA=$(git log --format=%H -1 <short_or_HEAD>)
+```
+
+```markdown
+Fixed in [`<short>`](https://github.com/{owner}/{repo}/commit/{full_sha}) — {explanation}
+```
+
+## Step 8 — Push, divergence guard, replies, resolution
+
+Post-rewrite divergence guard (only when this session rewrote history):
+
+```bash
+HEAD_BRANCH=$(gh pr view --json headRefName --jq .headRefName)
+git fetch origin "$HEAD_BRANCH" --quiet
+COUNTS=$(git rev-list --left-right --count "HEAD...origin/$HEAD_BRANCH")
+AHEAD=$(echo "$COUNTS" | cut -f1)
+BEHIND=$(echo "$COUNTS" | cut -f2)
+```
+
+Push:
+
+```bash
+git push
+```
+
+Post replies, routed by surface:
+
+```bash
+# Inline review comment
+gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
+  --method POST -f body="{reply_text}"
+
+# Review body or conversation comment
+gh api repos/{owner}/{repo}/issues/{number}/comments \
+  --method POST -f body="{reply_text}"
+```
+
+Resolve a thread via GraphQL:
+
+```bash
+gh api graphql -f query='
+  mutation($threadId: ID!) {
+    resolveReviewThread(input: {threadId: $threadId}) {
+      thread { isResolved }
+    }
+  }
+' -f threadId="{thread_id}"
+```
+
+## Step 9 — Check merge conflicts
+
+```bash
+git fetch origin
+git merge --no-commit --no-ff origin/{base_branch} 2>&1
+```
+
+## Step 10 — Final summary template
+
+```
+## PR #{number} Review Resolution Complete
+
+**Branch synced:** {status}
+**Comments processed:** {total} of {total_found}
+**Self-review excluded:** {count}
+**Feedback in self-review threads:** {count}
+**Bot reviews handled:** {count} ({applied} applied, {dismissed} dismissed)
+**Reviewer fixes:** {count}
+**Deferred to tickets:** {count}
+**Commits pushed:** {count}
+**Replies posted:** {count}
+**Threads resolved:** {count}
+**Threads left open:** {count}
+**Merge conflicts:** {status}
+
+PR URL: {url}
+```

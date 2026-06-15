@@ -2,6 +2,8 @@
 
 > Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks via the Datadog REST API.
 
+**Version:** `2026.06.15-195921`
+
 ## Invocation
 
 | Mode | Trigger |

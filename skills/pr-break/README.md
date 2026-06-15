@@ -3,7 +3,7 @@
 > Split a large PR into a stack of smaller, individually-shippable PRs without losing functionality, breaking
 > review continuity, or shipping a half-finished state on any intermediate branch.
 
-**Version:** `2026.06.12-015811`
+**Version:** `2026.06.15-200319`
 
 ## Invocation
 

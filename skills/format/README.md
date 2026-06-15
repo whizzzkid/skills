@@ -2,6 +2,8 @@
 
 > Apply the user's code-formatting preferences to any file the agent writes or edits, reconciled with the repo's existing lint/style configs. Repo lint config is authoritative — preferences fill gaps, never override.
 
+**Version:** `2026.06.15-200030`
+
 ## Invocation
 
 | Mode | Trigger |

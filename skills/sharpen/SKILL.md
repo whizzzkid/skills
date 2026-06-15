@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.15-194041'
+  version: '2026.06.15-200503'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -41,8 +41,8 @@ metadata:
 
 # Sharpen
 
-Improve and de-bloat skills based on field reports or incident retrospectives.
-Extracts the **principle** behind a failure and updates the skill to prevent the
+Improve and de-bloat skills from field reports or incident retrospectives.
+Extract the **principle** behind a failure → update the skill to prevent the
 behavior, not just the specific instance.
 
 ## When to Use
@@ -55,9 +55,8 @@ behavior, not just the specific instance.
 
 ### HARD RULE: invocation routing — `wk-learn` vs `wk-sharpen`
 
-`wk-sharpen` rewrites `SKILL.md` files. `wk-learn` only writes to
-`learnings/`. Direct skill edits without explicit user consent are out of scope.
-
+- `wk-sharpen` rewrites `SKILL.md` files; `wk-learn` only writes to `learnings/`.
+- Direct skill edits without explicit user consent are out of scope.
 - Route to `wk-learn` (capture only, no skill edits):
   - "make a learning"
   - "capture this"
@@ -299,10 +298,10 @@ not in the diff will cause a 422 error from the GitHub API.
 
 ### HARD RULE: de-bloat every run — never let prose accrete
 
-- Run this pass on **every** sharpening, not only when a learning prompts it. Bloat is the cumulative default of additive edits; treating sharpen as append-only is what grew SKILL.md files past 1000 lines.
+- Run on **every** sharpening, not only when a learning prompts it. Bloat is the cumulative default of additive edits; append-only sharpen grew SKILL.md files past 1000 lines.
 - Search for simplification opportunities before and after the functional edit.
-- **Bulletize, do not compress prose.** Convert paragraphs into terse, crisp bullet points and checklists — one rule per line, imperative voice, `→` for causality, drop articles/connectives in procedural text. Compressed prose still reads as prose and resists scanning; shorter sentences are not the goal, scannable bullets are.
-- Remove redundancy, dead labels, and explanatory filler. State a rule once; cross-reference it elsewhere instead of restating.
+- **Bulletize, do not compress prose.** One rule per line, imperative voice, `→` for causality, drop articles/connectives in procedural text. Compressed prose still reads as prose and resists scanning; scannable bullets are the goal, not shorter sentences.
+- Remove redundancy, dead labels, explanatory filler. State a rule once; cross-reference instead of restating.
 - **Preserve every rule, failure mode, and command.** Reject any edit that drops a HARD RULE, error code, or failure-mode explanation.
 - Re-run the Drift check after de-bloat edits land.
 
@@ -318,7 +317,7 @@ not in the diff will cause a 422 error from the GitHub API.
 
 ## Step 8: Verify and Commit (terminal gate)
 
-Do not return control until all four checks pass:
+Do not return control until all four pass:
 
 1. **Install:** `npx skills add . -g -y -a=claude 2>&1 | tail -5` from the repo root — must print `Done!`.
 2. **Commit:** every dirty file in a commit. Use `wk-commit` conventional format with classifier emojis.
@@ -384,7 +383,7 @@ proposal (user approval per phase) → Apply → Verify & commit
 
 ## Batch Mode: Scan Learnings, Memories, and Retrospects
 
-When invoked without a specific incident, sharpen enters batch mode.
+Invoked without a specific incident → batch mode.
 
 ### Source 1: Global learnings inbox
 
@@ -452,7 +451,7 @@ When invoked without a specific incident, sharpen enters batch mode.
 
 ## Improve Mode: Refactor and Optimize
 
-Use `/wk-sharpen improve [scope]` for suite-level cleanup, not incident-specific fixes.
+`/wk-sharpen improve [scope]` → suite-level cleanup, not incident-specific fixes.
 
 - Set `[scope]` to omitted / `all`, `<skill-name>`, or a glob pattern.
 - Inventory every skill in scope.

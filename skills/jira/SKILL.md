@@ -1,22 +1,18 @@
 ---
 name: wk-jira
 description: >-
-  Coordinate Jira ticket state with the development lifecycle, and surface
-  Jira context whenever the agent encounters a Jira artifact. Auto-invoked
-  on ANY of: a Jira URL in a prompt or file (matches
-  `https?://[^/]+\.atlassian\.net/`, `/browse/<KEY>`, or a configured
-  self-hosted host); a Jira key token (`[A-Z][A-Z0-9]+-\d+`) in a prompt,
-  branch name, commit message, PR body, or recent agent message; the agent
-  starting work on a branch; PR creation; PR draft→ready; or PR merge.
-  Detects the associated key; assigns the ticket to the user; transitions
-  it through In Progress → In Review → Done in lockstep with PR state;
-  audits the ticket description and proposes a structured context block
-  when thin; ensures every PR title carries a `[BOARD-NUM]` suffix and the
-  PR description references the ticket. Gates user-initiated write
-  operations (create, edit, batch transition) behind explicit confirmation
-  — Jira writes are effectively irreversible (no delete API). Requires the
-  Jira MCP connector. Not user-invocable — fires automatically alongside
-  `wk-commit`, `wk-pr`, and `wk-workflow`.
+  Coordinate Jira ticket state with the dev lifecycle and surface Jira
+  context on any Jira artifact. Auto-invoked on: a Jira URL (matches
+  `https?://[^/]+\.atlassian\.net/`, `/browse/<KEY>`, or a self-hosted
+  host); a key token (`[A-Z][A-Z0-9]+-\d+`) in a prompt, branch, commit,
+  PR body, or agent message; branch start; PR creation; PR draft→ready; PR
+  merge. Detects the key; assigns the ticket to the user; transitions In
+  Progress → In Review → Done in lockstep with PR state; audits thin
+  descriptions and proposes a context block; ensures every PR title carries
+  a `[BOARD-NUM]` suffix referencing the ticket. Gates user write
+  operations (create, edit, batch transition) behind confirmation — Jira
+  writes are irreversible (no delete API). Requires the Jira MCP connector.
+  Not user-invocable — fires alongside `wk-commit`, `wk-pr`, `wk-workflow`.
 allowed-tools:
   - Bash
   - Read
@@ -38,7 +34,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.11-192012'
+  version: '2026.06.15-200142'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -51,10 +47,9 @@ metadata:
 
 # Jira
 
-Keep Jira ticket state in lockstep with PR lifecycle. The skill is the
-glue between code work and project tracking — the user never has to
-remember to flip the ticket; the agent does it on their behalf as
-state transitions happen.
+Keep Jira ticket state in lockstep with PR lifecycle. Agent flips the
+ticket on the user's behalf as state transitions happen — user never
+has to remember.
 
 ```
 Start work ──► In Progress + assign-to-me
@@ -68,9 +63,9 @@ PR merged  ──► Done
 
 ## Trigger conditions
 
-The skill fires automatically on artifact mentions **and** at lifecycle
-points. Only the matching subset of stages runs each time — do not
-re-do work already done.
+Fires automatically on artifact mentions **and** at lifecycle points.
+Run only the matching subset of stages each time → never re-do work
+already done.
 
 | Trigger | Stages to run |
 |---------|---------------|
@@ -81,13 +76,13 @@ re-do work already done.
 | PR transitioning from draft → ready | 0, 1, 4 (In Review) |
 | PR merged (detected during `wk-pr` post-merge or via `gh pr view --json state`) | 0, 1, 5 (Done) |
 
-If the agent cannot determine which trigger fired, default to detect
-(Stage 1) and report what was found — never guess and transition.
+If trigger undeterminable → default to detect (Stage 1), report what was
+found, never guess and transition.
 
-**HARD RULE:** never assume "wasn't told to look up Jira" — if a Jira
-URL or key is in the agent's context, Stage 0 + Stage 1 + Stage 6
-run before any other response that depends on ticket context. Skip
-only when the MCP is unavailable (silent-skip rule).
+**HARD RULE:** never assume "wasn't told to look up Jira." If a Jira URL
+or key is in the agent's context → Stage 0 + 1 + 6 run before any other
+response that depends on ticket context. Skip only when MCP unavailable
+(silent-skip rule).
 
 ---
 
@@ -97,67 +92,64 @@ only when the MCP is unavailable (silent-skip rule).
 ToolSearch select:mcp__claude_ai_Jira_Confluence__getJiraIssue,mcp__claude_ai_Jira_Confluence__transitionJiraIssue,mcp__claude_ai_Jira_Confluence__editJiraIssue,mcp__claude_ai_Jira_Confluence__searchJiraIssuesUsingJql,mcp__claude_ai_Jira_Confluence__getTransitionsForJiraIssue,mcp__claude_ai_Jira_Confluence__lookupJiraAccountId
 ```
 
-If the connector is unavailable (tool search returns no matches),
-**skip silently** — log a one-line note ("Jira MCP not connected;
-ticket sync skipped") and let the development workflow proceed.
-Direct the user to https://claude.ai/customize/connectors only when
-they explicitly ask why a ticket didn't move.
+- Connector unavailable (tool search returns no matches) → **skip
+  silently**: log one-line note ("Jira MCP not connected; ticket sync
+  skipped"), let development workflow proceed.
+- Direct user to https://claude.ai/customize/connectors only when they
+  explicitly ask why a ticket didn't move.
+- Available → cache resolved tool names for the session.
 
-If available, cache the resolved tool names for the session.
-
-**HARD RULE:** never read or write Jira via a browser, WebFetch, or a
-web-search agent. All Jira reads and writes must go through the
-MCP connector. The browser path is slower, escapes the agent's
-context, can spawn an extra agent, and produces unstructured output
-that the agent then has to re-parse. If the MCP is unavailable, do
-not fall back to the browser — surface the connector gap per the
-silent-skip rule above and let the user decide.
+**HARD RULE:** never read or write Jira via browser, WebFetch, or a
+web-search agent. All Jira reads/writes go through the MCP connector.
+Rationale: browser path is slower, escapes the agent's context, can spawn
+an extra agent, produces unstructured output the agent must re-parse. MCP
+unavailable → do not fall back to browser; surface the connector gap per
+silent-skip rule, let the user decide.
 
 ---
 
 ## Stage 1: Detect the ticket key
 
-A Jira key matches `[A-Z][A-Z0-9]+-\d+` — letters/digits, a hyphen,
-then digits. Search in priority order; stop at the first hit:
+Jira key matches `[A-Z][A-Z0-9]+-\d+` (letters/digits, hyphen, digits).
+Search in priority order; stop at first hit:
 
-1. **Current branch name** — `git rev-parse --abbrev-ref HEAD`. Many
-   teams encode the key (`feat/<KEY>-<slug>`, `<key>-<slug>`).
-2. **Most recent commit message** — `git log -1 --pretty=%B`. Look
-   in subject and body.
-3. **PR title and body** — when fired during PR creation/update,
+1. **Current branch name** — `git rev-parse --abbrev-ref HEAD`. Teams
+   often encode the key (`feat/<KEY>-<slug>`, `<key>-<slug>`).
+2. **Most recent commit message** — `git log -1 --pretty=%B`. Check
+   subject and body.
+3. **PR title and body** — during PR creation/update,
    `gh pr view --json title,body`.
-4. **Recent user prompts in this session** — the user often pasted
-   the ticket URL or key when assigning the work.
+4. **Recent user prompts this session** — user often pasted the ticket
+   URL/key when assigning work.
 
-Normalize matches to UPPERCASE. If multiple distinct keys appear,
-prefer the one in the branch name; if still ambiguous, **ask** before
-transitioning anything:
+- Normalize matches to UPPERCASE.
+- Multiple distinct keys → prefer branch-name key; still ambiguous →
+  **ask** before transitioning anything:
 
-> "Found Jira keys {KEY-A, KEY-B}. Which one is the work for
-> this branch?"
+  > "Found Jira keys {KEY-A, KEY-B}. Which one is the work for
+  > this branch?"
 
-If **no** key is found, do not invent one. Skip transitions; in
-Stage 3 ask the user once whether a Jira ticket exists; if they
-say no, record it and stop offering for the rest of the branch.
+- **No** key found → do not invent one. Skip transitions; in Stage 3 ask
+  once whether a Jira ticket exists; if they say no, record it and stop
+  offering for the rest of the branch.
 
 ---
 
 ## Stage 2: Start work — In Progress + assign
 
-When the trigger is "start of branch," fetch the current state of the
-detected ticket and decide what to change.
+Trigger "start of branch" → fetch detected ticket's current state, decide
+what to change.
 
 ```
 mcp__claude_ai_Jira_Confluence__getJiraIssue(issueIdOrKey="<KEY>")
 mcp__claude_ai_Jira_Confluence__lookupJiraAccountId(searchString="<git user.email>")
 ```
 
-Compare current `status` and `assignee` against the desired state:
+Compare current `status` and `assignee` against desired state:
 
-- If `assignee` is unset OR is not the user, assign to the user.
-- If `status` is not already `In Progress` (or a forward-equivalent
-  like `In Review`/`Done` — never regress), transition to
-  `In Progress`.
+- `assignee` unset OR not the user → assign to the user.
+- `status` not already `In Progress` (or forward-equivalent like
+  `In Review`/`Done` — never regress) → transition to `In Progress`.
 
 Get available transitions before posting:
 
@@ -165,9 +157,9 @@ Get available transitions before posting:
 mcp__claude_ai_Jira_Confluence__getTransitionsForJiraIssue(issueIdOrKey="<KEY>")
 ```
 
-Match the transition by name (case-insensitive contains
-`in progress`). If no matching transition exists from the current
-state, leave status alone and report the gap once.
+- Match transition by name (case-insensitive contains `in progress`).
+- No matching transition from current state → leave status alone, report
+  the gap once.
 
 Apply changes via:
 
@@ -176,17 +168,15 @@ mcp__claude_ai_Jira_Confluence__editJiraIssue   # for assignee
 mcp__claude_ai_Jira_Confluence__transitionJiraIssue  # for status
 ```
 
-Then run the **Active-sprint assignment** subroutine (defined below).
-
-Report in one line:
+Then run **Active-sprint assignment** subroutine (below). Report one line:
 
 > "Jira: {KEY} → In Progress, assigned @<user>, sprint <name>."
 
 ### Active-sprint assignment (subroutine)
 
-Invoked after the status transition in Stage 2 (→ In Progress) and
-Stage 4 (→ In Review). A ticket with no sprint lands in the backlog —
-invisible on the sprint board and absent from velocity tracking.
+Invoked after status transition in Stage 2 (→ In Progress) and Stage 4
+(→ In Review). Failure mode: a ticket with no sprint lands in the
+backlog — invisible on the sprint board, absent from velocity tracking.
 
 - Find the active sprint on the ticket's project board:
 
@@ -195,53 +185,50 @@ invisible on the sprint board and absent from velocity tracking.
     jql="project = <PROJECT> AND sprint in openSprints()")
   ```
 
-  Read the sprint field from any returned issue to get the active
-  sprint id.
-- Set it on the ticket via `editJiraIssue`. The sprint field id is
-  custom per instance (commonly `customfield_10020`) — resolve it from
-  issue/field metadata rather than assuming the number, then write the
-  value in the shape that field expects (often `[{ id: <sprintId> }]`).
-- Skip silently when no active sprint exists or the field is
-  unavailable — not every board runs sprints.
+  Read the sprint field from any returned issue → active sprint id.
+- Set it on the ticket via `editJiraIssue`. Sprint field id is custom per
+  instance (commonly `customfield_10020`) → resolve from issue/field
+  metadata rather than assuming the number, then write the value in the
+  shape the field expects (often `[{ id: <sprintId> }]`).
+- Skip silently when no active sprint exists or field unavailable — not
+  every board runs sprints.
 
 ### Ticket description quality check
 
-Run the **Description quality gate** subroutine (defined below).
-Invoked from every writable stage — Stage 2 (start), Stage 3 (PR
-created), Stage 4 (PR ready) — so a session that joins mid-branch
-still gets a checkpoint before reviewers see the ticket.
+Run **Description quality gate** subroutine (below). Invoked from every
+writable stage — Stage 2 (start), Stage 3 (PR created), Stage 4 (PR
+ready) → a session joining mid-branch still gets a checkpoint before
+reviewers see the ticket.
 
 ---
 
 ## Stage 3: PR title and description sync
 
-When `wk-pr` is creating or updating a PR for a branch with a
-detected key, enforce two things:
+When `wk-pr` creates/updates a PR for a branch with a detected key,
+enforce two things.
 
 ### Title suffix
 
-Every PR title carries the key in **square brackets** at the end of
-the subject:
+Every PR title carries the key in **square brackets** at the end of the
+subject:
 
 ```
 feat(auth): ✨ OAuth login [<KEY>]
 fix(ci): 💚 pin dependency [<KEY>]
 ```
 
-Rules:
-
-- One key per title. If the work spans multiple tickets, choose the
-  primary one and reference others in the body.
+- One key per title. Work spanning multiple tickets → choose the primary
+  one, reference others in the body.
 - Square brackets, no parens, no colon prefix. Format `[<KEY>]`.
-- Bracket suffix sits **after** the conventional-commit subject and
-  any classifier emoji — last token in the title.
-- If the title already has a key suffix, do not duplicate it. If the
-  existing key is wrong, ask before replacing.
+- Bracket suffix sits **after** the conventional-commit subject and any
+  classifier emoji → last token in the title.
+- Title already has a key suffix → do not duplicate. Existing key wrong →
+  ask before replacing.
 
 ### Description reference
 
-The PR body must include a section that links back to the ticket so
-reviewers can navigate to context:
+PR body must include a section linking back to the ticket so reviewers can
+navigate to context:
 
 ```markdown
 ## Ticket
@@ -249,51 +236,47 @@ reviewers can navigate to context:
 [<KEY>](https://<your-domain>.atlassian.net/browse/<KEY>) — <ticket summary>
 ```
 
-Place the `## Ticket` section near the top, just under the
-auto-generated `## Summary`. Pull `<ticket summary>` from the Jira
-issue (`fields.summary`) so the link carries human context. Use the
-canonical Atlassian URL the MCP returns.
+- Place `## Ticket` near the top, just under the auto-generated
+  `## Summary`.
+- Pull `<ticket summary>` from the Jira issue (`fields.summary`) so the
+  link carries human context. Use the canonical Atlassian URL the MCP
+  returns.
+- `wk-pr` already built a description → **insert** the `## Ticket` section
+  rather than overwriting the rest. Section already exists → refresh its
+  content if the ticket summary changed.
 
-If `wk-pr` already builds a description, **insert** the `## Ticket`
-section rather than overwriting the rest. If the section already
-exists, refresh its content if the ticket summary has changed.
-
-**HARD RULE:** Any `gh pr edit --body` issued by this skill routes
-through `wk-gh` — the canonical outbound footer per `wk-gh` Step 4
-stays at the very end of the body, after the `## Ticket` insertion.
-Do not strip the footer when editing; preserve it exactly once.
+**HARD RULE:** Any `gh pr edit --body` issued by this skill routes through
+`wk-gh` — the canonical outbound footer per `wk-gh` Step 4 stays at the
+very end of the body, after the `## Ticket` insertion. Do not strip the
+footer when editing; preserve it exactly once.
 
 ### Description quality check (Stage 3)
 
-Run the **Description quality gate** subroutine. PR-creation time
-exposes title + summary that pre-fills `Problem` / `Context` with
-high confidence.
+Run **Description quality gate** subroutine. PR-creation time exposes
+title + summary → pre-fills `Problem` / `Context` with high confidence.
 
 ---
 
 ## Stage 4: PR ready → In Review
 
-When `wk-pr` flips a PR from draft to ready (`gh pr ready`), or when
-the agent observes a non-draft PR for the first time on the branch,
-transition the ticket:
+When `wk-pr` flips a PR draft → ready (`gh pr ready`), or the agent
+observes a non-draft PR for the first time on the branch → transition the
+ticket:
 
 ```
 mcp__claude_ai_Jira_Confluence__getTransitionsForJiraIssue(issueIdOrKey="<KEY>")
 mcp__claude_ai_Jira_Confluence__transitionJiraIssue(issueIdOrKey="<KEY>", transition={ id: "<resolved>" })
 ```
 
-Match transition name on case-insensitive contains `in review` /
-`code review` / `review` (in that priority — `in review` is the
-strongest match). Some boards name it `Ready for Review`; that
-matches too.
-
-Do not regress: if the ticket is already `In Review` or further
-forward, leave it alone. If the only forward transition is `Done`,
-stop and ask — that means the board has no review state and Stage 4
-should be a no-op for this team.
-
-After the transition, run the **Active-sprint assignment** subroutine
-(Stage 2) so a ticket that skipped Stage 2 still lands on the board.
+- Match transition name on case-insensitive contains `in review` /
+  `code review` / `review` (that priority — `in review` strongest). Boards
+  naming it `Ready for Review` match too.
+- Do not regress: ticket already `In Review` or further forward → leave
+  alone.
+- Only forward transition is `Done` → stop and ask: board has no review
+  state, Stage 4 is a no-op for this team.
+- After transition → run **Active-sprint assignment** subroutine (Stage
+  2) so a ticket that skipped Stage 2 still lands on the board.
 
 Report once per state change:
 
@@ -301,32 +284,29 @@ Report once per state change:
 
 ### Description quality check (Stage 4)
 
-Run the **Description quality gate** subroutine. PR-ready is the
-last natural writable checkpoint — when a session starts
-mid-branch (after the initial commit but before ready), this is
-the only run that fires. Skipping it leaves reviewers without the
-"why".
+Run **Description quality gate** subroutine. PR-ready is the last natural
+writable checkpoint — a session starting mid-branch (after initial commit
+but before ready) → this is the only run that fires. Skipping it leaves
+reviewers without the "why".
 
 ---
 
 ## Description quality gate (subroutine)
 
-Invoked from any writable stage. Idempotent — safe to call
-repeatedly per branch; skips silently after the first successful
-append.
+Invoked from any writable stage. Idempotent — safe to call repeatedly per
+branch; skips silently after the first successful append.
 
 - Evaluate `fields.description`. Treat as **thin** when any hold:
   - Empty, null, or whitespace-only.
   - Body text (after stripping markup) fewer than 40 characters.
-  - Body repeats only the ticket summary or a placeholder (`TBD`,
-    `n/a`, `see slack`, etc.).
-- When thin, propose appending a structured context block. Never
-  overwrite existing content — wrap it as `<existing details>`.
+  - Body repeats only the ticket summary or a placeholder (`TBD`, `n/a`,
+    `see slack`, etc.).
+- Thin → propose appending a structured context block. Never overwrite
+  existing content — wrap it as `<existing details>`.
 - Pre-fill `Date` with today's date (UTC, `YYYY-MM-DD`). Pre-fill
   `Problem` / `Decision` / `Trade-offs` / `Context` from the
-  highest-signal source available at this stage (branch name,
-  recent prompts, PR title/body, linked commits); leave empty
-  otherwise.
+  highest-signal source available at this stage (branch name, recent
+  prompts, PR title/body, linked commits); leave empty otherwise.
 - Append template:
 
   ```
@@ -343,12 +323,11 @@ append.
   ---
   ```
 
-- Confirm before writing — the Manual ticket operations HARD RULE
-  applies. Present the proposed merged description, wait for
-  explicit approval, then call `editJiraIssue`.
-- Skip silently when the description already exceeds the thinness
-  threshold OR when this branch has already had a successful
-  enrichment append in this session.
+- Confirm before writing — Manual ticket operations HARD RULE applies.
+  Present the proposed merged description, wait for explicit approval,
+  then call `editJiraIssue`.
+- Skip silently when description already exceeds the thinness threshold OR
+  this branch already had a successful enrichment append this session.
 
 Report once on append:
 
@@ -358,22 +337,20 @@ Report once on append:
 
 ## Stage 5: PR merged → Done
 
-When the agent observes that the PR has merged (`gh pr view --json
-state` returns `MERGED`), transition the ticket to `Done`:
+Agent observes PR merged (`gh pr view --json state` returns `MERGED`) →
+transition the ticket to `Done`:
 
-- Match transition name on case-insensitive contains: `done` first,
-  then `closed`, then `resolved`. Pick the first that exists.
-- If the ticket is already `Done`/`Closed`/`Resolved`, no-op.
-- If multiple "done-like" transitions exist (e.g., `Done` and
-  `Won't Do`), always pick `Done`. **Never** auto-pick a
-  cancellation/won't-do/duplicate transition — those require human
-  judgment.
-
-If the PR merged but the build/deploy is gated behind a separate
-post-merge process (e.g., the team's "Done" requires production
-deploy verification), respect that: if the board's workflow has a
-separate `Deployed`/`Verified` stage between `In Review` and `Done`,
-move only one step forward and report. Do not skip stages.
+- Match transition name on case-insensitive contains: `done` first, then
+  `closed`, then `resolved`. Pick the first that exists.
+- Ticket already `Done`/`Closed`/`Resolved` → no-op.
+- Multiple "done-like" transitions (e.g. `Done` and `Won't Do`) → always
+  pick `Done`. **Never** auto-pick a cancellation/won't-do/duplicate
+  transition — those require human judgment.
+- PR merged but build/deploy gated behind a separate post-merge process
+  (e.g. team's "Done" requires production deploy verification) → respect
+  it: board workflow with a separate `Deployed`/`Verified` stage between
+  `In Review` and `Done` → move only one step forward and report. Do not
+  skip stages.
 
 Report:
 
@@ -384,8 +361,8 @@ Report:
 ## Stage 6: Surface ticket context (read-only)
 
 Fires when the trigger was a Jira URL or key mention outside the
-development lifecycle (e.g., the user pasted a ticket link, asked a
-question about a ticket, or a key surfaced in a doc the agent read).
+development lifecycle (e.g. user pasted a ticket link, asked a question
+about a ticket, or a key surfaced in a doc the agent read).
 
 - Fetch the ticket once per session per key (cache in-session):
 
@@ -393,31 +370,29 @@ question about a ticket, or a key surfaced in a doc the agent read).
   mcp__claude_ai_Jira_Confluence__getJiraIssue(issueIdOrKey="<KEY>")
   ```
 
-- Report a one-line digest before answering the user's actual
-  question:
+- Report a one-line digest before answering the user's actual question:
 
   > "Jira: {KEY} — {summary} ({status}, assignee: @<them or 'unassigned'>)."
 
 - Do **not** transition, assign, or write. Stage 6 is read-only.
-- Do **not** prompt for the description-quality append here — Stage 2
-  owns that, and it requires development intent.
-- If multiple keys appear in the context, surface each once. Do not
-  spam the user with more than 5 digests per turn — list the
-  remainder by key only.
+- Do **not** prompt for the description-quality append here — Stage 2 owns
+  that, requires development intent.
+- Multiple keys in context → surface each once. Do not spam more than 5
+  digests per turn — list the remainder by key only.
 
 ---
 
 ## Manual ticket operations (confirm-first)
 
-When the user explicitly asks the agent to create, edit, or batch-transition
-Jira items outside the auto lifecycle, confirm before any write call. Jira
-write operations via the Atlassian MCP connector (`createJiraIssue`,
+User explicitly asks to create, edit, or batch-transition Jira items
+outside the auto lifecycle → confirm before any write call. Jira write
+operations via the Atlassian MCP connector (`createJiraIssue`,
 `editJiraIssue`, and similar write methods) are effectively irreversible —
 there is no delete API.
 
-**HARD RULE:** Never call a Jira write method on user-initiated work without
-explicit approval of the proposed change set. Auto mode does not exempt —
-Jira items are visible to the whole team.
+**HARD RULE:** Never call a Jira write method on user-initiated work
+without explicit approval of the proposed change set. Auto mode does not
+exempt — Jira items are visible to the whole team.
 
 - Default `issueTypeName` to `"Story"` when creating an issue. Pick a
   different type only when the context names one (`Bug`, `Task`, `Epic`).
@@ -443,8 +418,8 @@ Jira items are visible to the whole team.
 | Branch name has a key but the ticket was deleted / inaccessible | Report gap, skip transitions for this branch |
 | MCP returns auth error | Report once with the connector URL; do not block development |
 
-Never block a commit, push, or PR action on a Jira sync failure —
-ticket state is a side-effect of the work, not a precondition for it.
+Never block a commit, push, or PR action on a Jira sync failure — ticket
+state is a side-effect of the work, not a precondition for it.
 
 ---
 

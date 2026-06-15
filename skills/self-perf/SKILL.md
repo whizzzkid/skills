@@ -23,7 +23,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.08-183228'
+  version: '2026.06.15-200559'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -35,9 +35,8 @@ metadata:
 
 # Self-Performance Review
 
-Generates a self-performance review by pulling data from all connected work
-systems in parallel, distilling accomplishments, impact signals, and
-leadership evidence into a narrative ready for QPR submission.
+Pull data from all connected work systems in parallel → distill accomplishments,
+impact signals, leadership evidence → narrative ready for QPR submission.
 
 ```
 Parse period ──► Parallel data fetch (7 agents) ──► Synthesize ──► Draft narrative
@@ -52,7 +51,7 @@ Parse period ──► Parallel data fetch (7 agents) ──► Synthesize ─�
 
 ### Parse the period argument
 
-The skill accepts a period argument. Map it to a start/end date range:
+Map the period argument to a start/end date range:
 
 | Argument | Start | End |
 |----------|-------|-----|
@@ -101,14 +100,15 @@ If `$SYNTHESIS_FILE` exists, prompt:
 >
 > Reply with your choice."
 
-In auto mode, default to **(c)** — supplement is safe and additive.
+Auto mode → default **(c)** (supplement is safe and additive).
 
 ---
 
 ## Stage 1: Parallel Data Gathering
 
-Launch **7 agents in parallel**. Each writes its output to a file in
-`$REFS_DIR/`. Include the period context in every prompt.
+- Launch **7 agents in parallel**.
+- Each writes its output to a file in `$REFS_DIR/`.
+- Include the period context in every prompt.
 
 ### Subagent contract (mandatory)
 
@@ -132,7 +132,7 @@ The base contract's source-identifier and verified/claim tagging rules apply her
 
 **Output file:** `$REFS_DIR/github.md`
 
-Fetch from `gh` CLI or GitHub MCP:
+Fetch via `gh` CLI or GitHub MCP:
 
 ```bash
 # PRs authored
@@ -160,9 +160,9 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/calendar.md`
 
-Use an available Google Calendar MCP tool (search for `gcal` via `ToolSearch` to find the configured tool).
+Use a Google Calendar MCP tool (search `gcal` via `ToolSearch`).
 
-Fetch all events from `START_DATE` to `END_DATE`. Categorize:
+Fetch all events `START_DATE` → `END_DATE`. Categorize:
 - Interviews conducted (as interviewer or debrief panelist)
 - Training/workshops facilitated (as organizer/presenter)
 - 1:1s with direct reports and manager
@@ -171,7 +171,7 @@ Fetch all events from `START_DATE` to `END_DATE`. Categorize:
 - All-hands, company meetings
 - External/industry events
 
-For each category: count, estimated hours, notable examples.
+Per category: count, estimated hours, notable examples.
 
 Structure output as:
 - Summary stats table
@@ -187,9 +187,9 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/slack.md`
 
-Use an available Slack MCP tool (search for `slack` via `ToolSearch` to find the configured tool).
+Use a Slack MCP tool (search `slack` via `ToolSearch`).
 
-Search for the user's messages during the period. Look for:
+Search the user's messages during the period. Look for:
 - Decisions influenced or communicated
 - Technical explanations and unblocking of others
 - Announcements of shipped features
@@ -210,7 +210,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/gmail.md`
 
-Use an available Gmail MCP tool (search for `gmail` via `ToolSearch` to find the configured tool).
+Use a Gmail MCP tool (search `gmail` via `ToolSearch`).
 
 Resolve the user's email dynamically:
 
@@ -253,7 +253,7 @@ reporter = "${USER_EMAIL}" AND created >= "${START_DATE}"
 assignee = "${USER_EMAIL}" AND updated >= "${START_DATE}"
 ```
 
-**Confluence:** Search for pages created or edited by the user.
+**Confluence:** Search pages created or edited by the user.
 
 Structure output as:
 - Issues created (by project/epic)
@@ -268,7 +268,7 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/docs-meetings.md`
 
-Use Granola MCP (`mcp__granola__*`), an available Google Docs MCP tool (search `gdocs` via `ToolSearch`),
+Use Granola MCP (`mcp__granola__*`), a Google Docs MCP tool (search `gdocs` via `ToolSearch`),
 and Glean (`mcp__claude_ai_Glean__*`).
 
 **Granola:** Get all meetings in the period. Extract:
@@ -295,15 +295,13 @@ Structure output as:
 
 **Output file:** `$REFS_DIR/dx-sitrep.md`
 
-**Part 1: DX Metrics** (if available — search `dx` via `ToolSearch` to find a configured DX MCP tool):
+**Part 1: DX Metrics** (if available — search `dx` via `ToolSearch`):
 - PR cycle time, code review turnaround
 - Deploy frequency, lead time
 - Team/org/company comparisons
 - Trends over the period
 
-**Part 2: Sitrep files** (always available):
-
-Read all sitrep files in the period from `$PWD/sitrep/`:
+**Part 2: Sitrep files** (always available) — read all sitrep files in the period from `$PWD/sitrep/`:
 
 ```bash
 find "$PWD/sitrep" -name "*.md" -newer /tmp/start_marker | sort
@@ -327,8 +325,7 @@ Structure output as:
 
 ## Stage 2: Synthesize into Narrative
 
-After all 7 agents complete, read every reference file and synthesize
-into `$SYNTHESIS_FILE`.
+After all 7 agents complete → read every reference file → synthesize into `$SYNTHESIS_FILE`.
 
 ### Synthesis structure
 
@@ -384,7 +381,7 @@ into `$SYNTHESIS_FILE`.
 
 ### Impact language guide
 
-When synthesizing, use this language:
+When synthesizing, prefer strong over weak verbs:
 
 | Weak | Strong |
 |------|--------|
@@ -399,7 +396,7 @@ When synthesizing, use this language:
 Structure the narrative to demonstrate the user's level expectations.
 For the user's current level at $EMPLOYER, surface these signals:
 
-| L4 Signal | Evidence to Surface |
+| L4 Signal | Evidence to surface |
 |-----------|---------------------|
 | Ships impactful projects end-to-end | Feature milestones with dates and metrics |
 | Drives cross-team collaboration | Orgs collaborated with, PRs in other repos |
@@ -414,7 +411,7 @@ For the user's current level at $EMPLOYER, surface these signals:
 
 ### 3a. Commit reference files
 
-After all agents write their output files, commit:
+After all agents write their output files:
 
 ```bash
 git add QPR/
@@ -423,7 +420,7 @@ git commit -m "feat(QPR): add ${PERIOD_SLUG} performance reference corpus"
 
 ### 3b. Write synthesis
 
-Write the synthesized narrative to `$SYNTHESIS_FILE`. After writing, commit:
+Write the synthesized narrative to `$SYNTHESIS_FILE`, then commit:
 
 ```bash
 git add "$SYNTHESIS_FILE"
@@ -455,9 +452,7 @@ Announce:
 
 ## Stage 4: Distill Learnings into Daily Sitreps
 
-After synthesis, check if meaningful patterns from this period should inform
-daily operations. For each pattern, evaluate whether it belongs in the daily
-sitrep:
+After synthesis, evaluate whether meaningful patterns from this period belong in the daily sitrep:
 
 | Pattern | Add to |
 |---------|--------|

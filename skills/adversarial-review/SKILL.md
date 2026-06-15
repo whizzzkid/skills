@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-190033'
+  version: '2026.06.15-200120'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -54,7 +54,7 @@ metadata:
 
 # Adversarial Review
 
-Pre-flight critique of the current branch. Run mechanical sweeps, dispatch a fresh adversarial subagent, validate runtime claims, then return a clear/blocked/suggestions-only verdict.
+Pre-flight critique of the current branch → mechanical sweeps → fresh adversarial subagent → validate runtime claims → clear/blocked/suggestions-only verdict.
 
 ```
 Resolve base -> Build surface map -> Mechanical sweeps
@@ -64,20 +64,20 @@ Resolve base -> Build surface map -> Mechanical sweeps
 
 ## Non-Negotiable Contract
 
-1. **No push without clear verdict.** Run before every push, every `gh pr ready`, every force-push, and every rebase that rewrites pushed history. No opt-out.
-2. **No docs-only exemption.** Docs, specs, skills, and executable instructions can carry logic errors, stale counts, or bad commands.
-3. **Per-feature gate.** Run once on the complete implementation before publishing. Fix residuals in ≤1 follow-up, then re-review.
-4. **Idempotent within a session.** If no new commits landed since the last clear verdict, print the prior clearance record.
-5. **Scope re-reviews.** After a clear verdict, sweep only `git diff <cleared-sha>..HEAD`; record clearance at `.review-playground/.cleared-{HEAD_SHA}.json`.
+1. **No push without clear verdict.** Run before every push, `gh pr ready`, force-push, and rebase that rewrites pushed history. No opt-out.
+2. **No docs-only exemption.** Docs, specs, skills, executable instructions can carry logic errors, stale counts, bad commands.
+3. **Per-feature gate.** Run once on complete implementation before publishing → fix residuals in ≤1 follow-up → re-review.
+4. **Idempotent within a session.** No new commits since last clear verdict → print prior clearance record.
+5. **Scope re-reviews.** After clear verdict, sweep only `git diff <cleared-sha>..HEAD`; record clearance at `.review-playground/.cleared-{HEAD_SHA}.json`.
 6. **Mechanical first.** Run all sweeps before LLM reasoning.
 7. **Block before negotiate.** Blockers stop the caller. Downgrade severity only with explicit user confirmation.
-8. **Reproduce before claim.** Runtime-behavior findings must be reproduced in `.review-playground/` or downgraded to `question`.
-9. **Diff-anchored findings.** Commentable findings must map to lines in the diff; outside-diff issues become file-level notes or verdict-body notes.
+8. **Reproduce before claim.** Runtime-behavior findings reproduced in `.review-playground/` or downgraded to `question`.
+9. **Diff-anchored findings.** Commentable findings map to diff lines; outside-diff issues → file-level or verdict-body notes.
 10. **Gate, not actor.** Do not push, edit the PR, or post review comments from this skill.
 
 ## Step 1: Resolve Context and Build Surface Map
 
-Resolve the authoritative base dynamically. Hardcoding `main` is forbidden.
+Resolve authoritative base dynamically. Hardcoding `main` is forbidden.
 
 ```bash
 DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD --short 2>/dev/null | sed 's@^origin/@@')
@@ -92,7 +92,7 @@ git fetch origin "$BASE" --quiet
 MERGE_BASE=$(git merge-base HEAD "origin/$BASE")
 ```
 
-Refuse to proceed on uncommitted changes. Then build the surface map:
+Refuse to proceed on uncommitted changes. Build the surface map:
 
 ```bash
 git diff "$BASE...HEAD" --stat
@@ -100,17 +100,17 @@ git diff "$BASE...HEAD" --name-status
 git log "$BASE..HEAD" --oneline
 ```
 
-For every changed file, capture:
+Per changed file, capture:
 
 - New/modified functions, methods, classes, signatures, CLI flags, env vars, public API entries.
 - New/modified test functions and fixtures.
-- Removed lines; mark refactors as **net-new** vs **relocated**.
-- Touched docs, specs, READMEs, in-code help strings, and plugin manifests.
+- Removed lines; mark refactors **net-new** vs **relocated**.
+- Touched docs, specs, READMEs, in-code help strings, plugin manifests.
 - Diff kind: `feature`, `bugfix`, `refactor`, `docs`, `infra`.
 
 ## Step 2: Mechanical Sweep Catalog
 
-Run every sweep unconditionally. Use the first matching severity; escalate when a suggestion proves a HARD RULE violation.
+Run every sweep unconditionally. Use first matching severity; escalate when a suggestion proves a HARD RULE violation.
 
 | ID | Trigger | Check | Severity | Fix / escalation |
 |---|---|---|---|---|
@@ -156,9 +156,9 @@ Run every sweep unconditionally. Use the first matching severity; escalate when 
 
 After sweeps, dispatch a fresh subagent with no prior context. Pipe `git diff "$BASE...HEAD"` directly; never hand-transcribe the diff. If excerpts are necessary, verify hunk boundaries first.
 
-The subagent must be adversarial, unbiased, critical, objective, naming-aware, diff-sensitive, coverage-aware, refactor-aware, relocation-aware, and introduction-claim-aware.
+Subagent must be adversarial, unbiased, critical, objective, naming-aware, diff-sensitive, coverage-aware, refactor-aware, relocation-aware, introduction-claim-aware:
 
-- **Coverage-aware:** for test-only commits, enumerate code paths and flag unexercised paths.
+- **Coverage-aware:** test-only commits → enumerate code paths, flag unexercised paths.
 - **Refactor-aware:** demand removed-line audit; every removed line is relocated or intentionally dropped.
 - **Relocation-aware:** downgrade inherited pre-existing issues carried unchanged by a pure move.
 - **Introduction-claim-aware:** before calling a behavior newly introduced, grep the `-` lines of the same hunk.
@@ -183,7 +183,7 @@ The subagent must be adversarial, unbiased, critical, objective, naming-aware, d
 
 ## Step 4: Findings Format and Severity
 
-Each finding must use:
+Each finding uses:
 
 ```
 severity:   blocker | suggestion | question
@@ -195,18 +195,18 @@ rationale:  one to three sentences, citing exact diff lines
 fix-sketch: concrete code or command, not narrative
 ```
 
-- Use `blocker` for correctness, security, data loss, or HARD RULE violations.
-- Use `suggestion` for naming/style/readability unless tied to a hard rule.
-- Use `question` for genuine uncertainty.
-- Omit hedging, filler, praise, and diff restatement.
+- `blocker`: correctness, security, data loss, HARD RULE violations.
+- `suggestion`: naming/style/readability unless tied to a hard rule.
+- `question`: genuine uncertainty.
+- Omit hedging, filler, praise, diff restatement.
 
 ## Step 5: Playground Validation
 
 Create `.review-playground/` only if needed; never commit a `.gitignore` entry for it. Confine writes to that directory.
 
-- Write one script per runtime-behavior finding; drive each with the production runtime.
-- Mutation-test each new test: flip a conditional, hardcode a return, swap args, remove an assertion. If green, mark the test fake.
-- Use a standalone playground when the app cannot boot. Fetch pinned upstream source and replicate method signatures; cite the SHA/tag:
+- One script per runtime-behavior finding; drive each with the production runtime.
+- Mutation-test each new test: flip a conditional, hardcode a return, swap args, remove an assertion → green = fake test.
+- App cannot boot → use standalone playground. Fetch pinned upstream source, replicate method signatures, cite SHA/tag:
 
   ```bash
   gh api "repos/{owner}/{repo}/contents/{path}?ref={tag-or-sha}" --jq '.content' | base64 -d
@@ -228,33 +228,33 @@ Run every interpreter the diff exercises, not whatever is first on `PATH`; flag 
 
 ### Specialized checks (apply when the diff shape matches)
 
-- **Producer→consumer layout:** populate a staging dir with the real producer layout; run the consumer end-to-end. Verify path/key match, recursion depth, fixture placement, cleanup-after-consume ordering.
-- **Cluster promotion/dedup:** test that the guard checks the chosen representative, not just the iteration anchor; iterate in reverse and non-sequential order.
+- **Producer→consumer layout:** populate staging dir with real producer layout; run consumer end-to-end. Verify path/key match, recursion depth, fixture placement, cleanup-after-consume ordering.
+- **Cluster promotion/dedup:** test guard checks the chosen representative, not just the iteration anchor; iterate in reverse and non-sequential order.
 - **Interface contract change:** run old shapes through new code and new shapes through old consumers.
-- **Allowlist/privilege add:** compare the new entry against existing siblings, not an empty list; note when it is strictly less privileged than a present entry.
+- **Allowlist/privilege add:** compare new entry against existing siblings, not an empty list; note when strictly less privileged than a present entry.
 
 ### Documentation / prose / compression diffs — read-based analysis
 
-When every changed file is docs, prompt/rule text, or non-executable fixture data, skip scratch scripts and substitute a read-based adversarial pass under `.review-playground/`:
+When every changed file is docs, prompt/rule text, or non-executable fixture data, skip scratch scripts; substitute a read-based adversarial pass under `.review-playground/`:
 
-- Cover ambiguity, contradictions, missing cases, and edge-case prompts.
+- Cover ambiguity, contradictions, missing cases, edge-case prompts.
 - Cross-check every numeric count in tables/enumerated claims against the actual items.
 - **Compression/debloat diffs:** verify rule survival by *substance*, not by counting `HARD RULE` (or similar) labels — labels are trimmed first even when the rule they tagged is preserved, so label-count deltas are noise in either direction. Enumerate each gate the commit claims to preserve and content-grep it against the new file. With `grep -E`, write alternation as `a|b`; `\|` matches a literal pipe and silently returns zero (a false "missing gate").
-- **Relocations:** flag org-specific tooling names, command aliases, internal script names, tracker IDs, short-link prefixes, or source-only paths that do not exist in the destination repo; fix back-references to un-imported files.
+- **Relocations:** flag org-specific tooling names, command aliases, internal script names, tracker IDs, short-link prefixes, or source-only paths absent from the destination repo; fix back-references to un-imported files.
 - Flag committed absolute/home/worktree paths, local-only branches, or personal artifacts stated as permanent facts.
-- When a doc names a live code file as authoritative, read that file and verify the stated constraints against the current branch.
+- Doc names a live code file as authoritative → read that file, verify stated constraints against the current branch.
 
 ## Step 6: Verdict and Records
 
 Deduplicate by `(file, line, category)`, then return one verdict.
 
-- **Clear:** zero blockers and zero unverified high-confidence runtime claims. Print commit range, HEAD SHA, and finding counts. Write `.review-playground/.cleared-{HEAD_SHA}.json` with HEAD SHA, base, timestamp, finding counts, and verdict.
-- **Blocked:** print every blocker with file:line, category, and fix sketch. Refuse to clear; caller must fix and re-invoke.
+- **Clear:** zero blockers and zero unverified high-confidence runtime claims. Print commit range, HEAD SHA, finding counts. Write `.review-playground/.cleared-{HEAD_SHA}.json` with HEAD SHA, base, timestamp, finding counts, verdict.
+- **Blocked:** print every blocker with file:line, category, fix sketch. Refuse to clear; caller fixes and re-invokes.
 - **Suggestions only:** print suggestions and offer A/B/C: fix all in-line, clear with TODO/follow-up, or defer to tracked work. Default to A in auto mode when every fix-sketch is under 10 lines; otherwise B.
 
 ### Bot Reviewer Handling
 
-When bot reviewers exist (`*[bot]`), append:
+Bot reviewers exist (`*[bot]`) → append:
 
 - Post-push thread count may shrink; bots may retract and repost replacement threads.
 - Caller must re-fetch threads after push and match by `(path, line, body_excerpt)`, not REST comment ID.
@@ -270,14 +270,14 @@ On blocked verdict:
 4. Loop until clear, max 3 cycles.
 5. After 3 cycles, stop and surface to user; repeated recurrence means diagnosis/design is off.
 
-Do not autosquash post-rebase artifact fixes mid-chain. Commit them as a standalone conventional commit, then re-review.
+Do not autosquash post-rebase artifact fixes mid-chain. Commit as a standalone conventional commit, then re-review.
 
 Print the verdict line to the caller. Do not push, edit the PR, or post comments.
 
 ## Requirements
 
 - `gh` CLI authenticated.
-- Repo with a base branch resolvable via `gh pr view` or `git symbolic-ref refs/remotes/origin/HEAD`.
+- Repo with base branch resolvable via `gh pr view` or `git symbolic-ref refs/remotes/origin/HEAD`.
 - Write access to `.review-playground/` (gitignored).
 - Runtime matrix installed via `mise` or equivalent when matrix checks are required.
 

@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.15-190033'
+  version: '2026.06.15-200812'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -38,9 +38,8 @@ Plan -> Implement (commit per step + docs) -> Test -> Refactor Scan
 
 ## Mandatory Activation
 
-This workflow fires on EVERY task that will produce code changes, a commit, a push, a PR, or a CI build from a code change. No opt-out, no “too small” exemption.
-
-Session resumption is a fresh start. Before any write action after context compaction, rollover, or “continue where we left off”, invoke `wk-workflow` again.
+- Fires on EVERY task producing code changes, a commit, a push, a PR, or a CI build from a code change. No opt-out, no "too small" exemption.
+- Session resumption is a fresh start → before any write action after context compaction, rollover, or "continue where we left off", invoke `wk-workflow` again.
 
 ### Autonomy Rules
 
@@ -55,13 +54,11 @@ Execute the workflow without asking permission at each step.
 | Docs need updating | Invoke `wk-docs` | Ask “should I update docs?” |
 | Session ending | Invoke `wk-retro` | Ask “should I do a retro?” |
 
-Stop and ask only when the plan is ambiguous, CI persists after 3 attempts, a finding requires a user-owned design decision, the user explicitly requested a pause/check-in, or a destructive/shared-state action is required.
+Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a finding requires a user-owned design decision; user explicitly requested a pause/check-in; or a destructive/shared-state action is required.
 
-When you solicit feedback, block on it: end the turn after asking and do not implement past that point until answered.
-
-Skill invocation is mandatory. Use the Skill tool for prescribed skills; do not approximate with raw commands. Run the invoked skill’s full flow; user prose is additive context, not a license to skip parts.
-
-Batch independent tool calls in one response whenever possible.
+- When soliciting feedback, block on it → end the turn after asking; do not implement past that point until answered.
+- Skill invocation is mandatory → use the Skill tool for prescribed skills, do not approximate with raw commands. Run the invoked skill's full flow; user prose is additive context, not a license to skip parts.
+- Batch independent tool calls in one response whenever possible.
 
 ### Continuity Rules
 
@@ -88,7 +85,7 @@ Skill(wk-plan, args="<task from session context>")
 
 ## Phase 2: Implement
 
-Before the first Edit/Write, confirm the cwd is the intended worktree:
+Before the first Edit/Write, confirm cwd is the intended worktree:
 
 ```bash
 git rev-parse --abbrev-ref HEAD
@@ -120,7 +117,7 @@ For normalization, renames, required fields, schema changes, or similar recurrin
 
 ### Design pivots travel with their docs
 
-When a commit changes the logical structure of a feature, update every artifact that described the old shape in the same commit:
+When a commit changes the logical structure of a feature, update every artifact describing the old shape in the same commit:
 
 - design spec (`docs/specs/`-equivalent)
 - implementation plan (`docs/plans/`-equivalent)
@@ -139,23 +136,25 @@ Triggers: conditional became unconditional, helper lifted/inlined/replaced, path
 
 ### External-call reproduction before fix
 
-Before fixing a failing external API/CLI call, reproduce locally with exact parameters and read the response body. Before committing, rerun the same call and confirm 2xx. If local reproduction is impossible, pause before commit with the exact command and success criterion.
+- Before fixing a failing external API/CLI call, reproduce locally with exact parameters and read the response body.
+- Before committing, rerun the same call and confirm 2xx.
+- If local reproduction is impossible, pause before commit with the exact command and success criterion.
 
 ### Signature widening pre-flight
 
-When adding a non-optional public parameter or required public field, grep every caller/initializer before tests, fix every site in the same commit, then run tests.
+When adding a non-optional public parameter or required public field: grep every caller/initializer before tests → fix every site in the same commit → run tests.
 
 ### `replace_all` scope pre-flight
 
-Before using `replace_all: true`, grep the target string across the file and confirm every occurrence should receive the same replacement. Reject if any occurrence needs a different value/context or must remain unchanged.
+Before `replace_all: true`, grep the target string across the file and confirm every occurrence should receive the same replacement. Reject if any occurrence needs a different value/context or must remain unchanged.
 
 ### Same-semantic-class audit on coercions
 
-When applying a coercion (`.to_s`, `.to_i`, `&.`, `String()`, `Number()`, optional-chaining, null-coalescing) to one argument/field, audit every argument of the same semantic class (role + nullability + type shape) in the same pass. This applies to same-class guards, redactions, retry wrappers, and logging.
+When applying a coercion (`.to_s`, `.to_i`, `&.`, `String()`, `Number()`, optional-chaining, null-coalescing) to one argument/field, audit every argument of the same semantic class (role + nullability + type shape) in the same pass. Applies to same-class guards, redactions, retry wrappers, and logging.
 
 ### Code Standards
 
-Apply these standards to ALL code:
+Apply to ALL code:
 
 - **Version pins:** exact versions everywhere. No `latest`, `stable`, `nightly`, unpinned tags, `^`, or `~`. Dockerfile `FROM`, `mise.toml` / `.tool-versions`, GitHub Actions, git clones in Dockerfiles, and package managers must pin exact versions or official-action semver majors.
 - **Regexes:** named capture groups: `(?<year>\d{4})`.
@@ -187,7 +186,7 @@ Before code review, verify coverage and pass all checks.
 Required paths:
 
 - **Happy path** — expected successful flow works end to end.
-- **Sad path** — failures, invalid input, missing data, and error conditions handled gracefully.
+- **Sad path** — failures, invalid input, missing data, error conditions handled gracefully.
 - **Edge cases** — boundaries, empty collections, null/undefined fields, concurrency, large inputs, off-by-one errors.
 
 Verification:
@@ -208,7 +207,7 @@ Shell-script structure tests:
 - Use `! grep -q 'pattern'` for negative assertions; `grep -qv` is a false-positive trap.
 - Before range-based assertions, scan for string literals containing the end-range keyword and duplicate branch labels.
 
-Behavioral guard tests must reach the guarded branch. `[[ -f "$x" ]]` follows symlinks; point symlink-escape tests at `/etc/passwd` and confirm the test fails when the guard is removed.
+Behavioral guard tests must reach the guarded branch. `[[ -f "$x" ]]` follows symlinks → point symlink-escape tests at `/etc/passwd` and confirm the test fails when the guard is removed.
 
 ---
 
@@ -216,15 +215,15 @@ Behavioral guard tests must reach the guarded branch. `[[ -f "$x" ]]` follows sy
 
 After tests pass and before adversarial review, scan the diff and neighboring code for refactor/reuse opportunities.
 
-For every new/modified function, helper, constant, or block, scan same file, sibling files, and imported modules for existing helpers/constants/types, repeated literals, near-duplicate blocks (≥3 similar lines), long conditional chains, nested blocks, and re-implemented language/framework patterns.
+For every new/modified function, helper, constant, or block, scan same file, sibling files, and imported modules for: existing helpers/constants/types, repeated literals, near-duplicate blocks (≥3 similar lines), long conditional chains, nested blocks, re-implemented language/framework patterns.
 
 Classify each opportunity:
 
 - **Apply now** — reuse existing helper/constant, lift near-duplicate into a helper, flatten conditionals. Land as one commit before Phase 4.
-- **Defer with note** — real but out-of-scope; add TODO to PR “Follow-ups”.
+- **Defer with note** — real but out-of-scope; add TODO to PR "Follow-ups".
 - **Skip** — no real win or premature abstraction.
 
-Re-run tests after every Apply-now change. A clean diff is valid; record “refactor scan: no opportunities” in Phase 8.
+Re-run tests after every Apply-now change. A clean diff is valid → record "refactor scan: no opportunities" in Phase 8.
 
 ---
 
@@ -238,7 +237,7 @@ Run only when the diff changes browser-rendered UI: client components, templates
 - Treat load failure, console error on the changed surface, or broken interaction as a Phase 4 blocker.
 - Leave app/browser running and hand off the URL; continue Phase 4 onward while the user inspects.
 
-Skip backend/config/docs-only diffs and record “frontend preview: N/A” in Phase 8.
+Skip backend/config/docs-only diffs and record "frontend preview: N/A" in Phase 8.
 
 ---
 
@@ -252,9 +251,9 @@ After implementation, tests, refactor scan, and frontend preview (if applicable)
 
 - **Clear** — proceed to Phase 5.
 - **Blocked** — fix each blocker via `wk-commit`, re-invoke until clear. Never push, `gh pr ready`, or `gh pr create` on a blocked verdict.
-- **Suggestions only** — follow the skill’s A/B/C prompt.
+- **Suggestions only** — follow the skill's A/B/C prompt.
 
-Pre-flight review findings are mandatory actions, not options. Incorporate blockers/improvements into the relevant artifact and commit. Only pause for a genuine user-owned design decision.
+Pre-flight review findings are mandatory actions, not options → incorporate blockers/improvements into the relevant artifact and commit. Only pause for a genuine user-owned design decision.
 
 **HARD RULE:** every push, every PR transition (`gh pr create`, `gh pr ready`), and every force-push that leaves this machine runs `wk-adversarial-review` first. No size/docs-only exemption.
 
@@ -283,7 +282,7 @@ After code review passes, invoke `wk-pr`; never use raw `gh pr create`. `wk-pr` 
 
 After any implementation-approach pivot, resolve stale self-review threads and post fresh comments via `wk-self-review`.
 
-Before reworking a PR branch — force-push, restructure, content rewrite, big rebase, scope change — fetch and reconcile against the PR’s actual base and default branch. Resolve PR base before proposing a rebase target; never assume default.
+Before reworking a PR branch — force-push, restructure, content rewrite, big rebase, scope change — fetch and reconcile against the PR's actual base and default branch. Resolve PR base before proposing a rebase target; never assume default.
 
 ```bash
 PR_NUM=$(gh pr view --json number --jq .number)
@@ -309,8 +308,7 @@ After PR creation or any push to a PR branch, monitor, diagnose, and fix CI unti
 - Use `wk-buildkite` for Buildkite.
 - Run long watches in the background and continue with independent work.
 - Never end a turn announcing a holding pattern.
-
-Read actual logs first.
+- Read actual logs first.
 
 | Failure type | Action |
 |---|---|

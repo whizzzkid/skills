@@ -2,6 +2,8 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
+**Version:** `2026.06.15-200609`
+
 ## Invocation
 
 | Mode | Trigger |
@@ -40,7 +42,7 @@ flowchart TD
   keeping its contract, would the test still pass?" — yes = behavioral, no = structural.
 - **Format validators** must be derived from real example values found in the codebase or
   upstream docs, not from intuition — intuition-based validators routinely reject legal inputs.
-- `wk-testing-skeleton` produces the plan; `wk-workflow` Phase 3 verifies the suite passes —
+- [`wk-testing-skeleton`](../testing-skeleton/README.md) produces the plan; [`wk-workflow`](../workflow/README.md) Phase 3 verifies the suite passes —
   they are complementary, not redundant.
 - Coverage % is explicitly treated as a lagging indicator — CI coverage gate failures must be
   solved by finding the missing behavioral path, never by adding structural tests to touch lines.

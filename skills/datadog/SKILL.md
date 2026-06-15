@@ -17,7 +17,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.26-225200'
+  version: '2026.06.15-195921'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -34,8 +34,7 @@ via the Datadog REST API using curl.
 
 ## Step 1: Authenticate
 
-Check for required environment variables. If any are missing, ask the user
-to provide them.
+Check required env vars → if any missing, ask the user to provide them.
 
 ```bash
 : "${DATADOG_API_KEY:?Set DATADOG_API_KEY env var}"
@@ -63,24 +62,14 @@ If keys are missing, ask:
 in the current directory for API requests. Never write to project source
 files, configuration, or any other location.**
 
-Read may access any path (read-only) to understand existing configurations.
+- Read may access any path (read-only) to understand existing configurations.
 
 ## Step 1.5: Resolve resource-type intent before any write
 
-When the user asks to "create X per Y" (e.g., "a notebook per PR",
-"a dashboard per service"), clarify the artifact shape before
-building. Two distinct patterns share the phrasing:
-
-- **One reusable resource filtered by Y** → dashboard with
-  template variables (`$pr_number`, `$service`, `$env`). Default
-  for per-entity views, per-service health, per-team status.
-- **A new resource per Y instance** → notebook or new
-  dashboard per incident / per investigation. Default for
-  one-off forensic work, post-mortems, ad-hoc analysis.
-
-If the distinction is not explicit in the user's request, ask
-before creating. Pick the canonical Datadog pattern for the use
-case:
+- "create X per Y" (e.g., "notebook per PR", "dashboard per service") shares phrasing across two distinct patterns → clarify artifact shape before building.
+- **One reusable resource filtered by Y** → dashboard with template variables (`$pr_number`, `$service`, `$env`). Default for per-entity views, per-service health, per-team status.
+- **A new resource per Y instance** → notebook or new dashboard per incident / investigation. Default for one-off forensic work, post-mortems, ad-hoc analysis.
+- Distinction not explicit in request → ask before creating. Pick the canonical pattern:
 
 | User intent | Canonical resource |
 |-------------|--------------------|
@@ -89,8 +78,7 @@ case:
 | Alerting on threshold breach | Monitor |
 | Tracking objective compliance | SLO |
 
-Building a notebook-per-PR when the user wanted one filterable
-dashboard creates thousands of dead artifacts.
+- Building a notebook-per-PR when the user wanted one filterable dashboard creates thousands of dead artifacts.
 
 ## Step 2: Identify the Operation
 
@@ -156,8 +144,7 @@ curl -s -X GET "${DD_API}/v1/dashboard/{dashboard_id}" "${DD_HEADERS[@]}" | jq .
 
 ### Create / Update
 
-Ask the user for: title, description, layout type (`ordered` or `free`), and
-widgets (timeseries, query value, top list, heatmap, etc.).
+Ask for: title, description, layout type (`ordered` or `free`), widgets (timeseries, query value, top list, heatmap, etc.).
 
 ```bash
 curl -s -X POST "${DD_API}/v1/dashboard" "${DD_HEADERS[@]}" --data @dashboard.json | jq '{id, title, url}'
@@ -174,31 +161,21 @@ curl -s -X DELETE "${DD_API}/v1/dashboard/{dashboard_id}" "${DD_HEADERS[@]}"
 
 ### Clone
 
-Get the existing dashboard, strip the `id` field, modify the title, and POST
-as a new dashboard.
+Get existing dashboard → strip `id` field → modify title → POST as new dashboard.
 
 ### Widget custom links — log-attribute template expansion
 
 **HARD RULE — use `{{@attr.value}}` for external URLs, `{{@attr}}` for
-Datadog search URLs.** Datadog log-attribute template expansion has two
-modes; mixing them produces broken links.
+Datadog search URLs.** Two expansion modes; mixing them produces broken links.
 
-- `{{@attribute}}` expands to the full Datadog facet filter string
-  `@attribute:value` (e.g., `@repo:{owner}/{repo}`). Use this only
-  when the link target is a Datadog search/log query URL that expects
-  the full filter.
-- `{{@attribute.value}}` expands to the raw value alone (e.g.,
-  `{owner}/{repo}`). Use this for every external URL — GitHub,
-  Jira, PagerDuty, Buildkite, internal tools.
-- `{{$template_var}}` returns empty when the dashboard template
-  variable is `*`. Do not depend on template variables to populate
-  external-URL parameters; key off log attributes instead.
+- `{{@attribute}}` → full Datadog facet filter string `@attribute:value` (e.g., `@repo:{owner}/{repo}`). Use only when link target is a Datadog search/log query URL expecting the full filter.
+- `{{@attribute.value}}` → raw value alone (e.g., `{owner}/{repo}`). Use for every external URL — GitHub, Jira, PagerDuty, Buildkite, internal tools.
+- `{{$template_var}}` → empty when the dashboard template variable is `*`. Do not depend on template variables to populate external-URL parameters; key off log attributes instead.
 
-When authoring a custom link, classify the link target first:
+Classify link target before authoring:
 
 - External (anything off `*.datadoghq.com`) → `{{@attr.value}}`.
-- Datadog search/log URL → `{{@attr}}` is correct because the filter
-  prefix is what the URL needs.
+- Datadog search/log URL → `{{@attr}}` (filter prefix is what the URL needs).
 
 ---
 
@@ -216,9 +193,7 @@ curl -s -X GET "${DD_API}/v1/monitor/{monitor_id}" "${DD_HEADERS[@]}" | jq .
 
 ### Create / Update
 
-Ask the user for: monitor type (`metric alert`, `log alert`, `apm`, `process`,
-`composite`, etc.), query, thresholds (critical, warning, ok), notification
-message, and recipients.
+Ask for: monitor type (`metric alert`, `log alert`, `apm`, `process`, `composite`, etc.), query, thresholds (critical, warning, ok), notification message, recipients.
 
 ```bash
 curl -s -X POST "${DD_API}/v1/monitor" "${DD_HEADERS[@]}" --data @monitor.json | jq '{id, name, type}'
@@ -255,9 +230,7 @@ curl -s -X GET "${DD_API}/v1/slo/{slo_id}" "${DD_HEADERS[@]}" | jq .
 
 ### Create / Update
 
-Ask the user for: SLO type (`metric` or `monitor`), name, description, target
-percentage (e.g., 99.9), timeframe (`7d`, `30d`, `90d`). For metric-based:
-numerator and denominator queries. For monitor-based: monitor IDs.
+Ask for: SLO type (`metric` or `monitor`), name, description, target percentage (e.g., 99.9), timeframe (`7d`, `30d`, `90d`). Metric-based: numerator and denominator queries. Monitor-based: monitor IDs.
 
 ```bash
 curl -s -X POST "${DD_API}/v1/slo" "${DD_HEADERS[@]}" --data @slo.json | jq '.data[] | {id, name, type}'
@@ -294,8 +267,7 @@ curl -s -X GET "${DD_API}/v1/notebooks/{notebook_id}" "${DD_HEADERS[@]}" | jq .
 
 ### Create / Update
 
-Ask the user for: name, cells (markdown text, timeseries, log stream, etc.),
-and time range.
+Ask for: name, cells (markdown text, timeseries, log stream, etc.), time range.
 
 ```bash
 curl -s -X POST "${DD_API}/v1/notebooks" "${DD_HEADERS[@]}" --data @notebook.json | jq '.data | {id, attributes: {name: .attributes.name}}'

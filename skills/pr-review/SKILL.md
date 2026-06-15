@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-190033'
+  version: '2026.06.15-200139'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -42,11 +42,10 @@ metadata:
 
 # PR Review
 
-Thorough code review of a GitHub PR. Gathers context and existing-comment state,
-delegates deep adversarial investigation and playground validation to
-[`wk-adversarial-review`](../adversarial-review/README.md), then maps the
-returned findings into encouraging but critical inline comments posted as a
-pending GitHub review.
+Thorough code review of a GitHub PR → gather context + existing-comment state →
+delegate deep adversarial investigation and playground validation to
+[`wk-adversarial-review`](../adversarial-review/README.md) → map returned findings
+into encouraging but critical inline comments posted as a pending GitHub review.
 
 ## GitHub interaction routing
 
@@ -58,7 +57,7 @@ pending GitHub review.
 
 ## Phase 1: Context
 
-Determine the PR and gather context before reading files.
+Determine PR and gather context before reading files.
 
 **If already on a PR branch:**
 
@@ -85,25 +84,25 @@ note the desync in the review summary.
 
 ### Collect context
 
-Collect the PR title, body, linked issues, full diff, changed files, commit
-history, base branch, and change size. Recommend a PR stack in the body when the
-PR is large or mixes unrelated concerns.
+Collect PR title, body, linked issues, full diff, changed files, commit history,
+base branch, change size. Recommend a PR stack in the body when PR is large or
+mixes unrelated concerns.
 
 ### Extract author review focus
 
-Parse the PR description before investigation and turn explicit asks into a
+Parse PR description before investigation → turn explicit asks into a
 `review_focus` list:
 
-- Capture headings/labels, direct reviewer questions, path markers, and
-  self-flagged uncertainty as `{topic, files, question, severity-hint}`; use
-  `concern` when the author flags correctness/security, otherwise `suggestion`.
+- Capture headings/labels, direct reviewer questions, path markers, self-flagged
+  uncertainty as `{topic, files, question, severity-hint}`; use `concern` when
+  author flags correctness/security, else `suggestion`.
 - Drop boilerplate that is not a review ask: test-plan checkboxes, rollout notes,
   "closes #N" lines, screenshots, automation blocks.
-- If there are no asks, record `review_focus: []`.
+- No asks → record `review_focus: []`.
 
 Thread `review_focus` through later phases: Phase 3 prioritizes named files/topics
-first; Phase 4 answers every ask inline or in the body — unanswered asks are a
-review gap.
+first; Phase 4 answers every ask inline or in body — unanswered asks are a review
+gap.
 
 Announce before moving on:
 
@@ -111,8 +110,8 @@ Announce before moving on:
 
 ### Detect architecture-level changes → invoke [`wk-arch-review`](../arch-review/README.md)
 
-Run `wk-arch-review` before Phase 3 when the diff changes architecture or design.
-Fold its findings into Phase 3 prioritisation, Phase 4 comments, and the summary.
+Run `wk-arch-review` before Phase 3 when diff changes architecture or design →
+fold findings into Phase 3 prioritisation, Phase 4 comments, and summary.
 
 **HARD RULE — spec/design docs are unconditional triggers.** Any changed file
 matching `docs/(specs|adr|arch|design|rfc)/` invokes `wk-arch-review` before
@@ -120,33 +119,33 @@ Phase 3, even for a doc-only diff.
 
 Also trigger when any holds:
 
-- A filename contains `architecture`, `design`, `spec`, `rfc`, `adr`, `hld`,
-  `lld`, or `tech-spec`.
-- The diff adds infrastructure/topology: new service, datastore, queue/cache,
-  external hot-path dependency, IaC, or deploy/runtime topology.
-- The diff changes a trust boundary, auth flow, public API/contract, or a
-  migration that reshapes ownership or consistency.
+- Filename contains `architecture`, `design`, `spec`, `rfc`, `adr`, `hld`, `lld`,
+  or `tech-spec`.
+- Diff adds infrastructure/topology: new service, datastore, queue/cache, external
+  hot-path dependency, IaC, or deploy/runtime topology.
+- Diff changes a trust boundary, auth flow, public API/contract, or a migration
+  that reshapes ownership or consistency.
 
-Invoke with the changed doc path when one changed; otherwise pass the PR number:
-`Skill(wk-arch-review, args="<changed-doc-path | PR number>")`. Treat
-high-severity findings as Phase 4 concerns.
+Invoke with changed doc path when one changed; else pass PR number:
+`Skill(wk-arch-review, args="<changed-doc-path | PR number>")`. Treat high-severity
+findings as Phase 4 concerns.
 
 ## Phase 2: Existing Review Comments
 
 Fetch existing review comments, classify stale threads, optionally close the loop
-on your own prior comments, and build the Phase 3/4 exclusion list.
+on your own prior comments, build the Phase 3/4 exclusion list.
 
 ### Fetch comments and resolution state
 
-Retrieve root inline comments only (skip entries with `in_reply_to_id` — they are
-replies, not thread anchors):
+Retrieve root inline comments only (skip entries with `in_reply_to_id` — replies,
+not thread anchors):
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/comments \
   --jq '.[] | {id, node_id, path, line, original_line, position, body, user: .user.login, updated_at, in_reply_to_id}'
 ```
 
-The REST comments endpoint carries no resolution state. On re-review, query each
+REST comments endpoint carries no resolution state. On re-review, query each
 thread's `isResolved` / `isOutdated` before planning loop-closure work:
 
 ```bash
@@ -159,17 +158,17 @@ gh api graphql -f query='
 ```
 
 Skip loop-closure for threads already `isResolved: true`. Reserve follow-up for
-open threads, or resolved threads whose fix does not hold after you verify the
-current code.
+open threads, or resolved threads whose fix does not hold after verifying current
+code.
 
 ### Identify stale comments and review bodies
 
-A comment is stale when any holds: `position` is `null`; the file at `path`
-changed after the comment's `updated_at`; or the referenced line content no longer
-matches the current code. Read the current file when needed and categorize as
-**stale (fixed)**, **stale (unclear)**, or **active**.
+A comment is stale when any holds: `position` is `null`; file at `path` changed
+after comment's `updated_at`; or referenced line content no longer matches current
+code. Read the current file when needed and categorize as **stale (fixed)**,
+**stale (unclear)**, or **active**.
 
-Cross-check top-level review bodies against the current diff. Mark a body `stale
+Cross-check top-level review bodies against current diff. Mark a body `stale
 (superseded)` when it references absent files or an abandoned approach; do not
 carry that framing into the verdict.
 
@@ -205,7 +204,7 @@ Build two structures from active comments:
 **Verify trigger wiring before accepting a bot's severity.** A mechanically
 correct finding on an unwired path is not a live concern. For each bot finding,
 grep for the trigger that activates the affected path (env var, live caller,
-production config, compose/CI wiring). Trigger absent downgrades to "Confirmed but
+production config, compose/CI wiring). Trigger absent → downgrade to "Confirmed but
 narrower than stated."
 
 ### Re-review follow-up
@@ -239,12 +238,12 @@ After each reply, add the queued plus-one reaction to the root comment; log and
 skip reaction failures (fire-and-forget). Resolve acknowledged-fix threads only
 with user consent.
 
-**Thread actions are live.** Replies, reactions, and resolutions post immediately
-and cannot ride in a pending review; `in_reply_to` on draft-review comments
-returns 422. Honor "let me post it myself" by drafting the full set and posting
-only after approval. New holistic findings still enter the pending review in
-Phase 5. Dedup new findings against your own prior threads: overlapping findings
-become follow-up replies, not new top-level comments.
+**Thread actions are live.** Replies, reactions, resolutions post immediately and
+cannot ride in a pending review; `in_reply_to` on draft-review comments returns
+422. Honor "let me post it myself" by drafting the full set and posting only after
+approval. New holistic findings still enter the pending review in Phase 5. Dedup
+new findings against your own prior threads: overlapping findings become follow-up
+replies, not new top-level comments.
 
 ## Phase 3: Adversarial Investigation — delegate to [`wk-adversarial-review`](../adversarial-review/README.md)
 
@@ -273,8 +272,8 @@ On the returned findings:
 - Map adversarial-review `blocker` findings to Phase 4 `concern` candidates;
   `suggestion` / `question` pass through unchanged.
 
-The verdict is advisory here: pr-review always proceeds to compose comments — it
-never blocks the author or posts from the gate.
+Verdict is advisory here: pr-review always proceeds to compose comments — never
+blocks the author or posts from the gate.
 
 ### Validate bot findings
 
@@ -290,13 +289,13 @@ Formulate actionable inline comments anchored to specific diff lines.
 
 ### Posture, tone, and severity
 
-There is no comment cap. Surface every actionable finding and let the user prune
-in the GitHub draft UI. Inline comments are for bugs, concrete suggestions, and
-genuine intent/behavior questions — not diff narration, generic praise, pure
-observations, or bot agreements (those belong in the body).
+No comment cap. Surface every actionable finding; let the user prune in the GitHub
+draft UI. Inline comments are for bugs, concrete suggestions, genuine
+intent/behavior questions — not diff narration, generic praise, pure observations,
+or bot agreements (those belong in the body).
 
 Default to approving with concerns, not blocking. Never use "blocker" in
-author-facing text; use "concern" or "limitation". Keep comments encouraging and
+author-facing text; use "concern" or "limitation". Keep comments encouraging,
 one to two sentences. Tag each with a severity prefix:
 
 - **`concern:`** critical bugs, security, data loss, broken functionality. Use
@@ -313,14 +312,14 @@ Body shape: `**{severity}:** {observation}` then optional context/evidence/fix.
 When proposing a concrete replacement, prefer a GitHub ` ```suggestion ` fence
 over a language fence, only for target lines inside the PR diff:
 
-- Anchor on the exact lines replaced; one-line fixes use `line` + `side: "RIGHT"`,
+- Anchor on exact lines replaced; one-line fixes use `line` + `side: "RIGHT"`,
   multi-line use `start_line` + `line` + matching sides.
 - Match exact existing whitespace — indentation drift silently breaks the apply
   button. Verify: `awk 'NR>=START && NR<=END' "$FILE" | cat -A` (shows tabs as `^I`).
 - A single fence targets one contiguous range; split non-adjacent fixes into
   separate comments. Reply suggestions inherit the parent anchor.
-- If target lines are outside the diff, anchor a nearby diff-visible line, drop
-  the fence, use a plain example, and note manual application.
+- Target lines outside the diff → anchor a nearby diff-visible line, drop the
+  fence, use a plain example, note manual application.
 
 ### Deduplicate against existing comments
 
@@ -355,14 +354,14 @@ the pending-review checkpoint). `in_reply_to` is invalid on draft-review comment
 Lines not in the diff cause a 422 "Line could not be resolved" error.
 
 Build commentable lines from `gh pr diff {number}`. Both `+` and context lines are
-valid `RIGHT`-side targets; removed lines are not. For each proposed comment: keep
-on exact match; move to the nearest matching line within ±5 in the same hunk; else
+valid `RIGHT`-side targets; removed lines are not. Per proposed comment: keep on
+exact match; move to the nearest matching line within ±5 in the same hunk; else
 convert to a file-level comment (`"subject_type": "file"`, omit `line`/`side`) or
 move to the body with a `file:line` reference.
 
 ### Answer author review-focus items
 
-For each `review_focus` item: answer locally via an inline comment (a `question`
+Per `review_focus` item: answer locally via an inline comment (a `question`
 reframed as an answer, or `suggestion`/`concern` when an issue surfaces), add
 `Re: <question>` to the body for cross-cutting answers, or ask a specific
 clarifying question inline when unanswerable from the diff. Mark each `answered:
@@ -418,10 +417,9 @@ opt-in).
 
 The body is the verdict on the change as a whole, not an investigation log.
 
-- **HARD RULE — LGTM is one line.** With no concerns, the body is one line max
-  (`LGTM 🚀` or equivalent) plus the footer.
-- Recommend a PR stack and sketch split lines if the PR is too large or mixes
-  concerns.
+- **HARD RULE — LGTM is one line.** No concerns → body is one line max (`LGTM 🚀`
+  or equivalent) plus the footer.
+- Recommend a PR stack and sketch split lines if PR is too large or mixes concerns.
 - Describe change-spanning structural concerns in the body; leave instances inline.
 - Always end with the canonical outbound footer from `wk-gh` Step 4; apply the same
   footer to every inline comment at payload-render time.

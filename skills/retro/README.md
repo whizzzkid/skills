@@ -2,7 +2,7 @@
 
 > Run a session retrospective to capture learnings and improve future sessions.
 
-**Version:** `2026.06.12-154608`
+**Version:** `2026.06.15-200340`
 
 ## Invocation
 
@@ -21,7 +21,7 @@ flowchart TD
     D --> E["Write write-once per-session file to<br/>$WK_SKILLS_HOME/learnings/retrospect/&lt;YYYY-MM-DD&gt;_session-&lt;N&gt;.md"]
     E --> F{Promotable rules?}
     F -->|yes| G[Distill to actionable rules]
-    G --> H["Add to ~/.claude/memory/<br/>(distilled rules only, never the narrative)"]
+    G --> H["Add to $HOME/.claude/memory/<br/>(distilled rules only, never the narrative)"]
     F -->|no| I[Done]
     H --> I
     click C href "../learn/README.md" _blank
@@ -41,10 +41,10 @@ flowchart TD
   not first capture.
 - **Step 1.5 (`wk-learn scan`) is mandatory** even in auto mode — it walks the transcript to
   extract every user interruption, converting retro from memory-based to evidence-based.
-- **Write/Edit tools are scoped to `~/.claude/` and `$WK_SKILLS_HOME/learnings/retrospect/`** —
+- **Write/Edit tools are scoped to `$HOME/.claude/` and `$WK_SKILLS_HOME/learnings/retrospect/`** —
   the skill cannot write into project directories outside the retrospect log; learnings are
   intentionally global so they travel across all projects.
-- The retrospect log holds narratives; `~/.claude/memory/` files hold only the distilled,
+- The retrospect log holds narratives; `$HOME/.claude/memory/` files hold only the distilled,
   actionable rule — never copy narrative into memory files.
 - A Stop hook (`scripts/suggest-retro.sh`) is available for install but is opt-in; the skill
   works fine as a manual invocation.

@@ -23,7 +23,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.08-190213'
+  version: '2026.06.15-200628'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -32,19 +32,17 @@ metadata:
 
 # SilverBullet
 
-Working guide for SilverBullet 2.x pages, widgets, and interactive dashboards.
-SilverBullet runs in a modern browser with a CodeMirror live-preview editor and
-a service worker that intercepts all fetches. This skill encodes every constraint
-discovered during dashboard development so future work does not re-discover them.
+Working guide for SilverBullet 2.x pages, widgets, interactive dashboards.
+Runs in a browser: CodeMirror live-preview editor + service worker that
+intercepts all fetches.
 
 ## When to Use
 
-- Creating or editing SilverBullet pages, including `live.md` dashboards
+- Creating/editing SilverBullet pages, including `live.md` dashboards
 - Writing `space-style` CSS or Space Lua in the `#meta` page
 - Adding interactive elements (checkboxes, onclick handlers, links)
-- Debugging rendering anomalies (content missing, CSS not applying, handlers
-  not firing)
-- Migrating content from markdown tables to HTML div layouts
+- Debugging rendering anomalies (missing content, CSS not applying, handlers not firing)
+- Migrating markdown tables to HTML div layouts
 
 ## Local Setup (docker-compose)
 
@@ -73,91 +71,58 @@ services:
 
 ## Critical Constraints Reference
 
-Read this section before writing any SilverBullet content.
+Read before writing any SilverBullet content.
 
 ### HTML blocks — no blank lines inside
 
-**HARD RULE:** Never put a blank line inside a `<div>` block.
-
-CommonMark type-6 HTML blocks start at the opening tag and end at the first
-blank line. A blank line inside a `<div>` column terminates the HTML block and
-ejects all subsequent content as separate blocks — the `<div>` renders empty.
-
+- **HARD RULE:** Never put a blank line inside a `<div>` block.
+- CommonMark type-6 HTML blocks end at the first blank line → a blank line inside a `<div>` terminates the block, ejects subsequent content as separate blocks, `<div>` renders empty.
 - Replace blank-line separators inside columns with `<br>` or contiguous lines.
-- This applies to ALL `<div>`, `<span>`, `<section>`, etc. — any type-6 element.
+- Applies to ALL type-6 elements — `<div>`, `<span>`, `<section>`, etc.
 
 ### Input elements are disabled
 
-**HARD RULE:** Never use `<input type="checkbox">` or any `<input>`, `<button>`,
-or `<select>` element inside an HTML widget.
-
-SilverBullet's HTML widget renderer adds `disabled="disabled"` to all form
-elements to prevent them from hijacking the editor's cursor events. `onclick`
-attributes on disabled `<input>` elements are also silently stripped.
-
-- Use `<span onclick="...">` with CSS `::before` for interactive checkboxes.
+- **HARD RULE:** Never use `<input>` (incl. `type="checkbox"`), `<button>`, or `<select>` inside an HTML widget.
+- HTML widget renderer adds `disabled="disabled"` to all form elements → prevents hijacking editor cursor events. `onclick` on disabled `<input>` also silently stripped.
+- Use `<span onclick="...">` + CSS `::before` for interactive checkboxes.
 - Pattern: `<span class="st-cb" data-t="{id}" data-done="false" onclick="HANDLER"></span>`.
 
 ### onclick attribute constraints
 
 Two characters break inline onclick attributes:
 
-1. **`>` (greater-than)** — SilverBullet's HTML parser closes the opening tag
-   at the first `>` even inside an attribute value. Arrow functions (`=>`) break
-   the handler silently.
-2. **`"` (double-quote)** — terminates the attribute value; breaks the handler
-   and corrupts the surrounding markup.
+1. **`>` (greater-than)** — parser closes the opening tag at the first `>` even inside an attribute value → arrow functions (`=>`) break the handler silently.
+2. **`"` (double-quote)** — terminates the attribute value → breaks the handler, corrupts surrounding markup.
 
-**Rules:**
+Rules:
 - Replace `=>` arrow functions with `function(){}`.
 - Replace `"` string literals with `'` single quotes where possible.
-- For double-quote characters required at runtime, use
-  `var q=String.fromCharCode(34)` and build strings from that variable.
-- Prefer `.then()` chains over `async/await` (avoids `>` and keeps handlers
-  short).
+- For runtime-required double-quotes, use `var q=String.fromCharCode(34)` and build strings from it.
+- Prefer `.then()` chains over `async/await` → avoids `>`, keeps handlers short.
 
 ### No HTTP file API — use window.client
 
-**HARD RULE:** Never call `fetch()` to read or write SilverBullet page files.
-
-SilverBullet's service worker intercepts ALL fetch requests from the page and
-returns the SPA HTML shell. `/_/page.md`, `/fs/page.md`, `/.fs/page.md`,
-`/api/page/name` — all return 200 with `content-type: text/html`.
-
-Files live in IndexedDB; the only safe programmatic access is through the
-`window.client` API (see Step 3).
+- **HARD RULE:** Never call `fetch()` to read/write SilverBullet page files.
+- Service worker intercepts ALL fetch requests → returns the SPA HTML shell. `/_/page.md`, `/fs/page.md`, `/.fs/page.md`, `/api/page/name` all return 200 with `content-type: text/html`.
+- Files live in IndexedDB; only safe programmatic access is `window.client` (Step 3).
 
 ### Markdown table cells — no interactive tasks
 
-Native `- [ ]` task checkboxes do not render inside markdown table cells.
-SilverBullet's task widget decoration requires block-level markdown context;
-inside a cell the text renders literally as `- [ ]`.
-
+- Native `- [ ]` checkboxes do not render inside table cells — task widget decoration requires block-level context; inside a cell text renders literally as `- [ ]`.
 - Use `⬜`/`✅` emoji glyphs for read-only status indicators in table cells.
-- For interactive checkboxes in a multi-column layout, use HTML `<div>` columns
-  (see Step 2).
-- Never embed `widget.html()` or `widget.new{}` inside a table cell — the Lua
-  table object serializes as a nested markdown data table instead of rendering.
-  Widgets are standalone-line expressions only.
+- For interactive checkboxes in a multi-column layout, use HTML `<div>` columns (Step 2).
+- Never embed `widget.html()` or `widget.new{}` inside a table cell → Lua table object serializes as a nested markdown data table instead of rendering. Widgets are standalone-line expressions only.
 
 ### Inline markdown inside HTML blocks
 
-SilverBullet renders **inline markdown** inside HTML blocks:
-- `**bold**` → `<strong>` ✅
-- `[text](url)` → clickable link ✅
-- Emojis ✅
+Rendered (inline): `**bold**` → `<strong>` ✅; `[text](url)` → link ✅; emojis ✅
+NOT rendered (block-level): `- [ ]` → literal ✗; ATX headings `## H` → literal ✗; fenced code blocks → literal ✗
 
-But NOT block-level markdown:
-- `- [ ]` task items → literal text ✗
-- ATX headings (`## H`) → literal text ✗
-- Fenced code blocks → literal text ✗
-
-Write column content using inline markdown freely; substitute `<strong>`, `<a>`,
-and similar HTML for any block construct you need.
+Write column content with inline markdown freely; substitute `<strong>`, `<a>`, etc. for any block construct.
 
 ## Step 1: Determine Content Type
 
-Before writing content, classify what you're building:
+Classify what you're building:
 
 | Need | Use |
 |------|-----|
@@ -170,8 +135,8 @@ Before writing content, classify what you're building:
 
 ## Step 2: HTML Column Layout
 
-When interactive checkboxes or rich per-column formatting are required, use the
-HTML div column layout instead of a markdown table.
+For interactive checkboxes or rich per-column formatting, use the HTML div
+column layout instead of a markdown table.
 
 ### space-style block (in `#meta` page)
 
@@ -238,19 +203,18 @@ locate and update the item in the page source.
 
 ### onclick handler
 
-Replace `PAGE_NAME` with the SilverBullet page name (no `.md` extension).
-Replace `HANDLER` inline in each `<span>` attribute:
+Replace `PAGE_NAME` with the page name (no `.md`); replace `HANDLER` inline in each `<span>` attribute:
 
 ```
 var d=this.dataset.done==='true',t=this.dataset.t,q=String.fromCharCode(34);this.dataset.done=String(!d);window.client.space.readPage('PAGE_NAME').then(function(pg){var c=pg.text,s='data-t='+q+t+q+' data-done='+q+(d?'true':'false')+q,n='data-t='+q+t+q+' data-done='+q+String(!d)+q;return window.client.space.writePage('PAGE_NAME',c.replace(s,n))})
 ```
 
-This handler:
-1. Reads the `data-done` state from the clicked span.
-2. Flips the visual state immediately (`this.dataset.done = String(!d)`).
-3. Reads the full page text via `window.client.space.readPage`.
-4. Replaces the exact `data-t="X" data-done="Y"` pair in the source.
-5. Writes the updated text back via `window.client.space.writePage`.
+Handler steps:
+1. Reads `data-done` from the clicked span.
+2. Flips visual state immediately (`this.dataset.done = String(!d)`).
+3. Reads full page text via `window.client.space.readPage`.
+4. Replaces the exact `data-t="X" data-done="Y"` pair in source.
+5. Writes text back via `window.client.space.writePage`.
 
 No `>` (arrow functions) or `"` inside attribute values — all substituted.
 
@@ -268,16 +232,15 @@ All in-browser file operations must go through `window.client.space`:
 | Fire event | `window.client.dispatchAppEvent(name, data)` |
 
 - Page names never carry the `.md` extension.
-- `writePage` handles IndexedDB persistence and server sync automatically.
-- Always use `.then()` chains from onclick attributes — no `async/await` to
-  avoid `>`.
+- `writePage` handles IndexedDB persistence + server sync automatically.
+- Always use `.then()` chains from onclick attributes — no `async/await` (avoids `>`).
 
 ## Step 4: CSS Changes Require Force Reload
 
 **HARD RULE:** After any `space-style` edit, force a reload using the write-back
 pattern — `location.reload()` alone uses a cached snapshot.
 
-From a browser console or Playwright:
+From browser console or Playwright:
 
 ```javascript
 const pg = await window.client.space.readPage('EMPLOYER/sitrep-style');
@@ -286,8 +249,8 @@ location.reload(true);
 ```
 
 Replace `EMPLOYER/sitrep-style` with the actual `#meta` page path. The
-write-back invalidates the cached CSS and triggers SilverBullet to re-process
-the `space-style` block on reload.
+write-back invalidates cached CSS → SilverBullet re-processes the `space-style`
+block on reload.
 
 ## Step 5: CSS Selector Reference
 
@@ -309,16 +272,15 @@ JavaScript.
 ## Step 6: Verify Changes Visually
 
 **HARD RULE:** After any CSS or HTML change, verify in a browser — a file diff
-does not prove the running instance renders correctly. SilverBullet's
-service worker, IndexedDB cache, CodeMirror live preview, and HTML widget
-scoping all sit between the file and what the user sees.
+does not prove the running instance renders correctly. Service worker, IndexedDB
+cache, CodeMirror live preview, and HTML widget scoping all sit between file and
+rendered output.
 
 Run this loop (Playwright MCP, or browser console for steps 1/3/4):
 
-1. **Force style sync** if `space-style` changed — see Step 4 write-back.
-2. **Screenshot** the full page (`browser_take_screenshot`) — confirms layout
-   (e.g., 3 columns actually render, not 1).
-3. **Inspect the DOM** (`browser_evaluate`) — a screenshot misses hidden state:
+1. **Force style sync** if `space-style` changed — Step 4 write-back.
+2. **Screenshot** full page (`browser_take_screenshot`) — confirms layout (e.g., 3 columns render, not 1).
+3. **Inspect the DOM** (`browser_evaluate`) — screenshot misses hidden state:
 
    ```javascript
    window.getComputedStyle(el).display  // did the CSS apply?
@@ -326,15 +288,13 @@ Run this loop (Playwright MCP, or browser console for steps 1/3/4):
    el.disabled                          // is the element unexpectedly disabled?
    ```
 
-4. **Test interactivity** — `.click()` a checkbox span, then re-read the page
-   (`window.client.space.readPage`) to confirm the toggle persisted to file.
+4. **Test interactivity** — `.click()` a checkbox span, re-read the page (`window.client.space.readPage`) to confirm the toggle persisted to file.
 
-Key Playwright MCP tools: `browser_navigate`, `browser_take_screenshot`,
-`browser_evaluate`, `browser_click`.
+Key Playwright MCP tools: `browser_navigate`, `browser_take_screenshot`, `browser_evaluate`, `browser_click`.
 
 ## Common Mistakes
 
-Distilled from field reports on all known failure modes:
+All known failure modes:
 
 - **Blank line inside `<div>`** → column renders empty; content falls below layout.
 - **`<input type="checkbox">`** → disabled by SilverBullet; handler silently stripped.

@@ -23,7 +23,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-022206'
+  version: '2026.06.15-200014'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -46,22 +46,20 @@ Three modes: **brief** (default), **dense**, **off**.
 
 | Invocation | Effect |
 |-----------|--------|
-| `/concise` | Enable brief mode for this session + write `~/.claude/.concise-mode` |
+| `/concise` | Enable brief mode for this session + write `$HOME/.claude/.concise-mode` |
 | `/concise brief` | Enable brief mode (explicit) |
 | `/concise dense` | Enable dense mode |
-| `/concise off` | Disable — remove `~/.claude/.concise-mode` and touch `~/.claude/.concise-off` |
+| `/concise off` | Disable — remove `$HOME/.claude/.concise-mode` and touch `$HOME/.claude/.concise-off` |
 | `/concise:compress <path or paste>` | Rewrite a file or block using active mode rules |
 | `/concise:setup` | Re-run first-run setup flow (detect + offer to install hook and CLAUDE.md snippet) |
 
-Natural language triggers: "be brief", "less words", "reduce tokens",
+Natural-language triggers: "be brief", "less words", "reduce tokens",
 "shorter responses", "compress context", "stop being verbose".
 
-On activation, the skill writes the mode to `~/.claude/.concise-mode` and
-confirms in one line:
+On activation, write mode to `$HOME/.claude/.concise-mode` → confirm in one line:
 > `Concise mode: brief. Active for this session (and future, via mode file).`
 
-For how to make the skill active by default across all sessions and
-agents, see **Default Activation** below.
+Make active by default across sessions/agents → see **Default Activation**.
 
 ---
 
@@ -69,19 +67,13 @@ agents, see **Default Activation** below.
 
 ### Reasoning brevity (both modes)
 
-Concise governs the model's **internal reasoning**, not just the visible
-reply — the per-turn hook reminder carries a THINK-BRIEFLY / THINK-MINIMALLY
-clause for this.
+Concise governs **internal reasoning**, not just the visible reply — the
+per-turn hook reminder carries a THINK-BRIEFLY / THINK-MINIMALLY clause.
 
-- Keep internal deliberation short — reason just enough to reach a correct
-  answer, then act.
-- Do not re-derive facts already established this session, restate the
-  prompt back, or narrate a plan internally before doing the obvious step.
-- Act once the path is clear; reserve long reasoning for genuinely ambiguous
-  or high-risk work (the same exemptions as the output caps).
-- The hook can only *steer* reasoning length. The hard lever is the
-  harness reasoning/thinking budget — lower it (or pick a lower-effort
-  model) when internal-monologue token cost stays high despite the nudge.
+- Keep deliberation short → reason just enough to reach a correct answer, then act.
+- Don't re-derive facts established this session, restate the prompt, or narrate a plan before the obvious step.
+- Act once path is clear; reserve long reasoning for genuinely ambiguous/high-risk work (same exemptions as output caps).
+- Hook only *steers* reasoning length. Hard lever = harness reasoning/thinking budget — lower it (or pick a lower-effort model) when internal-monologue token cost stays high despite the nudge.
 
 ### brief (default)
 
@@ -96,19 +88,12 @@ clause for this.
 
 **Hard caps (brief):**
 
-- **≤3 sentences** per answer unless the answer is code, a diff, or a
-  safety warning. Multi-step procedures still need ≤3 sentences of
-  prose around the code; the code itself is exempt.
-- **No tables for ≤3 items** — write a sentence ("X (foo), Y (bar),
-  Z (baz)"). Tables are for ≥4 row × ≥2 column comparisons.
-- **No section headers for single-section answers.** Headers are for
-  navigation; if there's nothing to navigate to, drop them.
-- **No trailing summary, no recap, no "let me know if".** End on the
-  result.
+- **≤3 sentences** per answer unless answer is code, a diff, or a safety warning. Multi-step procedures still need ≤3 sentences of prose around the code; code itself exempt.
+- **No tables for ≤3 items** — write a sentence ("X (foo), Y (bar), Z (baz)"). Tables are for ≥4 row × ≥2 column comparisons.
+- **No section headers for single-section answers.** Headers are for navigation; drop them if nothing to navigate to.
+- **No trailing summary, no recap, no "let me know if".** End on the result.
 
-These caps are surfaced per-turn by the `concise-reminder.sh` hook so
-they stay top of mind even when the agent's defaults pull toward
-chattiness.
+Caps surfaced per-turn by `concise-reminder.sh` hook so they stay top of mind despite chatty defaults.
 
 **Format:** Prefer bullets over paragraphs for multi-part answers.
 
@@ -159,9 +144,9 @@ Regardless of mode, always write these at full verbosity:
 
 ## First-Run Setup (self-installing)
 
-Hooks live in `~/.claude/settings.json` — the harness config, not a skill
-file. `npx skills add` writes skill files but cannot touch `settings.json`.
-To close the gap, this skill **self-installs on first invocation**.
+Hooks live in `$HOME/.claude/settings.json` (harness config, not a skill file).
+`npx skills add` writes skill files but cannot touch `settings.json` → this
+skill **self-installs on first invocation**.
 
 ### Detect
 
@@ -177,13 +162,13 @@ grep -Fq "Concise by default" "$HOME/.claude/CLAUDE.md" 2>/dev/null && SNIPPET_I
 ### Offer
 
 If `HOOK_INSTALLED=0` **or** `SNIPPET_INSTALLED=0`, emit a one-time offer
-(mark `~/.claude/.concise-setup-offered` after so it doesn't re-ask):
+(mark `$HOME/.claude/.concise-setup-offered` after so it doesn't re-ask):
 
 > `wk-concise — first-run setup`
 >
 > To make brief mode the default for every session, I can wire up:
-> - [{snippet_state}] `~/.claude/CLAUDE.md` — opt-in-by-default across all agents
-> - [{hook_state}] `~/.claude/settings.json` — per-turn reinforcement hook (Claude Code)
+> - [{snippet_state}] `$HOME/.claude/CLAUDE.md` — opt-in-by-default across all agents
+> - [{hook_state}] `$HOME/.claude/settings.json` — per-turn reinforcement hook (Claude Code)
 >
 > Apply both? `(y)es / (n)o / (s)nippet only / (h)ook only`
 
@@ -191,34 +176,34 @@ If `HOOK_INSTALLED=0` **or** `SNIPPET_INSTALLED=0`, emit a one-time offer
 
 ### Apply
 
-On the user's answer, invoke `wk-update-config` (for the `settings.json` edit)
-and append `templates/claude-md-snippet.md` to `~/.claude/CLAUDE.md`.
-`wk-update-config` handles merge, validates JSON, reports result.
-Write `~/.claude/.concise-setup-offered` after applying (one-time guard).
-User can re-trigger via `/concise:setup`.
+On the user's answer: invoke `wk-update-config` (for the `settings.json` edit)
+and append `templates/claude-md-snippet.md` to `$HOME/.claude/CLAUDE.md`.
+`wk-update-config` handles merge, validates JSON, reports result. Write
+`$HOME/.claude/.concise-setup-offered` after applying (one-time guard). Re-trigger
+via `/concise:setup`.
 
 ---
 
 ## Default Activation
 
 Enable concise globally so every session starts in `brief` mode. Three
-stackable mechanisms — the first-run setup flow offers to install them
-automatically; use `/concise:setup` to re-run if needed.
+stackable mechanisms — first-run setup offers to install them automatically;
+`/concise:setup` re-runs if needed.
 
 ### Mechanism 1: CLAUDE.md / AGENTS.md snippet (works everywhere)
 
 Paste `templates/claude-md-snippet.md` into one of:
 
-- `~/.claude/CLAUDE.md` — global, all Claude Code sessions
-- `~/.agents/AGENTS.md` — cross-agent global
+- `$HOME/.claude/CLAUDE.md` — global, all Claude Code sessions
+- `$HOME/.agents/AGENTS.md` — cross-agent global
 - `<repo>/CLAUDE.md` or `<repo>/AGENTS.md` — per-project
-- `~/.gemini/GEMINI.md`, `.cursor/rules/concise.md`, etc. — agent-specific
+- `$HOME/.gemini/GEMINI.md`, `.cursor/rules/concise.md`, etc. — agent-specific
 
 No hook, no code — just prose the model reads at session start.
 
 ### Mechanism 2: UserPromptSubmit hook (Claude Code, per-turn reinforcement)
 
-Add to `~/.claude/settings.json`:
+Add to `$HOME/.claude/settings.json`:
 
 ```json
 {
@@ -238,14 +223,14 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-Reads mode from `~/.claude/.concise-mode` (default: `brief`), emits a 1-line
+Reads mode from `$HOME/.claude/.concise-mode` (default: `brief`), emits a 1-line
 reminder into agent context. Silent-fail on I/O error — never blocks a session.
 
 ### Mechanism 3: Mode file (single source of truth)
 
 ```bash
-echo "dense" > ~/.claude/.concise-mode   # Start in dense mode globally
-echo "brief" > ~/.claude/.concise-mode   # Revert to brief (default)
+echo "dense" > $HOME/.claude/.concise-mode   # Start in dense mode globally
+echo "brief" > $HOME/.claude/.concise-mode   # Revert to brief (default)
 ```
 
 ## Opt-Out
@@ -255,14 +240,14 @@ Any of these disables concise mode without removing the skill:
 | Action | Scope |
 |--------|-------|
 | `/concise off` | Current session |
-| `touch ~/.claude/.concise-off` | All future sessions until removed |
+| `touch $HOME/.claude/.concise-off` | All future sessions until removed |
 | `export CONCISE_OFF=1` | Current shell's sessions |
 | Remove the snippet from `CLAUDE.md` | Permanent |
 
 Opt-out precedence (hook evaluates top-to-bottom): `$CONCISE_OFF=1` →
-`~/.claude/.concise-off` exists → `~/.claude/.concise-mode` = "off".
+`$HOME/.claude/.concise-off` exists → `$HOME/.claude/.concise-mode` = "off".
 
-Confirm deactivation: `Normal mode restored. Opt back in with /concise (or remove ~/.claude/.concise-off).`
+Confirm deactivation: `Normal mode restored. Opt back in with /concise (or remove $HOME/.claude/.concise-off).`
 
 ## Session Persistence Summary
 
@@ -278,7 +263,7 @@ Confirm deactivation: `Normal mode restored. Opt back in with /concise (or remov
 ## `/concise:compress` — Context Compression
 
 Rewrites a verbose text block or file using the active mode's rules. No binary,
-no Python — the LLM applies the rules and returns a diff for review.
+no Python — LLM applies the rules and returns a diff for review.
 
 ### Usage
 
@@ -318,8 +303,8 @@ and state it: `No mode active — using brief for compression.`
 ### What to compress
 
 Good targets for `/concise:compress`:
-- `~/.claude/CLAUDE.md` — global agent instructions
-- Memory files in `~/.claude/memory/*.md`
+- `$HOME/.claude/CLAUDE.md` — global agent instructions
+- Memory files in `$HOME/.claude/memory/*.md`
 - Skill `SKILL.md` files (non-procedural sections only)
 - Meeting notes, spec docs with heavy prose
 

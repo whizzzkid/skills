@@ -52,15 +52,14 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.15-194350'
+  version: '2026.06.15-200652'
 ---
 
 # Sitrep
 
-Unified daily operations log backed by a SilverBullet workspace. It replaces
-the former morning and evening standalone skills with one persistent live page,
-no standalone HTML files, no per-day live directories, and dated snapshots at
-close.
+Unified daily ops log backed by a SilverBullet workspace. One persistent live
+page → replaces former morning/evening skills. No standalone HTML files, no
+per-day live directories; dated snapshots at close.
 
 ```
 start ──► Bootstrap ──► 5 agents ──► auto-transition ──► live.md (+ standup) ──► open ──► commit/push
@@ -76,35 +75,30 @@ end   ──► Read live.md ──► 7 agents ──► snapshot + pending liv
 
 ## Core hard rules
 
-**Never write outside `$SITREP_REPO/$EMPLOYER/`.** All sitrep output is scoped
-to the SilverBullet workspace. Never write `morning.md`, `evening.md`, or any
-sitrep file into the current working directory or `$WK_SKILLS_HOME`.
-
-**No interactive triage.** The user resolves items in SilverBullet, not in chat.
-Never call `AskUserQuestion` to keep/skip/resolve items. Both sub-commands are
-compile-only: gather → render → write → open. Write surfaced items
-unconditionally as `data-done="false"` checkbox spans; the user edits the
-browser page directly.
-
-**Never assert missing without checking.** Before saying "no snapshot" or "X not
-found", run `Read`, `ls`, or `find` on the path. If you did not check, say
-"I have not read X", not "X is missing."
+- **HARD RULE — never write outside `$SITREP_REPO/$EMPLOYER/`.** All output is
+  scoped to the SilverBullet workspace. Never write `morning.md`, `evening.md`,
+  or any sitrep file into cwd or `$WK_SKILLS_HOME`.
+- **HARD RULE — no interactive triage.** User resolves items in SilverBullet,
+  not chat. Never call `AskUserQuestion` to keep/skip/resolve. Both sub-commands
+  are compile-only: gather → render → write → open. Write surfaced items
+  unconditionally as `data-done="false"` checkbox spans; user edits the browser
+  page directly.
+- **HARD RULE — never assert missing without checking.** Before saying "no
+  snapshot" or "X not found", run `Read`/`ls`/`find` on the path. If you did not
+  check, say "I have not read X", not "X is missing."
 
 ## Rendering contract
 
-**Invoke [`wk-silverbullet`](../silverbullet/README.md) for layout mechanics.**
-This skill owns content selection;
-[`wk-silverbullet`](../silverbullet/README.md) owns HTML-block blank-line
-rules, span-checkbox pattern, onclick handler, `window.client` API, `space-style`
-CSS, and force-reload.
-
-SilverBullet parses inline hashtags in link text. Escape every `#` as `\#`, use
-full PR/issue titles (`repo\#N: commit-style title`), and omit items with no
-canonical URL.
-
-`live.md` is an HTML flexbox 3-column layout, not a Markdown table. Both
-`start` and `end` write frontmatter + `# Live — {DATE}` + one
-`<div class="sitrep-row">` containing three `<div class="sitrep-col">`.
+- Invoke [`wk-silverbullet`](../silverbullet/README.md) for layout mechanics. It
+  owns HTML-block blank-line rules, span-checkbox pattern, onclick handler,
+  `window.client` API, `space-style` CSS, force-reload. This skill owns content
+  selection.
+- SilverBullet parses inline hashtags in link text → escape every `#` as `\#`,
+  use full PR/issue titles (`repo\#N: commit-style title`), omit items with no
+  canonical URL.
+- `live.md` is an HTML flexbox 3-column layout, not a Markdown table. Both
+  `start` and `end` write frontmatter + `# Live — {DATE}` + one
+  `<div class="sitrep-row">` containing three `<div class="sitrep-col">`.
 
 - No blank lines inside any `<div>`; CommonMark ends the HTML block at the first
   blank line.
@@ -130,7 +124,7 @@ canonical URL.
 ## Restart SilverBullet after a compose change
 
 When this skill edits `docker-compose.yml` in `$SITREP_REPO`, restart after
-`git push` succeeds so the running service matches the committed config:
+`git push` succeeds so the running service matches committed config:
 
 ```bash
 docker compose down && docker compose up -d
@@ -139,8 +133,8 @@ docker compose logs --tail=5   # confirm the new config is active
 
 ## Dismissed registry (cross-run de-dup)
 
-Items the user resolves vanish from `live.md` at `end`, but the next `start`
-sweep can rediscover them. A week-scoped JSONL registry suppresses those keys.
+User-resolved items vanish from `live.md` at `end` but the next `start` sweep
+can rediscover them. A week-scoped JSONL registry suppresses those keys.
 
 - **File:** `$WEEK_MEM_FILE = $SITREP_REPO/$EMPLOYER/.dismissed/$YEAR-W$WEEK.jsonl`,
   scoped to ISO week (`date +%V`). Defined in Step 0.
@@ -208,18 +202,16 @@ fi
 
 ### Stage 1: Load previous live.md
 
-Read `$LIVE_FILE` if it exists. Extract open `data-done="false"` spans as
-carry-over and completed `data-done="true"` spans as a count only. Legacy
-`⬜` / `[ ]` / `✅` / `[x]` forms are read-only compatibility fallbacks; the
-canonical state is `data-done`.
-
-Resolve the previous working day from the existing `date:` frontmatter. Cross-check
-carry-overs against live external state in Stage 2.
-
-Read the previous working day's snapshot before standup compilation. Resolve
-`$PREV_SNAPSHOT_FILE` and use its `## Achievements / ### Code & PRs` as the
-primary Yesterday source; fall back to session memory only when a filesystem
-check proves the file is absent.
+- Read `$LIVE_FILE` if it exists. Extract open `data-done="false"` spans as
+  carry-over, completed `data-done="true"` spans as a count only.
+- Legacy `⬜` / `[ ]` / `✅` / `[x]` forms are read-only compatibility
+  fallbacks; canonical state is `data-done`.
+- Resolve previous working day from existing `date:` frontmatter. Cross-check
+  carry-overs against live external state in Stage 2.
+- Read previous working day's snapshot before standup compilation. Resolve
+  `$PREV_SNAPSHOT_FILE`; use its `## Achievements / ### Code & PRs` as primary
+  Yesterday source. Fall back to session memory only when a filesystem check
+  proves the file absent.
 
 ### Stage 2: Parallel data gathering
 
@@ -262,9 +254,8 @@ Agent roster:
 - **Jira + Confluence:** assigned tickets needing action; ticket mentions;
   Confluence mentions. ToolSearch: `"jira"`, `"confluence"`.
 
-Use the same soft/hard block handling as the canonical subagent contract:
-OAuth soft blocks degrade with an authorization CTA; missing MCPs are hard
-blocks.
+Soft/hard block handling per canonical subagent contract: OAuth soft blocks
+degrade with an authorization CTA; missing MCPs are hard blocks.
 
 #### Jira full open-ticket sweep
 
@@ -295,18 +286,17 @@ finished:
 
 - For each Agent 5 ticket in `In Review` / `Ready for Review` with a linked PR,
   check merge state: `gh pr view <url> --json state,merged,mergedAt`.
-- If merged within the last 14 days, fetch transitions and transition the ticket
-  to `Done`.
+- If merged within last 14 days, fetch transitions and transition ticket to
+  `Done`.
 - Render as a `data-done="true"` `⚙️ Auto-Actions` item with
-  `✅ auto-transitioned to Done by agent`; never render it as an open TODO.
+  `✅ auto-transitioned to Done by agent`; never render as an open TODO.
 
 ### Stage 3: Compile open items
 
-Merge agent results with carry-over. Drop carry-overs whose external record shows
-completion and drop any item whose key `is_dismissed` for the current week.
-
-Write every surviving item as a `data-done="false"` checkbox span in the correct
-column. No prompts.
+- Merge agent results with carry-over. Drop carry-overs whose external record
+  shows completion; drop any item whose key `is_dismissed` for the current week.
+- Write every surviving item as a `data-done="false"` checkbox span in the
+  correct column. No prompts.
 
 Content inventory, skip empty:
 
@@ -323,13 +313,12 @@ bullets. Sort and mark urgency per the rendering contract.
 
 ### Stage 4: Write live.md
 
-Re-read `$LIVE_FILE` immediately before writing. Preserve every
-`data-done="true"` span; never overwrite a done item with pending. Prefer `Edit`
-over full `Write` when structure allows.
-
-Write today's live page as one `<div class="sitrep-row">` of three
-`<div class="sitrep-col">`; no blank lines inside any `<div>`. Assign unique
-sequential `data-t` IDs.
+- Re-read `$LIVE_FILE` immediately before writing. Preserve every
+  `data-done="true"` span; never overwrite a done item with pending. Prefer
+  `Edit` over full `Write` when structure allows.
+- Write today's live page as one `<div class="sitrep-row">` of three
+  `<div class="sitrep-col">`; no blank lines inside any `<div>`. Assign unique
+  sequential `data-t` IDs.
 
 ```markdown
 ---
@@ -374,8 +363,8 @@ Render standup in col3 as a copy block:
 <div class="st-copy-block"><button class="st-copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.innerText)">Copy</button><pre class="st-standup">{standup text}</pre></div>
 ```
 
-Delegate formatting to
-[`wk-slack`](../slack/README.md) §Standup Snippet; this skill owns selection.
+Delegate formatting to [`wk-slack`](../slack/README.md) §Standup Snippet; this
+skill owns selection.
 
 - **Yesterday:** previous snapshot `## Achievements`, top 3–4 wins; never
   reconstruct from memory when the file exists. Apply the authorship filter.
@@ -419,11 +408,10 @@ Fold auto-actions into the same commit, or a follow-up
 
 ### Stage 1: Read live.md
 
-Read `$LIVE_FILE`. Extract completed `data-done="true"` spans, open
-`data-done="false"` spans, notes under `## Notes`, and standup data. Legacy
-checkbox glyphs are compatibility fallbacks only.
-
-If `$LIVE_FILE` is absent, continue from agents.
+- Read `$LIVE_FILE`. Extract completed `data-done="true"` spans, open
+  `data-done="false"` spans, notes under `## Notes`, standup data. Legacy
+  checkbox glyphs are compatibility fallbacks only.
+- If `$LIVE_FILE` absent, continue from agents.
 
 ### Stage 2: Parallel data gathering
 
@@ -452,7 +440,7 @@ Merge into two buckets:
   items, meeting notes, achievements, feedback, DX metrics, day stats.
 - **Pending → live.md:** tomorrow's prep, untracked actions, unanswered
   Slack/email/Jira/Confluence, Lattice requests, peer feedback opportunities,
-  DX improvements, and every externally-confirmed pending span.
+  DX improvements, every externally-confirmed pending span.
 
 Detect state by `data-done`, not glyphs. Cross-validate pending spans before
 carry-over:
@@ -467,9 +455,9 @@ pending. Drop items with no link.
 
 ### Stage 4: Write snapshot.md
 
-Snapshot is historical only. Never write pending items into it. If
-`$SNAPSHOT_FILE` already exists, re-read and merge; append newly completed items
-and meeting notes rather than overwriting.
+Snapshot is historical only; never write pending items into it. If
+`$SNAPSHOT_FILE` exists, re-read and merge — append newly completed items and
+meeting notes rather than overwriting.
 
 ```markdown
 ---
@@ -519,17 +507,15 @@ Append QPR-worthy items to `$SITREP_REPO/$EMPLOYER/QPR/brag-log.md` with `🌟`.
 
 ### Stage 5: Rewrite live.md
 
-Re-read `$LIVE_FILE` immediately before rewriting. Merge completed spans into
-the snapshot done set rather than re-surfacing them.
-
-Record dismissed keys before scrubbing: for each completed span, write its
-action-specific key to `$WEEK_MEM_FILE` via the Dismissed registry pattern.
-
-Rewrite `$LIVE_FILE` to hold every pending item. Drop completed spans and
-date-specific FYI content (Calendar, Announcements, standup). Fold pending
-spans plus tomorrow's prep, unresolved follow-ups, Lattice feedback, peer
-feedback opportunities, and DX improvements. Re-number `data-t` from `t1`; sort
-and mark urgency per the rendering contract.
+- Re-read `$LIVE_FILE` immediately before rewriting. Merge completed spans into
+  the snapshot done set rather than re-surfacing them.
+- Record dismissed keys before scrubbing: for each completed span, write its
+  action-specific key to `$WEEK_MEM_FILE` via the Dismissed registry pattern.
+- Rewrite `$LIVE_FILE` to hold every pending item. Drop completed spans and
+  date-specific FYI content (Calendar, Announcements, standup). Fold pending
+  spans plus tomorrow's prep, unresolved follow-ups, Lattice feedback, peer
+  feedback opportunities, DX improvements. Re-number `data-t` from `t1`; sort and
+  mark urgency per the rendering contract.
 
 ```markdown
 ---
@@ -557,7 +543,7 @@ note: "Scrubbed {N} completed items — full record in snapshot"
   unanswered Slack/email/Jira, Lattice requests, DX actions.
 - **col3 — Notes:** preserved free-form notes.
 
-There is no `.last_working_day` file; `date:` frontmatter is the sole marker.
+No `.last_working_day` file; `date:` frontmatter is the sole marker.
 
 ### Stage 6: Open snapshot in browser
 
@@ -586,8 +572,8 @@ git -C "$SITREP_REPO" push
 
 ### Stage 8: Distill accumulated learnings
 
-If `$WK_SKILLS_HOME` is set and unprocessed learning files exist, process the
-highest severity first, cap at 5 per run, and carry the rest. Invoke
+If `$WK_SKILLS_HOME` is set and unprocessed learning files exist: process
+highest severity first, cap at 5 per run, carry the rest. Invoke
 [`wk-sharpen`](../sharpen/README.md) with each file as input. Do not rename
 files here; [`wk-sharpen`](../sharpen/README.md) owns `.learned.md` renames.
 

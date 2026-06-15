@@ -2,12 +2,14 @@
 
 > Clean up git worktrees whose branches have been merged.
 
+**Version:** `2026.06.15-200616`
+
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
 | User-invocable | `/wk-worktree-cleanup`, "clean up worktrees", "prune stale worktrees" |
-| Model-invocable | automatic: after a PR is merged, when `wk-workflow` suggests cleanup |
+| Model-invocable | automatic: after a PR is merged, when [`wk-workflow`](../workflow/README.md) suggests cleanup |
 
 ## How It Works
 
@@ -39,7 +41,7 @@ flowchart TD
 - **[`wk-retro`](../retro/README.md) vs [`wk-learn`](../learn/README.md) are not interchangeable
   here** — retro writes the session narrative to
   `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md` (and only distilled rules, if any, to
-  `~/.claude/memory/`); `wk-learn` writes skill-specific learnings under
+  `$HOME/.claude/memory/`); [`wk-learn`](../learn/README.md) writes skill-specific learnings under
   `$WK_SKILLS_HOME/learnings/skills/`. This step uses retro.
 - **`git wtr` uses `-D` (force-delete)** regardless of merge status — never call it on an
   unconfirmed branch. When in doubt, classify as unmerged and let the user decide.
