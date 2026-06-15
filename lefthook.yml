@@ -27,6 +27,8 @@ pre-commit:
       run: .githooks/check-ticket-refs.sh
     check-prohibited:
       run: .githooks/check-prohibited.sh
+    check-skill-size:
+      run: .githooks/check-skill-size.sh
 
 commit-msg:
   commands:
