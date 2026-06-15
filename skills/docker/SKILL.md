@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.05.28-195018'
+  version: '2026.06.15-190033'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -170,6 +170,24 @@ ENV FEATURE_FLAG_X=""
 Use an empty string for "unset by default; entrypoint handles
 absence" and a real value when there is a meaningful default. Either
 way the variable name is now part of the image's documented contract.
+
+## Bind-Mount Overlay Shadows Image COPY
+
+A CI step that runs under a volume mount (`-v <checkout>:/workdir --workdir=/workdir`,
+common on Buildkite agents) replaces the image filesystem at the mount point with
+the live checkout. Any Dockerfile `COPY` to a path under that mount is invisible
+at runtime.
+
+**HARD RULE:** Generated artifacts a mounted step needs (Go embeds, codegen,
+build output) must be produced by the step's own command, not pre-baked via
+`COPY` into the overlaid path.
+
+- Symptom: a `COPY --from=...` lands in the image, yet the step still reports the
+  file missing.
+- Fix: add the generator to the step command before the consumer — e.g.
+  `go generate ./... && go test`.
+- Never rely on `COPY /workdir/...` (or any mount-point path) reaching a step that
+  overlays that path with a bind mount.
 
 ## Building Images
 

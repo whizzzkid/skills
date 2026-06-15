@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.10-194634'
+  version: '2026.06.15-190033'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -150,6 +150,12 @@ severity: <low | medium | high>
 
 Use a 2–4 word kebab-case slug (e.g., `missing-null-check`,
 `wrong-api-endpoint`, `good-parallel-pattern`).
+
+**Validate the filename suffix before staging.** A new learning ends in `.md`,
+never `.learned.md` — the `.learned.md` suffix marks an already-distilled file and
+makes `wk-sharpen` skip it. Confirm the path matches
+`<YYYY-MM-DD>_<slug>.md` (ISO date, kebab slug, single `.md`) before writing or
+`git add`.
 
 **HARD RULE — scrub all internal references before writing.** A learning file
 is committed to a **public** repo. Capture the principle and root cause, never

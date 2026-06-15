@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.14-180157'
+  version: '2026.06.15-190033'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -167,6 +167,7 @@ Apply these standards to ALL code:
   ```
 
 - **File permissions:** executable scripts `chmod +x`; source-only scripts 644.
+- **Portable home paths:** in skills, configs, and committed scripts, reference user-land paths via `$HOME/...` (or `${HOME}`), never a hardcoded machine-absolute home directory (an OS user-home path literal).
 - **Diagrams:** Mermaid over ASCII. Use `flowchart`/`graph` for flows, `sequenceDiagram` for request/response, `classDiagram` for type hierarchies, `stateDiagram-v2` for state machines.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
 - **External API fields:** reuse the client library schema/types when available; hardcode allowlists only when no library type encodes them, and cite the upstream source plus re-sync obligation.

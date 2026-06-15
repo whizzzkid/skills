@@ -28,3 +28,7 @@ which the Bash tool interprets as foreground.
 
 This keeps the CI loop conceptually intact while letting independent
 plan steps run in parallel.
+
+## Additional evidence
+
+Same pattern recurred with `until [...] bk build view` polling loop (not just `gh pr checks --watch`). Any foreground blocking loop — regardless of the underlying CLI — triggers a user interrupt. The rule generalizes: never foreground ANY CI polling construct.

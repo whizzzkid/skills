@@ -38,3 +38,4 @@ flowchart TD
 - **Deduplication before write:** Scan mode checks for existing `(skill, slug)` files including `.learned.md` archives. Duplicate findings append a `## Additional evidence` bullet rather than creating a parallel file.
 - **`.learned.md` extension signals absorption:** After [`wk-sharpen`](../sharpen/README.md) distills a learning into a skill, the owning skill renames the file from `.md` to `.learned.md` so it is never re-processed.
 - **Feeds batch distillation:** Learnings accumulate during the day and are batch-distilled when [`wk-sharpen`](../sharpen/README.md) runs on unprocessed files.
+- **Validate the filename suffix before staging:** a new learning ends in `.md`, never `.learned.md` (which marks an already-distilled file and is skipped by [`wk-sharpen`](../sharpen/README.md)); confirm the path matches `<YYYY-MM-DD>_<slug>.md`.

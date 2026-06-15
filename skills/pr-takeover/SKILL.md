@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.09-172926'
+  version: '2026.06.15-190033'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -196,6 +196,17 @@ npm test -- --passWithNoTests 2>&1 | tail -20         # JS/TS
 Record: passing / failing / skipped. Any failure from the original author's
 work is a **pre-existing failure** — document it, do not treat it as yours.
 
+**When the diff is dominated by documentation / prose / config rather than
+code**, "does it still pass" is the wrong baseline — there is often no runnable
+suite. Substitute a **gate-preservation audit**:
+
+- Run the repo's pre-commit/pre-push hooks as the executable baseline.
+- Diff each touched file against the base; enumerate the rules, links, and counts
+  the change claims to preserve, and verify each survived the compression
+  (parallel subagents scale well across many files).
+- The real takeover risk is a silently dropped load-bearing rule inside the
+  compressed prose, which no test catches.
+
 ---
 
 ## Step 5: Establish Co-Authorship
@@ -206,6 +217,10 @@ Identify the original author's Git identity:
 # From the existing commits
 git log --format="%an <%ae>" "$(git merge-base HEAD "origin/$(gh pr view $PR_NUMBER --json baseRefName -q .baseRefName)")..HEAD" | sort -u
 ```
+
+If the sole author across those commits is the user (taking over one's own PR),
+the co-authorship machinery is a no-op — skip Step 5 and the `$WK_CO_AUTHOR`
+trailer entirely.
 
 Store as `$ORIGINAL_AUTHOR`. Every commit you make during takeover must carry:
 

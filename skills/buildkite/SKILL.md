@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.11-192012'
+  version: '2026.06.15-190033'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -270,6 +270,12 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | jq -r '.state'
 ```
 
 If the build is still running, tell the user and offer to check again later.
+
+**HARD RULE: never foreground-poll.** Do not run an `until`/`while` loop on
+`bk build view` in the foreground — it blocks the turn (often 5–10 min) and
+forces the user to interrupt to regain control. Run a single status check and
+report state. If a watch is genuinely needed, run it with `run_in_background:
+true`.
 
 ## Pipeline Discovery
 
