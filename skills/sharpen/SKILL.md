@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.14-095327'
+  version: '2026.06.15-194041'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -297,13 +297,24 @@ not in the diff will cause a 422 error from the GitHub API.
 
 ## Step 7.5: De-bloat Pass (concision gate)
 
+### HARD RULE: de-bloat every run — never let prose accrete
+
+- Run this pass on **every** sharpening, not only when a learning prompts it. Bloat is the cumulative default of additive edits; treating sharpen as append-only is what grew SKILL.md files past 1000 lines.
 - Search for simplification opportunities before and after the functional edit.
-- Convert dense paragraphs to structured nested bullets when the rule remains complete and actionable.
-- Remove redundancy, dead labels, and explanatory filler.
-- Preserve every rule, failure mode, and command.
-- Reject edits that drop a HARD RULE, error code, or failure-mode explanation.
+- **Bulletize, do not compress prose.** Convert paragraphs into terse, crisp bullet points and checklists — one rule per line, imperative voice, `→` for causality, drop articles/connectives in procedural text. Compressed prose still reads as prose and resists scanning; shorter sentences are not the goal, scannable bullets are.
+- Remove redundancy, dead labels, and explanatory filler. State a rule once; cross-reference it elsewhere instead of restating.
+- **Preserve every rule, failure mode, and command.** Reject any edit that drops a HARD RULE, error code, or failure-mode explanation.
 - Re-run the Drift check after de-bloat edits land.
-- Keep the final `SKILL.md` as short as possible without losing coverage.
+
+### HARD RULE: hard size ceilings per `SKILL.md`
+
+- `.githooks/check-skill-size.sh` blocks commits over any of (each env-tunable):
+  - **Body** (everything after the front-matter) ≤ **24576 bytes** (`SKILL_SIZE_MAX_BYTES`)
+  - **Front-matter** block ≤ **8192 bytes** (`SKILL_FRONTMATTER_MAX_BYTES`)
+  - **`description:`** field ≤ **1024 bytes** (`SKILL_DESC_MAX_BYTES`)
+  - **`allowed-tools:`** ≤ **36 lines** (`SKILL_TOOLS_MAX_LINES`)
+- Do not rely on the hook as the only guard — keep skills under the ceilings proactively.
+- When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list. Coverage-preserving only — never trim by dropping a HARD RULE, error code, or failure-mode.
 
 ## Step 8: Verify and Commit (terminal gate)
 

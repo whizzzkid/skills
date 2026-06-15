@@ -78,6 +78,26 @@ metadata:
 
 Required fields: `name`, `description`
 
+## SKILL.md Prose Style
+
+A `SKILL.md` body is a runtime instruction loaded in full on every invocation —
+optimize for scannability and density.
+
+- **Terse bullets and checklists over prose.** One rule per line, imperative
+  voice, `→` for causality; drop articles and connectives in procedural text.
+- **Do not compress prose into shorter prose — bulletize it.** Compressed
+  paragraphs still read as prose and resist scanning; the goal is scannable
+  structure, not merely shorter sentences.
+- **State each rule once.** Cross-reference it elsewhere instead of restating.
+- **Hard size ceilings**, enforced by `.githooks/check-skill-size.sh`:
+  - Body (everything after the front-matter) ≤ **24 KiB** (`SKILL_SIZE_MAX_BYTES`)
+  - Front-matter block ≤ **8 KiB** (`SKILL_FRONTMATTER_MAX_BYTES`)
+  - `description:` field ≤ **1 KiB** (`SKILL_DESC_MAX_BYTES`)
+  - `allowed-tools:` ≤ **36 lines** (`SKILL_TOOLS_MAX_LINES`)
+  - Over a ceiling: bulletize, split content into `references/` or a sub-skill, or
+    scope the skill down — coverage-preserving, never by dropping a rule, error
+    code, or failure mode.
+
 ## Adding a Skill
 
 1. Create `skills/<skill-name>/SKILL.md` and set `group:` in frontmatter

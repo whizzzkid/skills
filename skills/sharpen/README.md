@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.06.14-095327`
+**Version:** `2026.06.15-194041`
 
 ## Invocation
 
@@ -59,8 +59,10 @@ flowchart TD
   Source 2 path; the memory file itself is never renamed (only the materialized learning is).
 - **Improve mode** requires explicit phased user approval even in auto mode — suite-scale
   refactoring is high blast-radius and can never be applied silently.
-- **De-bloat pass** scans for simplification opportunities and converts dense paragraphs to
-  nested bullets without dropping rules.
+- **De-bloat pass** is mandatory on every run (not only when a learning prompts it) and
+  enforces a hard 24 KiB ceiling per `SKILL.md` — over-ceiling skills are refactored, split into
+  references/sub-skills, or scoped down, coverage-preserving. A pre-commit hook backstops the
+  same ceiling.
 - The gitignored `.distilled-memories` marker prevents re-distilling the same global memory
   across runs (`--force` bypasses it); learnings **and retrospects** track their own processed
   state via the `.learned.md` rename — no marker. Retros are write-once per-session files, so
