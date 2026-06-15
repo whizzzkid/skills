@@ -52,7 +52,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.14-193553'
+  version: '2026.06.15-194350'
 ---
 
 # Sitrep
@@ -380,11 +380,12 @@ Delegate formatting to
 - **Yesterday:** previous snapshot `## Achievements`, top 3–4 wins; never
   reconstruct from memory when the file exists. Apply the authorship filter.
 - **Today:** top 3–4 🔴 ASAP items, deadline-first.
-- **Blockers:** `BLOCKED` or dependency conflicts; omit if none.
+- **Blockers:** `BLOCKED` or dependency conflicts; always present — `None` when empty (per [`wk-slack`](../slack/README.md) §Standup Snippet).
 - Apply [`wk-slack`](../slack/README.md) §Standup privacy filter — drop
   hiring/interview/candidate, personal HR/performance, or non-public items.
 - Use the plaintext fallback exactly: top-level `•` day markers with indented
-  `  •` item bullets, one item per line.
+  `  •` item bullets, one item per line. The emoji leads each day marker —
+  `• 👈🏽 Yesterday`, `• 👉🏽 Today`, `• ✋🏽 Blockers` — never trailing.
 - Verify `👈🏽` and `👉🏽` survive the write; re-emit via Write if either is
   missing.
 

@@ -25,7 +25,7 @@ license: MIT
 group: communication
 metadata:
   author: whizzzkid
-  version: '2026.05.29-192834'
+  version: '2026.06.15-194350'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -256,10 +256,11 @@ illustration):**
 - GitHub PR/issue link labels are always `repo#number` (e.g.,
   `somerepo#NNN`). Bare `#NNN` is forbidden — repo context is lost
   on paste outside the original surface.
-- Emoji lead characters `👈🏽`, `👉🏽`, `✋🏽` are mandatory on the three
-  top-level bullets respectively.
-- Omit the Blockers `<li>` entirely when no blockers exist; do not
-  emit an empty heading.
+- **Emoji LEADS every heading — `👈🏽`/`👉🏽`/`✋🏽` is the first character of the
+  Yesterday/Today/Blockers bullet respectively. Never trail the emoji at the end
+  of a heading line (`Yesterday 👈🏽` is wrong; `👈🏽 Yesterday` is right).**
+- Blockers is always present: emit `- ✋🏽 Blockers:` with a single `- None` child
+  when there are none. Never drop the heading or its emoji.
 - Build the copy button with `ClipboardItem` writing `text/html`
   with real `<a>` tags and `<ul><li>` nesting. Never copy
   `textContent` only — it strips every link.
