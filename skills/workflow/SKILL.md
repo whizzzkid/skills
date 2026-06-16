@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200812'
+  version: '2026.06.16-051748'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -176,6 +176,7 @@ Apply to ALL code:
 - **Error-string discriminators:** reproduce the failure against a real-enough fixture and capture exact text before matching on it.
 - **Env vars in docs:** document where stored, who can edit it, propagation, and unset default.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
+- **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
 
 ---
 
