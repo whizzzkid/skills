@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.16-065020'
+  version: '2026.06.16-072242'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -233,6 +233,7 @@ Run every interpreter the diff exercises, not whatever is first on `PATH`; flag 
 - **Cluster promotion/dedup:** test guard checks the chosen representative, not just the iteration anchor; iterate in reverse and non-sequential order.
 - **Interface contract change:** run old shapes through new code and new shapes through old consumers.
 - **Allowlist/privilege add:** compare new entry against existing siblings, not an empty list; note when strictly less privileged than a present entry.
+- **Cross-step file persistence:** before flagging that a file written in one CI step won't reach a later step, grep the pipeline templates for `artifact_upload`/`artifact_download` (or `artifacts: upload`/`download`) matching that path. Confirmed upload+download resolves the concern → do not surface it. Script-level I/O crossing step boundaries always has a pipeline artifact contract; read the orchestration layer, not just the source.
 
 ### Documentation / prose / compression diffs — read-based analysis
 
