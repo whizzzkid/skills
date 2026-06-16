@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.16-072242'
+  version: '2026.06.16-085419'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -117,10 +117,10 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.1 | Any security/redaction/credential touch | Grep full diff for secret leakage to stderr, `curl -H "Authorization: Bearer $VAR"`, or credential flag values in source/docs/shell. | Blocker | Move credentials to `curl -u`, netrc, or a `chmod 600` header/credentials file. |
 | 2.2 | Changed script/module/parallel pipeline | List directory siblings and whole-repo sibling toolchain invocations. | Blocker | Apply analogous fix to every sibling or explicitly justify absence. |
 | 2.3 | New guard/null-check/defensive branch | Trace upstream transforms for reachability and sentinel completeness. | Blocker | Fix dead guards; handle jq falsy output such as `"null"` before downstream consumers. |
-| 2.4 | Added/modified comments or docs claims | Check assertive claims (`always`, `never`, `must`, `works`) and intent phrases against implementation. | Suggestion | Update/delete stale comments; add pinning tests for universal claims. |
+| 2.4 | Added/modified comments or docs claims | Check assertive claims (`always`, `never`, `must`, `works`) and intent phrases against implementation; flag new/changed doc comments whose one sentence chains independent reasons (`because`/`while`/`so that`). | Suggestion | Update/delete stale comments; add pinning tests for universal claims; split independent clauses (test: "does removing either change the other's meaning?"). |
 | 2.5 | Base/branch references | Grep for hardcoded `main...HEAD`, `origin/main`, `master...HEAD`. | Blocker | Use dynamic base resolver. |
 | 2.6 | Version pins | Grep Dockerfiles, tool manifests, package manifests, and GitHub Actions for `latest`, `stable`, `nightly`, unpinned tags, `^`, or `~`. | Blocker | Pin exact versions or official-action majors. |
-| 2.7 | Signature/contract widening | Grep every caller/initializer for required params/fields; grep open merge/spread/update against structural containers. | Blocker | Update all call sites or add defaults; add allowlist/reserved-key/collision guards. |
+| 2.7 | Signature/contract widening | Grep every caller/initializer for required params/fields; grep open merge/spread/update against structural containers; on a single-field-struct→plain-param collapse, check whether the field's zero-value (`""`/`0`/`false`/`nil`) reaches ≥2 callers for different semantic reasons. | Blocker | Update all call sites or add defaults; add allowlist/reserved-key/collision guards; for an overloaded zero-value (`question`) add a named const or per-call-site comment to preserve intent. |
 | 2.8 | New/removed flags, symbols, errors, tests, docs terms | Sync docs, READMEs, specs, tests, PR body, in-code help, tables, and test counts. | Blocker | Update all enumerations; include synonym/casing variants for removed terms. |
 | 2.9 | Design-pivot docs/specs | Verify plans, ADRs, specs, and inline comments match the new logical shape. | Blocker | Update dependent artifacts in the same branch. |
 | 2.9.1 | Spec/interface with multi-mode type | Review structs/unions/records with ≥4 fields consumed by different modes. | Suggestion | Make compatibility explicit via consumer requirements or producer support matrix. |
@@ -129,7 +129,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.12 | Prior self-review exists | Fetch threads; compare new rationale against stale approach comments. | Suggestion | Drop duplicates, cross-reference, or resolve superseded threads. |
 | 2.13 | Direct comment API | Grep for `gh api .../pulls/<id>/comments`. | Blocker | Remove raw comment posting; verdict output only. |
 | 2.14 | Pre-push hook config | Inspect `.lefthook.yml`, `.husky/pre-push`, `.git/hooks/pre-push`, `bin/ci`; enumerate every gate and multi-phase anchor. | Blocker | Run every gate locally; fix missing hook-phase wiring. |
-| 2.15 | Source diff | Invoke `wk-workstyle check <path>` report-only on every source file. | Suggestion | Surface magic values, nested ternaries, missing public docs, sad-path gaps, branch/test mismatches, async timing, stale comments, empty catches, duplicated test helpers, bugfix-without-regression-test. |
+| 2.15 | Source diff | Invoke `wk-workstyle check <path>` report-only on every source file; on test dedup into `shared_examples`/parameterized factories, audit dropped caller-specific coverage. | Suggestion | Surface magic values, nested ternaries, missing public docs, sad-path gaps, branch/test mismatches, async timing, stale comments, empty catches, duplicated test helpers, bugfix-without-regression-test; restore per-caller log-label assertions, entry-point integration coverage, and caller env-var-fallback tests the shared block hides. |
 | 2.16 | Plugin/skill diff | Scan `SKILL.md` / plugin manifest for authoring-repo-relative paths. | Blocker | Use `${CLAUDE_PLUGIN_ROOT}/`, inline fallback, or pinned upstream fetch. |
 | 2.17 | Dynamic-language diff | For each call kept/added, grep module/imported namespace for matching definition. | Blocker | Restore/remove call or add definition. |
 | 2.18 | Removed named constant | Grep post-rebase diff for the literal value. | Suggestion | Restore constant or extract helper when literal appears at ≥2 non-comment sites. |
@@ -152,6 +152,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.34 | Spec/doc claim about implementation routing (which method a gate calls, which path bypasses a hook) | Grep the PR review thread for reviewer statements describing the same routing. | Blocker | A reviewer who read the source is ground truth; resolve any contradiction before asserting an inferred claim. |
 | 2.35 | Diff changes a structured return-type requirement in one doc section | Grep the whole document for every field comment that stores that value; confirm shape and vocabulary match. | Blocker | Update lagging field comments; keep one canonical name per value across all sections. |
 | 2.36 | Named returns + deferred cleanup that reads a named return | Grep the function for `return <zero-literal>, ...` after the defer is established. An explicit return sets the named returns to those values *before* deferred funcs run, so the cleanup sees the zero value (e.g. `os.RemoveAll("")` → silent no-op, leaked resource). | Blocker | Assign then bare-return (`err = ...; return`) so the named var keeps its real value for the deferred cleanup; verify any comment claiming the defer cleans up "on any error path". |
+| 2.37 | Gate reorder moves a cheap guard before a deeper call | Reordering short-circuits a failure path earlier, so calls it used to make become unreachable. Enumerate every now-unreachable call and check each `not_to receive` test covers all of them, not just the deepest (the diff usually touches only the deepest assertion). | Suggestion | Add the missing negative assertions; escalate to Blocker when a now-unreachable call was previously unstubbed and would hit the network/a real dependency. |
 
 ## Step 3: Fresh Adversarial Subagent
 
