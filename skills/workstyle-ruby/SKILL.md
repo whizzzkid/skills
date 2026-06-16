@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021639'
+  version: '2026.06.16-072242'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -57,6 +57,7 @@ Manual: `/wk-workstyle-ruby scan` (full working tree) · `/wk-workstyle-ruby che
 - **`frozen_string_literal: true`** magic comment in every file.
 - **Guard `return` / `next` / `break`** at the top of a method rather than `unless … else`.
 - **Prefer `map`, `select`, `reduce`** over imperative loops.
+- **Parenthesize endless/beginless ranges in `case/when`**: `when (50..)`, `when (..29)`. A bare `when 50..` parses the range as extending into the next expression → empty `when` branch → RuboCop `Lint/RequireRangeParentheses` + `Lint/EmptyWhen`.
 - **`raise` specific exception subclasses**, not bare `RuntimeError`.
 - **No `rescue Exception`** — rescue `StandardError` at most unless explicitly handling signals.
 - **ASCII-only in source comments.** Use `-`, `->`, `--`, `...` — not em dash (`—`), en dash (`–`), smart quotes,
