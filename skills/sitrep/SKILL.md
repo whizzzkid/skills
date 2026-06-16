@@ -29,6 +29,7 @@ allowed-tools:
   - "Bash(silverbullet:*)"
   - "Bash(docker compose:*)"
   - "Bash(gh pr view:*)"
+  - "Bash(git rev-parse:*)"
   - "Bash(git add:*)"
   - "Bash(git commit:*)"
   - "Bash(git push:*)"
@@ -52,7 +53,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200652'
+  version: '2026.06.16-065020'
 ---
 
 # Sitrep
@@ -169,7 +170,20 @@ is_dismissed() { [ -f "$WEEK_MEM_FILE" ] && jq -e --arg k "$1" \
 
 ### Verify environment and paths
 
+Resolution order for each key: `.sitrep.yml` at the working repo root → env
+var → skill default. The config probe runs first so per-project config can
+supply the vars without shell-profile exports.
+
 ```bash
+# Per-project overrides: .sitrep.yml at the working repo root wins over env/defaults.
+_CFG="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)/.sitrep.yml"
+if [ -f "$_CFG" ]; then
+  _yml() { sed -n "s/^$1:[[:space:]]*\"\{0,1\}\([^\"]*\)\"\{0,1\}[[:space:]]*\$/\1/p" "$_CFG"; }
+  _v=$(_yml sitrep_repo); [ -n "$_v" ] && SITREP_REPO="$_v"
+  _v=$(_yml employer);    [ -n "$_v" ] && EMPLOYER="$_v"
+  _v=$(_yml sitrep_port); [ -n "$_v" ] && SITREP_PORT="$_v"
+fi
+
 test -n "$SITREP_REPO" || { echo "SITREP_REPO is not set"; exit 1; }
 test -n "$EMPLOYER"    || { echo "EMPLOYER is not set"; exit 1; }
 SITREP_PORT="${SITREP_PORT:-3000}"
