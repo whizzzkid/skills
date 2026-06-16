@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.15-190033'
+  version: '2026.06.16-165651'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -170,6 +170,29 @@ ENV FEATURE_FLAG_X=""
 Use an empty string for "unset by default; entrypoint handles
 absence" and a real value when there is a meaningful default. Either
 way the variable name is now part of the image's documented contract.
+
+## Audit Runtime Env Reads Against the Forwarding List
+
+**HARD RULE:** Compose and the Buildkite `docker_compose` plugin forward
+*only* the env vars explicitly listed in the `environment:` / `env:` array.
+Agent-level vars — CI builtins and user-defined secrets alike — are silently
+absent inside the container unless declared. A missing entry surfaces as a
+runtime "feature not enabled" with no error, not a failure.
+
+Before treating a compose/plugin config as complete, audit the full runtime
+read set — not just the vars the diff added:
+
+1. Grep every script and library in the container's runtime call graph for
+   env reads: `ENV[`, `ENV.fetch`, `os.environ`, `process.env`, `$VAR`, etc.
+2. Collect the full set of env var names read.
+3. Diff that set against the `environment:` / `env:` list.
+4. Flag any read with no corresponding forwarding entry.
+5. Cross-check sibling templates/compose files serving the same role —
+   inconsistency between siblings is a strong signal of a missing entry.
+
+**Never use a host-side SHA or build identifier (e.g. the CI runner's own
+commit SHA) as a proxy for a target-artifact SHA inside the container** —
+they are different values and fail downstream comparisons.
 
 ## Bind-Mount Overlay Shadows Image COPY
 

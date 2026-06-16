@@ -2,6 +2,8 @@
 
 > Use when working with Docker — building images, inspecting containers, debugging Dockerfile issues, verifying image tags exist, or troubleshooting Docker daemon connectivity.
 
+**Version:** `2026.06.16-165651`
+
 ## Invocation
 
 | Mode | Trigger |
@@ -31,6 +33,7 @@ flowchart TD
 - **HARD RULE:** Always run `docker manifest inspect <image>:<tag>` before using any image tag in a `FROM` directive — never assume a tag exists.
 - **ENTRYPOINT reset:** Images with custom entrypoints break `docker-compose run` commands; the fix is `ENTRYPOINT []` in the Dockerfile. Verify with `docker run --rm <image> sh -c 'echo works'`.
 - **Runtime env vars contract:** Every env var read by the entrypoint at runtime must have an `ENV VAR=""` declaration in the Dockerfile — the image is the canonical interface document.
+- **Env-forwarding audit:** Compose / the `docker_compose` plugin forward only vars listed in `environment:` / `env:`. Audit the full container runtime call-graph reads against that list (not just the diff delta) and cross-check siblings; a missing entry is a silent runtime no-op. Never proxy a target-artifact SHA with a host build SHA.
 - **Daemon startup is user-only:** The skill never attempts to start the Docker daemon itself; it instructs the user to start Docker Desktop or `colima start`.
 - **ECR auth:** `authorization failed` / `ExpiredToken` errors always mean `aws sso login` — the skill does not attempt re-authentication.
 - **Exit code table:** Codes 137 (OOM) and 125 (daemon error) have specific meanings; the skill maps them rather than treating all failures as generic errors.

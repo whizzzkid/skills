@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.16-085419'
+  version: '2026.06.16-165651'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -121,7 +121,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.5 | Base/branch references | Grep for hardcoded `main...HEAD`, `origin/main`, `master...HEAD`. | Blocker | Use dynamic base resolver. |
 | 2.6 | Version pins | Grep Dockerfiles, tool manifests, package manifests, and GitHub Actions for `latest`, `stable`, `nightly`, unpinned tags, `^`, or `~`. | Blocker | Pin exact versions or official-action majors. |
 | 2.7 | Signature/contract widening | Grep every caller/initializer for required params/fields; grep open merge/spread/update against structural containers; on a single-field-struct→plain-param collapse, check whether the field's zero-value (`""`/`0`/`false`/`nil`) reaches ≥2 callers for different semantic reasons. | Blocker | Update all call sites or add defaults; add allowlist/reserved-key/collision guards; for an overloaded zero-value (`question`) add a named const or per-call-site comment to preserve intent. |
-| 2.8 | New/removed flags, symbols, errors, tests, docs terms | Sync docs, READMEs, specs, tests, PR body, in-code help, tables, and test counts. | Blocker | Update all enumerations; include synonym/casing variants for removed terms. |
+| 2.8 | New/removed flags, symbols, errors, tests, docs terms | Sync docs, READMEs, specs, tests, PR body, in-code help, tables, and test counts. On a parameter/symbol rename, also grep the owning class/module docstring for the old name AND any behavioral phrase it qualified (e.g. "no findings" when the param narrowed to "blocking findings only") — prose claims don't match a symbol grep. | Blocker | Update all enumerations; include synonym/casing variants for removed terms; sync stale semantic phrasing in class docstrings in the same commit as the rename. |
 | 2.9 | Design-pivot docs/specs | Verify plans, ADRs, specs, and inline comments match the new logical shape. | Blocker | Update dependent artifacts in the same branch. |
 | 2.9.1 | Spec/interface with multi-mode type | Review structs/unions/records with ≥4 fields consumed by different modes. | Suggestion | Make compatibility explicit via consumer requirements or producer support matrix. |
 | 2.10 | Existing PR | Fetch title/body; check behavior wording, test counts, file lists, remaining work, metadata, Jira suffix, rename/enum drift, rollout/ops section for prod-facing diffs. | Blocker | Record body drift as post-push TODO; fix before marking ready. |
@@ -134,7 +134,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.17 | Dynamic-language diff | For each call kept/added, grep module/imported namespace for matching definition. | Blocker | Restore/remove call or add definition. |
 | 2.18 | Removed named constant | Grep post-rebase diff for the literal value. | Suggestion | Restore constant or extract helper when literal appears at ≥2 non-comment sites. |
 | 2.19a | Added Struct/Record/interface/Go field | Grep tests for direct concrete-value assertion on the new field. | Blocker | Add direct assertion; `respond_to?`/presence alone is insufficient. |
-| 2.20 | Application code + CI pipeline | Extract net-new env reads; locate invoking pipeline steps; verify env allowlist forwarding. | Blocker | Forward vars in native/container steps; exempt auto-injected prefixes only for native non-container steps. |
+| 2.20 | Application code + CI pipeline | Extract net-new env reads; locate invoking pipeline steps; verify env allowlist forwarding. When the diff touches a compose `environment:` block or plugin `env:` array, escalate to a full-path audit: grep every script AND library in the container's runtime call graph (not just the diff delta) for env reads and diff that whole set against the forwarding list; run a sibling-template consistency check. | Blocker | Forward vars in native/container steps; exempt auto-injected prefixes only for native non-container steps. Surface any runtime read without a forwarding entry, including pre-existing reads in called libraries; siblings serving the same role must forward the same logical set. |
 | 2.19 | New/modified tests | Grep for self-referential equality (`expect(x).to eq(x.sort())`) and no-op `&& true` after `||`. | Blocker | Build independent expected values; propagate `false` in fail paths. |
 | 2.21 | New numeric security-gating config | Trace consumer path; verify positive lower bound and hard ceiling before control gates. | Blocker | Add bounds/ceiling constants. |
 | 2.22 | New structured-artifact plumbing | Detect `<collection>["key"]`/`.get(key)` feeding downstream calls. | Suggestion | Add integration test for the wire. |

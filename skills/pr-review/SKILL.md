@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200139'
+  version: '2026.06.16-165651'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -52,8 +52,12 @@ into encouraging but critical inline comments posted as a pending GitHub review.
 **HARD RULE:** Every `gh` read and GitHub write follows `wk-gh`:
 
 - Scope reads per `wk-gh` Step 1–2.
-- Append the canonical outbound footer from `wk-gh` Step 4 to the review body and
-  every inline comment; do not invent one.
+- **Invoke `wk-gh` (Skill tool) before drafting any review body or inline
+  comment.** The footer text lives in its Step 4 and is not reproducible from
+  memory — load the skill to extract it. "Do not invent one" means load `wk-gh`,
+  **not** skip the footer; omitting the footer is a rule violation, not a fallback.
+- Append the extracted canonical outbound footer to the review body and every
+  inline comment.
 
 ## Phase 1: Context
 
