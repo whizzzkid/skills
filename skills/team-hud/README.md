@@ -7,16 +7,14 @@
 > Generate a heads-up display of what each team member is working on —
 > surfacing PRs, Jira tickets, Slack activity, announcements, shareouts,
 > and emails. Designed to be invoked in parallel by
-> [`wk-goodmorning`](../goodmorning/README.md) and
-> [`wk-goodevening`](../goodevening/README.md) to produce the team-activity
-> section of daily summaries.
+> [`wk-sitrep`](../sitrep/README.md) to produce the team-activity section of daily summaries.
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
 | User-invocable | `/wk-team-hud` (currently disabled, status: wip) |
-| Model-invocable | parallel sub-task from [`wk-goodmorning`](../goodmorning/README.md) / [`wk-goodevening`](../goodevening/README.md) (currently disabled) |
+| Model-invocable | parallel sub-task from [`wk-sitrep`](../sitrep/README.md) (currently disabled) |
 
 ## Configuration
 
@@ -78,7 +76,7 @@ disabled:
 - **HARD RULE: pull from live sources.** Carry-over items from prior
   briefs are never re-surfaced without cross-checking against this run's
   fetched data — see the equivalent rule in
-  [`wk-goodmorning`](../goodmorning/README.md).
+  [`wk-sitrep`](../sitrep/README.md).
 - **Excludes the calling user.** This is a *team* brief; the caller's
   own activity is surfaced by the parent skill in other sections.
 - **GitHub team URL parsing** uses `gh api orgs/<org>/teams/<slug>/members`,

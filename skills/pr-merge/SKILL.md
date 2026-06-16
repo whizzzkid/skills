@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-024026'
+  version: '2026.06.15-200303'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -34,8 +34,8 @@ metadata:
 
 # PR Merge
 
-Gate the merge of a pull request behind a full pre-merge checklist, then
-merge, transition the linked ticket, and summarise follow-ups.
+Gate the merge behind a full pre-merge checklist → merge → transition linked
+ticket → summarise follow-ups.
 
 ## When to Use
 
@@ -44,8 +44,6 @@ merge, transition the linked ticket, and summarise follow-ups.
 - **NOT** for merging someone else's PR unless the user explicitly owns the merge.
 
 ## Step 1: Resolve the PR
-
-Determine which PR to merge:
 
 ```bash
 # If an argument was given (number or URL), use it directly.
@@ -61,13 +59,11 @@ Extract and record:
 - `{url}` — PR URL
 - `{body}` — PR description (used in Steps 5 and 8)
 
-If the command exits non-zero (not on a PR branch, no open PR), stop:
-
-> "No open PR found for the current branch. Pass a PR number or URL as an
-> argument, or switch to a PR branch."
-
-Announce:
-> "Checking PR #`{number}`: _{title}_ → `{base}`"
+- Command exits non-zero (not on a PR branch, no open PR) → stop:
+  > "No open PR found for the current branch. Pass a PR number or URL as an
+  > argument, or switch to a PR branch."
+- Announce:
+  > "Checking PR #`{number}`: _{title}_ → `{base}`"
 
 ## Step 2: Verify CI is green
 
@@ -76,20 +72,15 @@ gh pr checks {number} --json name,state,required \
   | jq '.[] | select(.required == true) | {name, state}'
 ```
 
-- All required checks must have `state: SUCCESS` (or `NEUTRAL`/`SKIPPED` if the
+- All required checks must be `state: SUCCESS` (or `NEUTRAL`/`SKIPPED` if the
   repo treats them as passing).
-- If **any** required check has `state: FAILURE` or `ERROR`, block:
-
+- Any required check `state: FAILURE` or `ERROR` → block:
   > "CI is not green. Failing checks:\n- {name}: {url}\n\nFix the failures and
   > re-run `/wk-pr-merge` when CI is green."
-
-- If **any** required check is `IN_PROGRESS` or `PENDING`, block:
-
+- Any required check `IN_PROGRESS` or `PENDING` → block:
   > "CI is still running ({name}). Re-run once all checks complete."
-
 - Always verify CI against `{head_sha}` — a stale run from a prior commit does
-  not count. If `gh pr checks` shows results for a different SHA, block until
-  a new run starts.
+  not count. `gh pr checks` showing a different SHA → block until a new run starts.
 
 ## Step 3: Verify reviews are approved
 
@@ -100,15 +91,11 @@ gh pr view {number} --json reviewDecision,reviews \
 
 - `reviewDecision == "APPROVED"` → proceed.
 - `reviewDecision == "CHANGES_REQUESTED"` → block:
-
   > "Changes requested by: {logins}. Resolve the review before merging."
-
 - `reviewDecision == "REVIEW_REQUIRED"` (no reviews yet) → block:
-
   > "No review has been submitted. The PR requires at least one approval."
-
-- `reviewDecision == null` (repo has no required reviewers) → treat as approved
-  and continue.
+- `reviewDecision == null` (repo has no required reviewers) → treat as approved,
+  continue.
 
 ## Step 4: Verify all review threads are resolved
 
@@ -138,23 +125,19 @@ gh pr view {number} --json reviewDecision,reviews \
   concept of "self-review"; every unresolved thread blocks the merge at the
   platform level. Excluding self-authored threads passes the skill's own gate,
   then GitHub rejects the merge with `base branch policy prohibits the merge`.
-- For unresolved threads authored by **reviewers or bots**, invoke
+- Unresolved threads authored by **reviewers or bots** → invoke
   [`wk-pr-resolve`](../pr-resolve/README.md) before proceeding — do not merge,
   do not block-and-stop:
-
   ```
   Skill(wk-pr-resolve, args="{number}")
   ```
-
-- `wk-pr-resolve` excludes self-review threads from triage, so it leaves
-  threads the PR author opened untouched. For any unresolved **self-review**
-  threads that remain, resolve them as a pre-merge cleanup — confirm with the
-  user, then mark each resolved by `id`:
-
+- `wk-pr-resolve` excludes self-review threads from triage → leaves
+  author-opened threads untouched. Remaining unresolved **self-review** threads
+  → resolve as pre-merge cleanup: confirm with user, then mark each resolved
+  by `id`:
   ```bash
   gh api graphql -f query='mutation($id:ID!){resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}' -F id=<threadId>
   ```
-
 - Re-run the GraphQL query. Continue only when **zero** unresolved non-outdated
   threads remain (any author).
 
@@ -166,18 +149,14 @@ Scan the PR body for unchecked task-list items:
 echo "{body}" | grep -nE '^\s*- \[ \]'
 ```
 
-- Items outside any "deferred" / "follow-up" / "future work" section with
-  `- [ ]` are **blockers** — list them and stop:
-
+- `- [ ]` items outside any "deferred" / "follow-up" / "future work" section
+  → **blockers**; list and stop:
   > "Unresolved action items in the PR description:\n- {item}\n\n
   > Check them off, move them to a deferred section, or link a tracking
   > ticket before merging."
-
-- Items explicitly labelled "Deferred", "Follow-up PR", "Next sprint", or
-  under a heading that contains those phrases are **not blockers** — collect
-  them for Step 8's output instead.
-
-- Items with `- [x]` are already done — skip.
+- Items labelled "Deferred", "Follow-up PR", "Next sprint", or under a heading
+  containing those phrases → **not blockers**; collect for Step 8 output.
+- `- [x]` items are already done → skip.
 
 ## Step 6: Merge the PR
 
@@ -185,37 +164,29 @@ echo "{body}" | grep -nE '^\s*- \[ \]'
 gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
 ```
 
-- **Always pass `--repo "$GITHUB_ORG/{repo}"`** — it forces GitHub
-  API-only behavior and skips local branch manipulation. Without it,
-  `gh pr merge --delete-branch` runs a local checkout of the base branch
-  and fails inside a git worktree where the base is already checked out
-  elsewhere (`fatal: '<base>' is already used by worktree at ...`). The
-  `--repo` form is idempotent in both worktree and regular checkouts.
-- **HARD RULE — always attempt squash first.** Run the `--squash` command
-  above on every merge. Fall back only when it **fails** — non-zero exit
-  (squash disallowed by branch protection, or a merge error).
-- On squash failure, detect the repo's allowed methods and retry with the
-  next best alternative, in order **`--rebase` then `--merge`** (first
-  allowed wins — rebase keeps linear history; merge commit is the universal
-  fallback):
-
+- **Always pass `--repo "$GITHUB_ORG/{repo}"`** — forces GitHub API-only
+  behavior, skips local branch manipulation. Without it,
+  `gh pr merge --delete-branch` runs a local checkout of the base branch and
+  fails inside a git worktree where the base is already checked out elsewhere
+  (`fatal: '<base>' is already used by worktree at ...`). The `--repo` form is
+  idempotent in both worktree and regular checkouts.
+- **HARD RULE — always attempt squash first.** Run the `--squash` command above
+  on every merge. Fall back only on **failure** — non-zero exit (squash
+  disallowed by branch protection, or a merge error).
+- Squash failure → detect allowed methods, retry next best in order
+  **`--rebase` then `--merge`** (first allowed wins — rebase keeps linear
+  history; merge commit is the universal fallback):
   ```bash
   gh api repos/{owner}/{repo} --jq '{allow_squash_merge, allow_merge_commit, allow_rebase_merge}'
   ```
-
 - Never switch away from squash when the squash command succeeds.
-
-- `--delete-branch` deletes the head branch after merge. If the repo has
-  "delete branch on merge" disabled and the user has not expressed a
-  preference, ask once:
-
+- `--delete-branch` deletes the head branch after merge. Repo has "delete branch
+  on merge" disabled and user has not expressed a preference → ask once:
   > "Delete the branch `{head}` after merge? (yes / no)"
-
 - **HARD RULE — never declare "Merge complete" until `state == "MERGED"`.**
   `gh pr merge --auto` and merge-queue repos return success while the PR is
   only *queued*; an immediate state check returns `OPEN`. Poll until merged or
   ~60s timeout:
-
   ```bash
   for i in $(seq 1 12); do
     state=$(gh pr view {number} --json state --jq .state)
@@ -224,18 +195,14 @@ gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
   done
   gh pr view {number} --json state,mergeCommit --jq '{state, mergeCommit: .mergeCommit.oid}'
   ```
-
-- On timeout (`state != "MERGED"`), re-fetch the blockers, stop, and do **not**
-  proceed to Step 7 — never log a null SHA as success:
-
+- Timeout (`state != "MERGED"`) → re-fetch blockers, stop, do **not** proceed to
+  Step 7 — never log a null SHA as success:
   ```bash
   gh pr view {number} --json mergeStateStatus,reviewDecision
   # plus the Step 4 unresolved-threads query
   ```
-
   > "Auto-merge queued but PR has not merged after ~60s. Likely blockers:
   > {unresolved threads / failed checks / changes requested}."
-
 - Record `{merge_sha}` (the merge commit OID) only once `state == "MERGED"`.
 
 ## Step 7: Transition the linked ticket
@@ -257,31 +224,25 @@ echo "{body}" | grep -oE 'https://app\.asana\.com/[^[:space:]]+'
 
 For each detected Jira key:
 
-1. Fetch the issue and its available transitions:
-
+1. Fetch issue + available transitions:
    ```
    getJiraIssue(key)
    getTransitionsForJiraIssue(key)
    ```
-
 2. Find the terminal transition (first match among: `Done`, `Closed`,
    `Resolved`, `Shipped`, `Complete`).
-
-3. Transition the ticket:
-
+3. Transition:
    ```
    transitionJiraIssue(key, transitionId)
    ```
-
 4. Post a shipped comment:
-
    ```
    addCommentToJiraIssue(key,
      body="Shipped in PR #{number} — {title}.\n{merge_sha}\n\nSee: {url}")
    ```
 
-If no terminal transition is found, note it in the output and skip the
-transition — do not block the merge.
+No terminal transition found → note in output, skip the transition, do not
+block the merge.
 
 ### GitHub issues
 
@@ -291,20 +252,20 @@ For each `closes #N` / `fixes #N` reference:
 gh issue close {N} --comment "Shipped in {url} (merge commit {merge_sha})."
 ```
 
-GitHub auto-close via `Closes #N` only fires when the PR merges into the
-repo's default branch. For other base branches, close manually here.
+GitHub auto-close via `Closes #N` only fires when the PR merges into the repo's
+default branch. For other base branches, close manually here.
 
 ### Asana
 
-No MCP available for Asana. Note each detected URL in the follow-ups output
-so the user can transition manually:
+No MCP available for Asana. Note each detected URL in the follow-ups output so
+the user can transition manually:
 
 > "⚠️ Asana task detected — no MCP available. Transition manually: {url}"
 
 ### No ticket found
 
-If no ticket key or issue reference is found anywhere, note it and continue —
-do not block.
+No ticket key or issue reference found anywhere → note it, continue, do not
+block.
 
 ## Step 8: Output follow-ups and action items
 
@@ -336,7 +297,7 @@ PR #{number} merged as {merge_sha} into `{base}`.
 (No follow-ups.) ← emit only when the list is empty
 ```
 
-If there are follow-ups, offer once:
+Follow-ups present → offer once:
 
 > "Want me to file these as GitHub issues or Jira tickets?"
 
@@ -344,13 +305,11 @@ If there are follow-ups, offer once:
 
 - Invoke [`wk-retro`](../retro/README.md) to reflect on the full PR session —
   implementation, review back-and-forth, and merge:
-
   ```
   Skill(wk-retro)
   ```
-
-- Run after the merge succeeds — the session is complete and its decisions
-  are freshest now.
+- Run after the merge succeeds — session is complete and its decisions are
+  freshest now.
 - Failure mode: merging ends the session; ad-hoc context (design choices,
   reviewer trade-offs) is lost if not distilled before the worktree is cleaned.
 
@@ -358,14 +317,12 @@ If there are follow-ups, offer once:
 
 - Invoke [`wk-worktree-cleanup`](../worktree-cleanup/README.md) to remove the
   worktree holding the just-merged branch:
-
   ```
   Skill(wk-worktree-cleanup, args="--current")
   ```
-
 - Run only when the merge happened from inside a dedicated worktree for the PR
-  branch. `wk-worktree-cleanup` self-detects the main worktree and skips
-  cleanup there — never removes the repo root.
+  branch. `wk-worktree-cleanup` self-detects the main worktree and skips cleanup
+  there — never removes the repo root.
 - Step 9's `wk-retro` satisfies `wk-worktree-cleanup`'s pre-delete retro guard;
   it will not re-run retro for the same session.
 

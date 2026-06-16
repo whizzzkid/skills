@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-122250'
+  version: '2026.06.15-200053'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -36,20 +36,16 @@ metadata:
 
 # Plan
 
-Produce a thorough, parallelizable, agent-ready plan before any code is
-written. Invoked at the start of every non-trivial task — either directly
-(`/wk-plan <task>`) or by `wk-workflow` Phase 1.
+Produce a thorough, parallelizable, agent-ready plan before any code is written.
 
-The output is an explicit numbered plan where every item carries an agent
-assignment marker, temporal dependencies are minimized, and parallel phases
-are the default.
+- Invoked at the start of every non-trivial task — directly (`/wk-plan <task>`) or by `wk-workflow` Phase 1.
+- Output: explicit numbered plan; every item carries an agent-assignment marker; temporal dependencies minimized; parallel phases are the default.
 
 ---
 
 ## Step 0: Grill — Detect and resolve ambiguities
 
-**HARD RULE:** Never plan a vague task. Stop here and clarify before
-research or planning begins.
+**HARD RULE:** Never plan a vague task. Stop here and clarify before research or planning begins.
 
 Scan the task description for these ambiguity signals:
 
@@ -63,14 +59,10 @@ Scan the task description for these ambiguity signals:
 | Missing "what must NOT change" | new feature touching shared code | Yes |
 | ≥2 distinct deliverables bundled | "add X, fix Y, and refactor Z" | Yes — confirm granularity |
 
-When ≥1 signal fires, ask the minimum set of questions (max 4) to unblock.
-Use `AskUserQuestion` rather than prose so the user can answer efficiently.
+- When ≥1 signal fires → ask the minimum set of questions (max 4) to unblock, via `AskUserQuestion` (not prose) for efficient answering.
+- Proceed to Step 1 only when every blocker is resolved.
 
-**Multi-deliverable granularity.** When the prompt lists ≥2 deliverables that
-could each stand alone (own ticket, commit, or PR), surface them as a numbered
-list and ask "one PR or separate?" **before** planning. A bundle of N tasks
-reads as a clear requirement but hides a granularity decision only the user
-owns; a single deliverable with sub-tasks does not trigger this.
+**Multi-deliverable granularity.** When the prompt lists ≥2 deliverables that could each stand alone (own ticket, commit, or PR) → surface them as a numbered list and ask "one PR or separate?" **before** planning. A bundle of N tasks reads as a clear requirement but hides a granularity decision only the user owns; a single deliverable with sub-tasks does not trigger this.
 
 Structure each question with a concrete `header` label. Good question forms:
 
@@ -80,14 +72,40 @@ Structure each question with a concrete `header` label. Good question forms:
 - **Priority tiebreaker:** "If speed and correctness conflict, which wins?"
 - **Risk tolerance:** "Is a partial rollout (flag/canary) acceptable, or must it ship atomically?"
 
-Proceed to Step 1 only when every blocker is resolved.
-
 ---
 
 ## Step 1: Research — Parallel context gathering
 
-Dispatch parallel `Agent` calls to build the context map before planning.
-Select the relevant agents for the task type (not all are needed every time).
+### Gate 1: Jira ticket pre-flight
+
+Before any exploration (`Read`, `Grep`, `Agent` dispatch) → check whether a Jira ticket exists for the work.
+
+- Treat a Jira URL or key in the user's prompt as a confirmed ticket.
+- When a ticket exists → invoke `wk-jira` Stage 0+1+2 before drafting the plan.
+- Put ticket acceptance criteria and linked specs in the plan before exploration starts.
+- Ask the user once if the ticket status is unknown.
+- Do not surface the ticket after exploration is underway.
+
+### Gate 2: Investigate user-provided artifacts first
+
+Before spawning exploration `Agent` calls → scan the user's most recent message for concrete references: URLs, PR numbers, file paths, error messages with line/column, build IDs, stack frames.
+
+When a concrete artifact is present:
+
+- Fetch or read it directly first (`gh pr diff`, `Read`, `gh run view`, `bk build view`, etc.).
+- For GitHub comment or review URLs → fetch the comment body before any codebase grep:
+
+  ```bash
+  gh api repos/{owner}/{repo}/{pulls|issues}/comments/{id}
+  ```
+
+- Before writing any HTTP client, SDK wrapper, or API integration for a third-party service → survey available MCP tools for that service name.
+- Prefer the MCP when the use case is interactive and the call must run inside a Claude session.
+- Build a client only when the call must run outside a Claude session → document that reason in the plan.
+- Spawn parallel exploration agents only when no concrete artifact exists, or the artifact is exhausted and gaps remain.
+- Treat parallel `Agent` dispatch as a higher-cost fallback, not the default.
+
+Dispatch parallel `Agent` calls to build the context map after the gates above clear. Select the relevant agents for the task type (not all are needed every time).
 
 ```
 // Agent roles — dispatch the subset that applies:
@@ -113,32 +131,22 @@ Agent D — Prior art and patterns
   (Informs the prefactor probe in Step 3.)
 ```
 
-Collect all agent results before Step 2. Treat contradictions between agents
-as a signal to probe further, not a reason to guess.
+Collect all agent results before Step 2. Treat contradictions between agents as a signal to probe further, not a reason to guess.
 
 ### File-role sanity check
 
-When the user tags a file by path **and** describes its role in prose, read
-the tagged file's actual purpose and compare it to the description before
-accepting it as a plan target.
+When the user tags a file by path **and** describes its role in prose → read the tagged file's actual purpose and compare it to the description before accepting it as a plan target.
 
-- If the file's content contradicts the described role and a sibling in the
-  same directory is a better match, surface the mismatch before drafting:
-  "The file you tagged does X — you described one that does Y; did you mean
-  `{better-match}`?"
-- Accepting a mis-tagged file at face value plans changes to the wrong file
-  and wastes the run.
+- If the file's content contradicts the described role and a sibling in the same directory is a better match → surface the mismatch before drafting: "The file you tagged does X — you described one that does Y; did you mean `{better-match}`?"
+- Accepting a mis-tagged file at face value plans changes to the wrong file and wastes the run.
 
 ---
 
 ## Step 2: Multi-Persona Validation
 
-Think simultaneously from multiple perspectives to surface concerns the
-research phase may not have raised. Select the 3–5 personas relevant to
-the task.
+Think simultaneously from multiple perspectives to surface concerns the research phase may not have raised. Select the 3–5 personas relevant to the task.
 
-For each persona, answer: **"What does this plan need to include from my
-perspective to be acceptable?"**
+For each persona, answer: **"What does this plan need to include from my perspective to be acceptable?"**
 
 **Implementor**
 - What is the smallest set of changes that satisfies the requirement?
@@ -162,96 +170,42 @@ perspective to be acceptable?"**
 - Are observability / logging / alerting covered in the plan?
 
 **Product / User**
-- Does the plan deliver the stated requirement, or does it deliver a
-  technically-correct implementation of a different thing?
+- Does the plan deliver the stated requirement, or a technically-correct implementation of a different thing?
 - Are there user-visible gaps between what is planned and what was asked?
 
 **For each concern raised by a persona:**
-- If it reveals a missing step → add it to the plan (Step 3).
-- If it reveals a scope conflict → go back to Step 0 and re-clarify.
-- If it is explicitly out of scope → record it as an exclusion with a
-  one-line rationale in the plan's Exclusions section.
+- Missing step → add it to the plan (Step 3).
+- Scope conflict → go back to Step 0 and re-clarify.
+- Explicitly out of scope → record as an exclusion with a one-line rationale in the plan's Exclusions section.
 
 ---
 
 ## Step 2.5: Simplest-Viable Scope Gate
 
-**HARD RULE:** The plan implements the **simplest approach that satisfies
-the stated requirement** — never a more capable, more general, or more
-defensive one the user did not ask for. This gate is the single biggest
-source of mid-task corrections ("did I ask you to implement that? why are
-you overcomplicating this?") — catch it in the plan, not at review.
+**HARD RULE:** The plan implements the **simplest approach that satisfies the stated requirement** — never a more capable, more general, or more defensive one the user did not ask for. This gate is the single biggest source of mid-task corrections ("did I ask you to implement that? why are you overcomplicating this?") — catch it in the plan, not at review.
 
-Before drafting, list every approach the plan would introduce that the
-user did **not** name, and justify or drop each:
+Before drafting, list every approach the plan would introduce that the user did **not** name, and justify or drop each:
 
-- **Unrequested mechanism** — an auth scheme, transport, caching layer,
-  retry/fallback chain, or config surface the task did not mention
-  (`netrc`, a temp-file credential dance, a generic wrapper). If the
-  task is "fetch X" and X has a one-line call, plan the one-line call.
-- **Unrequested generality** — a parameterized/abstracted solution where
-  a concrete one was asked for. Apply the Rule of Three: do not
-  generalize on the first instance.
-- **Unrequested hardening** — defensive guards, validation, or error
-  recovery for inputs the task does not put in scope.
-- **Unrequested breadth** — touching files, modules, or systems outside
-  the named target.
+- **Unrequested mechanism** — an auth scheme, transport, caching layer, retry/fallback chain, or config surface the task did not mention (`netrc`, a temp-file credential dance, a generic wrapper). If the task is "fetch X" and X has a one-line call → plan the one-line call.
+- **Unrequested generality** — a parameterized/abstracted solution where a concrete one was asked for. Apply the Rule of Three: do not generalize on the first instance.
+- **Unrequested hardening** — defensive guards, validation, or error recovery for inputs the task does not put in scope.
+- **Unrequested breadth** — touching files, modules, or systems outside the named target.
 
-For each item that survives, add a one-line rationale to the plan. For
-each that does not, drop it. **When an unrequested approach seems
-necessary but you are not certain the user wants it, surface it as a
-`[HUMAN-IN-LOOP]` decision with the simplest alternative stated — do not
-silently bake it into the plan.**
+Surviving item → add a one-line rationale to the plan. Otherwise → drop it. **When an unrequested approach seems necessary but you are not certain the user wants it → surface it as a `[HUMAN-IN-LOOP]` decision with the simplest alternative stated — do not silently bake it into the plan.**
 
 ### Search-scope boundary
 
-The plan's research and implementation steps stay **inside the project
-root**. Never plan a filesystem-root search (`find /`, `grep -r /`) or
-reads outside the repo / bundle path — grep within the project, or the
-tool-managed dependency path (`bundle show`, `mise where`). A step that
-reaches outside the repo is a scope-gate violation unless the task
-explicitly requires it.
+The plan's research and implementation steps stay **inside the project root**. Never plan a filesystem-root search (`find /`, `grep -r /`) or reads outside the repo / bundle path — grep within the project, or the tool-managed dependency path (`bundle show`, `mise where`). A step that reaches outside the repo is a scope-gate violation unless the task explicitly requires it.
 
 ---
 
 ## Step 3: Draft the Plan
 
-Synthesize Step 1 (research) and Step 2 (persona concerns) into a plan
-document with the following format. Write this as a fenced block for easy
-copy/paste into a TodoWrite list or a PLAN.md artifact.
+Synthesize Step 1 (research) and Step 2 (persona concerns) into a plan document with the following format. Write as a fenced block for easy copy/paste into a TodoWrite list or a PLAN.md artifact.
 
 ### Plan format
 
-```
-## Plan: <task title>
-
-**Scope:** <one-sentence boundary — what is in and out>
-**Done when:** <acceptance criteria — measurable, not aspirational>
-**Parallel budget:** <N> independent agents can run simultaneously
-
----
-
-### EXCLUSIONS
-- <item>: <one-line rationale for excluding>
-
----
-
-### Phase <letter>: <Phase Title>  [PARALLEL | SEQUENTIAL]
-
-> PARALLEL — all steps in this phase run concurrently.
-> SEQUENTIAL — each step depends on the previous one completing.
-
-**Step <letter><n>**  [AGENT-READY | AGENT-GUIDED | HUMAN-IN-LOOP]
-- **Goal:** <what this step achieves — one sentence>
-- **Artifacts out:** <files changed / docs written / tests added>
-- **Instructions:**
-  1. <concrete imperative>
-  2. <concrete imperative>
-  ...
-- **Commit after this step:** `<type>(<scope>): <message>`
-
-...
-```
+Write the plan as a fenced block with: task title, scope boundary, measurable done criteria, parallel budget, exclusions, then numbered phases. Each step carries a marker (`AGENT-READY`, `AGENT-GUIDED`, or `HUMAN-IN-LOOP`), a goal, artifacts out, numbered imperatives, and a commit message.
 
 ### Step markers
 
@@ -259,56 +213,125 @@ Every step must carry exactly one marker:
 
 | Marker | Meaning |
 |---|---|
-| `[AGENT-READY]` | Agent can complete this step autonomously without user input |
-| `[AGENT-GUIDED]` | Agent executes, then reports back before the next step starts |
-| `[HUMAN-IN-LOOP]` | A user decision is required before the step can complete |
+| `[AGENT-READY]` | Agent completes autonomously |
+| `[AGENT-GUIDED]` | Agent executes, then reports back |
+| `[HUMAN-IN-LOOP]` | User decision required |
 
 ### Parallelism rules
 
-- **Default to parallel phases.** If two steps do not share a write target
-  and neither's output is another's input, they go in the same parallel phase.
-- **Declare a sequential dependency explicitly.** Write `SEQUENTIAL — depends
-  on Phase <letter>` when the ordering is load-bearing.
-- **Never serialize for tidiness.** Sequential ordering must be justified by
-  a data or file dependency, not by preference for linear presentation.
-- **Maximum phase depth.** If the plan has more than 5 phases, look for
-  steps that can be collapsed or run earlier. Depth > 5 is a smell for
-  over-specification.
+- **Default to parallel phases.** Steps without shared write targets or data dependencies run concurrently.
+- **Declare sequential dependencies explicitly.** Write `SEQUENTIAL — depends on Phase <letter>` when ordering is load-bearing.
+- **Never serialize for tidiness.** Sequential ordering must be justified by a data or file dependency.
+- **Maximum phase depth.** If the plan has more than 5 phases, look for steps that can be collapsed or run earlier.
 
 ### Mandatory plan elements
 
-Every plan must contain these elements before it is valid. If any are
-missing, add them before Step 4:
+Every plan must contain these elements before it is valid:
 
 1. Implementation steps covering the full scope
-2. A commit boundary after each meaningful unit of work
-3. A documentation update step (`wk-docs`) for every changed behavior
-4. A testing step: happy path, sad path, edge cases
-5. An adversarial review step (`wk-adversarial-review`) before push
-6. A PR offer step
-7. A CI fix loop step (monitor + auto-diagnose up to 3 rounds)
-8. A session retro step (`wk-retro`)
+2. Commit boundary after each meaningful unit
+3. Documentation update step (`wk-docs`) for every changed behavior
+4. Testing step: happy path, sad path, edge cases
+5. Adversarial review step (`wk-adversarial-review`) before push
+6. PR offer step
+7. CI fix loop step (monitor + auto-diagnose up to 3 rounds)
+8. Session retro step (`wk-retro`)
+
+### Commit granularity
+
+Prefer the smallest possible commits. Each commit must:
+
+- Do exactly one logical thing
+- Pass all tests and CI in isolation
+- Include documentation updates for any behavior it introduces or changes
+- Be immediately committable via `wk-commit`
+
+If a step is too large for a single commit, split it into sub-steps with their own commit boundaries.
+
+### Prefactor probe — lift before extending
+
+Before writing a new caller of an existing pattern → lift the shared logic and migrate the existing caller first. Order: **lift → migrate → extend**.
+
+Trigger signals:
+
+- "another <X>", "similar to <X>", "like the <X> version"
+- The new feature is a verb the codebase already implements
+- The new caller will live in a different file from the existing one
+
+When the probe fires:
+
+1. **Grep** for the operation across the codebase. Read both call sites end-to-end.
+2. **Identify the duplicated prologue/epilogue** — validation, error handling, logging, retries, formatting.
+3. **Lift** the duplicated portion into a helper module/function in the same `lib/`-equivalent location.
+4. **Migrate** the existing caller onto the helper as a separate commit.
+5. **Then extend** — implement the new caller as a thin wrapper that delegates to the helper plus its new behavior.
+
+The plan must list these as numbered steps before the new-feature step. If grep returns no existing caller, the probe is a no-op.
+
+### Intra-file duplication probe
+
+Before adding any new block to a large mixed-content file (>200 lines, especially `.erb`, `.html`, `.vue`, `.svelte`, or any template that interleaves multiple languages) → grep the file itself for the function name, event name, selector, or feature keyword first.
+
+```bash
+grep -nE '<feature-keyword>|<function-name>|<event-name>' "$FILE"
+```
+
+If a match exists → decide in the same commit whether to remove the prior version, replace it, or merge — never add alongside.
+
+### Spec pre-flight — extend an in-flight spec before creating a new one
+
+Before producing a new spec/design doc → check for a related spec already in flight on an open PR and extend it rather than landing a parallel file.
+
+- Grep open PRs for specs in the same feature area before planning a new one.
+- Related spec in an open PR → stack on that branch and extend the existing doc.
+- Create a standalone spec only when no related in-flight spec exists.
+
+### New-capability probe — extend an existing skill before scaffolding a new one
+
+Before scaffolding a new skill, command, or entry point → ask whether the capability is a new verb on a noun an existing skill already owns.
+
+- Subcommand / mode of an existing skill (`/foo bar`, not `/foo-bar`) → add a routing mode to that skill.
+- Scaffold a standalone skill only for a genuinely distinct workflow — different argument shape, tool set, or user mental model.
+
+### Rule-set doc sync probe
+
+When the diff modifies a check / validator / rule file → find authoring guides that enumerate the rule set by count and add them as explicit sync targets in the plan, before implementation starts.
+
+- Grep guides (README, `docs/how-to`, repository-check docs) for count-enumerations of the rules: `"N things"`, `"three items"`, numbered "you must include" lists.
+- Add each matching guide as a numbered sync step so the count and the body stay aligned.
+
+### Tool-swap flag-parity probe
+
+When the plan swaps one tool for another in the same role (formatter, linter, bundler, compiler, transpiler) → add a planning step that probes whether the replacement's defaults match the replaced tool's behavior.
+
+- Ask: does the replacement need flags to reproduce the prior tool's output?
+- Identify each gap-closing flag in the plan, not at review time.
+- Pay special attention to tools with CWD-sensitive or module-aware behavior.
+
+### Producer-audit probe
+
+When the plan switches a consumer from a named-file lookup (`statSync(file)`) to a directory scan (`readdirSync(dir)` / glob) → audit the upstream producer first.
+
+- Grep the build/compile script that populates the directory and list every file it writes.
+- Add a filter step that explicitly includes or excludes each file type.
 
 ---
 
 ## Step 4: Validate the Plan
 
-Before presenting, run a validation checklist against the draft plan:
+Before presenting, run a validation checklist against the draft plan.
 
 **Requirement coverage**
 - Every clarified requirement (Step 0) maps to ≥1 step.
-- Every persona concern (Step 2) is either addressed by a step or
-  explicitly excluded with a rationale.
+- Every persona concern (Step 2) is addressed by a step or explicitly excluded with a rationale.
 
 **Agent-readiness**
-- Every `[AGENT-READY]` step has concrete instructions (not "investigate
-  and fix") — an agent can execute it without asking a clarifying question.
+- Every `[AGENT-READY]` step has concrete instructions (not "investigate and fix") — an agent can execute it without asking a clarifying question.
 - Every `[HUMAN-IN-LOOP]` step names the specific decision the user must make.
 
 **Parallelism**
 - No sequential ordering exists that is not justified by a dependency.
-- The parallel budget number in the header equals the maximum width
-  of any parallel phase.
+- The parallel budget number in the header equals the maximum width of any parallel phase.
 
 **Commit map**
 - Every phase or step boundary has a commit. No phase ends without one.
@@ -316,8 +339,18 @@ Before presenting, run a validation checklist against the draft plan:
 **Mandatory elements**
 - All 8 mandatory elements from Step 3 are present and numbered.
 
-Flag every validation failure inline in the draft (`⚠️ MISSING: …`).
-Resolve all flags before Step 5.
+**Probe coverage**
+- Jira ticket pre-flight cleared or asked once.
+- User-provided artifacts were read before agent dispatch.
+- Prefactor probe ran when an existing pattern is reused.
+- Intra-file duplication probe ran for large mixed-content files.
+- Spec pre-flight ran before creating a new spec/design doc.
+- New-capability probe ran before scaffolding a new skill or entry point.
+- Rule-set doc sync probe ran when rule files change.
+- Tool-swap flag-parity probe ran when tools are swapped.
+- Producer-audit probe ran when named-file lookup becomes directory scan.
+
+Flag every validation failure inline in the draft (`⚠️ MISSING: …`). Resolve all flags before Step 5.
 
 ---
 
@@ -333,25 +366,20 @@ Present the plan with a one-paragraph summary:
 
 Then show the full plan block from Step 3.
 
-**HARD RULE: Do not execute any step until the user approves the plan.**
-The plan is a contract. Execution starts only after an explicit "yes",
-"proceed", "looks good", or equivalent approval signal. Silence is not
-approval.
+**HARD RULE: Do not execute any step until the user approves the plan.** The plan is a contract. Execution starts only after an explicit "yes", "proceed", "looks good", or equivalent approval signal. Silence is not approval.
 
-After approval, hand off to `wk-workflow` for execution. The approved plan
-replaces `wk-workflow` Phase 1's inline planning entirely — do not re-plan
-in wk-workflow if wk-plan has already produced an approved plan this session.
+After approval → hand off to `wk-workflow` for execution. The approved plan replaces `wk-workflow` Phase 1's inline planning entirely — do not re-plan in wk-workflow if wk-plan has already produced an approved plan this session.
 
 ---
 
 ## Plan Notation Reference
 
 ```
-[PARALLEL]       — phase header: all steps in this phase run concurrently
+[PARALLEL]       — phase header: all steps run concurrently
 [SEQUENTIAL]     — phase header: each step waits for the previous
 [AGENT-READY]    — step: agent executes autonomously
-[AGENT-GUIDED]   — step: agent executes, reports back before next step
-[HUMAN-IN-LOOP]  — step: user decision required before step completes
+[AGENT-GUIDED]   — step: agent executes, reports back before next
+[HUMAN-IN-LOOP]  — step: user decision required
 ⚠️ MISSING:       — validation flag: gap in plan coverage
 ```
 
@@ -365,48 +393,21 @@ in wk-workflow if wk-plan has already produced an approved plan this session.
 Skill(wk-plan, args="<task from session context>")
 ```
 
-If wk-plan was already run this session and an approved plan exists,
-wk-workflow skips its own planning and executes the approved plan directly.
+If wk-plan was already run this session and an approved plan exists → wk-workflow skips its own planning and executes the approved plan directly. When invoked directly (`/wk-plan`) → output is a standalone plan the user can hand to wk-workflow, a multi-agent Workflow script, or execute manually step by step.
 
-When wk-plan is invoked directly (`/wk-plan`), the output is a standalone
-plan that the user can then hand to wk-workflow, a multi-agent Workflow
-script, or execute manually step by step.
-
----
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---|---|
-| `/wk-plan <task>` | Full grill → research → persona → plan → approval |
-| `/wk-plan` (no args) | Uses current session context as the task description |
-| `Skill(wk-plan)` from wk-workflow | Replaces Phase 1 inline planning |
-| Ambiguous / vague task | Stops at Step 0 and asks ≤4 clarifying questions |
-| All requirements clear | Skips Step 0 grill, proceeds directly to research |
 
 ---
 
 ## Common Mistakes
 
-- **Planning before grilling.** A plan built on a vague requirement
-  produces rework. Step 0 is non-skippable.
-- **Overcomplicating past the ask.** Planning an unrequested auth scheme,
-  abstraction, or defensive layer reads as progress but invites "did I ask
-  for that?". Step 2.5 is non-skippable — plan the simplest viable path.
-- **Sequential by default.** Most steps can run in parallel. Declare
-  dependencies explicitly — don't let caution serialize the work.
-- **Vague agent instructions.** `[AGENT-READY]` steps with "investigate
-  and fix" instructions will stall. Every AGENT-READY step must have
-  numbered imperatives an agent can execute cold.
-- **Missing exclusions.** Persona concerns that are "out of scope" but
-  not recorded will resurface as reviewer comments. Write them down.
-- **Executing before approval.** The plan is a contract. Starting before
-  the user approves it means executing the wrong contract.
-- **Ignoring the Jira ticket.** Acceptance criteria in the ticket override
-  the verbal task description. Always fetch the ticket before planning.
-- **Not re-running wk-plan after scope change.** If the user interrupts
-  mid-execution to add scope, re-invoke wk-plan on the new scope rather
-  than patching the running plan inline.
+- **Planning before grilling.** A plan built on a vague requirement produces rework.
+- **Overcomplicating past the ask.** Plan the simplest viable path; surface unrequested approaches as `[HUMAN-IN-LOOP]`.
+- **Sequential by default.** Declare dependencies explicitly — don't let caution serialize the work.
+- **Vague agent instructions.** Every `[AGENT-READY]` step must have numbered imperatives.
+- **Missing exclusions.** Persona concerns that are out of scope but not recorded will resurface as reviewer comments.
+- **Executing before approval.** The plan is a contract. Starting before approval means executing the wrong contract.
+- **Ignoring the Jira ticket.** Acceptance criteria in the ticket override the verbal task description.
+- **Not re-running wk-plan after scope change.** If the user interrupts mid-execution to add scope, re-invoke wk-plan on the new scope.
 
 ---
 

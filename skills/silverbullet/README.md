@@ -3,6 +3,8 @@
 Working guide for SilverBullet 2.x — interactive HTML dashboards, `space-style` CSS,
 the `window.client` file API, and every rendering constraint discovered in production.
 
+**Version:** `2026.06.15-200628`
+
 ## When It Activates
 
 Auto-invoked whenever the agent works with SilverBullet content:

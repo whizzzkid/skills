@@ -4,8 +4,8 @@ description: >-
   Thorough, critical code review of a GitHub pull request. Use when asked to
   review a PR, review code changes, help review this PR, create review comments,
   or investigate a pull request. Reads existing review comments, resolves stale
-  threads, builds a playground to validate assumptions, runs experiments, and
-  creates pending review comments via GitHub API.
+  threads, delegates deep investigation to wk-adversarial-review, and creates
+  pending review comments via GitHub API.
 argument-hint: '[PR number or URL]'
 allowed-tools:
   - "Bash(gh pr view:*)"
@@ -16,12 +16,9 @@ allowed-tools:
   - "Bash(git rev-parse:*)"
   - "Bash(git pull:*)"
   - "Bash(grep:*)"
-  - "Bash(.review-playground/:*)"
   - Read
   - Grep
   - Glob
-  - Write
-  - Edit
   - Agent
   - Skill
   - AskUserQuestion
@@ -33,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-162234'
+  version: '2026.06.15-200139'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -45,25 +42,22 @@ metadata:
 
 # PR Review
 
-Automated, thorough code review that investigates changes deeply, builds a
-playground to validate assumptions, and posts encouraging but critical review
-comments as a pending GitHub review.
+Thorough code review of a GitHub PR → gather context + existing-comment state →
+delegate deep adversarial investigation and playground validation to
+[`wk-adversarial-review`](../adversarial-review/README.md) → map returned findings
+into encouraging but critical inline comments posted as a pending GitHub review.
 
 ## GitHub interaction routing
 
-**HARD RULE:** Every `gh` read and every write to GitHub (review
-bodies, inline comments, thread replies, resolutions) follows
-`wk-gh`'s conventions:
+**HARD RULE:** Every `gh` read and GitHub write follows `wk-gh`:
 
-- Read-side: org scoping per `wk-gh` Step 1–2.
-- Write-side: append the canonical outbound footer per `wk-gh`
-  Step 4 — review body and every inline comment body. Do not draft
-  a separate footer in this skill; the canonical one in `wk-gh` is
-  authoritative.
+- Scope reads per `wk-gh` Step 1–2.
+- Append the canonical outbound footer from `wk-gh` Step 4 to the review body and
+  every inline comment; do not invent one.
 
 ## Phase 1: Context
 
-Determine the PR under review and gather all relevant context.
+Determine PR and gather context before reading files.
 
 **If already on a PR branch:**
 
@@ -71,16 +65,10 @@ Determine the PR under review and gather all relevant context.
 gh pr view --json number,title,body,baseRefName,headRefName,url,files,commits,reviews
 ```
 
-**If on main/master or no PR is detected:** Ask the user for a PR number or URL,
-then check out the branch:
-
-```bash
-gh pr checkout <number>
-```
+**If on main/master or no PR is detected:** ask for a PR number or URL, then
+`gh pr checkout <number>`.
 
 ### Verify local HEAD matches PR HEAD
-
-Before reading any files, confirm the local worktree is at the PR's HEAD:
 
 ```bash
 LOCAL_HEAD=$(git rev-parse HEAD)
@@ -91,117 +79,74 @@ if [ "$LOCAL_HEAD" != "$PR_HEAD" ]; then
 fi
 ```
 
-If the pull fails, use `gh pr diff` as the authoritative source for what
-changed and `gh api repos/{owner}/{repo}/contents/{path}?ref={pr_head_sha}`
-to read file contents at the PR HEAD instead of local `Read`. Note the desync
-in the review summary so the user is aware.
+If pull fails, use `gh pr diff` and the PR-head contents API as source of truth;
+note the desync in the review summary.
 
 ### Collect context
 
-Collect and internalize:
-- PR title, description, and linked issues
-- Full diff: `gh pr diff`
-- List of changed files and their scope
-- Commit history on this branch
-- The base branch to understand what's being merged into
-- The overall change size (lines changed, file count). A large PR (several
-  hundred lines, or many unrelated concerns) earns a PR-stack recommendation
-  in the review body (Phase 6).
+Collect PR title, body, linked issues, full diff, changed files, commit history,
+base branch, change size. Recommend a PR stack in the body when PR is large or
+mixes unrelated concerns.
 
-### Extract author review focus from the PR description
+### Extract author review focus
 
-Authors often steer reviewers toward specific sections, files, or
-concerns in the PR body. Parse the description before investigation
-and turn explicit asks into a `review_focus` list that biases
-Phases 3–5.
+Parse PR description before investigation → turn explicit asks into a
+`review_focus` list:
 
-- Scan the body for explicit-ask signals:
-  - Headings or labels like "Review focus", "Please review", "Asks
-    for reviewers", "Areas of concern", "Open questions", "Thoughts on".
-  - Direct questions to the reviewer ("Does X seem right?", "Am I
-    handling Y correctly?", "Is this the cleanest way to Z?").
-  - Markers tagging specific files or paths ("focus on `foo.ts`",
-    "the tricky part is in `bar/`", "ignore `vendor/`").
-  - Self-flagged uncertainty ("I'm not sure about the locking
-    strategy", "FIXME: revisit this before merge").
-- Capture each ask as `{topic, files, question, severity-hint}` —
-  `severity-hint` is `concern` when the author flags correctness or
-  security, `suggestion` otherwise.
-- Drop boilerplate that is not a review ask: test-plan checkboxes,
-  rollout notes, "closes #N" lines, screenshots, automation blocks.
-- If the body has no asks, record `review_focus: []` and proceed
-  normally — absence is not a failure.
+- Capture headings/labels, direct reviewer questions, path markers, self-flagged
+  uncertainty as `{topic, files, question, severity-hint}`; use `concern` when
+  author flags correctness/security, else `suggestion`.
+- Drop boilerplate that is not a review ask: test-plan checkboxes, rollout notes,
+  "closes #N" lines, screenshots, automation blocks.
+- No asks → record `review_focus: []`.
 
-Thread the focus list through later phases:
+Thread `review_focus` through later phases: Phase 3 prioritizes named files/topics
+first; Phase 4 answers every ask inline or in body — unanswered asks are a review
+gap.
 
-- **Phase 3:** prioritize the named files/topics first; still cover
-  the full diff, but front-load the author's flagged areas.
-- **Phase 4:** add a playground experiment per ask whose validation
-  is runnable (e.g., "is this concurrent-safe" → race-condition
-  script).
-- **Phase 5:** answer every ask explicitly — inline on the relevant
-  line when an answer is local, in the review body when the answer
-  spans the change. An unanswered author question is a review gap.
+Announce before moving on:
 
-Before moving on, announce what you found:
 > "Reviewing PR #N: *title* — X files changed, Y commits. Base: `{base_branch}`. Author asks: {k} focus item(s). Let me dig in."
 
 ### Detect architecture-level changes → invoke [`wk-arch-review`](../arch-review/README.md)
 
-Scan the diff for changes that introduce or alter the project's architecture.
-When matched, run `wk-arch-review` and fold its findings into this review
-(Phase 3 prioritisation, Phase 5 comments, the summary).
+Run `wk-arch-review` before Phase 3 when diff changes architecture or design →
+fold findings into Phase 3 prioritisation, Phase 4 comments, and summary.
 
-**HARD RULE — a spec/design doc is an unconditional trigger.** Any changed file
-matching `docs/(specs|adr|arch|design|rfc)/` invokes `wk-arch-review` **before
-Phase 3**, even when the diff contains no code. "Doc-only" is not a skip reason
-— a spec that misdescribes the system is as harmful as wrong code, and the spec
-is often the only place the architecture is stated.
+**HARD RULE — spec/design docs are unconditional triggers.** Any changed file
+matching `docs/(specs|adr|arch|design|rfc)/` invokes `wk-arch-review` before
+Phase 3, even for a doc-only diff.
 
-- **Trigger when any holds:**
-  - A changed path is an architecture/design doc — case-insensitive match on
-    `docs/(specs|adr|arch|design|rfc)/`, or a filename containing
-    `architecture`, `design`, `spec`, `rfc`, `adr`, `hld`, `lld`, or `tech-spec`.
-  - The diff introduces infrastructure/topology change — new service, new
-    datastore/queue/cache, new external dependency on a hot path, IaC
-    (terraform/k8s/helm), or a deploy/runtime topology change.
-  - The diff changes a trust boundary, auth flow, or a public API/contract.
-  - A migration reshapes data ownership or the consistency model.
-- **Invoke** (pass the changed doc path when one changed, else the PR so
-  arch-review evaluates the design implied by the code):
+Also trigger when any holds:
 
-  ```
-  Skill(wk-arch-review, args="<changed-doc-path | PR number>")
-  ```
+- Filename contains `architecture`, `design`, `spec`, `rfc`, `adr`, `hld`, `lld`,
+  or `tech-spec`.
+- Diff adds infrastructure/topology: new service, datastore, queue/cache, external
+  hot-path dependency, IaC, or deploy/runtime topology.
+- Diff changes a trust boundary, auth flow, public API/contract, or a migration
+  that reshapes ownership or consistency.
 
-- Treat arch-review's 🔴/🟠 findings as concerns in Phase 5 — attach each to
-  the relevant file/line, or the review body when it spans the change.
-- Skip silently only when **no** trigger matches — most code PRs are not
-  architectural. A doc-only diff is never a skip when it touches a spec/design
-  path.
+Invoke with changed doc path when one changed; else pass PR number:
+`Skill(wk-arch-review, args="<changed-doc-path | PR number>")`. Treat high-severity
+findings as Phase 4 concerns.
 
 ## Phase 2: Existing Review Comments
 
-Fetch all existing review comments on the PR, identify stale threads, and
-optionally resolve them before beginning investigation.
+Fetch existing review comments, classify stale threads, optionally close the loop
+on your own prior comments, build the Phase 3/4 exclusion list.
 
-### Fetch comments
+### Fetch comments and resolution state
 
-Retrieve all inline review comments from every reviewer:
+Retrieve root inline comments only (skip entries with `in_reply_to_id` — replies,
+not thread anchors):
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/comments \
   --jq '.[] | {id, node_id, path, line, original_line, position, body, user: .user.login, updated_at, in_reply_to_id}'
 ```
 
-Skip comments where `in_reply_to_id` is set — those are reply chains, not
-top-level threads. Focus on root comments that anchor each conversation.
-
-### Fetch thread resolution state (re-review intake)
-
-The REST `/pulls/{number}/comments` endpoint carries **no** resolution
-state. On a re-review, query each thread's `isResolved` via GraphQL at
-intake — before planning any loop-closure work:
+REST comments endpoint carries no resolution state. On re-review, query each
+thread's `isResolved` / `isOutdated` before planning loop-closure work:
 
 ```bash
 gh api graphql -f query='
@@ -212,890 +157,215 @@ gh api graphql -f query='
 } } } }'
 ```
 
-- Annotate each thread with its `isResolved` / `isOutdated` state.
-- Skip loop-closure planning (acknowledgment replies, 👍 reactions,
-  resolve-with-consent prompts) for threads already `isResolved: true` —
-  GitHub considers them closed; they need no action.
-- Reserve re-review follow-up for threads that are open, or
-  resolved-but-the-fix-does-not-hold — verify the fix before trusting the
-  resolved flag.
+Skip loop-closure for threads already `isResolved: true`. Reserve follow-up for
+open threads, or resolved threads whose fix does not hold after verifying current
+code.
 
-### Identify stale comments
+### Identify stale comments and review bodies
 
-A comment is **stale** when any of these are true:
+A comment is stale when any holds: `position` is `null`; file at `path` changed
+after comment's `updated_at`; or referenced line content no longer matches current
+code. Read the current file when needed and categorize as **stale (fixed)**,
+**stale (unclear)**, or **active**.
 
-- `position` is `null` — GitHub marks the diff position as outdated
-- The file at `path` was modified in commits after the comment's `updated_at`
-- The referenced line content no longer matches the current code
+Cross-check top-level review bodies against current diff. Mark a body `stale
+(superseded)` when it references absent files or an abandoned approach; do not
+carry that framing into the verdict.
 
-Read the current file and compare the line to confirm. Categorize each comment:
-
-- **Stale (fixed):** The underlying issue is clearly resolved in the current code.
-- **Stale (unclear):** The position is outdated but it is not obvious whether the
-  issue was addressed. Leave these for the author or reviewer to handle.
-- **Active:** Still applies to the current code.
-
-### Identify stale review bodies
-
-Top-level review bodies (reviews with zero inline comments) have no
-position to invalidate, so the comment-staleness checks above never flag
-them — a body describing a superseded approach slips through as "active."
-
-- Cross-check each review body's described files/approach against the
-  **current** diff's changed-file set.
-- Mark a body `stale (superseded)` when it references files absent from
-  the current diff, or names an approach the PR no longer takes (the
-  branch was rewritten after the body was generated).
-- Do not carry a superseded body's framing into the verdict; note in the
-  summary that its claims describe a prior revision.
-
-### Present and ask before resolving
+### Present and resolve stale threads
 
 **HARD RULE:** Never resolve review threads without explicit user consent.
-Present the categorized list and wait for confirmation.
 
-```
-Stale comments (resolved in code):
-1. [stale] src/auth.ts:42 by @reviewer — "Session token not invalidated" → Fixed in abc123
-2. [stale] src/utils.ts:18 by @reviewer — "Rename processData" → Renamed to transformPayload
-
-Stale comments (unclear):
-3. [stale?] src/api.ts:33 by @reviewer — "Is this timeout intentional?"
-
-Active comments:
-4. [active] src/cache.ts:91 by @reviewer — "LRU size should be configurable"
-
-Would you like me to resolve threads 1 and 2?
-(Thread 3 will be left for manual review.)
-```
-
-### Resolve confirmed threads
-
-After the user confirms, query for thread node IDs via GraphQL
-(see `skills/pr-resolve/references/graphql-review-threads.md` for the canonical query —
-use `comments(first: 1)` with only `body path line` fields when matching for resolution
-is all that is needed):
-
-Match each confirmed stale comment to its thread by `path` + `line` + `body`,
-then resolve:
+Present the categorized list and ask which stale-fixed threads to resolve. After
+confirmation, match each by `path` + `line` + `body`, then resolve:
 
 ```bash
 gh api graphql -f query='
   mutation($threadId: ID!) {
-    resolveReviewThread(input: {threadId: $threadId}) {
-      thread { isResolved }
-    }
+    resolveReviewThread(input: {threadId: $threadId}) { thread { isResolved } }
   }
 ' -f threadId="THREAD_NODE_ID"
 ```
 
-### Summarize
+### Summarize and build queues
 
-Announce what was found before moving on, broken down by commenter
-type so the dedup and validation strategy is planned upfront:
+Announce the intake state:
 
-> "Found X existing review comments (Y active, Z resolved as stale).
-> Active breakdown: A from human reviewers, B from bot reviewers
-> ({bot_logins}). Carrying N active comments forward into
-> investigation; B bot findings queued for Phase 4 validation."
+> "Found X existing review comments (Y active, Z resolved as stale). Active breakdown: A human, B bot ({bot_logins}). Carrying N active comments forward; B bot findings queued for validation."
 
-### Build the bot-findings validation queue
+Build two structures from active comments:
 
-Every active comment whose author is a bot (`user.type == "Bot"` or
-login ending in `[bot]`) goes into a `bot_findings_to_validate`
-queue. Phase 4 reproduces each in the playground; Phase 5 posts a
-typed reply driven by the validation outcome (see "Validate bot
-findings in the playground" in Phase 4).
+- **`bot_findings_to_validate`:** every active bot comment (`user.type == "Bot"`
+  or login ending in `[bot]`). Phase 3 classifies each `Confirmed` / `Refuted` /
+  `Inconclusive`; Phase 4 drives replies from that outcome.
+- **Exclusion list:** active comments keyed by `(file, line_range, topic)` so
+  Phase 3/4 do not duplicate existing concerns.
 
-This is in addition to — not instead of — the exclusion list below.
-The exclusion list still prevents the agent from posting parallel
-top-level comments on the same line; the validation queue is the
-mechanism by which bot findings get either confirmed (with a
-suggestion fix) or refuted (with counter-evidence) instead of being
-silently ignored.
-
-**Verify the path is wired before accepting a bot's severity.** Reproducing
-the *mechanism* is not enough — a mechanically-correct finding on a code path
-that nothing reaches in the shipped configuration is not a live concern. For
-each bot finding, also grep for the **trigger** that activates the affected
-path (an env var set in a compose/CI file, a live caller, a production config)
-before assigning severity.
-
-- Trigger present → severity as found.
-- Trigger absent (dormant / not-yet-wired path) → downgrade to "Confirmed but
-  narrower than stated"; do not echo the bot's Blocker verbatim.
-- Bonus check: when the PR edits a doc comment describing a mechanism, verify
-  the comment still agrees with the code it points at — a freshly-edited-but-
-  now-contradictory comment is a clean finding bots routinely miss.
-
-### Build exclusion list
-
-From the active comments, build a structured exclusion list keyed by
-`(file, line_range, topic)`. This list is the deduplication mechanism for
-Phase 3 and Phase 5 — it prevents you from independently rediscovering and
-re-posting issues that another reviewer already raised.
+**Verify trigger wiring before accepting a bot's severity.** A mechanically
+correct finding on an unwired path is not a live concern. For each bot finding,
+grep for the trigger that activates the affected path (env var, live caller,
+production config, compose/CI wiring). Trigger absent → downgrade to "Confirmed but
+narrower than stated."
 
 ### Re-review follow-up
 
-Detect if the current user has previously posted review comments on this
-PR. If so, this is a **re-review** — the agent must close the loop on
-existing discussions before investigating new issues.
+Detect prior comments by the current user (`gh api user --jq '.login'`). If
+present, close the loop on those threads before investigating new issues.
 
-**Identify the user's own prior comments:**
+| Status | Detect | Action |
+|---|---|---|
+| **Fix applied** | File changed, concern gone | Validate, then draft acknowledgment + queue a plus-one reaction. |
+| **Fix attempted, still wrong** | File changed, concern persists | Draft follow-up grounded in current code. |
+| **Deferred to ticket** | Author links ticket / says follow-up | Queue plus-one for low severity; nudge in-PR for concern-severity risks. |
+| **Author asked a question** | Last reply is author's question | Draft an answer stating the concrete action required. |
+| **Author pushed back** | Author disagrees / proposes alternative | Acknowledge, agree if warranted, or restate with evidence. |
+| **No response** | No reply, no code change | Leave as-is. |
+| **Already resolved** | `isResolved: true` | Skip. |
 
-Filter the fetched comments for those where `user` matches the current
-GitHub user (from `gh api user --jq '.login'`). For each, fetch the full
-reply chain — all comments with `in_reply_to_id` pointing to the root.
+**Validate claimed fixes before acknowledging.** A modified file proves an
+attempt, not a fix. Reproduce the original concern against current code until the
+named failure mode is gone. Verify any asserted system behavior in source, not PR
+prose.
 
-**Classify each thread the user participated in:**
-
-| Status | How to detect | Action |
-|--------|--------------|--------|
-| **Fix applied** | The file was modified after the comment, AND the concern is no longer present in the current code | **Validate the fix before acknowledging** (see below). Only after validation passes, draft "Looks good — thanks for addressing this." and queue a 👍 reaction. |
-| **Fix attempted, still wrong** | The file was modified but the concern persists or was only partially addressed | Draft a follow-up explaining what's still off, referencing the current code |
-| **Deferred to a future ticket** | The author's reply defers the issue to a tracked ticket or follow-up PR (links a ticket, says "follow-up", "separate PR", "next sprint") | Queue a 👍 reaction to acknowledge — no reply needed. **Exception:** if the original comment was `concern`-severity (correctness, security, data loss), do NOT just react — draft a polite nudge to address it in this PR (see "Nudge on critical deferrals"). |
-| **Author asked a question** | The last reply is from the PR author and contains a question or request for clarification | Draft a response that states the **concrete action or decision the answer requires** — grounded in current-code analysis — not a bare acknowledgment. |
-| **Author pushed back** | The last reply is from the author disagreeing or proposing an alternative | Draft a response acknowledging the pushback and either agreeing with reasoning or reiterating the concern with evidence |
-| **No response** | No replies from the author, no code changes addressing it | Leave as-is — the comment still stands |
-| **Already resolved** | Thread is marked resolved | Skip — no action needed |
-
-**Validate a claimed fix — do not trust the diff alone.** A modified file
-is evidence the author *tried*, not proof the concern is resolved. Before
-acknowledging a "Fix applied" thread:
-
-- Reproduce the original concern against the current code in the
-  playground (Phase 4), or — for non-executable concerns — re-read the
-  changed code and confirm the specific failure mode the comment named is
-  gone.
-- When the author's reply or fix asserts how the surrounding system
-  behaves ("the engine does no dispatch", "this path is advisory only"),
-  verify the claim against the relevant source file — not against the
-  spec/PR prose alone. Grep for the behavior the claim denies; absence in
-  the source validates the claim, presence refutes it.
-- If validation shows the issue persists, reclassify the thread as **Fix
-  attempted, still wrong** and draft the follow-up instead.
-
-**Nudge on critical deferrals.** A `concern`-severity issue deferred to a
-future ticket still ships the risk in this PR. Draft a follow-up that
-restates the risk in one clause and asks the author to consider fixing it
-in the same PR — politely, not as a demand. Lower-severity deferrals get the
-👍 reaction and nothing more.
-
-**Present follow-ups for approval:**
-
-```
-Re-review: You have {N} prior comment threads with updates:
-
-1. [fix applied] src/auth.ts:42 — "Session token not invalidated"
-   → Author fixed in commit abc123. Drafting acknowledgment.
-
-2. [question from author] src/api.ts:33 — "Is this timeout intentional?"
-   → Author replied: "We need 30s for the upstream call. Is that OK?"
-   → Drafting response based on current code analysis.
-
-3. [fix attempted] src/utils.ts:18 — "Rename processData"
-   → Author renamed to `process` but the suggestion was a more specific name.
-   → Drafting follow-up with clarification.
-
-4. [no response] src/cache.ts:91 — "LRU size should be configurable"
-   → No changes or replies. Comment still stands.
-```
-
-Wait for user approval, then post approved follow-up replies sequentially
-using the same reply API as `wk-pr-resolve`:
+Present follow-ups for approval, then post approved replies sequentially:
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
   --method POST -f body="{follow_up_text}"
 ```
 
-After each reply posts, add the queued emoji reaction to the **root**
-comment of the thread. Use the canonical reactions API and emoji mapping
-in `wk-pr-resolve` ("Add emoji reaction after each reply") — `+1` (👍) for
-acknowledged fixes and deferrals. Reactions are fire-and-forget; a
-non-200 is logged and skipped.
-
-Resolve threads where fixes were acknowledged (with user consent per the
-existing hard rule). Leave all other threads open.
-
-**Staging vs live — thread actions cannot ride in a pending review.**
-GitHub rejects `in_reply_to` on draft-review comments (422), and emoji
-reactions post immediately. Thread replies and reactions are therefore
-**live** actions, not pending. Honor "let me post it myself" by drafting
-the full follow-up set and posting replies + reactions only after explicit
-approval. New top-level findings from the holistic re-review still go into
-the pending (draft) review payload (Phase 6) as normal.
-
-**After follow-ups are posted, proceed to Phase 3** to run the complete
-holistic review on the current state of the PR. The re-review is not just
-loop-closing on old threads — investigate new issues across the whole diff.
-
-**Dedup re-review findings against your own prior threads.** A new finding
-that overlaps an existing thread — including one you opened on a prior
-review — becomes a follow-up reply on that thread, not a new top-level
-comment. Add the user's own prior comments to the Phase 2 exclusion list
-so Phase 5's no-duplicates HARD RULE covers them. Only genuinely new
-findings with no existing thread earn a new pending comment.
-
-## Phase 3: Investigation
-
-Read every changed file in full — not just the diff hunks. Understand the
-surrounding code, call sites, downstream consumers, and existing test coverage.
-
-**Carry forward existing comments.** Be aware of active unresolved review
-comments from Phase 2. Do not duplicate comments that already exist. If you
-find an issue that relates to an existing comment thread, reference it rather
-than creating a separate observation. Focus on finding **new** issues that no
-existing reviewer has raised.
-
-**Identify new and modified surface area.** Scan the diff for:
-
-- **New** functions, methods, classes, interfaces, and public APIs — code
-  that didn't exist before has had the least scrutiny.
-- **Modified** functions and methods — changed signatures, altered logic
-  branches, updated return types. Existing callers may silently accept
-  wrong results.
-- **Changed interfaces, types, and contracts** — any modification to a
-  type definition, protocol, abstract class, or API response shape.
-  Downstream consumers that weren't updated are a high-severity risk.
-
-Build a list of `{name, file, line, signature, parameters, status}` where
-status is `new` or `modified` for each. These become the targets for
-adversarial playground testing in Phase 4.
-
-**Doc-relocation audience scan.** When the diff is a doc relocation (file
-imported from another repo or org, no code changed), run an additional
-adversarial pass on the new content:
-
-- Does the doc reference org-specific tooling names, command aliases, or
-  internal scripts that do not exist in the destination repo?
-- Does it cite task-tracker IDs, internal short-link prefixes, or memory
-  file names that resolve only in the source environment?
-- Does it back-reference files, paths, or sibling docs that were not
-  imported alongside it?
-- Flag each as a `suggestion`-severity inline comment so the author can
-  rewrite, gloss, or knowingly preserve the reference. Surface-level
-  audits (hard-coded absolute paths) catch shape; this scan catches
-  vocabulary portability.
-
-**Be adversarial.** Your job is to find what the author missed:
-- Bugs and logic errors
-- Missed edge cases and failure modes
-- Security vulnerabilities
-- Performance regressions
-- Broken contracts or API changes
-- Race conditions and concurrency issues
-- Missing or inadequate error handling
-- Inconsistencies with existing patterns
-
-There is no fixed checklist. You decide what matters based on the actual changes.
-Follow the code wherever it leads — if a changed function is called from 5
-places, read all 5. If a new dependency is added, evaluate it.
-
-### Allowlist and privilege changes — compare against siblings, not zero
-
-When the diff adds an entry to a security allowlist (exec allowlist,
-permission list, firewall rule, capability grant), judge it against the
-entries already present — not against an empty list.
-
-- Reflexive framing treats "added to allowlist = wider attack surface." That is
-  wrong when the new entry is strictly less capable than a sibling already
-  allowed.
-- Compare the new entry's capabilities to existing ones. If it is strictly less
-  privileged than an already-present entry, say so in the review body — it
-  anchors the security verdict to evidence and pre-empts reviewer alarm.
-
-### Read framework source when local install is unavailable
-
-Worktree review environments often lack a full dependency install
-(broken bundle, missing DB creds, gems not installed). When the
-review needs to inspect a framework method's source:
-
-- Identify the package's upstream repository and the exact version
-  the project depends on (lockfile, `Gemfile.lock`, `package-lock.json`,
-  `requirements.txt`, etc.).
-- Fetch the file directly from the upstream repo via the GitHub
-  contents API, base64-decoded:
-
-  ```bash
-  gh api "repos/{owner}/{repo}/contents/{path}?ref={tag-or-sha}" \
-    --jq '.content' | base64 -d
-  ```
-
-- Read the fetched source the same way a local `Read` would — quote
-  exact lines in playground experiments and review comments.
-
-Do not abandon a review path because the bundle/lockfile cannot be
-installed locally; the upstream source is authoritative regardless.
-
-**Audit test quality.** If the PR includes test files, verify they actually
-test the change surface — not just pad coverage numbers. For each test file
-in the diff, check for these red flags:
-
-- **No failure path:** Tests only cover the happy path. No tests for
-  invalid input, error conditions, or edge cases the implementation
-  handles.
-- **Unfailable assertions:** Tests that assert on mocked return values,
-  trivial getters/setters, or constants — they pass regardless of whether
-  the implementation is correct.
-- **Missing assertions:** Test functions that call code but never assert
-  on the result (`expect`/`assert` count is zero or suspiciously low).
-- **Incomplete surface:** New functions or branches introduced in the PR
-  that have no corresponding test at all. Cross-reference the list of
-  new methods from above — every new public function should have at
-  least one test exercising it.
-- **Tautological tests:** Tests that verify the mock was called rather
-  than verifying behavior. Tests where the setup guarantees the
-  assertion (e.g., inserting a value and asserting it exists without
-  testing deletion, update, or conflict).
-- **Copy-paste tests:** Multiple tests with identical structure and only
-  trivially different inputs, suggesting the author generated tests
-  mechanically without thinking about meaningful scenarios.
-- **Mutation-surviving tests:** Tests that still pass when the
-  implementation is intentionally broken (e.g., flipping a conditional,
-  returning a hardcoded value, removing a validation check). If breaking
-  the code doesn't break the test, the test is not testing behavior —
-  it's testing setup. Flag these for playground verification in Phase 4.
-
-For each gap found, note **what's missing** and **what a useful test
-would look like** — this feeds into the playground (Phase 4) and review
-comments (Phase 5). A comment about missing test coverage is more
-actionable when it includes a concrete example of what to test.
-
-Take notes as you go. For each finding, annotate whether it overlaps an entry
-in the exclusion list from Phase 2. Mark overlapping findings as `[COVERED]`
-immediately — do not wait until Phase 5 to discover duplicates.
-
-### Verify PR description and commit-message claims
-
-Treat description accuracy as a separate review surface from code
-accuracy. A clean diff with a misleading description still ships
-misinformation that future readers act on.
-
-- For every specific claim in the PR description / commit message
-  (line ranges, file paths, attribute lists, "added X to each Y"
-  framing, before/after counts), verify against the actual diff.
-- Flag mismatches as `suggestion`-severity body notes even when the
-  code itself is correct.
-- Common failure modes: cited line range diverges from real range;
-  blanket framing ("each", "all") ignores intentional exceptions;
-  rationale references behavior the diff does not implement.
-
-## File Access Rules
-
-**HARD RULE:** Write and Edit tools may ONLY target files under
-`.review-playground/` in the project root. Never write or edit files
-outside of `.review-playground/`. Never commit playground files.
-
-Read, Glob, and Grep may access any path (read-only) for code investigation.
-
-## Phase 4: Playground
-
-Create a `.review-playground/` directory at the repository root. This is your
-workspace for experiments — **never commit these files**.
-
-### Environment prerequisite gate
-
-**HARD RULE:** Before running any playground experiment, confirm the
-prerequisites the diff exercises are available (container daemon,
-dependency install, database, language runtime). When any prerequisite
-fails:
-
-- **Stop immediately.** Do not proceed to Phase 5/6 with degraded
-  coverage.
-- Surface the failure to the user in the terminal with a concrete ask:
-
-  > "Local environment issue: {failure}. Please fix and re-run the review.
-  > Proceeding without a working env risks an incomplete or misleading
-  > review."
-
-- **Never disclose local environment state in any GitHub-posted surface.**
-  No review body, inline comment, or summary may mention that local tests
-  could not run, that a daemon was down, or that "CI is the arbiter." The
-  PR author must never see evidence of the reviewer's machine state.
-- **Name evidence as "verified locally", never the playground.** When
-  surfacing verification in an author-facing comment or review body, say
-  "verified locally" (or "verified against upstream source") — never the
-  `.review-playground/` directory, playground scripts, or "experiment"
-  artifacts. The playground is internal scaffolding; naming it leaks agent
-  internals meaningless to the author.
-
-### Documentation-only diff — substitute read-based analysis
-
-When every changed file is documentation, prompt/rule text, or
-non-executable fixture data (e.g., `.md`, prompt corpora, eval JSON,
-fixture-only `.tsx`/`.json`), skip the scratch-script and mutation-
-test experiments below and substitute a read-based adversarial
-analysis document written to `.review-playground/`.
-
-- Confirm there is no runnable code path the diff exercises before
-  invoking this escape hatch — a mixed diff still runs the full
-  playground for the executable portion.
-- The read-based analysis must still surface the adversarial
-  questions Phase 4 normally answers: ambiguity, contradictions,
-  missing-coverage cases, edge-case prompts.
-- Eval fixtures can be validated by reading the matcher logic and
-  tracing match behavior manually rather than executing it.
-- **Arithmetic audit:** cross-check every numeric literal in a table or
-  enumerated claim ("all six", counts, fixture floors) against the actual
-  items counted in the doc — a split or added section leaves stale counts.
-- **Local-path / personal-artifact audit:** flag as a **concern** any committed
-  absolute path containing a username, home directory, worktree/workspace dir,
-  or local-only file/branch reference stated as a permanent fact. It resolves
-  on one machine only and leaks personal environment structure. Fix: drop the
-  path, use a repo-relative path, or replace with a generic description.
-- **Cited source-of-truth audit:** when a skill/config doc names a live code
-  file as authoritative ("see `{path}` — source of truth if anything here
-  drifts"), read that file and verify every constraint the doc states —
-  allowlist entries, character classes, field names, enum values — against the
-  live code. Treat any drift as a **concern**: a doc that misstates an
-  allowlist or schema ships a broken config at user-invocation time, and
-  disclosure in the PR body does not fix the artifact users actually invoke.
-  Watch for claims satisfied only by a companion PR still open on another
-  branch — verify against the current branch's code, not the promised state.
-
-Ensure `.review-playground/` is in `.gitignore`:
-
-```bash
-if ! grep -qxF '.review-playground/' .gitignore 2>/dev/null; then
-  echo '.review-playground/' >> .gitignore
-fi
-```
-
-Build whatever combination the changes call for:
-
-### Scratch scripts
-
-Executable scripts that exercise changed code paths. Run them and observe
-behavior. Example: a script that calls the modified function with various inputs
-to see how it behaves at boundaries.
-
-### Adversarial testing of new and modified functions
-
-For every new or modified method/function identified in Phase 3, **launch
-parallel experiments** that try to break it. Use the Agent tool to run
-these concurrently — each agent writes its own script under
-`.review-playground/` and reports back.
-
-- **Boundary values:** empty, null/nil/undefined, zero, negative, max-size, single-vs-many, off-by-one, first/last/one-past-end, pagination edges.
-- **Type confusion:** wrong types per parameter; implicit coercion traps (`"0"` vs `0` vs `false`, `[]` vs `{}`); values that satisfy the type but violate semantic constraints.
-- **Input mutation:** valid input with one field wrong (wrong type, missing, extra, swapped, out-of-range); confirm graceful failure rather than silent corruption.
-- **State and ordering:** call stateful methods out of order (use-before-init, double-init, use-after-close); test async interleaving and cancellation.
-- **Fuzz:** randomized inputs in a loop; vary volume (1 / 10 / 1000) to expose resource leaks or accumulation bugs.
-- **Output contracts:** return values match expected types; mutate output in downstream consumers to verify callers validate what they receive.
-- **Concurrency:** parallel callers on shared state; race conditions; lock/unlock symmetry.
-- **Runtime portability:** run under each interpreter/runtime version in the project's support matrix, not just the one on `PATH`.
-
-**Interpreter / runtime portability:** When the diff touches scripts
-or modules that target multiple runtime environments (Linux CI vs
-macOS dev, multiple Node versions, Python 3.x vs 3.y), run the
-playground tests under **each runtime explicitly** — not just
-whatever is first on `PATH`. Static review cannot catch
-version-specific syntax; only runtime execution under the older or
-stricter interpreter can.
-
-| Diff includes | Run playground/tests under |
-|---------------|---------------------------|
-| `*.sh`, `*.bash`, `Brewfile`, shebanged shell | both `/bin/bash` (macOS bash 3.2) **and** the modern bash on `PATH`; flag bash 4+ idioms: `${var,,}`, `${var^^}`, `${var^}`, `${var,}`, `declare -A`, `mapfile`, `readarray`, `\|&`, `coproc` |
-| `*.py` | each Python version in the project's support matrix (`pyproject.toml [project] requires-python` or CI matrix) |
-| `*.js`, `*.ts`, `package.json` engines change | each Node version in `engines.node` / `.nvmrc` / CI matrix |
-| `*.rb`, `Gemfile.lock` | each Ruby version in `.ruby-version` / CI matrix |
-| `Dockerfile`, GH Actions matrix | each `runs-on` / base image listed |
-
-If a runtime listed above is not installed locally, do not silently
-skip it — note the gap in the review report ("could not test under
-bash 3.2; recommend reviewer or CI verify"). Authors and reviewers
-running modern interpreters consistently miss old-runtime breakage.
-
-Keep each experiment script short and focused — one script per function,
-one concern per script. Log failures clearly with input/output pairs.
-
-### Standalone playground when the app cannot boot
-
-When the worktree cannot boot the app (broken bundle, missing DB,
-gated services) but the review concerns pure framework/library
-logic, replicate the relevant framework code verbatim in a
-self-contained script under `.review-playground/` and run it with
-the system runtime.
-
-- Fetch the framework method(s) under test via the GitHub contents
-  API (see "Read framework source when local install is
-  unavailable" above).
-- Copy the methods verbatim into a single-file script — preserve
-  signatures, control flow, and any sentinel constants (`Halt`,
-  `Stop`, custom error classes).
-- Drive the script with the system interpreter on `PATH` and run
-  the same adversarial cases as the rest of Phase 4.
-- Note in the comment body that the verdict comes from a
-  re-implemented harness, with the upstream SHA/tag cited, so the
-  reviewer can audit the harness.
-
-A standalone harness is as rigorous as booting the app for pure
-logic checks and avoids the boot-dependency cliff entirely.
-
-### Validate bot findings in the playground
-
-Every entry in Phase 2's `bot_findings_to_validate` queue must run
-through a reproduction experiment in the playground before Phase 5
-posts replies. Bots fire on heuristics, so their findings range
-from precise and actionable to false-positive noise — silent skip
-either misses a real issue or wastes the author's time, and silent
-agreement amplifies false positives. Validation in code is the
-arbiter.
-
-For each queued bot finding:
-
-1. **Read the bot's claim** — the comment body plus any code
-   pointers (file:line, snippets, "consider X" suggestions).
-2. **Reproduce in a script** — write a focused playground experiment
-   that exercises the exact code path the bot flagged. If the
-   finding is "this function returns the wrong value when X," call
-   the function with X and compare. If the finding is "this loop
-   is O(n²)," time it at growing input sizes. If the finding is
-   "this regex doesn't match Y," feed it Y. Use the same
-   adversarial-testing patterns as the rest of Phase 4.
-3. **Classify the outcome** as **Confirmed**, **Refuted**, or **Inconclusive**. Phase 5 drives the reply based on this classification — see the outcome table in Phase 5 "Deduplicate against existing comments."
-
-Save each validation script under
-`.review-playground/bot-findings/{bot_login}-{thread_id}.{ext}` so
-the user can inspect what was actually run.
-
-If a bot finding is **out of scope for the playground** (e.g., a
-documentation/style claim that requires reading prose, not running
-code), skip the script step and use Phase 3 reading-based
-investigation instead — but still classify outcome and reply
-accordingly. The reply policy is the same regardless of how the
-verdict was reached.
-
-### Validate PR tests via mutation
-
-For each test file in the PR, verify the tests actually detect breakage:
-
-1. **Copy** the implementation file to `.review-playground/`.
-2. **Mutate** the copy — flip a conditional, hardcode a return value,
-   remove a validation check, swap two arguments in a function call.
-3. **Run the PR's tests** against the mutated copy. If the tests still
-   pass, they are not testing the behavior they claim to test.
-4. **Report** which tests survived mutation. These are candidates for
-   review comments — a test that can't detect a broken implementation
-   is worse than no test (it provides false confidence).
-
-Focus mutations on the code paths the tests claim to cover. One mutation
-per experiment script. Log the mutation, the test result, and whether the
-test correctly failed.
-
-### Cross-system artifact-flow validation
-
-When the diff touches a producer→consumer boundary (CI artifact upload/download, S3/GCS publish+fetch, queue, file-drop+scanner), verify the output layout matches the read strategy.
-
-| Component | What to check |
-|-----------|--------------|
-| **Path/key match** | Producer's written path exactly equals consumer's expected path — including prefixes, subdirectories, and naming conventions. |
-| **Recursion depth** | Consumer scan is recursive if producer writes nested paths; non-recursive scans (`read_dir`, `glob('*.ext')`) silently miss subdirectories. |
-| **Test fixtures** | Test harness populates fixtures at the producer's actual output path, not the consumer's assumed path — otherwise tests pass on layout mismatch. |
-| **Cleanup ordering** | Destructive cleanup (`rm -rf`, `shutil.rmtree`) runs only after confirming the consume succeeded; cleanup-before-verify loses data silently. |
-| **Playground experiment** | Populate staging with the producer's real layout and run the consumer against it — isolated consumer tests cannot catch layout mismatches. |
-
-### Cluster-promotion dedup guards
-
-When the diff includes a promotion / canonicalization / clustering
-algorithm that selects a **representative** from a cluster of
-entries (max-id, first-seen, highest-score), audit the dedup guard:
-
-- Check whether the guard tests the iteration anchor or the chosen
-  representative. When the cluster's representative differs from
-  the anchor, a guard on the anchor passes while the representative
-  overlaps with an existing canonical — producing silent duplicates
-  in the output set.
-- Construct a playground experiment that iterates entries in
-  reverse and non-sequential order. Proximity-based dedup loops
-  whose representative and anchor diverge under those orderings
-  expose the class of bug.
-
-### Interface contract violations
-
-When the PR modifies a type, interface, or API contract:
-
-1. **Identify all consumers** of the changed contract (callers, importers,
-   downstream services).
-2. **Build a script** that instantiates the old contract shape and passes
-   it through the new code path. Does it fail fast, or silently corrupt?
-3. **Build a script** that uses the new contract shape in old consumer
-   code. Does the consumer handle it, or does it break at runtime?
-4. **Report** any consumer that doesn't validate its inputs — these are
-   latent bugs waiting for a deployment mismatch.
-
-### Test cases
-
-Runnable tests (in the project's test framework) that verify the PR's behavior.
-Focus on:
-- Happy path — does the change work as described?
-- Sad path — how does it handle failure, invalid input, missing data?
-- Edge cases — boundaries, empty collections, null values, large inputs, concurrency
-
-### HTML visualizations
-
-When changes benefit from visual explanation — UI changes, data flow
-modifications, state transitions, or a critical-change heatmap — create an
-HTML file in the playground that visualizes what's happening.
-
-### Report findings
-
-After running experiments, summarize what you discovered:
-- Confirmed behaviors
-- Broken assumptions
-- Surprising or unexpected results
-- Things that work but seem fragile
-
-> "Playground built at `.review-playground/`. Here's what I found: ..."
-
-## Phase 5: Review Comments
-
-Formulate inline review comments anchored to specific lines in the diff.
-
-### Stay focused — no comment cap, but every comment must be actionable
-
-There is no hard cap on comment count. The Phase 5 summary and the
-GitHub UI's edit-on-draft flow (Phase 6 auto-posts a pending review)
-are the safety nets against over-commenting; surface every actionable
-finding and let the user prune in the UI.
-
-What stays inline:
-- Bugs the author should fix
-- Concrete suggestions with a `suggestion` block when applicable
-- Genuine questions about intent or behavior
-
-What does NOT go inline:
-- Restating what the diff already shows
-- Generic praise for routine correctness ("nice naming", "good test")
-- Pure observations the author can't act on
-- Bot agreements (see "Deduplicate against existing comments")
-
-Praise and overall verdict belong in the **review body** (Phase 6), not
-inline. Inline noise dilutes the actionable signal.
-
-### Review posture — approve with concerns, do not block
-
-- Default to approving the PR with concerns the author resolves, not to
-  blocking the merge. The reviewer rarely blocks.
-- Never use the word "blocker" in author-facing text — use "concern" or
-  "limitation".
-- When the review surfaces many concerns, add one affirming line in the
-  review body so the author is not discouraged (e.g. "Everything here is
-  fixable — don't fret it"). State it once, never per comment.
-
-### Tone
-
-- Encouraging and constructive, never robotic — each comment is one or two
-  sentences of actionable feedback. No filler, no hedging, no restating the diff.
-- Frame non-critical items as "candidate for a follow-up" rather than demands.
-
-### Severity
-
-Tag each comment with a severity prefix:
-
-- **`concern:`** Important to address before merge — critical bugs, security
-  issues, data loss risks, or broken functionality. Flag it as a concern the
-  author resolves and approve-with-concerns; never frame it as a merge block.
-  Use sparingly.
-- **`suggestion:`** Good for a follow-up change. Style nits, naming improvements,
-  refactoring ideas, pedantic observations, potential optimizations.
-- **`question:`** Genuine uncertainty about intent or behavior. Ask the author
-  to clarify.
-- **`praise:`** Reserve for inline only when calling out a non-obvious
-  pattern the reviewer should learn from. Generic praise belongs in the
-  review body, not as an inline thread.
-
-**Default to `suggestion` unless something is genuinely critical.** Frame
-non-blocking items as "good candidate for a follow-up" or "something to
-consider in a future pass."
-
-### Comment format
-
-Each comment body should follow this structure:
+After each reply, add the queued plus-one reaction to the root comment; log and
+skip reaction failures (fire-and-forget). Resolve acknowledged-fix threads only
+with user consent.
+
+**Thread actions are live.** Replies, reactions, resolutions post immediately and
+cannot ride in a pending review; `in_reply_to` on draft-review comments returns
+422. Honor "let me post it myself" by drafting the full set and posting only after
+approval. New holistic findings still enter the pending review in Phase 5. Dedup
+new findings against your own prior threads: overlapping findings become follow-up
+replies, not new top-level comments.
+
+## Phase 3: Adversarial Investigation — delegate to [`wk-adversarial-review`](../adversarial-review/README.md)
+
+Hand the checked-out PR to the adversarial-review engine and consume its findings
+rather than re-deriving them:
 
 ```
-**{severity}:** {The observation or concern}
-
-{Optional: context, evidence from playground experiments, or suggested fix}
+Skill(wk-adversarial-review)
 ```
 
-### Use applicable `suggestion` blocks for actionable fixes
+It resolves the base from the PR, runs the full mechanical sweep catalog,
+dispatches a fresh adversarial subagent over the complete diff, validates
+runtime-behavior claims in `.review-playground/` (runtime matrix, mutation tests,
+standalone upstream-source harness, specialized producer/consumer, cluster,
+interface-contract, and allowlist checks), and returns structured findings
+(`severity`, `file`, `line`, `category`, `finding`, `rationale`, `fix-sketch`)
+plus a verdict. For docs/prose/compression diffs it substitutes read-based
+analysis (gate-survival-by-substance, count cross-checks, relocation portability).
 
-When a comment proposes a concrete code replacement, prefer a GitHub
-` ```suggestion ` fence over a language fence (` ```go `, ` ```ts `,
-etc.). Suggestion fences render as a one-click "Commit suggestion"
-button in the GitHub UI; language fences render as read-only code
-samples the author has to copy by hand.
+On the returned findings:
 
-Rules:
+- Prioritize `review_focus` files/topics; ensure every focus item is investigated.
+- Fold in any `wk-arch-review` findings from Phase 1.
+- Annotate findings overlapping the Phase 2 exclusion list as `[COVERED]` so
+  Phase 4 does not duplicate them.
+- Map adversarial-review `blocker` findings to Phase 4 `concern` candidates;
+  `suggestion` / `question` pass through unchanged.
 
-- Use ` ```suggestion ` fences only when the target lines are inside
-  the PR diff. Suggestions outside the diff are not applicable —
-  GitHub disables the apply button.
-- Anchor the comment on the exact lines being replaced. One-line
-  fix → `line: <N>` + `side: "RIGHT"`. Multi-line replacement →
-  `start_line` + `line` + matching `start_side`/`side` to span the
-  range; both endpoints must be in the diff.
-- The suggestion body must match the **exact existing whitespace**
-  (tabs vs spaces, depth). Indentation drift silently breaks the
-  apply button. Pre-fetch the raw lines before drafting and visually
-  verify:
-  ```bash
-  awk 'NR>=START && NR<=END' "$FILE" | cat -A   # shows tabs as ^I
-  ```
-- Multiple ` ```suggestion ` blocks per comment are allowed — each
-  becomes its own commit when applied.
-- A single suggestion fence must target one **contiguous** range.
-  Fixes that touch two or more non-adjacent locations (e.g., an
-  array declaration and its expansion site) cannot ride in one
-  fence — GitHub applies the replacement as a single hunk. Split
-  into one anchored comment per site (each with its own contiguous
-  suggestion), or describe the multi-site fix in a plain language
-  fence without a suggestion.
-- Reply suggestions inherit the parent's anchor; they only apply to
-  replacements at the parent's line. If the fix spans different
-  lines, prefer a new top-level comment with the correct multi-line
-  anchor (and reference the parent thread in the body) over a reply
-  with an un-applicable suggestion.
-- If the lines to replace are **outside** the diff: anchor the
-  comment on a nearby diff-visible line, drop the suggestion fence,
-  use a plain language fence as an example, and note that the change
-  must be applied manually.
-- Praise / questions / pure observations do not need suggestion
-  blocks.
+Verdict is advisory here: pr-review always proceeds to compose comments — never
+blocks the author or posts from the gate.
 
-Capture the raw target lines with their original whitespace as a
-**Phase 4 prerequisite** for any finding with a concrete fix —
-getting indentation wrong only manifests after the comment is
-posted, when the apply button silently fails.
+### Validate bot findings
+
+Route each Phase 2 `bot_findings_to_validate` entry through the same engine: pass
+the bot's claim and code pointers to the adversarial subagent (or a reading-based
+analysis for prose/style-only claims) and classify the outcome `Confirmed` /
+`Refuted` / `Inconclusive`. Phase 4 uses the outcome table; silent skip is not
+allowed.
+
+## Phase 4: Review Comments
+
+Formulate actionable inline comments anchored to specific diff lines.
+
+### Posture, tone, and severity
+
+No comment cap. Surface every actionable finding; let the user prune in the GitHub
+draft UI. Inline comments are for bugs, concrete suggestions, genuine
+intent/behavior questions — not diff narration, generic praise, pure observations,
+or bot agreements (those belong in the body).
+
+Default to approving with concerns, not blocking. Never use "blocker" in
+author-facing text; use "concern" or "limitation". Keep comments encouraging,
+one to two sentences. Tag each with a severity prefix:
+
+- **`concern:`** critical bugs, security, data loss, broken functionality. Use
+  sparingly; frame as approve-with-concerns.
+- **`suggestion:`** style, naming, refactoring, optimization. *(Default.)*
+- **`question:`** genuine uncertainty about intent or behavior.
+- **`praise:`** non-obvious patterns worth learning from; generic praise stays in
+  the body.
+
+### Comment format and suggestion blocks
+
+Body shape: `**{severity}:** {observation}` then optional context/evidence/fix.
+
+When proposing a concrete replacement, prefer a GitHub ` ```suggestion ` fence
+over a language fence, only for target lines inside the PR diff:
+
+- Anchor on exact lines replaced; one-line fixes use `line` + `side: "RIGHT"`,
+  multi-line use `start_line` + `line` + matching sides.
+- Match exact existing whitespace — indentation drift silently breaks the apply
+  button. Verify: `awk 'NR>=START && NR<=END' "$FILE" | cat -A` (shows tabs as `^I`).
+- A single fence targets one contiguous range; split non-adjacent fixes into
+  separate comments. Reply suggestions inherit the parent anchor.
+- Target lines outside the diff → anchor a nearby diff-visible line, drop the
+  fence, use a plain example, note manual application.
 
 ### Deduplicate against existing comments
 
 **HARD RULE:** Never post a new top-level comment that duplicates an existing
-review comment. Before drafting each comment, check the exclusion list from
-Phase 2. A comment is a duplicate if it targets the same file and line range
-AND raises the same concern — even if you discovered it independently.
+review comment (same file/line range + same concern). Check the Phase 2 exclusion
+list before drafting each comment.
 
-Treatment depends on the original commenter's type — bot reviewers
-benefit from independent verification, human reviewers do not.
+- **Human duplicate:** validate against current code; skip a parallel comment when
+  it holds (optionally annotate `Also fix concerns from @{reviewer}`); reply to
+  the thread only with new information or evidenced disagreement.
+- **Bot duplicate:** drive from the Phase 3 outcome:
 
-**Duplicate of a human reviewer's comment:**
+| Phase 3 outcome | Phase 4 action |
+|---|---|
+| **Confirmed** | Silent skip at thread and body level. |
+| **Confirmed but narrower** | Reply with a scope note bounding the reproduced case. |
+| **Refuted** | Reply `**Could not reproduce** — <counter-evidence>` and what was tested. |
+| **Inconclusive** + agent found it | Reply with the agent's evidence and fix. |
+| **Inconclusive** + agent did not | Leave the thread; surface in the summary for override. |
 
-- **Validate, then skip the parallel comment.** Confirm the human's
-  concern holds against the current code. If it does, do not post a
-  second voice agreeing — the thread already carries it.
-- When your independent finding **agrees** and a related concern of
-  yours touches the same code, annotate that comment `Also fix concerns
-  from @{reviewer}` instead of restating theirs.
-- If your investigation adds **new information** the original reviewer
-  missed, reply to the existing thread instead of a new comment.
-- If your findings **disagree** (the existing comment is wrong or
-  incomplete), reply with a correction and evidence rather than a
-  parallel comment.
-
-**Bot reviewer comments** (commenter `user.type` == `Bot`, or login
-ends in `[bot]`):
-
-Every active bot comment was queued in Phase 2 and run through
-Phase 4's "Validate bot findings in the playground" step. The
-validation outcome decides the reply, not the fact of duplication:
-
-| Phase 4 outcome | Phase 5 action |
-|-----------------|----------------|
-| **Confirmed** | **Skip silently per thread.** No inline reply and no per-thread body anchor. The bot thread already stands; a "yes the bot was right" line is noise. Do not narrate the confirmation in the review body — a "validated N findings" line is an antipattern (see "Compose the review body"). Address a confirmed bot finding only by its substance, and only when it changes the verdict. Only reply per-thread if the playground surfaced new evidence the bot missed. |
-| **Confirmed but narrower than stated** | The playground reproduces the bot's failure only for a subset of the case the bot implied (e.g., a zero-iteration / empty-input edge the general case never hits). Reply with a **scope note**: `Confirmed for the case where X; does *not* apply when Y (verified in playground).` This is new evidence that materially narrows the bot's claim — it tells the author exactly what to fix and prevents over-amplifying the finding. |
-| **Refuted** | Reply with `**Could not reproduce** — <counter-evidence>` + brief description of what was tested. Always reply — silent skip leaves the author guessing. |
-| **Inconclusive** AND agent independently flagged the same issue | Reply with the agent's own evidence + suggestion fix (the agent's verdict carries the thread). |
-| **Inconclusive** AND agent did not flag it | Leave the thread alone. Note in the Phase 5 summary so the user can override. |
-| **Out of scope for code validation** (style/prose claim) | Use Phase 3 reading-based verdict; reply only on refute. |
-
-**HARD RULE:** A **per-thread** bot reply — whether folded into the
-body as a `Re: {bot} thread on …` anchor or posted as a live reply —
-is only justified when the agent has new evidence beyond confirming
-the bot's exact claim. Pure Confirmed outcomes get silent skip at the
-thread level: no inline reply, no per-thread body anchor.
-
-**Do not narrate bot-validation in the body.** A "Validated N findings
-from {bot} — all reproduced" line is an antipattern — it states facts
-about other bots' work that add no value for the author. When a confirmed
-bot finding matters, address its **substance** in the body (what it means
-for the PR), never the fact of confirmation. Pure Confirmed outcomes get
-silent skip at both thread and body level.
-
-Reserve body anchors and live replies for:
-
-- **Refuted** — counter-evidence the bot missed.
-- **Confirmed but narrower than stated** — a scope note bounding what
-  was reproduced versus what was not.
-- **Inconclusive AND agent independently flagged the same issue** —
-  the agent's own evidence carries the verdict.
-
-When a reply is justified, deliver it via one of the two mechanisms
-in Phase 6 ("Creating the pending review"):
-
-- **(a) folded into the review body** with an anchor reference — zero
-  extra API calls; stays inside the pending checkpoint.
-- **(b) live `/comments/{id}/replies` post** — requires explicit user
-  opt-in at the Phase 6 prompt because it bypasses the pending-review
-  checkpoint.
-
-`in_reply_to` is **not** a valid field on draft-review comments,
-so a bot reply cannot be embedded as a `comments[]` entry in the
-pending-review payload. Never attempt that — it returns 422.
-
-Never post a parallel top-level comment on the same line — the
-reply (via either mechanism) preserves the no-duplicates rule
-while adding the validation verdict.
-
-When presenting the comment summary, group entries as
-**Bot-validation: confirmed / refuted / inconclusive** plus
-**Skipped (human duplicates)** so the user sees the full strategy
-and can override individual entries.
+**HARD RULE:** A per-thread bot reply or body anchor is justified only with new
+evidence beyond confirming the bot's exact claim. Pure Confirmed outcomes get
+silent skip; never narrate bot validation. Justified replies use one mechanism:
+fold into the body as `Re: {bot} thread on {file}:{line} — …` (no extra call), or
+a live `/comments/{id}/replies` post (requires explicit user opt-in — it bypasses
+the pending-review checkpoint). `in_reply_to` is invalid on draft-review comments
+(422); never embed bot replies in the pending `comments[]` payload.
 
 ### Validate comment positions against the diff
 
 **HARD RULE:** Every inline comment must target a line that exists in the diff.
-Lines not in the diff (unchanged code, code from merge commits) will cause a
-422 "Line could not be resolved" error from the GitHub API.
+Lines not in the diff cause a 422 "Line could not be resolved" error.
 
-Before presenting comments, parse `gh pr diff` to build the set of commentable
-lines:
-
-```bash
-gh pr diff {number} > /tmp/pr-diff.txt
-```
-
-Walk the diff output to extract every `(file_path, new_file_line_number)` pair
-that appears in a hunk — both `+` (added) and ` ` (context) lines are valid
-targets. `-` (removed) lines are not commentable on the `RIGHT` side.
-
-For each proposed comment, check that `(path, line)` is in the commentable set:
-
-- **Match found:** keep the comment as-is.
-- **No match, nearby line (±5) in the same hunk matches:** move the comment to
-  the nearest matching line.
-- **No match at all:** convert to a file-level comment using
-  `"subject_type": "file"` (omit `line` and `side`), or move the observation
-  into the review body with a `file:line` reference.
+Build commentable lines from `gh pr diff {number}`. Both `+` and context lines are
+valid `RIGHT`-side targets; removed lines are not. Per proposed comment: keep on
+exact match; move to the nearest matching line within ±5 in the same hunk; else
+convert to a file-level comment (`"subject_type": "file"`, omit `line`/`side`) or
+move to the body with a `file:line` reference.
 
 ### Answer author review-focus items
 
-For each entry in the `review_focus` list captured in Phase 1, ensure
-the review addresses it before presenting comments.
-
-- Local answer (a specific file/line): post an inline comment with
-  severity `question` reframed as an answer, or `suggestion` /
-  `concern` when the answer surfaces an issue.
-- Cross-cutting answer (spans files or whole change): add a short
-  named section to the review body (Phase 6) — `Re: <author's
-  question>` — with the verdict and evidence.
-- Unanswerable from the diff alone (needs author context): keep the
-  question open and reply inline asking the specific clarifying
-  question, do not pretend to answer.
-
-Mark every focus item as `answered: inline | body | open` so the
-present-for-approval summary can show coverage at a glance.
+Per `review_focus` item: answer locally via an inline comment (a `question`
+reframed as an answer, or `suggestion`/`concern` when an issue surfaces), add
+`Re: <question>` to the body for cross-cutting answers, or ask a specific
+clarifying question inline when unanswerable from the diff. Mark each `answered:
+inline | body | open`.
 
 ### Present for approval
 
@@ -1103,170 +373,69 @@ Show a numbered summary of all proposed comments:
 
 ```
 1. [concern] src/auth.ts:42 — Session token not invalidated on logout
-2. [suggestion] src/utils.ts:18 — Consider renaming `processData` to something more specific
+2. [suggestion] src/utils.ts:18 — Rename `processData` to something specific
 3. [praise] src/cache.ts:91 — Nice use of LRU eviction here
-4. [question] src/api.ts:33 — Is this timeout intentional or a leftover from debugging?
+4. [question] src/api.ts:33 — Is this timeout intentional?
 ```
 
-Wait for the user to review. They may approve all, edit some, or skip
-individual comments.
+Wait for the user to review. They may approve all, edit some, or skip individual
+comments.
 
-## Phase 6: Post Review
+## Phase 5: Post Review
 
-**HARD RULE:** Auto-create the **pending (draft) review** immediately
-after presenting the Phase 5 summary. The pending review is a draft
-on GitHub — the user still submits it themselves from the GitHub UI.
-Creating the draft is not the same as submitting it; the human-in-the-
-loop checkpoint is the GitHub Submit button, not a terminal prompt.
+**HARD RULE:** Auto-create a pending (draft) review immediately after the Phase 4
+summary unless the user explicitly said "don't post", "wait", or "let me review
+first". The user submits the draft from the GitHub UI; never call an endpoint that
+submits, approves, or requests changes.
 
-- Never call any endpoint that submits or approves the review (no
-  `event: COMMENT` / `event: APPROVE` / `event: REQUEST_CHANGES`).
-- Omit `event` entirely so GitHub creates a draft.
-- Print the review's `html_url` and the literal line `Submit on GitHub
-  when ready.` so the user knows the next action lives in the UI.
+- Omit `event` entirely. Do not send `event: "PENDING"`; REST rejects it with 422.
+- Print the review `html_url` and `Submit on GitHub when ready.`
+- Edits/skips after the summary happen in the GitHub draft UI.
 
-### Pre-summary opt-out
-
-The user can request edits or skips by saying so **before** the Phase 5
-summary is presented (e.g., "drop suggestions, only concerns" or
-"don't post anything"). Once the summary is shown, the agent proceeds
-to create the pending review without a separate A/B/C gate — edits and
-skips happen in the GitHub UI on the draft.
-
-If the user explicitly says "don't post" / "wait" / "let me review
-first" at any point before posting, honor that — skip the create step
-and wait. Default is auto-post; explicit pause is opt-out.
-
-### Creating the pending review
-
-Build the review payload and post via `gh api`:
-
-**Important:** Do NOT include `"event": "PENDING"` in the payload — the REST
-API rejects `PENDING` as an event value (422 error). Omitting `event` entirely
-creates a pending (draft) review by default.
-
-**Important:** `in_reply_to` is **not a valid field** on
-`DraftPullRequestReviewComment`. The REST API rejects it with 422
-(`Field is not defined on DraftPullRequestReviewComment`). Every
-entry in `comments[]` must be a top-level comment with `path`,
-`line`, and `side`. Bot-thread replies (per Phase 5's
-"Validate bot findings" outcome) cannot ride along in the pending
-review payload — choose one of:
-
-- **(a) Inline in the review body** — add the counter-evidence note to
-  the top-level review `body` referencing the bot's anchor:
-  `Re: {bot} thread on {file}:{line} — Could not reproduce; <evidence>`.
-  Zero extra API calls; stays inside the pending checkpoint.
-- **(b) Live reply via `/comments/{id}/replies`** — posts immediately
-  (not draft); requires explicit user authorization (e.g., "post the
-  bot-thread replies live") in the Phase 5 summary or earlier, because
-  it bypasses the pending-review draft entirely. Format:
-  `gh api repos/{owner}/{repo}/pulls/{n}/comments/{parent_id}/replies --method POST -f body="..."`.
-
-Default to (a). Use (b) only when the user has explicitly opted in
-before the summary is presented.
-
-### Compose the review body
-
-The review body is **the agent's verdict on the change as a whole**, not
-a summary of the inline comments. The body is for the **PR author**; the
-investigation log — what you verified, mutation results, contract checks —
-is for the **reviewer running the skill** and stays in TERMINAL output
-only. Never move verification rationale into the GitHub body.
-
-- **HARD RULE — LGTM is one line.** When the verdict is LGTM with no
-  concerns, the body is **one line max** (`LGTM 🚀` or equivalent),
-  followed only by the footer. Do not justify the verdict, list what's
-  strong, or narrate what you checked — that rationale goes to the
-  terminal, never the body. A multi-paragraph LGTM is the exact thing
-  authors strip.
-- **PR is too large or mixes concerns:** recommend the author split it into
-  multiple PRs and **stack** them (a PR stack), and sketch the natural split
-  lines. Frame it as a suggestion that makes review easier, not a demand.
-- **PR has structural concerns spanning the whole change:** describe the
-  pattern, not the individual instances (those go inline). E.g.,
-  "logging is inconsistent across the new modules" goes in the body;
-  individual missing log lines go inline.
-
-The two bullets above (too-large, structural concerns) apply only when
-there is something the author must act on — never to a clean LGTM.
-
-Use emojis where they aid scanning (✅ 🚀 🛠️ 🧪 ⚠️ 📦 🎯). Outside the
-one-line LGTM case, keep the body to at most one to three short
-paragraphs.
-
-**Always end the body with the canonical outbound footer from
-`wk-gh` Step 4.** Do not write a custom footer here; emit the
-canonical one verbatim as the last content in the body.
-
-Bot-thread counter-evidence notes (option (a) above) are folded in
-**before** the footer, anchored as `Re: {bot} thread on {file}:{line} — …`.
-Only refuted or new-evidence cases earn a per-thread body anchor —
-never pure Confirmed outcomes (see Phase 5 HARD RULE).
-
-**Review body antipatterns — never emit any of these:**
-
-- **Blast-radius pre-judgment.** Never state "blast radius is low/high"
-  before `wk-arch-review` has run; the arch pass determines blast radius,
-  not the diff type. "Doc-only" is a diff-surface fact, not a scope verdict.
-- **Process meta-commentary.** Never mention which skills or tools were
-  invoked (e.g. "I ran an architecture pass") — the author needs the
-  verdict, not the method.
-- **Structurally-obvious findings.** Never state "no X concerns" when the
-  absence is structural (no code → no code bugs).
-- **Diff narration.** Never restate information the reader sees in the diff —
-  test counts, field/variable names, regex identifiers, list contents. Limit
-  the body to the verdict plus one non-obvious insight (a security or
-  architectural implication the diff does not make obvious).
-- **Bot re-narration.** Never restate what a bot already said, and never
-  narrate bot-validation outcomes as fact ("Validated N findings from
-  {bot} — all reproduced"). If a confirmed bot finding matters, address
-  its **substance** (what it means for the PR), not the fact of
-  confirmation.
-
-Every inline comment body also receives the canonical footer per
-`wk-gh` Step 4 — apply at payload-render time so no `comments[]`
-entry ships footer-less.
-
-### Build the payload
+### Create the pending review
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --method POST \
   --input - <<'EOF'
 {
-  "body": "<composed verdict — see 'Compose the review body' above — ending with the footer>",
+  "body": "<composed verdict ending with the canonical footer>",
   "comments": [
-    {
-      "path": "src/file.ts",
-      "line": 42,
-      "side": "RIGHT",
-      "body": "**suggestion:** Extract this into a helper — candidate for a follow-up."
-    }
+    { "path": "src/file.ts", "line": 42, "side": "RIGHT",
+      "body": "**suggestion:** Extract this into a helper — candidate for a follow-up." }
   ]
 }
 EOF
 ```
 
-Replace `{owner}/{repo}` with the actual repository and `{number}` with
-the PR number.
+Every `comments[]` entry must be top-level with `path`, `line`, `side`.
+`in_reply_to` is invalid on `DraftPullRequestReviewComment` (422); bot-thread
+replies cannot ride in the pending payload (fold into the body, or live-post with
+opt-in).
 
-The review stays **pending** (draft) — it is not visible to others until the
-user clicks "Submit review" on GitHub or explicitly asks the agent to submit.
+### Compose the review body
+
+The body is the verdict on the change as a whole, not an investigation log.
+
+- **HARD RULE — LGTM is one line.** No concerns → body is one line max (`LGTM 🚀`
+  or equivalent) plus the footer.
+- Recommend a PR stack and sketch split lines if PR is too large or mixes concerns.
+- Describe change-spanning structural concerns in the body; leave instances inline.
+- Always end with the canonical outbound footer from `wk-gh` Step 4; apply the same
+  footer to every inline comment at payload-render time.
+- Fold bot counter-evidence before the footer; only refuted/new-evidence cases earn
+  a per-thread anchor.
+
+Use emojis only where they aid scanning; outside LGTM, keep to one to three short
+paragraphs. Never emit: blast-radius pre-judgment before `wk-arch-review` runs;
+process meta-commentary about skills/tools; structurally-obvious findings ("no code
+concerns" for doc-only diffs); diff narration; bot re-narration.
 
 ### After posting
 
-Capture the `html_url` from the POST response (it points at the
-pending review on GitHub) and open it in the user's browser so
-they can review and submit without copy-pasting:
+Capture `html_url` from the POST response and open it:
 
 ```bash
-HTML_URL=$(gh api repos/{owner}/{repo}/pulls/{number}/reviews \
-  --method POST --input - <<'EOF'
-{ ... }
-EOF
-  --jq .html_url)
-
 case "$(uname -s)" in
   Darwin)  open "$HTML_URL" ;;
   Linux)   xdg-open "$HTML_URL" >/dev/null 2>&1 || true ;;
@@ -1274,44 +443,31 @@ case "$(uname -s)" in
 esac
 ```
 
-Always print the URL alongside the open call — terminal scrollback
-and remote sessions where the browser can't launch still need the
-text. Open failures are non-fatal; never block the workflow on a
-browser-launch hiccup.
+Always print the URL alongside the open call; browser-launch failures are
+non-fatal.
 
-**Pending-review verification: trust `path` + `body`, not `line`.**
-GitHub's REST API returns `line: null` and `start_line: null` for
-inline comments on a PENDING (draft) review — line/position metadata
-only populates after the review is submitted. This is API behavior,
-not a payload error.
-
-- Verify pending-review comments via `path` and a `body` prefix match.
-- Do not treat `line: null` from `/pulls/{n}/reviews/{id}/comments` as
-  a failure signal for draft reviews.
-- After the user submits on GitHub, the same endpoint returns the
-  resolved `line` value.
+**Pending-review verification: trust `path` + `body`, not `line`.** GitHub returns
+`line: null` / `start_line: null` for pending-review inline comments until
+submission — normal API behavior, not a payload error. Verify via `path` and a body
+prefix match. After submission the same endpoint returns resolved lines.
 
 Confirm success:
-> "Pending review created with N comments — opened at {html_url}.
-> Submit on GitHub when ready."
 
-Remind the user:
-> "The `.review-playground/` directory has your experiments and test files.
-> Feel free to keep exploring. Clean it up after the PR merges."
+> "Pending review created with N comments — opened at {html_url}. Submit on GitHub when ready."
 
 ## Quick Reference
 
 | Trigger | Behavior |
 |---------|----------|
-| "review this PR" | Full 6-phase review, always asks before posting |
-| "re-review this PR" | Detects prior comments, follows up on threads, then reviews new issues |
-| "just investigate this PR" | Phases 1-4 only, no comments posted |
+| "review this PR" | Full review; delegates investigation to wk-adversarial-review; creates a pending draft after the summary unless the user pauses. |
+| "re-review this PR" | Detects prior comments, follows up with consent, then reviews new issues. |
+| "just investigate this PR" | Phases 1-3 only; no review comments created. |
 
 ## Requirements
 
 - `gh` CLI authenticated with repo access
 - Git repository with a GitHub remote
-- Shell access for running playground experiments
+- `wk-adversarial-review` available (owns investigation + playground)
 
 ---
 

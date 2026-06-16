@@ -30,7 +30,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-061449'
+  version: '2026.06.15-200512'
   internal: false
   model:
     openai: gpt-4.1
@@ -43,10 +43,9 @@ metadata:
 
 # Refactor
 
-A refactor preserves behavior; only its shape changes. Tests passing
-and lints clean prove the **new code paths** work — they say nothing
-about whether **paths that should still exist** survived. This skill
-is the gate that catches dropped behavior before "ready for review."
+- Refactor preserves behavior → only shape changes.
+- Passing tests + clean lints prove **new code paths** work → say nothing about whether **paths that should still exist** survived.
+- This skill = the gate that catches dropped behavior before "ready for review."
 
 ```
 Detect kind ──► Two-axis diff ──► Removed-line audit
@@ -75,42 +74,23 @@ Detect kind ──► Two-axis diff ──► Removed-line audit
 | Before any "ready for review" / `gh pr ready` on a PR whose diff is movement-dominated | Yes |
 | User invokes `/wk-refactor` or `/wk-refactor <pr>` | Manual |
 
-The skill never blocks integration; it produces findings the user
-must acknowledge. **Do not** use the lint/test gate as a substitute —
-those gates verify the new code; this one verifies the old code
-isn't gone.
+- Never blocks integration → produces findings the user must acknowledge.
+- **Do not** substitute the lint/test gate → those verify new code; this verifies the old code isn't gone.
 
 ---
 
 ## Hard Rules
 
-1. **Tests passing is not preservation.** The test suite covers the
-   paths that *exist*; preservation requires verifying paths that
-   *should still exist* are still there. Never claim refactor
-   correctness on a green suite alone.
-2. **Conflict resolution by `--theirs` / `--ours` is a red flag.**
-   When two valid functional paths exist, picking one wholesale
-   produces internally-consistent but externally-regressed code.
-   Every `--theirs`/`--ours` resolution must be audited for
-   behavior loss before this skill is satisfied.
-3. **A pure refactor changes which file behavior lives in, not
-   which behavior exists.** Tests that disappear must be either
-   (a) explicitly out-of-scope (PR description says so), or
-   (b) renamed/moved to a new test file that asserts the same
-   behavior. "Removed for refactor" with no replacement is a
-   regression.
-4. **Removal-direction silence is a red flag.** A refactor whose net
-   diff is large-negative (lots of removed lines, few added) almost
-   always dropped behavior. The expected shape per refactor kind
-   below is the baseline; deviations need explicit justification.
+1. **Tests passing is not preservation.** Suite covers paths that *exist*; preservation requires verifying paths that *should still exist* are still there. Never claim refactor correctness on a green suite alone.
+2. **Conflict resolution by `--theirs` / `--ours` is a red flag.** Picking one of two valid functional paths wholesale → internally-consistent but externally-regressed code. Audit every `--theirs`/`--ours` resolution for behavior loss before this skill is satisfied.
+3. **A pure refactor changes which file behavior lives in, not which behavior exists.** Disappeared tests must be either (a) explicitly out-of-scope (PR description says so), or (b) renamed/moved to a new test file asserting the same behavior. "Removed for refactor" with no replacement = regression.
+4. **Removal-direction silence is a red flag.** Net diff large-negative (lots removed, few added) → almost always dropped behavior. Per-kind expected shape below is the baseline; deviations need explicit justification.
 
 ---
 
 ## Stage 0: Detect refactor kind
 
-Classify the refactor before auditing — different kinds have
-different expected diff shapes, and the wrong-shape signal is the
-fastest detector for behavior loss.
+Classify before auditing → different kinds have different expected diff shapes; wrong-shape signal = fastest detector for behavior loss.
 
 | Kind | Detect via | Expected diff shape |
 |------|------------|---------------------|
@@ -122,20 +102,14 @@ fastest detector for behavior loss.
 | **inline-helper** | Helper file removed; call sites grow | Inverse of extract-helper. |
 | **collapse / merge files** | Two+ files become one | Sources net-removed; target net-added; sum ≈ 0. |
 
-If the actual diff doesn't match the kind's expected shape — for
-example, an "extract-helper" with a 200-line net-negative caller —
-**stop and surface it** before continuing the audit. The mismatch is
-the finding.
-
-If the kind is genuinely unclear, ask the user once. Do not guess —
-the wrong kind classification produces the wrong audit checklist.
+- Actual diff doesn't match the kind's expected shape (e.g. "extract-helper" with a 200-line net-negative caller) → **stop and surface it** before continuing the audit. The mismatch is the finding.
+- Kind genuinely unclear → ask the user once. Don't guess — wrong classification produces the wrong audit checklist.
 
 ---
 
 ## Stage 1: Two-axis diff
 
-Refactors live between two reference points: where the branch
-**came from** and where it lands **now**. Capture both:
+Refactors live between two reference points — where the branch **came from** and where it lands **now**. Capture both:
 
 ```bash
 PR_NUM=$(gh pr view "${1:-}" --json number --jq .number 2>/dev/null \
@@ -156,20 +130,14 @@ git diff -M "$MERGE_BASE..HEAD"            > /tmp/refactor-mb.diff
 git diff -M --summary "origin/$BASE..HEAD" > /tmp/refactor-renames.txt
 ```
 
-Use `-M` so renamed files are identified as renames, not delete + add.
-The two diffs together reveal divergence: lines absent from both
-diffs but expected by the refactor's kind are the strongest behavior-
-loss signal.
+- Use `-M` → renamed files identified as renames, not delete + add.
+- Two diffs together reveal divergence: lines absent from both diffs but expected by the refactor's kind = strongest behavior-loss signal.
 
 ---
 
 ## Stage 2: Removed-line audit (per file)
 
-For each modified file, walk every removed line and ask: **did this
-line encode behavior not present elsewhere?** The checklist below
-captures the recurring shapes of dropped behavior.
-
-For each removed line, classify as one of:
+For each modified file, walk every removed line and ask: **did this line encode behavior not present elsewhere?** Checklist below captures recurring shapes of dropped behavior. Classify each removed line as one of:
 
 - **Relocated** — the same logic appears under a new name / file /
   function. Note where.
@@ -194,35 +162,23 @@ Mandatory checks per kind of removed line:
 | `warn` / `logger.*` / `puts` / `console.*` / `log.*` call inside a removed block | Is the diagnostic still emitted on the same code path? Collapsing a multi-line `unless`/`if` block into a guard clause routinely drops the warning, producing a silent debuggability regression even when behavior is otherwise preserved. |
 | Behavior narrowed to a specific arm / mode / branch (an unconditional read moved inside a conditional) | Do all existing tests still drive the unit through the arm that now owns the behavior? Tests pinned to the pre-narrowing invocation may pass coincidentally (default value matches) while no longer exercising the relocated code. Grep the test tree for the old invocation form and verify each test reaches the new code path. |
 
-A removed line that the refactor's kind does NOT predict (e.g., an
-`ENV.fetch` removal during a rename) is **suspicious by default** —
-renames don't drop env reads.
+A removed line the refactor's kind does NOT predict (e.g. an `ENV.fetch` removal during a rename) = **suspicious by default** — renames don't drop env reads.
 
 ### Stale-literal check (constant → resolver / value-bearing rename)
 
-The removed-line audit misses this class — the stale copy is an
-**unchanged** line, not a removed one.
+Removed-line audit misses this class — the stale copy is an **unchanged** line, not a removed one.
 
-- Run when a refactor replaces a named constant (or symbol) with a
-  resolver/function whose return value differs from a former literal.
-- Grep the **old literal value** across all files in scope — not just
-  the constant's identifier.
-  - Identifier-grep finds symbol references; it misses hardcoded copies
-    of the value in string-literal contexts (format strings, error
-    messages, logs).
-- Require every hit that is not a comment or test fixture to use the
-  resolver's return value, not the stale literal.
-- Failure mode: a stale literal in an error message shows users a
-  wrong/outdated value while every symbol reference looks correctly
-  updated.
+- Run when a refactor replaces a named constant (or symbol) with a resolver/function whose return value differs from a former literal.
+- Grep the **old literal value** across all files in scope — not just the constant's identifier.
+  - Identifier-grep finds symbol references; misses hardcoded copies of the value in string-literal contexts (format strings, error messages, logs).
+- Require every hit that is not a comment or test fixture to use the resolver's return value, not the stale literal.
+- Failure mode: a stale literal in an error message shows users a wrong/outdated value while every symbol reference looks correctly updated.
 
 ---
 
 ## Stage 3: Source-of-truth compare
 
-For each file the refactor touched, fetch the pre-refactor version
-from the base branch and read it side-by-side with the
-post-refactor file:
+For each touched file, fetch the pre-refactor version from the base branch and read side-by-side with the post-refactor file:
 
 ```bash
 for f in $(git diff --name-only "origin/$BASE..HEAD"); do
@@ -232,9 +188,7 @@ for f in $(git diff --name-only "origin/$BASE..HEAD"); do
 done
 ```
 
-Read the side-by-side **for semantic divergence**, not syntactic
-delta. Renames, reorderings, and pure formatting are noise. The
-audit's job is to spot:
+Read the side-by-side **for semantic divergence**, not syntactic delta. Renames, reorderings, pure formatting = noise. Spot:
 
 - Branches present on the base but absent on HEAD without a
   documented reason.
@@ -245,9 +199,7 @@ audit's job is to spot:
 - Tests on the base that exercise behavior the new shape no longer
   exercises.
 
-When the refactor split a file into N children, build a
-**coverage map**: every functional concern in the source must map
-to one of the children. Concerns with no destination are findings.
+Split into N children → build a **coverage map**: every functional concern in the source must map to one child. Concerns with no destination = findings.
 
 ---
 
@@ -274,14 +226,12 @@ Then ask, one finding at a time:
 >
 > Reply `a` / `b` / `c` / `s`."
 
-For (b), draft a fix as a small commit on top of the current
-branch (do not amend mid-review). For (c), drop into Stage 3-style
-investigation on just that file. For (s), record the skip in the
-report.
+- (b) → draft a fix as a small commit on top of the current branch (do not amend mid-review).
+- (c) → drop into Stage 3-style investigation on just that file.
+- (s) → record the skip in the report.
 
-If **all** findings are confirmed intentional, the refactor passes.
-If any regression survives, the skill returns a non-pass status —
-the user can override but the skill's report stands.
+- **All** findings confirmed intentional → refactor passes.
+- Any regression survives → non-pass status; user can override but the report stands.
 
 ---
 
@@ -300,28 +250,17 @@ Per-file:
 - <path>: <one-line per finding with status>
 ```
 
-The report is suitable to paste into the PR description (under a
-`## Refactor audit` heading) so reviewers see what was checked.
+Report is paste-ready into the PR description (under a `## Refactor audit` heading) so reviewers see what was checked.
 
 ---
 
 ## Conflict-resolution audit (special case)
 
-When this skill fires after `wk-pr-update` or `wk-pr-resolve`
-resolved conflicts, run an additional pass: for every file where
-`--theirs` or `--ours` was used wholesale (rather than a
-hand-merge), the file is **automatically suspicious** until
-audited.
+Fires after `wk-pr-update` or `wk-pr-resolve` resolved conflicts → run an additional pass.
 
-Flag pairs of files that crossed the conflict boundary together:
-when `lib/X.rb` was resolved with `--theirs` and `spec/X_spec.rb`
-was resolved with `--theirs` (or vice versa), the implementation
-and its test moved together — this is the failure mode where the
-suite stays green because the test moved with the code, hiding
-that paths from the *other* side are gone. Compare both files
-against the **other** side via `git show :2:<path>` (ours) and
-`git show :3:<path>` (theirs) before the resolution was committed
-when possible; otherwise compare against the base branch.
+- Every file where `--theirs` or `--ours` was used wholesale (not a hand-merge) = **automatically suspicious** until audited.
+- Flag pairs of files that crossed the conflict boundary together: `lib/X.rb` resolved with `--theirs` and `spec/X_spec.rb` resolved with `--theirs` (or vice versa) → implementation and its test moved together. Failure mode: suite stays green because the test moved with the code, hiding that paths from the *other* side are gone.
+- Compare both files against the **other** side via `git show :2:<path>` (ours) and `git show :3:<path>` (theirs) before the resolution was committed when possible; otherwise compare against the base branch.
 
 ---
 

@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.01-080026'
+  version: '2026.06.15-200030'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -37,18 +37,19 @@ metadata:
 
 # Format
 
-Reconcile the user's code-formatting preferences with the repo's lint
-config and apply the merged rules to every file the agent writes or
-edits. Repo config wins on conflict; preferences fill gaps.
+Reconcile user code-formatting preferences with the repo lint config; apply
+merged rules to every file the agent writes or edits. Repo config wins on
+conflict; preferences fill gaps.
 
 ## When this fires
 
-- **Auto:** before writing or editing any source file (any language).
-  The skill runs once per repo per session, caches the resolved
-  rule set, and passes it forward.
-- **Manual:** `/wk-format` rescans, `/wk-format rules` prints the
-  active rule set, `/wk-format check <path>` reports likely
-  violations of the merged ruleset against an existing file.
+- **Auto:** before writing/editing any source file (any language). Runs once
+  per repo per session → caches resolved rule set → passes it forward.
+- **Manual:**
+  - `/wk-format` → rescan repo configs, refresh cache.
+  - `/wk-format rules` → print active merged rule set.
+  - `/wk-format check <path>` → report likely violations of merged set against
+    an existing file (with line numbers).
 
 ---
 
@@ -56,51 +57,44 @@ edits. Repo config wins on conflict; preferences fill gaps.
 
 ### Likes — apply by default
 
-- **Comment functions well.** Every function (or method, or non-trivial
-  closure) gets a docstring/JSDoc/rustdoc-equivalent that documents:
-  the contract (what it does), inputs (types + meaning, not just
-  names), outputs (return shape + error modes), side effects.
-  Inline comments where the *why* is non-obvious — never to restate
-  the code.
-- **≤120 columns per line.** Hard cap. Wrap at semantic boundaries
-  (after operators, before chained method calls), not arbitrary
-  break points.
+- **Comment functions well.** Every function/method/non-trivial closure gets a
+  docstring/JSDoc/rustdoc-equivalent documenting: contract (what it does),
+  inputs (types + meaning, not just names), outputs (return shape + error
+  modes), side effects. Inline comments only where the *why* is non-obvious —
+  never to restate code.
+- **≤120 columns per line.** Hard cap. Wrap at semantic boundaries (after
+  operators, before chained method calls), not arbitrary points.
 - **End every file with a single trailing newline.** No more, no less.
-- **2-space indent, spaces only — never tabs.** Mixed indentation is
-  a defect.
-- **Imports at the top of the file.** Group: stdlib, third-party,
-  local. **Two blank lines** between import block and first
-  declaration; two blank lines between top-level functions, classes,
-  and import groups.
+- **2-space indent, spaces only — never tabs.** Mixed indentation is a defect.
+- **Imports at top of file.** Group: stdlib, third-party, local. Two blank
+  lines between import block and first declaration; two blank lines between
+  top-level functions, classes, and import groups.
 
 ### Dislikes — avoid by default
 
-- **No multi-line ternaries.** If a ternary doesn't fit on one line,
-  use an `if`/`else` (or pattern match, or guard clause) instead.
-- **Functions ≤40 lines.** Past that, split — extract a helper,
-  use early returns, or flatten the control flow. Counts code lines
-  excluding the docstring and blank lines.
-- **No vague names.** `data`, `temp`, `result`, `info`, `value`,
-  `obj`, `thing`, `helper`, `do_stuff`, `manager`, `handler` (without
-  a noun), single-letter locals outside tight loops or math —
-  reject and rename.
-- **No vague logic.** A reader should not need to run the code to know
-  what it does. Hidden side effects, undocumented magic numbers,
-  conditions that mix ANDs/ORs without parentheses, shadowing
-  built-ins — all violations.
-- **Do not overwrite input parameters.** Bind a new local instead.
-  Exception: when the language idiom requires it (Python `*args`
-  unpacking, Go `for i := range slice`, etc.) AND no clean
-  alternative exists; document why in a one-line comment.
+- **No multi-line ternaries.** Doesn't fit on one line → use `if`/`else` (or
+  pattern match, or guard clause).
+- **Functions ≤40 lines.** Past that → split: extract a helper, use early
+  returns, or flatten control flow. Counts code lines excluding docstring and
+  blank lines.
+- **No vague names.** Reject and rename: `data`, `temp`, `result`, `info`,
+  `value`, `obj`, `thing`, `helper`, `do_stuff`, `manager`, `handler` (without
+  a noun), single-letter locals outside tight loops or math.
+- **No vague logic.** Reader must not need to run code to know what it does.
+  Violations: hidden side effects, undocumented magic numbers, conditions
+  mixing ANDs/ORs without parentheses, shadowing built-ins.
+- **Do not overwrite input parameters.** Bind a new local instead. Exception:
+  language idiom requires it (Python `*args` unpacking, Go
+  `for i := range slice`, etc.) AND no clean alternative exists → document why
+  in a one-line comment.
 
 ---
 
 ## Stage 0: Detect repo config (run once per session per repo)
 
-Before writing any source file, scan the repo root + immediate
-subdirectories for lint/style configs. The agent should look for
-**all** of these and merge what it finds — repos often pin multiple
-layers (editor + language tool + project tool):
+Before writing any source file, scan repo root + immediate subdirs for
+lint/style configs. Look for **all** of these and merge what is found — repos
+often pin multiple layers (editor + language tool + project tool):
 
 ```bash
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
@@ -147,9 +141,8 @@ find "$ROOT" -maxdepth 2 -type f \( \
 \) 2>/dev/null
 ```
 
-Read each file found. Extract the keys relevant to the rule set (see
-"Key extraction" below). If multiple configs disagree (e.g.,
-`.editorconfig` says 2-space, `.prettierrc` says 4-space), the
+Read each file found. Extract rule-set keys (see "Key extraction"). On
+disagreement (e.g. `.editorconfig` says 2-space, `.prettierrc` says 4-space),
 **most-language-specific config wins** — `.prettierrc` for JS,
 `pyproject.toml [tool.black]` for Python, etc.
 
@@ -168,16 +161,16 @@ Read each file found. Extract the keys relevant to the rule set (see
 | `rustfmt.toml` | `max_width`, `tab_spaces`, `hard_tabs`, `newline_style` |
 | `.clang-format` | `ColumnLimit`, `IndentWidth`, `UseTab`, `BreakBeforeBraces` |
 
-For each detected key, record the source file and the resolved value.
-Conflicts: language-specific tool > Prettier/Black > `.editorconfig`
-> hard preferences from this skill.
+For each detected key, record source file + resolved value. Conflict
+precedence: language-specific tool > Prettier/Black > `.editorconfig` > this
+skill's hard preferences.
 
 ---
 
 ## Stage 1: Build the merged rule set
 
-Produce a single in-memory rule set the agent can consult during
-edits. Suggested shape (illustrative — not literal output format):
+Produce a single in-memory rule set to consult during edits. Suggested shape
+(illustrative — not literal output format):
 
 ```
 language: <auto-detect from extension>
@@ -196,56 +189,48 @@ naming_min_chars: 3                      # except idiomatic loop counters
 banned_names: data, temp, result, info, value, obj, thing, do_stuff, manager
 ```
 
-`/wk-format rules` prints this set; `/wk-format check <path>` runs
-the rules against an existing file and reports violations (with line
-numbers).
+(`/wk-format rules` prints this set; `/wk-format check <path>` runs it against
+an existing file and reports violations with line numbers.)
 
 ---
 
 ## Stage 2: Apply during write/edit
 
-When the agent writes or edits a file:
-
-1. Resolve the rule set (Stage 1 cache, or rerun Stage 0 if absent).
-2. Detect the file's language from extension/shebang.
+1. Resolve rule set (Stage 1 cache, or rerun Stage 0 if absent).
+2. Detect file language from extension/shebang.
 3. **Before** committing the edit text:
    - Wrap any line >max_line_length at a semantic boundary.
-   - Convert any tabs to the resolved indent (or vice versa if repo
-     uses tabs).
-   - Add the trailing newline if missing.
-   - Reject any function the edit creates that exceeds the function
-     length cap; split it into helpers and re-emit.
-   - Reject any vague name; choose a name that names the *thing*
-     (the data's role), not its type or its position.
-   - Reject any multi-line ternary; rewrite as `if`/`else`.
-   - Reject any input-parameter reassignment without an explicit
-     comment justifying it.
+   - Convert tabs to resolved indent (or vice versa if repo uses tabs).
+   - Add trailing newline if missing.
+   - Reject any function exceeding the length cap → split into helpers, re-emit.
+   - Reject any vague name → name the *thing* (the data's role), not its type
+     or position.
+   - Reject any multi-line ternary → rewrite as `if`/`else`.
+   - Reject any input-parameter reassignment lacking an explicit justifying
+     comment.
 4. **Documentation:**
-   - Every new function gets a doc block in the language's idiom
-     (Python `"""…"""`, JS/TS JSDoc `/** … */`, Rust `///`, Ruby
-     `# @param`, Go top-of-func comment with the function name).
-   - The block names: contract, params (type + meaning), return,
-     errors/raises, side effects.
-   - Inline comments only where the *why* is non-obvious; never
-     restate the code.
+   - Every new function gets a doc block in the language idiom: Python
+     `"""…"""`, JS/TS JSDoc `/** … */`, Rust `///`, Ruby `# @param`, Go
+     top-of-func comment with the function name.
+   - Block names: contract, params (type + meaning), return, errors/raises,
+     side effects.
+   - Inline comments only where the *why* is non-obvious; never restate code.
 
 ---
 
 ## Stage 3: Conflict resolution
 
-Repo config is authoritative. When a repo rule contradicts a hard
-preference, **the repo wins** — but the agent flags it once per
-session so the user knows their preference was overridden:
+Repo config is authoritative — repo rule contradicting a hard preference →
+**repo wins**. Flag once per session so the user knows the preference was
+overridden; do not re-surface the same conflict on subsequent edits (cache the
+resolved set):
 
-> "Repo `.prettierrc` sets `printWidth: 100`; using 100 instead of
-> the preferred 120 for this repo."
+> "Repo `.prettierrc` sets `printWidth: 100`; using 100 instead of the
+> preferred 120 for this repo."
 
-Do not surface the same conflict on every subsequent edit — once is
-enough. Cache the resolved set for the session.
-
-If the agent has no repo config to read (greenfield repo, scratch
-script, dotfile edit), apply the hard preferences as-is and note in
-the first commit that the formatting reflects user defaults.
+No repo config to read (greenfield repo, scratch script, dotfile edit) → apply
+hard preferences as-is; note in the first commit that formatting reflects user
+defaults.
 
 ---
 

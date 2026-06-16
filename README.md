@@ -37,13 +37,11 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 
 | Skill | Description |
 |---|---|
-| [sitrep](skills/sitrep/) | Unified daily ops log on a SilverBullet workspace — `start`/`end` replace goodmorning + goodevening, no HTML |
+| [sitrep](skills/sitrep/) | Unified daily ops log on a SilverBullet workspace — `start`/`end` replace goodmorning + the former evening wrap-up flow, no HTML |
 | [cal](skills/cal/) | Google Calendar — fetch events, find free slots, check availability, schedule interview prep + scorecard blocks |
 | [retro](skills/retro/) | Session retrospective that captures learnings and promotes them globally |
 | [self-perf](skills/self-perf/) | Self-performance review from GitHub, Slack, Gmail, Calendar, Jira, and Granola data |
 | [team-hud](skills/team-hud/) | ⚠️ WIP — heads-up display of team activity; blocked on Slack/Jira/Group roster access |
-| [goodmorning](skills/goodmorning/) | ⚠️ DEPRECATED — use `/wk-sitrep start`. Retained as agent-spec reference only |
-| [goodevening](skills/goodevening/) | ⚠️ DEPRECATED — use `/wk-sitrep end`. Retained as agent-spec reference only |
 
 ### Pull Request
 
@@ -112,7 +110,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [tone](skills/tone/) | Apply the user's voice — encouraging, energetic, humorous, intent-carrying emoji — to messages drafted on their behalf |
 | [calver](skills/calver/) | Generate CalVer version strings in YYYY.MM.DD-HHMMSS format (auto-invoked on any version bump) |
 | [learn](skills/learn/) | Post-completion learning capture — writes structured learning files for wk-sharpen distillation |
-| [sharpen](skills/sharpen/) | Improve skills based on field reports by extracting principles without overfitting on examples |
+| [sharpen](skills/sharpen/) | Distill field reports and prune skill bloat without overfitting on examples |
 | [skill](skills/skill/) | Scaffold a new wk-* skill from the canonical template, syncing both README indexes |
 | [env](skills/env/) | Diagnose env-var availability; source `$HOME/.profile`, report missing vars |
 | [scope-guard](skills/scope-guard/) | PreToolUse hook that blocks out-of-repo searches and warns on Edit/Write outside the project root |
@@ -123,7 +121,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | Variable | Required by | Description |
 |----------|-------------|-------------|
 | `WK_SKILLS_HOME` | All skills (learning capture) | Path to this skills repo (e.g., `~/gitc/skills`). Used by the post-completion learning hook on every skill and by [`wk-sharpen`](skills/sharpen/README.md) batch mode. |
-| `GITHUB_ORG` | gh, goodmorning, goodevening | GitHub organization to scope `gh` CLI queries (PRs, issues, notifications). |
+| `GITHUB_ORG` | gh, sitrep | GitHub organization to scope `gh` CLI queries (PRs, issues, notifications). |
 | `DATADOG_API_KEY` | datadog | Datadog API key for dashboard/monitor/SLO management. |
 | `DATADOG_APP_KEY` | datadog | Datadog application key (read/write access). |
 | `DATADOG_SITE` | datadog | Datadog site (optional, defaults to `datadoghq.com`). |

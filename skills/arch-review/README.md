@@ -6,6 +6,8 @@ and underlying assumptions. Can also author architecture documents and generate
 interactive HTML playgrounds that visualise a proposed design and its failure
 modes.
 
+**Version:** `2026.06.15-200055`
+
 ## Trigger
 
 - Reviewing an architecture doc, RFC, spec, or ADR

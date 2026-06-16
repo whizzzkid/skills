@@ -40,7 +40,7 @@ wk-goodmorning always generates morning.html from scratch using an inline templa
 **Benefits:**
 - User owns the design — style tweaks live in the repo, not in skill code.
 - Daily output is deterministic — same template in = same shell out, only content varies.
-- Other sitrep skills (wk-goodevening) can follow the same pattern: `<repo_root>/_templates/evening/brief.html`.
+- Other sitrep skills (wk-sitrep end) can follow the same pattern: `<repo_root>/_templates/evening/brief.html`.
 - Skill code becomes simpler (data + slot fragments) and easier to evolve.
 
 **Related learning:** `2026-04-24_priorities-need-source-links.md` — should be folded into the priorities slot builder so link-injection is enforced at render time rather than trusted to per-run judgment.

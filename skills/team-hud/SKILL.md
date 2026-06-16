@@ -64,7 +64,7 @@ sourced live from Slack, Jira, GitHub, and email.
 
 ## When to Use
 
-- Invoked by `wk-goodmorning` and `wk-goodevening` (parallel sub-task) to
+- Invoked by `wk-sitrep` (parallel sub-task) to
   populate the team activity section of the daily brief.
 - Called directly via `/wk-team-hud` for an on-demand snapshot.
 - **NOT** a contact directory or org-chart lookup — this is a *what's happening now* signal.
@@ -138,7 +138,7 @@ For each resolved `channel_id`:
 ## Step 2: Determine time window
 
 - Default: last 24 hours for morning invocation; last 8 hours for evening invocation.
-- Calling skills (`wk-goodmorning`, `wk-goodevening`) may pass `--since <duration>` to override.
+- Calling skills (`wk-sitrep`) may pass `--since <duration>` to override.
 - Parse `--since` as a relative duration string (e.g., `48h`, `3d`).
 
 ## Step 3: Fetch live signals (parallel, one dispatch per member)
@@ -217,7 +217,7 @@ Produce a Markdown block for embedding in a calling brief:
 | Invocation | Behavior |
 |------------|----------|
 | `/wk-team-hud` | On-demand snapshot, writes to `~/.claude/team-hud/` |
-| `wk-goodmorning` / `wk-goodevening` → parallel | Returns HUD block, no disk write |
+| `wk-sitrep` → parallel | Returns HUD block, no disk write |
 | `/wk-team-hud --since 48h` | Extends the look-back window |
 
 ## Requirements

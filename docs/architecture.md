@@ -171,8 +171,6 @@ keep costs low. High-reasoning skills (pr-review, sharpen, workflow) use
 | [`wk-commit`](../skills/commit/README.md) | sonnet | Conventional commits with signing |
 | [`wk-self-review`](../skills/self-review/README.md) | sonnet | Post design-decision comments on own PR |
 | [`wk-retro`](../skills/retro/README.md) | sonnet | Session retrospective → global memory |
-| [`wk-goodmorning`](../skills/goodmorning/README.md) | sonnet | Daily brief — Slack, Gmail, Calendar, GitHub |
-| [`wk-goodevening`](../skills/goodevening/README.md) | sonnet | End-of-day wrap-up and action tracking |
 | [`wk-buildkite`](../skills/buildkite/README.md) | sonnet | CI investigation and log reading |
 | [`wk-docs`](../skills/docs/README.md) | sonnet | Keep documentation in sync with code |
 | [`wk-mise`](../skills/mise/README.md) | sonnet | Runtime version management |
@@ -208,7 +206,7 @@ what the agent reads to decide whether to activate a skill.
 | Variable | Used by | Purpose |
 |----------|---------|---------|
 | `WK_SKILLS_HOME` | All skills | Path to this repo — required for learning capture |
-| `GITHUB_ORG` | gh, goodmorning, goodevening | Scope GitHub queries to org |
+| `GITHUB_ORG` | gh, sitrep | Scope GitHub queries to org |
 | `DATADOG_API_KEY` | datadog | API access |
 | `DATADOG_APP_KEY` | datadog | Read/write access |
 | `WK_SKILLS_TEAM_SLACK_HANDLE` | team-hud | CSV of Slack usergroup handles; resolved to channels via cache |

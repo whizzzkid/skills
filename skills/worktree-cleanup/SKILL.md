@@ -31,7 +31,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.05.29-062851'
+  version: '2026.06.15-200616'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -43,24 +43,23 @@ metadata:
 
 # Worktree Cleanup
 
-Scans all git worktrees in the current repo, identifies which branches have
-been merged, cleans up the merged ones, and reports any unmerged worktrees
-so the user can decide what to do with them.
+Scan all git worktrees in the current repo → identify merged branches → clean
+merged ones → report unmerged ones for the user to decide.
 
 ## Prerequisites
 
 - Git aliases configured: `git wtl`, `git wtr`
-- `gh` CLI authenticated (for checking PR merge status on GitHub)
+- `gh` CLI authenticated (for PR merge status on GitHub)
 - Default mode runs from the main worktree (repo root). To clean the worktree
   you are currently inside, use `--current` mode (below) — it handles the
   chdir-to-main step `git worktree remove` requires.
 
 ## Mode: clean the current worktree (`--current`)
 
-Invoked to remove the worktree the agent is **currently inside** — e.g., after
-[`wk-pr-merge`](../pr-merge/README.md) merges the PR for this worktree's branch.
-`git worktree remove` cannot remove the worktree that is the current working
-directory, so this mode chdir's to the main worktree first.
+- Removes the worktree the agent is **currently inside** — e.g., after
+  [`wk-pr-merge`](../pr-merge/README.md) merges this branch's PR.
+- `git worktree remove` cannot remove the current working directory → this mode
+  chdir's to the main worktree first.
 
 ```bash
 CURRENT_WT=$(git rev-parse --show-toplevel)
@@ -68,13 +67,13 @@ MAIN_WT=$(dirname "$(git rev-parse --git-common-dir)")
 CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
 ```
 
-- If `CURRENT_WT` equals `MAIN_WT`: not inside a linked worktree — report and
-  stop. Never remove the repo root.
-- Verify `CURRENT_BRANCH` is merged via Step 3's checks. If `unmerged` or
-  `unknown`, stop and ask the user — do not auto-remove unmerged work.
+- `CURRENT_WT` == `MAIN_WT` → not inside a linked worktree; report and stop.
+  Never remove the repo root.
+- Verify `CURRENT_BRANCH` is merged via Step 3. If `unmerged`/`unknown`, stop
+  and ask the user — do not auto-remove unmerged work.
 - Run Step 4's retro + content-scan guard against `CURRENT_WT`. Skip retro if
   it already ran this session (e.g., `wk-pr-merge` Step 9 invoked it).
-- After the guard confirms the worktree is clean, chdir to main and remove:
+- After the guard confirms clean, chdir to main and remove:
 
   ```bash
   cd "$MAIN_WT"
@@ -84,8 +83,8 @@ CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
   git worktree prune
   ```
 
-- Report the removed worktree/branch and the new working directory
-  (`MAIN_WT`). Then stop — do not fall through to the full sibling scan.
+- Report removed worktree/branch + new working directory (`MAIN_WT`). Then stop
+  — do not fall through to the full sibling scan.
 
 ## Step 1: List Worktrees
 
@@ -93,7 +92,7 @@ CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
 git wtl
 ```
 
-This outputs lines like:
+Outputs lines like:
 
 ```
 /path/to/repo                   abc1234 [main]
@@ -101,85 +100,86 @@ This outputs lines like:
 /path/to/repo/worktrees/fix-y   ghi9012 [fix-y]
 ```
 
-Parse each line to extract the **path** and **branch name** (in brackets).
-
-**Skip the main worktree** — the first entry that does not have `/worktrees/`
-in its path. This is the repo root and must never be removed.
-
-Also skip any worktree with a detached HEAD (shown as `(detached HEAD)` instead
-of a branch name in brackets).
+- Parse each line → extract **path** and **branch name** (in brackets).
+- **Skip the main worktree** — first entry without `/worktrees/` in its path.
+  Repo root; never remove.
+- Skip any detached-HEAD worktree (shown as `(detached HEAD)` instead of a
+  bracketed branch name).
 
 ## Step 2: Detect the Default Branch
 
-Resolve the default branch dynamically and store as `{default-branch}`:
+Resolve dynamically, store as `{default-branch}`:
 
 ```bash
 $(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null || git symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||')
 ```
 
-If both fail, fall back to whichever of `main` or `master` exists locally.
-Use `{default-branch}` in all subsequent git commands.
+- If both fail → fall back to whichever of `main`/`master` exists locally.
+- Use `{default-branch}` in all subsequent git commands.
 
 ## Step 3: Check Merge Status
 
-For each worktree branch, check if it has been merged using **both** methods.
-A branch is considered merged if **either** check passes.
+Check each branch with **both** methods; merged if **either** passes.
 
-### Local check
+- Local check:
 
-```bash
-git branch --merged {default-branch} | grep -qw '{branch}'
-```
+  ```bash
+  git branch --merged {default-branch} | grep -qw '{branch}'
+  ```
 
-### Remote check (GitHub PR status)
+- Remote check (GitHub PR status) — result `> 0` means a merged PR exists:
 
-```bash
-gh pr list --state merged --head '{branch}' --json number,title --jq 'length'
-```
+  ```bash
+  gh pr list --state merged --head '{branch}' --json number,title --jq 'length'
+  ```
 
-If the result is `> 0`, the branch has a merged PR.
-
-### Classify each branch
+Classify each branch:
 
 - **merged** — either check confirmed it
 - **unmerged** — neither check confirmed it
-- **unknown** — `gh` command failed (e.g., no remote, no auth); treat as unmerged
+- **unknown** — `gh` failed (no remote, no auth); treat as unmerged
 
 ## Step 4: Capture learnings before deletion
 
-**HARD RULE:** A worktree often holds the only copy of session-specific context —
-ad-hoc notes, agent transcripts, draft plans not yet distilled into
-`$WK_SKILLS_HOME/learnings/`. Once the worktree is removed, that
-context is unrecoverable. Run `wk-retro` against each merged
-worktree **before** calling `git wtr`.
+**HARD RULE:** A worktree often holds the only copy of session-specific context
+— ad-hoc notes, agent transcripts, draft plans not yet distilled into
+`$WK_SKILLS_HOME/learnings/`. Once removed, that context is unrecoverable. Run
+`wk-retro` against each merged worktree **before** calling `git wtr`.
 
-`wk-retro` writes the session narrative to `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md` (and only distilled rules, if any, to `~/.claude/memory/`). `wk-learn` is for skill-specific learnings under `$WK_SKILLS_HOME/learnings/skills/` — do not substitute one for the other here.
+- `wk-retro` → session narrative to
+  `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md` (and only distilled
+  rules, if any, to `$HOME/.claude/memory/`).
+- `wk-learn` → skill-specific learnings under
+  `$WK_SKILLS_HOME/learnings/skills/`. Do not substitute one for the other here.
 
 ### Disposable paths — skip retro and clean without prompting
 
-Some untracked content is always disposable: **temporary directories created
-by the agent during this session** (review playgrounds, build artifacts, IDE
-caches), OS metadata files, and editor swap files matched by `.gitignore`.
+- Always disposable: temporary directories the agent created this session
+  (review playgrounds, build artifacts, IDE caches), OS metadata files, editor
+  swap files matched by `.gitignore`.
+- If the only untracked content is disposable → treat worktree as clean and
+  proceed. Before `git wtr` (Step 5), `git clean -fd` may run without
+  per-worktree user confirmation to remove them.
+- Anything else (session notes, draft plans, uncommitted code) → triggers the
+  normal retro check.
 
-If the only untracked content falls into these categories, treat the worktree
-as clean and proceed. Before `git wtr` (Step 5), `git clean -fd` may run
-without per-worktree user confirmation to remove them.
+For each `merged` branch:
 
-Anything else — session notes, draft plans, uncommitted code — still triggers
-the normal retro check.
-
-For each branch classified as `merged`:
-
-- **Pre-delete content scan.** Surface uncommitted or stashed content before any retro/delete decision — merged status only proves committed work landed; staged, untracked-non-disposable, or stashed content can still be unique to this worktree:
+- **Pre-delete content scan.** Merged status only proves committed work landed;
+  staged, untracked-non-disposable, or stashed content can still be unique to
+  this worktree. Surface it before any retro/delete decision:
 
   ```bash
   git -C worktrees/{branch} status --short
   git -C worktrees/{branch} stash list
   ```
 
-  If either reports non-empty content (beyond the disposable-paths classifier set), surface to the user before proceeding.
+  Either reports non-empty content (beyond the disposable-paths classifier set)
+  → surface to the user before proceeding.
 
-- **Author check — skip retro when branch is owned by another user.** `wk-retro` reflects the current session; running it against another contributor's branch yields empty lenses:
+- **Author check — skip retro when another user owns the branch.** `wk-retro`
+  reflects the current session; running it on another contributor's branch
+  yields empty lenses:
 
   ```bash
   AUTHOR=$(git -C worktrees/{branch} log -1 --format='%ae')
@@ -187,45 +187,48 @@ For each branch classified as `merged`:
   [ "$AUTHOR" = "$ME" ] || SKIP_RETRO=1
   ```
 
-  If `SKIP_RETRO=1`, jump to Step 5 directly; record the skip reason in the cleanup report.
+  `SKIP_RETRO=1` → jump to Step 5 directly; record the skip reason in the
+  cleanup report.
 
-- **Retro already run?** (learning file mtime within this worktree's active window, entry in `~/.claude/memory/retro-log.md` for this branch/PR, or explicit user skip recorded this run) → skip retro, proceed to Step 5.
-- **No signal found and author matches** → invoke `wk-retro` before deletion: `Skill(wk-retro, args="--worktree worktrees/{branch}")`. If `wk-retro` is unavailable or fails, stop and ask the user before proceeding.
-- **After retro returns** → confirm the worktree is clean, then proceed to Step 5.
+- **Retro already run?** (learning file mtime within this worktree's active
+  window, entry in `$HOME/.claude/memory/retro-log.md` for this branch/PR, or
+  explicit user skip recorded this run) → skip retro, proceed to Step 5.
+- **No signal found and author matches** → invoke `wk-retro` before deletion:
+  `Skill(wk-retro, args="--worktree worktrees/{branch}")`. If `wk-retro` is
+  unavailable or fails, stop and ask the user before proceeding.
+- **After retro returns** → confirm the worktree is clean, proceed to Step 5.
 
 ## Step 5: Clean Up Merged Worktrees
 
-For each **merged** branch whose retro has been confirmed (Step 4),
-remove the worktree and delete the branch.
+For each **merged** branch whose retro is confirmed (Step 4), remove the
+worktree and delete the branch.
 
 ### Pre-clean disposable untracked content
 
-Run `git clean -fd` inside the worktree before `git wtr`. `git worktree
-remove` refuses to delete a worktree that contains untracked files and
-errors out without `--force`. Falling back to `--force` masks unrelated
-uncommitted work the disposable-paths classifier missed.
-
-- Scope the clean to the worktree path; do not run it in the primary
-  checkout.
-- Only run after Step 4 confirmed every untracked path is disposable —
-  the classifier is the gate, `git clean` is the executor.
-- If a non-disposable untracked path appears between Step 4 and Step 5
-  (e.g., a generated file from `wk-retro`), re-run Step 4's check.
+- Run `git clean -fd` inside the worktree before `git wtr`. `git worktree
+  remove` refuses to delete a worktree containing untracked files and errors out
+  without `--force`. Falling back to `--force` masks unrelated uncommitted work
+  the disposable-paths classifier missed.
+- Scope the clean to the worktree path; never run it in the primary checkout.
+- Only run after Step 4 confirmed every untracked path is disposable — the
+  classifier is the gate, `git clean` is the executor.
+- Non-disposable untracked path appears between Step 4 and Step 5 (e.g., a
+  generated file from `wk-retro`) → re-run Step 4's check.
 
 ```bash
 git -C worktrees/{branch} clean -fd
 git wtr {branch}
 ```
 
-The `git wtr` alias expands to `git worktree remove worktrees/{branch} && git branch -D {branch}`.
+`git wtr` expands to `git worktree remove worktrees/{branch} && git branch -D {branch}`.
 
-**HARD RULE:** Never call `git wtr` on a branch that has not been confirmed
-merged. The `-D` flag force-deletes the branch regardless of merge status.
-If in doubt, classify as unmerged and let the user decide.
+**HARD RULE:** Never call `git wtr` on a branch not confirmed merged. The `-D`
+flag force-deletes the branch regardless of merge status. If in doubt, classify
+as unmerged and let the user decide.
 
 ## Step 6: Prune Stale References
 
-After removing merged worktrees, clean up any stale metadata:
+Clean up stale metadata after removing merged worktrees:
 
 ```bash
 git worktree prune
@@ -233,7 +236,7 @@ git worktree prune
 
 ## Step 7: Report
 
-Present a summary with two sections:
+Present two sections.
 
 ### Cleaned up
 
@@ -244,7 +247,7 @@ Present a summary with two sections:
 | fix-y  | GitHub PR #NNN |
 ```
 
-If nothing was cleaned, say: "No merged worktrees found — nothing to clean up."
+Nothing cleaned → say: "No merged worktrees found — nothing to clean up."
 
 ### Still active (unmerged)
 
@@ -255,9 +258,9 @@ If nothing was cleaned, say: "No merged worktrees found — nothing to clean up.
 | spike-a | worktrees/spike-a | No PR found |
 ```
 
-If there are no unmerged worktrees, say: "All worktrees have been cleaned up."
+No unmerged worktrees → say: "All worktrees have been cleaned up."
 
-For unmerged worktrees, let the user know:
+For unmerged worktrees, tell the user:
 > "These worktrees have unmerged branches. Let me know if you'd like to
 > force-remove any of them, or I can leave them as-is."
 
@@ -272,7 +275,7 @@ For unmerged worktrees, let the user know:
 
 ## Requirements
 
-- Git worktree aliases (`git wtl`, `git wtr`) in `~/.gitconfig`
+- Git worktree aliases (`git wtl`, `git wtr`) in `$HOME/.gitconfig`
 - `gh` CLI authenticated with repo access (for PR merge checks)
 - Shell access
 

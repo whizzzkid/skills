@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.10-191555'
+  version: '2026.06.15-200558'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -44,13 +44,12 @@ README, field learnings, and infrastructure hooks.
 ## When to Use
 
 - Creating a new skill from scratch
-- When `/wk-skill <name>` is invoked directly
+- `/wk-skill <name>` invoked directly
 
-**Implement the full skill when asked.** Generate frontmatter plus a complete,
-runnable body and its README in one pass. Do not stop at a skeleton. Do not
-gate delivery on any test-first ceremony — write the skill, install it, commit
-it. Apply a RED-GREEN-REFACTOR hardening pass only if the user explicitly asks
-for one.
+**Implement the full skill when asked.** One pass → frontmatter + complete,
+runnable body + README. Do not stop at a skeleton. Do not gate delivery on any
+test-first ceremony — write, install, commit. Apply a RED-GREEN-REFACTOR
+hardening pass only on explicit user request.
 
 ## Step 1: Check environment
 
@@ -58,13 +57,12 @@ for one.
 test -n "$WK_SKILLS_HOME" && echo "OK: $WK_SKILLS_HOME" || echo "MISSING"
 ```
 
-Stop and tell the user to set `$WK_SKILLS_HOME` if missing.
+If missing → stop, tell user to set `$WK_SKILLS_HOME`.
 
 Parse the argument:
-- Strip a leading `wk-` prefix from the directory name (the `wk-` lives in
-  the `name:` frontmatter field, not the directory).
-- The skill `name:` field is always `wk-<name>`.
-- If no argument is provided, ask the user for the skill name.
+- Strip leading `wk-` from directory name (`wk-` lives in `name:` frontmatter, not the directory).
+- `name:` field is always `wk-<name>`.
+- No argument → ask user for the skill name.
 
 ## Step 2: Guard against collisions
 
@@ -72,39 +70,38 @@ Parse the argument:
 test -d "$WK_SKILLS_HOME/skills/<name>" && echo "EXISTS" || echo "CLEAR"
 ```
 
-Stop if the directory already exists — do not overwrite an existing skill.
-Suggest `wk-sharpen` if the user wants to improve an existing one.
+Directory exists → stop, do not overwrite. Suggest `wk-sharpen` to improve an
+existing skill.
 
 ## Step 3: Surface relevant learnings
 
-Scan for unprocessed learnings that may inform the new skill's scope or
-known pitfalls:
+Scan unprocessed learnings that may inform scope or known pitfalls:
 
 ```bash
 find "$WK_SKILLS_HOME/learnings/skills" -name "*.md" \
   ! -name "*.learned.md" -type f 2>/dev/null | head -20
 ```
 
-Also grep for the skill name / topic across existing learnings:
+Grep the skill name / topic across existing learnings:
 
 ```bash
 grep -rl "<name>" "$WK_SKILLS_HOME/learnings/" 2>/dev/null
 ```
 
-Read any matches. Surface key insights as a bullet list before writing the
-skill — these become the first draft of the "Common Mistakes" section.
+Read matches → surface key insights as a bullet list before writing → these
+seed the "Common Mistakes" section.
 
 ## Step 4: Determine metadata
 
 If description, model tier, effort, or group were not provided as arguments, ask:
 
-1. **Description** (one sentence, "Use when…" form, ≤500 chars)
-2. **Group** — pick the logical group this skill belongs to:
+1. **Description** — one sentence, "Use when…" form, ≤500 chars
+2. **Group** — logical group:
    - `rituals` — time-bounded routines: daily bookends, session wrap-ups, performance reviews
-   - `pull-request` — anything in the PR lifecycle: create, review, resolve, update, break
+   - `pull-request` — PR lifecycle: create, review, resolve, update, break
    - `tools` — external tool integrations: CI, observability, VCS, containers, package managers
    - `workflows` — development process: commits, formatting, docs, testing, meta-skills
-3. **Model tier** — pick based on task complexity:
+3. **Model tier** — by task complexity:
 
    | Tier | When | Claude | OpenAI | Gemini |
    |------|------|--------|--------|--------|
@@ -112,14 +109,13 @@ If description, model tier, effort, or group were not provided as arguments, ask
    | `opus` | Deep reasoning, adversarial review, batch distillation | claude-opus-4-7 | o3 | gemini-2.5-pro |
    | `haiku` | Single lookups, calver generation, trivial transforms | claude-haiku-4-5 | gpt-4.1-nano | gemini-2.5-flash-8b |
 
-4. **Effort** — `low` (single action), `medium` (multi-step flow), `high`
-   (long-running, many decisions)
-5. **User-invocable** — `true` if the user should call it directly with `/`
-6. **Model-invocable** — `true` if another skill or agent should auto-trigger it
+4. **Effort** — `low` (single action), `medium` (multi-step flow), `high` (long-running, many decisions)
+5. **User-invocable** — `true` if the user calls it directly with `/`
+6. **Model-invocable** — `true` if another skill or agent auto-triggers it
 
 ## Step 5: Generate CalVer version
 
-Invoke `wk-calver` to get the UTC timestamp for `metadata.version`.
+Invoke `wk-calver` for the UTC `metadata.version` timestamp:
 
 ```bash
 date -u '+%Y.%m.%d-%H%M%S'
@@ -131,56 +127,53 @@ date -u '+%Y.%m.%d-%H%M%S'
 mkdir -p "$WK_SKILLS_HOME/skills/<name>"
 ```
 
-Write `$WK_SKILLS_HOME/skills/<name>/SKILL.md` with the **full body** — not a
+Write `$WK_SKILLS_HOME/skills/<name>/SKILL.md` with the **full body**, not a
 skeleton:
-- Frontmatter filled in from Steps 4–5, including `group: <group>` before `metadata:`
+- Frontmatter from Steps 4–5, including `group: <group>` before `metadata:`.
 - Complete body: `# <Title>`, `## When to Use`, numbered `## Step N` sections
   with concrete imperative instructions and runnable commands, `## Quick
   Reference`, `## Requirements`, `## Post-Completion`.
 - Every Step carries real behavior — commands, checks, decision rules — derived
-  from the user's description and Step 3 learnings. Never leave
-  `<!-- DESIGN NOTES -->` or "RED phase not yet run" placeholders unless the
-  user explicitly requested a scaffold-only pass.
+  from the description and Step 3 learnings. Never leave `<!-- DESIGN NOTES -->`
+  or "RED phase not yet run" placeholders unless the user requested a
+  scaffold-only pass.
 - `## Post-Completion` always ends with:
   ```
   Invoke `wk-learn` with this skill's short name as the argument
   (e.g., `wk-learn <name>`).
   ```
-- If Step 3 surfaced learnings, add a `## Common Mistakes` section with those
-  insights.
+- Step 3 surfaced learnings → add a `## Common Mistakes` section with those insights.
 
 Write the sibling `$WK_SKILLS_HOME/skills/<name>/README.md` in the **same
 commit** (AGENTS.md README co-change rule). Follow the per-skill format in
-`skills/README.md`: `# wk-<name>` heading (matching the `name:` field), purpose,
-trigger, key phases/rules, and integration points.
+`skills/README.md`: `# wk-<name>` heading (matching `name:`), purpose, trigger,
+key phases/rules, integration points.
 
-- **Linkify every `wk-*` mention in the README from the first draft** — even
-  an illustrative or placeholder `wk-<name>` example. Write
-  `[wk-<name>](../<name>/README.md)`, or drop the backticks (plain
-  `wk-<name>`). A bare backticked `` `wk-foo` `` trips the `check-skill-links`
-  pre-commit hook and forces a re-commit. The skill's own name in the `#`
-  heading is exempt.
+- **Linkify every `wk-*` mention in the README from the first draft** — even an
+  illustrative or placeholder `wk-<name>`. Write `[wk-<name>](../<name>/README.md)`,
+  or drop the backticks (plain `wk-<name>`). A bare backticked `` `wk-foo` ``
+  trips the `check-skill-links` pre-commit hook → forces a re-commit. The
+  skill's own name in the `#` heading is exempt.
 
 **HARD RULE — sync BOTH skill indexes in the same commit.** A new skill is not
-done until it has a row in **both** index files. There is no "when in scope"
-exemption — every published skill (everything except `_template/`) appears in
-both:
+done until it has a row in **both** index files. No "when in scope" exemption —
+every published skill (all except `_template/`) appears in both:
 
 - `skills/README.md` (canonical owned index) — add a row to the matching group
   table: `` | [`wk-<name>`](./<name>/README.md) | <purpose> | <invocation> | ``.
-  Add a new group section if the skill's `group:` has no table yet. Bump the
-  skill-count and group-count in the header line.
+  Add a new group section if `group:` has no table yet. Bump the skill-count
+  and group-count in the header line.
 - `README.md` (root landing-page mirror) — add a row to the matching group:
   `` | [<name>](skills/<name>/) | <description> | ``.
 
 The `check-readme-index` pre-commit hook blocks the commit if either row is
-missing, so a skipped index is caught mechanically — add both up front.
+missing → add both up front.
 
-**Removal / rename obligation.** This skill only *adds*. When a skill is
-removed or renamed, the same commit MUST delete or update its row in **both**
-indexes (and the header counts) — the `check-readme-index` hook flags an orphan
-row pointing at a directory that no longer exists. A material `group:` or
-`description:` change likewise updates both indexes.
+**Removal / rename obligation.** This skill only *adds*. On removal or rename,
+the same commit MUST delete or update its row in **both** indexes (and header
+counts) — `check-readme-index` flags an orphan row pointing at a deleted
+directory. A material `group:` or `description:` change likewise updates both
+indexes.
 
 **HARD RULE — MCP tools use wildcards, never employer-specific IDs.** When
 populating `allowed-tools` with MCP connector entries, replace the org/tenant
@@ -196,77 +189,72 @@ allowed-tools:
   - "mcp__claude_ai_Slack_*__slack_send_message"
 ```
 
-This applies to all MCP tool patterns: `mcp__claude_ai_<Service>_*__<operation>`.
-Quote wildcard entries so YAML parsers don't interpret `*` as a glob anchor.
+Applies to all MCP tool patterns: `mcp__claude_ai_<Service>_*__<operation>`.
+Quote wildcard entries so YAML parsers don't read `*` as a glob anchor.
 
-**HARD RULE — skills live in `$WK_SKILLS_HOME`, never `~/.claude/skills/`.**
-`~/.claude/skills/` is read-only — it is managed by the install step that
-syncs from the skills repo. Direct writes there bypass change management,
-versioning, and review.
+**HARD RULE — skills live in `$WK_SKILLS_HOME`, never `$HOME/.claude/skills/`.**
+`$HOME/.claude/skills/` is read-only — managed by the install step syncing from the
+skills repo. Direct writes there bypass change management, versioning, review.
 
 - Always scaffold into `$WK_SKILLS_HOME/skills/<name>/`.
-- If `$WK_SKILLS_HOME` is unset, stop and ask the user where the skills
-  repo lives — do not default to the installed path.
+- `$WK_SKILLS_HOME` unset → stop, ask where the skills repo lives. Do not
+  default to the installed path.
 
-**HARD RULE — model-invocation frontmatter.** Use `model-invocable: true`
-to mark a skill as model-invocable. Never use `disable-model-invocation:
-false` — it is a no-op (skills are model-invocable by default) and reads
-as misleading dead config. To opt out, set `disable-model-invocation: true`.
+**HARD RULE — model-invocation frontmatter.** Mark model-invocable with
+`model-invocable: true`. Never use `disable-model-invocation: false` — a no-op
+(skills are model-invocable by default), reads as misleading dead config. To
+opt out, set `disable-model-invocation: true`.
 
-**HARD RULE — sub-command state must define a deterministic fallback.**
-Any sub-command (e.g., `/wk-foo:bar`) that reads session-scoped state
-(active mode, active config, current context) must explicitly state the
-behavior when that state is absent.
+**HARD RULE — sub-command state must define a deterministic fallback.** Any
+sub-command (e.g., `/wk-foo:bar`) reading session-scoped state (active mode,
+active config, current context) must state the behavior when that state is
+absent.
 
-- Pick a default and document it in the skill body.
-- Emit a one-line confirmation in the sub-command output naming the
-  resolved state (`"compressing using mode: brief (default — no active
-  mode)"`).
-- Refusing or silently guessing are both wrong; the user cannot debug
-  either.
+- Pick a default, document it in the body.
+- Emit a one-line confirmation naming the resolved state (`"compressing using
+  mode: brief (default — no active mode)"`).
+- Refusing or silently guessing are both wrong — the user cannot debug either.
 
-**HARD RULE — supersede parity audit.** When the user frames the new
-skill as replacing, superseding, or deprecating existing skills
-("replaces X", "instead of X", "deprecate X once this ships"), audit
-each named skill for feature parity before declaring the new skill done.
+**HARD RULE — supersede parity audit.** When the user frames the new skill as
+replacing/superseding/deprecating existing skills ("replaces X", "instead of
+X", "deprecate X once this ships"), audit each named skill for feature parity
+before declaring done.
 
-- Read each superseded skill's `SKILL.md` and extract its stage/feature
-  list.
-- Confirm the new skill covers each feature, or record an explicit,
-  intentional exclusion in the body — features left implicit surface
-  one-by-one across later runs, each forcing a follow-up sharpen pass.
-- Keep the deprecated file when the new skill links to it as a spec
-  source — deprecation marks it superseded; deletion orphans the
-  reference.
+- Read each superseded skill's `SKILL.md`, extract its stage/feature list.
+- Confirm the new skill covers each feature, or record an explicit, intentional
+  exclusion in the body — implicit features surface one-by-one across later
+  runs, each forcing a follow-up sharpen pass.
+- Keep the deprecated file when the new skill links to it as a spec source —
+  deprecation marks it superseded; deletion orphans the reference.
 
 ## Step 7: Present the skill
 
-Display the completed `SKILL.md` and `README.md`, then continue directly to
-Step 8 (install) and Step 9 (commit) — the skill is ready to ship. Do not stop
-and wait for the user to "fill in the body"; the body is already written.
+Display the completed `SKILL.md` and `README.md` → continue directly to Step 8
+(install) and Step 9 (commit). The skill is ready to ship. Do not wait for the
+user to "fill in the body"; it is already written.
 
 ## Step 8: Install and verify
 
-After writing the body and README (Step 6), install and verify:
+After writing the body and README (Step 6):
 
 ```bash
 cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5
 ```
 
 Must print `Done!`. If it prints `No skills found` or exits non-zero:
-- Re-run from the repo root (`$WK_SKILLS_HOME`)
-- Check that `name:` in frontmatter uses only letters, numbers, and hyphens
+- Re-run from the repo root (`$WK_SKILLS_HOME`).
+- Check `name:` frontmatter uses only letters, numbers, hyphens.
 
-**HARD RULE — `allowed-tools` must match the body two-way.** Before
-declaring the skill ready:
+**HARD RULE — `allowed-tools` must match the body two-way.** Before declaring
+ready:
 
-- Grep the skill body for every tool-call pattern (`Bash(`, `Read(`,
-  `Edit(`, `WebFetch(`, `Skill(`, MCP tool names). Every match must
-  appear in `allowed-tools`.
-- Walk each `allowed-tools` entry in reverse — every entry must be
-  exercised by a concrete step in the body. Remove orphaned entries.
-- Missing entries fail silently at runtime. Orphaned entries grant
-  unnecessary permissions and rot into stale config.
+- Grep the body for every tool-call pattern (`Bash(`, `Read(`, `Edit(`,
+  `WebFetch(`, `Skill(`, MCP tool names). Every match must appear in
+  `allowed-tools`.
+- Walk each `allowed-tools` entry in reverse — every entry must be exercised by
+  a concrete step. Remove orphaned entries.
+- Missing entries fail silently at runtime. Orphaned entries grant unnecessary
+  permissions and rot into stale config.
 
 Confirm the skill appears in the registry:
 
@@ -276,7 +264,7 @@ npx skills list -a=claude 2>/dev/null | grep "wk-<name>"
 
 ## Step 9: Commit
 
-Invoke `wk-commit` with the `SKILL.md` and `README.md` staged together:
+Invoke `wk-commit` with `SKILL.md` and `README.md` staged together:
 
 ```
 ✨ feat(skills): add wk-<name> skill

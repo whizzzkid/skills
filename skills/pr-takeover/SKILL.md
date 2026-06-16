@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.09-172926'
+  version: '2026.06.15-200404'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -38,24 +38,24 @@ metadata:
 
 # PR Takeover
 
-Take over an in-flight PR from another author — understand the work done so far,
-join as a co-author, and drive it to completion using the full `wk-workflow`.
+Take over an in-flight PR from another author — understand work done so far, join
+as co-author, drive to completion via full `wk-workflow`.
 
 ## Hard Rules
 
-0. **Never approve your own work.** Both the user and the original author are
-   PR authors after takeover. The user must not self-approve. If CI requires
-   approval, request a peer review.
-1. **Both parties are authors — preserve co-authorship.** Every new commit adds
-   both the original author and the user via `Co-Authored-By` trailers.
-2. **Scope explosion triggers a stacked PR.** If the changes introduced during
-   takeover exceed ~30% of the original PR's line-count diff, automatically
-   switch to `stack` mode for the new work rather than expanding the existing PR.
+0. **Never approve your own work.** Both user and original author are PR authors
+   after takeover → user must not self-approve. CI requires approval → request a
+   peer review.
+1. **Preserve co-authorship.** Every new commit adds both original author and
+   user via `Co-Authored-By` trailers.
+2. **Scope explosion → stacked PR.** Takeover changes exceed ~30% of original
+   PR's line-count diff → auto-switch to `stack` mode for new work; do not expand
+   the existing PR.
 3. **Full workflow always runs.** `wk-workflow` governs all implementation work
-   regardless of mode. Skipping phases is not permitted.
-4. **PR description reflects the new reality.** After any substantive change,
-   update the PR body to reflect the combined work — original scope + takeover
-   additions. Preserve all metadata lines per `skills/pr/references/pr-description-metadata.md`.
+   regardless of mode. Skipping phases not permitted.
+4. **PR description reflects new reality.** After any substantive change → update
+   PR body to combined work (original scope + takeover additions). Preserve all
+   metadata lines per `skills/pr/references/pr-description-metadata.md`.
 
 ---
 
@@ -63,18 +63,18 @@ join as a co-author, and drive it to completion using the full `wk-workflow`.
 
 Accept: `wk-pr-takeover <pr-number-or-url> [--stack]`
 
-- If `--stack` is present → **stack mode** (create new branch on top).
-- Otherwise → **overwrite mode** (continue directly on the existing branch).
-- If no PR argument is provided, infer the target from the current branch
-  before prompting — only fall through to the prompt when none is found:
+- `--stack` present → **stack mode** (create new branch on top).
+- Else → **overwrite mode** (continue on existing branch).
+- No PR argument → infer target from current branch before prompting; fall
+  through to prompt only when none found:
 
   ```bash
   PR_NUMBER=$(gh pr view --json number --jq .number 2>/dev/null)
   ```
 
-  If a PR is found, surface it and confirm: "Taking over PR #N
-  (<title>) on the current branch — continue?" Ask "Which PR are you
-  taking over? Provide a number or URL." only when no PR resolves.
+  - PR found → confirm: "Taking over PR #N (<title>) on the current branch —
+    continue?"
+  - No PR resolves → ask "Which PR are you taking over? Provide a number or URL."
 
 ```bash
 # Resolve PR number from an explicit URL/number argument
@@ -86,7 +86,7 @@ PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
 
 ## Step 2: Fetch PR Context
 
-Pull full metadata for the target PR:
+Pull full metadata for the target PR.
 
 ```bash
 gh pr view "$PR_NUMBER" \
@@ -103,8 +103,7 @@ gh pr view "$PR_NUMBER" \
   }'
 ```
 
-Also fetch review comments and timeline to understand what has already been
-discussed:
+Fetch review + timeline comments → understand prior discussion:
 
 ```bash
 gh api "repos/{owner}/{repo}/pulls/$PR_NUMBER/comments" \
@@ -114,17 +113,17 @@ gh api "repos/{owner}/{repo}/issues/$PR_NUMBER/comments" \
   --jq '[.[] | {author: .user.login, body: .body}]'
 ```
 
-Read the PR diff to understand the scope of work completed:
+Read the diff → understand scope of work completed:
 
 ```bash
 gh pr diff "$PR_NUMBER" | head -500
 ```
 
 Summarize internally:
-- What the original author set out to do (from title + body)
-- What code has been written (from diff)
-- What review feedback exists (from comments)
-- Whether there are unresolved threads
+- Original author's goal (title + body)
+- Code written (diff)
+- Review feedback (comments)
+- Unresolved threads
 
 ---
 
@@ -136,19 +135,18 @@ Summarize internally:
 gh pr checkout "$PR_NUMBER"
 ```
 
-Verify the branch is clean and up to date with its base:
+Verify branch is clean and up to date with its base:
 
 ```bash
 git status --short
 git log --oneline "$(git merge-base HEAD origin/$(gh pr view $PR_NUMBER --json baseRefName -q .baseRefName))..HEAD"
 ```
 
-If the branch has merge conflicts with its base, run `wk-pr-update` before
-proceeding.
+Branch has merge conflicts with base → run `wk-pr-update` before proceeding.
 
 ### Stack Mode
 
-Compute a new branch name from the existing head + a suffix:
+Compute new branch name from existing head + suffix:
 
 ```bash
 HEAD_BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName -q .headRefName)
@@ -157,9 +155,8 @@ git fetch origin "$HEAD_BRANCH"
 git checkout -b "$NEW_BRANCH" "origin/$HEAD_BRANCH"
 ```
 
-The new PR will target `$HEAD_BRANCH` as its base. Note the stacked-on-draft
-rule: if `$HEAD_BRANCH` itself is a draft PR that is not yet approved, surface
-the following choice before continuing:
+New PR targets `$HEAD_BRANCH` as base. Stacked-on-draft rule: `$HEAD_BRANCH` is
+itself an unapproved draft PR → surface this choice before continuing:
 
 > "The base branch `{HEAD_BRANCH}` is still a draft PR. Options:
 > (A) Stack here anyway — reviewer must merge both in sequence.
@@ -172,18 +169,18 @@ the following choice before continuing:
 
 ## Step 4: Orient to the Existing Work
 
-Read all files touched by the existing commits:
+Read all files touched by existing commits:
 
 ```bash
 git diff --name-only "$(git merge-base HEAD "origin/$(gh pr view $PR_NUMBER --json baseRefName -q .baseRefName)")"
 ```
 
 Read each changed file. Understand:
-- What pattern or convention was being followed?
-- Are there incomplete sections (TODO, FIXME, `raise NotImplementedError`)?
-- Do tests exist? Do they pass?
+- Pattern/convention being followed
+- Incomplete sections (TODO, FIXME, `raise NotImplementedError`)
+- Tests exist? pass?
 
-Run the test suite to establish a baseline:
+Run the test suite → establish a baseline:
 
 ```bash
 # Adjust for the project's test command
@@ -193,8 +190,19 @@ go test ./... 2>&1 | tail -20                         # Go
 npm test -- --passWithNoTests 2>&1 | tail -20         # JS/TS
 ```
 
-Record: passing / failing / skipped. Any failure from the original author's
-work is a **pre-existing failure** — document it, do not treat it as yours.
+Record passing / failing / skipped. Failure from original author's work = a
+**pre-existing failure** → document it, do not treat it as yours.
+
+**Diff dominated by documentation / prose / config rather than code** → "does it
+still pass" is the wrong baseline; often no runnable suite. Substitute a
+**gate-preservation audit**:
+
+- Run the repo's pre-commit/pre-push hooks as the executable baseline.
+- Diff each touched file against base → enumerate rules, links, counts the change
+  claims to preserve, verify each survived the compression (parallel subagents
+  scale well across many files).
+- Real takeover risk: a silently dropped load-bearing rule inside compressed
+  prose, which no test catches.
 
 ---
 
@@ -207,7 +215,11 @@ Identify the original author's Git identity:
 git log --format="%an <%ae>" "$(git merge-base HEAD "origin/$(gh pr view $PR_NUMBER --json baseRefName -q .baseRefName)")..HEAD" | sort -u
 ```
 
-Store as `$ORIGINAL_AUTHOR`. Every commit you make during takeover must carry:
+Sole author across those commits is the user (taking over one's own PR) →
+co-authorship machinery is a no-op; skip Step 5 and the `$WK_CO_AUTHOR` trailer
+entirely.
+
+Store as `$ORIGINAL_AUTHOR`. Every commit during takeover must carry:
 
 ```
 Co-Authored-By: $ORIGINAL_AUTHOR
@@ -224,15 +236,15 @@ export WK_CO_AUTHOR="$ORIGINAL_AUTHOR"
 
 ## Step 6: Plan the Remaining Work
 
-Based on Step 4's orientation, produce a task list:
+From Step 4's orientation, produce a task list:
 
 1. Unresolved review feedback → items to implement
 2. Incomplete code sections → items to finish
 3. Missing tests → items to add
-4. Pre-existing failures → flag as pre-existing, include remediation if in scope
+4. Pre-existing failures → flag as pre-existing; include remediation if in scope
 
-If the estimated work is > 30% of the original diff line-count AND you are in
-**overwrite mode**, switch to **stack mode** automatically:
+Estimated work > 30% of original diff line-count AND in **overwrite mode** →
+auto-switch to **stack mode**:
 
 ```bash
 ORIGINAL_LINES=$(gh pr diff "$PR_NUMBER" | grep -c '^[+-]')
@@ -253,7 +265,7 @@ Invoke the full `wk-workflow` as if this were new work:
 Skill("wk-workflow")
 ```
 
-Key adaptations during the workflow phases:
+Key phase adaptations:
 
 | Phase | Adaptation |
 |-------|-----------|
@@ -271,7 +283,7 @@ Key adaptations during the workflow phases:
 
 ### Overwrite Mode
 
-The PR already exists. Update the description to reflect the combined work:
+PR already exists. Update description to reflect combined work:
 
 ```bash
 gh pr edit "$PR_NUMBER" --body "$(cat <<'EOF'
@@ -284,7 +296,7 @@ EOF
 )"
 ```
 
-Push when the adversarial review clears:
+Push when adversarial review clears:
 
 ```bash
 git push origin HEAD
@@ -326,7 +338,7 @@ gh pr edit "$PR_NUMBER" --body "$(existing_body)
 
 ## Step 9: Self-Review
 
-Invoke `wk-self-review` to post inline comments documenting decisions and
+Invoke `wk-self-review` → post inline comments documenting decisions and
 non-obvious choices added during takeover:
 
 ```
@@ -360,16 +372,16 @@ EOF
 
 ## Common Mistakes
 
-- **Assuming the branch is mergeable** — always run tests at Step 4 before
-  adding any code. Pre-existing failures must be documented separately.
+- **Assuming the branch is mergeable** — always run tests at Step 4 before adding
+  code. Document pre-existing failures separately.
 - **Stacking on a draft base** — follow the three-option check in Step 3 Stack
   Mode. Auto-mode retargets to the default branch.
 - **Approving your own work** — you are now a co-author; the approval constraint
   applies even though you didn't write the original code.
 - **Losing co-author trailers** — set `$WK_CO_AUTHOR` before any `wk-commit`
   invocation. Commits without the trailer lose attribution history.
-- **Expanding scope silently** — if the 30% threshold triggers mid-session,
-  switch modes and surface the decision to the user before proceeding.
+- **Expanding scope silently** — 30% threshold triggers mid-session → switch
+  modes and surface the decision to the user before proceeding.
 
 ---
 

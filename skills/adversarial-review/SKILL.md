@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.12-013539'
+  version: '2026.06.16-072242'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -54,89 +54,45 @@ metadata:
 
 # Adversarial Review
 
-Pre-flight critique of the current branch. Catches the classes of issues
-reviewers and bots historically flag, so the PR does not need a second cycle.
+Pre-flight critique of the current branch → mechanical sweeps → fresh adversarial subagent → validate runtime claims → clear/blocked/suggestions-only verdict.
 
 ```
-Resolve base -> Enumerate surface -> Mechanical sweeps
-  -> Adversarial subagent -> Playground validation
-  -> Verdict (clear / blockers) -> Fix loop -> Re-review
+Resolve base -> Build surface map -> Mechanical sweeps
+  -> Fresh adversarial subagent -> Playground validation
+  -> Verdict -> Fix loop -> Re-review
 ```
 
-## Mandatory Activation
+## Non-Negotiable Contract
 
-**This skill fires before any artifact leaves the machine:**
+1. **No push without clear verdict.** Run before every push, `gh pr ready`, force-push, and rebase that rewrites pushed history. No opt-out.
+2. **No docs-only exemption.** Docs, specs, skills, executable instructions can carry logic errors, stale counts, bad commands.
+3. **Per-feature gate.** Run once on complete implementation before publishing → fix residuals in ≤1 follow-up → re-review.
+4. **Idempotent within a session.** No new commits since last clear verdict → print prior clearance record.
+5. **Scope re-reviews.** After clear verdict, sweep only `git diff <cleared-sha>..HEAD`; record clearance at `.review-playground/.cleared-{HEAD_SHA}.json`.
+6. **Mechanical first.** Run all sweeps before LLM reasoning.
+7. **Block before negotiate.** Blockers stop the caller. Downgrade severity only with explicit user confirmation.
+8. **Reproduce before claim.** Runtime-behavior findings reproduced in `.review-playground/` or downgraded to `question`.
+9. **Diff-anchored findings.** Commentable findings map to diff lines; outside-diff issues → file-level or verdict-body notes.
+10. **Gate, not actor.** Do not push, edit the PR, or post review comments from this skill.
 
-- Before the first push of a branch (`wk-workflow` Phase 4 -> here).
-- Before `gh pr ready` flips a draft to ready (`wk-pr` Step 5 -> here).
-- Before every subsequent push that introduces new code or doc changes on
-  an existing PR (`wk-pr-resolve` Step 8, `wk-pr` re-runs).
-- Before any force-push or rebase that rewrites pushed history.
+## Step 1: Resolve Context and Build Surface Map
 
-**There is no opt-out.** "Small fix", "trivial", "just a comment tweak",
-"only docs" are red flags, not exemptions. A docs-only commit can still
-contradict an enumerated test count in a spec; run the skill anyway.
-
-**This is a per-feature gate, not a per-commit gate.** Run once on the
-**complete** implementation before the push that publishes it — not after
-each incremental commit of a multi-commit change. The caller batches its
-commits locally and gates once; reviewing partial work review-by-review
-turns one pass into a slow commit→review→fix loop that rediscovers the next
-unimplemented site each round.
-
-The skill is **idempotent within a session** — if no new commits have
-landed since the last clear verdict, re-invocation is a no-op that
-prints the prior verdict.
-
-**Scope a re-review to the new diff.** When new commits land after a clear
-verdict (CI fixes, follow-up commits), run the sweeps against the diff
-**since the cleared SHA** recorded in `.review-playground/.cleared-{SHA}.json`
-(`git diff <cleared-sha>..HEAD`), not the full branch surface. Re-sweeping
-unchanged, already-cleared code is wasted work.
-
-## Style Rules
-
-- **Bullets, imperative voice.** Each rule is a verb the agent executes.
-- **Mechanical first.** Greps and command audits run before any LLM reasoning.
-- **Block before negotiate.** Blockers stop the push; severity downgrades
-  require explicit user confirmation, not agent judgment.
-- **Reproduce before claim.** Every finding that asserts runtime behavior
-  must be reproduced in `.review-playground/` or rejected.
-
----
-
-## Step 0: Resolve Context
-
-Compute the inputs every later step needs. Hardcoding `main` is forbidden —
-stacked PRs have non-default bases and the skill must work on them.
+Resolve authoritative base dynamically. Hardcoding `main` is forbidden.
 
 ```bash
-DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD --short 2>/dev/null \
-          | sed 's@^origin/@@')
+DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD --short 2>/dev/null | sed 's@^origin/@@')
 DEFAULT=${DEFAULT:-main}
-
 PR_NUM=$(gh pr view --json number --jq .number 2>/dev/null || echo "")
 if [ -n "$PR_NUM" ]; then
   BASE=$(gh pr view "$PR_NUM" --json baseRefName --jq .baseRefName)
 else
   BASE="$DEFAULT"
 fi
-
 git fetch origin "$BASE" --quiet
 MERGE_BASE=$(git merge-base HEAD "origin/$BASE")
 ```
 
-`$BASE` is authoritative for every later diff command in this skill.
-
-Refuse to proceed if `git status --short` shows uncommitted changes —
-the diff sweeps must reflect the same tree that will leave the machine.
-
----
-
-## Step 1: Enumerate Diff Surface
-
-Build a structured map of what the branch changes. This map drives the
-adversarial subagent's targets and the mechanical sweeps.
+Refuse to proceed on uncommitted changes. Build the surface map:
 
 ```bash
 git diff "$BASE...HEAD" --stat
@@ -144,1161 +100,189 @@ git diff "$BASE...HEAD" --name-status
 git log "$BASE..HEAD" --oneline
 ```
 
-For every changed file, extract:
-
-- New / modified functions, methods, classes — `{name, file, line, signature}`.
-- New / modified CLI flags, env vars, public API entries.
-- New / modified test functions and fixture files.
-- Removed lines (refactor delta — track separately; refactors must preserve
-  behavior).
-- For movement / refactor diffs, annotate each changed line as
-  **net-new** vs **relocated** — a relocated line is identical to a line
-  present at `$MERGE_BASE` (the move changed its location, not its
-  content). This annotation gates the relocation-aware severity rule the
-  subagent applies below.
-- Touched documentation paths (`docs/`, `README*`, in-code help strings).
-
-Annotate the map with kind (`feature`, `bugfix`, `refactor`, `docs`,
-`infra`) — kind biases which categories the subagent prioritises.
-
----
-
-## Step 2: Mechanical Sweeps (run unconditionally)
-
-Greps and command audits that catch known classes mechanically. Each sweep
-is cheap; run all of them before invoking the adversarial agent.
-
-### 2.1 Vulnerability-class sweep
-
-For every fix in the diff, grep the **full diff** for the same pattern
-class. Fixes applied to one site, with siblings left broken, are the
-single highest-frequency reviewer flag.
-
-- Credential / token / secret in `stderr|2>&1|>&2|cat.*ERR`.
-- Null / sentinel guard added on one branch — every sibling branch.
-- Input validation added at one entry point — every other entry point.
-- API token expanded inside a `curl -H "Authorization: Bearer $VAR"`
-  argument — visible to `ps aux` on multi-user hosts (a different
-  exposure path than stderr leakage). Flag `blocker`; write the header to
-  a `chmod 600` temp file and pass `-H @file`.
-- Credential passed as a CLI flag **value** (`--password=$X`,
-  `--http-password=$X`, `-p $X`, `wget --password`) in source **or
-  documentation code fences** — lands in `/proc/<pid>/cmdline`, visible to
-  any local user via `ps`. Scan docs and shell, not just the diff source.
-  Flag `blocker`; safe alternatives: `curl -u` (scrubs `-u` from argv),
-  `--netrc`, or a `chmod 600` header/credentials file.
-
-```bash
-git diff "$BASE...HEAD" | grep -nE 'redact|mask|sanitize|escape|sanitis'
-git diff "$BASE...HEAD" | grep -nE 'curl[^|]*-H[^|]*\$\{?[A-Z_]+'
-grep -rnE -- '--password=|--http-password=|-p[= ]\$|wget .*--(password|user)' \
-  docs/ README* scripts/ .buildkite/ 2>/dev/null
-```
-
-Every hit must be addressed or explicitly excluded in the verdict.
-
-### 2.2 Sibling-script audit
-
-For each changed `*.sh` / module / parallel-pipeline file, list its
-directory siblings and grep them for the analogous code path. Each
-sibling must be (a) already correct, (b) absent of the path, or
-(c) also fixed in this branch.
-
-```bash
-for f in $(git diff "$BASE...HEAD" --name-only | grep -E '\.(sh|bash|py|rb|ts|js)$'); do
-  dir=$(dirname "$f")
-  find "$dir" -maxdepth 1 -type f
-done | sort -u
-```
-
-**Toolchain-invocation siblings.** When a build/correctness flag or env
-is added to one toolchain invocation, grep the **whole repo** for every
-sibling invocation of that toolchain and require each to apply or
-explicitly justify the same flag.
-
-- A fix on one `go build` / `go run` / `go test` (or any compiler/builder)
-  call site that misses analogous call sites is a partial fix — CI runs
-  the missed ones.
-- Prefer a top-of-script `export <TOOL>FLAGS=...` over per-call flags so
-  every invocation inherits the fix.
-- Treat "works locally" as weak evidence when the behavior is
-  environment-dependent (e.g. a linked git worktree suppresses Go VCS
-  stamping that a fresh CI clone does not) — reproduce in a clone-like
-  environment before clearing.
-
-### 2.3 Reachability trace on new guards
-
-For each `if x == "X"`, `if x is None`, null-check, or defensive branch
-added in the diff, trace upstream transforms (jq filters, trim, decode,
-type coercion). If an upstream transform already eliminates the
-sentinel, the guard is dead code. Flag the dead-code path **and** any
-test fixture that simulates the impossible producer output.
-
-**Guard-completeness probe (jq falsy output).** Tracing that a guard is
-*reachable* is not enough — trace whether it captures **every** form of
-the invalid sentinel. When a `[ -z "$VAR" ]` / empty-string guard reads
-`$VAR` from a `jq` filter, check whether the filter can emit a non-empty
-falsy literal: `jq .field` emits the 4-char string `"null"` for a JSON
-null field (not empty), and `"false"` / `"0"` for other falsy values. An
-empty-string guard passes `"null"` straight through to the downstream
-call. Detection:
-
-```bash
-git diff "$BASE...HEAD" | grep -nE '\[ -z "\$[A-Z_]+" \]'
-```
-
-Flag `blocker` when the guarded var is `jq`-sourced and `null` reaches a
-downstream API/SHA consumer; require `[ -z "$VAR" ] || [ "$VAR" = null ]`
-or a `// empty` jq fallback.
-
-### 2.4 Comment accuracy pass
-
-Grep added or modified comments for two parallel classes:
-
-- **Assertive behavioral claims:** `always`, `guaranteed`, `never`,
-  `available`, `works`, `cannot`, `must`.
-- **Descriptive intent phrases:** `treat .* as`, `interpret .* as`,
-  `use .* to match`, `equivalent to`, `mirrors`, `behaves like`.
-
-Mentally execute each claim against the current implementation. For
-intent phrases, verify the described behavior still appears in the
-same function body — refactors often remove the behavior but leave
-the comment. Update or delete the comment if false; stale comments
-asserting old behavior or describing removed intent are a top-3
-reviewer flag.
-
-**Claim-without-pinning-test check.** A comment can be accurate yet
-unverified. For each `always` / `only` / `never` / `must` claim — and
-especially type-coercion claims (JSON `false` vs string `"false"`,
-Ruby truthiness, Go `nil` vs zero-value, JS `0`/`""`/`null`) — grep the
-test suite for an `it` / `test` / `assert` block that exercises the
-exact condition the comment asserts. If none exists, flag
-`suggestion`: the invariant is correct today but silently brittle, and
-a reviewer bot will request the pinning test.
-
-**Warn-without-mechanism check.** When a doc, comment, or instruction
-claims it will "warn", "notify", or "alert" the user, confirm an explicit
-output step backs the claim. A parenthetical "(warn the user)" with no
-imperative output block reads as optional and is routinely omitted at
-runtime. Flag `suggestion`: convert the claim into an explicit output
-instruction or a required step.
-
-**Source-comment URL cross-check.** When a source file's top-of-file or
-inline comment carries a download/API URL, grep README and docs for the
-same hostname/path and confirm they agree with the documented access
-mechanism. Flag `blocker` on divergence — auth-gated/private repos are
-prone to this (a public-URL comment copied from an example while the real
-download requires an authenticated CLI lookup).
-
-```bash
-grep -rnoE 'https?://[^"'"'"' )]+' scripts/ .buildkite/ src/ 2>/dev/null | sort -u
-```
-
-### 2.5 Hardcoded base / branch sweep
-
-```bash
-git diff "$BASE...HEAD" | grep -nE '\bmain\.\.\.HEAD\b|origin/main\b|\bmaster\.\.\.HEAD\b'
-```
-
-Every hit must use the dynamic-base resolver (`gh pr view --json baseRefName`).
-
-### 2.6 Version-pin sweep
-
-```bash
-git diff "$BASE...HEAD" -- 'Dockerfile*' '.tool-versions' 'mise.toml' \
-  | grep -nE ':latest|:stable|:nightly|=[^"]*latest|^\+\s*[a-z]+\s*=\s*"latest"'
-```
-
-Every hit must be replaced with an exact pin. Apply the same rule to
-GitHub Actions versions in `.github/workflows/*.yml`.
-
-### 2.7 Signature widening pre-flight
-
-For each function whose signature changed (added required param, added
-required struct field, removed param, changed type), grep **every**
-caller and initializer in the repo. Each call site must be updated in
-the same branch or wrapped by a defaulted helper.
-
-```bash
-grep -rn '<FunctionName>(' src/ tests/
-grep -rn '<TypeName>\s*{' src/ tests/
-```
-
-Structural-contract widening: refactors that swap a constrained
-shape (positional array, `"k:v"` string list) for an open
-merge / spread / dict-update against a structural container hand
-collision safety to the caller. Grep the diff for the pattern:
-
-```bash
-git diff "$BASE...HEAD" \
-  | grep -nE '\.merge\(|\.update\(|Object\.assign\(|\{\.\.\.|\*\*[a-z_]+\b|hash\[\s*[a-z_]+\s*\]\s*='
-```
-
-For each hit, verify the same commit adds an allowlist / reserved-
-key constant / collision guard. Flag missing guards as
-`suggestion`; promote to `blocker` when the container has named
-fields the caller could shadow.
-
-### 2.8 Cross-doc enumeration sync
-
-Extract every new flag, symbol, error code, or test name from the diff.
-Grep `docs/`, `README*`, in-code help strings, PR body. Every surface
-that enumerates the set (counts, bullet lists, conflict matrices, format
-lists) must match the new state. A mismatch caught locally is one
-commit; deferred is a second cycle.
-
-**Synonym + casing sweep for removed terms.** When the diff removes a
-term (rule, flag, instruction name), an exact-string grep misses
-semantically-equivalent restatements elsewhere. Before declaring the
-sweep clear:
-
-- Generate a variant set for the removed term — at minimum: original,
-  Title Case, sentence case, lower case, `space-to-dash`, `dash-to-space`,
-  and any alternate phrasing visible in adjacent docs (skim one
-  neighbor doc for the concept's other names).
-- Run one grep per variant. A single hit in any variant is a stale-doc
-  blocker.
-- Grep `spec/`, `test/`, and `*_spec.*` / `*_test.*` globs for any removed
-  or replaced **string literal**, not just `docs/` and `README*`. Structure
-  tests assert exact source content (`include("…")`, `grep -q '…'`); a
-  changed literal leaves a stale assertion. A hit in a spec/test file is a
-  blocker — the assertion is pinned to the old form and fails CI.
-- Treat **spec tables** as first-class sweep targets — terms often
-  appear as row labels (`| Clean-state output line | … |`) that prose
-  greps miss. Grep table-row syntax explicitly:
-
-  ```bash
-  grep -rnE "^\|[^|]*<variant>[^|]*\|" docs/ 2>/dev/null
-  ```
-
-- Named sweep targets for removed-rule audits: `docs/specs/`, validator
-  / linter skill files under `skills/*/`, plugin `README*` and
-  `SKILL.md` files — these are the most common homes for enumerated
-  rule lists.
-- Treat a **rename** — even a behavior-preserving local-variable rename —
-  as a removed-term change. Run the variant grep across source, `docs/`,
-  **and test files** (test-function names, comments, error-label /
-  message strings), not just prose. The change most likely to skip this
-  sweep ("just a local rename") is exactly the one that leaves stale
-  spec mapping/word-choice tables and test labels referencing the old
-  name.
-
-Test-count sync is mandatory: count test functions in changed
-`*_spec.*` / `*.bats` / `*_test.*` files, grep specs for matching
-count phrases (`"\d+ tests"`, `"covers \d+ scenarios"`), update every
-mismatch in this branch.
-
-Cross-module filter parity: when a metric, counter, or summary
-purports to count artifacts produced by another module, grep that
-producer for the filter it applies. Flag any divergence between the
-metric's filter and the producer's filter as a data-model mismatch —
-"what counts as an X" must be defined in one place, not implicitly
-split across modules.
-
-Unverified test-claim audit: spec prose stating "tests verify X",
-"a test confirms X", "unit tests assert X", "spec asserts X" must
-map to an actual test function exercising X. Grep spec docs for
-these phrases and cross-check against the relevant test files. Flag
-any unverified claim as a blocker (spec was written ahead of the
-test — or the test was never added):
-
-```bash
-grep -rnE "tests? (verify|confirm|assert|ensure)|spec (asserts|verifies|confirms)" \
-  docs/ README* 2>/dev/null
-```
-
-For each hit, locate the named test file and grep for a function
-name or `it`/`test` description that matches the claimed behavior.
-
-Universality-claim verification: spec prose stating that a value is
-"common to every / tagged on all / present in every / applies to
-every" subject is a **hidden enumeration** — count/bullet greps miss
-it. Extract the subject noun, grep the diff for every instantiation
-of that class/function, and verify the claimed field is passed at
-every site:
-
-```bash
-grep -rnE "common to (every|all)|tagged on (every|all)|present in (every|all)|applies to (every|all)" \
-  docs/ README* 2>/dev/null
-```
-
-Flag any call site that omits the claimed field as a blocker
-(spec-vs-implementation divergence).
-
-Undocumented credential vars in doc shell blocks: for every `$VAR` /
-`${VAR}` used in a `curl -u`, `Authorization:`, or other auth-passing
-pattern inside a documentation shell fence, verify the variable is defined
-or annotated (inline comment, prose above the block, or a Prerequisites
-section) within the same doc. A ported snippet with opaque credential var
-names gives copy-pasting users a silent auth failure. Flag `suggestion`.
-
-### 2.9 Design-pivot doc audit
-
-If the diff touches `docs/specs/` or removes pseudocode/sequence blocks,
-verify the corresponding `docs/plans/`, `docs/adr/`, and in-code comment
-references are updated in the same branch. Logical-shape changes
-(conditional became unconditional, abstraction layer lifted, interface
-signature widened, state moved lifecycles) trigger this audit.
-
-### 2.9.1 Multi-mode interface smell (spec/interface diffs)
-
-When a spec/interface diff defines a struct/union/record whose fields are
-read by multiple distinct modes or consumer families — each consuming only
-a subset — flag it for review.
-
-- Trigger: a type with ≥4 fields where prose or comments tie subsets of
-  fields to different modes/consumers (judgment, not a pure grep).
-- Failure mode: as modes grow, every consumer accretes nil-guards for
-  inapplicable fields and compatibility stays implicit.
-- Raise as `suggestion`: ask whether compatibility should be explicit —
-  the consumer declares the fields it requires, or the producer declares
-  which consumers it supports — rather than every consumer tolerating
-  missing fields.
-
-### 2.10 PR metadata sync
-
-If a PR exists for the branch:
-
-- Fetch title and body (`gh pr view --json title,body`).
-- Verify title still describes the behavior (verb matches —
-  `allowlist` vs `denylist`, `enable` vs `disable`).
-- Verify body's test counts, file lists, "remaining work" sections
-  match HEAD.
-- Verify metadata lines survive any planned body rewrite
-  (`Closes #N`, `Co-authored-by:`, `**Build:**`, `<details>Prompt</details>`).
-- Verify Jira key suffix `[BOARD-NUM]` is present when a Jira key is
-  detectable from branch name or any commit message.
-- Rename audit: enumerate every symbol (path, class, method, flag,
-  command) deleted in `git diff "$BASE...HEAD" --diff-filter=D` and
-  grep the PR body for each. Any hit is a blocker until the body is
-  updated to the replacement text — rename commits update code but
-  leave the PR body stale because body edits are not part of the
-  file diff.
-- Enumerated-rule scope audit: when a commit narrows or expands an
-  enumerated set (banned items, allowed items, supported flags), extract
-  the tokens removed from the set and grep the PR body for each. Confirm
-  the body's prose description of the set matches HEAD's current set. A
-  "restrict/narrow/relax X to only Y" commit updates the code and
-  reference docs but leaves the body's enumeration stale — the rename
-  audit misses it because the token is removed from a list inside a
-  surviving file, not via `--diff-filter=D`.
-- Rollout / operations section: when the diff touches production-
-  facing surfaces (observability backend, deployment pipeline,
-  schema migration, public API version path, monitoring, paging),
-  require the PR body to carry a rollout / rollback / monitoring
-  section. Trigger via a path-pattern grep, then check the body:
-
-  ```bash
-  PROD='datadog|metrics|telemetry|deploy|migration|schema|api[_/]v[0-9]+|observability|prometheus|grafana|pager|on[-_]?call'
-  if git diff "$BASE...HEAD" --name-only | grep -iE "$PROD" > /dev/null; then
-    gh pr view --json body --jq .body \
-      | grep -iE 'rollout|rollback|operations|migration|monitoring|on[-_]?call|deploy plan' \
-      || echo "BLOCKER: prod-facing diff missing rollout/ops section"
-  fi
-  ```
-
-  `suggestion` for internal-only telemetry; `blocker` when the
-  change affects customer-visible behavior or dashboards owned
-  by another team.
-- **PR-body staleness is a post-push fix, not a push-gating blocker.**
-  Record every stale-body finding above as a post-push TODO — do not
-  update the body before pushing. The body describes what is live in the
-  PR, and commits are not live until pushed; updating first inverts the
-  causal order. Sequence: push → update body to reflect new HEAD →
-  re-fetch comment surfaces. The finding still blocks marking the PR
-  ready, just not the push itself.
-
-### 2.11 External-call reproduction gate
-
-If the diff modifies any request payload, header construction, or CLI
-invocation against an external API (`curl`, `gh api`, HTTP client
-calls), require either:
-
-- A recorded local reproduction with the new payload returning success.
-- Explicit user opt-out citing why local reproduction is infeasible
-  (gated network, user-only credentials).
-
-Unverified API-shape changes are a recurring source of follow-up PRs.
-
-**Error-schema verification.** When the diff adds a check for an
-error-carrying key against an external API response, verify the API's
-actual error schema before clearing it. Asserting the wrong key (checking
-`error` when the API returns `{"message": ...}`) silently skips both the
-success and the failure branch — no output renders, and the failure looks
-like a no-op.
-
-```bash
-git diff "$BASE...HEAD" | grep -nE '"(error|err|errors|message)"'
-```
-
-Each hit must be backed by the API's documented error shape or a recorded
-error response — never an assumed key name.
-
-### 2.12 Self-review surface check
-
-If a prior self-review exists on the PR, fetch its threads. Any new
-self-review comment that duplicates earlier rationale must be dropped
-or rewritten as a cross-reference. Any thread whose rationale describes
-a now-superseded approach must be resolved by the author before push.
-
-### 2.13 Raw-API bypass detection
-
-```bash
-git diff "$BASE...HEAD" | grep -nE 'gh api .*/pulls/[0-9]+/comments\b'
-```
-
-Any direct comment-posting call that bypasses the pending-review flow is
-a blocker — publishing review feedback outside the pending-review API
-skips the human checkpoint.
-
-### 2.14 Pre-push gate compliance
-
-Inspect the repo's pre-push hook config (`.lefthook.yml`,
-`.husky/pre-push`, `.git/hooks/pre-push`, `bin/ci`). Enumerate every
-gate the hook runs. Confirm each has been run locally against the
-current HEAD. Passing one suite does not imply the others pass.
-
-**Multi-phase wiring check.** When a hook-config command's tag or name
-declares it runs in more than one hook phase (dual-phase enforcement,
-e.g. pre-commit *and* pre-push), verify the config actually wires every
-claimed phase — not just the one the command was authored under:
-
-- Confirm the shared definition is anchored (YAML `&anchor`) under the
-  phase it is defined in.
-- Confirm every other claimed phase references that anchor (`*anchor`)
-  or repeats the command.
-- Flag as `blocker` when a phase named in the tag has no corresponding
-  entry — the command claims enforcement it never delivers.
-
-### 2.15 Workstyle pass
-
-Invoke `wk-workstyle check <path>` on every source file in the diff.
-The pass runs in report-only mode during adversarial review — findings
-are added to the verdict, not auto-fixed. Surface:
-
-- Unnamed constants / magic numbers / magic strings.
-- Nested ternaries.
-- Undocumented public functions or methods added in the diff.
-- Missing sad-path tests for new error-handling branches.
-- Branch-vs-test enumeration for every new multi-branch function (>2
-  return paths). A green suite does not imply full branch coverage — do
-  the math explicitly: count the function's distinct `return` / exit
-  paths, then count the named test cases that exercise it. Flag any
-  return path with no covering test.
-  - `blocker` when an uncovered path changes observable behavior
-    (different value, error, side effect); `suggestion` when paths are
-    behaviorally equivalent.
-  - Detection: count `return`/`raise`/`throw` statements in the new
-    function, then grep test files for test-name variants targeting that
-    function (`Test<Name>_*`, `describe('<Name>'`, `it '<case>'`) and
-    confirm the count covers each path.
-- Untested nil/blank branch in presence-guarded builder methods. For any
-  new method that can return nil via `.presence` (or an equivalent
-  build-then-return-empty pattern like `if x.present? ; h[k]=x ; end ;
-  h.presence`), grep the spec for a test that stubs the controlling field
-  to nil/blank and asserts the method (or its caller) receives `nil`. Flag
-  `suggestion` when absent — the nil return path is behaviorally
-  significant and silently brittle without coverage.
-- Temporal dependencies in new async code.
-- Stale comments adjacent to modified code.
-- Empty `catch`/`rescue`/`except` blocks.
-- Inline test helpers duplicating production source. For each new
-  `let`, `before`, fixture, factory, or shell heredoc that defines a
-  multi-line callable in a spec/test file, grep the production source
-  in the diff for a function of the same name or an identical /
-  near-identical block (threshold: >3 identical non-trivial lines).
-  Flag as `test-tautology` — stubs applied to the copied body never
-  exercise the real code, so the test passes regardless of production
-  drift. Fix: extract the production code to a requireable / sourceable
-  module and load it from both the production caller and the test.
-  - **Escalate to `blocker` when the duplicated function carries
-    security-sensitive logic** — symlink-escape guard, path-traversal
-    check, credential/secret redaction, auth or permission check. A
-    patch to the production guard then leaves the test validating stale
-    logic: the suite stays green while the real guard regresses.
-    Detection: grep test files for function definitions (`<name>()`,
-    `def <name>`, heredoc-defined functions) whose name also appears in
-    the diff's production source, then classify each duplicated body for
-    security-sensitive operations.
-- Bugfix-without-regression-test. For every commit whose subject
-  matches `^(fix|bugfix|bug)[:(]`, enumerate the commit's changed
-  files. If the source-side files changed without a paired
-  test-side file in the **same commit**, flag the gap. Without a
-  spec asserting the post-fix behavior, a future refactor can
-  silently revert the fix:
-
-  ```bash
-  for sha in $(git log --format=%H "$BASE..HEAD" --grep='^fix\|^bugfix\|^bug:'); do
-    src=$(git show --name-only --pretty=format: "$sha" | grep -vE '^(spec|test|tests)/')
-    tst=$(git show --name-only --pretty=format: "$sha" | grep -E '^(spec|test|tests)/')
-    [ -n "$src" ] && [ -z "$tst" ] && echo "BLOCKER: $sha changes source without test"
-  done
-  ```
-
-  `suggestion` when the fix is a one-line defensive coercion and
-  the existing spec has parallel structure; `blocker` when the fix
-  introduces a new branch.
-
-Project config is authoritative — suppress any finding that contradicts
-an active linter config.
-
-### 2.16 Plugin install portability
-
-When the diff includes a `SKILL.md` or `.claude-plugin/plugin.json`,
-scan the SKILL.md body for path references that resolve only in the
-publishing repo.
-
-- Flag `Read("skills/.../*.md")`, `cat skills/...`, or any relative
-  path rooted at the publishing-repo layout. Paths that work in the
-  authoring repo fail silently when the plugin is installed in a
-  consumer repo.
-- Require one of: a `${CLAUDE_PLUGIN_ROOT}/`-prefixed path, an inline
-  fallback (the content embedded in SKILL.md), or a `WebFetch` of a
-  pinned upstream URL.
-- Blocker until resolved — install-time portability failures are
-  invisible to the authoring repo's own CI and only surface in the
-  consumer's session.
-
-### 2.17 Dynamic-language call/definition cross-check
-
-For dynamic-language source files in the diff (Ruby, Python, JS/TS,
-Elixir, etc.), the compiler cannot catch a deleted helper whose callers
-survive. Conflict-resolution merges and inline-refactor commits both
-hit this. Tests fail at runtime; the file still loads.
-
-- For each method call added or kept in the diff (`<name>(`, `.<name>`),
-  grep the file and the module for a matching definition:
-
-  ```bash
-  grep -nE 'def +<name>\b|function +<name>\b|<name> *=' <file>
-  ```
-
-- Flag any call whose definition is absent from the file, module, or
-  imported namespace.
-- Pairs with sweep 2.7 (signature widening) — 2.7 covers added params,
-  2.17 covers removed definitions still called.
-
-### 2.18 Removed-constant magic-string scan
-
-When a named constant is removed in the diff, its literal value often
-gets inlined at multiple call-sites — re-introducing the duplication
-the constant existed to prevent.
-
-- For each removed `const X = "..."` / `X = "..."` / `<X> = "..."` (any
-  language), grep the post-rebase diff for the literal value:
-
-  ```bash
-  git diff "$BASE...HEAD" | grep -nF '<literal-value>'
-  ```
-
-- Flag as `suggestion` (not blocker) when the literal appears at 2+
-  non-comment sites. Recommend extracting a helper or restoring the
-  named constant.
-
-### 2.19a Struct/Record field-extension contract test
-
-When the diff adds a field to a Struct/Record type — `Struct.new(...)`,
-`@dataclass`, `attr_reader :foo` / `attr_accessor`, `field :foo`,
-named tuple, TypeScript `interface` member, Go struct field, equivalent
-in any language — require a direct assertion test on the new field's
-concrete value. Transitive coverage through behavior tests passes today
-but silently allows a future refactor to drop or mis-populate the
-field.
-
-- Grep the diff for added field names inside Struct/Record-extension
-  patterns. Build the set of `(type, new-field)` pairs.
-- For each pair, grep test/spec files for
-  `expect(<instance>.<field>).to eq(...)` /
-  `assert <instance>.<field> ==` / `expect(x.<field>).toBe(...)` /
-  language-equivalent assertion.
-- Flag as `blocker` when no direct assertion exists on the new field
-  (a `respond_to?` / type check alone does not count — assert the
-  value, not the presence).
-- Pairs with sweep 2.7 (signature widening) — 2.7 covers function-
-  parameter additions, 2.19a covers data-shape additions.
-
-### 2.20 Env-var pipeline forwarding sweep
-
-New env reads in application code that the CI pipeline never forwards
-into the container produce **silent runtime null-reads** — build green,
-feature never fires. Sibling to 2.7 (signature widening) but the caller
-lives in YAML/DSL, not source. Code-to-pipeline interface drift is
-invisible at every individual layer (secret set, agent dump shows it,
-code reads with default) and breaks only at the agent→container
-boundary.
-
-Run unconditionally on every diff that touches application code in a
-project with a CI pipeline.
-
-1. Extract net-new env reads from the diff. Multi-language coverage:
-
-   ```bash
-   git diff "$BASE...HEAD" \
-     | grep -nE '^\+.*(ENV\.fetch\(|ENV\[|os\.environ|os\.getenv|process\.env\.|os\.Getenv\()[ "'\''[\.]([A-Z][A-Z0-9_]+)' \
-     | grep -oE '[A-Z][A-Z0-9_]{3,}' | sort -u
-   ```
-
-   Covers Ruby (`ENV.fetch`, `ENV[...]`), Python (`os.environ`,
-   `os.getenv`), JS/TS (`process.env.X`), Go (`os.Getenv`), shell
-   (`${X}` paired with a new export or `[ -z "${X:-}" ]` guard).
-
-2. For each var, locate the entry-point script that reads it — grep
-   `bin/`, `cmd/`, `scripts/`, `lib/`, `src/`.
-3. For each entry-point script, locate the pipeline template / CI step
-   that invokes it — grep `.buildkite/`, `.github/workflows/`,
-   `.circleci/`, `azure-pipelines*`, `gitlab-ci*` for the script name.
-4. For each invoking step, verify the var name appears in the step's
-   env allowlist. Allowlist location varies:
-
-   | Platform | Allowlist location |
-   |---|---|
-   | Buildkite + docker_compose plugin | plugin step's `env: [...]` array |
-   | Buildkite native step | step `env:` block |
-   | GitHub Actions | step or workflow `env:`; `secrets:` for reusable workflows |
-   | docker-compose direct | `services.<svc>.environment:` |
-   | Dockerfile runtime default | `ENV` |
-
-5. Missing forwarding is a **blocker** — the symptom only surfaces when
-   the feature is expected to fire (runtime null-read + default
-   fallback). Build stays green.
-6. Exempt platform auto-injection prefixes (`BUILDKITE_*`, `GITHUB_*`,
-   `CI_*`) **only for native steps** where the agent env passes straight
-   through. A `docker_compose` (or any container) plugin forwards **only**
-   vars in its `env:` list — an auto-injected prefix read *inside the
-   container* is still null unless explicitly listed. Do not exempt
-   prefixes for containerized steps.
-7. When the diff **adds a new pipeline template**, extract every
-   platform-native var the invoked script reads — including fallbacks
-   already in the baseline, not just net-new reads — and check each against
-   the new template's `env:` list. A `BUILDKITE_*` var read via fallback
-   but absent from a newly-added template is a blocker (dead inside the
-   container).
-
-One-liner detection sketch:
-
-```bash
-for V in $(git diff "$BASE...HEAD" | grep -nE '^\+.*(ENV\.fetch|ENV\[|os\.environ|os\.getenv|process\.env\.)[ "'\''[\.]([A-Z][A-Z0-9_]+)' | grep -oE '[A-Z][A-Z0-9_]{3,}' | sort -u); do
-  for SCRIPT in $(grep -rl "$V" bin/ scripts/ src/ lib/ 2>/dev/null); do
-    grep -rl "$(basename "$SCRIPT")" .buildkite/ .github/workflows/ 2>/dev/null | while read TEMPLATE; do
-      grep -q "\"$V\"\|'$V'" "$TEMPLATE" || echo "BLOCKER: $V read by $SCRIPT but not forwarded in $TEMPLATE"
-    done
-  done
-done
-```
-
-### 2.19 Tautological test assertion scan
-
-Self-referential equality assertions pass regardless of behavior — both
-sides derive from the same source, so the test would still pass if the
-production code were inverted, deleted, or replaced with a no-op.
-
-- Grep new and modified test/spec files for equality forms where both
-  operands reference the same variable(s):
-
-  ```bash
-  grep -nE 'eq\(.*\.sort\)|expect\(([a-zA-Z_]+)\)\.to eq\(\1\)|assert.*==.*\.sort\b' \
-    <(git diff "$BASE...HEAD" -- 'spec/**' 'test/**' '**/*.test.*' '**/*.spec.*')
-  ```
-
-- Generalize the pattern: any `expect(x).to eq(x[.method])` form, any
-  `assertEqual(x, x.method())` form, any `expect(arr).toEqual(arr.sort())`
-  form, any comparison where both sides reference the same variable
-  passed through a transform.
-- Blocker — the test provides zero coverage of the function under test.
-- Fix: construct the expected value independently of the input (literal
-  array, hand-written sequence, or a known-good fixture).
-
-No-op `&& true` after `||`: grep changed test files for `&& true` on a
-line that also contains `||`:
-
-```bash
-git diff "$BASE...HEAD" -- '*.bats' '*_test.*' '*_spec.*' \
-  | grep -nE '^\+.*\|\|.*&& true'
-```
-
-Bash `||` / `&&` are equal-precedence and left-associative, so a trailing
-`&& true` forces the whole compound to exit 0 — the test can never fail.
-Blocker. Fix: rewrite the fail path as `... || (echo "diagnostic" && false)`
-so the inner `false` propagates as the compound's exit status.
-
-### 2.21 Numeric security-gate bounds sweep
-
-A numeric config field that gates a security control (approval
-threshold, LOC ceiling, rate limit, retry cap) with no upper bound lets
-an operator set it arbitrarily high and bypass the gate entirely
-(e.g., `max-lines: 999999` defeats a LOC-based approval gate).
-
-- Grep the diff for new numeric config identifiers: `Max`, `Limit`,
-  `Cap`, `Threshold`, `MaxLines`, `min`, `ceiling` introduced in a
-  config struct, schema, or YAML key.
-- For each, trace the consuming path and verify both: (a) a lower-bound
-  check (positive integer), and (b) a hard ceiling constant enforced
-  before the value gates the control.
-- Missing ceiling on a security-gating field is a `blocker`; missing
-  bound on a non-gating tunable is a `suggestion`.
-
-### 2.22 Pass-through wiring integration test
-
-When the diff changes a script or entrypoint to forward a new value
-from a structured artifact to a downstream call
-(`findings["x"]` → `run(param: findings["x"])`), unit tests on each end
-(serialization at the source, behavior at the sink) do not cover the
-wire itself — the key lookup and forward.
-
-- Detect the pattern: a new `<collection>["<key>"]` or `.get(<key>)`
-  read feeding a new argument to a downstream function/command in a
-  script or entrypoint.
-- Verify an integration/end-to-end test constructs a fixture with the
-  key set and asserts the downstream behavior fires.
-- Flag `suggestion` when both unit ends are covered but the wire is
-  not; the forwarding line is new code and needs its own coverage.
-
-### 2.23 Seed-before-empty-collapse sweep
-
-A collection seeded or prepended with a non-empty value **before** an
-emptiness guard that collapses to a compact / "nothing to show" form
-silently defeats the guard. The seed alone makes the guard evaluate
-false, so the full template renders carrying only the decorative seed
-and no substantive content — the exact case the compact form existed to
-handle.
-
-- Grep the diff for a seed/prepend into a collection near an emptiness
-  collapse on that same collection:
-
-  ```bash
-  git diff "$BASE...HEAD" \
-    | grep -nE 'unshift|prepend|\.insert\(0,|^\+.*=\s*\[[^]]+\]\s*\+|\.all\?\s*\{.*empty\?|\.none\?|\.empty\?|\.blank\?'
-  ```
-
-- For each candidate, trace the path where no substantive content
-  exists. Verify the guard decides on **substantive content only** —
-  the seed / decoration must be added *after* the gate, not before it.
-- Flag as `blocker` when the seed can drive a "no substantive content"
-  path into rendering the full form instead of the compact one.
-
-### 2.24 Argument-injection / missing `--` separator sweep
-
-An external command invoked with a variable / array / glob expansion of
-attacker-influenceable names, with no `--` option terminator before the
-positional args, is an argument-injection (RCE) path: a basename like
-`-I.jsonl` or `--use-compress-program=evil` is parsed as an option, not
-a file. A realpath / symlink guard does **not** catch this — it
-validates the path, not the basename's option-likeness.
-
-- Grep the diff for option-parsing commands fed expanded names with no
-  `--` terminator:
-
-  ```bash
-  git diff "$BASE...HEAD" \
-    | grep -nE '\b(tar|rm|cp|mv|grep|chmod|chown|git|curl)\b[^|]*("\$\{[a-z_]+\[@\]|/\*)' \
-    | grep -v ' -- '
-  ```
-
-- For each hit, trace whether the expanded values originate from an
-  untrusted source (sandbox-writable dir, user upload, API payload).
-- Flag as `blocker` when the source is untrusted and no `--` precedes
-  the positional args; fix by inserting `--` before them.
-
-### 2.25 Trap-handler collision sweep
-
-`bash trap` REPLACES the prior handler on a signal — it does not append.
-A second `trap` on an overlapping signal silently disables the first's
-cleanup (e.g. a later temp-file cleanup trap dropping an earlier one).
-
-- When the diff adds `trap '...' <signals>`, grep the **whole file**
-  (not just the hunk) for other `trap` calls sharing any signal:
-
-  ```bash
-  grep -nE "^[[:space:]]*trap '" <file>
-  ```
-
-- Flag `blocker` when two traps share a signal; require a single combined
-  trap or a trap-append helper.
-
-### 2.26 Capture-variable promotion check
-
-A new `FOO=$(...)` capture whose value must reach a canonical downstream
-variable is a silent-unset bug when the `CANONICAL=$FOO` promotion is
-missing — later blocks read an unset name.
-
-```bash
-git diff "$BASE...HEAD" | grep -nE '^\+[A-Z_]+=\$\('
-```
-
-- A capture used only for a same-block guard is fine.
-- One feeding a canonical name referenced in later hunks must carry the
-  `CANONICAL=$FOO` assignment before the block ends. Flag `blocker` when
-  the canonical name is read downstream but never assigned.
-
-### 2.27 N-parallel-block symmetry sweep
-
-When the diff hardens one block in a group of structurally-parallel blocks
-(multiple inference / validation / guard blocks that each capture-then-
-check an external call), a fix applied to only one sibling drives
-multi-round review loops — the next round re-flags the identical class in
-each remaining sibling.
-
-- Identify repeated `VAR=$(cmd); EXIT=$?; <guard>; CANONICAL=$VAR` shapes.
-- Build a symmetry matrix: for each guard / capture / assignment present
-  in any block, verify it is present in ALL siblings.
-- Flag any guard present in a strict subset of the parallel blocks, unless
-  the asymmetry is documented as intentional.
-
-### 2.28 CI-payload commit-field foreign-SHA check
-
-A `commit` field in a CI trigger payload names the **pipeline** repo's
-SHA. Setting it from a foreign repository's target SHA makes the build
-fail at clone — the SHA does not exist in the pipeline repo.
-
-- When the diff changes a `commit` field in a CI trigger payload, check
-  whether the value comes from an env var representing a foreign repo's
-  SHA (typically prefixed `REVIEW_`, `TARGET_`, `SOURCE_`).
-- Flag `blocker`: a foreign-repo SHA used as the pipeline `commit` field
-  is always wrong.
-
-### 2.29 curl silent-mode transport-error sweep
-
-`curl -s` (without `-S`) suppresses curl's own transport diagnostics
-(DNS, TLS, connection refused) AND leaves stdout empty — a downstream
-body-error parser then prints a misleading empty-reason message instead
-of the real network failure.
-
-```bash
-git diff "$BASE...HEAD" | grep -nE 'curl[[:space:]]+(-[a-zA-Z]*s)\b' | grep -vE 'sS|Ss'
-```
-
-- Flag any `curl -s` whose response is later parsed for errors.
-- Require `-sS` plus an exit-status check to separate transport failures
-  from API-level errors.
-
-### 2.30 Committed-artifact freshness after source fix
-
-A committed compiled/generated artifact built from changed source goes
-stale when the source is fixed but the artifact is not regenerated — a CI
-freshness check then fails one round after a clear verdict.
-
-- After any source fix, grep the diff for source whose build produces a
-  committed artifact: `.wasm`, `//go:generate` / `go:embed` targets,
-  generated code, build output whitelisted via `.gitignore` exceptions.
-- For each hit, add an explicit "rebuild and re-commit the artifact" step
-  to the fix plan **before** issuing the clear verdict.
-- Flag a fixed source file with an un-regenerated sibling artifact as a
-  blocker.
-
-### 2.31 jq permissive `else .` passthrough
-
-A jq type-dispatch expression with a bare `else .` fallback passes every
-unlisted input shape through unchanged — including objects, which `jq -r`
-renders as multi-line pretty-printed JSON (garbage output). Structurally
-it is an unguarded passthrough for unexpected types.
-
-```bash
-git diff "$BASE...HEAD" | grep -nE '^\+.*\belse[[:space:]]+\.[[:space:]]+end'
-```
-
-- Flag any added `else . end` in a jq expression (not `else empty`) as a
-  candidate for review — verify all non-listed types produce acceptable
-  `jq -r` output.
-- Canonical safe pattern for string-only extraction:
-  `if type=="array" then .[] elif type=="string" then . else empty end`.
-
-### 2.32 Go struct-tag realignment after type widening
-
-When a Go diff widens a struct field's type name (short type → longer
-named type), `gofmt` reformats only the changed line, leaving sibling
-fields' tag columns aligned to the old narrower width. `goimports`
-recomputes the widest type across the whole struct and realigns every
-field — so a file that passes local `gofmt`/format-on-save still fails
-CI's `goimports -l`. The gap is invisible until CI.
-
-- Detect changed `.go` files whose diff adds a field line with a
-  capitalized type token (the type-widening shape), then run
-  `goimports -l` on each:
-
-  ```bash
-  git diff "$BASE...HEAD" -- '*.go' \
-    | grep -nE '^\+[[:space:]]+[A-Z][A-Za-z]+[[:space:]]+[A-Z][A-Za-z]+[[:space:]]' \
-    | awk -F: '{print $1}' | sort -u \
-    | xargs -r -I{} goimports -local "$MODULE" -l {}
-  ```
-
-- Any file in the output is a `blocker` — format it (`goimports -w`)
-  before the push is cleared. `$MODULE` is the module path from `go.mod`.
-- Skip when the repo has no `go.mod` or CI runs only `gofmt`.
-
-### 2.33 Truthy-but-unparseable fallback-bypass sweep
-
-A two-store redundancy that branches on the **raw** value's presence
-(`if raw`) rather than the **parsed** result silently skips the fallback
-when the primary returns a non-nil but unparseable value. The parser
-returns nil, but the `else` (fallback) branch is unreachable because
-`raw` is truthy — the redundancy is defeated for exactly the
-malformed-input case it existed to handle.
-
-- Grep the diff for a presence-guarded parse with a fallback in the
-  `else`:
-
-  ```bash
-  git diff "$BASE...HEAD" \
-    | grep -nE 'if +\w+.*\n.*(Integer|parseInt|to_i|Float|JSON\.parse|strconv)' 
-  ```
-
-- Flag `blocker` when the guard tests raw presence but the parser can
-  return nil/error for a non-nil input, and the `else` holds the
-  fallback. Correct shape: parse first, then fall back on the parsed
-  result — `parsed = raw && parse(raw); parsed || fallback`.
-- Require a paired test: stub the primary to return an invalid (non-nil)
-  value AND the fallback to return a real value; assert the real value
-  reaches the caller. Absent that test, the contract is unverified.
-
-After mechanical sweeps land their findings, dispatch a fresh subagent
-with no prior context to critique the diff. The subagent operates only
-on `git diff "$BASE...HEAD"` and the surface map from Step 1.
-
-- Pipe `git diff "$BASE...HEAD"` output **directly** into the subagent
-  prompt — never hand-transcribe the diff inline. Manual transcription
-  introduces artifacts (duplicated lines, dropped hunks) the subagent then
-  flags as false blockers, burning a fix cycle.
-- If length limits force an inline excerpt, verify it against the file
-  first (grep for duplicated lines / confirm hunk boundaries) before
-  dispatch.
-
-The subagent must be:
-
-- **Adversarial.** Actively hunt bugs, security issues, design flaws.
-- **Unbiased.** Treat the diff as a stranger's code.
-- **Critical.** Flag real problems, not style preferences.
-- **Objective.** Judge against the diff, not assumed intent.
-- **Naming-aware.** Vague names (`data`, `temp`, `result`), inconsistent
-  casing, misleading names, names diverging from surrounding style.
-- **Diff-sensitive.** Stricter on net-new code and public API surfaces.
-- **Coverage-aware (test-only commits).** When a commit adds/changes only
-  tests, enumerate the distinct code paths through each function under test
-  (e.g. each branch a `dirname`/conditional produces) and verify at least
-  one new test exercises each. Flag any unexercised path as a `suggestion` —
-  test-presence alone does not prove path coverage.
-- **Refactor-aware.** For movement-dominated diffs, demand a
-  removed-line audit — every removed line must have a corresponding
-  relocated line or an explicit "intentionally dropped" rationale.
-- **Relocation-aware.** Before rating any finding a `blocker` in a
-  movement-dominated diff, check whether the flagged line existed
-  verbatim at `$MERGE_BASE`. A pre-existing issue carried unchanged by a
-  pure move was accepted before this branch — downgrade it to
-  `suggestion` or skip it. Do not bill the refactor for inherited debt.
-- **Introduction-claim verification.** Before rating a "newly
-  introduced" behavioral change (added flag, changed value, new call) a
-  `blocker`, grep the removed (`-`) lines of the **same hunk** for that
-  flag/value. If the removed block already carried it, the behavior is
-  unchanged — the claim is a false positive; log it and dismiss.
-  "Before" behavior lives in the `-` lines, not the `+` lines; a claim
-  built only on `+` lines is unverified.
-
-### Categories to hunt
-
-| Category | Example failure modes |
-|----------|----------------------|
+Per changed file, capture:
+
+- New/modified functions, methods, classes, signatures, CLI flags, env vars, public API entries.
+- New/modified test functions and fixtures.
+- Removed lines; mark refactors **net-new** vs **relocated**.
+- Touched docs, specs, READMEs, in-code help strings, plugin manifests.
+- Diff kind: `feature`, `bugfix`, `refactor`, `docs`, `infra`.
+
+## Step 2: Mechanical Sweep Catalog
+
+Run every sweep unconditionally. Use first matching severity; escalate when a suggestion proves a HARD RULE violation.
+
+| ID | Trigger | Check | Severity | Fix / escalation |
+|---|---|---|---|---|
+| 2.1 | Any security/redaction/credential touch | Grep full diff for secret leakage to stderr, `curl -H "Authorization: Bearer $VAR"`, or credential flag values in source/docs/shell. | Blocker | Move credentials to `curl -u`, netrc, or a `chmod 600` header/credentials file. |
+| 2.2 | Changed script/module/parallel pipeline | List directory siblings and whole-repo sibling toolchain invocations. | Blocker | Apply analogous fix to every sibling or explicitly justify absence. |
+| 2.3 | New guard/null-check/defensive branch | Trace upstream transforms for reachability and sentinel completeness. | Blocker | Fix dead guards; handle jq falsy output such as `"null"` before downstream consumers. |
+| 2.4 | Added/modified comments or docs claims | Check assertive claims (`always`, `never`, `must`, `works`) and intent phrases against implementation. | Suggestion | Update/delete stale comments; add pinning tests for universal claims. |
+| 2.5 | Base/branch references | Grep for hardcoded `main...HEAD`, `origin/main`, `master...HEAD`. | Blocker | Use dynamic base resolver. |
+| 2.6 | Version pins | Grep Dockerfiles, tool manifests, package manifests, and GitHub Actions for `latest`, `stable`, `nightly`, unpinned tags, `^`, or `~`. | Blocker | Pin exact versions or official-action majors. |
+| 2.7 | Signature/contract widening | Grep every caller/initializer for required params/fields; grep open merge/spread/update against structural containers. | Blocker | Update all call sites or add defaults; add allowlist/reserved-key/collision guards. |
+| 2.8 | New/removed flags, symbols, errors, tests, docs terms | Sync docs, READMEs, specs, tests, PR body, in-code help, tables, and test counts. | Blocker | Update all enumerations; include synonym/casing variants for removed terms. |
+| 2.9 | Design-pivot docs/specs | Verify plans, ADRs, specs, and inline comments match the new logical shape. | Blocker | Update dependent artifacts in the same branch. |
+| 2.9.1 | Spec/interface with multi-mode type | Review structs/unions/records with ≥4 fields consumed by different modes. | Suggestion | Make compatibility explicit via consumer requirements or producer support matrix. |
+| 2.10 | Existing PR | Fetch title/body; check behavior wording, test counts, file lists, remaining work, metadata, Jira suffix, rename/enum drift, rollout/ops section for prod-facing diffs. | Blocker | Record body drift as post-push TODO; fix before marking ready. |
+| 2.11 | External API/CLI request shape | Require local reproduction of new payload/header/invocation or explicit user opt-out; verify error schema keys. | Blocker | Reproduce success/error responses; never assume API keys. |
+| 2.12 | Prior self-review exists | Fetch threads; compare new rationale against stale approach comments. | Suggestion | Drop duplicates, cross-reference, or resolve superseded threads. |
+| 2.13 | Direct comment API | Grep for `gh api .../pulls/<id>/comments`. | Blocker | Remove raw comment posting; verdict output only. |
+| 2.14 | Pre-push hook config | Inspect `.lefthook.yml`, `.husky/pre-push`, `.git/hooks/pre-push`, `bin/ci`; enumerate every gate and multi-phase anchor. | Blocker | Run every gate locally; fix missing hook-phase wiring. |
+| 2.15 | Source diff | Invoke `wk-workstyle check <path>` report-only on every source file. | Suggestion | Surface magic values, nested ternaries, missing public docs, sad-path gaps, branch/test mismatches, async timing, stale comments, empty catches, duplicated test helpers, bugfix-without-regression-test. |
+| 2.16 | Plugin/skill diff | Scan `SKILL.md` / plugin manifest for authoring-repo-relative paths. | Blocker | Use `${CLAUDE_PLUGIN_ROOT}/`, inline fallback, or pinned upstream fetch. |
+| 2.17 | Dynamic-language diff | For each call kept/added, grep module/imported namespace for matching definition. | Blocker | Restore/remove call or add definition. |
+| 2.18 | Removed named constant | Grep post-rebase diff for the literal value. | Suggestion | Restore constant or extract helper when literal appears at ≥2 non-comment sites. |
+| 2.19a | Added Struct/Record/interface/Go field | Grep tests for direct concrete-value assertion on the new field. | Blocker | Add direct assertion; `respond_to?`/presence alone is insufficient. |
+| 2.20 | Application code + CI pipeline | Extract net-new env reads; locate invoking pipeline steps; verify env allowlist forwarding. | Blocker | Forward vars in native/container steps; exempt auto-injected prefixes only for native non-container steps. |
+| 2.19 | New/modified tests | Grep for self-referential equality (`expect(x).to eq(x.sort())`) and no-op `&& true` after `||`. | Blocker | Build independent expected values; propagate `false` in fail paths. |
+| 2.21 | New numeric security-gating config | Trace consumer path; verify positive lower bound and hard ceiling before control gates. | Blocker | Add bounds/ceiling constants. |
+| 2.22 | New structured-artifact plumbing | Detect `<collection>["key"]`/`.get(key)` feeding downstream calls. | Suggestion | Add integration test for the wire. |
+| 2.23 | Seed/prepend before emptiness collapse | Trace whether decorative seed drives guard false. | Blocker | Add seed/decoration after substantive-content gate. |
+| 2.24 | External command with expanded names | Grep commands like tar/rm/cp/mv/grep/chmod/git/curl for missing `--` before untrusted expanded args. | Blocker | Insert `--` before positional args. |
+| 2.25 | New bash `trap` | Grep whole file for overlapping signal handlers. | Blocker | Combine traps or use append helper. |
+| 2.26 | New command capture | For each `FOO=$(...)`, verify canonical promotion before downstream reads. | Blocker | Add `CANONICAL=$FOO` or limit capture to same-block guard. |
+| 2.27 | Parallel guard/inference blocks | Build symmetry matrix for capture/guard/canonical assignment. | Blocker | Apply guard to all siblings or document intentional asymmetry. |
+| 2.28 | CI trigger payload `commit` field | Verify it is not sourced from foreign-repo SHA envs (`REVIEW_`, `TARGET_`, `SOURCE_`). | Blocker | Use pipeline repo SHA. |
+| 2.29 | `curl -s` response parsing | Grep for silent mode without `-S`. | Suggestion | Require `-sS` plus exit-status check. |
+| 2.30 | Source fix with committed artifact | Detect `.wasm`, generated code, `go:generate`, `go:embed`, whitelisted build output. | Blocker | Rebuild and re-commit artifact before clear. |
+| 2.31 | Added jq `else .` | Grep jq type-dispatch fallbacks. | Suggestion | Use `else empty` or prove all unlisted types render acceptably. |
+| 2.32 | Go type widening | Run `goimports -l` on changed Go files when repo has `go.mod` and CI runs goimports. | Blocker | Run goimports before clear. |
+| 2.33 | Raw-presence parse fallback | Grep parse-with-fallback shapes. | Blocker | Parse first; fallback on parsed result; add invalid-primary test. |
+| 2.34 | Spec/doc claim about implementation routing (which method a gate calls, which path bypasses a hook) | Grep the PR review thread for reviewer statements describing the same routing. | Blocker | A reviewer who read the source is ground truth; resolve any contradiction before asserting an inferred claim. |
+| 2.35 | Diff changes a structured return-type requirement in one doc section | Grep the whole document for every field comment that stores that value; confirm shape and vocabulary match. | Blocker | Update lagging field comments; keep one canonical name per value across all sections. |
+| 2.36 | Named returns + deferred cleanup that reads a named return | Grep the function for `return <zero-literal>, ...` after the defer is established. An explicit return sets the named returns to those values *before* deferred funcs run, so the cleanup sees the zero value (e.g. `os.RemoveAll("")` → silent no-op, leaked resource). | Blocker | Assign then bare-return (`err = ...; return`) so the named var keeps its real value for the deferred cleanup; verify any comment claiming the defer cleans up "on any error path". |
+
+## Step 3: Fresh Adversarial Subagent
+
+After sweeps, dispatch a fresh subagent with no prior context. Pipe `git diff "$BASE...HEAD"` directly; never hand-transcribe the diff. If excerpts are necessary, verify hunk boundaries first.
+
+Subagent must be adversarial, unbiased, critical, objective, naming-aware, diff-sensitive, coverage-aware, refactor-aware, relocation-aware, introduction-claim-aware:
+
+- **Coverage-aware:** test-only commits → enumerate code paths, flag unexercised paths.
+- **Refactor-aware:** demand removed-line audit; every removed line is relocated or intentionally dropped.
+- **Relocation-aware:** downgrade inherited pre-existing issues carried unchanged by a pure move.
+- **Introduction-claim-aware:** before calling a behavior newly introduced, grep the `-` lines of the same hunk.
+
+### Categories to Hunt
+
+| Category | Failure modes |
+|---|---|
 | Logic / arithmetic | Off-by-one, first/last/one-past-end, pagination edges |
 | Type coercion | `"0"` vs `0` vs `false`, `[]` vs `{}`, semantic-violation values |
 | State / ordering | Use-before-init, use-after-close, double-init, async interleaving |
 | Concurrency | Races, lock asymmetry, shared-state parallel callers |
-| Contract changes | Modified signatures — consumer sweep, old-shape→new-code and new-shape→old-consumer |
-| Cross-system flow | Producer layout ≠ consumer scan, recursion depth mismatch, destructive cleanup before verify |
-| Runtime portability | bash 3.2 vs 4+, `mapfile`, `declare -A`; Python/Node/Ruby matrix from `.tool-versions` |
-| Refactor-removed behavior | Validation / recursion / error handling silently dropped during port |
-| Test quality | Tautological tests, missing assertions, no failure path, no test for new function, **asymmetric coverage** of fields populated on both pass and fail return paths (assert the field's value on at least one example of each path) |
-| Security | Injection, secret leakage in stderr/logs, redaction gaps, traversal |
-| Data loss | Unprotected writes, race-prone cleanups, missing rollback |
+| Contract changes | Signature widening, consumer sweep, old/new shape mismatch |
+| Cross-system flow | Producer layout ≠ consumer scan, recursion mismatch, destructive cleanup before verify |
+| Runtime portability | Shell/runtime matrix gaps |
+| Refactor-removed behavior | Validation, recursion, error handling silently dropped |
+| Test quality | Tautology, missing assertions, missing failure path, asymmetric field coverage |
+| Security | Injection, secret leakage, redaction gaps, traversal |
+| Data loss | Unprotected writes, race-prone cleanup, missing rollback |
 | Error handling | Swallowed errors, generic catches, wrong error class |
-| Performance | Quadratic scans on hot paths, missing indexes, repeated I/O |
+| Performance | Quadratic scans, missing indexes, repeated I/O |
 
-### Findings format
+## Step 4: Findings Format and Severity
 
-Each finding emitted by the subagent must be:
+Each finding uses:
 
 ```
 severity:   blocker | suggestion | question
 file:       path
 line:       N (must exist in the diff's commentable set)
-category:   one of the above
+category:   one of the hunt categories
 finding:    one sentence
-rationale:  one to three sentences, citing the exact diff lines
+rationale:  one to three sentences, citing exact diff lines
 fix-sketch: concrete code or command, not narrative
 ```
 
-- `blocker` is reserved for correctness, security, data loss, or a
-  documented HARD RULE violation. Style and naming default to
-  `suggestion`. Genuine uncertainty is `question`.
-- Hedging, filler, praise inline are forbidden. Restating the diff is
-  forbidden.
+- `blocker`: correctness, security, data loss, HARD RULE violations.
+- `suggestion`: naming/style/readability unless tied to a hard rule.
+- `question`: genuine uncertainty.
+- Omit hedging, filler, praise, diff restatement.
 
----
+## Step 5: Playground Validation
 
-## Step 4: Playground Validation
+Create `.review-playground/` only if needed; never commit a `.gitignore` entry for it. Confine writes to that directory.
 
-Every finding that asserts runtime behavior — "this races", "this
-mutates", "this regex misses X", "this script doesn't run under bash
-3.2" — must be reproduced before clearing or escalating.
+- One script per runtime-behavior finding; drive each with the production runtime.
+- Mutation-test each new test: flip a conditional, hardcode a return, swap args, remove an assertion → green = fake test.
+- App cannot boot → use standalone playground. Fetch pinned upstream source, replicate method signatures, cite SHA/tag:
 
-- Create `.review-playground/` (gitignored). Writes from this skill
-  are confined to that directory.
-- **HARD RULE — never commit the gitignore entry.** `.review-playground/`
-  is a local, ephemeral scratch dir. Keep it in `~/.gitignore_global`
-  or rely on the user's per-repo opt-in. Never `git add .gitignore`
-  to introduce a `.review-playground/` line on the branch under
-  review — skill scratch dirs are not repo state.
-- One script per finding. Drive with the runtime the production code
-  uses. If the project supports a matrix, run each interpreter — do
-  not silently skip uninstalled runtimes; flag the gap.
-- Mutation test for each new test in the diff: flip a conditional,
-  hardcode a return, swap arg order, remove an assertion, re-run.
-  If green, the test is fake — `blocker`.
-- Standalone playground when the app cannot boot (broken bundle,
-  missing DB): fetch upstream framework source via
-  `gh api repos/{owner}/{repo}/contents/{path}?ref={tag}` and
-  replicate the method signatures verbatim. Cite the upstream SHA.
-- Cross-system layout repro: when the diff changes a
-  producer/consumer pairing, populate a staging dir with the real
-  producer layout and run the consumer end-to-end.
+  ```bash
+  gh api "repos/{owner}/{repo}/contents/{path}?ref={tag-or-sha}" --jq '.content' | base64 -d
+  ```
 
-Findings that cannot be reproduced are downgraded from `blocker` to
-`question` with the reproduction gap recorded.
+- Downgrade unreproduced runtime claims from `blocker` to `question`.
 
----
+### Runtime matrix
 
-## Step 5: Verdict
+Run every interpreter the diff exercises, not whatever is first on `PATH`; flag any missing runtime for CI rather than silently skipping.
 
-Aggregate mechanical-sweep findings and subagent findings. Deduplicate
-by `(file, line, category)`.
+| Diff includes | Run under |
+|---|---|
+| `*.sh`, `*.bash`, `Brewfile`, shebanged shell | macOS bash 3.2 and modern bash; flag bash 4+ idioms. |
+| `*.py` | each Python version in `requires-python` or CI. |
+| `*.js`, `*.ts`, `package.json` engines change | each Node version in `engines.node`, `.nvmrc`, or CI. |
+| `*.rb`, `Gemfile.lock` | each Ruby version in `.ruby-version` or CI. |
+| `Dockerfile`, GH Actions matrix | each `runs-on` / base image listed. |
 
-- **Clear:** zero blockers, zero unverified high-confidence runtime
-  claims. Print a one-line clear verdict citing the commit range and
-  HEAD SHA. The caller (`wk-workflow`, `wk-pr`, `wk-pr-resolve`)
-  proceeds with its next step.
-- **Blocked:** any blocker. Print the blocker list with file:line,
-  category, and fix sketch. Refuse to clear. The caller MUST loop back
-  to Phase 2 (Implement) to fix each blocker before re-invoking this
-  skill. Auto mode does not bypass this — pushing past a blocker is a
-  workflow violation.
-- **Suggestions only:** print the suggestion list, present an
-  AskUserQuestion offering:
-  - **A)** Fix all suggestions in-line, then re-review (recommended
-    when count <= 3 and changes are mechanical).
-  - **B)** Clear with suggestions noted as TODO comments / follow-up.
-  - **C)** Defer all suggestions to a tracked ticket.
+### Specialized checks (apply when the diff shape matches)
 
-  Default to **A** in auto mode if every suggestion has a concrete
-  fix-sketch under 10 lines; otherwise default to **B**.
+- **Producer→consumer layout:** populate staging dir with real producer layout; run consumer end-to-end. Verify path/key match, recursion depth, fixture placement, cleanup-after-consume ordering.
+- **Cluster promotion/dedup:** test guard checks the chosen representative, not just the iteration anchor; iterate in reverse and non-sequential order.
+- **Interface contract change:** run old shapes through new code and new shapes through old consumers.
+- **Allowlist/privilege add:** compare new entry against existing siblings, not an empty list; note when strictly less privileged than a present entry.
+- **Cross-step file persistence:** before flagging that a file written in one CI step won't reach a later step, grep the pipeline templates for `artifact_upload`/`artifact_download` (or `artifacts: upload`/`download`) matching that path. Confirmed upload+download resolves the concern → do not surface it. Script-level I/O crossing step boundaries always has a pipeline artifact contract; read the orchestration layer, not just the source.
 
-### Note bot reviewers in the verdict
+### Documentation / prose / compression diffs — read-based analysis
 
-When the pre-push comment map contains bot reviewers (login matches
-`*[bot]`), append to the verdict body:
+When every changed file is docs, prompt/rule text, or non-executable fixture data, skip scratch scripts; substitute a read-based adversarial pass under `.review-playground/`:
 
-- Post-push thread count may shrink — bots that recreate their entire
-  review object on each push retract pre-push threads and may post a
-  single replacement before their database catches up with HEAD.
-- The caller MUST re-fetch threads after push (`wk-pr-resolve` Step 8.x
-  refresh) and match findings by `(path, line, body_excerpt)`, not by
-  REST comment ID.
-- A reduced thread count is expected, not a regression signal.
-- Emit a `session_resolved_classes` set in the verdict — one entry
-  per finding addressed this session, keyed by `(path_prefix,
-  concern_class)`. Callers match incoming bot threads against this
-  set by concern class **before** matching by exact `path:line`,
-  tagging matches as `already-addressed` and skipping triage. Bots
-  that re-evaluate from a stale post-push snapshot otherwise echo
-  every prior finding as new.
+- Cover ambiguity, contradictions, missing cases, edge-case prompts.
+- Cross-check every numeric count in tables/enumerated claims against the actual items.
+- **Compression/debloat diffs:** verify rule survival by *substance*, not by counting `HARD RULE` (or similar) labels — labels are trimmed first even when the rule they tagged is preserved, so label-count deltas are noise in either direction. Enumerate each gate the commit claims to preserve and content-grep it against the new file. With `grep -E`, write alternation as `a|b`; `\|` matches a literal pipe and silently returns zero (a false "missing gate").
+- **Relocations:** flag org-specific tooling names, command aliases, internal script names, tracker IDs, short-link prefixes, or source-only paths absent from the destination repo; fix back-references to un-imported files.
+- Flag committed absolute/home/worktree paths, local-only branches, or personal artifacts stated as permanent facts.
+- Doc names a live code file as authoritative → read that file, verify stated constraints against the current branch.
 
-### Clearance record
+## Step 6: Verdict and Records
 
-On a clear verdict, write `.review-playground/.cleared-{HEAD_SHA}.json`
-recording: HEAD SHA, base, timestamp, finding counts, verdict. The
-file lets the orchestrator skip re-invocation when no new commits land.
+Deduplicate by `(file, line, category)`, then return one verdict.
 
----
+- **Clear:** zero blockers and zero unverified high-confidence runtime claims. Print commit range, HEAD SHA, finding counts. Write `.review-playground/.cleared-{HEAD_SHA}.json` with HEAD SHA, base, timestamp, finding counts, verdict.
+- **Blocked:** print every blocker with file:line, category, fix sketch. Refuse to clear; caller fixes and re-invokes.
+- **Suggestions only:** print suggestions and offer A/B/C: fix all in-line, clear with TODO/follow-up, or defer to tracked work. Default to A in auto mode when every fix-sketch is under 10 lines; otherwise B.
 
-## Step 6: Fix Loop
+### Bot Reviewer Handling
 
-On a blocked verdict:
+Bot reviewers exist (`*[bot]`) → append:
 
-1. Caller addresses each blocker, committing each fix individually
-   via `wk-commit` (one fix per commit, atomic, conventional format).
-   When a blocker names one of N structurally-parallel blocks, fix every
-   sibling in the same round (sweep 2.27) — partial application re-flags
-   the identical class on the next sibling next round.
-2. Re-invoke `wk-adversarial-review`. The skill re-runs Steps 1–5
-   against the new HEAD.
-3. Loop until clear, max 3 cycles. After 3 cycles, stop and surface to
-   the user — repeated blocker recurrence on the same axis means the
-   diagnosis or design is off, not the fix.
+- Post-push thread count may shrink; bots may retract and repost replacement threads.
+- Caller must re-fetch threads after push and match by `(path, line, body_excerpt)`, not REST comment ID.
+- Emit `session_resolved_classes` keyed by `(path_prefix, concern_class)` so callers mark bot echoes as already-addressed.
 
-**Artifact-rebuild fix after a rebase — do not autosquash into a mid-chain
-commit.** `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>` replays
-the whole chain from `<base>`, re-exposing every already-resolved conflict.
-When a post-rebase fix (e.g., a stale rebuilt artifact) needs committing,
-amend it into a standalone conventional commit (`git commit --amend` for the
-message) rather than folding it mid-chain.
+## Step 7: Fix Loop and Hand Back
 
----
+On blocked verdict:
 
-## Step 7: Hand Back
+1. Caller fixes each blocker via `wk-commit` (one atomic conventional commit per fix).
+2. Fix every structurally-parallel sibling in the same round.
+3. Re-invoke this skill.
+4. Loop until clear, max 3 cycles.
+5. After 3 cycles, stop and surface to user; repeated recurrence means diagnosis/design is off.
 
-Print the verdict line to the caller. Do not push, do not edit the PR,
-do not post review comments — those actions belong to the calling
-skill, not this one. This skill is a **gate**, not an actor.
+Do not autosquash post-rebase artifact fixes mid-chain. Commit as a standalone conventional commit, then re-review.
 
----
-
-## Hard Rules
-
-1. **No push without clear verdict.** Every push, every `gh pr ready`,
-   every force-push runs this skill first. Auto mode does not bypass.
-2. **Mechanical sweeps AND the adversarial subagent dispatch run
-   unconditionally.** Even on docs-only diffs. A `.md` file that is a
-   skill instruction or executable specification is code — logic errors
-   in it fail at runtime exactly as source would. The "docs-only"
-   exemption never skips the subagent dispatch for instruction/spec
-   files; it applies only to changelog entries, plain prose, and files
-   with no executable logic. Test-count sync and cross-doc enumeration
-   land most often on docs diffs.
-3. **Findings are diff-anchored.** Every comment must map to a line in
-   the commentable set. Lines outside the diff become file-level or
-   verdict-body notes — never silently dropped.
-4. **Reproduce before claim.** Runtime-behavior findings must be
-   exercised in `.review-playground/` or downgraded.
-5. **No raw `gh api .../comments` from this skill.** Verdict output is
-   text only — the caller decides what becomes a PR comment.
-6. **Refactors get the removed-line audit.** When the diff is dominated
-   by movement, every removed line must be accounted for.
-7. **Severity ladder is non-negotiable.** `blocker` for
-   correctness/security/data-loss/HARD-RULE violations only. Naming
-   and style default to `suggestion`.
-
----
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| `wk-workflow` Phase 4 | Full flow on current branch before PR creation |
-| `wk-pr` before first push | Full flow; blocks `gh pr create` on blockers |
-| `wk-pr` before `gh pr ready` | Full flow against PR HEAD; blocks ready transition |
-| `wk-pr-resolve` before Step 8 push | Full flow against new commits since last clear |
-| User `/wk-adversarial-review` | Manual run on current branch |
-| Re-invocation on same HEAD | No-op; prints prior clearance record |
+Print the verdict line to the caller. Do not push, edit the PR, or post comments.
 
 ## Requirements
 
 - `gh` CLI authenticated.
-- Repo with a base branch resolvable via `gh pr view` or
-  `git symbolic-ref refs/remotes/origin/HEAD`.
+- Repo with base branch resolvable via `gh pr view` or `git symbolic-ref refs/remotes/origin/HEAD`.
 - Write access to `.review-playground/` (gitignored).
-- For matrix runtime checks: every interpreter in `.tool-versions` /
-  CI matrix installed via `mise` or equivalent.
-
----
+- Runtime matrix installed via `mise` or equivalent when matrix checks are required.
 
 ## Post-Completion
 
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn adversarial-review`).
+Invoke `wk-learn adversarial-review`.

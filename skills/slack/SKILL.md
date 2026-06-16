@@ -25,7 +25,7 @@ license: MIT
 group: communication
 metadata:
   author: whizzzkid
-  version: '2026.05.29-192834'
+  version: '2026.06.15-200722'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -42,9 +42,9 @@ standard Markdown.
 
 ## When to Use
 
-- Posting a feature announcement or milestone to a public channel
+- Feature announcement or milestone → public channel
 - Sharing a PR or doc for review
-- Sending a status update or weekly digest
+- Status update or weekly digest
 - Asking for approvals, feedback, or eyes on something
 - Any Slack message where voice and format matter
 
@@ -52,12 +52,12 @@ standard Markdown.
 
 ## Step 1: Resolve channel and intent
 
-- Identify the target channel. If not named, ask.
-- Clarify the message type — pick one:
-  - **announcement** — a milestone, launch, or plan going public
-  - **review-request** — asking for eyes on a PR, doc, or spec
+- Identify target channel → if not named, ask.
+- Pick message type:
+  - **announcement** — milestone, launch, or plan going public
+  - **review-request** — eyes on a PR, doc, or spec
   - **status-update** — progress report or digest
-  - **ask** — a specific request for action or approval
+  - **ask** — specific request for action or approval
   - **fyi** — informational link or note, no action needed
 - Collect content: links, epic lists, PR numbers, context sentences.
 
@@ -65,7 +65,7 @@ standard Markdown.
 
 ## Step 2: Draft with the message template
 
-Apply the template matching the message type:
+Apply template matching the message type:
 
 ### Announcement / review-request
 
@@ -118,28 +118,25 @@ Optional: what happens next or deadline.
 one before writing anything; mixing them silently breaks links and
 structure.**
 
-- **Context A — Slack API / Bot messages (`chat.postMessage`):** use
-  Slack mrkdwn. Links: `<url|label>`. Bold: `*text*`. Italic:
-  `_text_`. Bullets: `-` at line start, 4-space indent for nesting.
-  Never use HTML tags — they post as literal text.
-- **Context B — Plain text typed or pasted into the compose box:**
-  bare URLs auto-linkify. Mrkdwn `*bold*` and `_italic_` render.
-  `<url|label>` does **not** render — it appears as literal angle
-  brackets. Use bare URLs when no label is available; otherwise use
-  Context C for clickable labels.
+- **Context A — Slack API / Bot messages (`chat.postMessage`):** Slack
+  mrkdwn. Links `<url|label>`; bold `*text*`; italic `_text_`; bullets
+  `-` at line start, 4-space indent for nesting. Never use HTML tags —
+  they post as literal text.
+- **Context B — Plain text typed/pasted into compose box:** bare URLs
+  auto-linkify; mrkdwn `*bold*` and `_italic_` render. `<url|label>`
+  does **not** render — appears as literal angle brackets. Use bare
+  URLs when no label available; else use Context C for clickable labels.
 - **Context C — Copy-to-clipboard from a web dashboard into compose
-  box:** write `text/html` to the clipboard via `ClipboardItem` with
-  real `<a href>` tags and nested `<ul><li>` structure. Slack's
-  desktop app respects the HTML MIME type on paste and renders
-  clickable labels with preserved indentation. `textContent`-only
-  copies strip every link. Fall back to
-  `navigator.clipboard.writeText(el.innerText)` when `ClipboardItem`
-  is unavailable (older browsers, insecure context) — labels degrade
-  to plain text but the copy still works.
+  box:** write `text/html` to clipboard via `ClipboardItem` with real
+  `<a href>` tags and nested `<ul><li>` structure → Slack desktop
+  respects the HTML MIME type on paste, renders clickable labels with
+  preserved indentation. `textContent`-only copies strip every link.
+  Fall back to `navigator.clipboard.writeText(el.innerText)` when
+  `ClipboardItem` is unavailable (older browsers, insecure context) —
+  labels degrade to plain text but the copy still works.
 
-Default to Context C whenever generating a copy button on a
-dashboard. Use Context A only when posting via the Slack API. Use
-Context B only for ad-hoc plaintext drops.
+Default Context C for a dashboard copy button. Context A only when
+posting via the Slack API. Context B only for ad-hoc plaintext drops.
 
 ---
 
@@ -171,29 +168,27 @@ Convert before sending: `**...**` → `*...*`, `~~...~~` → `~...~`,
 
 Derived from real messages posted by the user:
 
-- **Heading emoji is topical** — pick an emoji that matches the subject
-  (`:eyes:` for review, `:mega:` for milestone, `:dart:` for goal,
-  `:page_facing_up:` for doc, `:git:` for code, `:tada:` for launch).
-- **Em-dash `—` in headings** — separates the noun from the context:
+- **Heading emoji is topical** — match the subject (`:eyes:` review,
+  `:mega:` milestone, `:dart:` goal, `:page_facing_up:` doc, `:git:`
+  code, `:tada:` launch).
+- **Em-dash `—` in headings** separates noun from context:
   `*Fresh Eyes Q1 FY27 — Vision doc is up for review*`.
-- **tl;dr is conversational, not corporate** — "We've been heads-down
-  turning async discussions into a structured plan" not "This document
+- **tl;dr conversational, not corporate** — "We've been heads-down
+  turning async discussions into a structured plan", not "This document
   summarizes Q1 FY27 objectives."
-- **Numbered lists for ordered/sequential items** — epics, stack PRs,
-  rollout steps.
+- **Numbered lists for ordered/sequential** — epics, stack PRs, rollout steps.
 - **Bullets for unordered** — pending reviews, options, links.
 - **Nested sub-bullets** for stacked PRs or multi-part items.
 - **Closing CTA is an invitation, not a demand** — "Would love eyes on
-  sequencing and the open questions" not "Please review by EOD."
+  sequencing and the open questions", not "Please review by EOD."
 - **Warm sign-off when ending a week or heading OOO** — "Have a good
   weekend folks" / "I'll be away Monday".
-- **Excitement is genuine and brief** — "Exciting things are coming!!!"
+- **Excitement genuine and brief** — "Exciting things are coming!!!"
   works; excessive hype does not.
 - **Direct asks use "Hey Folks"** — informal opener, one crisp sentence,
   link, done.
-- **Never over-tag** — CC only people whose attention the message
-  genuinely requires. One or two `<@handle>` is normal; a list of five
-  is noise.
+- **Never over-tag** — CC only people whose attention is genuinely
+  required. One or two `<@handle>` is normal; a list of five is noise.
 - **No signature block / no "Thanks, Nishant"** — the Slack profile is
   the signature.
 
@@ -219,15 +214,14 @@ are hard to retract; approval is cheap.
 After sending, confirm:
 - Channel name
 - Permalink or message ts
-- Whether it was sent as a top-level message or thread reply
+- Top-level message or thread reply
 
 ---
 
 ## Standup Snippet
 
-Canonical spec for the daily standup snippet rendered by
-wk-goodmorning (and any other caller). The snippet is a public team
-artifact — every rule below is a HARD RULE.
+Canonical spec for the daily standup snippet rendered by wk-sitrep start
+(and any other caller). Public team artifact — every rule below is a HARD RULE.
 
 **Structure (Context C — HTML for clipboard, bullets shown for
 illustration):**
@@ -246,58 +240,54 @@ illustration):**
   - {blocker} <a href="…">{link label}</a>
 ```
 
-- Yesterday, Today, Blockers are top-level `<li>` items of a single
-  `<ul>`. Sub-points are nested `<ul><li>` children. Never emit them
-  as `<p>`, `<b>`, or `<h*>` — flat headings collapse Slack's paste
-  indentation.
+- Yesterday, Today, Blockers are top-level `<li>` of a single `<ul>`;
+  sub-points are nested `<ul><li>` children. Never emit them as `<p>`,
+  `<b>`, or `<h*>` — flat headings collapse Slack's paste indentation.
 - Each leaf bullet carries **at most one** external link. Multiple
-  artifacts → parent bullet (group label, no link) + one child
-  bullet per artifact, each carrying its single link.
+  artifacts → parent bullet (group label, no link) + one child bullet
+  per artifact, each carrying its single link.
 - GitHub PR/issue link labels are always `repo#number` (e.g.,
-  `somerepo#NNN`). Bare `#NNN` is forbidden — repo context is lost
-  on paste outside the original surface.
-- Emoji lead characters `👈🏽`, `👉🏽`, `✋🏽` are mandatory on the three
-  top-level bullets respectively.
-- Omit the Blockers `<li>` entirely when no blockers exist; do not
-  emit an empty heading.
-- Build the copy button with `ClipboardItem` writing `text/html`
-  with real `<a>` tags and `<ul><li>` nesting. Never copy
-  `textContent` only — it strips every link.
+  `somerepo#NNN`). Bare `#NNN` forbidden — repo context is lost on
+  paste outside the original surface.
+- **Emoji LEADS every heading — `👈🏽`/`👉🏽`/`✋🏽` is the first character of the
+  Yesterday/Today/Blockers bullet respectively. Never trail the emoji at the end
+  of a heading line (`Yesterday 👈🏽` is wrong; `👈🏽 Yesterday` is right).**
+- Blockers always present: emit `- ✋🏽 Blockers:` with a single `- None` child
+  when there are none. Never drop the heading or its emoji.
+- Build the copy button with `ClipboardItem` writing `text/html` with
+  real `<a>` tags and `<ul><li>` nesting. Never copy `textContent` only
+  — it strips every link.
 
 ### Standup privacy filter (HARD RULE)
 
-Apply this filter to every candidate item **before** it lands in the
-snippet. The morning/evening dashboard may keep filtered items
-privately; the standup may not.
+Apply to every candidate item **before** it lands in the snippet. The
+morning/evening dashboard may keep filtered items privately; the standup may not.
 
-- Drop interview, hiring, or candidate-pipeline items in their
-  specific form. If an interview must appear, render generically
-  (e.g., "L4 SE candidate interview 12pm") — never include
-  candidate names, CodeSignal URLs, Greenhouse/scorecard links, or
-  any other hiring-pipeline PII.
-- Drop personal HR, performance, QPR, or compensation actions
-  (e.g., "QPR self-review window closes", "1:1 with manager").
+- Drop interview, hiring, or candidate-pipeline items in specific form.
+  If an interview must appear, render generically (e.g., "L4 SE
+  candidate interview 12pm") — never include candidate names,
+  CodeSignal URLs, Greenhouse/scorecard links, or any other
+  hiring-pipeline PII.
+- Drop personal HR, performance, QPR, or compensation actions (e.g.,
+  "QPR self-review window closes", "1:1 with manager").
 - Drop personal communications (farewell replies, DMs, condolences,
   social-channel pings).
-- Drop anything the caller has flagged as private or has not yet
-  decided to share publicly.
-- When uncertain, omit. The standup is public; the dashboard is
-  private.
+- Drop anything the caller flagged as private or has not yet decided to
+  share publicly.
+- When uncertain, omit. Standup is public; dashboard is private.
 
 ### Caller contract
 
 When invoked as `wk-slack §Standup Snippet`, return:
 
-- The HTML payload (`<ul>…</ul>`) ready to embed in a dashboard card
-  and copy to clipboard via `ClipboardItem`.
-- The plaintext fallback (Context B) for the markdown brief, using
-  `-` bullets, 2-space indent for nesting, bare URLs.
-- The filtered-out items (so the caller can keep them in the
-  private dashboard).
+- HTML payload (`<ul>…</ul>`) ready to embed in a dashboard card and
+  copy to clipboard via `ClipboardItem`.
+- Plaintext fallback (Context B) for the markdown brief: `-` bullets,
+  2-space indent for nesting, bare URLs.
+- Filtered-out items (so the caller keeps them in the private dashboard).
 
-Callers (wk-goodmorning, wk-goodevening) must **not** re-implement
-the structure, link format, or privacy filter inline — invoke this
-section instead.
+Callers (wk-sitrep) must **not** re-implement the structure, link
+format, or privacy filter inline — invoke this section instead.
 
 ---
 
@@ -329,7 +319,7 @@ section instead.
 ## Requirements
 
 - Slack MCP connector (`mcp__claude_ai_Slack_*`)
-- Channel ID or channel name to resolve to ID via `slack_search_channels`
+- Channel ID, or channel name → resolve to ID via `slack_search_channels`
 - User handle (from `slack_read_user_profile` if only a name is given)
 
 ---

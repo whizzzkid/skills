@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.06.12-024025'
+  version: '2026.06.16-072242'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -107,6 +107,11 @@ Surfaces covered (non-exhaustive):
 - Inline-comment replies (`gh api .../pulls/{n}/comments/{id}/replies`)
 - Issue and PR conversation comments (`gh issue comment`, `gh pr comment`)
 - Review-thread state changes (resolve/unresolve via GraphQL)
+
+**Inline-reply IDs are numeric REST IDs.** `in_reply_to` (and
+`/pulls/{n}/comments/{id}/replies`) require the integer REST `id` from
+`GET /pulls/{n}/comments` (or `databaseId` from a GraphQL reviewThreads query),
+not a GraphQL node ID (`PRRC_…`) — passing the node ID returns 404.
 
 Every write surface above must:
 

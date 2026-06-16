@@ -3,6 +3,8 @@
 > Bring a PR branch up to date with its base using the right integration strategy — rebase for small branches,
 > patch-replay for large ones — with conflict resolution, re-validation, and force-with-lease push.
 
+**Version:** `2026.06.15-200515`
+
 ## Invocation
 
 | Mode | Trigger |
@@ -48,7 +50,7 @@ stateDiagram-v2
   scan proves old paths weren't silently dropped.
 - **Dirty tree aborts in auto mode:** The skill requires a clean working tree. Auto mode defaults to abort
   rather than stashing changes on the user's behalf — that mutation is outside the autonomy budget.
-- **Invoked by `wk-pr-resolve` Step 2:** Rather than inline merge/rebase logic, `wk-pr-resolve` delegates
+- **Invoked by [`wk-pr-resolve`](../pr-resolve/README.md) Step 2:** Rather than inline merge/rebase logic, [`wk-pr-resolve`](../pr-resolve/README.md) delegates
   base-branch integration here so the strategy heuristics and safety nets apply consistently everywhere.
-- **`wk-refactor` fires after every successful rebase/replay:** Immediately after integration, the refactor
+- **[`wk-refactor`](../refactor/README.md) fires after every successful rebase/replay:** Immediately after integration, the refactor
   audit runs to catch behavior that was dropped by conflict resolution before the PR is pushed.

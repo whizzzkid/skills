@@ -2,6 +2,8 @@
 
 > Scaffold a new wk-* skill from the canonical template with full infrastructure wiring.
 
+**Version:** `2026.06.15-200558`
+
 ## Invocation
 
 | Mode | Trigger |

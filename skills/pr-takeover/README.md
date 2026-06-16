@@ -3,6 +3,8 @@
 Take over a pull request being worked on by someone else and drive it to
 completion using the full [`wk-workflow`](../workflow/README.md).
 
+**Version:** `2026.06.15-200404`
+
 ## Purpose
 
 When a PR needs a new owner — the original author is unavailable, you are
@@ -33,7 +35,7 @@ original PR's line-count diff.
 1. **Parse** — resolve PR number / URL, detect `--stack` flag
 2. **Fetch context** — read PR description, diff, reviews, and comments
 3. **Check out** — branch checkout (overwrite) or new branch from head (stack)
-4. **Orient** — read changed files, run baseline tests, identify gaps
+4. **Orient** — read changed files, run baseline tests, identify gaps. Prose/docs-dominated diffs substitute a gate-preservation audit (hooks as baseline; verify every claimed rule/link/count survived)
 5. **Co-authorship** — extract original author identity; set `$WK_CO_AUTHOR`
 6. **Plan** — task list from unresolved feedback + incomplete code
 7. **[`wk-workflow`](../workflow/README.md)** — full workflow (plan → implement → test → review → PR → retro)
@@ -44,7 +46,7 @@ original PR's line-count diff.
 ## Hard Rules
 
 - User MUST NOT approve the PR (co-author constraint).
-- Every commit carries `Co-Authored-By: <original-author>`.
+- Every commit carries `Co-Authored-By: <original-author>` — skipped when the sole author is the user (own-PR takeover).
 - Pre-existing test failures are documented, not silently fixed without attribution.
 - Stacking on a draft base surfaces a three-option prompt; auto-mode retargets to the default branch.
 - 30% scope threshold triggers automatic switch to stack mode.

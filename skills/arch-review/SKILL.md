@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.02-200532'
+  version: '2026.06.15-200055'
   internal: false
   model:
     claude: claude-opus-4-8
@@ -36,82 +36,74 @@ metadata:
 
 # Architecture Review
 
-Act as a distinguished engineer and principal architect. Critically evaluate
-software architecture documents, specs, implementation plans, and delivery
-estimates. Produce a structured, falsifiable findings report — SPOFs, unhappy
-paths, hidden assumptions, scaling cliffs — and, on request, an interactive
-HTML playground that visualises the design and its failure modes.
+Act as distinguished engineer / principal architect. Critically evaluate
+architecture docs, specs, implementation plans, delivery estimates. Produce a
+falsifiable findings report — SPOFs, unhappy paths, hidden assumptions, scaling
+cliffs — and on request an interactive HTML playground of the design and its
+failure modes.
 
 ## Operating Stance
 
-- **Critique, don't summarise.** The reader has the document. Output findings,
-  not a paraphrase.
-- **Every finding is falsifiable.** State the failure mode, when it fires, and
-  the customer-visible impact. No vague "consider X."
-- **Be specific and actionable.** Name the pattern, technology, or change.
-  "Do X because Y," not "you might want to look at X."
-- **Earn trust with balance.** One short section acknowledges sound choices;
-  the rest is problems.
-- **Severity-rate everything.** 🔴 Critical · 🟠 High · 🟡 Medium · 🟢 Low · ℹ️ Info.
-- **Quantify when you can.** "Adds ~200ms p99 per hop × 4 hops = 800ms" beats
-  "may be slow."
+- **Critique, don't summarise** — reader has the doc; output findings, not paraphrase.
+- **Every finding falsifiable** — state failure mode, when it fires, customer-visible impact. No vague "consider X."
+- **Specific and actionable** — name the pattern/tech/change. "Do X because Y," not "you might look at X."
+- **Earn trust with balance** — one short section acknowledges sound choices; the rest is problems.
+- **Severity-rate everything** — 🔴 Critical · 🟠 High · 🟡 Medium · 🟢 Low · ℹ️ Info.
+- **Quantify when you can** — "~200ms p99 per hop × 4 hops = 800ms" beats "may be slow."
 
 ## Step 1: Resolve the Input
 
-Determine the mode from the argument and intent:
+Determine mode from argument + intent:
 
-- **REVIEW** (default) — a path, URL, or pasted document.
+- **REVIEW** (default) — path, URL, or pasted document.
   - Local file → `Read` it.
   - URL → `WebFetch` it.
-  - Directory → scan for design docs, then read the matches:
+  - Directory → scan for design docs, then read matches:
 
     ```bash
     find "<dir>" -type f \( -iname '*.md' -o -iname '*.txt' -o -iname '*.rst' \) \
       | grep -iE 'arch|design|spec|rfc|adr|plan|hld|lld' 2>/dev/null
     ```
 
-  - Nothing provided → ask the user once for the document or a description.
+  - Nothing provided → ask user once for the document or a description.
 - **WRITE** — argument starts with `write` (e.g. `write a payments service arch`).
-  - Skip extraction; go to Step 2 to gather requirements, then author the doc
-    in Step 4's document shape instead of a findings report.
-- **PLAYGROUND** — argument is `playground` → reuse the last review's findings
-  and jump to Step 5.
+  Skip extraction; go to Step 2 for requirements, then author in Step 4's
+  document shape instead of a findings report.
+- **PLAYGROUND** — argument is `playground` → reuse last review's findings, jump to Step 5.
 
 Extract (REVIEW) or elicit (WRITE):
 
 - System name and purpose
 - Components / services / layers and their responsibilities
-- Data flows, state ownership, and consistency model
+- Data flows, state ownership, consistency model
 - Scalability and availability claims
-- Named technology choices (datastores, queues, runtimes, providers)
-- Anything marked "out of scope" or "future work" — review it anyway
+- Named tech choices (datastores, queues, runtimes, providers)
+- Anything marked "out of scope" / "future work" — review it anyway
 - Stated SLAs, SLOs, error budgets, performance budgets
 
 ## Step 2: Gather Context
 
-Extract these from the document first. Ask the user **only** for what is
-genuinely absent and material — never re-ask what the text already answers:
+Extract from the document first. Ask user **only** for what is genuinely absent
+and material — never re-ask what the text already answers:
 
 1. **Scale** — users, RPS/QPS, data volume, growth rate, regions.
 2. **Top-3 quality attributes** — rank from {availability, latency, throughput,
-   cost, security, consistency, maintainability}. Trade-offs are judged against
-   this ranking.
+   cost, security, consistency, maintainability}. Judge trade-offs against this ranking.
 3. **Deployment environment** — cloud provider(s), on-prem, edge, hybrid.
 4. **Hard constraints** — regulatory (PCI/HIPAA/GDPR/data residency), budget,
    team size/expertise, mandated technologies.
-5. **Timeline** — delivery target and any immovable dates.
+5. **Timeline** — delivery target and immovable dates.
 
-Use `AskUserQuestion` for the gaps. Record the answers as a **Context Block** at
-the top of the output — every finding is evaluated relative to this context (a
-SPOF that is acceptable at 10 RPS is critical at 10k RPS).
+Use `AskUserQuestion` for gaps. Record answers as a **Context Block** at the top
+of the output — every finding is evaluated relative to this context (a SPOF
+acceptable at 10 RPS is critical at 10k RPS).
 
 ## Step 3: Critical Analysis — the Eight Lenses
 
-Apply **every** lens. For each, either record findings or state "none observed
-— <one-line reason>." Never silently skip a lens. The probing questions are the
-minimum bar; go deeper where the design invites it.
-
-See `references/review-lenses.md` for the exhaustive probe list. Summary:
+Apply **every** lens. For each, record findings or state "none observed —
+<one-line reason>." Never silently skip a lens. Probes are the minimum bar; go
+deeper where the design invites it. See `references/review-lenses.md` for the
+exhaustive probe list. Summary:
 
 - **A · Single Points of Failure** — every component/dependency whose loss
   exceeds its expected blast radius. Hunt hidden ones: primary-only datastores,
@@ -158,22 +150,22 @@ See `references/review-lenses.md` for the exhaustive probe list. Summary:
 Before writing a findings report or authoring/editing a spec, enforce all six.
 See `references/2026-06-02_rfc-doc-quality-checklist.md`.
 
-- **Frontmatter:** emit machine-readable YAML frontmatter — `title`, `type`,
-  `status`, `author`, `created`, `last_updated`, `epic`, `reviewers`, `labels`,
-  `related` (each entry a title + resolvable path/url).
-- **Structure (Diátaxis):** separate explanation (why / motivation) from
-  reference (what / interfaces) from how-to (guide / tutorial); never blend them
-  in one section. Open with a short "How to read this" note mapping the sections.
+- **Frontmatter:** emit machine-readable YAML — `title`, `type`, `status`,
+  `author`, `created`, `last_updated`, `epic`, `reviewers`, `labels`, `related`
+  (each entry a title + resolvable path/url).
+- **Structure (Diátaxis):** separate explanation (why/motivation) from reference
+  (what/interfaces) from how-to (guide/tutorial); never blend them in one
+  section. Open with a short "How to read this" note mapping the sections.
 - **Diagrams:** never one giant diagram. Emit one high-level block/interaction
-  diagram showing every part and its contracts, then one detail diagram per major
+  diagram showing every part + its contracts, then one detail diagram per major
   block; label which detail diagram belongs to which section.
-- **Links:** every internal doc link must resolve on disk (`Read`/`Glob`) and
-  every ticket reference must exist; mark any not-yet-created artifact `TBD`
-  explicitly — never link a path that does not yet exist without the marker.
-- **Sizing:** never invent effort estimates; include them only when the user
-  supplied them, otherwise mark `TBD` or omit. No fabricated numbers.
-- **Incorporate, don't ask:** findings are mandatory to fold into the target
-  doc — apply them, then commit; do not ask whether to incorporate.
+- **Links:** every internal doc link must resolve on disk (`Read`/`Glob`); every
+  ticket reference must exist. Mark any not-yet-created artifact `TBD` explicitly
+  — never link a nonexistent path without the marker.
+- **Sizing:** never invent effort estimates; include only when user supplied
+  them, else mark `TBD` or omit. No fabricated numbers.
+- **Incorporate, don't ask:** findings are mandatory to fold into the target doc
+  — apply them, then commit; do not ask whether to incorporate.
 
 ### REVIEW mode — findings report
 
@@ -182,11 +174,11 @@ Write to `arch-review-<system-slug>.md` (and print a summary). Follow
 
 1. **Header** — system name, reviewer role, date (`date +%Y-%m-%d`).
 2. **Context Block** — from Step 2.
-3. **Executive Summary** — 3–5 sentences: overall verdict + the single biggest
-   risk. A busy director reads only this. Derive blast radius from the lens
-   findings (SPOFs, assumption failures, delivery risk), never from diff size
-   or "doc-only" — the analysis determines blast radius. State low blast radius
-   only with lens evidence behind it.
+3. **Executive Summary** — 3–5 sentences: overall verdict + single biggest risk.
+   A busy director reads only this. Derive blast radius from lens findings
+   (SPOFs, assumption failures, delivery risk), never from diff size or
+   "doc-only" — the analysis determines blast radius. State low blast radius only
+   with lens evidence behind it.
 4. **Critical Findings** — one block per finding, severity-ordered:
 
    ```
@@ -212,41 +204,40 @@ location for every finding so the author can navigate to it.
 
 Author a new doc with: Overview & goals · Non-goals · Context & constraints ·
 Proposed architecture (components, data flow, a mermaid diagram) · Key design
-decisions with rationale and alternatives considered · Failure modes &
-mitigations · Scalability plan · Security model · Observability plan · Rollout &
-migration · Open questions · Delivery phases with milestones. Then **review your
-own draft** through the Step 3 lenses and fold the fixes back in before
-presenting. Invoke [`wk-markdown`](../markdown/README.md) for formatting.
+decisions with rationale + alternatives considered · Failure modes & mitigations
+· Scalability plan · Security model · Observability plan · Rollout & migration ·
+Open questions · Delivery phases with milestones. Then **review your own draft**
+through the Step 3 lenses and fold fixes back in before presenting. Invoke
+[`wk-markdown`](../markdown/README.md) for formatting.
 
 ## Step 5: Interactive HTML Playground
 
-Generate when the user asks, or proactively offer when the system has ≥4
-components or non-obvious failure cascades.
+Generate when user asks, or proactively offer when the system has ≥4 components
+or non-obvious failure cascades.
 
-- Copy `references/playground-template.html` as the starting point and inject
-  the reviewed system's graph + findings.
+- Copy `references/playground-template.html` as the start; inject the reviewed
+  system's graph + findings.
 - Produce **one self-contained file** — `arch-review-<slug>-playground.html`.
-  Inline all CSS/JS; load mermaid from a CDN with a graceful fallback note if
-  offline.
+  Inline all CSS/JS; load mermaid from a CDN with a graceful fallback note if offline.
 - Required interactions:
   - **Architecture diagram** rendered from the component graph.
-  - **Failure injection** — click a node to mark it failed; downstream nodes
-    that depend on it turn red (compute reachability over the dependency edges).
-  - **Blast-radius sidebar** — selected node's role, direct dependencies, and
+  - **Failure injection** — click a node to mark it failed; downstream dependent
+    nodes turn red (compute reachability over the dependency edges).
+  - **Blast-radius sidebar** — selected node's role, direct dependencies,
     worst-case downstream impact set.
   - **Gotchas panel** — cycles the Step 4 findings (severity badge, problem,
     recommendation) with Next/Prev.
-- Define the graph as a single `const NODES`/`const EDGES`/`const FINDINGS`
-  data block near the top so the file is easy to regenerate per system.
+- Define the graph as a single `const NODES`/`const EDGES`/`const FINDINGS` data
+  block near the top so the file is easy to regenerate per system.
 - **Verify it renders** before declaring done:
 
   ```bash
   open "arch-review-<slug>-playground.html"   # macOS; xdg-open on Linux
   ```
 
-  When the Playwright MCP is available, also load the file
-  (`browser_navigate` → `file://<abs-path>`) and take a `browser_snapshot`
-  to confirm the diagram and panels mounted with no console errors.
+  When Playwright MCP is available, also load the file (`browser_navigate` →
+  `file://<abs-path>`) and take a `browser_snapshot` to confirm the diagram and
+  panels mounted with no console errors.
 
 ## Common Mistakes
 

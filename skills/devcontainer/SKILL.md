@@ -9,7 +9,7 @@ description: >
   container".
 group: tools
 metadata:
-  version: 2026.05.12-230100
+  version: 2026.06.15-200014
   model: sonnet
   effort: medium
   user-invocable: true
@@ -28,7 +28,7 @@ Create or debug a `.devcontainer/` setup for a mise-managed Rails app.
 
 ## Step 1: Audit the project first
 
-**HARD RULE: Check CI compose before writing any config.** The project already
+**HARD RULE: Check CI compose before writing any config.** Project already
 demonstrates the correct Docker override pattern.
 
 ```bash
@@ -38,20 +38,20 @@ cat .ruby-version                   # pin this exactly in mise.toml
 grep -E "redis|sidekiq|elasticsearch" Gemfile | head -10  # extra services needed
 ```
 
-Read all four. The CI compose shows exact image versions, service names, and
-`CONFIG__` env var keys — copy them, don't guess.
+- Read all four.
+- CI compose → exact image versions, service names, `CONFIG__` keys. Copy them, don't guess.
 
 ## Step 2: Write the Dockerfile
 
-Base image: `ghcr.io/jdx/mise:<version>` — pin to an exact version, never
-`latest`. The image is Debian-based (`apt-get` works).
+- Base image: `ghcr.io/jdx/mise:<version>` — pin exact version, never `latest`.
+- Image is Debian-based (`apt-get` works).
 
 **HARD RULE: Do NOT add `ENV PATH=.../shims` or `echo 'eval "$(mise activate
-bash)"' >> /etc/bash.bashrc`.** The `jdx/mise` image already configures both
-shim PATH and bash activation. Manual additions cause double-activation bugs.
+bash)"' >> /etc/bash.bashrc`.** `jdx/mise` image already configures both shim
+PATH and bash activation → manual additions cause double-activation bugs.
 
 **HARD RULE: Do NOT `COPY mise.toml` or `RUN mise install` in the Dockerfile.**
-Use `auto_install = true` in `mise.toml` instead — tools install on first
+Use `auto_install = true` in `mise.toml` instead → tools install on first
 container start when the workspace bind-mounts.
 
 ```dockerfile
@@ -76,8 +76,8 @@ CMD ["sleep", "infinity"]
 
 ### Apt package audit
 
-Install only what gems actually compile against. The minimal set above
-covers the common case; everything else is redundant.
+Install only what gems compile against. Minimal set above covers the common
+case; everything else is redundant.
 
 | Package | Keep? | Why |
 |---------|-------|-----|
@@ -88,19 +88,18 @@ covers the common case; everything else is redundant.
 | `default-libmysqlclient-dev` | **drop if `trilogy`** | `trilogy` speaks MySQL wire protocol natively; only `mysql2` links libmysqlclient |
 | `libssl-dev` | **drop** | mise Ruby ships with OpenSSL compiled in |
 
-**Caveat:** if `bundle install` fails with an OpenSSL compile error
-(gem locks an `openssl` version that does not match the bundled one),
-add `libssl-dev` back. The default omits it.
+**Caveat:** if `bundle install` fails with an OpenSSL compile error (gem locks
+an `openssl` version that does not match the bundled one), add `libssl-dev`
+back. Default omits it.
 
 ## Step 2.5: Optional — mise profiles for container-only tools
 
-Keep host `mise.toml` lean; add container-only tools via a profile so
-host developers don't install them.
+Keep host `mise.toml` lean; add container-only tools via a profile so host
+developers don't install them.
 
 - `mise.toml` (everyone): shared tools (`ruby`, `lefthook`).
 - `mise.devcontainer.toml` (container only): tools like `gh`.
-- Compose env: `MISE_PROFILE: devcontainer` — mise merges both files
-  when the profile is active.
+- Compose env `MISE_PROFILE: devcontainer` → mise merges both files when profile active.
 
 ## Step 3: Write docker-compose.yml
 
@@ -159,10 +158,10 @@ Key decisions:
 - `MISE_TRUSTED_CONFIG_PATHS: /workspace` — trusts `mise.toml` after bind mount replaces `/workspace`
 - `ssl_mode: preferred` — Docker MySQL has no TLS; `required` causes `SSL is required but the server doesn't support it`
 - `depends_on.condition: service_healthy` — waits for real readiness, not just container start
-- `bundle-cache:/usr/local/bundle` — persists gems across restarts (only works with `BUNDLE_PATH` set in Dockerfile)
+- `bundle-cache:/usr/local/bundle` — persists gems across restarts; only works with `BUNDLE_PATH` set in Dockerfile
 - Host config mounts:
-  - `~/.config/mise/config.toml:ro` — inherit developer's global mise settings (trusted plugins, overrides); `${XDG_CONFIG_HOME:-~/.config}` falls back when unset
-  - `~/.claude` — mounts Claude Code settings, memory, and skills read-write so transcripts and memory persist
+  - `$HOME/.config/mise/config.toml:ro` — inherit developer's global mise settings (trusted plugins, overrides); `${XDG_CONFIG_HOME:-$HOME/.config}` falls back when unset
+  - `$HOME/.claude` — mounts Claude Code settings, memory, skills read-write so transcripts/memory persist
 
 ## Step 4: Write devcontainer.json
 
@@ -201,8 +200,7 @@ Key decisions:
 
 ### Log paths
 
-Write logs to paths inside the workspace bind-mount so they are
-visible from the host without declaring an extra volume.
+Write logs inside the workspace bind-mount → visible from host without an extra volume.
 
 - Server output → `.devcontainer/logs/server.log` (from `postStartCommand`).
 - Rails app logs → `log/development.log` (Rails default, already on host).
@@ -220,7 +218,7 @@ auto_install = true   # install tools on container start, no COPY+install at bui
 ruby = "3.4.7"   # must match .ruby-version exactly
 ```
 
-Ruby version must match `.ruby-version` exactly — mismatch causes Bundler
+Ruby version must match `.ruby-version` exactly → mismatch causes Bundler
 lockfile platform conflicts.
 
 ## Common Mistakes

@@ -2,6 +2,8 @@
 
 > Generate a self-performance review narrative by pulling data from all work systems.
 
+**Version:** `2026.06.15-200559`
+
 ## Invocation
 
 | Mode | Trigger |
@@ -28,7 +30,7 @@ flowchart TD
     E1 & E2 & E3 & E4 & E5 & E6 & E7 --> F[Stage 2: Synthesize narrative]
     F --> G[Write QPR/period/synthesis.md]
     G --> H[Commit + push reference corpus]
-    H --> I[Distill patterns into goodmorning/goodevening]
+    H --> I[Distill patterns into daily sitrep]
 ```
 
 ## Noteworthy
