@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.16-194053'
+  version: '2026.06.16-211537'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -155,6 +155,9 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.37 | Gate reorder moves a cheap guard before a deeper call | Reordering short-circuits a failure path earlier, so calls it used to make become unreachable. Enumerate every now-unreachable call and check each `not_to receive` test covers all of them, not just the deepest (the diff usually touches only the deepest assertion). | Suggestion | Add the missing negative assertions; escalate to Blocker when a now-unreachable call was previously unstubbed and would hit the network/a real dependency. |
 | 2.38 | New/renamed default-or-fallback constant | Grep all files for string literals describing the OLD default behavior (e.g. the prior default's name, "no model", "default") — display-label and logging helpers often hard-code the old representation and are missed by a call-site-only sweep. | Blocker | Update each stale literal or justify keeping it; a logging path emitting the old name reads as correct to operators at runtime. |
 | 2.39 | Ruby diff with new/modified comment lines | When `.rubocop.yml` enables `Style/AsciiComments`, grep new `+` comment lines for non-ASCII (`[^\x00-\x7F]` — em-dash, curly quotes, arrows). | Blocker | Replace with ASCII; the cop fails CI with `Style/AsciiComments`. |
+| 2.40 | Diff touches token scope, secret access, or privilege escalation | Verify the PR body carries `## Problem` (why the elevated scope), `## Approach` (why narrower alternatives were ruled out), and `## Testing` (how the permission was exercised): `grep -E "## Problem\|## Approach\|## Testing" <pr_body>`. | Blocker | Any section absent on a security-sensitive diff is a finding; placeholder-only bodies fail description checks. |
+| 2.41 | Comment claims a concurrency/signal race is "eliminated"/"removed" | A reorder of `signal.Stop` (or equivalent unregister) narrows but does not drain a buffered channel — a queued signal still executes the exit path. | Suggestion | Reword to "narrows the window" unless a done-channel/atomic-flag guard truly closes it; escalate to Blocker if the comment is load-bearing for a safety claim. |
+| 2.42 | New parameterized integration test iterating a helper's nil/error paths | Grep the helper's unit spec; if it already asserts all the iterated cases return the same value, the integration iterations re-test internals. | Suggestion | Keep one representative case at the integration boundary; drop the rest. |
 
 ## Step 3: Fresh Adversarial Subagent
 

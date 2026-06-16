@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200921'
+  version: '2026.06.16-211537'
 ---
 
 # PR Resolve
@@ -153,6 +153,8 @@ commands.md §3 — GraphQL for unresolved threads, REST for full details):
 
 Map fields: `threadId`, `commentId`, `path`, `line`, `body`, `user`, `userType`,
 `replies[]`, `isOutdated`, `isResolved`.
+
+- **Read bot inline-comment bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}`.** After a bot replaces its review, the REST `databaseId` is invalid for *all* operations — even a read GET returns 404. The thread node ID is stable.
 
 **Three-surface pre-flight check:**
 
@@ -395,6 +397,7 @@ looks current.
 - Preserve metadata lines.
 - Verify commit links, test-plan checkboxes, CI status, remaining work, known limitations, and file lists before deciding no drift.
 - No drift → log an explicit "no drift detected" line naming the compared fields.
+- **Never assert a result the agent cannot confirm.** Gate every drafted Testing/Results section on known evidence (diff, CI output, user statement). No evidence → write an honest placeholder (`Pending — <how to exercise the change>`), never a template-filled "build completed successfully".
 
 **Re-check self-review and docs drift (every push):**
 
