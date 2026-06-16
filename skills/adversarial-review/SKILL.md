@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200120'
+  version: '2026.06.16-065020'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -151,6 +151,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.33 | Raw-presence parse fallback | Grep parse-with-fallback shapes. | Blocker | Parse first; fallback on parsed result; add invalid-primary test. |
 | 2.34 | Spec/doc claim about implementation routing (which method a gate calls, which path bypasses a hook) | Grep the PR review thread for reviewer statements describing the same routing. | Blocker | A reviewer who read the source is ground truth; resolve any contradiction before asserting an inferred claim. |
 | 2.35 | Diff changes a structured return-type requirement in one doc section | Grep the whole document for every field comment that stores that value; confirm shape and vocabulary match. | Blocker | Update lagging field comments; keep one canonical name per value across all sections. |
+| 2.36 | Named returns + deferred cleanup that reads a named return | Grep the function for `return <zero-literal>, ...` after the defer is established. An explicit return sets the named returns to those values *before* deferred funcs run, so the cleanup sees the zero value (e.g. `os.RemoveAll("")` → silent no-op, leaked resource). | Blocker | Assign then bare-return (`err = ...; return`) so the named var keeps its real value for the deferred cleanup; verify any comment claiming the defer cleans up "on any error path". |
 
 ## Step 3: Fresh Adversarial Subagent
 
