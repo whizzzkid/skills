@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.16-165651'
+  version: '2026.06.16-194053'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -153,6 +153,8 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.35 | Diff changes a structured return-type requirement in one doc section | Grep the whole document for every field comment that stores that value; confirm shape and vocabulary match. | Blocker | Update lagging field comments; keep one canonical name per value across all sections. |
 | 2.36 | Named returns + deferred cleanup that reads a named return | Grep the function for `return <zero-literal>, ...` after the defer is established. An explicit return sets the named returns to those values *before* deferred funcs run, so the cleanup sees the zero value (e.g. `os.RemoveAll("")` → silent no-op, leaked resource). | Blocker | Assign then bare-return (`err = ...; return`) so the named var keeps its real value for the deferred cleanup; verify any comment claiming the defer cleans up "on any error path". |
 | 2.37 | Gate reorder moves a cheap guard before a deeper call | Reordering short-circuits a failure path earlier, so calls it used to make become unreachable. Enumerate every now-unreachable call and check each `not_to receive` test covers all of them, not just the deepest (the diff usually touches only the deepest assertion). | Suggestion | Add the missing negative assertions; escalate to Blocker when a now-unreachable call was previously unstubbed and would hit the network/a real dependency. |
+| 2.38 | New/renamed default-or-fallback constant | Grep all files for string literals describing the OLD default behavior (e.g. the prior default's name, "no model", "default") — display-label and logging helpers often hard-code the old representation and are missed by a call-site-only sweep. | Blocker | Update each stale literal or justify keeping it; a logging path emitting the old name reads as correct to operators at runtime. |
+| 2.39 | Ruby diff with new/modified comment lines | When `.rubocop.yml` enables `Style/AsciiComments`, grep new `+` comment lines for non-ASCII (`[^\x00-\x7F]` — em-dash, curly quotes, arrows). | Blocker | Replace with ASCII; the cop fails CI with `Style/AsciiComments`. |
 
 ## Step 3: Fresh Adversarial Subagent
 

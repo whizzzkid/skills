@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.05-190456'
+  version: '2026.06.16-194053'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -118,6 +118,10 @@ writing or delivering such a doc, enforce every gate below:
   `TBD` explicitly — never leave a dead or speculative link unmarked.
 - **No fabricated sizing:** omit effort/timeline estimates, or mark them `TBD`,
   unless the user supplied them.
+- **Cross-section consistency:** after editing any concept, grep the whole doc
+  for its core terms and review every hit for consistent tense, qualifier, and
+  implementation status. A diff-focused edit updates the narrative section but
+  leaves a risk-table row or summary stating the old default — a top bot-review flag.
 
 ---
 

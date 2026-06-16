@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.16-051748'
+  version: '2026.06.16-194053'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -165,6 +165,7 @@ Apply to ALL code:
   git diff "$(git merge-base HEAD "origin/$BASE")...HEAD"
   ```
 
+- **CLI flags:** verify any flag against the tool's `--help` (or `--help`-equivalent) before embedding it in a doc, skill, or committed script. An unverified flag name fails with `flag provided but not defined` (exit 2) on first run.
 - **File permissions:** executable scripts `chmod +x`; source-only scripts 644.
 - **Portable home paths:** in skills, configs, and committed scripts, reference user-land paths via `$HOME/...` (or `${HOME}`), never a hardcoded machine-absolute home directory (an OS user-home path literal).
 - **Diagrams:** Mermaid over ASCII. Use `flowchart`/`graph` for flows, `sequenceDiagram` for request/response, `classDiagram` for type hierarchies, `stateDiagram-v2` for state machines.

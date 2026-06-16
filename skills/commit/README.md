@@ -2,7 +2,7 @@
 
 > Use when creating git commits or pushing code. Enforces conventional commits with emoji, commit signing, and safe push behavior.
 
-**Version:** `2026.06.15-200150`
+**Version:** `2026.06.16-194053`
 
 ## Invocation
 

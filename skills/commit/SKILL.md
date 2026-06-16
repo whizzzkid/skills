@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200150'
+  version: '2026.06.16-194053'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -228,6 +228,10 @@ like `lychee`, `shellcheck`, `bats`, etc.
   the user to run the command manually.
 - Regular push rejected → tell the user and ask how to proceed rather than
   automatically force-pushing.
+- Push rejected non-fast-forward (remote diverged) → default to `git pull
+  --no-rebase` (merge), then retry the regular push. Rebasing rewrites published
+  commits and forces a force-push the classifier blocks; only rebase when the
+  user explicitly asks for clean linear history.
 
 ### Stage handoff-doc removal with the work it describes
 
