@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.16-211537'
+  version: '2026.06.17-074547'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -115,7 +115,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | ID | Trigger | Check | Severity | Fix / escalation |
 |---|---|---|---|---|
 | 2.1 | Any security/redaction/credential touch | Grep full diff for secret leakage to stderr, `curl -H "Authorization: Bearer $VAR"`, or credential flag values in source/docs/shell. | Blocker | Move credentials to `curl -u`, netrc, or a `chmod 600` header/credentials file. |
-| 2.2 | Changed script/module/parallel pipeline | List directory siblings and whole-repo sibling toolchain invocations. | Blocker | Apply analogous fix to every sibling or explicitly justify absence. |
+| 2.2 | Changed script/module/parallel pipeline | List directory siblings and whole-repo sibling toolchain invocations. When a directive (`soft_fail`, `retry`, `timeout`, exit-code handling) is copied from a sibling, verify the sibling's behavioral/exit-code contract actually transfers — pattern copy ≠ contract transfer. | Blocker | Apply analogous fix to every sibling or justify absence. A copied directive whose contract does not hold (e.g. `soft_fail` on a step whose failures must hard-fail) is a blocker; quote the sibling's contract or flag pending verification. |
 | 2.3 | New guard/null-check/defensive branch | Trace upstream transforms for reachability and sentinel completeness. | Blocker | Fix dead guards; handle jq falsy output such as `"null"` before downstream consumers. |
 | 2.4 | Added/modified comments or docs claims | Check assertive claims (`always`, `never`, `must`, `works`) and intent phrases against implementation; flag new/changed doc comments whose one sentence chains independent reasons (`because`/`while`/`so that`). | Suggestion | Update/delete stale comments; add pinning tests for universal claims; split independent clauses (test: "does removing either change the other's meaning?"). |
 | 2.5 | Base/branch references | Grep for hardcoded `main...HEAD`, `origin/main`, `master...HEAD`. | Blocker | Use dynamic base resolver. |
@@ -158,17 +158,19 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.40 | Diff touches token scope, secret access, or privilege escalation | Verify the PR body carries `## Problem` (why the elevated scope), `## Approach` (why narrower alternatives were ruled out), and `## Testing` (how the permission was exercised): `grep -E "## Problem\|## Approach\|## Testing" <pr_body>`. | Blocker | Any section absent on a security-sensitive diff is a finding; placeholder-only bodies fail description checks. |
 | 2.41 | Comment claims a concurrency/signal race is "eliminated"/"removed" | A reorder of `signal.Stop` (or equivalent unregister) narrows but does not drain a buffered channel — a queued signal still executes the exit path. | Suggestion | Reword to "narrows the window" unless a done-channel/atomic-flag guard truly closes it; escalate to Blocker if the comment is load-bearing for a safety claim. |
 | 2.42 | New parameterized integration test iterating a helper's nil/error paths | Grep the helper's unit spec; if it already asserts all the iterated cases return the same value, the integration iterations re-test internals. | Suggestion | Keep one representative case at the integration boundary; drop the rest. |
+| 2.43 | New field added to a struct/record beside an existing same-primitive-type field | Grep for a resolver/normalizer/sanitizer on the sibling (`resolve*`/`normalize*`/`sanitize*`, often at load time); confirm the new field gets equivalent treatment. Symmetry is implicit — a raw new field skips it silently. | Blocker | Apply the same normalizer. Absence is a blocker when the field feeds a security-sensitive consumer (paths, URLs, shell args, allow-dir lists) — a raw path/URL field is a traversal/SSRF vector. |
 
 ## Step 3: Fresh Adversarial Subagent
 
 After sweeps, dispatch a fresh subagent with no prior context. Pipe `git diff "$BASE...HEAD"` directly; never hand-transcribe the diff. If excerpts are necessary, verify hunk boundaries first.
 
-Subagent must be adversarial, unbiased, critical, objective, naming-aware, diff-sensitive, coverage-aware, refactor-aware, relocation-aware, introduction-claim-aware:
+Subagent must be adversarial, unbiased, critical, objective, naming-aware, diff-sensitive, coverage-aware, refactor-aware, relocation-aware, introduction-claim-aware, runtime-behavior-cautious:
 
 - **Coverage-aware:** test-only commits → enumerate code paths, flag unexercised paths.
 - **Refactor-aware:** demand removed-line audit; every removed line is relocated or intentionally dropped.
 - **Relocation-aware:** downgrade inherited pre-existing issues carried unchanged by a pure move.
 - **Introduction-claim-aware:** before calling a behavior newly introduced, grep the `-` lines of the same hunk.
+- **Runtime-behavior-cautious:** any claim about how a tool behaves under failure (exit codes, signal handling, `--write-out`/buffering flags, subshell/pipe semantics) is emitted at most as `question` with a repro request — never `blocker` from first-principles reasoning. Tool behavior is verified in the playground (Step 5), not deduced.
 
 ### Categories to Hunt
 
@@ -219,7 +221,7 @@ Create `.review-playground/` only if needed; never commit a `.gitignore` entry f
   gh api "repos/{owner}/{repo}/contents/{path}?ref={tag-or-sha}" --jq '.content' | base64 -d
   ```
 
-- Downgrade unreproduced runtime claims from `blocker` to `question`.
+- **Runtime-behavior claims stay `question` until reproduced.** Any finding asserting how a tool behaves under failure — exit codes, signal handling, `--write-out`/buffering flags, subshell/pipe semantics — is capped at `question` until a playground run confirms it; never `blocker` from deduction (see Step 3 runtime-behavior-cautious).
 
 ### Runtime matrix
 

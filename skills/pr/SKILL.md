@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200526'
+  version: '2026.06.17-074547'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -77,6 +77,13 @@ ensures quality before marking ready.
    default branch, even for an "obviously simple" branch. Wrong base → pulls a
    parent branch's commits into the diff, runs CI against the wrong target. When
    the resolved base differs from the default, surface it before proceeding.
+
+   **Very important — gate `gh pr create` on the algorithm, not intuition.** Do
+   not call `gh pr create` until Step 1's loop has actually run this session and
+   set `$BEST_BASE`/`$BEST_DIST`. A branch that "obviously" targets the default is
+   exactly where the loop gets skipped and a stacked branch silently mis-bases.
+   `--base` takes `$BEST_BASE`'s computed value only — never a hand-typed branch
+   name. If `$BEST_BASE != $DEFAULT_BRANCH`, surface the A/B/C prompt first.
 4. **Derive behavioral claims from the implementation, never narrate from
    intent.** Before finalizing any PR-body section describing behavioral rules,
    conditions, thresholds, or severity — re-read the source file and verify each
@@ -223,6 +230,20 @@ On `blocked`, address each blocker with atomic `wk-commit` invocations, re-invok
 
 **Always create PRs in draft mode** (`--draft` flag). Never create a non-draft
 PR unless the user explicitly asks.
+
+### Link the source plan and spec (pre-flight)
+
+Before composing the body, locate the implementation plan the work derives from —
+not just a high-level vision spec:
+
+```bash
+grep -rliE '<branch-phase-or-feature-keyword>' docs/plans docs/specs 2>/dev/null
+```
+
+- Found a plan under `docs/plans/` (or equivalent) → link it, anchored to the
+  relevant phase section, under a `## Meta` block; link the spec too when present.
+- The plan is the authoritative source of acceptance criteria — always surface it
+  when one exists. A vision/spec link is not a substitute for the plan link.
 
 ### Resolve PR Body Template
 

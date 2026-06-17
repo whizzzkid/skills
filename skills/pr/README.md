@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.06.15-200526`
+**Version:** `2026.06.17-074547`
 
 ## Invocation
 
@@ -54,7 +54,10 @@ flowchart TD
   before `gh pr ready`. A `blocked` verdict stops all three — no size exemption.
 - **Base detection is non-trivial:** The skill computes the closest merge-base across all open PR branches, not
   just `main`. Silent mis-basing causes wrong CI targets and inflated diffs; the detected `$BEST_BASE` is used
-  for both `--base` and scope measurement.
+  for both `--base` and scope measurement. `gh pr create` is gated on the loop having actually run — never on
+  the assumption that a branch "obviously" targets the default.
+- **Source plan is linked:** Step 2 pre-flights `docs/plans/` for the implementation plan the work derives
+  from and links it (anchored to the phase) under `## Meta` — a vision/spec link is not a substitute.
 - **PR template detection:** Repo `.github/pull_request_template.md` takes precedence over the hardcoded
   fallback template. Every section must be populated — no placeholders left behind.
 - **Jira key suffix is auto-injected:** The title gets `[BOARD-NUM]` appended from the branch name or latest

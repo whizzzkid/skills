@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.17-073146'
+  version: '2026.06.17-074547'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -40,6 +40,7 @@ Plan -> Implement (commit per step + docs) -> Test -> Refactor Scan
 
 - Fires on EVERY task producing code changes, a commit, a push, a PR, or a CI build from a code change. No opt-out, no "too small" exemption.
 - Session resumption is a fresh start → before any write action after context compaction, rollover, or "continue where we left off", invoke `wk-workflow` again.
+- A planning discussion in chat is NOT a substitute for this invocation. Even when the plan is clear, invoke the skill before the first Edit/Write/Bash — it gates that first write call and may surface branch hygiene, guardrails, or pre-flight steps the conversation did not cover. "I already planned, the invocation is redundant" is the rationalization this rule forbids.
 
 ### Autonomy Rules
 
