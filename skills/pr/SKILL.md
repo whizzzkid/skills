@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.17-074547'
+  version: '2026.06.17-083805'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -122,8 +122,14 @@ BEST_BASE="$DEFAULT_BRANCH"
 BEST_DIST=999999
 HEAD_SHA=$(git rev-parse HEAD)
 for CAND in $CANDIDATES; do
-  git fetch origin "$CAND" --quiet 2>/dev/null || continue
-  MB=$(git merge-base "$HEAD_SHA" "origin/$CAND" 2>/dev/null) || continue
+  # Resolve the candidate to a usable ref. A fetch failure must NOT exclude the
+  # candidate — it may be a local-only ref (worktree branch not yet pushed to
+  # origin). Prefer origin/<cand>; fall back to the local ref before skipping.
+  REF="origin/$CAND"
+  git rev-parse --verify --quiet "$REF" >/dev/null 2>&1 \
+    || git fetch origin "$CAND" --quiet 2>/dev/null \
+    || REF="$CAND"
+  MB=$(git merge-base "$HEAD_SHA" "$REF" 2>/dev/null) || continue
   [ "$MB" = "$HEAD_SHA" ] && continue   # candidate is downstream of HEAD; not a base
   DIST=$(git rev-list --count "$MB..$HEAD_SHA")
   if [ "$DIST" -lt "$BEST_DIST" ] || \
