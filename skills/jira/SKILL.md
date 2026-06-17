@@ -34,7 +34,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200142'
+  version: '2026.06.17-183014'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -340,6 +340,8 @@ Report once on append:
 Agent observes PR merged (`gh pr view --json state` returns `MERGED`) →
 transition the ticket to `Done`:
 
+- **Run the Child-completion gate first** — never transition to `Done`
+  while children remain open.
 - Match transition name on case-insensitive contains: `done` first, then
   `closed`, then `resolved`. Pick the first that exists.
 - Ticket already `Done`/`Closed`/`Resolved` → no-op.
@@ -355,6 +357,39 @@ transition the ticket to `Done`:
 Report:
 
 > "Jira: {KEY} → Done. PR #<N> merged."
+
+---
+
+## Child-completion gate (subroutine)
+
+**HARD RULE:** Never transition any item to a terminal state (`Done` /
+`Closed` / `Resolved`) while it has children not yet in a terminal state.
+Failure mode: closing an epic/parent with open children buries unfinished
+work — invisible on the board, falsely counted complete. The parent's
+state must never get ahead of its children.
+
+- Invoked before every terminal transition — auto (Stage 5) and manual
+  (terminal-state row, Manual ticket operations).
+- Query open children via JQL (covers subtasks, epic children, and the
+  parent link):
+
+  ```
+  mcp__claude_ai_Jira_Confluence__searchJiraIssuesUsingJql(
+    jql='(parent = "<KEY>" OR "Epic Link" = "<KEY>") AND statusCategory != Done')
+  ```
+
+- Use `statusCategory != Done` (the category, not a named status) so
+  every non-terminal state on any board counts as pending.
+- Zero open children → proceed with the transition.
+- One or more open children → **do not transition.** Surface the blocked
+  list and let the user decide via `AskUserQuestion`:
+
+  > "Jira: {KEY} has open children: {<child-key> (<status>), …}.
+  > Closing the parent now would bury them. Transition anyway, or hold?"
+
+- Transition only on explicit user approval; default to **hold**.
+- JQL errors or the connector lacks `Epic Link`/`parent` support → treat
+  as **unverified**, do not auto-transition, report the gap and ask.
 
 ---
 
@@ -402,7 +437,7 @@ exempt — Jira items are visible to the whole team.
 |-----------|----------------------|-----------------|
 | Create issue(s) | Yes — show numbered list of titles before writing | Present draft set, wait for "yes" / "go ahead" |
 | Edit issue fields | Yes — if ambiguous source or batch | Show diff of proposed changes |
-| Transition to terminal state | Yes — if not part of auto lifecycle | Confirm the target state explicitly |
+| Transition to terminal state | Yes — run Child-completion gate, then confirm target state | Block on open children; confirm explicitly |
 | Assign to user (auto lifecycle) | No — auto-assign as part of Stage 2 | `editJiraIssue` with assignee |
 
 ---

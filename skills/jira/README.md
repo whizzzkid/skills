@@ -2,7 +2,7 @@
 
 > Coordinate Jira ticket state with the development lifecycle and surface Jira context whenever the agent encounters a Jira artifact.
 
-**Version:** `2026.06.15-200142`
+**Version:** `2026.06.17-183014`
 
 ## Invocation
 
@@ -29,6 +29,7 @@ stateDiagram-v2
 
 - **Never blocks development:** Jira sync failures (MCP unavailable, wrong transition, inaccessible ticket) are reported once and skipped — they never block a commit, push, or PR action.
 - **Silent skip when MCP is unavailable:** If `ToolSearch` finds no Jira MCP tools, the skill logs one line and exits. It never falls back to WebFetch or a browser — the browser path is slower and produces unstructured output.
+- **HARD RULE — never close a parent with open children:** Before any terminal transition (`Done`/`Closed`/`Resolved`), the Child-completion gate queries children (`statusCategory != Done`); any open child blocks the transition and the skill asks the user to decide. Defaults to hold.
 - **Description quality gate runs at every writable stage:** Stages 2, 3, and 4 each invoke the gate, so a session that joins mid-branch (e.g., after the initial commit) still gets a checkpoint before reviewers see the ticket.
 - **HARD RULE — confirm before any user-initiated write:** `createJiraIssue`, `editJiraIssue`, and transition calls on user-requested operations all require explicit approval. Jira has no delete API. Auto mode does not exempt this.
 - **PR title format is enforced:** `feat(auth): ✨ OAuth login [BOARD-123]` — key in square brackets, last token, exactly one key. If the title already has the wrong key, the skill asks before replacing.
