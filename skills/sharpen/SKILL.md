@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.17-074547'
+  version: '2026.06.17-084217'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -277,9 +277,9 @@ not in the diff will cause a 422 error from the GitHub API.
 
 ### Sync skill README, diagrams, and repo-level docs
 
-- Update `skills/{skill-name}/README.md` when a step, phase, trigger, or argument shape changed.
+- Bump the sibling `README.md` `Version:` line to match `metadata.version` and stage it on **every** version change — unconditional, even when no step/diagram/narrative changed. `.githooks/check-readme-sync.sh` blocks any commit staging a `SKILL.md` without its sibling `README.md`.
+- Update `skills/{skill-name}/README.md` narrative when a step, phase, trigger, or argument shape changed.
 - Update any Mermaid diagram to match the new flow.
-- Bump the README version to the same CalVer as `metadata.version`.
 - When first adding the Version line to an existing README, pre-convert bare `wk-*` mentions to relative links.
 - Update both index files when the one-line description changes.
 - Invoke `wk-docs` when the edit changes cross-skill behavior or documented workflow.
@@ -290,6 +290,7 @@ not in the diff will cause a 422 error from the GitHub API.
 - Frontmatter `description` still matches the behavior.
 - `argument-hint` matches the current argument shape.
 - `allowed-tools` lists every tool the new edits reference.
+- Sibling `README.md` `Version:` matches `metadata.version` and is staged (hook-enforced on every commit).
 - Quick-reference table, Trigger table, and Step list match the body.
 - Cross-references still resolve.
 - Examples reflect the post-edit behavior.
