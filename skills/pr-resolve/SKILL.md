@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.16-211537'
+  version: '2026.06.17-193931'
 ---
 
 # PR Resolve
@@ -139,6 +139,11 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
 - Otherwise delegate base integration to `wk-pr-update`, only if it preserves the
   no-force-push contract. `wk-pr-update` reports an unresolvable conflict,
   validation regression, or required forced push → stop and surface the blocker.
+- **Base advanced (upstream PR merged) → resolve conflicts against the new base
+  before continuing.** The new base is authoritative for overlapping hunks;
+  resolve each conflict to match it, complete the merge, and re-verify. Resume
+  the workflow only on a clean merged tree — never triage, fix, or push on a
+  conflicted or unmerged tree.
 
 ## Step 3: Fetch Unresolved Comments
 
