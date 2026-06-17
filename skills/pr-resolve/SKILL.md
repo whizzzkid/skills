@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.17-193931'
+  version: '2026.06.17-194536'
 ---
 
 # PR Resolve
@@ -78,7 +78,8 @@ and the suggestion-format template live in
 3. **Only resolve threads you actually worked on** — after a fix, explicit
    dismissal, or tracked deferral. Never resolve follow-up questions, skipped,
    rethink-pending, or ordinary self-review threads.
-4. **Never force-push.** Regular `git push` only.
+4. **Never force-push** — regular `git push` only. *Exception:* a base-advance
+   rebase (Step 2) may `git push --force-with-lease`; never bare `git push -f`.
 5. **Never commit without attempting verification.** Verification unavailable or
    failing → inform the user before proceeding.
 6. **Commits follow `wk-commit` conventions** — conventional format with emoji,
@@ -139,11 +140,17 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
 - Otherwise delegate base integration to `wk-pr-update`, only if it preserves the
   no-force-push contract. `wk-pr-update` reports an unresolvable conflict,
   validation regression, or required forced push → stop and surface the blocker.
-- **Base advanced (upstream PR merged) → resolve conflicts against the new base
-  before continuing.** The new base is authoritative for overlapping hunks;
-  resolve each conflict to match it, complete the merge, and re-verify. Resume
-  the workflow only on a clean merged tree — never triage, fix, or push on a
-  conflicted or unmerged tree.
+- **Base-advance conflict (upstream PR merged) → rebase onto the new base to
+  resolve.** When base integration conflicts because the base moved, the new
+  base is authoritative for overlapping hunks; replay the branch's own commits
+  onto it, resolving each conflict against the base:
+  ```bash
+  git fetch origin "$BASE_BRANCH"
+  git rebase --onto "origin/$BASE_BRANCH" "$(git merge-base HEAD "origin/$BASE_BRANCH")"
+  ```
+  Re-verify, resume only on a clean tree, and push the rewritten branch with
+  `git push --force-with-lease` (Hard Rule 4 exception) — never bare `-f`. Never
+  triage, fix, or push on a conflicted or unmerged tree.
 
 ## Step 3: Fetch Unresolved Comments
 
@@ -392,8 +399,11 @@ divergence before pushing (compute `$AHEAD`/`$BEHIND`, commands.md §8):
 - Cherry-pick conflicts or remote-only commits are rewritten duplicates → stop and surface to the user.
 
 **Push** (`git push`). If rejected as non-fast-forward: re-run reconciliation
-when no history was rewritten; if history was rewritten, use the divergence
-guard's cherry-pick recovery instead of rebasing. Never force-push.
+when no history was rewritten. History rewritten by a Step 2 base-advance
+rebase → `git push --force-with-lease` (Hard Rule 4 exception); a rejected lease
+means the remote advanced, so reconcile remote-only commits first, then retry.
+Any other rewrite uses the divergence guard's cherry-pick recovery. Never bare
+`git push -f`.
 
 **Sync PR description immediately after push — HARD RULE:** After every push,
 update the PR body before posting replies or resolving threads — even when it
