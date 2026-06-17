@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.17-074547'
+  version: '2026.06.17-192911'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -54,13 +54,7 @@ metadata:
 
 # Adversarial Review
 
-Pre-flight critique of the current branch → mechanical sweeps → fresh adversarial subagent → validate runtime claims → clear/blocked/suggestions-only verdict.
-
-```
-Resolve base -> Build surface map -> Mechanical sweeps
-  -> Fresh adversarial subagent -> Playground validation
-  -> Verdict -> Fix loop -> Re-review
-```
+Resolve base → build surface map → mechanical sweeps → fresh adversarial subagent → playground validation → clear/blocked/suggestions-only verdict → fix loop → re-review.
 
 ## Non-Negotiable Contract
 
@@ -115,7 +109,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | ID | Trigger | Check | Severity | Fix / escalation |
 |---|---|---|---|---|
 | 2.1 | Any security/redaction/credential touch | Grep full diff for secret leakage to stderr, `curl -H "Authorization: Bearer $VAR"`, or credential flag values in source/docs/shell. | Blocker | Move credentials to `curl -u`, netrc, or a `chmod 600` header/credentials file. |
-| 2.2 | Changed script/module/parallel pipeline | List directory siblings and whole-repo sibling toolchain invocations. When a directive (`soft_fail`, `retry`, `timeout`, exit-code handling) is copied from a sibling, verify the sibling's behavioral/exit-code contract actually transfers — pattern copy ≠ contract transfer. | Blocker | Apply analogous fix to every sibling or justify absence. A copied directive whose contract does not hold (e.g. `soft_fail` on a step whose failures must hard-fail) is a blocker; quote the sibling's contract or flag pending verification. |
+| 2.2 | Changed script/module/parallel pipeline | List directory siblings and whole-repo sibling toolchain invocations. When a directive (`soft_fail`, `retry`, `timeout`, exit-code handling) is copied from a sibling, verify the sibling's behavioral/exit-code contract actually transfers — pattern copy ≠ contract transfer. | Blocker | Apply analogous fix to every sibling or justify absence. A copied directive whose contract does not hold is a blocker; quote the sibling's contract or flag pending verification. |
 | 2.3 | New guard/null-check/defensive branch | Trace upstream transforms for reachability and sentinel completeness. | Blocker | Fix dead guards; handle jq falsy output such as `"null"` before downstream consumers. |
 | 2.4 | Added/modified comments or docs claims | Check assertive claims (`always`, `never`, `must`, `works`) and intent phrases against implementation; flag new/changed doc comments whose one sentence chains independent reasons (`because`/`while`/`so that`). | Suggestion | Update/delete stale comments; add pinning tests for universal claims; split independent clauses (test: "does removing either change the other's meaning?"). |
 | 2.5 | Base/branch references | Grep for hardcoded `main...HEAD`, `origin/main`, `master...HEAD`. | Blocker | Use dynamic base resolver. |
@@ -153,12 +147,13 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.35 | Diff changes a structured return-type requirement in one doc section | Grep the whole document for every field comment that stores that value; confirm shape and vocabulary match. | Blocker | Update lagging field comments; keep one canonical name per value across all sections. |
 | 2.36 | Named returns + deferred cleanup that reads a named return | Grep the function for `return <zero-literal>, ...` after the defer is established. An explicit return sets the named returns to those values *before* deferred funcs run, so the cleanup sees the zero value (e.g. `os.RemoveAll("")` → silent no-op, leaked resource). | Blocker | Assign then bare-return (`err = ...; return`) so the named var keeps its real value for the deferred cleanup; verify any comment claiming the defer cleans up "on any error path". |
 | 2.37 | Gate reorder moves a cheap guard before a deeper call | Reordering short-circuits a failure path earlier, so calls it used to make become unreachable. Enumerate every now-unreachable call and check each `not_to receive` test covers all of them, not just the deepest (the diff usually touches only the deepest assertion). | Suggestion | Add the missing negative assertions; escalate to Blocker when a now-unreachable call was previously unstubbed and would hit the network/a real dependency. |
-| 2.38 | New/renamed default-or-fallback constant | Grep all files for string literals describing the OLD default behavior (e.g. the prior default's name, "no model", "default") — display-label and logging helpers often hard-code the old representation and are missed by a call-site-only sweep. | Blocker | Update each stale literal or justify keeping it; a logging path emitting the old name reads as correct to operators at runtime. |
+| 2.38 | New/renamed default-or-fallback constant | Grep all files for string literals describing the OLD default behavior (e.g. the prior default's name) — display-label and logging helpers often hard-code the old representation and are missed by a call-site-only sweep. | Blocker | Update each stale literal or justify keeping it; a logging path emitting the old name reads as correct to operators at runtime. |
 | 2.39 | Ruby diff with new/modified comment lines | When `.rubocop.yml` enables `Style/AsciiComments`, grep new `+` comment lines for non-ASCII (`[^\x00-\x7F]` — em-dash, curly quotes, arrows). | Blocker | Replace with ASCII; the cop fails CI with `Style/AsciiComments`. |
 | 2.40 | Diff touches token scope, secret access, or privilege escalation | Verify the PR body carries `## Problem` (why the elevated scope), `## Approach` (why narrower alternatives were ruled out), and `## Testing` (how the permission was exercised): `grep -E "## Problem\|## Approach\|## Testing" <pr_body>`. | Blocker | Any section absent on a security-sensitive diff is a finding; placeholder-only bodies fail description checks. |
-| 2.41 | Comment claims a concurrency/signal race is "eliminated"/"removed" | A reorder of `signal.Stop` (or equivalent unregister) narrows but does not drain a buffered channel — a queued signal still executes the exit path. | Suggestion | Reword to "narrows the window" unless a done-channel/atomic-flag guard truly closes it; escalate to Blocker if the comment is load-bearing for a safety claim. |
+| 2.41 | Comment claims a concurrency/signal race is "eliminated"/"removed" | A reorder of `signal.Stop` (or equivalent) narrows but does not drain a buffered channel — a queued signal still executes the exit path. | Suggestion | Reword to "narrows the window" unless a done-channel/atomic-flag guard truly closes it; escalate to Blocker if the comment is load-bearing for a safety claim. |
 | 2.42 | New parameterized integration test iterating a helper's nil/error paths | Grep the helper's unit spec; if it already asserts all the iterated cases return the same value, the integration iterations re-test internals. | Suggestion | Keep one representative case at the integration boundary; drop the rest. |
 | 2.43 | New field added to a struct/record beside an existing same-primitive-type field | Grep for a resolver/normalizer/sanitizer on the sibling (`resolve*`/`normalize*`/`sanitize*`, often at load time); confirm the new field gets equivalent treatment. Symmetry is implicit — a raw new field skips it silently. | Blocker | Apply the same normalizer. Absence is a blocker when the field feeds a security-sensitive consumer (paths, URLs, shell args, allow-dir lists) — a raw path/URL field is a traversal/SSRF vector. |
+| 2.44 | Merge/rebase conflict resolved at a function call site | Compare both conflict sides' arg counts against the current base-branch signature; the base signature is authoritative for required params. A side missing a required arg is stale (branch cut before the signature changed), not a "which caller wins" choice. | Blocker | Take the side matching the base signature; flag the short call as a correctness defect, not a style preference. |
 
 ## Step 3: Fresh Adversarial Subagent
 
@@ -221,7 +216,7 @@ Create `.review-playground/` only if needed; never commit a `.gitignore` entry f
   gh api "repos/{owner}/{repo}/contents/{path}?ref={tag-or-sha}" --jq '.content' | base64 -d
   ```
 
-- **Runtime-behavior claims stay `question` until reproduced.** Any finding asserting how a tool behaves under failure — exit codes, signal handling, `--write-out`/buffering flags, subshell/pipe semantics — is capped at `question` until a playground run confirms it; never `blocker` from deduction (see Step 3 runtime-behavior-cautious).
+- **Runtime-behavior claims stay `question` until reproduced.** Any finding asserting how a tool behaves under failure (see Step 3 runtime-behavior-cautious) is capped at `question` until a playground run confirms it; never `blocker` from deduction.
 
 ### Runtime matrix
 
@@ -280,9 +275,7 @@ On blocked verdict:
 4. Loop until clear, max 3 cycles.
 5. After 3 cycles, stop and surface to user; repeated recurrence means diagnosis/design is off.
 
-Do not autosquash post-rebase artifact fixes mid-chain. Commit as a standalone conventional commit, then re-review.
-
-Print the verdict line to the caller. Do not push, edit the PR, or post comments.
+Do not autosquash post-rebase artifact fixes mid-chain. Commit as a standalone conventional commit, then re-review. Print the verdict line to the caller (Contract item 10: gate, not actor).
 
 ## Requirements
 
