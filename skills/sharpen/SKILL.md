@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200503'
+  version: '2026.06.17-064321'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -237,6 +237,7 @@ not in the diff will cause a 422 error from the GitHub API.
 - Justify inline only when the literal token is required.
 - Apply replacement maps longest-first.
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
+- Scrub the staged learning and retrospect archive files too — not only the skill edits and references. A `.learned.md` rename commits the archive into the public repo; an internal tool/project/service/org name there blocks the commit at the prohibited-term hook.
 
 ## Step 6: Present for Review
 
@@ -319,7 +320,7 @@ not in the diff will cause a 422 error from the GitHub API.
 
 Do not return control until all four pass:
 
-1. **Install:** `npx skills add . -g -y -a=claude 2>&1 | tail -5` from the repo root — must print `Done!`.
+1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — must print `Done!`. Prefix the explicit `cd` (or use an absolute path); the Bash cwd persists across calls, so a `cd` from an earlier rename/scan step can leave a `.`-relative install in the wrong dir ("No valid skills found").
 2. **Commit:** every dirty file in a commit. Use `wk-commit` conventional format with classifier emojis.
    - Re-check the index after any hook-blocked commit.
    - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link.
