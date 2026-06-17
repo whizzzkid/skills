@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.16-194053'
+  version: '2026.06.17-073146'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -243,11 +243,15 @@ Skip backend/config/docs-only diffs and record "frontend preview: N/A" in Phase 
 
 ---
 
-## Phase 4: Adversarial Review
+## Phase 4: Adversarial Review — the single review gate
 
-After implementation, tests, refactor scan, and frontend preview (if applicable), invoke `wk-adversarial-review`.
+After implementation, tests, refactor scan, and frontend preview (if applicable), invoke `wk-adversarial-review`. **This is the only place the workflow runs it**; later phases never re-declare it as a separate step.
 
-**HARD RULE:** adversarial review is a per-feature gate, not a per-commit gate. Run once on the complete logical change, then push. Do not push-and-review after each incremental commit. Fix residuals in ≤1 follow-up commit, then re-run once.
+**HARD RULE:** adversarial review is one session gate keyed to *new commits since the last clear verdict* — not per-phase, not per-commit.
+
+- Run once on the complete logical change, then push. Never push-and-review per incremental commit.
+- Idempotent re-entry: a later push (Phase 6 CI fix, Phase 5 rework, `gh pr ready`) re-fires the gate only when commits landed since the last clearance, and then sweeps only the delta. No new commits → it prints the prior clearance instead of re-running.
+- Fix residuals in ≤1 follow-up commit, then re-run once.
 
 `wk-adversarial-review` returns **clear**, **blocked**, or **suggestions-only**.
 
@@ -255,9 +259,9 @@ After implementation, tests, refactor scan, and frontend preview (if applicable)
 - **Blocked** — fix each blocker via `wk-commit`, re-invoke until clear. Never push, `gh pr ready`, or `gh pr create` on a blocked verdict.
 - **Suggestions only** — follow the skill's A/B/C prompt.
 
-Pre-flight review findings are mandatory actions, not options → incorporate blockers/improvements into the relevant artifact and commit. Only pause for a genuine user-owned design decision.
+Pre-flight findings are mandatory actions, not options → fold blockers/improvements into the relevant artifact and commit. Pause only for a genuine user-owned design decision.
 
-**HARD RULE:** every push, every PR transition (`gh pr create`, `gh pr ready`), and every force-push that leaves this machine runs `wk-adversarial-review` first. No size/docs-only exemption.
+**HARD RULE:** nothing leaves the machine without a clear verdict covering current HEAD — every push, PR transition (`gh pr create`, `gh pr ready`), force-push. Satisfy this through the idempotent gate above, never a fresh full review per step. No size/docs-only exemption.
 
 ---
 
@@ -426,7 +430,7 @@ The retro scans the session, classifies interruptions/redirects by affected skil
 | `wk-pr` | Creating/updating a pull request | 5 |
 | `wk-self-review` | Invoked automatically by `wk-pr` after CI passes | 5 |
 | `wk-buildkite` | Diagnosing Buildkite CI failures | 6 |
-| `wk-adversarial-review` | Pre-flight gate before every push / PR transition | 4, 5, 6 |
+| `wk-adversarial-review` | Single review gate; owned by Phase 4, idempotent re-entry on new commits | 4 |
 | `wk-pr-update` | Rebasing/syncing a PR branch with its base | 5, 6 |
 | `wk-pr-review` | Reviewing someone else's PR | — |
 | `wk-pr-resolve` | Addressing review feedback on your PR | — |

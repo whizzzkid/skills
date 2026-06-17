@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.06.16-194053`
+**Version:** `2026.06.17-073146`
 
 ## Invocation
 
@@ -54,6 +54,9 @@ flowchart TD
   and producer-audit probe.
 - **Design pivots travel with their docs** — a commit changing logical structure must update
   spec, plan, inline comments, test names, and any ADR in the same commit. No deferred rewrites.
+- **One review gate** — [`wk-adversarial-review`](../adversarial-review/README.md) runs once, at Phase 4. It is not
+  re-run per phase or per push; the gate is keyed to new commits since the last clear verdict, so later pushes
+  (CI fixes, rework) re-fire it only on the delta and otherwise reuse the prior clearance.
 - **CI fix loop** has a 3-attempt limit with an axis-of-variation check: attempts 1 and 2 on
   the same axis require broadening to a different axis on attempt 3, not "the same thing harder."
 - **Phase 8 ([`wk-retro`](../retro/README.md)) is non-negotiable** — mandatory regardless of task outcome, even if
