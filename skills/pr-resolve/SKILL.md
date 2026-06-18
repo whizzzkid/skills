@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.18-005430'
+  version: '2026.06.18-194627'
 ---
 
 # PR Resolve
@@ -64,12 +64,20 @@ manage the full resolution cycle from sync to summary. Verbatim command blocks
 and the suggestion-format template live in
 [`references/commands.md`](references/commands.md); use them exactly.
 
+## Resume After Compaction
+
+Resumed from a context-compaction summary mid-skill → before any other action:
+read the last completed step from the summary, confirm the resume point (default:
+next uncompleted step), skip completed steps, and re-run possibly-stale sync/fetch
+(Steps 2–3). Never restart from Step 1, and never drop tail steps absent from the
+summary — Step 9.4 learnings, Step 9.5 CI wait + new-comment loop, and Step 11
+retro all still run.
+
 ## Hard Rules
 
-0. **Scope/render GitHub payloads through `wk-gh`.** Satisfy `wk-gh` org-scope
-   gates before any GitHub read/write. Direct `gh api` the only transport →
-   append the canonical outbound footer at payload-render time to every reply,
-   PR body edit, thread message.
+0. **Scope GitHub payloads through `wk-gh`.** Satisfy its org-scope gates before
+   any GitHub read/write; `gh api` is the only transport. Append the canonical
+   outbound footer to every reply, PR-body edit, and thread message at render time.
 1. **Never push without explicit user confirmation.**
 2. **Never post reply comments without explicit user confirmation.**
    - **HARD RULE — route every outbound reply/dismissal body through
@@ -94,9 +102,9 @@ and the suggestion-format template live in
    - **Surface external replies inside self-review threads** in the summary; do
      not triage or resolve them.
    - **User-touched reviewer threads allow one narrow follow-up** — on a
-     reviewer/bot thread where the user already replied, post one follow-up only
-     when the session changed the finding or a new item needs callout. Still
-     requires Hard Rule 2 confirmation.
+     reviewer/bot thread the user already replied to, post one follow-up only when
+     the session changed the finding or a new item needs callout. Still requires
+     Hard Rule 2.
 9. **Co-author attribution.** Current user not the PR author → add a
    `Co-authored-by:` trailer for the PR author on every commit. Real identities
    only; never invent agent co-authors.
@@ -105,10 +113,10 @@ and the suggestion-format template live in
 11. **Adversarial-review gate before push.** New commits this session must pass
     `wk-adversarial-review` before `git push`. Blocked verdict → no push; fix and
     re-invoke until clear.
-12. **Implement handoff documents before deleting them.** Branch holds a file
-    whose name signals remaining work → read it fully, implement its items, and
-    delete it in the same commit as the last implementation change. Present a plan
-    first if the work is large or spans repos.
+12. **Implement handoff documents before deleting them.** A branch file whose
+    name signals remaining work → read it fully, implement its items, delete it in
+    the same commit as the last change. Plan first if the work is large or spans
+    repos.
 
 ## Step 1: Identify the PR
 
@@ -216,13 +224,12 @@ user to submit it as `COMMENT` or abort, then submit before any reply.
 
 - Track bot thrash by `(path_prefix, concern_class)` and total active findings per round.
 - Stop and ask before another fix when: same pair re-fires 3×; totals stop falling for 2 consecutive rounds; or a new finding contradicts an accepted fix.
-- Evaluate bot suggestions; never accept blindly.
 - Bot reply: documented command syntax if available, else a generic reply tagging the bot and stating the decision.
-- **Surface prior-round dismissals.** Before presenting a judgment-required
-  finding, check the session `dismissed` list and prior-round notes for the same
-  field/concern class — a bot re-firing on a dismissed field from a new angle
-  ("redundant" vs "unused") is the same decision. Found → surface the prior
-  reason inline, default to `(d)`, ask once to confirm or override.
+- **Surface prior-round dismissals.** Before a judgment-required finding, check
+  the session `dismissed` list and prior-round notes for the same field/concern
+  class — a bot re-firing on a dismissed field from a new angle ("redundant" vs
+  "unused") is the same decision. Found → surface the prior reason inline, default
+  to `(d)`, ask once.
 
 **All-Minor bulk-dismiss gate.** Every active finding Minor and each has a
 plausible skip rationale → offer one bulk action before per-item triage:
@@ -240,15 +247,15 @@ pass. Do not loop comment-by-comment through fix/commit/push.
 - Process bot reviews first, then human comments.
 - For each: read full file context, the comment, and the reply chain before generating a fix.
 
-**Org-specific policy questions.** Reviewer question touches org-specific policy
-→ search the configured KB first and cite an authoritative doc; fall back to
-general knowledge only if the KB returns nothing, flagging the fallback. Skip for
-code-level intent, design rationale, or test-coverage questions.
+**Org-specific policy questions.** Reviewer question touches org policy → search
+the configured KB first and cite an authoritative doc; fall back to general
+knowledge only if the KB is empty, flagging the fallback. Skip for code-level
+intent, design rationale, or test-coverage questions.
 
-**Missing-documentation findings.** Before surfacing a bot finding claiming
+**Missing-documentation findings.** Before surfacing a bot finding that
 behavior/rationale/trade-off is undocumented, grep the diff, touched files, and
-repo docs; covered (or code makes the rationale unambiguous) → include the
-reference and dismiss; else present normally.
+repo docs; covered (or code makes it unambiguous) → cite the reference and
+dismiss; else present normally.
 
 **Suggestion format** — see commands.md §4. Every suggestion includes reasoning
 for applying and discarding (`Why this fix` / `Why skip`); `{bot_badge}` is
@@ -342,7 +349,7 @@ in order. Commands: commands.md §6.
 **Issue-class scan before each fix.** Identify the issue class; grep the full PR
 diff for sibling paths sharing it (commands.md §6). Include siblings in the same
 commit only when they share the triage unit or were merged by Step 4. Per class:
-credential/token leaks → grep shell commands and stderr redirections, subtract
+credential/token leaks → grep shell commands and stderr redirections, minus
 already-redacted lines; validation/exception/retry gaps → grep the affected
 symbol plus every entry/call site; race/TOCTOU → grep the resource path plus
 every read-then-write site.
@@ -376,8 +383,6 @@ When it fires:
 > individual review comments, resolve {R} threads, and leave {L} threads open for
 > follow-up. Proceed? (yes / edit / abort)"
 
-Be explicit that this skill posts threaded replies, not a formal PR Review.
-
 **Resolution rule.** Per Hard Rule 3: resolve only threads in
 `resolve_after_push`. Submitted self-review threads resolve only at merge
 readiness.
@@ -397,24 +402,22 @@ atomic commit, re-invoke, loop until clear.
 
 **Post-rewrite divergence guard.** History rewritten this session → re-check
 divergence before pushing (compute `$AHEAD`/`$BEHIND`, commands.md §8): `BEHIND ==
-0` → safe; `AHEAD > 0 && BEHIND > 0` → cherry-pick remote-only commits onto the
-rewritten tip then re-check; cherry-pick conflicts or remote-only commits that are
-rewritten duplicates → stop and surface.
+0` → safe; both > 0 → cherry-pick remote-only commits onto the rewritten tip,
+re-check; cherry-pick conflicts or remote-only rewritten duplicates → stop and
+surface.
 
-**Push** (`git push`). Rejected non-fast-forward: no history rewritten → re-run
-reconciliation; Step 2 base-advance rebase → `git push --force-with-lease` (Hard
-Rule 4 exception), and on a rejected lease reconcile remote-only commits first
-then retry; any other rewrite → the divergence-guard cherry-pick recovery above.
-Never bare `git push -f`.
+**Push** (`git push`). Rejected non-fast-forward: no rewrite → re-run
+reconciliation; Step 2 base-advance rebase → `--force-with-lease` (Hard Rule 4),
+reconciling remote-only commits first on a rejected lease; any other rewrite →
+the divergence-guard cherry-pick above. Never bare `git push -f`.
 
-**Sync PR description immediately after push — HARD RULE:** After every push,
-update the PR body before posting replies or resolving threads — even when it
-looks current.
+**Sync PR description immediately after push — HARD RULE:** Update the PR body
+before posting replies or resolving threads, even when it looks current.
 
 - Preserve metadata lines.
 - Verify commit links, test-plan checkboxes, CI status, remaining work, known limitations, and file lists before deciding no drift.
 - No drift → log an explicit "no drift detected" line naming the compared fields.
-- **Never assert a result the agent cannot confirm.** Gate every Testing/Results section on known evidence (diff, CI output, user statement); no evidence → honest placeholder (`Pending — <how to exercise>`), never a template "build completed successfully".
+- **Never assert a result the agent cannot confirm.** Gate Testing/Results on known evidence (diff, CI output, user statement); no evidence → honest placeholder (`Pending — <how to exercise>`), never a template "build completed successfully".
 
 **Re-check self-review and docs drift (every push):**
 
@@ -430,7 +433,7 @@ replies sequentially, routed by surface (commands.md §8):
   combined reply** (you cannot reply to sub-sections of an issue comment).
 - React on the original: `+1` for `a`/`e`/`t`; `-1` for `d`; `heart` for follow-up questions; none for `s`/`r`. Reaction failures are fire-and-forget.
 - Before bot replies, refresh bot thread IDs: re-run the GraphQL reviewThreads query against post-push HEAD, match by `(path, line, root_comment.body_excerpt)`; skip replies for dropped findings.
-- Resolve via GraphQL `resolveReviewThread` (commands.md §8); `NOT_FOUND` → refresh IDs once, match by stable identity, retry; no match/retry fails → log and continue. REST comment IDs die on force-push/bot replacement (GraphQL thread IDs are stable), so an inline reply HTTP 404 → log and keep the thread in `resolve_after_push`. **Fully outdated thread (`line: null`)** → skip the REST reply entirely (every REST op 404s, incl. GET) and post one top-level `gh pr comment` summarizing fixes to the outdated threads in lieu of inline replies.
+- Resolve via GraphQL `resolveReviewThread` (commands.md §8); `NOT_FOUND` → refresh IDs once, match by stable identity, retry; no match/retry fails → log and continue. REST comment IDs die on force-push/bot replacement (GraphQL thread IDs are stable), so an inline-reply 404 → log and keep the thread in `resolve_after_push`. **Fully outdated thread (`line: null`)** → skip the REST reply (every REST op 404s, incl. GET); post one top-level `gh pr comment` summarizing fixes to the outdated threads instead.
 - Detect in-place bot summary updates by re-fetching each captured bot issue comment: active→clean = positive resolution; added findings = regression → re-enter Step 4.
 - Post-push comments matching `(path, line, concern)` from this session are already-addressed echoes: reply with the commit link, resolve, do not re-prompt or re-commit.
 
@@ -448,10 +451,10 @@ baseline-holding learning.
 
 Classify processed comments into generic issue classes (security, validation,
 exception handling, race/TOCTOU, retry/timeout, defensive/dead guard,
-API/external-call shape, docs/rationale drift, comment-accuracy drift, or new).
-For each non-empty class invoke `Skill(wk-learn, args="adversarial-review")`
-encoding class, mechanism, detection sketch, confidence — generic patterns only,
-no paths, line numbers, logins, or SHAs. Re-run for each new post-CI batch.
+API/external-call shape, docs/rationale or comment-accuracy drift, or new). For
+each non-empty class invoke `Skill(wk-learn, args="adversarial-review")` encoding
+class, mechanism, detection sketch, confidence — generic patterns only, no paths,
+lines, logins, or SHAs. Re-run for each new post-CI batch.
 
 ## Step 9.5: Wait for CI, Then Loop on New Comments
 

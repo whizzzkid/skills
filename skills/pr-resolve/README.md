@@ -4,7 +4,7 @@
 > and manage the full resolution cycle from branch sync through push, CI
 > polling, and session retro.
 
-**Version:** `2026.06.18-005430`
+**Version:** `2026.06.18-194627`
 
 ## Invocation
 
@@ -45,6 +45,10 @@ sequenceDiagram
 
 ## Noteworthy
 
+- **Resume after compaction:** When the session resumes from a context-compaction
+  summary mid-skill, identify the last completed step, confirm the resume point,
+  re-run stale sync/fetch, and never silently drop tail steps (Step 9.4 learnings,
+  Step 9.5 CI loop, Step 11 retro).
 - **HARD RULE — Step 5 is execution-free:** Obvious-fix items are **queued**
   into `fixes_to_apply`, not auto-applied mid-Step-5. Triage finishes before
   Step 6 executes the unified queue.

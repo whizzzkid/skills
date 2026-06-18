@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200340'
+  version: '2026.06.18-194629'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -275,6 +275,12 @@ Skill(wk-learn, args="<skill-name>")
 - Both are required. Skipping the `wk-learn` call orphans the lesson — the retrospect log is
   read by humans, not by the sharpen pipeline.
 - One `wk-learn` call per affected skill, not one per session.
+- **Compaction recovery:** if the session resumes from a compaction summary that
+  mentions an in-progress retro, first verify each "What could've been better"
+  bullet already got its `wk-learn` call; if not, make them before any other work.
+  The summary reliably carries the retro entry — use it as the source of truth for
+  which skills still need a call. The "same response" contract breaks when
+  compaction truncates the retro response, silently dropping the calls.
 
 After invoking, note in the retro entry which skills were routed to `wk-learn`.
 

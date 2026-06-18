@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.17-074547'
+  version: '2026.06.18-194628'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -59,6 +59,7 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 
 - When soliciting feedback, block on it → end the turn after asking; do not implement past that point until answered.
 - Skill invocation is mandatory → use the Skill tool for prescribed skills, do not approximate with raw commands. Run the invoked skill's full flow; user prose is additive context, not a license to skip parts.
+- **Announce-and-invoke in the same turn:** a skill counts as invoked only when its `Skill` call appears in the same response as the text announcing it. "Now running X" with no same-turn `Skill(X)` call is a protocol violation — narration is not action. On catching a self-announcement without its call, invoke the skill before any other action.
 - Batch independent tool calls in one response whenever possible.
 
 ### Continuity Rules
