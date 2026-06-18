@@ -53,7 +53,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.16-065020'
+  version: '2026.06.18-170600'
 ---
 
 # Sitrep
@@ -238,6 +238,7 @@ SUBAGENT CONTRACT (mandatory):
 - Do NOT invoke /skills or act as the orchestrator skill
 - Do NOT prompt the user for input — the orchestrator handles all triage
 - Do NOT open files in browsers or call `open`
+- When research is complete, **actively send all results back** via `SendMessage({to: "main", summary: "<agent-name> results", message: "<your full markdown>"})`. Do NOT just go idle — the orchestrator does not poll; it only receives what you push.
 - Your output is markdown text the orchestrator pastes into a section
 - EVERY item you return MUST include a `url` field with a clickable
   link to the underlying artifact. Items without `url` are rejected at compile time.
