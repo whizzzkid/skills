@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200609'
+  version: '2026.06.18-004259'
   internal: false
   model:
     openai: gpt-4.1
@@ -177,6 +177,18 @@ When writing a fallback that discriminates on a specific tool error message (`if
 - Error wording differs across tool versions and platforms; a guessed string makes the fallback either never fire or swallow unrelated failures.
 - Corollary of the "probe capability, don't parse error text" rule in `wk-workstyle`: if you must match on error text, derive it from observation, not intuition.
 - For git network errors, use `file://` URIs to activate the network code path in a local test instead of bare paths (which use the local protocol and emit different errors).
+
+### Capture args inside the loop in fake shell-binary stubs
+
+When a fake binary (a stub `curl`/`git`/etc. on `PATH`) logs its invocation by
+parsing positional args in a `while [[ $# -gt 0 ]]; do ... shift; done` loop,
+`echo "$@"` placed **after** the loop always emits nothing — `shift` consumes
+`$@` in place, so it is empty once the loop exits. The log file is never written
+and tests fail with a missing-file error instead of a useful assertion.
+
+- Capture the value into a named variable **inside** the loop (e.g. `api_url="$1"`
+  in the wildcard `case` branch), then read that variable after the loop.
+- Never rely on `$@` / `$1` surviving a complete shift-consuming loop.
 
 ### Nil-out consumed env vars in stubbed-ENV tests
 

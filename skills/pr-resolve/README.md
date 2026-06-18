@@ -4,7 +4,7 @@
 > and manage the full resolution cycle from branch sync through push, CI
 > polling, and session retro.
 
-**Version:** `2026.06.17-194536`
+**Version:** `2026.06.18-005430`
 
 ## Invocation
 

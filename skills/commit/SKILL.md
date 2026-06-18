@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.16-194053'
+  version: '2026.06.18-004257'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -263,6 +263,22 @@ preceding `git add`. Anything already staged — a prior `git mv`, an earlier
 
 - Unstage strays with `git restore --staged <paths>` (or `git stash`) before
   committing. Treat `git mv` as already-staged.
+
+### Re-stage a file edited after it was staged
+
+`git add` snapshots the working tree at the moment it runs — later edits update
+the working tree but leave the staged snapshot stale. Pre-commit hooks (RuboCop,
+formatters) inspect the **staged** content, so they flag offenses already fixed
+in the working tree and block the commit.
+
+- After any Edit/Write to a file already in the index, re-run `git add <file>`
+  before committing.
+- Detect the gap — overlap between working-tree and staged changes means a
+  re-stage is needed:
+
+  ```bash
+  comm -12 <(git diff --name-only | sort) <(git diff --cached --name-only | sort)
+  ```
 
 ## Prohibited Terms in Commit Messages
 

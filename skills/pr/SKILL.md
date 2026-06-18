@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.17-083805'
+  version: '2026.06.18-004258'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -497,8 +497,14 @@ Invoke `wk-adversarial-review` one more time against PR HEAD before
 introduced new commits since Step 2's gate. Re-running catches drift between
 draft and ready.
 
-After the self-review is posted, automated feedback is addressed, and the
-adversarial-review verdict is `clear`:
+**HARD RULE — check off the test-plan boxes before `gh pr ready`, not after.**
+The CI-green sync (Step 4.2) is a blocking precondition for `gh pr ready`, not an
+aspiration: re-read the PR body and tick every test-plan checkbox now satisfied
+by green CI and passing local checks. Unchecked boxes on a ready PR read as work
+not done. Do not call `gh pr ready` until the body's checkboxes match reality.
+
+After the self-review is posted, automated feedback is addressed, the test-plan
+checkboxes are synced, and the adversarial-review verdict is `clear`:
 
 ```bash
 gh pr ready

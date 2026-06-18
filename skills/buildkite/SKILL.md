@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200057'
+  version: '2026.06.18-004256'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -117,12 +117,13 @@ Tell the user:
 Pattern for inspecting a build's jobs:
 
 ```bash
-bk build view -p <pipeline> -b <branch> --json 2>&1 | \
+bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | \
   jq '{number: .number, state: .state, finished: .finished_at, \
        jobs: [.jobs[] | select(.state == "failed" or .state == "broken") | \
               {name: .name, state: .state, exit_status: .exit_status}]}'
 ```
 
+- **Always strip the auth warning before `jq`.** Under env-var auth (`BUILDKITE_API_TOKEN`), `bk ... --json` prepends `Warning: using BUILDKITE_API_TOKEN ...` to **stdout**, breaking the parse with "Invalid numeric literal". Pipe through `grep -v '^Warning:'` (safe whether the line is present or not; prefer over `tail -n +2`, which corrupts interactive-auth output that has no warning). Apply to every `--json | jq` pipe.
 - Adjust the `select` predicate to filter by different states.
 - Target a specific build → pass the build number as a **positional** arg: `bk build view -p <pipeline> <build-number> --json`. Never pass it to `-b`.
 - On `bk build view`, `-b` is `--branch`; passing a build number to it resolves to `null` → breaks the `jq` pipe with "Invalid numeric literal".
@@ -207,7 +208,7 @@ Cron-based polling of `bk` is unreliable → prefer a manual check:
 
 ```bash
 # Quick status check
-bk build view -p <pipeline> -b <branch> --json 2>&1 | jq -r '.state'
+bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | jq -r '.state'
 ```
 
 - Build still running → tell the user and offer to check again later.

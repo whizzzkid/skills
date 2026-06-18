@@ -25,7 +25,10 @@ while IFS= read -r skill_file; do
   [[ -z "$skill_file" ]] && continue
   readme="${skill_file%/SKILL.md}/README.md"
   # Pass only if the sibling README.md is also in the staged set.
-  if ! printf '%s\n' "$staged" | grep -qxF "$readme"; then
+  # Herestring, not a pipe: under `set -o pipefail`, `printf | grep -q` lets
+  # grep close the pipe on first match, killing printf with SIGPIPE, so the
+  # pipeline reports failure and the README is falsely flagged as unstaged.
+  if ! grep -qxF "$readme" <<< "$staged"; then
     violations+=("  $skill_file  (stage $readme too)")
   fi
 done <<< "$staged_skills"
