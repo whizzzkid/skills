@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.18-004258'
+  version: '2026.06.19-183410'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -434,6 +434,12 @@ After the draft PR is created (or after pushing new commits to an existing PR):
    parallel with launching the CI poll. CI takes minutes; stage the self-review
    draft in that window so the PR is closer to ready when CI finishes.
 
+   **HARD RULE — self-review runs in parallel, never after CI.** Deferring
+   `wk-self-review` until CI is green is a recurring violation — treat the
+   deferral as a blocker-equivalent. The intuitive "CI green → then review"
+   order is wrong here: invoke `wk-self-review` the moment `gh pr create`
+   returns, before/alongside the CI-poll launch — not serially after CI.
+
    **HARD RULE — never compose inline comment payloads directly from `wk-pr`.**
    Always delegate to `wk-self-review` via the Skill tool. The pending-review
    draft (`POST /pulls/{n}/reviews` with `event` omitted) is enforced by
@@ -496,6 +502,12 @@ Invoke `wk-adversarial-review` one more time against PR HEAD before
 `gh pr ready`. Self-review, CI fixes, and automated-feedback resolution may have
 introduced new commits since Step 2's gate. Re-running catches drift between
 draft and ready.
+
+**Scoped skip — mechanical-only delta.** If the *only* commits since the last
+`clear` verdict are direct mechanical responses to that verdict's own blockers
+(no new logic, no refactor, no scope addition), the final gate may be skipped.
+Note the skip and the cleared HEAD SHA in the PR. Any commit touching logic or
+adding behavior still requires re-running the gate.
 
 **HARD RULE — check off the test-plan boxes before `gh pr ready`, not after.**
 The CI-green sync (Step 4.2) is a blocking precondition for `gh pr ready`, not an

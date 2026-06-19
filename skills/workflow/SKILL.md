@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.18-194628'
+  version: '2026.06.19-183410'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -176,6 +176,8 @@ Apply to ALL code:
 - **ADRs:** create `docs/adr/` records for significant architectural decisions: title, status, context, decision, consequences.
 - **Content-lint hooks:** scope to the file class and added lines only; smoke-test against an out-of-scope file that legitimately contains the pattern.
 - **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace each variable’s source, path, and meaning in the new context.
+- **No hardcoded env-specific constant beside a dynamic sibling:** before hardcoding OS, arch, version, or path, grep the file for the same value in an existing path. If a sibling path already computes it dynamically (`uname -s`/`uname -m`, etc.), reuse that computation — a parallel (e.g. beta-vs-stable) path authored in isolation must not re-hardcode what its sibling derives.
+- **Confirm example formats before encoding:** treat a version/naming/query string shown in a feature request — especially inside a CLI snippet — as illustrative, not normative. Confirm the exact production format before encoding it across more than one file (code, specs, docs). One clarifying question up front ("is `<example>` exact, or illustrative?") avoids multi-file correction cycles.
 - **Error-string discriminators:** reproduce the failure against a real-enough fixture and capture exact text before matching on it.
 - **Env vars in docs:** document where stored, who can edit it, propagation, and unset default.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.

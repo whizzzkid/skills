@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.18-194629'
+  version: '2026.06.19-183410'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -55,6 +55,13 @@ correction or self-caught error — do not defer to retro.
   the agent forgets between events.
 - Multiple corrections in one session → multiple `wk-learn` calls, one per affected
   skill, at the moment each correction lands.
+- **Self-caught errors count, not only user corrections.** Discovering a bug,
+  finding a missing check, or correcting your own code mid-task triggers an
+  immediate `wk-learn` in that same response — before, alongside, or after the
+  fix commit. Deferring a self-caught discovery to retro collapses a multi-step
+  diagnosis into one vague sentence and loses the exact error mode. (This is a
+  recurring miss: the generic "self-caught error" mention above did not steer, so
+  it is called out explicitly here.)
 - Rule applies to the agent during the session; the retro flow below still runs as
   the consolidation pass.
 
