@@ -2,7 +2,7 @@
 
 > Coordinate Jira ticket state with the development lifecycle and surface Jira context whenever the agent encounters a Jira artifact.
 
-**Version:** `2026.06.17-183014`
+**Version:** `2026.06.22-181422`
 
 ## Invocation
 
@@ -17,7 +17,7 @@
 stateDiagram-v2
     [*] --> Detect: Jira key found
     Detect --> Surface: URL/key mention only (Stage 6)
-    Detect --> InProgress: Branch work begins (Stage 2)
+    Detect --> InProgress: Any dev work — claim ticket (Stage 2)
     InProgress --> DescriptionCheck: quality gate
     DescriptionCheck --> PRTitleSync: wk-pr creates PR (Stage 3)
     PRTitleSync --> InReview: PR draft→ready (Stage 4)
@@ -34,3 +34,5 @@ stateDiagram-v2
 - **HARD RULE — confirm before any user-initiated write:** `createJiraIssue`, `editJiraIssue`, and transition calls on user-requested operations all require explicit approval. Jira has no delete API. Auto mode does not exempt this.
 - **PR title format is enforced:** `feat(auth): ✨ OAuth login [BOARD-123]` — key in square brackets, last token, exactly one key. If the title already has the wrong key, the skill asks before replacing.
 - **Assignee is never stolen:** If a ticket is already assigned to someone else, the skill reports once and leaves it — the work may genuinely be reassigned.
+- **HARD RULE — starting work is one atomic, self-healing claim:** Assign-to-user + In Progress + active sprint + a start comment fire together on *any* development intent (edit/commit/PR work), not only the literal first commit — so mid-branch joins and resumed sessions still claim the ticket.
+- **Posts progress comments automatically:** A factual one-line comment (`addCommentToJiraIssue`) is posted at each lifecycle change — claim, PR opened, merged — confirmation-exempt like auto-assign, idempotent to avoid duplicate spam.

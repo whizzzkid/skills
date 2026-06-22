@@ -6,8 +6,9 @@ description: >-
   `https?://[^/]+\.atlassian\.net/`, `/browse/<KEY>`, or a self-hosted
   host); a key token (`[A-Z][A-Z0-9]+-\d+`) in a prompt, branch, commit,
   PR body, or agent message; branch start; PR creation; PR draft→ready; PR
-  merge. Detects the key; assigns the ticket to the user; transitions In
-  Progress → In Review → Done in lockstep with PR state; audits thin
+  merge. Detects the key; assigns the ticket to the user; moves it to the
+  active sprint; transitions In Progress → In Review → Done in lockstep with
+  PR state; posts a progress comment at each lifecycle change; audits thin
   descriptions and proposes a context block; ensures every PR title carries
   a `[BOARD-NUM]` suffix referencing the ticket. Gates user write
   operations (create, edit, batch transition) behind confirmation — Jira
@@ -34,7 +35,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.17-183014'
+  version: '2026.06.22-181422'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -52,11 +53,11 @@ ticket on the user's behalf as state transitions happen — user never
 has to remember.
 
 ```
-Start work ──► In Progress + assign-to-me
+Start work ──► In Progress + assign-to-me + active sprint + comment
 PR opened  ──► title = "<conventional>: <subject> [BOARD-NUM]"
-                description references ticket
+                description references ticket + comment
 PR ready   ──► In Review
-PR merged  ──► Done
+PR merged  ──► Done + comment
 ```
 
 ---
@@ -71,7 +72,7 @@ already done.
 |---------|---------------|
 | Jira URL appears in a user prompt, file, or agent context (`https?://[^/]+\.atlassian\.net/...` or `/browse/<KEY>`) | 0, 1, 6 (surface) |
 | Jira key token (`[A-Z][A-Z0-9]+-\d+`) appears in a prompt, branch name, commit, PR body, or recent agent message | 0, 1, 6 (surface) |
-| Agent begins work on a branch (first edit, first commit on a fresh branch) | 0 (MCP), 1 (detect), 2 (start) |
+| Agent does any development work on a detected ticket and Stage 2 has not completed this branch (first edit/commit on a fresh branch, **or** a mid-branch join) | 0 (MCP), 1 (detect), 2 (start) |
 | About to create a PR (called from `wk-pr`) | 0, 1, 3 (title + description) |
 | PR transitioning from draft → ready | 0, 1, 4 (In Review) |
 | PR merged (detected during `wk-pr` post-merge or via `gh pr view --json state`) | 0, 1, 5 (Done) |
@@ -89,7 +90,7 @@ response that depends on ticket context. Skip only when MCP unavailable
 ## Stage 0: MCP availability check
 
 ```
-ToolSearch select:mcp__claude_ai_Jira_Confluence__getJiraIssue,mcp__claude_ai_Jira_Confluence__transitionJiraIssue,mcp__claude_ai_Jira_Confluence__editJiraIssue,mcp__claude_ai_Jira_Confluence__searchJiraIssuesUsingJql,mcp__claude_ai_Jira_Confluence__getTransitionsForJiraIssue,mcp__claude_ai_Jira_Confluence__lookupJiraAccountId
+ToolSearch select:mcp__claude_ai_Jira_Confluence__getJiraIssue,mcp__claude_ai_Jira_Confluence__transitionJiraIssue,mcp__claude_ai_Jira_Confluence__editJiraIssue,mcp__claude_ai_Jira_Confluence__searchJiraIssuesUsingJql,mcp__claude_ai_Jira_Confluence__getTransitionsForJiraIssue,mcp__claude_ai_Jira_Confluence__lookupJiraAccountId,mcp__claude_ai_Jira_Confluence__addCommentToJiraIssue
 ```
 
 - Connector unavailable (tool search returns no matches) → **skip
@@ -135,10 +136,21 @@ Search in priority order; stop at first hit:
 
 ---
 
-## Stage 2: Start work — In Progress + assign
+## Stage 2: Start work — claim the ticket
 
-Trigger "start of branch" → fetch detected ticket's current state, decide
-what to change.
+**HARD RULE — claim the ticket as one atomic action.** On the first detected
+development intent on a ticket each branch, four things fire together as one
+"claim": assign-to-user **and** In Progress **and** active sprint **and** a
+start comment. Never ship a subset.
+
+- "Development intent" = any edit, commit, or PR work on a branch with a
+  detected key — **not** only the literal first commit. A first-commit signal
+  may never be observed (mid-branch join, resumed session, edit-before-commit).
+- **Self-healing:** if Stage 2 has not completed this branch, run the whole
+  claim now, whatever point you joined at. Verify against live ticket state
+  (assignee, status, sprint) so a partial prior run finishes.
+
+Fetch the detected ticket's current state, decide what to change.
 
 ```
 mcp__claude_ai_Jira_Confluence__getJiraIssue(issueIdOrKey="<KEY>")
@@ -147,7 +159,8 @@ mcp__claude_ai_Jira_Confluence__lookupJiraAccountId(searchString="<git user.emai
 
 Compare current `status` and `assignee` against desired state:
 
-- `assignee` unset OR not the user → assign to the user.
+- `assignee` unset → assign to the user. Already set to someone else → defer
+  to the conflict table (do not silently reassign).
 - `status` not already `In Progress` (or forward-equivalent like
   `In Review`/`Done` — never regress) → transition to `In Progress`.
 
@@ -168,9 +181,10 @@ mcp__claude_ai_Jira_Confluence__editJiraIssue   # for assignee
 mcp__claude_ai_Jira_Confluence__transitionJiraIssue  # for status
 ```
 
-Then run **Active-sprint assignment** subroutine (below). Report one line:
+Then run **Active-sprint assignment** and **Progress comment** subroutines
+(below) to complete the claim. Report one line:
 
-> "Jira: {KEY} → In Progress, assigned @<user>, sprint <name>."
+> "Jira: {KEY} → In Progress, assigned @<user>, sprint <name>, comment posted."
 
 ### Active-sprint assignment (subroutine)
 
@@ -192,6 +206,25 @@ backlog — invisible on the sprint board, absent from velocity tracking.
   shape the field expects (often `[{ id: <sprintId> }]`).
 - Skip silently when no active sprint exists or field unavailable — not
   every board runs sprints.
+
+### Progress comment (subroutine)
+
+Invoked at each lifecycle change — Stage 2 (claim), Stage 3 (PR opened), Stage 5
+(merged) — so watchers see progress on the ticket without opening the PR. The
+missing-comment gap this prevents: a ticket that silently advances states with
+no narrative of what was done.
+
+- Post via `addCommentToJiraIssue(issueIdOrKey="<KEY>", commentBody="<note>")`.
+- **Auto — no per-comment confirmation** (same exemption as auto-assign);
+  lifecycle comments are additive, factual status notes, not user-voice prose.
+- One line, factual, link the artifact — no marketing tone:
+  - Stage 2: `` Started work on branch `<branch>`. ``
+  - Stage 3: `PR opened: <pr-url>.`
+  - Stage 5: `Merged via <pr-url>.`
+- **Idempotent:** before posting, scan recent comments for an identical
+  lifecycle note this branch; skip if already present — avoids duplicate spam on
+  re-runs and self-healing reruns.
+- Skip silently on comment-write failure — never block the dev workflow.
 
 ### Ticket description quality check
 
@@ -249,6 +282,11 @@ navigate to context:
 `wk-gh` — the canonical outbound footer per `wk-gh` Step 4 stays at the
 very end of the body, after the `## Ticket` insertion. Do not strip the
 footer when editing; preserve it exactly once.
+
+### PR-opened comment
+
+On PR **creation** only (skip on PR updates), run **Progress comment**
+subroutine → post `PR opened: <pr-url>`. The open event is commented once.
 
 ### Description quality check (Stage 3)
 
@@ -354,7 +392,8 @@ transition the ticket to `Done`:
   `In Review` and `Done` → move only one step forward and report. Do not
   skip stages.
 
-Report:
+After the transition, run **Progress comment** subroutine → post
+`Merged via <pr-url>`. Report:
 
 > "Jira: {KEY} → Done. PR #<N> merged."
 
@@ -439,6 +478,7 @@ exempt — Jira items are visible to the whole team.
 | Edit issue fields | Yes — if ambiguous source or batch | Show diff of proposed changes |
 | Transition to terminal state | Yes — run Child-completion gate, then confirm target state | Block on open children; confirm explicitly |
 | Assign to user (auto lifecycle) | No — auto-assign as part of Stage 2 | `editJiraIssue` with assignee |
+| Post lifecycle comment (auto) | No — additive factual status note, part of the claim/PR/merge events | `addCommentToJiraIssue` |
 
 ---
 
@@ -463,7 +503,7 @@ state is a side-effect of the work, not a precondition for it.
 | Trigger | Stages |
 |---------|--------|
 | Jira URL or key in prompt / file / context (no dev intent) | 0, 1, 6 |
-| First commit on a branch | 0, 1, 2 |
+| Any dev work on a detected ticket, Stage 2 not yet done this branch | 0, 1, 2 |
 | `wk-pr` creating/updating PR | 0, 1, 3 |
 | `gh pr ready` succeeds | 0, 1, 4 |
 | `gh pr view` shows MERGED | 0, 1, 5 |
