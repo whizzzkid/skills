@@ -15,7 +15,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021641'
+  version: '2026.06.22-175725'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -50,6 +50,24 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
 - **`[[ … ]]`** over `[ … ]` in bash.
 - **Heredoc** for multi-line strings; avoid concatenated `echo` chains.
 - **Named constants** for magic values at the top of the script.
+- **Capture a non-zero exit with `|| status=$?`, never `cmd; status=$?`.** Under
+  `set -e`, the `;` separator does not suppress `errexit` — a command that exits
+  non-zero terminates the script before the `status=$?` assignment runs. Only `||`
+  suppresses `errexit` on its left operand. Initialize `status=0` first, then
+  `cmd || status=$?`. Flag any `cmd; status=$?` in a `set -e` script.
+
+  ```bash
+  status=0
+  http_code=$(helper ...) || status=$?   # captures 2 instead of exiting
+  ```
+
+- **An EXIT trap cannot see a `local` variable.** A script-scope
+  `trap '... "$f" ...' EXIT` runs after functions return, so a `local f` set
+  inside a function is out of scope and expands empty — `${f:-}` silently
+  swallows the bug and the tempfile leaks on SIGINT/SIGTERM. Declare any var a
+  script-level trap cleans up at script scope (init to `""` before the first
+  function call), or register tempfiles into a global array the trap iterates.
+  Flag any trap referencing a variable that is `local` where it's assigned.
 - **Target bash 3.2** for any hook or script that may run under the macOS
   system bash (`/bin/bash`). Avoid bash-4+ builtins — `mapfile`/`readarray`,
   associative arrays (`declare -A`), `${var^^}`/`${var,,}` case conversion,

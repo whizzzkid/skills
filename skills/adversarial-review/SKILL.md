@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.22-145005'
+  version: '2026.06.22-175725'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -128,7 +128,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.17 | Dynamic-language diff; inline refactor of a helper | For each call kept/added, grep module/imported namespace for the definition. Inverse: for each helper defined/kept, grep non-test files for a caller — zero after an inline refactor is dead code whose tests assert a dead path. | Blocker | Restore/remove call or add definition; delete dead helpers and retarget their tests at the live caller. |
 | 2.18 | Removed named constant | Grep post-rebase diff for the literal value. | Suggestion | Restore constant or extract helper when literal appears at ≥2 non-comment sites. |
 | 2.19a | Added Struct/Record/interface/Go field | Grep tests for direct concrete-value assertion on the new field. When the field is serialized via `.to_s`/equivalent, also include a nil/false/0 case — the zero-value path through a serialization boundary is the common production path and a `NoMethodError` there escapes happy-path specs. | Blocker | Add direct assertion; `respond_to?`/presence alone is insufficient; add the nil/zero-value serialization case. |
-| 2.20 | Application code + CI pipeline | Extract net-new env reads; locate invoking pipeline steps; verify allowlist forwarding. Diff touches a compose `environment:` or plugin `env:` → full-path audit: grep every script+library in the container's runtime call graph (not just diff delta) for env reads, diff against the forwarding list, run a sibling-template consistency check. | Blocker | Forward vars in native/container steps; exempt auto-injected prefixes only for native non-container steps. Surface any runtime read without a forwarding entry (incl. called libs); same-role siblings forward the same set. A spec deleting a var and asserting the script's own default = intentional omission → `question`. |
+| 2.20 | Application code + CI pipeline | Extract net-new env reads; locate invoking pipeline steps; verify allowlist forwarding. Diff touches a compose `environment:` or plugin `env:` → full-path audit: grep every script+library in the container's runtime call graph (not just diff delta) for env reads, diff against the forwarding list, run a sibling-template consistency check. **Wholesale `env:` list replacement (e.g. a ported template) → diff the full new list against the `origin/$BASE` version of the same file**, not just the diff delta. | Blocker | Forward vars in native/container steps; exempt auto-injected prefixes only for native non-container steps. Surface any runtime read without a forwarding entry (incl. called libs); same-role siblings forward the same set. A var present in base but absent from a replaced list is a candidate dropped-forwarding regression → re-add or justify. A spec deleting a var and asserting the script's own default = intentional omission → `question`. |
 | 2.19 | New/modified tests | Grep for self-referential equality (`expect(x).to eq(x.sort())`) and no-op `&& true` after `||`. | Blocker | Build independent expected values; propagate `false` in fail paths. |
 | 2.21 | New numeric security-gating config | Trace consumer path; verify positive lower bound and hard ceiling before control gates. | Blocker | Add bounds/ceiling constants. |
 | 2.22 | New structured-artifact plumbing | Detect `<collection>["key"]`/`.get(key)` feeding downstream calls. | Suggestion | Add integration test for the wire. |
@@ -140,8 +140,6 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.28 | CI trigger payload `commit` field | Verify it is not sourced from foreign-repo SHA envs (`REVIEW_`, `TARGET_`, `SOURCE_`). | Blocker | Use pipeline repo SHA. |
 | 2.29 | `curl -s` response parsing | Grep for silent mode without `-S`. | Suggestion | Require `-sS` plus exit-status check. |
 | 2.30 | Source fix with committed artifact | Detect `.wasm`, generated code, `go:generate`, `go:embed`, build output. | Blocker | Rebuild and re-commit before clear. |
-| 2.31 | Added jq `else .` | Grep jq type-dispatch fallbacks. | Suggestion | Use `else empty` or prove all unlisted types render OK. |
-| 2.32 | Go type widening | Run `goimports -l` on changed Go files when repo has `go.mod` and CI runs goimports. | Blocker | Run before clear. |
 | 2.33 | Raw-presence parse fallback | Grep parse-with-fallback shapes. | Blocker | Parse first; fallback on parsed result; add invalid-primary test. |
 | 2.34 | Spec/doc routing claim (which method a gate calls, which path bypasses a hook) | Grep the PR review thread for reviewer statements on the same routing. | Blocker | A reviewer who read the source is ground truth; resolve contradictions before asserting an inferred claim. |
 | 2.35 | Diff changes a structured return-type requirement in one doc section | Grep the whole document for every field comment that stores that value; confirm shape and vocabulary match. | Blocker | Update lagging field comments; keep one canonical name per value across all sections. |
@@ -156,8 +154,8 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.49 | Tempfile response capture in a curl error handler (`mktemp` + `-o "$f"` + `cat "$f"`) | `-f`/`--fail` exits before writing the body to `-o` on HTTP 4xx/5xx, so the handler reads an empty file on exactly the failure cases it targets. | Blocker | Use `--fail-with-body` (curl 7.76+) or drop `-f`; the response file must be written on error for the capture to work. |
 | 2.52 | Helper extracted from a function that accepts `context.Context` | Grep the helper body for `context.Background()`/`context.TODO()` when the calling function takes a `ctx context.Context`/`parentCtx` param — caller-supplied cancellation (SIGINT, timeout) is silently dropped. An error-switch `case errors.Is(err, context.Canceled)` that became unreachable confirms the context was never plumbed through. | Blocker | Add `parentCtx context.Context` as the helper's first param with a `nil → context.Background()` guard, matching the original function; verify the Canceled case is reachable. |
 
-Lower-frequency, language-specific sweeps (2.39, 2.41, 2.42, 2.45, 2.46, 2.50,
-2.51) live in
+Lower-frequency, language-specific sweeps (2.31, 2.32, 2.39, 2.41, 2.42, 2.45,
+2.46, 2.50, 2.51) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 

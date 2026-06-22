@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200303'
+  version: '2026.06.22-175725'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -41,6 +41,13 @@ ticket → summarise follow-ups.
 
 - User wants to merge a branch / PR they believe is ready.
 - User says "merge this", "ship it", "merge the PR", or similar.
+- **HARD RULE — a past-tense merge signal is just as binding as an imperative
+  one.** "The PR is merged", "it's been merged", "PR landed", or "update the
+  ticket, it merged" triggers this skill **before any other action** — never
+  transition the ticket inline via the Jira MCP. The merge event owns the ticket
+  transition, follow-up collection, retro, and worktree cleanup; an inline MCP
+  call silently skips all but the transition. PR already `MERGED` → skip Steps
+  2–6 and resume at Step 7.
 - **NOT** for merging someone else's PR unless the user explicitly owns the merge.
 
 ## Step 1: Resolve the PR
@@ -125,12 +132,20 @@ gh pr view {number} --json reviewDecision,reviews \
   concept of "self-review"; every unresolved thread blocks the merge at the
   platform level. Excluding self-authored threads passes the skill's own gate,
   then GitHub rejects the merge with `base branch policy prohibits the merge`.
-- Unresolved threads authored by **reviewers or bots** → invoke
-  [`wk-pr-resolve`](../pr-resolve/README.md) before proceeding — do not merge,
-  do not block-and-stop:
-  ```
-  Skill(wk-pr-resolve, args="{number}")
-  ```
+- **Triage unresolved reviewer/bot threads by severity before blocking** — an
+  unresolved thread is not automatically a merge blocker:
+  - **Blocker or Major** (correctness, security, data-loss risk) → invoke
+    [`wk-pr-resolve`](../pr-resolve/README.md) before proceeding — do not merge,
+    do not block-and-stop:
+    ```
+    Skill(wk-pr-resolve, args="{number}")
+    ```
+  - **Minor or Info** (style, abstraction quality, non-critical coverage gap) →
+    do not block. Propose one Jira ticket per finding (or a single omnibus
+    ticket): draft the body from the finding text, ask the user for the
+    epic/parent, file it, then resolve each thread with a `Tracked in [<KEY>]`
+    reply (satisfies the count-ALL rule below). User declines filing → leave the
+    thread open and proceed anyway; Minor threads must not block a merge-ready PR.
 - `wk-pr-resolve` excludes self-review threads from triage → leaves
   author-opened threads untouched. Remaining unresolved **self-review** threads
   → resolve as pre-merge cleanup: confirm with user, then mark each resolved

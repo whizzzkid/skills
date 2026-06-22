@@ -2,7 +2,7 @@
 
 > Adversarial pre-flight review of the current branch before anything leaves the machine.
 
-**Version:** `2026.06.22-145005`
+**Version:** `2026.06.22-175725`
 
 ## Invocation
 

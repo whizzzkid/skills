@@ -2,7 +2,7 @@
 
 > Enforces safe, idiomatic shell-script conventions on every shell file the agent writes or edits.
 
-**Version:** `2026.06.12-021641`
+**Version:** `2026.06.22-175725`
 
 ## Invocation
 
