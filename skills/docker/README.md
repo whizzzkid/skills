@@ -2,7 +2,7 @@
 
 > Use when working with Docker — building images, inspecting containers, debugging Dockerfile issues, verifying image tags exist, or troubleshooting Docker daemon connectivity.
 
-**Version:** `2026.06.16-165651`
+**Version:** `2026.06.22-174243`
 
 ## Invocation
 
@@ -38,3 +38,4 @@ flowchart TD
 - **ECR auth:** `authorization failed` / `ExpiredToken` errors always mean `aws sso login` — the skill does not attempt re-authentication.
 - **Exit code table:** Codes 137 (OOM) and 125 (daemon error) have specific meanings; the skill maps them rather than treating all failures as generic errors.
 - **Bind-mount overlay:** A CI step running under `-v checkout:/workdir --workdir=/workdir` shadows the image at the mount point — `COPY` to that path is invisible. Generated artifacts must come from the step command (e.g. `go generate`), not a Dockerfile `COPY`.
+- **dind network failures → check floating tags first:** A `RUN` failing on a network/fetch error inside docker-in-docker usually means a floating `FROM` tag updated and invalidated the layer cache, forcing a cold run with no bridge network. Pin the tag to the project's tool-version file before reaching for `--network=host`.

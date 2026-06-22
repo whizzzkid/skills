@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.18-194627'
+  version: '2026.06.22-174243'
 ---
 
 # PR Resolve
@@ -66,12 +66,11 @@ and the suggestion-format template live in
 
 ## Resume After Compaction
 
-Resumed from a context-compaction summary mid-skill → before any other action:
-read the last completed step from the summary, confirm the resume point (default:
-next uncompleted step), skip completed steps, and re-run possibly-stale sync/fetch
-(Steps 2–3). Never restart from Step 1, and never drop tail steps absent from the
-summary — Step 9.4 learnings, Step 9.5 CI wait + new-comment loop, and Step 11
-retro all still run.
+Resumed from a compaction summary mid-skill → before anything else: read the last
+completed step, confirm the resume point (default: next uncompleted step), skip
+completed steps, re-run possibly-stale sync/fetch (Steps 2–3). Never restart from
+Step 1; never drop tail steps absent from the summary — Step 9.4 learnings, Step
+9.5 CI wait + new-comment loop, Step 11 retro all still run.
 
 ## Hard Rules
 
@@ -110,9 +109,8 @@ retro all still run.
    only; never invent agent co-authors.
 10. **Include bot reviews** as first-class feedback. Evaluate each for
     correctness before accepting or dismissing.
-11. **Adversarial-review gate before push.** New commits this session must pass
-    `wk-adversarial-review` before `git push`. Blocked verdict → no push; fix and
-    re-invoke until clear.
+11. **Adversarial-review gate before push** — new commits this session must pass
+    `wk-adversarial-review` before `git push` (mechanics in Step 8).
 12. **Implement handoff documents before deleting them.** A branch file whose
     name signals remaining work → read it fully, implement its items, delete it in
     the same commit as the last change. Plan first if the work is large or spans
@@ -171,6 +169,11 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
   where `git add <repo-relative-path>` exits 128. Use
   `git -C "$(git rev-parse --show-toplevel)" add <paths>` for all staging here and
   in Step 6.
+- **HARD RULE — Step 2 is unconditional.** Run fetch + ahead/behind before
+  triaging any comment, whatever the branch state. "Already up to date" is an
+  outcome of running it, not a reason to skip. Step 9's test-merge is a conflict
+  check, not a sync substitute — a skipped Step 2 is a violation even when Step 9
+  clears clean.
 
 ## Step 3: Fetch Unresolved Comments
 
@@ -297,34 +300,22 @@ commit, push, or post replies.
 skip rationale during partition; rationale concedes the comment is right →
 re-route into `obvious_fixes[]`.
 
-**Bulk-queue preview for obvious fixes.** Obvious-fix items exist → present one
-preview and ask once before queueing:
+**Bulk-queue preview for obvious fixes.** Obvious-fix items exist → present the
+bulk-queue preview (commands.md §5) once before queueing. Default
+(silence/affirmative/unrelated): queue all obvious-fix items into `fixes_to_apply`
+and proceed. Only explicit `stop` or `consult <indices>` diverts.
 
-> "**Bulk-queue candidates ({K} obvious fixes — skip rationale empty / no valid reason):**
-> 1. {path}:{line} — {summary}  2. ...
->
-> Queuing all {K} for Step 6 (one commit per triage unit; replies/resolution
-> normal; runs only after all judgment-required items triaged). Reply **stop**
-> for per-comment consultation, or list indices to consult."
+**Present one judgment-required comment at a time.** For each, present the full §4
+suggestion format then the per-comment prompt (commands.md §5). `a`, `e`, `d`,
+`t`, `s`, `r` are reserved; extra options use other letters and must not redefine
+them. Wait for the response before the next comment.
 
-Default (silence/affirmative/unrelated): queue all obvious-fix items into
-`fixes_to_apply` and proceed. Only explicit `stop` or `consult <indices>` diverts.
-
-**Present one judgment-required comment at a time.** For each, present the full
-suggestion format and ask:
-
-> **Comment {n}/{total}:** How would you like to handle this?
-> **(a)** Apply the suggested fix
-> **(e)** Edit the suggested fix (describe how to adjust it)
-> **(d)** Dismiss — not applicable / false positive (reuses the Step 4 `Why skip` rationale)
-> **(t)** Defer to ticket — track in a follow-up issue/ticket instead of fixing in-PR
-> **(s)** Skip — leave as-is without resolving
-> **(r)** Rethink — re-analyze this comment more thoroughly before deciding
-> {additional context-specific options using non-reserved letters}
-
-`a`, `e`, `d`, `t`, `s`, `r` are reserved; extra options use other letters and
-must not redefine them. Wait for the response before the next comment. Never
-batch two consultation prompts in one message.
+**HARD RULE — pre-emit count gate (mechanical).** Before sending a Step 5
+message, count its `Comment {n}` decision headers; > 1 → hard-stop and split, one
+message per comment. Fires even when items feel similar or the flow is already
+"listing"; a batched prompt lets the user reply `a a d` — forbidden. The
+intention-based rule above kept failing here, so the count check is its
+structural guard.
 
 **Decision handling** — record exactly one outcome per decision; `a`/`e`/`d`/`t`
 all mark `resolve_after_push`:

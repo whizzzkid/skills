@@ -105,6 +105,33 @@ Every suggestion includes reasoning for applying and discarding:
 `{bot_badge}` is `🤖 (bot)` for bots, omitted otherwise. Be honest in the skip
 rationale; if no good skip reason exists, say so.
 
+## Step 5 — Consultation prompts
+
+Bulk-queue preview (obvious fixes; ask once before queueing):
+
+```
+**Bulk-queue candidates ({K} obvious fixes — skip rationale empty / no valid reason):**
+1. {path}:{line} — {summary}  2. ...
+
+Queuing all {K} for Step 6 (one commit per triage unit; replies/resolution
+normal; runs only after all judgment-required items triaged). Reply **stop**
+for per-comment consultation, or list indices to consult.
+```
+
+Per-comment prompt (one judgment-required comment at a time, after the §4
+suggestion format):
+
+```
+**Comment {n}/{total}:** How would you like to handle this?
+**(a)** Apply the suggested fix
+**(e)** Edit the suggested fix (describe how to adjust it)
+**(d)** Dismiss — not applicable / false positive (reuses the Step 4 `Why skip` rationale)
+**(t)** Defer to ticket — track in a follow-up issue/ticket instead of fixing in-PR
+**(s)** Skip — leave as-is without resolving
+**(r)** Rethink — re-analyze this comment more thoroughly before deciding
+{additional context-specific options using non-reserved letters}
+```
+
 ## Step 6 — Issue-class scan before each fix
 
 ```bash

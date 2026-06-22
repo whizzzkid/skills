@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.16-165651'
+  version: '2026.06.22-174243'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -262,6 +262,21 @@ When a Docker build fails:
    being copied
 4. **Check multi-stage references** — ensure `COPY --from=<stage>` references
    valid stages
+
+### dind Network Failures — Check Floating Tags Before `--network=host`
+
+**HARD RULE:** When a `RUN` step inside `docker build` fails with a network or
+fetch error in a docker-in-docker (dind) environment, check the stage's `FROM`
+tag before reaching for `--network=host`.
+
+- A floating base tag (`rust:bookworm`, `node:slim`, `:latest`) that updated
+  upstream invalidates the layer cache, forcing the `RUN` to execute cold — and
+  the cold run needs external network the dind bridge network lacks.
+- Pin the tag to match the project's tool-version file (`mise.toml`,
+  `.tool-versions`): `rust:bookworm` → `rust:1.93-bookworm`. A stable cache means
+  the `RUN` never runs cold inside dind.
+- `--network=host` masks the real cause; reserve it for when pinning is impossible
+  or the failure is not cache-related.
 
 ### Common Exit Codes
 
