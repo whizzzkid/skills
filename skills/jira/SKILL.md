@@ -35,7 +35,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.22-181422'
+  version: '2026.06.22-145005'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -84,6 +84,14 @@ found, never guess and transition.
 or key is in the agent's context → Stage 0 + 1 + 6 run before any other
 response that depends on ticket context. Skip only when MCP unavailable
 (silent-skip rule).
+
+**HARD RULE — wk-jira claim precedes wk-workflow Phase 1.** A Jira key/URL
+in the session-opening prompt is a development claim, not a side-effect of
+the work. Run Stage 0 + 1 + 2 (surface + assign + In Progress + sprint +
+comment) **before** `wk-workflow` Phase 1 planning begins — `wk-workflow`'s
+"any development task" trigger must not fire first and skip the claim. The
+ticket lands In Progress at session start, not retroactively after the PR
+exists.
 
 ---
 

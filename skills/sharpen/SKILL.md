@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.22-174243'
+  version: '2026.06.22-145005'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -239,7 +239,14 @@ not in the diff will cause a 422 error from the GitHub API.
 - Reject ticket-shaped example tokens. Grep the proposed edit against `[A-Z][A-Z0-9]+-\d+`; any match — even an invented placeholder — trips the `check-ticket-refs` hook, which matches on shape, not provenance. Replace with an angle-bracket placeholder (`<child-key>`, `<KEY>`) or the repo's `BOARD-NUM` form.
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
 - Scrub the staged learning and retrospect archive files too — not only the skill edits and references. A `.learned.md` rename commits the archive into the public repo; an internal tool/project/service/org name there blocks the commit at the prohibited-term hook.
-- Grep every staged file against the repo's authoritative term list, not just the ad-hoc categories above: `grep -iEf .skillprohibit <staged files>` (skill edits, references, AND renamed `.learned.md`/retro archives). Anonymize every hit. The category grep misses internal codenames the list catches; the `check-prohibited` hook is the backstop, not the first line — relying on it costs a failed-commit + amend cycle.
+- Grep every staged file against the repo's authoritative term list, not just the ad-hoc categories above. Feed the scan the **authoritative staged set**, never a hand-built path list — a manual list silently under-matches and diverges from what the commit carries:
+
+  ```bash
+  grep -iEnf .skillprohibit $(git diff --cached --name-only)
+  ```
+
+  Covers skill edits, references, AND renamed `.learned.md`/retro archives. Anonymize every hit.
+- Treat a NONE result as **unverified, not proof-of-clean** — sanity-check the grep fires against a known-positive line before trusting it. The category grep misses internal codenames the list catches; the `check-prohibited` hook is the backstop, not the first line — relying on it costs a failed-commit + amend cycle.
 
 ## Step 6: Present for Review
 

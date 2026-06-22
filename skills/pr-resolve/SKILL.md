@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.22-174243'
+  version: '2026.06.22-145005'
 ---
 
 # PR Resolve
@@ -138,6 +138,11 @@ Co-author session adds:
 
 Sync with both base and remote PR branch before triaging. Commands: commands.md §2.
 
+- **HARD RULE — conflict-marker pre-flight is the first action.** Before any
+  fetch or comment read, run `git diff --check`. Any conflict markers → resolve
+  (or delegate to `wk-pr-update`) to a clean tree before fetching one comment.
+  Never triage or fix on a conflicted tree — it embeds markers in commits or
+  generates suggestions against a stale diff.
 - **Reconcile remote PR branch first** — fetch, rebase onto `origin/$HEAD_BRANCH`
   if remote is ahead. Keeps next push fast-forward; avoids a divergent second
   merge commit.
@@ -147,24 +152,21 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
   no-force-push contract); on an unresolvable conflict, validation regression, or
   required forced push it reports → stop and surface the blocker.
 - **Base-advance conflict (upstream PR merged) → rebase onto the new base to
-  resolve.** When base integration conflicts because the base moved, the new
-  base is authoritative; replay the branch's commits onto it, resolving each
-  conflict against the base:
+  resolve.** Base moved → the new base is authoritative; replay the branch onto
+  it, resolving each conflict against the base:
   ```bash
   git fetch origin "$BASE_BRANCH"
   git rebase --onto "origin/$BASE_BRANCH" "$(git merge-base HEAD "origin/$BASE_BRANCH")"
   ```
-  Re-verify, resume only on a clean tree, and push the rewritten branch with
-  `git push --force-with-lease` (Hard Rule 4 exception) — never bare `-f`. Never
-  triage, fix, or push on a conflicted or unmerged tree.
+  Re-verify, resume only on a clean tree, push with `git push --force-with-lease`
+  (Hard Rule 4 exception) — never bare `-f`.
 - **HARD RULE — audit dropped safety guards after each conflict resolution.** The
   base side (HEAD during rebase) is canonical `origin/$BASE_BRANCH`; a guard there
-  was added intentionally. Diff both sides for signal/context/cleanup primitives
+  was intentional. Diff both sides for signal/context/cleanup primitives
   (`signal.Stop`, `context.Cancel*`, `sync.*`, `defer`, `close(`, `os.RemoveAll`,
-  resource-release calls); any present on the base side but absent from the
-  resolved result is a dropped guard — restore it unless the incoming commit
-  explicitly removed it with rationale. Green compile/tests do **not** prove it
-  unneeded. Block until each absence is confirmed.
+  resource releases); any on the base side but absent from the result is a dropped
+  guard — restore it unless the incoming commit removed it with rationale. Green
+  compile/tests do **not** prove it unneeded; block until each absence is confirmed.
 - **Stage resolved files from the repo root.** Session cwd may be a subdirectory,
   where `git add <repo-relative-path>` exits 128. Use
   `git -C "$(git rev-parse --show-toplevel)" add <paths>` for all staging here and
@@ -424,7 +426,7 @@ replies sequentially, routed by surface (commands.md §8):
   combined reply** (you cannot reply to sub-sections of an issue comment).
 - React on the original: `+1` for `a`/`e`/`t`; `-1` for `d`; `heart` for follow-up questions; none for `s`/`r`. Reaction failures are fire-and-forget.
 - Before bot replies, refresh bot thread IDs: re-run the GraphQL reviewThreads query against post-push HEAD, match by `(path, line, root_comment.body_excerpt)`; skip replies for dropped findings.
-- Resolve via GraphQL `resolveReviewThread` (commands.md §8); `NOT_FOUND` → refresh IDs once, match by stable identity, retry; no match/retry fails → log and continue. REST comment IDs die on force-push/bot replacement (GraphQL thread IDs are stable), so an inline-reply 404 → log and keep the thread in `resolve_after_push`. **Fully outdated thread (`line: null`)** → skip the REST reply (every REST op 404s, incl. GET); post one top-level `gh pr comment` summarizing fixes to the outdated threads instead.
+- Resolve via GraphQL `resolveReviewThread` (commands.md §8); `NOT_FOUND` → refresh IDs once, match by stable identity, retry; no match/retry fails → log and continue. REST comment IDs die on force-push/bot replacement (GraphQL thread IDs are stable), so an inline-reply 404 → log and keep the thread in `resolve_after_push`. **Fully outdated thread (`line: null`)** → skip the REST reply (every REST op 404s, incl. GET); post one top-level `gh pr comment` summarizing the fixes instead.
 - Detect in-place bot summary updates by re-fetching each captured bot issue comment: active→clean = positive resolution; added findings = regression → re-enter Step 4.
 - Post-push comments matching `(path, line, concern)` from this session are already-addressed echoes: reply with the commit link, resolve, do not re-prompt or re-commit.
 

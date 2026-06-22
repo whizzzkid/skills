@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.22-174243'
+  version: '2026.06.22-145005'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -148,23 +148,22 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.36 | Named returns + deferred cleanup that reads a named return | Grep for `return <zero-literal>, ...` after the defer is established. An explicit return sets the named returns *before* deferred funcs run, so cleanup sees the zero value (e.g. `os.RemoveAll("")` → silent no-op, leaked resource). | Blocker | Assign then bare-return (`err = ...; return`) so the named var keeps its real value for cleanup; verify any comment claiming the defer cleans up on any error path. |
 | 2.37 | Gate reorder moves a cheap guard before a deeper call | Reordering short-circuits a failure path earlier → calls it used to make become unreachable. Enumerate every now-unreachable call; check each `not_to receive` test covers all, not just the deepest. | Suggestion | Add the missing negative assertions; escalate to Blocker when a now-unreachable call was previously unstubbed and would hit the network/a real dependency. |
 | 2.38 | New/renamed default-or-fallback constant | Grep all files for string literals describing the OLD default behavior — display-label and logging helpers often hard-code it, missed by a call-site-only sweep. | Blocker | Update each stale literal or justify; a logging path emitting the old name looks correct to operators. |
-| 2.39 | Ruby diff (comments, lambdas) | When `.rubocop.yml` enables `Style/AsciiComments`, grep new `+` comment lines for non-ASCII (`[^\x00-\x7F]` — em-dash, curly quotes, arrows). Also flag any `-> {` lambda spanning multiple lines OR containing a `rescue` AND inside an array literal — the brace form is a parse error there. | Blocker | Replace non-ASCII with ASCII (the cop fails CI); convert array-position multi-line/rescue lambdas to `-> do ... end`. |
 | 2.40 | Diff touches token scope, secret access, or privilege escalation | Verify the PR body carries `## Problem` (why the elevated scope), `## Approach` (why narrower alternatives were ruled out), and `## Testing` (how the permission was exercised). | Blocker | Any section absent on a security-sensitive diff is a finding; placeholder-only bodies fail checks. |
 | 2.43 | New field beside an existing same-primitive-type field | Grep for a resolver/normalizer/sanitizer on the sibling (`resolve*`/`normalize*`/`sanitize*`); confirm the new field gets equivalent treatment. | Blocker | Apply the same normalizer. Blocker when the field feeds a security-sensitive consumer (paths, URLs, shell args, allow-dir lists) — a raw path/URL field is a traversal/SSRF vector. |
 | 2.44 | Merge/rebase conflict resolved at a function call site | Compare both sides' arg counts against the current base-branch signature; base is authoritative for required params (a side missing one is stale, not caller-wins). Also diff both sides for safety primitives (`signal.Stop`, `context.Cancel*`, `sync.*`, `defer`, `close(`, `os.RemoveAll`, resource releases) present on either side but absent from the result — base is canonical, so a missing guard is a dropped contract. | Blocker | Take the side matching the base signature; flag the short call. Restore any base-side safety primitive absent from the result unless the incoming commit removed it with rationale; green tests don't prove it unneeded. |
-| 2.47 | Bash fake/stub branching on arg/URL content (`if [[ $arg == *pat* ]]`) | A matched branch with no terminal `exit`/`return` before its `fi` falls through to the sibling branch's response — a test omitting the branch's params passes via the wrong path (e.g. beta-unavailable case silently returns the stable URL). | Blocker | End each branch with an explicit `exit`/`echo …; exit 0` returning that branch's correct fallback (`echo '[]'; exit 0` for not-yet-available); never let a matched branch fall through. |
+| 2.47 | Bash fake/stub that branches on arg/URL content or writes output a real tool emits only under a flag | (a) A matched branch with no terminal `exit`/`return` before its `fi` falls through to the sibling's response — a test omitting that branch's params passes via the wrong path. (b) A stub writing output unconditionally, ignoring whether the gating flag (`--fail-with-body`, etc.) is in `$@`, makes a production regression away from that flag undetectable. | Blocker | End each branch with explicit `exit` returning its own fallback (`echo '[]'; exit 0`); gate conditional output on flag presence (`for a in "$@"; do [[ $a == --flag ]] && has=true; done`). Model both flag-present and flag-absent paths so the stub is a contract gate, not a shape-mimicker. |
 | 2.48 | Finding or identity/dedup key relies on an LLM round-trip preserving a field verbatim | Grep the prompt/skill builder for an explicit verbatim-echo instruction for that exact field — absence confirms the stability is an unenforced bet, not a guarantee. If test mocks return the field verbatim, the rephrase path is uncovered. | Blocker | Pin the field in the prompt (fix at source) over a downstream key workaround; add a rephrasing-mock regression test. |
 | 2.49 | Tempfile response capture in a curl error handler (`mktemp` + `-o "$f"` + `cat "$f"`) | `-f`/`--fail` exits before writing the body to `-o` on HTTP 4xx/5xx, so the handler reads an empty file on exactly the failure cases it targets. | Blocker | Use `--fail-with-body` (curl 7.76+) or drop `-f`; the response file must be written on error for the capture to work. |
-| 2.50 | Diff adds a log-level filter (custom `io.Writer` routing by string content) | Grep every failure-path log call in the package for the token the filter matches; a site using a reformatting helper (e.g. `[session]`-prefixed) that strips the token is a silent gap — the filter drops the diagnostics its own doc comment promises. | Blocker | Emit the filter's token at every failure callsite or match the helper's format. |
-| 2.51 | Test redirects a global logger | Grep test files for `log.SetOutput(nil)` — it sets the global writer to nil, not stderr; a later `log.Printf` in any test in the same binary writes to nil and hangs until timeout. | Blocker | Save/restore: `orig := log.Writer(); … t.Cleanup(func(){ log.SetOutput(orig) })`. Never reset a global logger writer to nil. |
+| 2.52 | Helper extracted from a function that accepts `context.Context` | Grep the helper body for `context.Background()`/`context.TODO()` when the calling function takes a `ctx context.Context`/`parentCtx` param — caller-supplied cancellation (SIGINT, timeout) is silently dropped. An error-switch `case errors.Is(err, context.Canceled)` that became unreachable confirms the context was never plumbed through. | Blocker | Add `parentCtx context.Context` as the helper's first param with a `nil → context.Background()` guard, matching the original function; verify the Canceled case is reachable. |
 
-Lower-frequency shape-specific sweeps (2.41, 2.42, 2.45, 2.46) live in
+Lower-frequency, language-specific sweeps (2.39, 2.41, 2.42, 2.45, 2.46, 2.50,
+2.51) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 
 ## Step 3: Fresh Adversarial Subagent
 
-After sweeps, dispatch a fresh subagent with no prior context. Pipe `git diff "$BASE...HEAD"` directly; never hand-transcribe; verify hunk boundaries if excerpting.
+After sweeps, dispatch a fresh subagent with no prior session context. Pipe `git diff "$BASE...HEAD"` directly plus the PR title/body purpose section; never hand-transcribe; verify hunk boundaries if excerpting.
 
 Subagent must be adversarial, objective, naming-aware, and diff-sensitive, plus the stances below:
 
@@ -174,6 +173,7 @@ Subagent must be adversarial, objective, naming-aware, and diff-sensitive, plus 
 - **Introduction-claim-aware:** before calling a behavior newly introduced, grep the `-` lines of the same hunk.
 - **Runtime-behavior-cautious:** any claim about tool behavior under failure (exit codes, signal handling, `--write-out`/buffering, subshell/pipe semantics) is at most `question` with a repro request — never `blocker` from first principles; verify in the playground (Step 5).
 - **Absence-claim-cautious:** a finding that a "safe no-op" or missing error-path write is a defect must cite a concrete failure scenario. Absence of defensive code is not itself a defect — writing a default (e.g. `{}`) on read failure can clobber legitimate local-only state. Cap at `question` without a repro.
+- **Intent-aware:** weigh the PR title/body purpose (piped in above). A change the PR explicitly documents as intentional, test-only, or throwaway (e.g. a CI gate removed to force a step to run) is stated context — do not flag documented-intentional design as a `blocker`. The guard still holds on production branches, where the pattern is unflagged.
 
 ### Categories to Hunt
 

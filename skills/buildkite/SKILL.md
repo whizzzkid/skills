@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.18-004256'
+  version: '2026.06.22-145005'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -265,11 +265,21 @@ An internal registry mirror may be **pre-seeded**, not pull-through — referenc
 - Verify the exact repository exists under the mirror before pinning a step to it — do not assume other working `library/*` images prove a pull-through cache.
 - Repo absent → reuse an image already referenced in the pipeline and install the extra toolchain into it, pinned + checksummed.
 
-## Opening in Browser
+## Build URL vs Opening in Browser
 
-```bash
-bk build view -p <pipeline> -b <branch> -w
-```
+- **To retrieve a build URL** (to share or link), read it from JSON — never `-w`:
+
+  ```bash
+  bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | jq -r '.web_url'
+  ```
+
+- **Reserve `-w` / `--web` for when the user explicitly asks to open the build** — it launches the default browser immediately as a side effect, not a URL-retrieval flag:
+
+  ```bash
+  bk build view -p <pipeline> -b <branch> -w
+  ```
+
+- Never run `-w` just to obtain a URL → it opens an unexpected browser tab.
 
 ## Canonical download path
 
