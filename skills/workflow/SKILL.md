@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.19-183410'
+  version: '2026.06.22-170517'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -29,7 +29,7 @@ metadata:
 Master orchestration for development tasks. Follow this sequence exactly:
 
 ```
-Plan -> Implement (commit per step + docs) -> Test -> Refactor Scan
+Plan -> Implement (commit per step + docs) -> Test -> Refactor & Deletion Scan
   -> Live Preview (frontend only) -> Adversarial Review -> PR
   -> CI Fix Loop -> Resolve Comments -> Docs Audit -> Retro
 ```
@@ -217,7 +217,7 @@ Behavioral guard tests must reach the guarded branch. `[[ -f "$x" ]]` follows sy
 
 ---
 
-## Phase 3.5: Refactor-Opportunity Scan
+## Phase 3.5: Refactor & Deletion-Safety Scan
 
 After tests pass and before adversarial review, scan the diff and neighboring code for refactor/reuse opportunities.
 
@@ -230,6 +230,15 @@ Classify each opportunity:
 - **Skip** — no real win or premature abstraction.
 
 Re-run tests after every Apply-now change. A clean diff is valid → record "refactor scan: no opportunities" in Phase 8.
+
+### Deletion-safety scan
+
+For every removed line/symbol/file in the diff, classify the deletion intentional or accidental — an unexplained removal is a blocker, not a style nit.
+
+- Removed symbol (function, const, field, export) → grep the repo for surviving references; any live caller is an accidental drop → restore or migrate it.
+- Removed validation, guard, error-handling, cleanup, or test → confirm a replacement covers the same case; no replacement = regression → restore it.
+- Removed file → confirm nothing still imports it and its responsibility moved elsewhere.
+- Deletion collateral to the change's stated goal (unrelated cleanup) → split into its own commit, never bundle it silently.
 
 ---
 
