@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.19-183410'
+  version: '2026.06.22-180154'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -365,6 +365,16 @@ EOF
 Repo template used for a stacked PR → use the template as the body structure and
 inject the `## Stack` section listing all parts with PR numbers and status,
 following the same format shown above.
+
+### Auto-populate stacked cross-reference links
+
+When `$BEST_BASE` is another PR's head branch (the stacking signal from Step 1),
+populate the `## Stack` cross-reference links from the detected ordering — never
+leave them for manual post-creation `gh pr edit` passes:
+
+- Resolve each stack member's number/URL up front (`gh pr list --state open --json number,headRefName,baseRefName,url`), order by the base→head chain, and write canonical `[#NNN]({url})` links for prev/next into the body **before** `gh pr create` — so the first pass ships complete links.
+- After creating the new PR, back-link it into the immediate parent: one `gh pr edit {parent}` adding this PR as its "next". Edit only the adjacent member, not the whole chain.
+- A PR not yet created (later part) → list it as `pending` without a link; backfill when it exists.
 
 ### Markdown preview links
 

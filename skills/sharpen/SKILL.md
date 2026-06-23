@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.22-175725'
+  version: '2026.06.22-180154'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -335,6 +335,7 @@ Do not return control until all four pass:
 2. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Never blanket `git add -A` — the working tree routinely carries *unprocessed* inbox files (`learnings/`, `retrospect/`) from other sessions, and `-A` bundles them into this commit. Add processed paths explicitly. If `-A` is unavoidable, `git reset` every `learnings/`/`retrospect/` path this run did not process before committing.
    - Re-check the index after any hook-blocked commit.
+   - **Untracked skill dir from another session blocks `check-readme-index`.** The hook scans the whole `skills/` tree on disk (not staged paths), so any untracked `skills/<name>/` left by another run fails it. Do not `git add` or index another session's incomplete skill. Move it aside (`mv skills/<name> /tmp/agent/...`), land the scoped commit, push, then restore it untouched.
    - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link.
    - Stage a `.learned.md` rename by adding only the new `.learned.md` path.
 3. **Push once:** after all commits exist, push a single time.
