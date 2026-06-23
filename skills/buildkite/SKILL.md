@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.22-145005'
+  version: '2026.06.23-221017'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -213,6 +213,11 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | jq -
 
 - Build still running → tell the user and offer to check again later.
 - **HARD RULE: never foreground-poll.** Do not run an `until`/`while` loop on `bk build view` in the foreground — it blocks the turn (often 5–10 min) and forces the user to interrupt to regain control. Run a single status check and report state. If a watch is genuinely needed, run it with `run_in_background: true`.
+- **HARD RULE: a monitoring announcement states URL + failing step + next action — never just "monitoring in background."** A bare "watching CI" leaves the user unable to tell whether the failure is already identified or still being discovered, forcing an interrupt. Immediately after starting a watch, report all three:
+  - build URL — `bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | jq -r '.web_url'`
+  - the current failing step (if already known), and
+  - the next diagnostic action. Example: "Build #N running — {URL}. Watching the RuboCop and spec steps; will fetch logs on first failure."
+- **Non-required checks do not gate a merge.** Informational checks (security scanners, dependency bots) often queue indefinitely. Never block or keep polling on them — gate only on GitHub *required* checks via `gh pr checks --json name,state,required | jq 'select(.required==true)'` (pr-merge Step 2 owns this).
 
 ## Pipeline Discovery
 

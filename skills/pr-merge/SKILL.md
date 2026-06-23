@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.22-175725'
+  version: '2026.06.23-221017'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -79,6 +79,10 @@ gh pr checks {number} --json name,state,required \
   | jq '.[] | select(.required == true) | {name, state}'
 ```
 
+- **Important — poll and gate on `required == true` only.** The `jq` filter above
+  drops non-required checks for a reason: informational checks (security scanners,
+  dependency bots) often queue indefinitely. Never wait on, poll, or block the
+  merge for a non-required check — report it as informational, not a blocker.
 - All required checks must be `state: SUCCESS` (or `NEUTRAL`/`SKIPPED` if the
   repo treats them as passing).
 - Any required check `state: FAILURE` or `ERROR` → block:

@@ -4,7 +4,7 @@
 > merge, transition the linked ticket to its terminal state, and surface
 > any follow-ups and deferred action items.
 
-**Version:** `2026.06.22-175725`
+**Version:** `2026.06.23-221017`
 
 ## Invocation
 
@@ -34,7 +34,7 @@ flowchart TD
 
 All four must pass; any failure blocks and reports what needs fixing:
 
-- CI: all required checks green on HEAD SHA
+- CI: all required checks green on HEAD SHA (non-required checks are informational — never polled or blocked on)
 - Reviews: `reviewDecision = APPROVED` (or no required reviewers)
 - Threads: zero unresolved review threads (including self-review)
 - Action items: no unchecked `- [ ]` outside designated deferred sections

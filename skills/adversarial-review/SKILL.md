@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.23-220111'
+  version: '2026.06.23-221017'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash

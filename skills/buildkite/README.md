@@ -2,7 +2,7 @@
 
 > Use when working with Buildkite CI — checking build status, investigating failures, viewing job logs, or monitoring builds after push.
 
-**Version:** `2026.06.22-145005`
+**Version:** `2026.06.23-221017`
 
 ## Invocation
 
@@ -38,3 +38,4 @@ flowchart TD
 - **Env vars must be forwarded at every layer** (pipeline YAML → build script → docker-compose → Dockerfile `ENV`) or they are silently dropped before reaching the container.
 - **Artifact downloads use a namespaced path** `/tmp/agent/buildkite/<build>/<job_id>/...` to prevent cross-session overwrites and provide a greppable audit trail.
 - **Never foreground-poll** — an `until`/`while` loop on `bk build view` blocks the turn for minutes; run a single status check, or watch with `run_in_background: true`.
+- **A monitoring announcement carries URL + failing step + next action** — never just "monitoring in background"; the user must be able to tell whether the failure is already identified. Non-required checks (security scanners, dep bots) never gate a merge — gate only on GitHub `required == true` checks (pr-merge Step 2 owns this).
