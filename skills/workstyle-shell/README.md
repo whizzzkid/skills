@@ -2,7 +2,7 @@
 
 > Enforces safe, idiomatic shell-script conventions on every shell file the agent writes or edits.
 
-**Version:** `2026.06.22-175725`
+**Version:** `2026.06.23-220111`
 
 ## Invocation
 
@@ -19,6 +19,8 @@
 - `[[ … ]]` over `[ … ]` in bash.
 - Heredoc for multi-line strings; avoid concatenated `echo` chains.
 - Named constants for magic values at the top of the script.
+- One-line comment above each function (scripts with ≥3 functions) — describe what it does and any non-obvious output format.
+- No `${VAR:?msg}` guard when an `EXIT` trap is registered — bash 3.2 resets `$?` to 0 on `:?` failure; use an explicit `if [[ -z … ]]; then exit 1; fi`.
 - Probe capability, don't parse error text — branch on exit code against a known-good input.
 
 ## Noteworthy

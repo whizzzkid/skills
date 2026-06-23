@@ -15,7 +15,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.22-175725'
+  version: '2026.06.23-220111'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -50,6 +50,11 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
 - **`[[ … ]]`** over `[ … ]` in bash.
 - **Heredoc** for multi-line strings; avoid concatenated `echo` chains.
 - **Named constants** for magic values at the top of the script.
+- **One-line comment above each function** in scripts with ≥3 functions —
+  describe what it does and any non-obvious output format (e.g.
+  `# Returns the OS name lowercased for package lookup`). Function names lack
+  type signatures/docstrings, so this is the only signal about inputs, side
+  effects, and output shape. Single-/two-function scripts may skip it.
 - **Capture a non-zero exit with `|| status=$?`, never `cmd; status=$?`.** Under
   `set -e`, the `;` separator does not suppress `errexit` — a command that exits
   non-zero terminates the script before the `status=$?` assignment runs. Only `||`
@@ -68,6 +73,16 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   script-level trap cleans up at script scope (init to `""` before the first
   function call), or register tempfiles into a global array the trap iterates.
   Flag any trap referencing a variable that is `local` where it's assigned.
+- **Never guard with `${VAR:?msg}` when an `EXIT` trap is registered.** On bash
+  3.2 (macOS default), an `EXIT` trap firing on a `:?` expansion failure resets
+  `$?` to `0` before the trap body runs → the script exits `0` and the guard
+  silently passes. Works on bash 4/5 (Linux CI), fails silently on macOS. Use an
+  explicit check instead:
+
+  ```bash
+  if [[ -z "${VAR:-}" ]]; then echo "VAR is required" >&2; exit 1; fi
+  ```
+
 - **Target bash 3.2** for any hook or script that may run under the macOS
   system bash (`/bin/bash`). Avoid bash-4+ builtins — `mapfile`/`readarray`,
   associative arrays (`declare -A`), `${var^^}`/`${var,,}` case conversion,

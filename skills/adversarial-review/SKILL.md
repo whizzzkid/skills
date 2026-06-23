@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.22-175725'
+  version: '2026.06.23-220111'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -140,10 +140,10 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.28 | CI trigger payload `commit` field | Verify it is not sourced from foreign-repo SHA envs (`REVIEW_`, `TARGET_`, `SOURCE_`). | Blocker | Use pipeline repo SHA. |
 | 2.29 | `curl -s` response parsing | Grep for silent mode without `-S`. | Suggestion | Require `-sS` plus exit-status check. |
 | 2.30 | Source fix with committed artifact | Detect `.wasm`, generated code, `go:generate`, `go:embed`, build output. | Blocker | Rebuild and re-commit before clear. |
+| 2.53 | Build script passes `-ldflags "-X pkg.Symbol=value"` (or any stringly-typed cross-language symbol contract) | The symbol name is an unchecked contract between the builder and the consuming language; a string-match assertion in the builder's own test does not lock the symbol name or output path, and a rename on either side passes both suites silently. Verify a test builds the real binary with that exact flag and asserts the stamped value via the binary's own output (`--version`). | Blocker | Add an end-to-end stamped-binary exec test; a builder-side string match is insufficient coverage. |
 | 2.33 | Raw-presence parse fallback | Grep parse-with-fallback shapes. | Blocker | Parse first; fallback on parsed result; add invalid-primary test. |
 | 2.34 | Spec/doc routing claim (which method a gate calls, which path bypasses a hook) | Grep the PR review thread for reviewer statements on the same routing. | Blocker | A reviewer who read the source is ground truth; resolve contradictions before asserting an inferred claim. |
 | 2.35 | Diff changes a structured return-type requirement in one doc section | Grep the whole document for every field comment that stores that value; confirm shape and vocabulary match. | Blocker | Update lagging field comments; keep one canonical name per value across all sections. |
-| 2.36 | Named returns + deferred cleanup that reads a named return | Grep for `return <zero-literal>, ...` after the defer is established. An explicit return sets the named returns *before* deferred funcs run, so cleanup sees the zero value (e.g. `os.RemoveAll("")` → silent no-op, leaked resource). | Blocker | Assign then bare-return (`err = ...; return`) so the named var keeps its real value for cleanup; verify any comment claiming the defer cleans up on any error path. |
 | 2.37 | Gate reorder moves a cheap guard before a deeper call | Reordering short-circuits a failure path earlier → calls it used to make become unreachable. Enumerate every now-unreachable call; check each `not_to receive` test covers all, not just the deepest. | Suggestion | Add the missing negative assertions; escalate to Blocker when a now-unreachable call was previously unstubbed and would hit the network/a real dependency. |
 | 2.38 | New/renamed default-or-fallback constant | Grep all files for string literals describing the OLD default behavior — display-label and logging helpers often hard-code it, missed by a call-site-only sweep. | Blocker | Update each stale literal or justify; a logging path emitting the old name looks correct to operators. |
 | 2.40 | Diff touches token scope, secret access, or privilege escalation | Verify the PR body carries `## Problem` (why the elevated scope), `## Approach` (why narrower alternatives were ruled out), and `## Testing` (how the permission was exercised). | Blocker | Any section absent on a security-sensitive diff is a finding; placeholder-only bodies fail checks. |
@@ -152,10 +152,9 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.47 | Bash fake/stub that branches on arg/URL content or writes output a real tool emits only under a flag | (a) A matched branch with no terminal `exit`/`return` before its `fi` falls through to the sibling's response — a test omitting that branch's params passes via the wrong path. (b) A stub writing output unconditionally, ignoring whether the gating flag (`--fail-with-body`, etc.) is in `$@`, makes a production regression away from that flag undetectable. | Blocker | End each branch with explicit `exit` returning its own fallback (`echo '[]'; exit 0`); gate conditional output on flag presence (`for a in "$@"; do [[ $a == --flag ]] && has=true; done`). Model both flag-present and flag-absent paths so the stub is a contract gate, not a shape-mimicker. |
 | 2.48 | Finding or identity/dedup key relies on an LLM round-trip preserving a field verbatim | Grep the prompt/skill builder for an explicit verbatim-echo instruction for that exact field — absence confirms the stability is an unenforced bet, not a guarantee. If test mocks return the field verbatim, the rephrase path is uncovered. | Blocker | Pin the field in the prompt (fix at source) over a downstream key workaround; add a rephrasing-mock regression test. |
 | 2.49 | Tempfile response capture in a curl error handler (`mktemp` + `-o "$f"` + `cat "$f"`) | `-f`/`--fail` exits before writing the body to `-o` on HTTP 4xx/5xx, so the handler reads an empty file on exactly the failure cases it targets. | Blocker | Use `--fail-with-body` (curl 7.76+) or drop `-f`; the response file must be written on error for the capture to work. |
-| 2.52 | Helper extracted from a function that accepts `context.Context` | Grep the helper body for `context.Background()`/`context.TODO()` when the calling function takes a `ctx context.Context`/`parentCtx` param — caller-supplied cancellation (SIGINT, timeout) is silently dropped. An error-switch `case errors.Is(err, context.Canceled)` that became unreachable confirms the context was never plumbed through. | Blocker | Add `parentCtx context.Context` as the helper's first param with a `nil → context.Background()` guard, matching the original function; verify the Canceled case is reachable. |
 
-Lower-frequency, language-specific sweeps (2.31, 2.32, 2.39, 2.41, 2.42, 2.45,
-2.46, 2.50, 2.51) live in
+Lower-frequency, language-specific sweeps (2.31, 2.32, 2.36, 2.39, 2.41, 2.42,
+2.45, 2.46, 2.50, 2.51, 2.52) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 
@@ -244,7 +243,7 @@ Bot reviewers exist (`*[bot]`) → append:
 On blocked verdict:
 
 1. Caller fixes each blocker via `wk-commit` (one atomic conventional commit per fix).
-2. Fix every structurally-parallel sibling in the same round.
+2. Fix every structurally-parallel sibling in the same round. For a value/message/constant-reporting defect, grep the **entire changed file** (not just the flagged line) for every site of the same shape (e.g. `grep "timed out after %v" <file>`) — a refactor that extracts a helper clones the defect onto a different line; treat each match as the same fix unless divergence is justified.
 3. Re-invoke this skill.
 4. Loop until clear, max 3 cycles.
 5. After 3 cycles, stop and surface to user; recurrence means diagnosis/design is off.

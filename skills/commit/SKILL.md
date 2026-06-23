@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.18-004257'
+  version: '2026.06.23-220111'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -386,6 +386,19 @@ Or:
 Silence after a push that touched an open PR is itself a violation of this rule.
 
 ## Post-CI-Fix Squash Offer
+
+### Single trivial follow-up → offer `--amend` at the fix site
+
+When a CI fix produces one trivial follow-up that is clearly a correction to the
+*immediately prior* commit, surface an explicit `--amend` suggestion for the user
+to approve in the same response — do not silently create a separate commit and
+defer cleanup to retro.
+
+- Auto mode blocks `git commit --amend` as history-rewriting → it needs explicit
+  user confirmation. Ask once, at the fix site, rather than accumulating commits
+  the user must later squash by hand (`git rebase -i HEAD~N`).
+- Prior commit already pushed → the amend forces a force-push; flag that in the
+  same ask (force-push rules below apply).
 
 After the CI fix loop (`wk-workflow` Phase 6) exits green, before marking the PR
 ready, check whether the branch has a long tail of small `fix(ci):` commits that

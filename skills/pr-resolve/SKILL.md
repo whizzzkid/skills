@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.22-145005'
+  version: '2026.06.23-220111'
 ---
 
 # PR Resolve
@@ -66,11 +66,11 @@ and the suggestion-format template live in
 
 ## Resume After Compaction
 
-Resumed from a compaction summary mid-skill → before anything else: read the last
-completed step, confirm the resume point (default: next uncompleted step), skip
-completed steps, re-run possibly-stale sync/fetch (Steps 2–3). Never restart from
-Step 1; never drop tail steps absent from the summary — Step 9.4 learnings, Step
-9.5 CI wait + new-comment loop, Step 11 retro all still run.
+Resumed from a compaction summary mid-skill → read the last completed step,
+confirm the resume point (default: next uncompleted step), skip completed steps,
+re-run possibly-stale sync/fetch (Steps 2–3). Never restart from Step 1; never
+drop tail steps absent from the summary (Step 9.4 learnings, 9.5 CI wait +
+new-comment loop, Step 11 retro).
 
 ## Hard Rules
 
@@ -247,7 +247,7 @@ lacks a plausible skip rationale.
 
 **Order of processing — HARD RULE: triage every comment before applying any
 fix.** Classify the whole set first, then apply accepted fixes as one batched
-pass. Do not loop comment-by-comment through fix/commit/push.
+pass — never loop comment-by-comment through fix/commit/push.
 
 - Process bot reviews first, then human comments.
 - For each: read full file context, the comment, and the reply chain before generating a fix.
@@ -289,8 +289,8 @@ consultation prompt, re-read the skip rationale; it concedes the comment is righ
 - Merge duplicate comments on the same `path:line` with the same concern.
 - Split one comment with multiple distinct sub-items into one suggestion each.
 - Multi-reviewer convergence on the same concern class = incomplete prior fix:
-  merge the class, scan the full PR diff for siblings, fix the class, reply from
-  each flagging thread.
+  merge the class, fix it via the Step 6 issue-class scan, reply from each
+  flagging thread.
 
 ## Step 5: Consult — Collect All Decisions First
 
@@ -345,13 +345,15 @@ commit only when they share the triage unit or were merged by Step 4. Per class:
 credential/token leaks → grep shell commands and stderr redirections, minus
 already-redacted lines; validation/exception/retry gaps → grep the affected
 symbol plus every entry/call site; race/TOCTOU → grep the resource path plus
-every read-then-write site.
+every read-then-write site; value/message/constant reporting → grep the **whole
+changed file** (not just the diff) for the same shape (`grep "timed out after %v"
+<file>`); a refactor clones the defect onto a sibling line.
 
 **For each fix:**
 
 1. Apply the change with Edit.
-2. Verify with the repo's build/lint/test command. No build system → warn once. Verification fails → ask whether to fix, commit anyway, or skip.
-3. Commit one commit per triage unit (HEREDOC template, commands.md §6). Non-co-author sessions omit the PR-author trailer; `Co-authored-by` only for real contributors.
+2. Verify with the repo's build/lint/test command. No build system → warn once. Verification fails → ask whether to fix, commit anyway, or skip. Go file → also run `goimports -local <module> -l <file>` before staging (`-w` fixes); `go test` misses import-grouping the CI format gate rejects.
+3. Commit one commit per triage unit (HEREDOC template, commands.md §6; co-author trailer per Hard Rule 9).
 4. Record the full SHA immediately: `FULL_SHA=$(git log --format=%H -1 <short_or_HEAD>)`.
 5. Update the drafted reply with a clickable commit link, full SHA from git (never infer from a short SHA; format in commands.md §6).
 
@@ -444,10 +446,10 @@ baseline-holding learning.
 
 Classify processed comments into generic issue classes (security, validation,
 exception handling, race/TOCTOU, retry/timeout, defensive/dead guard,
-API/external-call shape, docs/rationale or comment-accuracy drift, or new). For
-each non-empty class invoke `Skill(wk-learn, args="adversarial-review")` encoding
-class, mechanism, detection sketch, confidence — generic patterns only, no paths,
-lines, logins, or SHAs. Re-run for each new post-CI batch.
+API/external-call shape, docs/comment-accuracy drift, or new). For each non-empty
+class invoke `Skill(wk-learn, args="adversarial-review")` encoding class,
+mechanism, detection sketch, confidence — generic patterns only (no paths, lines,
+logins, SHAs). Re-run for each new post-CI batch.
 
 ## Step 9.5: Wait for CI, Then Loop on New Comments
 
@@ -459,25 +461,21 @@ lines, logins, or SHAs. Re-run for each new post-CI batch.
 
 ## Step 10: Final Summary
 
-Emit the resolution summary (template: commands.md §10) covering: branch sync,
-comments processed, self-review handling, bot reviews, reviewer fixes, deferrals,
-commits, replies, threads resolved/open, merge conflicts, PR URL.
+Emit the resolution summary (template: commands.md §10) covering branch sync,
+comments processed, self-review/bot handling, fixes, deferrals, commits, replies,
+threads resolved/open, conflicts, and PR URL.
 
 ## Step 11: Session Retro
 
 Invoke `wk-retro` to capture session-level learnings. Mandatory on every
-completion, including narrow directives. Adversarial-review learnings were
-emitted in Step 9.4.
+completion, including narrow directives.
 
 ## Quick Reference
 
 | Trigger | Behavior |
 |---|---|
-| "resolve PR comments" | Full workflow |
-| "address review feedback" | Full workflow |
+| "resolve PR comments" / "address review feedback" / "respond to reviewers" / "fix PR #{number}" | Full workflow |
 | "fix the comment" / "there's a description issue" with an open PR | Auto-activate on the open PR |
-| "fix PR #{number}" | Full workflow for the specified PR |
-| "respond to reviewers" | Full workflow with focus on replies |
 | Session ends | Emit adversarial-review learnings, then run `wk-retro` |
 
 ## Requirements
