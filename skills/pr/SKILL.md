@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.22-180154'
+  version: '2026.06.23-213906'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -518,6 +518,20 @@ draft and ready.
 (no new logic, no refactor, no scope addition), the final gate may be skipped.
 Note the skip and the cleared HEAD SHA in the PR. Any commit touching logic or
 adding behavior still requires re-running the gate.
+
+**HARD RULE — verify CI for the *current* HEAD before `gh pr ready`.** A green
+CI result against an earlier HEAD does not satisfy the gate. Every push that
+lands new commits starts a fresh CI run — confirm the run for the current HEAD
+SHA has **completed** and is green before marking ready; never race `gh pr ready`
+ahead of a still-`running` build, and never assume a prior run covers the new
+commits. Each push = one CI run that must finish.
+
+```bash
+gh pr view --json statusCheckRollup,headRefOid \
+  --jq '{head: .headRefOid, checks: [.statusCheckRollup[].status] | unique}'
+```
+
+Re-poll until the run for the current `headRefOid` is `COMPLETED` and green.
 
 **HARD RULE — check off the test-plan boxes before `gh pr ready`, not after.**
 The CI-green sync (Step 4.2) is a blocking precondition for `gh pr ready`, not an

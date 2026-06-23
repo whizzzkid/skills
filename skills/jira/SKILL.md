@@ -35,7 +35,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.22-145005'
+  version: '2026.06.23-213906'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -157,6 +157,19 @@ start comment. Never ship a subset.
 - **Self-healing:** if Stage 2 has not completed this branch, run the whole
   claim now, whatever point you joined at. Verify against live ticket state
   (assignee, status, sprint) so a partial prior run finishes.
+
+**HARD RULE — a blocked Jira write is surfaced once, never silently retried.**
+Auto mode (and permission classifiers) treat a Jira write as an external-system
+write needing explicit intent — a ticket URL/key in the opening prompt counts as
+*context*, not *authorization* to modify the ticket. So the claim's transition
+can be denied even though this skill considers it auto. On a permission denial:
+
+- Stop. Do not spin on repeated denials, and do not silently swallow the block.
+- Tell the user the write was blocked, and ask **once** to either: (a) confirm
+  intent — "yes, transition this ticket as we work" — or (b) add a permission
+  rule for the Jira MCP write methods.
+- Retry only after the user resolves it; otherwise proceed with the dev workflow
+  (ticket state is a side-effect, never a precondition — see Conflict handling).
 
 Fetch the detected ticket's current state, decide what to change.
 
@@ -500,6 +513,7 @@ exempt — Jira items are visible to the whole team.
 | Ticket assignee already set, but to someone else | Do **not** reassign; the work may genuinely be reassigned. Report once: "Jira: {KEY} is assigned to @<them>; not changing." |
 | Branch name has a key but the ticket was deleted / inaccessible | Report gap, skip transitions for this branch |
 | MCP returns auth error | Report once with the connector URL; do not block development |
+| Auto mode / permission classifier blocks a lifecycle write | Surface the block once, ask the user to confirm intent or add a Jira-write permission rule; do not silently retry or spin on denials (see Stage 2 HARD RULE) |
 
 Never block a commit, push, or PR action on a Jira sync failure — ticket
 state is a side-effect of the work, not a precondition for it.

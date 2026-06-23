@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200053'
+  version: '2026.06.23-213906'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -236,6 +236,21 @@ Every plan must contain these elements before it is valid:
 6. PR offer step
 7. CI fix loop step (monitor + auto-diagnose up to 3 rounds)
 8. Session retro step (`wk-retro`)
+9. Jira lifecycle steps — **only when a ticket key is in scope** (see below)
+
+### Jira lifecycle as explicit plan steps
+
+When a Jira key is in scope (Gate 1), surface its lifecycle transitions as
+**named numbered steps**, not invisible `wk-jira` side-effects. A transition
+handled only as an ambient side-effect is prone to being skipped or blocked
+without the user noticing.
+
+- Add a step group: `(Jira) claim ticket → In Progress`, `(Jira) post PR-opened
+  comment`, `(Jira) transition → In Review on gh pr ready`, `(Jira) → Done on
+  merge`.
+- Mark each `[AGENT-READY]` with the caveat: "auto mode may block this Jira write
+  (treated as an external-system write) — if denied, re-invoke `wk-jira` or add a
+  permission rule; do not silently retry."
 
 ### Commit granularity
 
@@ -338,6 +353,7 @@ Before presenting, run a validation checklist against the draft plan.
 
 **Mandatory elements**
 - All 8 mandatory elements from Step 3 are present and numbered.
+- Ticket in scope → Jira lifecycle steps (element 9) are present, named, and carry the auto-mode caveat.
 
 **Probe coverage**
 - Jira ticket pre-flight cleared or asked once.

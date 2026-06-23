@@ -2,7 +2,7 @@
 
 > Coordinate Jira ticket state with the development lifecycle and surface Jira context whenever the agent encounters a Jira artifact.
 
-**Version:** `2026.06.22-145005`
+**Version:** `2026.06.23-213906`
 
 ## Invocation
 
@@ -35,4 +35,5 @@ stateDiagram-v2
 - **PR title format is enforced:** `feat(auth): ✨ OAuth login [BOARD-123]` — key in square brackets, last token, exactly one key. If the title already has the wrong key, the skill asks before replacing.
 - **Assignee is never stolen:** If a ticket is already assigned to someone else, the skill reports once and leaves it — the work may genuinely be reassigned.
 - **HARD RULE — starting work is one atomic, self-healing claim:** Assign-to-user + In Progress + active sprint + a start comment fire together on *any* development intent (edit/commit/PR work), not only the literal first commit — so mid-branch joins and resumed sessions still claim the ticket.
+- **HARD RULE — a blocked write is surfaced once, never silently retried:** Auto mode treats a Jira write as an external-system write needing explicit intent (a referenced ticket = context, not authorization). On a permission denial, the skill surfaces the block once and asks the user to confirm intent or add a Jira-write permission rule — it never spins on denials or swallows the block silently.
 - **Posts progress comments automatically:** A factual one-line comment (`addCommentToJiraIssue`) is posted at each lifecycle change — claim, PR opened, merged — confirmation-exempt like auto-assign, idempotent to avoid duplicate spam.

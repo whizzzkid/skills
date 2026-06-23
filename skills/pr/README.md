@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.06.22-180154`
+**Version:** `2026.06.23-213906`
 
 ## Invocation
 
@@ -52,6 +52,9 @@ flowchart TD
   unless the user explicitly requests it.
 - **Adversarial review gates three transitions:** Before `gh pr create`, before every subsequent push, and
   before `gh pr ready`. A `blocked` verdict stops all three — no size exemption.
+- **Fresh CI per push before ready:** Every push that lands new commits starts a new CI run. The skill verifies
+  the run for the *current* HEAD SHA has completed and is green before `gh pr ready` — a prior green run against
+  older commits never satisfies the gate.
 - **Base detection is non-trivial:** The skill computes the closest merge-base across all open PR branches, not
   just `main`. Silent mis-basing causes wrong CI targets and inflated diffs; the detected `$BEST_BASE` is used
   for both `--base` and scope measurement. `gh pr create` is gated on the loop having actually run — never on
