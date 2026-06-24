@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.16-165651'
+  version: '2026.06.24-202743'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -205,11 +205,13 @@ Build two structures from active comments:
 - **Exclusion list:** active comments keyed by `(file, line_range, topic)` so
   Phase 3/4 do not duplicate existing concerns.
 
-**Verify trigger wiring before accepting a bot's severity.** A mechanically
-correct finding on an unwired path is not a live concern. For each bot finding,
-grep for the trigger that activates the affected path (env var, live caller,
-production config, compose/CI wiring). Trigger absent → downgrade to "Confirmed but
-narrower than stated."
+**Re-scope a bot's severity in both directions.** A mechanically correct finding
+on an unwired path is not a live concern: grep for the trigger that activates the
+affected path (env var, live caller, production config, compose/CI wiring); trigger
+absent → downgrade to "Confirmed but narrower than stated." Conversely, trace one
+hop downstream for amplified impact — a referenced file/URL/symbol that does not
+resolve, a value that reaches a user-facing surface — since the bot's own test gap
+can hide it; impact beyond the bot's framing → upgrade to "Confirmed but broader."
 
 ### Re-review follow-up
 
@@ -279,6 +281,17 @@ On the returned findings:
 Verdict is advisory here: pr-review always proceeds to compose comments — never
 blocks the author or posts from the gate.
 
+### Discriminate environmental failures from PR findings
+
+Before treating a local test/command failure as a PR finding:
+
+- Check whether the failing line is in the diff. A failure far from changed lines
+  is a strong tell it is environmental, not PR-introduced.
+- Confirm the interpreter/runtime matches the project's pinned version
+  (`mise`/`.tool-versions`/CI config), not whatever is first on `PATH`; re-run under
+  the pinned version before reporting (mirrors the `wk-adversarial-review` runtime
+  matrix).
+
 ### Validate bot findings
 
 Route each Phase 2 `bot_findings_to_validate` entry through the same engine: pass
@@ -340,6 +353,7 @@ list before drafting each comment.
 |---|---|
 | **Confirmed** | Silent skip at thread and body level. |
 | **Confirmed but narrower** | Reply with a scope note bounding the reproduced case. |
+| **Confirmed but broader** | Reply with the amplified impact as new evidence (e.g. a referenced target that 404s). |
 | **Refuted** | Reply `**Could not reproduce** — <counter-evidence>` and what was tested. |
 | **Inconclusive** + agent found it | Reply with the agent's evidence and fix. |
 | **Inconclusive** + agent did not | Leave the thread; surface in the summary for override. |

@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.06.16-165651`
+**Version:** `2026.06.24-202743`
 
 ## Invocation
 
@@ -41,7 +41,7 @@ flowchart TD
   Phase 4 summary unless the user explicitly pauses; the user still submits it from the GitHub UI.
 - **Bot findings are validated before reply:** Every active bot comment is routed through the adversarial engine
   and classified Confirmed, Refuted, or Inconclusive. Confirmed findings get silent skip; confirmed-but-narrower,
-  refuted, and agent-backed inconclusive cases get replies with new evidence.
+  confirmed-but-broader, refuted, and agent-backed inconclusive cases get replies with new evidence.
 - **`in_reply_to` is invalid in draft review payloads:** The GitHub REST API rejects it with 422. Bot-thread
   replies must either be folded into the review body or posted as live replies — they cannot be embedded in the
   `comments[]` array of the pending review.
