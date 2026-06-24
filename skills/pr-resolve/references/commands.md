@@ -140,6 +140,13 @@ git diff "origin/$BASE...HEAD" | grep -nE '<class-pattern>' \
   | grep -v '<already-fixed-pattern>'
 ```
 
+Per-class grep targets (a refactor clones the defect onto sibling lines):
+
+- Credential/token leaks → grep shell commands and stderr redirections, minus already-redacted lines.
+- Validation/exception/retry gaps → grep the affected symbol plus every entry/call site.
+- Race/TOCTOU → grep the resource path plus every read-then-write site.
+- Value/message/constant reporting → grep the **whole changed file** (not just the diff) for the same shape (`grep "timed out after %v" <file>`).
+
 Commit (one commit per triage unit; omit the trailer in non-co-author sessions):
 
 ```bash

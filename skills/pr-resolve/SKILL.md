@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.24-165531'
+  version: '2026.06.24-172956'
 ---
 
 # PR Resolve
@@ -79,9 +79,11 @@ new-comment loop, Step 11 retro).
    outbound footer to every reply, PR-body edit, and thread message at render time.
 1. **Never push without explicit user confirmation.**
 2. **Never post reply comments without explicit user confirmation.**
-   - **HARD RULE — route every outbound reply/dismissal body through
-     `Skill(wk-tone)` before drafting or posting.** Prose posted as the user;
-     filter banned register before payload render.
+   - **HARD RULE — every reply/dismissal body leads with substance (what
+     changed, the decision, the commit SHA), never a pleasantry.** Praise/thanks/
+     acknowledgement openers ("Good catch!", "Great point!") are banned
+     unconditionally, short replies included. Route through `Skill(wk-tone)`
+     before render (posts as the user); the ban holds even if routing is skipped.
 3. **Only resolve threads you actually worked on** — after a fix, explicit
    dismissal, or tracked deferral. Never resolve follow-up questions, skipped,
    rethink-pending, or ordinary self-review threads.
@@ -163,9 +165,9 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
 - **HARD RULE — audit dropped safety guards after each conflict resolution.** The
   base side (HEAD during rebase) is canonical `origin/$BASE_BRANCH`; a guard there
   was intentional. Diff both sides for signal/context/cleanup primitives
-  (`signal.Stop`, `context.Cancel*`, `sync.*`, `defer`, `close(`, `os.RemoveAll`,
-  resource releases); any on the base side but absent from the result is a dropped
-  guard — restore it unless the incoming commit removed it with rationale. Green
+  (`signal.Stop`, `defer`, `close(`, `os.RemoveAll`, resource releases, etc.); any
+  on the base side but absent from the result is a dropped guard — restore it
+  unless the incoming commit removed it with rationale. Green
   compile/tests do **not** prove it unneeded; block until each absence is confirmed.
 - **Stage resolved files from the repo root.** Session cwd may be a subdirectory,
   where `git add <repo-relative-path>` exits 128. Use
@@ -191,7 +193,7 @@ commands.md §3 — GraphQL for unresolved threads, REST for full details):
 Map fields: `threadId`, `commentId`, `path`, `line`, `body`, `user`, `userType`,
 `replies[]`, `isOutdated`, `isResolved`.
 
-- **Read bot inline-comment bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}`.** After a bot replaces its review, the REST `databaseId` 404s for *all* ops (even a read GET); the thread node ID is stable.
+- **Read bot inline-comment bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}`.** After a bot replaces its review the REST `databaseId` 404s for *all* ops including reads (Step 8: thread node IDs are stable, REST IDs are not).
 
 **Three-surface pre-flight check:**
 
@@ -316,8 +318,7 @@ them. Wait for the response before the next comment.
 message, count its `Comment {n}` decision headers; > 1 → hard-stop and split, one
 message per comment. Fires even when items feel similar or the flow is already
 "listing"; a batched prompt lets the user reply `a a d` — forbidden. The
-intention-based rule above kept failing here, so the count check is its
-structural guard.
+intention-based rule above kept failing, so this count check is its structural guard.
 
 **Decision handling** — record exactly one outcome per decision; `a`/`e`/`d`/`t`
 all mark `resolve_after_push`:
@@ -340,14 +341,9 @@ Apply all Step 5 decisions: process `fixes_to_apply`, `dismissals`, `deferrals`
 in order. Commands: commands.md §6.
 
 **Issue-class scan before each fix.** Identify the issue class; grep the full PR
-diff for sibling paths sharing it (commands.md §6). Include siblings in the same
-commit only when they share the triage unit or were merged by Step 4. Per class:
-credential/token leaks → grep shell commands and stderr redirections, minus
-already-redacted lines; validation/exception/retry gaps → grep the affected
-symbol plus every entry/call site; race/TOCTOU → grep the resource path plus
-every read-then-write site; value/message/constant reporting → grep the **whole
-changed file** (not just the diff) for the same shape (`grep "timed out after %v"
-<file>`); a refactor clones the defect onto a sibling line.
+diff for sibling paths sharing it — per-class grep targets in commands.md §6 (a
+refactor clones the defect onto sibling lines). Include siblings in the same
+commit only when they share the triage unit or were merged by Step 4.
 
 **For each fix:**
 
