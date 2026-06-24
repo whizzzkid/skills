@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.23-213906'
+  version: '2026.06.24-165531'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -548,6 +548,14 @@ gh pr ready
 
 Confirm to the user:
 > "PR #{number} is marked ready for review: {url}"
+
+**Trivial-PR auto-merge fast path.** When the net diff is under 25 lines
+(`git diff $BASE...HEAD --shortstat`) **and** the final adversarial-review
+verdict is `clear` with zero findings, skip the poll-and-wait CI loop: mark
+ready, then `gh pr merge --auto --squash` so it lands the moment required checks
+pass. Note the line count and auto-merge intent in the PR body so reviewers see
+why. Any logic-bearing change, or a diff at/over the threshold, takes the full
+CI poll above — the fast path is for mechanical, low-risk deltas only.
 
 ## Step 6: Session Retro
 

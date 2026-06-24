@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.23-220111'
+  version: '2026.06.24-165531'
 ---
 
 # PR Resolve
@@ -352,7 +352,7 @@ changed file** (not just the diff) for the same shape (`grep "timed out after %v
 **For each fix:**
 
 1. Apply the change with Edit.
-2. Verify with the repo's build/lint/test command. No build system → warn once. Verification fails → ask whether to fix, commit anyway, or skip. Go file → also run `goimports -local <module> -l <file>` before staging (`-w` fixes); `go test` misses import-grouping the CI format gate rejects.
+2. Verify with the repo's build/lint/test command. No build system → warn once. Verification fails → ask whether to fix, commit anyway, or skip. Go file → run `goimports -local <module> -w <file>` (write, not `-l` which only lists → false pass) before staging. `go test` misses import-grouping CI rejects.
 3. Commit one commit per triage unit (HEREDOC template, commands.md §6; co-author trailer per Hard Rule 9).
 4. Record the full SHA immediately: `FULL_SHA=$(git log --format=%H -1 <short_or_HEAD>)`.
 5. Update the drafted reply with a clickable commit link, full SHA from git (never infer from a short SHA; format in commands.md §6).

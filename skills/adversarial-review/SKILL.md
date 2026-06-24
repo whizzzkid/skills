@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.23-221017'
+  version: '2026.06.24-165531'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -154,7 +154,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.49 | Tempfile response capture in a curl error handler (`mktemp` + `-o "$f"` + `cat "$f"`) | `-f`/`--fail` exits before writing the body to `-o` on HTTP 4xx/5xx, so the handler reads an empty file on exactly the failure cases it targets. | Blocker | Use `--fail-with-body` (curl 7.76+) or drop `-f`; the response file must be written on error for the capture to work. |
 
 Lower-frequency, language-specific sweeps (2.31, 2.32, 2.36, 2.39, 2.41, 2.42,
-2.45, 2.46, 2.50, 2.51, 2.52) live in
+2.45, 2.46, 2.50, 2.51, 2.52, 2.53) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 
