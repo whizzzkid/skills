@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.24-165531'
+  version: '2026.06.25-214432'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -110,7 +110,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 |---|---|---|---|---|
 | 2.1 | Any security/redaction/credential touch | Grep full diff for secret leakage to stderr, `curl -H "Authorization: Bearer $VAR"`, or credential flag values in source/docs/shell. | Blocker | Move to `curl -u`, netrc, or a `chmod 600` credentials file. |
 | 2.2 | Changed script/module/parallel pipeline | List directory siblings and whole-repo sibling toolchain invocations. A directive (`soft_fail`, `retry`, `timeout`, exit-code handling) copied from a sibling → verify the sibling's behavioral/exit-code contract actually transfers (pattern copy ≠ contract transfer). | Blocker | Apply to every sibling or justify absence; quote the sibling's contract for any copied directive, or flag it pending verification. |
-| 2.3 | New guard/null-check/defensive branch | Trace upstream transforms for reachability and sentinel completeness. A map field left `nil` by `json.Unmarshal` (absent JSON key, not `{}`) is a live absent-key path — confirm the schema always has the key before calling it dead. | Blocker | Fix dead guards; handle jq falsy output (`"null"`) before downstream consumers. |
+| 2.3 | New guard/null-check/defensive branch, OR a flagged *missing* guard | Trace upstream transforms for reachability and sentinel completeness. A map field left `nil` by `json.Unmarshal` (absent JSON key, not `{}`) is a live absent-key path — confirm the schema always has the key before calling it dead. Before flagging a *missing*-guard/empty-value as a blocker, trace the producer: if it errors on the caller's short-circuit path or guarantees non-empty on success (test-pinned), the guard is unnecessary. | Blocker | Fix dead guards; handle jq falsy output (`"null"`); document why a structurally-guaranteed guard is absent. |
 | 2.4 | Added/modified comments or docs claims | Check assertive claims (`always`, `never`, `must`, `works`) and intent phrases against implementation; flag new/changed doc comments whose one sentence chains independent reasons (`because`/`while`/`so that`). | Suggestion | Update/delete stale comments; add pinning tests for universal claims; split independent clauses. |
 | 2.5 | Base/branch refs | Grep for hardcoded `main...HEAD`, `origin/main`, `master...HEAD`. | Blocker | Use dynamic base resolver. |
 | 2.6 | Version pins | Grep Dockerfiles, tool/package manifests, and GitHub Actions for `latest`, `stable`, `nightly`, unpinned tags, `^`, or `~`. | Blocker | Pin exact versions or official-action majors. |
@@ -127,6 +127,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.16 | Plugin/skill diff | Scan `SKILL.md`/plugin manifest for authoring-repo-relative paths. | Blocker | Use `${CLAUDE_PLUGIN_ROOT}/`, inline fallback, or pinned upstream fetch. |
 | 2.17 | Dynamic-language diff; inline refactor of a helper | For each call kept/added, grep module/imported namespace for the definition. Inverse: for each helper defined/kept, grep non-test files for a caller — zero after an inline refactor is dead code whose tests assert a dead path. | Blocker | Restore/remove call or add definition; delete dead helpers and retarget their tests at the live caller. |
 | 2.18 | Removed named constant | Grep post-rebase diff for the literal value. | Suggestion | Restore constant or extract helper when literal appears at ≥2 non-comment sites. |
+| 2.19 | New subprocess/LLM/network call site with a hardcoded `context.Background()`/`context.TODO()` | If the enclosing function has a live cancellation context available (a `context.Context` field on a received struct, or a wrapper embedding one), the literal breaks SIGINT/SIGTERM propagation to in-flight work. | Blocker | Forward the available app/request context; a nil-guard in the callee makes forwarding safe. |
 | 2.19a | Added Struct/Record/interface/Go field | Grep tests for direct concrete-value assertion on the new field. When the field is serialized via `.to_s`/equivalent, also include a nil/false/0 case — the zero-value path through a serialization boundary is the common production path and a `NoMethodError` there escapes happy-path specs. | Blocker | Add direct assertion; `respond_to?`/presence alone is insufficient; add the nil/zero-value serialization case. |
 | 2.20 | Application code + CI pipeline | Extract net-new env reads; locate invoking pipeline steps; verify allowlist forwarding. Diff touches a compose `environment:` or plugin `env:` → full-path audit: grep every script+library in the container's runtime call graph (not just diff delta) for env reads, diff against the forwarding list, run a sibling-template consistency check. **Wholesale `env:` list replacement (e.g. a ported template) → diff the full new list against the `origin/$BASE` version of the same file**, not just the diff delta. | Blocker | Forward vars in native/container steps; exempt auto-injected prefixes only for native non-container steps. Surface any runtime read without a forwarding entry (incl. called libs); same-role siblings forward the same set. A var present in base but absent from a replaced list is a candidate dropped-forwarding regression → re-add or justify. A spec deleting a var and asserting the script's own default = intentional omission → `question`. |
 | 2.19 | New/modified tests | Grep for self-referential equality (`expect(x).to eq(x.sort())`) and no-op `&& true` after `||`. | Blocker | Build independent expected values; propagate `false` in fail paths. |
@@ -140,7 +141,6 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.28 | CI trigger payload `commit` field | Verify it is not sourced from foreign-repo SHA envs (`REVIEW_`, `TARGET_`, `SOURCE_`). | Blocker | Use pipeline repo SHA. |
 | 2.29 | `curl -s` response parsing | Grep for silent mode without `-S`. | Suggestion | Require `-sS` plus exit-status check. |
 | 2.30 | Source fix with committed artifact | Detect `.wasm`, generated code, `go:generate`, `go:embed`, build output. | Blocker | Rebuild and re-commit before clear. |
-| 2.53 | Build script passes `-ldflags "-X pkg.Symbol=value"` (or any stringly-typed cross-language symbol contract) | The symbol name is an unchecked contract between the builder and the consuming language; a string-match assertion in the builder's own test does not lock the symbol name or output path, and a rename on either side passes both suites silently. Verify a test builds the real binary with that exact flag and asserts the stamped value via the binary's own output (`--version`). | Blocker | Add an end-to-end stamped-binary exec test; a builder-side string match is insufficient coverage. |
 | 2.33 | Raw-presence parse fallback | Grep parse-with-fallback shapes. | Blocker | Parse first; fallback on parsed result; add invalid-primary test. |
 | 2.34 | Spec/doc routing claim (which method a gate calls, which path bypasses a hook) | Grep the PR review thread for reviewer statements on the same routing. | Blocker | A reviewer who read the source is ground truth; resolve contradictions before asserting an inferred claim. |
 | 2.35 | Diff changes a structured return-type requirement in one doc section | Grep the whole document for every field comment that stores that value; confirm shape and vocabulary match. | Blocker | Update lagging field comments; keep one canonical name per value across all sections. |
@@ -154,7 +154,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.49 | Tempfile response capture in a curl error handler (`mktemp` + `-o "$f"` + `cat "$f"`) | `-f`/`--fail` exits before writing the body to `-o` on HTTP 4xx/5xx, so the handler reads an empty file on exactly the failure cases it targets. | Blocker | Use `--fail-with-body` (curl 7.76+) or drop `-f`; the response file must be written on error for the capture to work. |
 
 Lower-frequency, language-specific sweeps (2.31, 2.32, 2.36, 2.39, 2.41, 2.42,
-2.45, 2.46, 2.50, 2.51, 2.52, 2.53) live in
+2.45, 2.46, 2.50, 2.51, 2.52, 2.53, 2.54) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 

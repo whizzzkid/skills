@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.24-172956'
+  version: '2026.06.25-214432'
 ---
 
 # PR Resolve
@@ -193,7 +193,7 @@ commands.md §3 — GraphQL for unresolved threads, REST for full details):
 Map fields: `threadId`, `commentId`, `path`, `line`, `body`, `user`, `userType`,
 `replies[]`, `isOutdated`, `isResolved`.
 
-- **Read bot inline-comment bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}`.** After a bot replaces its review the REST `databaseId` 404s for *all* ops including reads (Step 8: thread node IDs are stable, REST IDs are not).
+- **Bot REST comment IDs are unstable; thread node IDs are not.** After a bot replaces its review the REST `databaseId` 404s for *all* ops (Step 8). Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}`. On a reply-POST 404, post one top-level `gh pr comment` summarizing all bot resolutions (never retry another REST ID) and resolve the stable GraphQL thread node ID to close it.
 
 **Three-surface pre-flight check:**
 

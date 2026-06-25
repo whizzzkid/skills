@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.22-170517'
+  version: '2026.06.25-214432'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -82,6 +82,8 @@ Skill(wk-plan, args="<task from session context>")
 - If `wk-plan` already produced an approved plan this session, skip Phase 1 and execute it.
 - If `wk-plan` surfaced unanswered questions, resolve them before proceeding.
 - Do not re-plan inline after an approved plan exists.
+
+**HARD RULE — wait for plan approval before the first Edit/Write/Bash write-action, any diff size.** "Small"/"2-line"/"obvious" is exactly the rationalization this forbids: present-plan → wait-for-approval → execute.
 
 ---
 
@@ -280,7 +282,7 @@ Pre-flight findings are mandatory actions, not options → fold blockers/improve
 
 ## Phase 5: PR
 
-**HARD RULE:** every push to a branch with no open PR invokes `wk-pr` automatically. No size exemption.
+**HARD RULE — "push succeeded" is NOT "work complete".** After every successful `git push`, run `gh pr view 2>/dev/null`; no open PR → invoke `wk-pr` immediately (no size exemption, no waiting to be asked). The push is this check's trigger, not the task's end.
 
 ### Repo convention before branching
 
@@ -291,31 +293,15 @@ Branching is the default, not an absolute. Probe first:
 - Branch only when evidence points to PR-gated workflow; otherwise commit straight to default and skip auto-PR.
 - If signals conflict/are absent for a non-trivial change, branch and say why in one line.
 
-After code review passes, invoke `wk-pr`; never use raw `gh pr create`. `wk-pr` handles draft creation, stacked PRs, CI polling, self-review, feedback triage, and marking ready.
+After code review passes, invoke `wk-pr` (never raw `gh pr create`) — it handles draft creation, stacking, CI polling, self-review, feedback triage, and marking ready.
 
 ### Post-push sync
 
 `wk-commit` handles PR description sync and stale comment resolution after every push.
 
-**HARD RULE:** auto-sync drifted artifacts — never ask permission to fix obvious drift. After any push, significant code change, or approach pivot, audit PR title/body, self-review comments, ticket description, and related docs; update them in the same turn. Confirm only when sync content is genuinely ambiguous.
+**HARD RULE:** auto-sync drifted artifacts — never ask permission to fix obvious drift. After any push, significant code change, or approach pivot, audit PR title/body, self-review comments, ticket description, and related docs; update in the same turn. On an approach pivot, also resolve stale self-review threads and post fresh comments via `wk-self-review`. Confirm only when sync content is genuinely ambiguous.
 
-After any implementation-approach pivot, resolve stale self-review threads and post fresh comments via `wk-self-review`.
-
-Before reworking a PR branch — force-push, restructure, content rewrite, big rebase, scope change — fetch and reconcile against the PR's actual base and default branch. Resolve PR base before proposing a rebase target; never assume default.
-
-```bash
-PR_NUM=$(gh pr view --json number --jq .number)
-BASE=$(gh pr view "$PR_NUM" --json baseRefName --jq .baseRefName)
-DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD --short | sed 's@^origin/@@')
-
-git fetch origin "$BASE" "$DEFAULT" --quiet
-
-LOCAL_MB=$(git merge-base HEAD "origin/$BASE")
-REMOTE_TIP=$(git rev-parse "origin/$BASE")
-if [ "$LOCAL_MB" != "$REMOTE_TIP" ]; then
-  Skill(wk-pr-update, args="$BASE")
-fi
-```
+Before reworking a PR branch — force-push, restructure, content rewrite, big rebase, scope change — fetch and reconcile against the PR's actual base and default branch. Resolve PR base before proposing a rebase target; never assume default. Recipe: [`references/pre-rework-base-reconcile.md`](references/pre-rework-base-reconcile.md).
 
 ---
 

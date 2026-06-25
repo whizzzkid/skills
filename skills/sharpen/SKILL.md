@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.22-180154'
+  version: '2026.06.25-214432'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -431,6 +431,7 @@ Invoked without a specific incident → batch mode.
 - Distill that new learning through the Source 2 path.
 - Log the memory file as `distilled`.
 - Only process `user` or `project` type memories if they contain explicit instructions about how a skill should behave.
+- **Normalize both sides before diffing against the marker.** `comm` does exact string matching; the directory listing and `.distilled-memories` must share one path form. Collapse repeated slashes (`sed 's#//#/#g'`) and `sort -u` both sides first — a trailing-slash glob yields `dir//file.md` and silently mismatches every entry. Treat a result where *every* memory shows un-distilled as a probable format mismatch, not a real backlog — sanity-check before processing.
 
 ### Source 4: Session retrospects
 

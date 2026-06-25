@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.23-221017'
+  version: '2026.06.25-214432'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -89,6 +89,7 @@ Tell the user:
 - Do NOT configure auth, create tokens, or work around auth failures. User must run `bk auth login` interactively.
 - Logs unfetchable after re-auth → ask user to download from the Buildkite web UI.
 - Never extract a token from the user's `bk` config/environment and call the Buildkite REST API directly via `curl` as a workaround. Token-based curl workarounds bypass scope checks, leak credentials into shell history, and have repeatedly produced multi-turn dead ends when the original failure was scope-shaped, not credential-shaped.
+- **Stop diagnosing once a failure is infra-shaped.** After ≥2 consecutive rebuilds fail with the same error string on the same step, classify as infra-side (e.g. mirror/network failure unrelated to the diff) and stop — report the pattern and recommend waiting for CI to recover. Do not list all jobs or re-diagnose; repeated identical errors across independent rebuilds add noise, not signal.
 
 ## Tool Selection
 

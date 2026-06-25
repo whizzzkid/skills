@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.06.16-072242'
+  version: '2026.06.25-214432'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -112,6 +112,12 @@ Surfaces covered (non-exhaustive):
 `/pulls/{n}/comments/{id}/replies`) require the integer REST `id` from
 `GET /pulls/{n}/comments` (or `databaseId` from a GraphQL reviewThreads query),
 not a GraphQL node ID (`PRRC_…`) — passing the node ID returns 404.
+
+**Prefer the `/replies` subresource over `in_reply_to`.** `POST
+/pulls/{n}/comments/{id}/replies --field body="…"` is simpler and sidesteps
+`in_reply_to` formatting entirely. If using the base endpoint, pass the ID with
+`--field in_reply_to=<int>`, never `-f` — `-f` sends a string and returns 422
+("is not a number").
 
 Every write surface above must:
 
