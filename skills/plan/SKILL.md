@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.23-213906'
+  version: '2026.06.25-234328'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -383,6 +383,8 @@ Present the plan with a one-paragraph summary:
 Then show the full plan block from Step 3.
 
 **HARD RULE: Do not execute any step until the user approves the plan.** The plan is a contract. Execution starts only after an explicit "yes", "proceed", "looks good", or equivalent approval signal. Silence is not approval.
+
+**Auto mode + an unambiguous implementation directive already in the original prompt is approval.** When the user's own message contains a clear imperative ("fix this", "implement X", "make this change") and the plan executes exactly that, present the plan and proceed in the same turn — do not block on a second "proceed?". Re-asking what the original directive already authorized is the over-gating this forbids. Block only when the plan is speculative or the user's intent is genuinely unclear.
 
 After approval → hand off to `wk-workflow` for execution. The approved plan replaces `wk-workflow` Phase 1's inline planning entirely — do not re-plan in wk-workflow if wk-plan has already produced an approved plan this session.
 

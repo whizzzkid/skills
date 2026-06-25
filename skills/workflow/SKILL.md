@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.25-231013'
+  version: '2026.06.25-234328'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -66,6 +66,7 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 
 The Phase 1 plan is the session contract.
 
+- Read the full prompt to the end and enumerate every deliverable before acting. A message opening with a noun task ("create a ticket") and closing with an imperative ("fix this") is two work items — commit to the full list before executing the first; never stop after the first deliverable.
 - On interruption mid-plan: stop, update the active plan/TodoWrite list, re-state the new top item in one line, resume from the earliest incomplete item.
 - Final completeness gate: before claiming completion, re-read the plan and ensure every numbered step is finished or explicitly deferred/removed.
 
@@ -121,22 +122,15 @@ For normalization, renames, required fields, schema changes, or similar recurrin
 
 ### Design pivots travel with their docs
 
-When a commit changes the logical structure of a feature, update every artifact describing the old shape in the same commit:
-
-- design spec (`docs/specs/`-equivalent)
-- implementation plan (`docs/plans/`-equivalent)
-- inline comments referencing the old approach
-- test names/comments referencing the old approach
-- ADR (`docs/adr/`) or successor
-- spec sections enumerating tests by count/name/bullet
+When a commit changes a feature's logical structure, update every artifact describing the old shape in the same commit: design spec, implementation plan, inline comments, test names/comments, ADR (or successor), and spec sections enumerating tests by count/name/bullet.
 
 Triggers: conditional became unconditional, helper lifted/inlined/replaced, paths merged/split, interface signature changed, state lifecycle moved.
 
 ### File/table/test sync
 
-- New file: update the spec’s New Files / Modified Files tables in the same commit.
-- Test added/removed/renamed: grep specs/plans/READMEs for the test file/function and count phrases before committing; update hits in the same commit.
-- Major spec rewrite: add a STATUS UPDATE banner citing the commit SHA and schedule the full rewrite as a follow-up commit on the same branch.
+- New file → update the spec’s New/Modified Files tables in the same commit.
+- Test added/removed/renamed → grep specs/plans/READMEs for the file/function and count phrases, update hits in the same commit.
+- Major spec rewrite → STATUS UPDATE banner citing the SHA; schedule the full rewrite as a follow-up commit.
 
 ### External-call reproduction before fix
 
@@ -144,17 +138,13 @@ Triggers: conditional became unconditional, helper lifted/inlined/replaced, path
 - Before committing, rerun the same call and confirm 2xx.
 - If local reproduction is impossible, pause before commit with the exact command and success criterion.
 
-### Signature widening pre-flight
+### Edit-scope pre-flights
 
-When adding a non-optional public parameter or required public field: grep every caller/initializer before tests → fix every site in the same commit → run tests.
+Enumerate every affected site and fix all in one pass before tests:
 
-### `replace_all` scope pre-flight
-
-Before `replace_all: true`, grep the target string across the file and confirm every occurrence should receive the same replacement. Reject if any occurrence needs a different value/context or must remain unchanged.
-
-### Same-semantic-class audit on coercions
-
-When applying a coercion (`.to_s`, `.to_i`, `&.`, `String()`, `Number()`, optional-chaining, null-coalescing) to one argument/field, audit every argument of the same semantic class (role + nullability + type shape) in the same pass. Applies to same-class guards, redactions, retry wrappers, and logging.
+- **Signature widening** — non-optional public param/required field → grep every caller/initializer, fix each in the same commit.
+- **`replace_all: true`** — grep the target string first; reject if any occurrence needs a different value/context or must stay unchanged.
+- **Coercion same-class** — a coercion (`.to_s`, `&.`, `String()`, optional-chaining, null-coalescing) on one arg/field → audit every arg of the same semantic class (role + nullability + type shape); also same-class guards, redactions, retry wrappers, logging.
 
 ### Code Standards
 
@@ -178,9 +168,9 @@ Apply to ALL code:
 - **ADRs:** create `docs/adr/` records for significant architectural decisions: title, status, context, decision, consequences.
 - **Content-lint hooks:** scope to the file class and added lines only; smoke-test against an out-of-scope file that legitimately contains the pattern.
 - **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace each variable’s source, path, and meaning in the new context.
-- **No hardcoded env-specific constant beside a dynamic sibling:** before hardcoding OS, arch, version, or path, grep the file for the same value in an existing path. If a sibling computes it dynamically (`uname -s`/`-m`, etc.), reuse that computation — a parallel path authored in isolation must not re-hardcode what its sibling derives.
-- **Confirm example formats before encoding:** treat a version/naming/query string in a request (esp. a CLI snippet) as illustrative, not normative. Confirm the exact production format before encoding it across >1 file — one clarifying question up front avoids multi-file correction cycles.
-- **Parsing tool output:** verify which stream (stdout/stderr) each line uses and which flags gate it; capture both with `2>&1` and grep an always-emitted line, never a flag-gated one (a `--quiet`/`--json`-gated line yields empty silently). For a multi-match `sed -n 's/.*marker//p'` filter pick `tail -1` (canonical line is last), not `head -1` (an earlier line can match the marker). Before matching on an error string, reproduce the failure against a real-enough fixture and capture the exact text.
+- **No hardcoded env-specific constant beside a dynamic sibling:** before hardcoding OS, arch, version, or path, grep the file — if a sibling derives the same value dynamically (`uname -s`/`-m`, etc.), reuse that computation, never re-hardcode what a sibling derives.
+- **Confirm example formats before encoding:** treat a version/naming/query string (esp. in a CLI snippet) as illustrative, not normative — confirm the production format before encoding it across >1 file.
+- **Parsing tool output:** capture both streams (`2>&1`) and grep an always-emitted line, never a flag-gated one (a `--quiet`/`--json`-gated line yields empty silently). Multi-match `sed -n 's/.*marker//p'` → `tail -1` (canonical line is last), not `head -1`. Match an error string only after reproducing the failure against a real fixture and capturing the exact text.
 - **Env vars in docs:** document where stored, who can edit it, propagation, and unset default.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
@@ -312,7 +302,7 @@ After PR creation or any push to a PR branch, monitor, diagnose, and fix CI unti
 - Use `gh pr checks --watch --fail-fast` for generic checks.
 - Use `wk-buildkite` for Buildkite.
 - Run long watches in the background and continue with independent work.
-- Never end a turn announcing a holding pattern.
+- **Never end a turn announcing a holding pattern or delegating its final action.** Watch CI to completion this turn; once green, run `gh pr ready` yourself — never hand "mark ready once CI passes" to the user.
 - Read actual logs first.
 
 | Failure type | Action |
@@ -377,10 +367,10 @@ After CI exits green and the PR is marked ready, drive every open review comment
 
 - Poll unresolved review threads.
 - While any remain, invoke `wk-pr-resolve`.
-- Re-poll after every pass — new comments may arrive.
+- Re-poll after every pass **and after every later push** — bots re-review on each push, so resolution is per-push, not one-time.
 - Re-enter Phase 6 if a resolving commit turns CI red.
 - Exit only when zero unresolved threads remain and CI is green.
-- Treat the loop as spanning sessions; resume from the poll step on later invocations.
+- Treat the loop as spanning sessions; resume from the poll step on later invocations. Never run the Phase 8 retro while a push since the last `wk-pr-resolve` pass has unaddressed threads.
 
 ---
 

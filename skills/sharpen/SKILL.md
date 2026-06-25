@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.25-232603'
+  version: '2026.06.25-234328'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -327,6 +327,7 @@ not in the diff will cause a 422 error from the GitHub API.
 - When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list. Coverage-preserving only — never trim by dropping a HARD RULE, error code, or failure-mode.
 - **Prefer structural moves over prose-mangling to reclaim bytes.** Two structural edits reclaim far more per change than tightening dense lines, with zero coverage risk: (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list; (2) merge a new row into the existing row it conceptually overlaps (Step 5 merge-overlap). Reserve prose compression for the final small margin.
 - **Budget the reclaim before drafting when headroom is tight.** Headroom (`ceiling − current body`) under ~2× the drafted edit → pick the reclaim target and estimate its savings *before* writing the new rule, so the net byte change is non-positive on the first pass. Measure once to confirm, not repeatedly to discover.
+  - **Single-digit-byte headroom → the new rule's own full byte size IS the reclaim quantity.** Sum the new content's bytes, select reclaim targets totaling ≥ that sum, and apply them in ONE pass before the first remeasure. Trimming a little then remeasuring (over → trim → over → trim) turns one edit into a multi-cycle search loop; plan the full quantity, apply once, confirm once.
   - **Use the hook's own measure, not ad-hoc `wc -c`** — they diverge by tens of bytes (body-delimiter + newline handling), decisive under ~100 bytes headroom. Replicate `check-skill-size.sh`'s `measure()` (`LC_ALL=C awk`, `length($0)+1` per body line, body starts after the closing `---`, against the staged blob via `git show :path`) for the authoritative count before drafting and before committing.
 
 ## Step 8: Verify and Commit (terminal gate)
