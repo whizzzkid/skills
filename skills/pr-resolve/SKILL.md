@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.25-214432'
+  version: '2026.06.25-224947'
 ---
 
 # PR Resolve
@@ -87,6 +87,9 @@ new-comment loop, Step 11 retro).
 3. **Only resolve threads you actually worked on** — after a fix, explicit
    dismissal, or tracked deferral. Never resolve follow-up questions, skipped,
    rethink-pending, or ordinary self-review threads.
+   - **Resolution gates on the fix landing, never on CI.** Pushed commit
+     addressed the finding → resolve in Step 8 now; never defer to the Step 9.5
+     CI wait — post-push CI failures are a later commit's context.
 4. **Never force-push** — regular `git push` only. *Exception:* a base-advance
    rebase (Step 2) may `git push --force-with-lease`; never bare `git push -f`.
 5. **Never commit without attempting verification.** Verification unavailable or
@@ -193,7 +196,7 @@ commands.md §3 — GraphQL for unresolved threads, REST for full details):
 Map fields: `threadId`, `commentId`, `path`, `line`, `body`, `user`, `userType`,
 `replies[]`, `isOutdated`, `isResolved`.
 
-- **Bot REST comment IDs are unstable; thread node IDs are not.** After a bot replaces its review the REST `databaseId` 404s for *all* ops (Step 8). Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}`. On a reply-POST 404, post one top-level `gh pr comment` summarizing all bot resolutions (never retry another REST ID) and resolve the stable GraphQL thread node ID to close it.
+- **Bot REST comment IDs are unstable; thread node IDs are not.** After a bot replaces its review the REST `databaseId` 404s for *all* ops. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}` (reply-404 handling: Step 8).
 
 **Three-surface pre-flight check:**
 
@@ -451,7 +454,7 @@ logins, SHAs). Re-run for each new post-CI batch.
 
 - Delegate CI polling to the configured CI skill; wait for `passed`, `failed`, or `canceled`.
 - Failed/canceled → surface the failure and exit; fixing CI outranks further feedback.
-- CI passes → re-run Step 3 against post-push HEAD; matching `(path, line, concern)` comments are already-addressed echoes.
+- CI passes → re-run Step 3 against post-push HEAD (matches are already-addressed echoes, per Step 8).
 - Genuinely new unresolved comments → loop: Step 4 (new findings) → Step 5 (same partition/one-at-a-time) → Steps 6–9 → Step 9.5 after the second push.
 - Exit only when CI passes and the post-CI fetch surfaces no genuinely unresolved comments. Cap at 3 iterations; beyond that, surface the review-thrash loop to the user.
 
