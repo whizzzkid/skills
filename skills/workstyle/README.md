@@ -32,6 +32,7 @@ flowchart TD
     U --> U2[wk-workstyle-structure]
     U --> U3[wk-workstyle-async]
     U --> U4[wk-workstyle-docs]
+    U --> U4b[wk-workstyle-docstrings]
     U --> U5[wk-workstyle-testing]
     U --> U6[wk-workstyle-error-handling]
 
@@ -42,7 +43,7 @@ flowchart TD
     L --> L5[wk-workstyle-rust]
     L --> L6[wk-workstyle-shell]
 
-    U1 & U2 & U3 & U4 & U5 & U6 & L1 & L2 & L3 & L4 & L5 & L6 --> G[Step 2: Apply or report]
+    U1 & U2 & U3 & U4 & U4b & U5 & U6 & L1 & L2 & L3 & L4 & L5 & L6 --> G[Step 2: Apply or report]
     G --> H{Finding type}
     H -->|auto-fixable| I[Apply silently, note in commit]
     H -->|judgment needed| J[Surface as suggestion before commit]
@@ -62,7 +63,8 @@ flowchart TD
 | [`wk-workstyle-naming`](../workstyle-naming/README.md) | introduces or renames an identifier |
 | [`wk-workstyle-structure`](../workstyle-structure/README.md) | writes function bodies, control flow, imports, layout |
 | [`wk-workstyle-async`](../workstyle-async/README.md) | touches async/concurrent code |
-| [`wk-workstyle-docs`](../workstyle-docs/README.md) | adds/edits comments, docstrings, or public API |
+| [`wk-workstyle-docs`](../workstyle-docs/README.md) | adds/edits inline comments or updates existing docs |
+| [`wk-workstyle-docstrings`](../workstyle-docstrings/README.md) | adds/edits structured docstrings or public callable signatures |
 | [`wk-workstyle-testing`](../workstyle-testing/README.md) | writes or modifies tests |
 | [`wk-workstyle-error-handling`](../workstyle-error-handling/README.md) | touches an error path |
 | [`wk-workstyle-typescript`](../workstyle-typescript/README.md) | edits `.ts/.tsx/.js/.jsx/.mjs/.cjs` |

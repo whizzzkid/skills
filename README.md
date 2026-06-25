@@ -75,6 +75,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [devcontainer](skills/devcontainer/) | Create or debug a devcontainer for a mise-managed Rails app — Dockerfile, docker-compose, devcontainer.json |
 | [mise](skills/mise/) | Polyglot runtime version manager — tool installation, `mise exec --` for missing tools, git hook activation |
 | [gh](skills/gh/) | Scope all GitHub CLI operations to `$GITHUB_ORG` (model-invocable only) |
+| [cloudsmith](skills/wk-cloudsmith/) | Cloudsmith registry — two-step raw upload, auth patterns, Buildkite OIDC integration |
 | [curl](skills/curl/) | Transport-safe curl idioms — `-sS`, exit-status capture, token hygiene on any parsed HTTP call |
 | [silverbullet](skills/silverbullet/) | Create/edit/debug SilverBullet pages, widgets, dashboards — HTML blocks, checkboxes, space-style CSS |
 
@@ -94,6 +95,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [workstyle-structure](skills/workstyle-structure/) | Layout & structure — guard clauses, nesting depth, magic values, duplication threshold |
 | [workstyle-async](skills/workstyle-async/) | Async & concurrency — no temporal coupling, no unbounded chains, propagate errors |
 | [workstyle-docs](skills/workstyle-docs/) | Code docs — public-API docs, WHY-not-WHAT comments, mandatory stale-comment removal |
+| [workstyle-docstrings](skills/workstyle-docstrings/) | Docstrings — terse WHY-only, full column width, input/output types, stale removal |
 | [workstyle-testing](skills/workstyle-testing/) | Testing intent — new-path coverage, behavior over implementation, mandatory sad paths |
 | [workstyle-error-handling](skills/workstyle-error-handling/) | Error handling — no silent swallow, operational vs programmer errors |
 | [workstyle-typescript](skills/workstyle-typescript/) | TS/JS idioms — const/no-var, no any, explicit return types, `??`/`?.`, `Promise.all` |

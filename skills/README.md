@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **58 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
+> **61 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
 
 ---
 
@@ -65,6 +65,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-devcontainer`](./devcontainer/README.md) | Generate devcontainer for Rails/mise projects with Dockerfile, docker-compose, devcontainer.json | User + Model |
 | [`wk-mise`](./mise/README.md) | Manage mise tool versions — install, configure .mise.toml, diagnose missing tools | User + Model |
 | [`wk-gh`](./gh/README.md) | Scope all `gh` CLI operations to `$GITHUB_ORG` — auto-fires on any GitHub interaction | Auto (on gh CLI use) |
+| [`wk-cloudsmith`](./wk-cloudsmith/README.md) | Cloudsmith registry — two-step raw upload, auth patterns, Buildkite OIDC integration | User + Model |
 | [`wk-curl`](./curl/README.md) | Transport-safe curl idioms — `-sS`, exit-status capture, token hygiene on any parsed HTTP call | Auto (on curl use) |
 | [`wk-silverbullet`](./silverbullet/README.md) | Create/edit/debug SilverBullet pages, widgets, dashboards — HTML blocks, checkboxes, space-style CSS | Auto (on SilverBullet work) |
 
@@ -86,6 +87,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-workstyle-structure`](./workstyle-structure/README.md) | Layout & structure — guard clauses, nesting depth, magic values, duplication → wk-refactor | Auto (on control-flow edits) |
 | [`wk-workstyle-async`](./workstyle-async/README.md) | Async & concurrency — no temporal coupling, no unbounded chains, propagate errors | Auto (on async edits) |
 | [`wk-workstyle-docs`](./workstyle-docs/README.md) | Code docs — public-API docs, WHY-not-WHAT comments, mandatory stale-comment removal | Auto (on comment/doc edits) |
+| [`wk-workstyle-docstrings`](./workstyle-docstrings/README.md) | Docstrings — terse WHY-only, full column width, input/output types, stale removal | Auto (on docstring/public-API edits) |
 | [`wk-workstyle-testing`](./workstyle-testing/README.md) | Testing intent — new-path coverage, behavior over implementation, mandatory sad paths | Auto (on test edits) |
 | [`wk-workstyle-error-handling`](./workstyle-error-handling/README.md) | Error handling — no silent swallow, operational vs programmer errors | Auto (on error-path edits) |
 | [`wk-workstyle-typescript`](./workstyle-typescript/README.md) | TS/JS idioms — const/no-var, no any, explicit return types, `??`/`?.`, `Promise.all` | Auto (on .ts/.js edits) |

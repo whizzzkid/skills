@@ -97,7 +97,8 @@ carry the rules; this orchestrator only dispatches and aggregates.
 | Introduces or renames any identifier (variable, function, class, constant, boolean) | `wk-workstyle-naming` |
 | Adds/edits a function body, branching logic, control flow, imports, or file layout | `wk-workstyle-structure` |
 | Touches async/await, promises, `.then` chains, callbacks, goroutines, threads, channels, mutexes | `wk-workstyle-async` |
-| Adds/edits a doc comment, docstring, inline comment, or new public API | `wk-workstyle-docs` |
+| Adds/edits an inline comment or updates existing docs without a structured docstring | `wk-workstyle-docs` |
+| Adds/edits a structured docstring, JSDoc, YARD, `///`, or any callable with `@param`/`@return` | `wk-workstyle-docstrings` |
 | Writes or modifies tests | `wk-workstyle-testing` |
 | Touches a `catch`/`rescue`/`except` block, error return, or raise/throw | `wk-workstyle-error-handling` |
 
