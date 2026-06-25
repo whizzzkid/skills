@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200103'
+  version: '2026.06.25-223723'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -212,10 +212,15 @@ via `wk-learn scan --since=<N>d` or `wk-learn scan --all` (every transcript on
 disk).
 
 ```bash
-PROJECT_SLUG=$(echo "$PWD" | sed 's|/|-|g')
-find "$TRANSCRIPT_ROOT/$PROJECT_SLUG" -name '*.jsonl' \
-  -mtime -7 -type f 2>/dev/null
+# Claude normalizes BOTH / and _ to - in project dir names; collapse both.
+PROJECT_SLUG=$(echo "$PWD" | sed 's|[/_]|-|g')
+find "$TRANSCRIPT_ROOT/$PROJECT_SLUG" -name '*.jsonl' -mtime -7 -type f 2>/dev/null
 ```
+
+- **Slug-mismatch fallback:** a `sed 's|/|-|g'` that omits the `_`→`-` rule yields a
+  slug that silently matches nothing for any repo whose name contains an underscore.
+  If the slug-derived dir does not exist, list `$TRANSCRIPT_ROOT` and pick the entry
+  with the longest common substring before reporting zero transcripts.
 
 ### Step S2: Extract interruption signals
 
