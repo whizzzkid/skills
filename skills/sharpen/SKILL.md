@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.25-223723'
+  version: '2026.06.25-225346'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -326,6 +326,7 @@ not in the diff will cause a 422 error from the GitHub API.
 - Do not rely on the hook as the only guard — keep skills under the ceilings proactively.
 - When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list. Coverage-preserving only — never trim by dropping a HARD RULE, error code, or failure-mode.
 - **Prefer structural moves over prose-mangling to reclaim bytes.** Two structural edits reclaim far more per change than tightening dense lines, with zero coverage risk: (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list; (2) merge a new row into the existing row it conceptually overlaps (Step 5 merge-overlap). Reserve prose compression for the final small margin.
+- **Budget the reclaim before drafting when headroom is tight.** Headroom (`ceiling − current body`) under ~2× the drafted edit → pick the reclaim target and estimate its savings *before* writing the new rule, so the net byte change is non-positive on the first pass. Measure once to confirm, not repeatedly to discover.
 
 ## Step 8: Verify and Commit (terminal gate)
 
