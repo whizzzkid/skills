@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.25-224947'
+  version: '2026.06.25-232603'
 ---
 
 # PR Resolve
@@ -69,8 +69,8 @@ and the suggestion-format template live in
 Resumed from a compaction summary mid-skill → read the last completed step,
 confirm the resume point (default: next uncompleted step), skip completed steps,
 re-run possibly-stale sync/fetch (Steps 2–3). Never restart from Step 1; never
-drop tail steps absent from the summary (Step 9.4 learnings, 9.5 CI wait +
-new-comment loop, Step 11 retro).
+drop tail steps absent from the summary (Step 9.4 learnings, 9.5 CI wait + loop,
+Step 11 retro).
 
 ## Hard Rules
 
@@ -127,10 +127,9 @@ Run `gh pr view --json ...` (commands.md §1). No PR detected → ask for
 number/URL. Extract `{owner}`, `{repo}`, `{number}`, `{base_branch}`,
 `{head_sha}`.
 
-Detect co-author scenario: capture `$PR_AUTHOR` and `$CURRENT_USER`
-(commands.md §1). `$PR_AUTHOR != $CURRENT_USER` → co-author session: record both
-logins, treat both as self for comment exclusion, give the PR author
-`Co-authored-by:` on every commit.
+Detect co-author scenario: capture `$PR_AUTHOR`/`$CURRENT_USER` (commands.md §1).
+`$PR_AUTHOR != $CURRENT_USER` → co-author session: record both logins, treat both
+as self for comment exclusion, add the PR author `Co-authored-by:` per commit.
 
 Announce:
 > "Resolving review comments on PR #{number}: *title*. Base: `{base_branch}`."
@@ -196,7 +195,7 @@ commands.md §3 — GraphQL for unresolved threads, REST for full details):
 Map fields: `threadId`, `commentId`, `path`, `line`, `body`, `user`, `userType`,
 `replies[]`, `isOutdated`, `isResolved`.
 
-- **Bot REST comment IDs are unstable; thread node IDs are not.** After a bot replaces its review the REST `databaseId` 404s for *all* ops. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}` (reply-404 handling: Step 8).
+- **Bot REST comment IDs are unstable; thread node IDs are not.** After a bot replaces its review the REST `databaseId` 404s for *all* ops. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}` (reply-404: Step 8).
 
 **Three-surface pre-flight check:**
 
@@ -233,7 +232,7 @@ user to submit it as `COMMENT` or abort, then submit before any reply.
 **Bot / non-convergence handling:**
 
 - Track bot thrash by `(path_prefix, concern_class)` and total active findings per round.
-- Stop and ask before another fix when: same pair re-fires 3×; totals stop falling for 2 consecutive rounds; or a new finding contradicts an accepted fix.
+- Stop and ask before another fix when: same pair re-fires 3×; totals stop falling 2 rounds running; or a new finding contradicts an accepted fix.
 - Bot reply: documented command syntax if available, else a generic reply tagging the bot and stating the decision.
 - **Surface prior-round dismissals.** Before a judgment-required finding, check
   the session `dismissed` list and prior-round notes for the same field/concern
@@ -267,10 +266,13 @@ behavior/rationale/trade-off is undocumented, grep the diff, touched files, and
 repo docs; covered (or code makes it unambiguous) → cite the reference and
 dismiss; else present normally.
 
-**Suggestion format** — see commands.md §4. Every suggestion includes reasoning
-for applying and discarding (`Why this fix` / `Why skip`); `{bot_badge}` is
-`🤖 (bot)` for bots, omitted otherwise. Be honest in the skip rationale; if no
-good skip reason exists, say so.
+**Verify pattern applicability before copying.** A finding citing a pattern used
+elsewhere → confirm the scenario matches (auth model, runtime state, credential
+ownership) first; precedent alone never proves this context needs it.
+
+**Suggestion format** — see commands.md §4. Every suggestion gives `Why this fix`
+/ `Why skip` reasoning; `{bot_badge}` = `🤖 (bot)` for bots, else omitted. Be
+honest in the skip rationale; none exists → say so.
 
 **Detect design flaws.** Before drafting a localized patch, decide whether the
 comment signals a design flaw (triggers: "this might not trigger", "depends on
@@ -309,8 +311,8 @@ re-route into `obvious_fixes[]`.
 
 **Bulk-queue preview for obvious fixes.** Obvious-fix items exist → present the
 bulk-queue preview (commands.md §5) once before queueing. Default
-(silence/affirmative/unrelated): queue all obvious-fix items into `fixes_to_apply`
-and proceed. Only explicit `stop` or `consult <indices>` diverts.
+(silence/affirmative/unrelated): queue all into `fixes_to_apply` and proceed. Only
+explicit `stop` or `consult <indices>` diverts.
 
 **Present one judgment-required comment at a time.** For each, present the full §4
 suggestion format then the per-comment prompt (commands.md §5). `a`, `e`, `d`,
@@ -382,8 +384,8 @@ When it fires:
 readiness.
 
 **Disambiguate "review" objections.** "don't post the self-review" / "skip the
-review" → ask whether they mean a formal PR Review submission or the threaded
-replies; default to the former unless they confirm the latter.
+review" → ask: formal PR Review submission, or threaded replies? Default to the
+former unless they confirm the latter.
 
 ## Step 8: Push and Respond
 
@@ -409,13 +411,13 @@ the divergence-guard cherry-pick above. Never bare `git push -f`.
 before posting replies or resolving threads, even when it looks current.
 
 - Preserve metadata lines.
-- Verify commit links, test-plan checkboxes, CI status, remaining work, known limitations, and file lists before deciding no drift.
+- Verify commit links, test-plan checkboxes, CI status, remaining work, known limitations, and file lists before declaring no drift.
 - No drift → log an explicit "no drift detected" line naming the compared fields.
 - **Never assert a result the agent cannot confirm.** Gate Testing/Results on known evidence (diff, CI output, user statement); no evidence → honest placeholder (`Pending — <how to exercise>`), never a template "build completed successfully".
 
 **Re-check self-review and docs drift (every push):**
 
-- Re-read agent-posted self-review comments; if a fix changed the code a comment describes, correct or resolve it.
+- Re-read agent-posted self-review comments; a fix changed the code a comment describes → correct or resolve it.
 - Invoke `wk-docs` against files touched this session; update docs/specs/README when behavior, signatures, or config changed.
 
 **Post replies, reactions, resolve threads.** Re-run the pending self-review
@@ -424,18 +426,18 @@ replies sequentially, routed by surface (commands.md §8):
 
 - Prefix issue-comment replies with a quote of the original comment.
 - Multiple suggestions split from one issue comment (Step 4) → post **one
-  combined reply** (you cannot reply to sub-sections of an issue comment).
-- React on the original: `+1` for `a`/`e`/`t`; `-1` for `d`; `heart` for follow-up questions; none for `s`/`r`. Reaction failures are fire-and-forget.
+  combined reply** (no sub-section replies on issue comments).
+- React on the original: `+1` for `a`/`e`/`t`; `-1` for `d`; `heart` for follow-ups; none for `s`/`r`. Reaction failures are fire-and-forget.
 - Before bot replies, refresh bot thread IDs: re-run the GraphQL reviewThreads query against post-push HEAD, match by `(path, line, root_comment.body_excerpt)`; skip replies for dropped findings.
-- Resolve via GraphQL `resolveReviewThread` (commands.md §8); `NOT_FOUND` → refresh IDs once, match by stable identity, retry; no match/retry fails → log and continue. REST comment IDs die on force-push/bot replacement (GraphQL thread IDs are stable), so an inline-reply 404 → log and keep the thread in `resolve_after_push`. **Fully outdated thread (`line: null`)** → skip the REST reply (every REST op 404s, incl. GET); post one top-level `gh pr comment` summarizing the fixes instead.
+- Resolve via GraphQL `resolveReviewThread` (commands.md §8); `NOT_FOUND` → refresh IDs once, match by stable identity, retry; no match/retry fails → log and continue. REST comment IDs die on force-push/bot replacement (thread IDs stay stable), so an inline-reply 404 → log and keep the thread in `resolve_after_push`. **Fully outdated thread (`line: null`)** → skip the REST reply (every REST op 404s, incl. GET); post one top-level `gh pr comment` summarizing fixes instead.
 - Detect in-place bot summary updates by re-fetching each captured bot issue comment: active→clean = positive resolution; added findings = regression → re-enter Step 4.
-- Post-push comments matching `(path, line, concern)` from this session are already-addressed echoes: reply with the commit link, resolve, do not re-prompt or re-commit.
+- Post-push comments matching `(path, line, concern)` from this session are already-addressed echoes: reply with the commit link, resolve, no re-prompt/re-commit.
 
 ## Step 9: Check Merge Conflicts
 
 Test-merge `origin/{base_branch}` with `--no-commit --no-ff` (commands.md §9).
-Clean → abort the test merge and report success. Conflicts detected → abort and
-ask whether to resolve them now.
+Clean → abort and report success. Conflicts → abort and ask whether to resolve
+them now.
 
 ## Step 9.4: Capture Adversarial-Review Learnings
 
@@ -448,19 +450,19 @@ exception handling, race/TOCTOU, retry/timeout, defensive/dead guard,
 API/external-call shape, docs/comment-accuracy drift, or new). For each non-empty
 class invoke `Skill(wk-learn, args="adversarial-review")` encoding class,
 mechanism, detection sketch, confidence — generic patterns only (no paths, lines,
-logins, SHAs). Re-run for each new post-CI batch.
+logins, SHAs). Re-run per new post-CI batch.
 
 ## Step 9.5: Wait for CI, Then Loop on New Comments
 
-- Delegate CI polling to the configured CI skill; wait for `passed`, `failed`, or `canceled`.
-- Failed/canceled → surface the failure and exit; fixing CI outranks further feedback.
+- Delegate CI polling to the configured CI skill; wait for `passed`/`failed`/`canceled`.
+- Failed/canceled → surface the failure and exit; fixing CI outranks feedback.
 - CI passes → re-run Step 3 against post-push HEAD (matches are already-addressed echoes, per Step 8).
 - Genuinely new unresolved comments → loop: Step 4 (new findings) → Step 5 (same partition/one-at-a-time) → Steps 6–9 → Step 9.5 after the second push.
 - Exit only when CI passes and the post-CI fetch surfaces no genuinely unresolved comments. Cap at 3 iterations; beyond that, surface the review-thrash loop to the user.
 
 ## Step 10: Final Summary
 
-Emit the resolution summary (template: commands.md §10) covering branch sync,
+Emit the summary (template: commands.md §10) covering branch sync,
 comments processed, self-review/bot handling, fixes, deferrals, commits, replies,
 threads resolved/open, conflicts, and PR URL.
 
