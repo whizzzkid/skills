@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.25-223723'
+  version: '2026.06.25-231013'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -40,7 +40,7 @@ Plan -> Implement (commit per step + docs) -> Test -> Refactor & Deletion Scan
 
 - Fires on EVERY task producing code changes, a commit, a push, a PR, or a CI build from a code change. No opt-out, no "too small" exemption.
 - Session resumption is a fresh start → before any write action after context compaction, rollover, or "continue where we left off", invoke `wk-workflow` again.
-- A planning discussion in chat is NOT a substitute for this invocation. Even when the plan is clear, invoke the skill before the first Edit/Write/Bash — it gates that first write call and may surface branch hygiene, guardrails, or pre-flight steps the conversation did not cover. "I already planned, the invocation is redundant" is the rationalization this rule forbids.
+- A planning discussion in chat is NOT a substitute for this invocation. Even when the plan is clear, invoke the skill before the first Edit/Write/Bash — it gates that first write and may surface branch hygiene, guardrails, or pre-flight steps the chat did not cover. "I already planned" is the rationalization this forbids.
 
 ### Autonomy Rules
 
@@ -179,9 +179,8 @@ Apply to ALL code:
 - **Content-lint hooks:** scope to the file class and added lines only; smoke-test against an out-of-scope file that legitimately contains the pattern.
 - **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace each variable’s source, path, and meaning in the new context.
 - **No hardcoded env-specific constant beside a dynamic sibling:** before hardcoding OS, arch, version, or path, grep the file for the same value in an existing path. If a sibling computes it dynamically (`uname -s`/`-m`, etc.), reuse that computation — a parallel path authored in isolation must not re-hardcode what its sibling derives.
-- **Confirm example formats before encoding:** treat a version/naming/query string in a feature request (especially a CLI snippet) as illustrative, not normative. Confirm the exact production format before encoding it across >1 file (code/specs/docs) — one clarifying question up front avoids multi-file correction cycles.
-- **CLI output streams:** before parsing a tool's output, verify which stream (stdout vs stderr) each line uses and which flags gate it; capture both with `2>&1` and grep an always-emitted line, never a flag-conditioned one (a `--quiet`/`--json`-gated line grepped unconditionally yields empty silently).
-- **Error-string discriminators:** reproduce the failure against a real-enough fixture and capture exact text before matching on it.
+- **Confirm example formats before encoding:** treat a version/naming/query string in a request (esp. a CLI snippet) as illustrative, not normative. Confirm the exact production format before encoding it across >1 file — one clarifying question up front avoids multi-file correction cycles.
+- **Parsing tool output:** verify which stream (stdout/stderr) each line uses and which flags gate it; capture both with `2>&1` and grep an always-emitted line, never a flag-gated one (a `--quiet`/`--json`-gated line yields empty silently). For a multi-match `sed -n 's/.*marker//p'` filter pick `tail -1` (canonical line is last), not `head -1` (an earlier line can match the marker). Before matching on an error string, reproduce the failure against a real-enough fixture and capture the exact text.
 - **Env vars in docs:** document where stored, who can edit it, propagation, and unset default.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
