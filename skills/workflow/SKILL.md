@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.26-182204'
+  version: '2026.06.26-184237'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -60,6 +60,7 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 - When soliciting feedback, block on it → end the turn after asking; do not implement past that point until answered.
 - Skill invocation is mandatory → use the Skill tool for prescribed skills, do not approximate with raw commands. Run the invoked skill's full flow; user prose is additive context, not a license to skip parts.
 - **Announce-and-invoke in the same turn:** a skill counts as invoked only when its `Skill` call appears in the same response as the text announcing it. "Now running X" with no same-turn `Skill(X)` call is a protocol violation — narration is not action. On catching a self-announcement without its call, invoke the skill before any other action.
+- **HARD RULE — never report a skill absent from the session available-skills list alone.** The list is not exhaustive; a skill can exist on disk yet be missing from it. Confirm via `ls "$WK_SKILLS_HOME/skills/" | grep <name>` before telling the user a skill is missing; report absent only when that returns nothing.
 - Batch independent tool calls in one response whenever possible.
 
 ### Continuity Rules
@@ -198,14 +199,7 @@ Verification:
 
 In a mise-managed repo, `GemNotFound` on `bundle exec` / `bin/rspec` is a setup gap. Run `bin/setup`, then invoke tests via `mise exec -- <cmd>`.
 
-Shell-script structure tests:
-
-- Anchor awk end-ranges to full lines.
-- Use two-stage awk when duplicate branch labels exist.
-- Use `! grep -q 'pattern'` for negative assertions; `grep -qv` is a false-positive trap.
-- Before range-based assertions, scan for string literals containing the end-range keyword and duplicate branch labels.
-
-Behavioral guard tests must reach the guarded branch. `[[ -f "$x" ]]` follows symlinks → point symlink-escape tests at `/etc/passwd` and confirm the test fails when the guard is removed.
+Shell-script structure & symlink-guard tests: [`references/shell-script-test-checks.md`](references/shell-script-test-checks.md).
 
 ---
 
