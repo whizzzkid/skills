@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.26-202243'
+  version: '2026.06.26-203712'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -332,9 +332,9 @@ not in the diff will cause a 422 error from the GitHub API.
   - **`description:`** field ≤ **1024 bytes** (`SKILL_DESC_MAX_BYTES`)
   - **`allowed-tools:`** ≤ **36 lines** (`SKILL_TOOLS_MAX_LINES`)
 - Keep skills under the ceilings proactively — never rely on the hook as the only guard. When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list. Coverage-preserving only — never trim by dropping a HARD RULE, error code, or failure-mode.
-- **Prefer structural moves over prose-mangling to reclaim bytes** (zero coverage risk): (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list; (2) merge a new row into the existing row it conceptually overlaps (Step 5 merge-overlap); (3) delete scaffolding / blank lines. Reserve prose for the final margin — prose savings under-shoot and reopen the loop.
-- **Budget the reclaim before drafting when headroom is tight.** Headroom under ~2× the drafted edit → pick the reclaim target and size its savings *before* writing the new rule; net byte change must be non-positive on the first pass.
-  - **Important — measure exactly once.** Single-digit headroom → the new rule's byte size IS the reclaim quantity: pick targets totaling ≥ that sum, apply in ONE pass, then measure. A second measure-and-trim cycle is the re-violation signal — stop and re-plan, do not keep tweaking.
+- **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list; (2) delete scaffolding / blank lines. A pure row/bullet merge reclaims ~3 B (prefix + newline), NOT content — count it as reclaim only when it also drops the now-duplicated phrase. Reserve prose for the final margin — prose savings under-shoot and reopen the loop.
+- **Budget the reclaim before drafting when headroom is tight.** Headroom under ~2× the drafted edit → size the reclaim target *before* writing the new rule; net byte change must be non-positive on the first pass.
+  - **Important — measure exactly once.** Single-digit headroom → the new rule's byte size IS the reclaim quantity; apply the cut in ONE pass. A second measure-and-trim cycle is the re-violation signal — stop and re-plan.
   - **Important — measure with the hook's `measure()`, never `wc -c` or a fresh awk.** A hand-rolled replica that diverges (miscounts the first line or closing `---`) reports false headroom and reopens the loop. Run the IDENTICAL staged-blob command pre-draft and at commit — `git add` first, then `git show ":path" | LC_ALL=C awk` (`length($0)+1`, body after `---`); never the working tree.
 
 ## Step 8: Verify and Commit (terminal gate)
