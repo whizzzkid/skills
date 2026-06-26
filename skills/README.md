@@ -155,23 +155,23 @@ flowchart TD
     style ADV fill:#d0021b,color:#fff
     style WKSTYLE fill:#8e44ad,color:#fff
 
-    click WKSTYLE href "./workstyle/README.md" _blank
-    click WF href "./workflow/README.md" _blank
-    click PLAN href "./plan/README.md" _blank
-    click COMMIT href "./commit/README.md" _blank
-    click DOCS href "./docs/README.md" _blank
-    click FMT href "./format/README.md" _blank
-    click SKEL href "./testing-skeleton/README.md" _blank
-    click ADV href "./adversarial-review/README.md" _blank
-    click PR href "./pr/README.md" _blank
-    click SR href "./self-review/README.md" _blank
-    click CI href "./buildkite/README.md" _blank
-    click PRR href "./pr-review/README.md" _blank
-    click RES href "./pr-resolve/README.md" _blank
-    click UPD href "./pr-update/README.md" _blank
-    click BREAK href "./pr-break/README.md" _blank
-    click JIRA href "./jira/README.md" _blank
-    click RETRO href "./retro/README.md" _blank
+    click WKSTYLE href "https://github.com/whizzzkid/skills/blob/main/skills/workstyle/README.md" _blank
+    click WF href "https://github.com/whizzzkid/skills/blob/main/skills/workflow/README.md" _blank
+    click PLAN href "https://github.com/whizzzkid/skills/blob/main/skills/plan/README.md" _blank
+    click COMMIT href "https://github.com/whizzzkid/skills/blob/main/skills/commit/README.md" _blank
+    click DOCS href "https://github.com/whizzzkid/skills/blob/main/skills/docs/README.md" _blank
+    click FMT href "https://github.com/whizzzkid/skills/blob/main/skills/format/README.md" _blank
+    click SKEL href "https://github.com/whizzzkid/skills/blob/main/skills/testing-skeleton/README.md" _blank
+    click ADV href "https://github.com/whizzzkid/skills/blob/main/skills/adversarial-review/README.md" _blank
+    click PR href "https://github.com/whizzzkid/skills/blob/main/skills/pr/README.md" _blank
+    click SR href "https://github.com/whizzzkid/skills/blob/main/skills/self-review/README.md" _blank
+    click CI href "https://github.com/whizzzkid/skills/blob/main/skills/buildkite/README.md" _blank
+    click PRR href "https://github.com/whizzzkid/skills/blob/main/skills/pr-review/README.md" _blank
+    click RES href "https://github.com/whizzzkid/skills/blob/main/skills/pr-resolve/README.md" _blank
+    click UPD href "https://github.com/whizzzkid/skills/blob/main/skills/pr-update/README.md" _blank
+    click BREAK href "https://github.com/whizzzkid/skills/blob/main/skills/pr-break/README.md" _blank
+    click JIRA href "https://github.com/whizzzkid/skills/blob/main/skills/jira/README.md" _blank
+    click RETRO href "https://github.com/whizzzkid/skills/blob/main/skills/retro/README.md" _blank
 ```
 
 ---
@@ -192,9 +192,9 @@ flowchart LR
     style SHARPEN fill:#7b68ee,color:#fff
     style SKILL fill:#2ecc71,color:#fff
 
-    click LEARN href "./learn/README.md" _blank
-    click RETRO href "./retro/README.md" _blank
-    click SHARPEN href "./sharpen/README.md" _blank
+    click LEARN href "https://github.com/whizzzkid/skills/blob/main/skills/learn/README.md" _blank
+    click RETRO href "https://github.com/whizzzkid/skills/blob/main/skills/retro/README.md" _blank
+    click SHARPEN href "https://github.com/whizzzkid/skills/blob/main/skills/sharpen/README.md" _blank
 ```
 
 The cycle: **session → learn → retro → sharpen → better skills → next session**.

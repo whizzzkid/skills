@@ -24,7 +24,7 @@ flowchart TD
     G --> H["Add to $HOME/.claude/memory/<br/>(distilled rules only, never the narrative)"]
     F -->|no| I[Done]
     H --> I
-    click C href "../learn/README.md" _blank
+    click C href "https://github.com/whizzzkid/skills/blob/main/skills/learn/README.md" _blank
 ```
 
 ## Noteworthy

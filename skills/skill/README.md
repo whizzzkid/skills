@@ -28,9 +28,9 @@ flowchart TD
     J -->|yes| K[Confirm registry entry]
     J -->|no| L[Re-run from repo root / check frontmatter]
     K --> M[wk-commit: feat - add wk-name skill]
-    click Z href "../sharpen/README.md" _blank
-    click E href "../calver/README.md" _blank
-    click M href "../commit/README.md" _blank
+    click Z href "https://github.com/whizzzkid/skills/blob/main/skills/sharpen/README.md" _blank
+    click E href "https://github.com/whizzzkid/skills/blob/main/skills/calver/README.md" _blank
+    click M href "https://github.com/whizzzkid/skills/blob/main/skills/commit/README.md" _blank
 ```
 
 ## Noteworthy

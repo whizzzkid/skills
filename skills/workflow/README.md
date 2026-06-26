@@ -31,12 +31,12 @@ flowchart TD
     I -->|yes| K[Phase 6.5: resolve review comments]
     K --> L[Phase 7: wk-docs final audit]
     L --> M[Phase 8: wk-retro — NON-NEGOTIABLE]
-    click A href "../plan/README.md" _blank
-    click D href "../adversarial-review/README.md" _blank
-    click G href "../pr/README.md" _blank
-    click K href "../pr-resolve/README.md" _blank
-    click L href "../docs/README.md" _blank
-    click M href "../retro/README.md" _blank
+    click A href "https://github.com/whizzzkid/skills/blob/main/skills/plan/README.md" _blank
+    click D href "https://github.com/whizzzkid/skills/blob/main/skills/adversarial-review/README.md" _blank
+    click G href "https://github.com/whizzzkid/skills/blob/main/skills/pr/README.md" _blank
+    click K href "https://github.com/whizzzkid/skills/blob/main/skills/pr-resolve/README.md" _blank
+    click L href "https://github.com/whizzzkid/skills/blob/main/skills/docs/README.md" _blank
+    click M href "https://github.com/whizzzkid/skills/blob/main/skills/retro/README.md" _blank
 ```
 
 ## Noteworthy

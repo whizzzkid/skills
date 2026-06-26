@@ -29,7 +29,7 @@ flowchart TD
     H --> M[Deduplicate against existing learnings]
     M --> N[Report summary]
     L --> O[Signal: distill with wk-sharpen when ready]
-    click O href "../sharpen/README.md" _blank
+    click O href "https://github.com/whizzzkid/skills/blob/main/skills/sharpen/README.md" _blank
 ```
 
 ## Noteworthy

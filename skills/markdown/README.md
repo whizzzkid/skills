@@ -30,7 +30,7 @@ flowchart TD
     K -->|no| M[✅ Write file]
     L --> M
     M --> N[wk-learn markdown]
-    click N href "../learn/README.md" _blank
+    click N href "https://github.com/whizzzkid/skills/blob/main/skills/learn/README.md" _blank
 ```
 
 ## Noteworthy
@@ -47,4 +47,4 @@ flowchart TD
 - **120-column rule has hard exceptions:** Never wrap URLs mid-link, fenced code blocks, or table cells where
   splitting would change meaning — leave them as-is even when they exceed the limit.
 - **Post-run learning:** Invokes `wk-learn markdown` on completion to capture session findings for future
-  distillation via `wk-sharpen`.
+  distillation via [`wk-sharpen`](../sharpen/README.md).

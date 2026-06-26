@@ -31,7 +31,7 @@ flowchart TD
     L --> M[git worktree prune]
     M --> N[Report: cleaned + still active table]
     I --> N
-    click K href "../retro/README.md" _blank
+    click K href "https://github.com/whizzzkid/skills/blob/main/skills/retro/README.md" _blank
 ```
 
 ## Noteworthy

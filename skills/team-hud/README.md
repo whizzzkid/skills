@@ -44,7 +44,7 @@ flowchart TD
     H --> I{Standalone or sub-task?}
     I -->|standalone| J["Write to<br/>~/.claude/team-hud/&lt;YYYY-MM-DD&gt;.md"]
     I -->|sub-task| K[Return block to caller]
-    click B href "#blockers" _blank
+    click B href "https://github.com/whizzzkid/skills/blob/main/skills/team-hud/README.md#blockers" _blank
 ```
 
 ## Blockers

@@ -38,12 +38,12 @@ flowchart TD
     Q --> R[Step 5: Final wk-adversarial-review gate]
     R --> S[gh pr ready]
     S --> T[Step 6: wk-retro]
-    click E href "../pr-break/README.md" _blank
-    click F href "../adversarial-review/README.md" _blank
-    click H href "../commit/README.md" _blank
-    click P href "../self-review/README.md" _blank
-    click R href "../adversarial-review/README.md" _blank
-    click T href "../retro/README.md" _blank
+    click E href "https://github.com/whizzzkid/skills/blob/main/skills/pr-break/README.md" _blank
+    click F href "https://github.com/whizzzkid/skills/blob/main/skills/adversarial-review/README.md" _blank
+    click H href "https://github.com/whizzzkid/skills/blob/main/skills/commit/README.md" _blank
+    click P href "https://github.com/whizzzkid/skills/blob/main/skills/self-review/README.md" _blank
+    click R href "https://github.com/whizzzkid/skills/blob/main/skills/adversarial-review/README.md" _blank
+    click T href "https://github.com/whizzzkid/skills/blob/main/skills/retro/README.md" _blank
 ```
 
 ## Noteworthy
