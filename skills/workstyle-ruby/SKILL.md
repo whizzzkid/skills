@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.16-072242'
+  version: '2026.06.26-170909'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -63,6 +63,12 @@ Manual: `/wk-workstyle-ruby scan` (full working tree) · `/wk-workstyle-ruby che
 - **ASCII-only in source comments.** Use `-`, `->`, `--`, `...` — not em dash (`—`), en dash (`–`), smart quotes,
   or Unicode ellipsis. RuboCop's `Style/AsciiComments` enforces this in many Ruby shops; the cop default is
   ASCII-only. Applies to `.rb` files and bin scripts loaded as Ruby.
+
+## Verify with RuboCop
+
+- **Run `bundle exec rubocop --no-color <changed-files>` on every changed `.rb` file before staging** — layout and style cops (argument line breaks, non-ASCII comment characters) are not reliably caught by inspection alone; only the linter sees them. Skipping the local run defers the catch to CI and forces a follow-up fix commit.
+- Fix every offense before `wk-commit`.
+- Skip only when the repo has no RuboCop config or `bundle exec rubocop` is unavailable.
 
 ## Apply or Report
 

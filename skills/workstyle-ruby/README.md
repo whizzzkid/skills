@@ -5,7 +5,7 @@
 > returns, enumerable methods, specific exception subclasses, and ASCII-only
 > comments. Project RuboCop config wins.
 
-**Version:** `2026.06.16-072242`
+**Version:** `2026.06.26-170909`
 
 ## Invocation
 
@@ -23,6 +23,7 @@
 - `raise` specific exception subclasses, not bare `RuntimeError`.
 - No `rescue Exception` — rescue `StandardError` at most unless handling signals.
 - ASCII-only in source comments — no em/en dashes, smart quotes, or Unicode ellipsis.
+- Run `bundle exec rubocop --no-color <changed-files>` before staging; layout/style cops aren't caught by inspection.
 
 ## Noteworthy
 
