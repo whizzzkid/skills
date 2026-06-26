@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.26-185403'
+  version: '2026.06.26-200700'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -160,7 +160,8 @@ not in the diff will cause a 422 error from the GitHub API.
 
 ### HARD RULE: re-violation escalation — `already-covered` is NOT "done"
 
-- A fresh learning that repeats an existing rule proves the rule is not steering.
+- A fresh learning that repeats an existing rule proves the rule failed → escalate.
+- **Exception — positive-steering evidence blocks escalation:** before escalating an `already-covered` repeat, check for same-session evidence the rule fired correctly (a retro "What worked" bullet, or the learning conceding the existing behavior was right). If present, the rule worked: classify `already-covered`, cite the proving lines, do NOT escalate.
 - Escalate by exactly one notch:
   1. baseline prose rule
   2. `**Important:**`
@@ -332,11 +333,11 @@ not in the diff will cause a 422 error from the GitHub API.
   - **`allowed-tools:`** ≤ **36 lines** (`SKILL_TOOLS_MAX_LINES`)
 - Do not rely on the hook as the only guard — keep skills under the ceilings proactively.
 - When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list. Coverage-preserving only — never trim by dropping a HARD RULE, error code, or failure-mode.
-- **Prefer structural moves over prose-mangling to reclaim bytes.** Two structural edits reclaim far more per change than tightening dense lines, with zero coverage risk: (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list; (2) merge a new row into the existing row it conceptually overlaps (Step 5 merge-overlap). Reserve prose compression for the final small margin.
+- **Prefer structural moves over prose-mangling to reclaim bytes** (zero coverage risk): (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list; (2) merge a new row into the existing row it conceptually overlaps (Step 5 merge-overlap). Reserve prose compression for the final small margin.
 - **Budget the reclaim before drafting when headroom is tight.** Headroom under ~2× the drafted edit → pick the reclaim target and size its savings *before* writing the new rule; net byte change must be non-positive on the first pass.
-  - **Important — measure exactly once.** Single-digit headroom → the new rule's byte size IS the reclaim quantity: sum the new bytes, pick reclaim targets totaling ≥ that sum, apply in ONE pass, then measure. A second measure-and-trim cycle is the re-violation signal — stop and re-plan the reclaim, do not keep tweaking. Trim-then-remeasure turns one edit into a search loop.
-  - **Size the quantity from a structural move (subsection merge, scaffolding/blank-line deletion), never prose compression** — prose savings are unpredictable and under-shoot, reopening the loop. Reserve prose for the final margin.
-  - **Use the hook's `measure()`, not `wc -c`** — they diverge by tens of bytes (delimiter + newline handling), decisive under ~100 B. Replicate it (`LC_ALL=C awk`, `length($0)+1` per body line, body after the closing `---`, staged blob via `git show :path`) before drafting and before committing.
+  - **Important — measure exactly once.** Single-digit headroom → the new rule's byte size IS the reclaim quantity: pick targets totaling ≥ that sum, apply in ONE pass, then measure. A second measure-and-trim cycle is the re-violation signal — stop and re-plan, do not keep tweaking.
+  - **Size the reclaim from a structural move** (subsection merge, scaffolding/blank-line deletion), never prose — prose savings under-shoot and reopen the loop.
+  - **Use the hook's `measure()`, not `wc -c`** — they diverge by tens of bytes, decisive under ~100 B. Replicate it (`LC_ALL=C awk`, `length($0)+1`, body after closing `---`, staged blob via `git show :path`).
 
 ## Step 8: Verify and Commit (terminal gate)
 
