@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.26-172223'
+  version: '2026.06.26-175224'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -334,7 +334,7 @@ not in the diff will cause a 422 error from the GitHub API.
 - When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list. Coverage-preserving only — never trim by dropping a HARD RULE, error code, or failure-mode.
 - **Prefer structural moves over prose-mangling to reclaim bytes.** Two structural edits reclaim far more per change than tightening dense lines, with zero coverage risk: (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list; (2) merge a new row into the existing row it conceptually overlaps (Step 5 merge-overlap). Reserve prose compression for the final small margin.
 - **Budget the reclaim before drafting when headroom is tight.** Headroom under ~2× the drafted edit → pick the reclaim target and size its savings *before* writing the new rule; net byte change must be non-positive on the first pass.
-  - **Single-digit headroom → the new rule's full byte size IS the reclaim quantity.** Sum the new bytes, pick reclaim targets totaling ≥ that sum, apply in ONE pass before remeasuring — trim-then-remeasure turns one edit into a search loop.
+  - **Important — measure exactly once.** Single-digit headroom → the new rule's byte size IS the reclaim quantity: sum the new bytes, pick reclaim targets totaling ≥ that sum, apply in ONE pass, then measure. A second measure-and-trim cycle is the re-violation signal — stop and re-plan the reclaim, do not keep tweaking. Trim-then-remeasure turns one edit into a search loop.
   - **Size the quantity from a structural move (subsection merge, scaffolding/blank-line deletion), never prose compression** — prose savings are unpredictable and under-shoot, reopening the loop. Reserve prose for the final margin.
   - **Use the hook's `measure()`, not `wc -c`** — they diverge by tens of bytes (delimiter + newline handling), decisive under ~100 B. Replicate it (`LC_ALL=C awk`, `length($0)+1` per body line, body after the closing `---`, staged blob via `git show :path`) before drafting and before committing.
 
