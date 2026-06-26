@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.26-003823'
+  version: '2026.06.26-184429'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -333,6 +333,12 @@ Follow-ups present → offer once:
   step and resume it immediately. Treating a question as session termination
   leaves the ticket un-transitioned, the retro uncaptured, or the worktree
   uncleaned. Never wait for an explicit "did you finish?" re-prompt.
+- **HARD RULE — context compaction does not reset the Steps 7-10 unit.** A
+  mid-turn compaction is indistinguishable from a clean start to a resuming
+  session. When resuming from a compaction summary that shows `wk-pr-merge` was
+  active with any of Steps 7-10 listed pending, execute those steps before any
+  other work — the compaction summary is the authoritative source for which
+  steps remain.
 - Invoke [`wk-retro`](../retro/README.md) to reflect on the full PR session —
   implementation, review back-and-forth, and merge:
   ```
