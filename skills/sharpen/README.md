@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.06.26-010824`
+**Version:** `2026.06.26-013903`
 
 ## Invocation
 
@@ -39,7 +39,7 @@ flowchart TD
     K --> L[Parallel audit agents]
     L --> M[Consolidate + phased proposal per user approval]
     M --> Q
-    click R href "../refactor/README.md" _blank
+    click R href "https://github.com/whizzzkid/skills/blob/main/skills/refactor/README.md" _blank
 ```
 
 ## Noteworthy
