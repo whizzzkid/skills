@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.26-195425'
+  version: '2026.06.26-233141'
 ---
 
 # PR Resolve
@@ -197,12 +197,6 @@ Map fields: `threadId`, `commentId`, `path`, `line`, `body`, `user`, `userType`,
 
 - **Bot REST comment IDs are unstable; thread node IDs are not.** After a bot replaces its review the REST `databaseId` 404s for *all* ops. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}` (reply-404: Step 8).
 
-**Three-surface pre-flight check:**
-
-- Track per-invocation flags (`inline_comments_fetched`, `review_bodies_fetched`,
-  `issue_comments_fetched`); cached results from a prior invocation do not count.
-- Any flag false → stop and report the failed surface; never advance on partial fetches.
-
 **Agent-observed drift is first-class feedback.** PR metadata/diff/docs drift
 seen during Steps 1–3 → inject into the comment map as `surface:
 agent_observation` (`bot_badge` flag); triage like any finding.
@@ -228,6 +222,8 @@ user to submit it as `COMMENT` or abort, then submit before any reply.
 - Report skipped self-review threads and external replies hidden inside them.
 
 ## Step 4: Generate Suggestions
+
+**HARD RULE — honor the user's named target.** User points to a specific artifact (comment, CI log, bot review) → name the exact finding before writing code; multiple findings in it → ask which, never infer; don't act on adjacent findings until the stated one is resolved.
 
 **Bot / non-convergence handling:**
 

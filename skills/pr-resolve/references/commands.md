@@ -78,6 +78,11 @@ gh api repos/{owner}/{repo}/issues/{number}/comments --paginate \
     created_at, updated_at}'
 ```
 
+**Three-surface pre-flight gate (HARD RULE).** Track per-invocation flags
+(`inline_comments_fetched`, `review_bodies_fetched`, `issue_comments_fetched`);
+cached results from a prior invocation do not count. Any flag false → stop and
+report the failed surface; never advance on partial fetches.
+
 Pre-check pending self-reviews (a pending review blocks reply posting with HTTP
 422):
 
