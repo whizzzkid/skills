@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.26-174333'
+  version: '2026.06.26-195425'
 ---
 
 # PR Resolve
@@ -284,11 +284,10 @@ clarifying reply second; in Step 5 `(a)` applies the design option unless edited
 
 | Tag | Condition |
 |---|---|
-| `obvious-fix` | Skip rationale empty, "no valid reason", "no good reason to skip", `—`, or otherwise concedes the comment is right. |
+| `obvious-fix` | Skip rationale empty, "no valid reason", "no good reason to skip", `—`, or otherwise concedes the comment is right. **Fail-open** (swallowed errors, silent returns) in a script writing/publishing external artifacts also lands here, absent an idempotent-pass-through requirement. |
 | `judgment-required` | A real tradeoff, false-positive possibility, scope question, multiple valid approaches, or security/performance judgment exists. |
 
-Default to `judgment-required` when uncertain; the Step 5 partition re-reads each
-skip rationale and re-routes conceded comments to `obvious-fix`.
+Default to `judgment-required` when uncertain.
 
 **Merge, split, convergence:**
 
@@ -326,8 +325,6 @@ hard-stop unless both hold:
 - **Completeness:** the item restates its full §4 block — comment body/quote,
   fix, skip rationale; reconstruct any missing piece first. A bare letter/code
   ref (`A+C, D, B`) is unreadable even when the count passes.
-
-Structural guard for the intention-based rules above, which kept failing.
 
 **Decision handling** — record exactly one outcome per decision; `a`/`e`/`d`/`t`
 all mark `resolve_after_push`:
