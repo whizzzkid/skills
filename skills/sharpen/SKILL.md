@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.26-205249'
+  version: '2026.06.26-232319'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -342,13 +342,12 @@ not in the diff will cause a 422 error from the GitHub API.
 Do not return control until all four pass:
 
 1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — must print `Done!`. Prefix the explicit `cd` (or use an absolute path); the Bash cwd persists across calls, so a `cd` from an earlier rename/scan step can leave a `.`-relative install in the wrong dir ("No valid skills found").
-   - **In-session `Skill` calls load the cached plugin version, not the edited file.** The plugin cache (`$HOME/.claude/plugins/cache/`) is checked before the worktree install, and the Skill tool caches per-session. To test an edited `SKILL.md` in-session, copy it to the cache path or start a fresh session — re-invoking after `npx skills add` alone still loads the stale cached content.
 2. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Never blanket `git add -A` — the working tree routinely carries *unprocessed* inbox files (`learnings/`, `retrospect/`) from other sessions, and `-A` bundles them into this commit. Add processed paths explicitly. If `-A` is unavoidable, `git reset` every `learnings/`/`retrospect/` path this run did not process before committing.
    - Re-check the index after any hook-blocked commit.
-   - **Untracked skill dir from another session blocks `check-readme-index`.** The hook scans the whole `skills/` tree on disk (not staged paths), so any untracked `skills/<name>/` left by another run fails it. Do not `git add` or index another session's incomplete skill. Move it aside (`mv skills/<name> /tmp/agent/...`), land the scoped commit, push, then restore it untouched.
+   - **Untracked skill dir from another session blocks `check-readme-index`** — the hook scans the whole `skills/` tree on disk, not staged paths. Don't `git add` or index another session's incomplete skill: move it aside (`mv skills/<name> /tmp/agent/...`), land the scoped commit, push, then restore it untouched.
    - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link.
-   - Stage a `.learned.md` rename by adding only the new `.learned.md` path.
+   - Rename `.learned.md` with `mv`, not `git mv` — a freshly materialized learning is untracked, so `git mv` aborts (`fatal: not under version control`). Then `git add` the new path.
 3. **Push once:** after all commits exist, push a single time.
 4. **Clean tree:** `git status --short` must be empty.
 
