@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.26-002229'
+  version: '2026.06.26-165629'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -106,11 +106,13 @@ Per changed file, capture:
 
 Run every sweep unconditionally. Use first matching severity; escalate when a suggestion proves a HARD RULE violation.
 
+- **Run any repo-local automated-review/static-analysis tool as an explicit sweep here, before the subagent** — read its output and fold its blockers/majors. A check that lives only in an ambient memory note ("run X before push") competes with context pressure and gets skipped; a numbered procedure step always executes. Gate the verdict on a clean run.
+
 | ID | Trigger | Check | Severity | Fix / escalation |
 |---|---|---|---|---|
 | 2.1 | Any security/redaction/credential touch | Grep full diff for secret leakage to stderr, `curl -H "Authorization: Bearer $VAR"`, or credential flag values in source/docs/shell. | Blocker | Move to `curl -u`, netrc, or a `chmod 600` credentials file. |
 | 2.2 | Changed script/module/parallel pipeline | List directory siblings and whole-repo sibling toolchain invocations. A directive (`soft_fail`, `retry`, `timeout`, exit-code handling) copied from a sibling → verify the sibling's behavioral/exit-code contract actually transfers (pattern copy ≠ contract transfer). | Blocker | Apply to every sibling or justify absence; quote the sibling's contract for any copied directive, or flag it pending verification. |
-| 2.3 | New guard/null-check/defensive branch, OR a flagged *missing* guard | Trace upstream transforms for reachability and sentinel completeness. A map field left `nil` by `json.Unmarshal` (absent JSON key, not `{}`) is a live absent-key path — confirm the schema always has the key before calling it dead. Before flagging a *missing*-guard/empty-value as a blocker, trace the producer: if it errors on the caller's short-circuit path or guarantees non-empty on success (test-pinned), the guard is unnecessary. | Blocker | Fix dead guards; handle jq falsy output (`"null"`); document why a structurally-guaranteed guard is absent. |
+| 2.3 | New guard/null-check/defensive branch, OR a flagged *missing* guard | Trace upstream transforms for reachability and sentinel completeness. A map field left `nil` by `json.Unmarshal` (absent JSON key, not `{}`) is a live absent-key path — confirm the schema always has the key before calling it dead. Before flagging a *missing*-guard/empty-value as a blocker, trace the producer: if it errors on the caller's short-circuit path or guarantees non-empty on success (test-pinned), the guard is unnecessary. A partition predicate reading a nilable field via bracket/`[]` access defers the nil error past the decision point. | Blocker | Fix dead guards; handle jq falsy output (`"null"`); document why a structurally-guaranteed guard is absent; in a partition predicate use strict access (`.fetch`/equivalent) so nil fails fast at the boundary, not in a downstream formatter. |
 | 2.4 | Added/modified comments or docs claims | Check assertive claims (`always`, `never`, `must`, `works`) and intent phrases against implementation; flag new/changed doc comments whose one sentence chains independent reasons (`because`/`while`/`so that`). | Suggestion | Update/delete stale comments; add pinning tests for universal claims; split independent clauses. |
 | 2.5 | Base/branch refs | Grep for hardcoded `main...HEAD`, `origin/main`, `master...HEAD`. | Blocker | Use dynamic base resolver. |
 | 2.6 | Version pins | Grep Dockerfiles, tool/package manifests, and GitHub Actions for `latest`, `stable`, `nightly`, unpinned tags, `^`, or `~`. | Blocker | Pin exact versions or official-action majors. |
@@ -129,12 +131,10 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.19 | New subprocess/LLM/network call site with a hardcoded `context.Background()`/`context.TODO()` | If the enclosing function has a live cancellation context available (a `context.Context` field on a received struct, or a wrapper embedding one), the literal breaks SIGINT/SIGTERM propagation to in-flight work. | Blocker | Forward the available app/request context; a nil-guard in the callee makes forwarding safe. |
 | 2.19a | Added Struct/Record/interface/Go field | Grep tests for direct concrete-value assertion on the new field. When the field is serialized via `.to_s`/equivalent, also include a nil/false/0 case — the zero-value path through a serialization boundary is the common production path and a `NoMethodError` there escapes happy-path specs. | Blocker | Add direct assertion; `respond_to?`/presence alone is insufficient; add the nil/zero-value serialization case. |
 | 2.20 | Application code + CI pipeline | Extract net-new env reads; locate invoking pipeline steps; verify allowlist forwarding. Diff touches a compose `environment:` or plugin `env:` → full-path audit: grep every script+library in the container's runtime call graph (not just diff delta) for env reads, diff against the forwarding list, run a sibling-template consistency check. **Wholesale `env:` list replacement (e.g. a ported template) → diff the full new list against the `origin/$BASE` version of the same file**, not just the diff delta. | Blocker | Forward vars in native/container steps; exempt auto-injected prefixes only for native non-container steps. Surface any runtime read without a forwarding entry (incl. called libs); same-role siblings forward the same set. A var present in base but absent from a replaced list is a candidate dropped-forwarding regression → re-add or justify. A spec deleting a var and asserting the script's own default = intentional omission → `question`. |
-| 2.56 | New/modified tests | Grep for self-referential equality (`expect(x).to eq(x.sort())`) and no-op `&& true` after `||`. | Blocker | Build independent expected values; propagate `false` in fail paths. |
 | 2.21 | New numeric security-gating config | Trace consumer path; verify positive lower bound and hard ceiling before control gates. | Blocker | Add bounds/ceiling constants. |
 | 2.22 | New structured-artifact plumbing | Detect `<collection>["key"]`/`.get(key)` feeding downstream calls. | Suggestion | Add integration test for the wire. |
 | 2.23 | Seed/prepend before emptiness collapse | Trace whether decorative seed drives guard false. | Blocker | Add seed/decoration after substantive-content gate. |
 | 2.24 | External command with expanded names | Grep commands like tar/rm/cp/mv/grep/chmod/git/curl for missing `--` before untrusted expanded args. | Blocker | Insert `--` before positional args. |
-| 2.25 | New bash `trap` | Grep whole file for overlapping signal handlers. | Blocker | Combine traps or use append helper. |
 | 2.26 | New command capture | For each `FOO=$(...)`, verify canonical promotion before downstream reads. | Blocker | Add `CANONICAL=$FOO` or limit capture to same-block guard. |
 | 2.27 | Parallel guard/inference blocks | Build symmetry matrix for capture/guard/canonical assignment. | Blocker | Apply guard to all siblings or document intentional asymmetry. |
 | 2.28 | CI trigger payload `commit` field | Verify it is not sourced from foreign-repo SHA envs (`REVIEW_`, `TARGET_`, `SOURCE_`). | Blocker | Use pipeline repo SHA. |
@@ -149,10 +149,9 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.44 | Merge/rebase conflict resolved at a function call site | Compare both sides' arg counts against the current base-branch signature; base is authoritative for required params (a side missing one is stale, not caller-wins). Also diff both sides for safety primitives (`signal.Stop`, `context.Cancel*`, `sync.*`, `defer`, `close(`, `os.RemoveAll`, resource releases) present on either side but absent from the result — base is canonical, so a missing guard is a dropped contract. | Blocker | Take the side matching the base signature; flag the short call. Restore any base-side safety primitive absent from the result unless the incoming commit removed it with rationale; green tests don't prove it unneeded. |
 | 2.47 | Bash fake/stub that branches on arg/URL content or writes output a real tool emits only under a flag | (a) A matched branch with no terminal `exit`/`return` before its `fi` falls through to the sibling's response — a test omitting that branch's params passes via the wrong path. (b) A stub writing output unconditionally, ignoring whether the gating flag (`--fail-with-body`, etc.) is in `$@`, makes a production regression away from that flag undetectable. | Blocker | End each branch with explicit `exit` returning its own fallback (`echo '[]'; exit 0`); gate conditional output on flag presence (`for a in "$@"; do [[ $a == --flag ]] && has=true; done`). Model both flag-present and flag-absent paths so the stub is a contract gate, not a shape-mimicker. |
 | 2.48 | Finding or identity/dedup key relies on an LLM round-trip preserving a field verbatim | Grep the prompt/skill builder for an explicit verbatim-echo instruction for that exact field — absence confirms the stability is an unenforced bet, not a guarantee. If test mocks return the field verbatim, the rephrase path is uncovered. | Blocker | Pin the field in the prompt (fix at source) over a downstream key workaround; add a rephrasing-mock regression test. |
-| 2.55 | Log/output parse pipeline or multi-branch diagnostic guard | (a) A regex narrowed to fix overreach (e.g. `[^ ]+\.json` from `.+\.json`) silently drops inputs with spaces/Unicode — enumerate the full input space before accepting; prefer `sed -n 's/.*anchor//p'` (tail-of-line, all chars) over a character-class exclusion when the value format is unconstrained. (b) A message branch keyed on a proxy variable (e.g. stderr emptiness) instead of the actual discriminant (parse result vs file existence) fires the wrong message on orthogonal failures. | Blocker | (a) Use a space-safe extraction; (b) give each distinct failure mode its own condition and message — never branch on a proxy when the discriminant is available directly. |
 
 Lower-frequency and shape-specific sweeps (2.18, 2.30, 2.31, 2.32, 2.36, 2.39,
-2.41, 2.42, 2.45, 2.46, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54) live in
+2.25, 2.41, 2.42, 2.45, 2.46, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 
@@ -162,7 +161,7 @@ After sweeps, dispatch a fresh subagent with no prior session context. Pipe `git
 
 Subagent must be adversarial, objective, naming-aware, and diff-sensitive, plus the stances below:
 
-- **Coverage-aware:** test-only commits → enumerate code paths, flag unexercised paths.
+- **Coverage-aware:** test-only commits → enumerate code paths, flag unexercised paths. But a private helper exercised transitively through its public caller *is* covered — do not flag a line-coverage gap on a transitively-tested private method, nor on a sibling severity/branch already exercised by an equivalent case; a line-coverage lens reports both as gaps, but coupling tests to private helpers couples them to implementation detail.
 - **Refactor-aware:** demand removed-line audit; every removed line is relocated or intentionally dropped.
 - **Relocation-aware:** downgrade inherited pre-existing issues carried unchanged by a pure move.
 - **Introduction-claim-aware:** before calling a behavior newly introduced, grep the `-` lines of the same hunk.

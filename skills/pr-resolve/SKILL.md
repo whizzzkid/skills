@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.25-232603'
+  version: '2026.06.26-170002'
 ---
 
 # PR Resolve
@@ -287,9 +287,8 @@ clarifying reply second; in Step 5 `(a)` applies the design option unless edited
 | `obvious-fix` | Skip rationale empty, "no valid reason", "no good reason to skip", `—`, or otherwise concedes the comment is right. |
 | `judgment-required` | A real tradeoff, false-positive possibility, scope question, multiple valid approaches, or security/performance judgment exists. |
 
-Default to `judgment-required` when uncertain. Immediately before any Step 5
-consultation prompt, re-read the skip rationale; it concedes the comment is right
-→ re-tag `obvious-fix` and route to bulk-apply. Severity does not bypass this.
+Default to `judgment-required` when uncertain; the Step 5 partition re-reads each
+skip rationale and re-routes conceded comments to `obvious-fix`.
 
 **Merge, split, convergence:**
 
@@ -307,7 +306,7 @@ commit, push, or post replies.
 **Partition before any prompts.** Place every suggestion into exactly one list:
 `obvious_fixes[]` (tag == `obvious-fix`) or `judgment_required[]`. Re-read each
 skip rationale during partition; rationale concedes the comment is right →
-re-route into `obvious_fixes[]`.
+re-route into `obvious_fixes[]`. Severity does not bypass this.
 
 **Bulk-queue preview for obvious fixes.** Obvious-fix items exist → present the
 bulk-queue preview (commands.md §5) once before queueing. Default
@@ -319,11 +318,16 @@ suggestion format then the per-comment prompt (commands.md §5). `a`, `e`, `d`,
 `t`, `s`, `r` are reserved; extra options use other letters and must not redefine
 them. Wait for the response before the next comment.
 
-**HARD RULE — pre-emit count gate (mechanical).** Before sending a Step 5
-message, count its `Comment {n}` decision headers; > 1 → hard-stop and split, one
-message per comment. Fires even when items feel similar or the flow is already
-"listing"; a batched prompt lets the user reply `a a d` — forbidden. The
-intention-based rule above kept failing, so this count check is its structural guard.
+**HARD RULE — pre-emit gate (mechanical).** Before sending a Step 5 message,
+hard-stop unless both hold:
+
+- **Count:** exactly one `Comment {n}` header — > 1 → split, one per message (a
+  batched prompt lets the user reply `a a d` — forbidden).
+- **Completeness:** the item restates its full §4 block — comment body/quote,
+  fix, skip rationale; reconstruct any missing piece first. A bare letter/code
+  ref (`A+C, D, B`) is unreadable even when the count passes.
+
+Structural guard for the intention-based rules above, which kept failing.
 
 **Decision handling** — record exactly one outcome per decision; `a`/`e`/`d`/`t`
 all mark `resolve_after_push`:
@@ -475,8 +479,8 @@ completion, including narrow directives.
 
 | Trigger | Behavior |
 |---|---|
-| "resolve PR comments" / "address review feedback" / "respond to reviewers" / "fix PR #{number}" | Full workflow |
-| "fix the comment" / "there's a description issue" with an open PR | Auto-activate on the open PR |
+| "resolve PR comments" / "address review feedback" / "fix PR #{number}" | Full workflow |
+| "fix the comment" / "description issue" with an open PR | Auto-activate on the open PR |
 | Session ends | Emit adversarial-review learnings, then run `wk-retro` |
 
 ## Requirements
@@ -490,8 +494,4 @@ completion, including narrow directives.
 
 ## Post-Completion
 
-Invoke `wk-learn` with this skill's short name as the argument:
-
-```
-wk-learn pr-resolve
-```
+Invoke `wk-learn pr-resolve`.

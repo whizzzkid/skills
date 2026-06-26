@@ -15,7 +15,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.26-163958'
+  version: '2026.06.26-165301'
 ---
 
 # Mermaid
@@ -115,6 +115,12 @@ done.
   browser via Playwright; confirm the diagram renders with no Mermaid syntax
   error box and nodes show line breaks, not literal `\n`. Commit only after it
   renders clean.
+- **Render immediately after each edit; never defer.** Validate the moment a
+  diagram changes, not "later" — deferral defeats the rule and forces a user
+  redirect. Multiple diagrams changed → render **all** in the same pass before
+  any commit; a green first diagram does not vouch for an unrendered second
+  (the recurring miss: validate one, commit, discover the second only on
+  feedback). URL generation is not validation — the browser open is.
 - When fixing existing diagrams across many files, sweep mermaid-fenced lines
   only — never replace `\n` in surrounding prose.
 
@@ -138,6 +144,9 @@ done.
 - **Unquoted parentheses/colons in labels** — break the parse; quote the label.
 - **Relative `click` target** — renders but 404s against GitHub's sandboxed
   mermaid iframe; only absolute URLs navigate (`call` JS handlers are stripped).
+- **Deferring browser validation** — generating a preview URL without opening
+  it, or validating one of several edited diagrams and postponing the rest;
+  render every changed diagram in the same pass before committing.
 - **Forgetting the `mermaid` fence tag** — renders as a code block, not a diagram.
 
 ---
