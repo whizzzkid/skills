@@ -15,7 +15,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.26-162551'
+  version: '2026.06.26-163958'
 ---
 
 # Mermaid
@@ -102,8 +102,10 @@ A block that parses locally can still fail on GitHub. Verify before declaring
 done.
 
 - Grep the block for known failure patterns: a literal `\n` (always wrong), and
-  a relative/anchor click target — `grep -nE '\\n|click .* href "(\./|\.\./|#)' <file>`
-  inside the mermaid fence must return nothing. (Absolute-URL clicks are fine.)
+  a relative/anchor click target in either click form —
+  `grep -nE '\\n|^[[:space:]]*click[[:space:]]+[^"]*"(\./|\.\./|#)' <file>` must
+  return nothing. (Anchored on `click`, so prose is not matched; absolute-URL
+  clicks are fine.)
 - **HARD RULE — grep is necessary but not sufficient; render every added or
   modified diagram in a browser before committing.** Grep catches only known
   string patterns (`\n`, `click`); a structural syntax error — a malformed

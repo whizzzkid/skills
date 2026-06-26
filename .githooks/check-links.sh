@@ -39,7 +39,7 @@ fi
 # canonical GitHub blob URLs validate offline against the local worktree.
 if ! mise exec -- lychee \
     --remap "https://github.com/whizzzkid/skills/blob/main/(.*) file://$REPO_ROOT/\$1" \
-    './README.md' './*.md' './skills/*/README.md' './docs/**/*.md'; then
+    './README.md' './*.md' './skills/*.md' './skills/*/README.md' './docs/**/*.md'; then
   echo "" >&2
   echo "✗ pre-commit: lychee found broken link(s) in navigable docs (see above)." >&2
   echo "  Fix the path/anchor, or exclude an illustrative placeholder in lychee.toml." >&2

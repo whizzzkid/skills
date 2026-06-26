@@ -2,7 +2,7 @@
 
 > Author Mermaid diagrams that render correctly on GitHub — the strictest common target.
 
-**Version:** `2026.06.26-162551`
+**Version:** `2026.06.26-163958`
 
 ## Invocation
 
@@ -20,7 +20,7 @@ flowchart TD
     C --> D["Step 3: Quote labels with special chars<br/>parens, colons, pipes, quotes"]
     D --> E["Step 4: Avoid sanitized constructs<br/>click targets must be absolute URLs"]
     E --> H["Step 5: grep block for backslash-n<br/>and relative click targets"]
-    H --> G["Step 5: Render in browser before commit<br/>confirm no syntax-error box"]
+    H --> G["then render in browser before commit<br/>confirm no syntax-error box"]
     G --> I["Diagram renders on GitHub"]
 ```
 

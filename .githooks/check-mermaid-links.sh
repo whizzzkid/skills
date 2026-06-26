@@ -28,10 +28,12 @@ staged=$(git diff --cached --name-only --diff-filter=ACMR \
 [[ -z "$staged" ]] && exit 0
 
 # Navigable docs to scan (mirror check-links.sh scope; skip the scaffold).
-docs=$(find . -name '*.md' \
+# `|| true`: grep exits 1 when nothing matches, which under `set -o pipefail`
+# would abort the hook instead of yielding an empty (harmless) doc set.
+docs=$(find . \
   \( -name 'README.md' -o -path './docs/*' -o -path './*.md' \) \
   -not -path '*/_template/*' -not -path '*/node_modules/*' 2>/dev/null \
-  | grep -E '(^|/)README\.md$|^\./docs/.*\.md$|^\./[^/]+\.md$' | sort -u)
+  | grep -E '(^|/)README\.md$|^\./docs/.*\.md$|^\./[^/]+\.md$' | sort -u || true)
 
 relative=()
 broken=()
@@ -55,8 +57,12 @@ while IFS= read -r file; do
       *)
         relative+=("  $file:$lineno  →  $target (unrecognized; use an absolute https URL)") ;;
     esac
-  done < <(grep -nE '^\s*click\s+\S+\s+href\s+"' "$file" \
-            | sed -E 's/^([0-9]+):.*href[[:space:]]+"([^"]*)".*/\1:\2/')
+  # Match both click forms — `click ID href "url"` and the shorthand
+  # `click ID "url"` (Mermaid accepts both) — anchored at line start so prose
+  # mentioning "click" is never matched. Extract the FIRST quoted string (the
+  # link target; a trailing "tooltip" is ignored).
+  done < <(grep -nE '^[[:space:]]*click[[:space:]]+[^"]*"' "$file" \
+            | sed -E 's/^([0-9]+):[[:space:]]*click[[:space:]]+[^"]*"([^"]*)".*/\1:\2/')
 done <<< "$docs"
 
 if [[ ${#relative[@]} -gt 0 || ${#broken[@]} -gt 0 ]]; then
