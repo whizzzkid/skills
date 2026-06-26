@@ -15,7 +15,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.26-003822'
+  version: '2026.06.26-162551'
 ---
 
 # Mermaid
@@ -81,9 +81,16 @@ flowchart TD
 
 ## Step 4: Avoid GitHub-sanitized constructs
 
-- **No `click` directives / JS interactivity** — GitHub strips event handlers;
-  a diagram relying on `click ... call` does nothing. Use a following markdown
-  link instead.
+- **HARD RULE — a Mermaid `click` target on GitHub MUST be an absolute URL.**
+  Two distinct, silent failure modes:
+  - `click X call <fn>` (JS callback) → the sanitizer strips it; does nothing.
+  - `click X href "./rel"` / `"../rel"` / `"#anchor"` → renders as a real link
+    but resolves against the **sandboxed mermaid iframe origin**, not the repo
+    → **404**. The link looks wired up; every relative target is silently broken.
+  - `click X href "https://…full URL…"` → navigates correctly.
+  - Prefer a markdown link beside the diagram for navigation. If you keep a
+    `click`, its target must be an absolute URL — never relative, never a bare
+    anchor. (`.githooks/check-mermaid-links.sh` enforces this where present.)
 - **No raw HTML beyond `<br/>`** in labels — other tags are sanitized.
 - **No external `%%{init}%%` themes that assume a script context** — basic
   `%%{init: {...}}%%` config works, but keep it minimal; complex theming may
@@ -94,8 +101,9 @@ flowchart TD
 A block that parses locally can still fail on GitHub. Verify before declaring
 done.
 
-- Grep the block for the known failure patterns: `grep -nE '\\n|click ' <file>`
-  inside the mermaid fence — both must return nothing.
+- Grep the block for known failure patterns: a literal `\n` (always wrong), and
+  a relative/anchor click target — `grep -nE '\\n|click .* href "(\./|\.\./|#)' <file>`
+  inside the mermaid fence must return nothing. (Absolute-URL clicks are fine.)
 - **HARD RULE — grep is necessary but not sufficient; render every added or
   modified diagram in a browser before committing.** Grep catches only known
   string patterns (`\n`, `click`); a structural syntax error — a malformed
@@ -114,7 +122,7 @@ done.
 |---------|----------|
 | Authoring a mermaid block | Apply Steps 1–4, then validate (Step 5) |
 | `/wk-mermaid` | Audit mermaid blocks in the current file/repo for these rules |
-| Fixing broken GitHub diagrams | Replace `\n` → `<br/>`, quote special-char labels, drop `click` |
+| Fixing broken GitHub diagrams | Replace `\n` → `<br/>`, quote special-char labels, make every `click` target absolute |
 
 ## Requirements
 
@@ -126,7 +134,8 @@ done.
 - **Literal `\n` for line breaks** — renders as visible `\n` on GitHub; use
   `<br/>`. (The recurring failure this skill exists to prevent.)
 - **Unquoted parentheses/colons in labels** — break the parse; quote the label.
-- **Relying on `click` interactivity** — stripped by GitHub's sanitizer.
+- **Relative `click` target** — renders but 404s against GitHub's sandboxed
+  mermaid iframe; only absolute URLs navigate (`call` JS handlers are stripped).
 - **Forgetting the `mermaid` fence tag** — renders as a code block, not a diagram.
 
 ---
