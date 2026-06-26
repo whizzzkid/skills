@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.25-234328'
+  version: '2026.06.26-182204'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -66,7 +66,7 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 
 The Phase 1 plan is the session contract.
 
-- Read the full prompt to the end and enumerate every deliverable before acting. A message opening with a noun task ("create a ticket") and closing with an imperative ("fix this") is two work items — commit to the full list before executing the first; never stop after the first deliverable.
+- **Important:** Read the prompt to the end and enumerate every deliverable before acting. A message opening with a noun task ("create a ticket") and closing with an imperative ("fix this") is two work items — commit to the full list first; never stop after the first deliverable.
 - On interruption mid-plan: stop, update the active plan/TodoWrite list, re-state the new top item in one line, resume from the earliest incomplete item.
 - Final completeness gate: before claiming completion, re-read the plan and ensure every numbered step is finished or explicitly deferred/removed.
 
