@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.25-234328'
+  version: '2026.06.26-230726'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -59,7 +59,8 @@ Scan the task description for these ambiguity signals:
 | Missing "what must NOT change" | new feature touching shared code | Yes |
 | ≥2 distinct deliverables bundled | "add X, fix Y, and refactor Z" | Yes — confirm granularity |
 
-- When ≥1 signal fires → ask the minimum set of questions (max 4) to unblock, via `AskUserQuestion` (not prose) for efficient answering.
+- When ≥1 signal fires → ask only the questions needed to unblock, via `AskUserQuestion` (not prose).
+- **HARD RULE — one question per message.** Ask a single question, wait for the answer, then ask the next; track answers as you go. Never present a batched/numbered list, even with recommended defaults — a wall of simultaneous questions is overwhelming. Generalizes the wk-pr-resolve one-comment-at-a-time rule to every grill/clarify/decision flow.
 - Proceed to Step 1 only when every blocker is resolved.
 
 **Multi-deliverable granularity.** When the prompt lists ≥2 deliverables that could each stand alone (own ticket, commit, or PR) → surface them as a numbered list and ask "one PR or separate?" **before** planning. A bundle of N tasks reads as a clear requirement but hides a granularity decision only the user owns; a single deliverable with sub-tasks does not trigger this.
