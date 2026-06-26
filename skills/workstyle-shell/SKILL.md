@@ -15,7 +15,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.23-220111'
+  version: '2026.06.26-002229'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -66,6 +66,10 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   http_code=$(helper ...) || status=$?   # captures 2 instead of exiting
   ```
 
+- **Register a cleanup trap the moment you create a temp file or dir** — `trap
+  'rm -rf "$tmp"' EXIT INT TERM`, in the same commit, never deferred to a later
+  fix. An `EXIT`-only trap leaks the tempfile on Ctrl-C and on CI cancellation;
+  cover `INT`/`TERM` too. Pair with the `local`-scope rule below.
 - **An EXIT trap cannot see a `local` variable.** A script-scope
   `trap '... "$f" ...' EXIT` runs after functions return, so a `local f` set
   inside a function is out of scope and expands empty — `${f:-}` silently

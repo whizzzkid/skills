@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.23-221017'
+  version: '2026.06.26-002229'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -262,6 +262,12 @@ For each detected Jira key:
 
 No terminal transition found → note in output, skip the transition, do not
 block the merge.
+
+**Jira MCP unavailable / unauthenticated** (connector tools error or absent) →
+do not block the merge. Surface the detected key and its terminal state in the
+Step 8 follow-ups for manual transition, mirroring the Asana fallback:
+
+> "⚠️ Jira MCP unavailable — transition `<KEY>` to Done manually: {url}"
 
 ### GitHub issues
 

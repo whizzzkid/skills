@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.06.25-214432'
+  version: '2026.06.26-002229'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -118,6 +118,15 @@ not a GraphQL node ID (`PRRC_…`) — passing the node ID returns 404.
 `in_reply_to` formatting entirely. If using the base endpoint, pass the ID with
 `--field in_reply_to=<int>`, never `-f` — `-f` sends a string and returns 422
 ("is not a number").
+
+**Resolve the exact repo name before any GraphQL `$owner`/`$repo` call.** URL
+slugs normalize underscores to hyphens, but the GraphQL API requires the stored
+name verbatim — a slug-derived name (from a URL or `$GITHUB_ORG` search) returns
+`NOT_FOUND`. Read it from the API; never derive it from a URL:
+
+```bash
+gh repo view --json owner,name --jq '{owner: .owner.login, name: .name}'
+```
 
 Every write surface above must:
 

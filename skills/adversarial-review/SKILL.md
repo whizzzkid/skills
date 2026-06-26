@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.25-231013'
+  version: '2026.06.26-002229'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -129,7 +129,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.19 | New subprocess/LLM/network call site with a hardcoded `context.Background()`/`context.TODO()` | If the enclosing function has a live cancellation context available (a `context.Context` field on a received struct, or a wrapper embedding one), the literal breaks SIGINT/SIGTERM propagation to in-flight work. | Blocker | Forward the available app/request context; a nil-guard in the callee makes forwarding safe. |
 | 2.19a | Added Struct/Record/interface/Go field | Grep tests for direct concrete-value assertion on the new field. When the field is serialized via `.to_s`/equivalent, also include a nil/false/0 case — the zero-value path through a serialization boundary is the common production path and a `NoMethodError` there escapes happy-path specs. | Blocker | Add direct assertion; `respond_to?`/presence alone is insufficient; add the nil/zero-value serialization case. |
 | 2.20 | Application code + CI pipeline | Extract net-new env reads; locate invoking pipeline steps; verify allowlist forwarding. Diff touches a compose `environment:` or plugin `env:` → full-path audit: grep every script+library in the container's runtime call graph (not just diff delta) for env reads, diff against the forwarding list, run a sibling-template consistency check. **Wholesale `env:` list replacement (e.g. a ported template) → diff the full new list against the `origin/$BASE` version of the same file**, not just the diff delta. | Blocker | Forward vars in native/container steps; exempt auto-injected prefixes only for native non-container steps. Surface any runtime read without a forwarding entry (incl. called libs); same-role siblings forward the same set. A var present in base but absent from a replaced list is a candidate dropped-forwarding regression → re-add or justify. A spec deleting a var and asserting the script's own default = intentional omission → `question`. |
-| 2.19 | New/modified tests | Grep for self-referential equality (`expect(x).to eq(x.sort())`) and no-op `&& true` after `||`. | Blocker | Build independent expected values; propagate `false` in fail paths. |
+| 2.56 | New/modified tests | Grep for self-referential equality (`expect(x).to eq(x.sort())`) and no-op `&& true` after `||`. | Blocker | Build independent expected values; propagate `false` in fail paths. |
 | 2.21 | New numeric security-gating config | Trace consumer path; verify positive lower bound and hard ceiling before control gates. | Blocker | Add bounds/ceiling constants. |
 | 2.22 | New structured-artifact plumbing | Detect `<collection>["key"]`/`.get(key)` feeding downstream calls. | Suggestion | Add integration test for the wire. |
 | 2.23 | Seed/prepend before emptiness collapse | Trace whether decorative seed drives guard false. | Blocker | Add seed/decoration after substantive-content gate. |
