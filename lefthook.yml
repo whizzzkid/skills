@@ -17,6 +17,8 @@ pre-commit:
       run: .githooks/check-pr-numbers.sh
     check-skill-links:
       run: .githooks/check-skill-links.sh
+    check-links:
+      run: .githooks/check-links.sh
     check-learnings-dirs:
       run: .githooks/check-learnings-dirs.sh
     check-learning-filenames:

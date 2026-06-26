@@ -1,0 +1,16 @@
+# Link validation config for the check-links pre-commit hook
+# (.githooks/check-links.sh). Manual run:
+#   mise exec -- lychee ./README.md './skills/*/README.md'
+#
+# Offline: validate local file targets and anchors only. Online link liveness is
+# intentionally NOT checked here — it is slow and network-flaky in a pre-commit
+# gate. Run a networked lychee pass in CI for external-URL rot instead.
+offline = true
+no_progress = true
+
+# Skip the skill scaffold — placeholder links, not a published doc.
+exclude_path = ["_template"]
+
+# Illustrative/template link targets that appear in prose examples and are not
+# real paths: {var} placeholders (raw and %-encoded) and the bare word "url".
+exclude = ['\{', '%7B', '(^|/)url$']

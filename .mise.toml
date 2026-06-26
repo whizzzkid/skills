@@ -1,0 +1,4 @@
+[tools]
+# Link checker used by the check-links pre-commit hook (.githooks/check-links.sh).
+# aqua backend installs a prebuilt binary — no Rust toolchain required.
+lychee = "0.24.2"
