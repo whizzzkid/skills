@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.26-005154'
+  version: '2026.06.26-010824'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -238,7 +238,7 @@ not in the diff will cause a 422 error from the GitHub API.
 - Apply replacement maps longest-first.
 - Reject ticket-shaped example tokens. Grep the proposed edit against `[A-Z][A-Z0-9]+-\d+`; any match — even an invented placeholder — trips the `check-ticket-refs` hook, which matches on shape, not provenance. Replace with an angle-bracket placeholder (`<child-key>`, `<KEY>`) or the repo's `BOARD-NUM` form.
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
-- Scrub the staged learning and retrospect archive files too — not only the skill edits and references. A `.learned.md` rename commits the archive into the public repo; an internal tool/project/service/org name there blocks the commit at the prohibited-term hook.
+- Scrub staged learning and retrospect archive files too, not just skill edits/references — a `.learned.md` rename commits the archive publicly, so an internal name there blocks the commit at the prohibited-term hook. A term-handling learning's example IS the term; scrub it.
 - Grep every staged file against the repo's authoritative term list, not just the ad-hoc categories above. Feed the scan the **authoritative staged set**, never a hand-built path list — a manual list silently under-matches and diverges from what the commit carries:
 
   ```bash
