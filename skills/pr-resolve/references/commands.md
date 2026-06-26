@@ -44,8 +44,15 @@ LAST_BASE_MERGE=$(git log --merges --first-parent --pretty=format:%H \
       fi
     done)
 if [ -n "$LAST_BASE_MERGE" ] && [ "$BEHIND" -le 5 ]; then
-  git merge "origin/$BASE"
+  git merge "origin/$BASE" --no-edit
 fi
+```
+
+Stage resolved files from the repo root (session cwd may be a subdirectory where
+`git add <repo-relative-path>` exits 128; applies here and in Step 6):
+
+```bash
+git -C "$(git rev-parse --show-toplevel)" add <paths>
 ```
 
 ## Step 3 — Fetch unresolved comments

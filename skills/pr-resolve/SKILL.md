@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.26-170002'
+  version: '2026.06.26-174333'
 ---
 
 # PR Resolve
@@ -151,7 +151,9 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
   if remote is ahead. Keeps next push fast-forward; avoids a divergent second
   merge commit.
 - **Integrate the base branch** — merge-aware pre-check: HEAD already contains a
-  base merge and `$BEHIND <= 5` → plain `git merge`.
+  base merge and `$BEHIND <= 5` → plain `git merge`. Detecting `$BEHIND > 0`
+  obligates the merge before reading one comment; reporting the count and
+  continuing is a violation.
 - Otherwise delegate base integration to `wk-pr-update` (only if it preserves the
   no-force-push contract); on an unresolvable conflict, validation regression, or
   required forced push it reports → stop and surface the blocker.
@@ -166,15 +168,13 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
   (Hard Rule 4 exception) — never bare `-f`.
 - **HARD RULE — audit dropped safety guards after each conflict resolution.** The
   base side (HEAD during rebase) is canonical `origin/$BASE_BRANCH`; a guard there
-  was intentional. Diff both sides for signal/context/cleanup primitives
-  (`signal.Stop`, `defer`, `close(`, `os.RemoveAll`, resource releases, etc.); any
-  on the base side but absent from the result is a dropped guard — restore it
-  unless the incoming commit removed it with rationale. Green
-  compile/tests do **not** prove it unneeded; block until each absence is confirmed.
-- **Stage resolved files from the repo root.** Session cwd may be a subdirectory,
-  where `git add <repo-relative-path>` exits 128. Use
-  `git -C "$(git rev-parse --show-toplevel)" add <paths>` for all staging here and
-  in Step 6.
+  was intentional. Diff both sides for signal/cleanup primitives (signal stops,
+  `defer`, channel closes); any on the base side but absent from the result is a
+  dropped guard — restore it unless the incoming commit removed it with rationale.
+  Green compile/tests do **not** prove it unneeded; block until each absence is
+  confirmed.
+- **Stage resolved files from the repo root** — cwd may be a subdir where `git add`
+  exits 128 (command in commands.md §2; here and Step 6).
 - **HARD RULE — Step 2 is unconditional.** Run fetch + ahead/behind before
   triaging any comment, whatever the branch state. "Already up to date" is an
   outcome of running it, not a reason to skip. Step 9's test-merge is a conflict
