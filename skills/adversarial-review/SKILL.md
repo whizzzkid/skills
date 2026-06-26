@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.26-170910'
+  version: '2026.06.26-172224'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -107,6 +107,7 @@ Per changed file, capture:
 Run every sweep unconditionally. Use first matching severity; escalate when a suggestion proves a HARD RULE violation.
 
 - **Run any repo-local automated-review/static-analysis tool as an explicit sweep here, before the subagent** — read its output and fold its blockers/majors. A check that lives only in an ambient memory note ("run X before push") competes with context pressure and gets skipped; a numbered procedure step always executes. Gate the verdict on a clean run.
+- **Detect a configured second-opinion review integration (review binary on `PATH` / env flag) and invoke it this same turn** — re-derive it from the integration's presence each run, never from a standing user-config rule; fold its blockers/majors.
 
 | ID | Trigger | Check | Severity | Fix / escalation |
 |---|---|---|---|---|
@@ -204,7 +205,6 @@ Create `.review-playground/` only if needed (never commit a `.gitignore` entry f
   gh api "repos/{owner}/{repo}/contents/{path}?ref={tag-or-sha}" --jq '.content' | base64 -d
   ```
 
-- **Runtime-behavior claims stay `question` until reproduced** (Contract item 8; Step 3 runtime-behavior-cautious) — never `blocker` from deduction.
 
 ### Runtime matrix
 

@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.26-013903'
+  version: '2026.06.26-172223'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -149,6 +149,7 @@ not in the diff will cause a 422 error from the GitHub API.
 - Grep the source learning/memory's core subject term against `.skillprohibit` at distill time, before byte-budget or draft.
 - A lesson *about* an internal/prohibited tool can only produce edit text naming it — the collision is knowable now, not at the Step 5 staged scan.
 - On match: the lesson cannot land in the public repo. Route it to the user's private `CLAUDE.md`, mark the source distilled, skip the fold (no byte-budget, no draft).
+- When recording a skipped or private-routed fold, name the subject by **category only** in the commit-message body — the `commit-msg` hook scans the message with the same term list as files, so a named token there fails the commit and forces a re-author cycle.
 
 ### HARD RULE: full-read before `already-covered`
 
@@ -362,30 +363,6 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 | Referencing specific line numbers | Describe the line's role or position |
 | Copying error descriptions verbatim | Extract the error code and failure mode |
 | Adding "if file is X, do Y" | Add a general rule that covers all repos |
-
-## Example: Good vs Bad
-
-### Bad (overfitted)
-
-```markdown
-## Phase 5: Review Comments
-
-Check lines 232 and 60 in trust-boundaries.md and model.md. If the
-PB3 anchor is broken, skip commenting on those lines.
-```
-
-### Good (principle-focused)
-
-```markdown
-## Phase 5: Review Comments
-
-### Validate comment positions
-
-Parse the diff to confirm each proposed comment's target line exists
-in a hunk. Lines not in the diff will cause a 422 error from the API.
-If a line is missing, move the comment to a nearby valid line or the
-review body.
-```
 
 ## Quick Reference
 
