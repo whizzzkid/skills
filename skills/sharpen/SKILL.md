@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.25-235135'
+  version: '2026.06.26-003825'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -246,7 +246,7 @@ not in the diff will cause a 422 error from the GitHub API.
   ```
 
   Covers skill edits, references, AND renamed `.learned.md`/retro archives. Anonymize every hit.
-- Treat a NONE result as **unverified, not proof-of-clean** — sanity-check the grep fires against a known-positive line before trusting it. The category grep misses internal codenames the list catches; the `check-prohibited` hook is the backstop, not the first line — relying on it costs a failed-commit + amend cycle.
+- Treat a NONE result as **unverified, not proof-of-clean** — confirm the grep fires by echoing a pattern **from `.skillprohibit` itself** (its first non-comment line) through it, not a guessed term that may be unlisted and gives a false "grep broken" signal. The category grep misses internal codenames the list catches; the `check-prohibited` hook is the backstop, not the first line — relying on it costs a failed-commit + amend cycle.
 
 ## Step 6: Present for Review
 

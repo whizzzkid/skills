@@ -15,7 +15,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.11-213638'
+  version: '2026.06.26-003822'
 ---
 
 # Mermaid
@@ -94,11 +94,17 @@ flowchart TD
 A block that parses locally can still fail on GitHub. Verify before declaring
 done.
 
-- Grep the block for the failure patterns: `grep -nE '\\n|click ' <file>`
+- Grep the block for the known failure patterns: `grep -nE '\\n|click ' <file>`
   inside the mermaid fence — both must return nothing.
-- For a high-stakes diagram, open the file's GitHub blob URL in a browser
-  (Playwright) and screenshot — confirm nodes show line breaks, not literal
-  `\n`, and the diagram renders rather than showing a Mermaid syntax error box.
+- **HARD RULE — grep is necessary but not sufficient; render every added or
+  modified diagram in a browser before committing.** Grep catches only known
+  string patterns (`\n`, `click`); a structural syntax error — a malformed
+  `opt`/`alt`/`loop`/`par` block, a stray keyword, an unclosed subgraph — is
+  invisible to both `git diff` and grep and surfaces only on render, breaking
+  the whole page. Open the file's GitHub blob URL (or a local preview) in a
+  browser via Playwright; confirm the diagram renders with no Mermaid syntax
+  error box and nodes show line breaks, not literal `\n`. Commit only after it
+  renders clean.
 - When fixing existing diagrams across many files, sweep mermaid-fenced lines
   only — never replace `\n` in surrounding prose.
 

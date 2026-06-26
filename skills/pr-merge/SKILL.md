@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.26-002229'
+  version: '2026.06.26-003823'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -328,6 +328,11 @@ Follow-ups present → offer once:
 
 ## Step 9: Capture session learnings
 
+- **HARD RULE — Steps 7-10 are one unit; a user question mid-flow is not a stop
+  signal.** After answering any digression during Steps 7-10, note the pending
+  step and resume it immediately. Treating a question as session termination
+  leaves the ticket un-transitioned, the retro uncaptured, or the worktree
+  uncleaned. Never wait for an explicit "did you finish?" re-prompt.
 - Invoke [`wk-retro`](../retro/README.md) to reflect on the full PR session —
   implementation, review back-and-forth, and merge:
   ```

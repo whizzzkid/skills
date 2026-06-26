@@ -31,7 +31,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200616'
+  version: '2026.06.26-003826'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -154,9 +154,11 @@ Classify each branch:
 
 ### Disposable paths — skip retro and clean without prompting
 
-- Always disposable: temporary directories the agent created this session
-  (review playgrounds, build artifacts, IDE caches), OS metadata files, editor
-  swap files matched by `.gitignore`.
+- Always disposable: agent-infrastructure artifacts the skills tooling
+  regenerates each run — `.agents/`, `skills-lock.json`, `.review-playground/`
+  (carry no unique session context; disposable even when not gitignored) — plus
+  build artifacts, IDE caches, OS metadata files, and editor swap files matched
+  by `.gitignore`.
 - If the only untracked content is disposable → treat worktree as clean and
   proceed. Before `git wtr` (Step 5), `git clean -fd` may run without
   per-worktree user confirmation to remove them.

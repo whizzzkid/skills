@@ -2,7 +2,7 @@
 
 > Clean up git worktrees whose branches have been merged.
 
-**Version:** `2026.06.15-200616`
+**Version:** `2026.06.26-003826`
 
 ## Invocation
 
