@@ -157,6 +157,7 @@ flowchart TD
 
     click WKSTYLE href "./workstyle/README.md" _blank
     click WF href "./workflow/README.md" _blank
+    click PLAN href "./plan/README.md" _blank
     click COMMIT href "./commit/README.md" _blank
     click DOCS href "./docs/README.md" _blank
     click FMT href "./format/README.md" _blank
