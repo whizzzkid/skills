@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.26-175224'
+  version: '2026.06.26-185403'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -400,14 +400,8 @@ Invoked without a specific incident → batch mode.
 ### Source 2: Repo learnings directory
 
 - Scan `$WK_SKILLS_HOME/learnings/skills/` for unprocessed files.
-- For each unprocessed learning:
-  1. Read the file.
-  2. Run the normal sharpen workflow using the learning as input.
-  3. Rename to `.learned.md`.
-- Process every unprocessed learning.
-- Order by severity.
-- Walk learnings one-by-one.
-- Confirm the distilled principle is encoded before renaming.
+- Process every unprocessed learning one-by-one, severity-ordered: read it, run the sharpen workflow, confirm the distilled principle landed, then rename to `.learned.md`.
+- Re-scan after each fold-commit, not only at start — concurrent sessions write the tree continuously. Treat "inbox drained" as a terminal check run after the last commit, never a fact set up-front.
 
 ### Source 3: Global memory files
 
