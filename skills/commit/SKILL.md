@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.23-220111'
+  version: '2026.06.26-222446'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -248,6 +248,17 @@ planning markdown left by a prior session) → delete the handoff file in the
 git add <implementation files> <handoff doc>
 git commit -m "feat: ✨ apply X (removes NEXT_PHASE.md handoff)"
 ```
+
+### Exclude ephemeral working docs from commits
+
+Planning/working artifacts (plan docs, scratch notes, agent handoff files) are
+not history — only settled docs (specs, ADRs) belong in committed history.
+
+- Before `git add` on any docs path, confirm the repo's convention commits it.
+  Many repos track `docs/specs/` and `docs/adr/` but treat `docs/plans/` (and
+  equivalents) as ephemeral — never stage those.
+- Staging everything under `docs/` blindly leaks plan docs into the PR. Add
+  spec/ADR paths explicitly; exclude the working-artifact dirs.
 
 ### Verify the staged set before a grouped commit
 
