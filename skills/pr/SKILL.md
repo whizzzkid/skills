@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.24-165531'
+  version: '2026.06.26-222133'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -440,15 +440,15 @@ After the draft PR is created (or after pushing new commits to an existing PR):
    *content* of the sync is ambiguous (e.g., two equally-plausible rewrites of a
    bullet). Applies to PR description, self-review threads, Jira ticket body, and
    project docs touched by the change.
-2. **Invoke `wk-self-review` immediately** — post the pending self-review in
-   parallel with launching the CI poll. CI takes minutes; stage the self-review
-   draft in that window so the PR is closer to ready when CI finishes.
+2. **Invoke `wk-self-review` immediately** — the moment `gh pr create` returns,
+   before the CI-poll launch. CI takes minutes; staging the draft in that window
+   means the PR is closer to ready when CI finishes.
 
-   **HARD RULE — self-review runs in parallel, never after CI.** Deferring
-   `wk-self-review` until CI is green is a recurring violation — treat the
-   deferral as a blocker-equivalent. The intuitive "CI green → then review"
-   order is wrong here: invoke `wk-self-review` the moment `gh pr create`
-   returns, before/alongside the CI-poll launch — not serially after CI.
+   **HARD RULE — self-review launches before the CI poll, never after CI green.**
+   Deferring `wk-self-review` until CI is green is a recurring violation — treat
+   the deferral as a blocker-equivalent. The intuitive "CI green → then review"
+   order is wrong. **Structural gate: do not start the CI poll (item 3) until the
+   pending self-review draft is posted.**
 
    **HARD RULE — never compose inline comment payloads directly from `wk-pr`.**
    Always delegate to `wk-self-review` via the Skill tool. The pending-review
