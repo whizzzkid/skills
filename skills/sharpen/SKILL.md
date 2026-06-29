@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.29-172434'
+  version: '2026.06.29-212249'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -347,7 +347,7 @@ Do not return control until all four pass:
    - **Untracked skill dir from another session blocks `check-readme-index`** — the hook scans the whole `skills/` tree on disk, not staged paths. Don't `git add` or index another session's incomplete skill: move it aside (`mv skills/<name> /tmp/agent/...`), land the scoped commit, push, then restore it untouched.
    - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link.
    - Rename `.learned.md` with `mv`, not `git mv` — a freshly materialized learning is untracked, so `git mv` aborts (`fatal: not under version control`). Then `git add` the new path.
-   - On signing failure, stop — don't re-run install/scan or re-stage; ask the user for an interactive signer unlock. A listed agent key (`ssh-add -l` ok) ≠ signing capability; only a completed signed commit proves it.
+   - On signing failure, stop — don't re-run install/scan or re-stage; ask the user for an interactive signer unlock. A listed agent key (`ssh-add -l` ok) ≠ signing capability; only a completed signed commit proves it. On the next run the staged fold is resumable, not done — retry the gate; never re-distill.
 3. **Push once:** after all commits exist, push a single time.
 4. **Clean tree:** `git status --short` must be empty.
 
@@ -403,13 +403,12 @@ Invoked without a specific incident → batch mode.
 
 ### Source 3: Global memory files
 
-- Scan `$HOME/.claude/memory/` for memory files that contain skill-applicable feedback or corrections.
+- Scan `$HOME/.claude/memory/` for memory files.
 - Only process memories of type `feedback`.
 - Read each file's frontmatter.
 - Determine which skill the feedback applies to.
 - Materialize each matched memory as a learning via `wk-learn`.
 - Distill that new learning through the Source 2 path.
-- Log the memory file as `distilled`.
 - Only process `user` or `project` type memories if they contain explicit instructions about how a skill should behave.
 - **Normalize both sides before diffing against the marker.** `comm` does exact string matching; the directory listing and `.distilled-memories` must share one path form. Collapse repeated slashes (`sed 's#//#/#g'`) and `sort -u` both sides first — a trailing-slash glob yields `dir//file.md` and silently mismatches every entry. Treat a result where *every* memory shows un-distilled as a probable format mismatch, not a real backlog — sanity-check before processing.
 
