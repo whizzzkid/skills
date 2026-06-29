@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.26-234129'
+  version: '2026.06.29-193724'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -121,7 +121,6 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.8 | New/removed flags, symbols, errors, tests, docs terms | Sync docs, READMEs, specs, tests, PR body, in-code help, tables, test counts. On a parameter/symbol rename, also grep the owning class/module docstring for the old name AND any behavioral phrase it qualified — prose claims don't match a symbol grep. | Blocker | Update all enumerations; include synonym/casing variants for removed terms; sync stale docstring phrasing in the same commit as the rename. |
 | 2.9 | Design-pivot docs/specs | Verify plans, ADRs, specs, inline comments match the new logical shape. | Blocker | Update dependent artifacts in the same branch. |
 | 2.9.1 | Spec/interface with multi-mode type | Review structs/unions/records with ≥4 fields consumed by different modes. | Suggestion | Make compatibility explicit via consumer requirements or producer support matrix. |
-| 2.9.2 | Spec introduces an event-sourced materialized-view / dual-write (table + event log) | Four contract failure modes look like one: (a) is "authoritative" scoped to mutations-only or all-writes? — a creation baseline written straight to the table with no event breaks event-replay reconstruction; (b) is every write path (create, ingest, re-ingest, webhook, reaction) enumerated and assigned event-first or baseline-only? — an undifferentiated re-ingest silently mutates user-facing columns outside the event log; (c) is "atomic" backed by an explicit transaction, not just the HTTP request boundary? — two sequential writes partially commit on crash/drop/exception between them; (d) is the fold ordering deterministic under same-timestamp writes? — `created_at` alone collapses, use `(created_at, id)`. | Blocker | Scope authority explicitly; enumerate+assign every write path; require a transaction or flag partial-commit risk; tie-break the fold by `(created_at, id)`. Re-ingest column split: identity/discovered-once (write-once when NULL), always-refresh (overwrite), mutable user state (frozen on re-ingest, mutation path only). |
 | 2.10 | Existing PR | Fetch title/body; check behavior wording, test counts, file lists, remaining work, metadata, Jira suffix, rename/enum drift, rollout/ops section for prod-facing diffs. Enum-like body lists (symbols, tags, flags, codes): grep post-diff code for all values; any missing from the body is drift. | Blocker | Record body drift as post-push TODO; fix before marking ready. |
 | 2.11 | External API/CLI request shape | Require local reproduction of new payload/header/invocation or explicit user opt-out; verify error schema keys. | Blocker | Reproduce success/error responses; never assume API keys. |
 | 2.12 | Prior self-review exists | Fetch threads; compare new rationale against stale approach comments. | Suggestion | Drop duplicates, cross-reference, or resolve superseded threads. |
@@ -148,9 +147,10 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.43 | New field beside an existing same-primitive-type field | Grep for a resolver/normalizer/sanitizer on the sibling (`resolve*`/`normalize*`/`sanitize*`); confirm the new field gets equivalent treatment. | Blocker | Apply the same normalizer. Blocker when the field feeds a security-sensitive consumer (paths, URLs, shell args, allow-dir lists) — a raw path/URL field is a traversal/SSRF vector. |
 | 2.44 | Merge/rebase conflict resolved at a function call site | Compare both sides' arg counts against the current base-branch signature; base is authoritative for required params (a side missing one is stale, not caller-wins). Also diff both sides for safety primitives (`signal.Stop`, `context.Cancel*`, `sync.*`, `defer`, `close(`, `os.RemoveAll`, resource releases) present on either side but absent from the result — base is canonical, so a missing guard is a dropped contract. | Blocker | Take the side matching the base signature; flag the short call. Restore any base-side safety primitive absent from the result unless the incoming commit removed it with rationale; green tests don't prove it unneeded. |
 | 2.48 | Finding or identity/dedup key relies on an LLM round-trip preserving a field verbatim | Grep the prompt/skill builder for an explicit verbatim-echo instruction for that exact field — absence confirms the stability is an unenforced bet, not a guarantee. If test mocks return the field verbatim, the rephrase path is uncovered. | Blocker | Pin the field in the prompt (fix at source) over a downstream key workaround; add a rephrasing-mock regression test. |
+| 2.58 | URL/host from an external API response (even authenticated) fed to `curl`/fetch | Authenticated identity ≠ trusted payload. Grep an API-response field reaching `curl` (esp. `-L`/`-o`) or any URL-accepting shell command without an `https://` scheme guard. | Blocker | Add a one-line `https://` scheme guard before the call; absence with `-L`/`-o` is a blocker (`file://`/`gopher://`/`dict://` SSRF / local-resource vector). |
 
-Lower-frequency and shape-specific sweeps (2.18, 2.20, 2.30, 2.31, 2.32, 2.35, 2.36, 2.37, 2.39,
-2.25, 2.41, 2.42, 2.45, 2.46, 2.47, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57) live in
+Lower-frequency and shape-specific sweeps (2.9.2, 2.18, 2.20, 2.30, 2.31, 2.32, 2.35, 2.36, 2.37,
+2.39, 2.25, 2.41, 2.42, 2.45, 2.46, 2.47, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 

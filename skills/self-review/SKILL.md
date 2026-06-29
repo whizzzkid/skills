@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200358'
+  version: '2026.06.29-202140'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -130,6 +130,14 @@ why, and what alternatives existed.
 - Anything a reviewer can understand at a glance
 
 Goal is signal, not noise. Fewer high-quality comments beat many trivial ones.
+
+**HARD RULE — never fabricate a quantitative claim.** A comment that justifies a
+threshold (timeout, buffer size, retry count, dimension) with a specific size,
+latency, or performance figure must cite a verifiable source (a benchmark,
+release artifact, CI log, or measurement in the repo) or state the value is
+conservative without inventing a number. A plausible-sounding figure with no
+source behind it is fabrication — drop the number, keep the rationale.
+"Conservative for any reasonable response" is honest; an invented range is not.
 
 ### Markdown preview link for large diffs
 

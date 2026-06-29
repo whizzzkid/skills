@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.26-233141'
+  version: '2026.06.29-200930'
 ---
 
 # PR Resolve
@@ -69,8 +69,8 @@ and the suggestion-format template live in
 Resumed from a compaction summary mid-skill → read the last completed step,
 confirm the resume point (default: next uncompleted step), skip completed steps,
 re-run possibly-stale sync/fetch (Steps 2–3). Never restart from Step 1; never
-drop tail steps absent from the summary (Step 9.4 learnings, 9.5 CI wait + loop,
-Step 11 retro).
+drop tail steps absent from the summary (9.4 learnings, 9.5 CI wait+loop, 11
+retro).
 
 ## Hard Rules
 
@@ -80,16 +80,15 @@ Step 11 retro).
 1. **Never push without explicit user confirmation.**
 2. **Never post reply comments without explicit user confirmation.**
    - **HARD RULE — every reply/dismissal body leads with substance (what
-     changed, the decision, the commit SHA), never a pleasantry.** Praise/thanks/
-     acknowledgement openers ("Good catch!", "Great point!") are banned
-     unconditionally, short replies included. Route through `Skill(wk-tone)`
-     before render (posts as the user); the ban holds even if routing is skipped.
+     changed, the decision, the commit SHA), never a pleasantry.** Praise/thanks
+     openers ("Good catch!") are banned unconditionally. Route through
+     `Skill(wk-tone)` before render; the ban holds even if routing is skipped.
 3. **Only resolve threads you actually worked on** — after a fix, explicit
    dismissal, or tracked deferral. Never resolve follow-up questions, skipped,
    rethink-pending, or ordinary self-review threads.
    - **Resolution gates on the fix landing, never on CI.** Pushed commit
-     addressed the finding → resolve in Step 8 now; never defer to the Step 9.5
-     CI wait — post-push CI failures are a later commit's context.
+     addressed the finding → resolve in Step 8 now, never defer to the Step 9.5
+     CI wait (later CI failures are a later commit's context).
 4. **Never force-push** — regular `git push` only. *Exception:* a base-advance
    rebase (Step 2) may `git push --force-with-lease`; never bare `git push -f`.
 5. **Never commit without attempting verification.** Verification unavailable or
@@ -105,9 +104,9 @@ Step 11 retro).
      protection can count every unresolved thread regardless of authorship.
    - **Surface external replies inside self-review threads** in the summary; do
      not triage or resolve them.
-   - **User-touched reviewer threads allow one narrow follow-up** — on a
-     reviewer/bot thread the user already replied to, post one follow-up only when
-     the session changed the finding or a new item needs callout. Still requires
+   - **User-touched reviewer threads: one narrow follow-up** — on a reviewer/bot
+     thread the user already replied to, post a single follow-up only when the
+     session changed the finding or a new item needs callout. Still requires
      Hard Rule 2.
 9. **Co-author attribution.** Current user not the PR author → add a
    `Co-authored-by:` trailer for the PR author on every commit. Real identities
@@ -210,9 +209,10 @@ agent_observation` (`bot_badge` flag); triage like any finding.
 | `User` | Matches current user login in co-author session | Self-review |
 | `User` | Any other login | Reviewer |
 
-**Pre-check pending self-reviews.** A pending review blocks reply posting with
-HTTP 422. Capture `$PENDING_REVIEW_ID` (commands.md §3); one exists → ask the
-user to submit it as `COMMENT` or abort, then submit before any reply.
+**Important — pre-check pending self-reviews here at Step 3, never discover them
+at reply time.** A pending review blocks reply posting with HTTP 422. Capture
+`$PENDING_REVIEW_ID` (commands.md §3); one exists → ask the user to submit it as
+`COMMENT` or abort, then submit before any reply.
 
 **Filter and group:**
 
@@ -232,9 +232,8 @@ user to submit it as `COMMENT` or abort, then submit before any reply.
 - Bot reply: documented command syntax if available, else a generic reply tagging the bot and stating the decision.
 - **Surface prior-round dismissals.** Before a judgment-required finding, check
   the session `dismissed` list and prior-round notes for the same field/concern
-  class — a bot re-firing on a dismissed field from a new angle ("redundant" vs
-  "unused") is the same decision. Found → surface the prior reason inline, default
-  to `(d)`, ask once.
+  class — a bot re-firing on a dismissed field from a new angle is the same
+  decision. Found → surface the prior reason inline, default to `(d)`, ask once.
 
 **All-Minor bulk-dismiss gate.** Every active finding Minor and each has a
 plausible skip rationale → offer one bulk action before per-item triage:
@@ -250,20 +249,19 @@ fix.** Classify the whole set first, then apply accepted fixes as one batched
 pass — never loop comment-by-comment through fix/commit/push.
 
 - Process bot reviews first, then human comments.
-- For each: read full file context, the comment, and the reply chain before generating a fix.
+- For each: read full file context, the comment, and reply chain before a fix.
 
 **Org-specific policy questions.** Reviewer question touches org policy → search
 the configured KB first and cite an authoritative doc; fall back to general
-knowledge only if the KB is empty, flagging the fallback. Skip for code-level
-intent, design rationale, or test-coverage questions.
+knowledge only if the KB is empty, flagging it. Skip for code-level intent,
+design rationale, or test-coverage questions.
 
-**Missing-documentation findings.** Before surfacing a bot finding that
-behavior/rationale/trade-off is undocumented, grep the diff, touched files, and
-repo docs; covered (or code makes it unambiguous) → cite the reference and
-dismiss; else present normally.
+**Missing-documentation findings.** Before surfacing a bot "undocumented
+behavior/rationale/trade-off" finding, grep the diff, touched files, and repo
+docs; covered (or code is unambiguous) → cite and dismiss; else present normally.
 
 **Verify pattern applicability before copying.** A finding citing a pattern used
-elsewhere → confirm the scenario matches (auth model, runtime state, credential
+elsewhere → confirm the scenario matches (auth, runtime state, credential
 ownership) first; precedent alone never proves this context needs it.
 
 **Suggestion format** — see commands.md §4. Every suggestion gives `Why this fix`
@@ -272,9 +270,9 @@ honest in the skip rationale; none exists → say so.
 
 **Detect design flaws.** Before drafting a localized patch, decide whether the
 comment signals a design flaw (triggers: "this might not trigger", "depends on
-X", "what happens if {edge case}", "why do we need this at all", "duplicated
-with", "contract is unclear"). Fired → present the design change first, a
-clarifying reply second; in Step 5 `(a)` applies the design option unless edited.
+X", "what happens if {edge}", "why do we need this", "duplicated with", "contract
+unclear"). Fired → present the design change first, a clarifying reply second; in
+Step 5 `(a)` applies the design option unless edited.
 
 **Classify suggestions** — tag each `obvious-fix` or `judgment-required`:
 
@@ -347,10 +345,15 @@ diff for sibling paths sharing it — per-class grep targets in commands.md §6 
 refactor clones the defect onto sibling lines). Include siblings in the same
 commit only when they share the triage unit or were merged by Step 4.
 
+**Probe the real config path before editing a file named by user shorthand.**
+Shorthand names the concept, not the path — CI/pipeline step config often lives
+in a generator/template file. Grep the step key (`grep -rn '<step-key>'
+<config-dir>`) and edit the file the grep returns, not the named one.
+
 **For each fix:**
 
 1. Apply the change with Edit.
-2. Verify with the repo's build/lint/test command. No build system → warn once. Verification fails → ask whether to fix, commit anyway, or skip. Go file → run `goimports -local <module> -w <file>` (write, not `-l` which only lists → false pass) before staging. `go test` misses import-grouping CI rejects.
+2. Verify with the repo's build/lint/test command. No build system → warn once. Verification fails → ask whether to fix, commit anyway, or skip. Go file → `goimports -local <module> -w <file>` before staging (not `-l`, which only lists → false pass; `go test` misses import-grouping CI rejects).
 3. Commit one commit per triage unit (HEREDOC template, commands.md §6; co-author trailer per Hard Rule 9).
 4. Record the full SHA immediately: `FULL_SHA=$(git log --format=%H -1 <short_or_HEAD>)`.
 5. Update the drafted reply with a clickable commit link, full SHA from git (never infer from a short SHA; format in commands.md §6).
@@ -410,7 +413,7 @@ before posting replies or resolving threads, even when it looks current.
 - Preserve metadata lines.
 - Verify commit links, test-plan checkboxes, CI status, remaining work, known limitations, and file lists before declaring no drift.
 - No drift → log an explicit "no drift detected" line naming the compared fields.
-- **Never assert a result the agent cannot confirm.** Gate Testing/Results on known evidence (diff, CI output, user statement); no evidence → honest placeholder (`Pending — <how to exercise>`), never a template "build completed successfully".
+- **Never assert a result the agent cannot confirm.** Gate Testing/Results on known evidence (diff, CI, user statement); no evidence → honest placeholder (`Pending — <how to exercise>`), never a templated "build completed successfully".
 
 **Re-check self-review and docs drift (every push):**
 
@@ -424,9 +427,9 @@ replies sequentially, routed by surface (commands.md §8):
 - Prefix issue-comment replies with a quote of the original comment.
 - Multiple suggestions split from one issue comment (Step 4) → post **one
   combined reply** (no sub-section replies on issue comments).
-- React on the original: `+1` for `a`/`e`/`t`; `-1` for `d`; `heart` for follow-ups; none for `s`/`r`. Reaction failures are fire-and-forget.
+- React on the original per the decision→reaction map (commands.md §8).
 - Before bot replies, refresh bot thread IDs: re-run the GraphQL reviewThreads query against post-push HEAD, match by `(path, line, root_comment.body_excerpt)`; skip replies for dropped findings.
-- Resolve via GraphQL `resolveReviewThread` (commands.md §8); `NOT_FOUND` → refresh IDs once, match by stable identity, retry; no match/retry fails → log and continue. REST comment IDs die on force-push/bot replacement (thread IDs stay stable), so an inline-reply 404 → log and keep the thread in `resolve_after_push`. **Fully outdated thread (`line: null`)** → skip the REST reply (every REST op 404s, incl. GET); post one top-level `gh pr comment` summarizing fixes instead.
+- Resolve via GraphQL `resolveReviewThread` (commands.md §8); `NOT_FOUND` → refresh IDs once, match by stable identity, retry; no match/retry fails → log and continue. An inline-reply 404 (REST IDs unstable, see Step 3) → log and keep the thread in `resolve_after_push`. **Fully outdated thread (`line: null`)** → skip the REST reply (every REST op 404s, incl. GET); post one top-level `gh pr comment` summarizing fixes instead.
 - Detect in-place bot summary updates by re-fetching each captured bot issue comment: active→clean = positive resolution; added findings = regression → re-enter Step 4.
 - Post-push comments matching `(path, line, concern)` from this session are already-addressed echoes: reply with the commit link, resolve, no re-prompt/re-commit.
 

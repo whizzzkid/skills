@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.26-204054'
+  version: '2026.06.29-200929'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -171,8 +171,7 @@ Apply to ALL code:
 - **Content-lint hooks:** scope to the file class and added lines only; smoke-test against an out-of-scope file that legitimately contains the pattern.
 - **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace each variable’s source, path, and meaning in the new context.
 - **No hardcoded env-specific constant beside a dynamic sibling:** before hardcoding OS, arch, version, or path, grep the file — if a sibling derives the same value dynamically (`uname -s`/`-m`, etc.), reuse that computation, never re-hardcode what a sibling derives.
-- **Confirm example formats before encoding:** treat a version/naming/query string (esp. in a CLI snippet) as illustrative, not normative — confirm the production format before encoding it across >1 file.
-- **Parsing tool output:** capture both streams (`2>&1`) and grep an always-emitted line, never a flag-gated one (a `--quiet`/`--json`-gated line yields empty silently). Multi-match `sed -n 's/.*marker//p'` → `tail -1` (canonical line is last), not `head -1`. Match an error string only after reproducing the failure against a real fixture and capturing the exact text.
+- **Niche standards** (example-format confirmation, tool-output/error-string parsing) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Env vars in docs:** document where stored, who can edit it, propagation, and unset default.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
@@ -260,6 +259,8 @@ After implementation, tests, refactor scan, and frontend preview (if applicable)
 - **Suggestions only** — follow the skill's A/B/C prompt.
 
 Pre-flight findings are mandatory actions, not options → fold blockers/improvements into the relevant artifact and commit. Pause only for a genuine user-owned design decision.
+
+**HARD RULE — never defer a security guard.** A missing guard or input validation (SSRF, injection, path traversal, scheme check) is blocker-class regardless of scope — apply it now; never propose deferring it without explicit user instruction. Split a larger tooling swap into a follow-up, never the guard itself.
 
 **HARD RULE:** nothing leaves the machine without a clear verdict covering current HEAD — every push, PR transition (`gh pr create`, `gh pr ready`), force-push. Satisfy this through the idempotent gate above, never a fresh full review per step. No size/docs-only exemption.
 

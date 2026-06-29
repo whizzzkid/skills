@@ -214,6 +214,10 @@ gh api repos/{owner}/{repo}/issues/{number}/comments \
   --method POST -f body="{reply_text}"
 ```
 
+Decision → reaction map (react on the original comment; failures are
+fire-and-forget): `+1` for `a`/`e`/`t`; `-1` for `d`; `heart` for follow-ups;
+none for `s`/`r`.
+
 Resolve a thread via GraphQL:
 
 ```bash
