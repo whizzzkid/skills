@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.29-212249'
+  version: '2026.06.29-223820'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -297,7 +297,7 @@ not in the diff will cause a 422 error from the GitHub API.
 - Bump the sibling `README.md` `Version:` line to match `metadata.version` and stage it on **every** version change — unconditional, even when no step/diagram/narrative changed. `.githooks/check-readme-sync.sh` blocks any commit staging a `SKILL.md` without its sibling `README.md`.
 - Update `skills/{skill-name}/README.md` narrative when a step, phase, trigger, or argument shape changed.
 - Update any Mermaid diagram to match the new flow.
-- When first adding the Version line to an existing README, pre-convert bare `wk-*` mentions to relative links.
+- Write every README `wk-*` mention as a relative link — on first `Version:` add and when authoring a new sibling.
 - Update both index files when the one-line description changes.
 - Invoke `wk-docs` when the edit changes cross-skill behavior or documented workflow.
 - Stage doc edits with the SKILL.md change.
@@ -309,6 +309,7 @@ not in the diff will cause a 422 error from the GitHub API.
 - `allowed-tools` lists every tool the new edits reference.
 - Sibling `README.md` `Version:` matches `metadata.version` and is staged (hook-enforced on every commit).
 - Quick-reference table, Trigger table, and Step list match the body.
+- README counts of any set whose size changed — recount from source, never increment.
 - Cross-references still resolve.
 - Examples reflect the post-edit behavior.
 - Fix every drift item in the same pass.
@@ -345,7 +346,6 @@ Do not return control until all four pass:
    - Never blanket `git add -A` — the working tree routinely carries *unprocessed* inbox files (`learnings/`, `retrospect/`) from other sessions, and `-A` bundles them into this commit. Add processed paths explicitly. If `-A` is unavoidable, `git reset` every `learnings/`/`retrospect/` path this run did not process before committing.
    - Re-check the index after any hook-blocked commit.
    - **Untracked skill dir from another session blocks `check-readme-index`** — the hook scans the whole `skills/` tree on disk, not staged paths. Don't `git add` or index another session's incomplete skill: move it aside (`mv skills/<name> /tmp/agent/...`), land the scoped commit, push, then restore it untouched.
-   - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link.
    - Rename `.learned.md` with `mv`, not `git mv` — a freshly materialized learning is untracked, so `git mv` aborts (`fatal: not under version control`). Then `git add` the new path.
    - On signing failure, stop — don't re-run install/scan or re-stage; ask the user for an interactive signer unlock. A listed agent key (`ssh-add -l` ok) ≠ signing capability; only a completed signed commit proves it. On the next run the staged fold is resumable, not done — retry the gate; never re-distill.
 3. **Push once:** after all commits exist, push a single time.
