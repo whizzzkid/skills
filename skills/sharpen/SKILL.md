@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.29-223820'
+  version: '2026.06.29-233843'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -246,15 +246,17 @@ not in the diff will cause a 422 error from the GitHub API.
 - Apply replacement maps longest-first.
 - Reject ticket-shaped example tokens. Grep the proposed edit against `[A-Z][A-Z0-9]+-\d+`; any match — even an invented placeholder — trips the `check-ticket-refs` hook, which matches on shape, not provenance. Replace with an angle-bracket placeholder (`<child-key>`, `<KEY>`) or the repo's `BOARD-NUM` form.
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
-- Scrub staged learning and retrospect archive files too, not just skill edits/references — a `.learned.md` rename commits the archive publicly, so an internal name there blocks the commit at the prohibited-term hook. A term-handling learning's example IS the term; scrub it.
-- Grep every staged file against the repo's authoritative term list, not just the ad-hoc categories above. Feed the scan the **authoritative staged set**, never a hand-built path list — a manual list silently under-matches and diverges from what the commit carries:
+- Scrub staged `.learned.md`/retro archives too — a rename commits them publicly, so an internal name there blocks the prohibited-term hook. A term-handling learning's example IS the term; scrub it.
+- Grep every staged file against the repo's authoritative term list, not just the ad-hoc categories above. Scan file **contents AND staged path strings** — `check-prohibited` greps content + commit msg, never filenames, so a slug/filename term ships clean. Feed the **authoritative staged set**, never a hand-built path list — it silently under-matches:
 
   ```bash
-  grep -iEnf .skillprohibit $(git diff --cached --name-only)
+  files="$(git diff --cached --name-only)"
+  grep -iEnf .skillprohibit $files
+  printf '%s\n' "$files" | grep -iEf .skillprohibit
   ```
 
-  Covers skill edits, references, AND renamed `.learned.md`/retro archives. Anonymize every hit.
-- Treat a NONE result as **unverified, not proof-of-clean**. A real hit in the staged scan IS the proof — skip the synthetic probe when the scan already matched. To confirm grep fires on a genuine NONE, feed a string the patterns match: `.skillprohibit` lines are regexes, so a pattern with `[]?*+` won't self-match as literal input — use a plain-literal line or expand one (`a[-_]?b` → `a-b`). The category grep misses internal codenames the list catches; the `check-prohibited` hook is the backstop — relying on it costs a failed-commit + amend cycle.
+  Anonymize every hit. Pick a generic slug for a prohibited-subject lesson up front; never derive it from the subject.
+- Treat a NONE result as **unverified, not proof-of-clean**. A real hit in the staged scan IS the proof — skip the synthetic probe when the scan already matched. To confirm grep fires on a genuine NONE, feed a string the patterns match: `.skillprohibit` lines are regexes, so a pattern with `[]?*+` won't self-match as literal input — use a plain-literal line or expand one (`a[-_]?b` → `a-b`). The `check-prohibited` hook is the backstop — relying on it costs a failed-commit + amend cycle.
 
 ## Step 6: Present for Review
 
