@@ -101,6 +101,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [workstyle-typescript](skills/workstyle-typescript/) | TS/JS idioms — const/no-var, no any, explicit return types, `??`/`?.`, `Promise.all` |
 | [workstyle-python](skills/workstyle-python/) | Python idioms — type hints, f-strings, dataclass/TypedDict, pathlib, no mutable defaults |
 | [workstyle-ruby](skills/workstyle-ruby/) | Ruby idioms — `?`/`!` naming, frozen_string_literal, guard returns, ASCII-only comments |
+| [workstyle-rails](skills/workstyle-rails/) | Rails env — run `bin/setup` before manual gem install when a gem/env command fails |
 | [workstyle-go](skills/workstyle-go/) | Go idioms — errors as values, `%w` wrapping, table-driven tests, no library panic, defer |
 | [workstyle-rust](skills/workstyle-rust/) | Rust idioms — no unwrap/expect in prod, `&str` params, derive Debug, clippy::all, `///` docs |
 | [workstyle-shell](skills/workstyle-shell/) | Shell idioms — `set -euo pipefail`, quoted vars, `local`, capability-probe not error-parse |

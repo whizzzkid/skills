@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.01-224411'
+  version: '2026.06.29-225549'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -101,6 +101,7 @@ carry the rules; this orchestrator only dispatches and aggregates.
 | Adds/edits a structured docstring, JSDoc, YARD, `///`, or any callable with `@param`/`@return` | `wk-workstyle-docstrings` |
 | Writes or modifies tests | `wk-workstyle-testing` |
 | Touches a `catch`/`rescue`/`except` block, error return, or raise/throw | `wk-workstyle-error-handling` |
+| A `bundle exec`/`bin/*`/`rake`/`rails` command fails with a gem or env error | `wk-workstyle-rails` |
 
 ### Language rule sets (by file extension)
 

@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **61 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
+> **62 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
 
 ---
 
@@ -93,6 +93,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-workstyle-typescript`](./workstyle-typescript/README.md) | TS/JS idioms — const/no-var, no any, explicit return types, `??`/`?.`, `Promise.all` | Auto (on .ts/.js edits) |
 | [`wk-workstyle-python`](./workstyle-python/README.md) | Python idioms — type hints, f-strings, dataclass/TypedDict, pathlib, no mutable defaults | Auto (on .py edits) |
 | [`wk-workstyle-ruby`](./workstyle-ruby/README.md) | Ruby idioms — `?`/`!` naming, frozen_string_literal, guard returns, ASCII-only comments | Auto (on .rb edits) |
+| [`wk-workstyle-rails`](./workstyle-rails/README.md) | Rails env — run `bin/setup` before manual gem install on a gem/env command failure | Auto (on gem/env command failure) |
 | [`wk-workstyle-go`](./workstyle-go/README.md) | Go idioms — errors as values, `%w` wrapping, table-driven tests, no library panic, defer | Auto (on .go edits) |
 | [`wk-workstyle-rust`](./workstyle-rust/README.md) | Rust idioms — no unwrap/expect in prod, `&str` params, derive Debug, clippy::all, `///` docs | Auto (on .rs edits) |
 | [`wk-workstyle-shell`](./workstyle-shell/README.md) | Shell idioms — `set -euo pipefail`, quoted vars, `local`, capability-probe not error-parse | Auto (on .sh edits) |

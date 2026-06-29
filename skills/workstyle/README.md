@@ -39,6 +39,7 @@ flowchart TD
     L --> L1[wk-workstyle-typescript]
     L --> L2[wk-workstyle-python]
     L --> L3[wk-workstyle-ruby]
+    L --> L3b[wk-workstyle-rails]
     L --> L4[wk-workstyle-go]
     L --> L5[wk-workstyle-rust]
     L --> L6[wk-workstyle-shell]
@@ -70,6 +71,7 @@ flowchart TD
 | [`wk-workstyle-typescript`](../workstyle-typescript/README.md) | edits `.ts/.tsx/.js/.jsx/.mjs/.cjs` |
 | [`wk-workstyle-python`](../workstyle-python/README.md) | edits `.py` |
 | [`wk-workstyle-ruby`](../workstyle-ruby/README.md) | edits `.rb` or a Ruby bin script |
+| [`wk-workstyle-rails`](../workstyle-rails/README.md) | a `bundle exec`/`bin/*`/`rails` command fails with a gem or env error |
 | [`wk-workstyle-go`](../workstyle-go/README.md) | edits `.go` |
 | [`wk-workstyle-rust`](../workstyle-rust/README.md) | edits `.rs` |
 | [`wk-workstyle-shell`](../workstyle-shell/README.md) | edits `.sh` or a shell bin script |
