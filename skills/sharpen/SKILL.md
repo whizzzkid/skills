@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.26-235210'
+  version: '2026.06.29-172434'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -317,9 +317,8 @@ not in the diff will cause a 422 error from the GitHub API.
 
 ### HARD RULE: de-bloat every run — never let prose accrete
 
-- Run on **every** sharpening, not only when a learning prompts it. Bloat is the cumulative default of additive edits; append-only sharpen grew SKILL.md files past 1000 lines.
-- Search for simplification opportunities before and after the functional edit.
-- **Bulletize, do not compress prose.** One rule per line, imperative voice, `→` for causality, drop articles/connectives in procedural text — compressed prose still resists scanning; scannable bullets are the goal.
+- Run on **every** sharpening, not only when a learning prompts it. Bloat is the cumulative default of additive edits.
+- **Bulletize, do not compress prose.** One rule per line, imperative voice, `→` for causality, drop articles/connectives in procedural text.
 - Remove redundancy, dead labels, explanatory filler. State a rule once; cross-reference instead of restating.
 - **Preserve every rule, failure mode, and command.** Reject any edit that drops a HARD RULE, error code, or failure-mode explanation.
 - Re-run the Drift check after de-bloat edits land.
@@ -348,6 +347,7 @@ Do not return control until all four pass:
    - **Untracked skill dir from another session blocks `check-readme-index`** — the hook scans the whole `skills/` tree on disk, not staged paths. Don't `git add` or index another session's incomplete skill: move it aside (`mv skills/<name> /tmp/agent/...`), land the scoped commit, push, then restore it untouched.
    - When authoring a new sibling `README.md`, write every `wk-*` mention as a relative link.
    - Rename `.learned.md` with `mv`, not `git mv` — a freshly materialized learning is untracked, so `git mv` aborts (`fatal: not under version control`). Then `git add` the new path.
+   - On signing failure, stop — don't re-run install/scan or re-stage; ask the user for an interactive signer unlock. A listed agent key (`ssh-add -l` ok) ≠ signing capability; only a completed signed commit proves it.
 3. **Push once:** after all commits exist, push a single time.
 4. **Clean tree:** `git status --short` must be empty.
 
