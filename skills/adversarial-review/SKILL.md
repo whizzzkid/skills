@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.29-212249'
+  version: '2026.06.29-222346'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -106,11 +106,9 @@ Per changed file, capture:
 
 Run every sweep unconditionally. Use first matching severity; escalate when a suggestion proves a HARD RULE violation.
 
-- **Run any repo-local automated-review/static-analysis tool as an explicit sweep here, before the subagent** — read its output and fold its blockers/majors. A check that lives only in an ambient memory note ("run X before push") competes with context pressure and gets skipped; a numbered procedure step always executes. Gate the verdict on a clean run.
-- **Detect a configured second-opinion review integration (review binary on `PATH` / env flag) and invoke it this same turn** — re-derive it from the integration's presence each run, never from a standing user-config rule; fold its blockers/majors.
-
 | ID | Trigger | Check | Severity | Fix / escalation |
 |---|---|---|---|---|
+| 2.0 | Every run, before the subagent | Probe for a configured second-opinion / automated-review tool (`command -v <tool>` on `PATH`, or its env flag); re-derive presence each run, never from a standing user-config rule. Present-but-not-invoked is a finding — ambient prose / memory rules lose to context pressure, only an executed sweep row guarantees the run. | Blocker | Invoke it this turn, read its output, fold its blockers/majors; gate the verdict on a clean run. |
 | 2.1 | Any security/redaction/credential touch | Grep full diff for secret leakage to stderr, `curl -H "Authorization: Bearer $VAR"`, or credential flag values in source/docs/shell. | Blocker | Move to `curl -u`, netrc, or a `chmod 600` credentials file. |
 | 2.2 | Changed script/module/parallel pipeline | List directory siblings and whole-repo sibling toolchain invocations. A directive (`soft_fail`, `retry`, `timeout`, exit-code handling) copied from a sibling → verify the sibling's behavioral/exit-code contract actually transfers (pattern copy ≠ contract transfer). | Blocker | Apply to every sibling or justify absence; quote the sibling's contract for any copied directive, or flag it pending verification. |
 | 2.3 | New guard/null-check/defensive branch, OR a flagged *missing* guard | Trace upstream transforms for reachability and sentinel completeness. A map field left `nil` by `json.Unmarshal` (absent JSON key, not `{}`) is a live absent-key path — confirm the schema always has the key before calling it dead. Before flagging a *missing*-guard/empty-value as a blocker, trace the producer: if it errors on the caller's short-circuit path or guarantees non-empty on success (test-pinned), the guard is unnecessary. A partition predicate reading a nilable field via bracket/`[]` access defers the nil error past the decision point. A `${var:-default}` whose upstream guard (`set -e`, `jq -e` type check, `|| exit`) already aborts is dead — the default documents an unreachable path. But an explicit `|| { exit; }` guard after that type-check *is* the failure-surfacing remedy → defense-in-depth, not a dead guard: classify it suggestion/question, confirm intent, never blocker. | Blocker | Fix dead guards; handle jq falsy output (`"null"`); document why a structurally-guaranteed guard is absent; in a partition predicate use strict access (`.fetch`/equivalent) so nil fails fast at the boundary, not in a downstream formatter; drop the dead `:-default` or replace with explicit failure-surfacing. |
@@ -150,7 +148,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.58 | URL/host from an external API response (even authenticated) fed to `curl`/fetch | Authenticated identity ≠ trusted payload. Grep an API-response field reaching `curl` (esp. `-L`/`-o`) or any URL-accepting shell command without an `https://` scheme guard. A string scheme guard covers only the first URL; with `-L` also require `--proto "=https" --proto-redir "=https"` — 30x hops to `http://`/internal hosts bypass the guard. | Blocker | Add a one-line `https://` scheme guard before the call; absence with `-L`/`-o` is a blocker (`file://`/`gopher://`/`dict://` SSRF / local-resource vector). With `-L`, also require `--proto "=https" --proto-redir "=https"`; absence alongside `-o` is a blocker (redirect-chain download to disk is highest-risk). |
 
 Lower-frequency and shape-specific sweeps (2.9.2, 2.18, 2.20, 2.30, 2.31, 2.32, 2.35, 2.36, 2.37,
-2.39, 2.25, 2.41, 2.42, 2.45, 2.46, 2.47, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57) live in
+2.39, 2.25, 2.41, 2.42, 2.45, 2.46, 2.47, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57, 2.59) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 
