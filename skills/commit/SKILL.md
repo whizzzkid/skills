@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.26-222446'
+  version: '2026.06.30-000637'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -198,6 +198,17 @@ signature.
 - **Push after every commit unless the user explicitly said not to.** A commit
   without a push leaves work invisible to the team and easy to lose. The push is
   not a separate step the user must request — it is the tail of the commit sequence.
+- **First push of a brand-new branch with no PR → confirm intent first.** The push
+  mandate above applies once a branch has an upstream or an open PR. When `gh pr
+  view 2>/dev/null` finds no open PR **and** the push would create a *new* remote
+  branch (no upstream tracking), pause and confirm before pushing — an orphaned
+  remote branch is visible to teammates with no PR context and harder to reason
+  about. Detect the new-branch case:
+
+  ```bash
+  git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null \
+    || echo "no upstream — first push, confirm intent"
+  ```
 - Push blocked (branch protection, no upstream branch, rejection) → report it
   explicitly to the user. Never silently skip the push.
 - Pre-push hooks run → emit a one-line note before `git push` that hooks may take
@@ -458,6 +469,7 @@ User declines or thresholds not met → leave history alone.
 | Hook failure | Stop, ask user to run manually |
 | Push succeeded + open PR exists | Run PR Sync — diff title/body vs branch, `gh pr edit` if drifted |
 | Push succeeded + no PR | Skip PR Sync silently |
+| First push of new branch + no PR | Confirm push intent before pushing |
 | Message names a prohibited token | Stop — rewrite using category description only |
 
 ---

@@ -2,7 +2,7 @@
 
 > Use when creating git commits or pushing code. Enforces conventional commits with emoji, commit signing, and safe push behavior.
 
-**Version:** `2026.06.26-222446`
+**Version:** `2026.06.30-000637`
 
 ## Invocation
 
@@ -33,7 +33,7 @@ flowchart TD
 
 ## Noteworthy
 
-- **Push is part of the commit sequence**, not a separate step — every commit is followed by a push unless the user has explicitly said not to. Silent skip is a violation.
+- **Push is part of the commit sequence**, not a separate step — every commit is followed by a push unless the user has explicitly said not to. Silent skip is a violation. Exception: the first push of a brand-new branch with no open PR is gated on user confirmation, to avoid orphaned remote branches.
 - **Exactly one emoji per commit subject** — classifiers beat primary action emojis (`📌` beats `🔧` for a pin), and `🤖` is the canonical fallback for agent-authored or mixed-bag commits rather than stacking multiple emojis.
 - **PR Sync runs after every successful push** to a branch with an open PR — title and body are diffed against the post-push state and updated if they have drifted, with human-authored sections (review checkboxes, hand-edited test plans) preserved.
 - **Signing is non-negotiable** — `--no-gpg-sign`, `-n`, and `git -c commit.gpgsign=false` are forbidden; on signing failure the skill stops and surfaces the error.
