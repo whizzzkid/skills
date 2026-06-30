@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.29-235314'
+  version: '2026.06.30-005359'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -247,16 +247,15 @@ not in the diff will cause a 422 error from the GitHub API.
 - Reject ticket-shaped example tokens. Grep the proposed edit against `[A-Z][A-Z0-9]+-\d+`; any match — even an invented placeholder — trips the `check-ticket-refs` hook, which matches on shape, not provenance. Replace with an angle-bracket placeholder (`<child-key>`, `<KEY>`) or the repo's `BOARD-NUM` form.
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
 - Scrub staged `.learned.md`/retro archives too — a rename commits them publicly, so an internal name there blocks the prohibited-term hook. A term-handling learning's example IS the term; scrub it.
-- Grep every staged file against the repo's authoritative term list, not just the ad-hoc categories above. Scan file **contents AND staged path strings** — `check-prohibited` greps content + commit msg, never filenames, so a slug/filename term ships clean. Feed the **authoritative staged set**, never a hand-built path list — it silently under-matches:
+- Grep every staged file against the repo's authoritative term list, not just the ad-hoc categories above. Scan file **contents AND staged path strings** — `check-prohibited` greps content + commit msg, never filenames, so a slug/filename term ships clean. Scan per-file (NUL-delimited), never a bare multi-line `$files` — a stricter `grep` alias collapses it to one bad path and false-cleans; a `No such file or directory` warning is a scan failure, not clean:
 
   ```bash
-  files="$(git diff --cached --name-only)"
-  grep -iEnf .skillprohibit $files
-  printf '%s\n' "$files" | grep -iEf .skillprohibit
+  git diff --cached --name-only -z | xargs -0 grep -iEnHf .skillprohibit
+  git diff --cached --name-only | grep -iEf .skillprohibit
   ```
 
   Anonymize every hit. Pick a generic slug for a prohibited-subject lesson up front; never derive it from the subject.
-- Treat a NONE result as **unverified, not proof-of-clean**. A real hit in the staged scan IS the proof — skip the synthetic probe when the scan already matched. To confirm grep fires on a genuine NONE, feed a string the patterns match: `.skillprohibit` lines are regexes, so a pattern with `[]?*+` won't self-match as literal input — use a plain-literal line or expand one (`a[-_]?b` → `a-b`). The `check-prohibited` hook is the backstop — relying on it costs a failed-commit + amend cycle.
+- Treat a NONE result as **unverified, not proof-of-clean**. A real hit in the staged scan IS the proof — skip the synthetic probe when the scan already matched. For a genuine NONE, prove grep fires by feeding it a string the patterns match (expand a regex line: `a[-_]?b` → `a-b`). The `check-prohibited` hook is the backstop — relying on it costs a failed-commit cycle.
 
 ## Step 6: Present for Review
 
