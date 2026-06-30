@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.30-000637'
+  version: '2026.06.30-005359'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -203,7 +203,12 @@ signature.
   view 2>/dev/null` finds no open PR **and** the push would create a *new* remote
   branch (no upstream tracking), pause and confirm before pushing — an orphaned
   remote branch is visible to teammates with no PR context and harder to reason
-  about. Detect the new-branch case:
+  about. **Exception — auto mode + authorizing directive:** when auto mode is on
+  *and* the session's originating prompt already authorizes a published/tracked
+  PR (e.g. *create a ticket to track this*, *open a PR*, *ship X*), the new-branch
+  state is expected, not a surprise — skip the confirm and push. Confirm only on
+  genuinely ambiguous intent; the no-upstream signal alone does not mean unclear
+  intent. Detect the new-branch case:
 
   ```bash
   git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null \
@@ -469,7 +474,7 @@ User declines or thresholds not met → leave history alone.
 | Hook failure | Stop, ask user to run manually |
 | Push succeeded + open PR exists | Run PR Sync — diff title/body vs branch, `gh pr edit` if drifted |
 | Push succeeded + no PR | Skip PR Sync silently |
-| First push of new branch + no PR | Confirm push intent before pushing |
+| First push of new branch + no PR | Confirm push intent — unless auto mode + originating directive authorizes a tracked PR (then push) |
 | Message names a prohibited token | Stop — rewrite using category description only |
 
 ---
