@@ -230,6 +230,21 @@ gh api graphql -f query='
 ' -f threadId="{thread_id}"
 ```
 
+Reply routing & resolution rules:
+
+- Before bot replies, refresh bot thread IDs: re-run the GraphQL `reviewThreads`
+  query against post-push HEAD, match by `(path, line, root_comment.body_excerpt)`;
+  skip replies for dropped findings.
+- Resolve via `resolveReviewThread`; `NOT_FOUND` → refresh IDs once, match by
+  stable identity, retry; no match / retry fails → log and continue.
+- Inline-reply `404` (REST IDs unstable, see Step 3) → log and keep the thread in
+  `resolve_after_push`.
+- Fully outdated thread (`line: null`) → skip the REST reply (every REST op 404s,
+  incl. GET); post one top-level `gh pr comment` summarizing fixes instead.
+- Detect in-place bot summary updates by re-fetching each captured bot issue
+  comment: active→clean = positive resolution; added findings = regression →
+  re-enter Step 4.
+
 ## Step 9 — Check merge conflicts
 
 ```bash
