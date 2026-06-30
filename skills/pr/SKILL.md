@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.30-001421'
+  version: '2026.06.30-203635'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -257,6 +257,10 @@ grep -rliE '<branch-phase-or-feature-keyword>' docs/plans docs/specs 2>/dev/null
   relevant phase section, under a `## Meta` block; link the spec too when present.
 - The plan is the authoritative source of acceptance criteria — always surface it;
   a spec link is not a substitute for the plan link.
+- **"Link the reference material" means add source URLs to the body, not copy
+  files into the repo.** Satisfy a reference/citation request with the source URL;
+  never create local copies of referenced files. Ambiguous reference request →
+  clarify scope before creating any files.
 
 ### Resolve PR Body Template
 
