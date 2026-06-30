@@ -12,3 +12,10 @@ inline standards; relocation does not lower their priority.
   yields empty silently). Multi-match `sed -n 's/.*marker//p'` → `tail -1`
   (canonical line is last), not `head -1`. Match an error string only after
   reproducing the failure against a real fixture and capturing the exact text.
+- **External API fields:** reuse the client library schema/types when available;
+  hardcode allowlists only when no library type encodes them, and cite the
+  upstream source plus re-sync obligation.
+- **Content-lint hooks:** scope to the file class and added lines only;
+  smoke-test against an out-of-scope file that legitimately contains the pattern.
+- **Env vars in docs:** document where stored, who can edit it, propagation, and
+  unset default.

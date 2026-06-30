@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.06.29-200929`
+**Version:** `2026.06.30-003800`
 
 ## Invocation
 

@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.29-200929'
+  version: '2026.06.30-003800'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -147,6 +147,7 @@ Enumerate every affected site and fix all in one pass before tests:
 - **Signature widening** — non-optional public param/required field → grep every caller/initializer, fix each in the same commit.
 - **`replace_all: true`** — grep the target string first; reject if any occurrence needs a different value/context or must stay unchanged.
 - **Coercion same-class** — a coercion (`.to_s`, `&.`, `String()`, optional-chaining, null-coalescing) on one arg/field → audit every arg of the same semantic class (role + nullability + type shape); also same-class guards, redactions, retry wrappers, logging.
+- **Structured-row insert** — before inserting/upserting a row into a tabular/list data file (CSV, YAML/JSON list, fixtures), scan sibling rows for convention-populated fields; if every existing row sets a field the new row leaves blank, ask the user to supply it — tools accept the omission silently.
 
 ### Code Standards
 
@@ -166,13 +167,10 @@ Apply to ALL code:
 - **Portable home paths:** in skills, configs, and committed scripts, reference user-land paths via `$HOME/...` (or `${HOME}`), never a hardcoded machine-absolute home directory (an OS user-home path literal).
 - **Diagrams:** Mermaid over ASCII. Use `flowchart`/`graph` for flows, `sequenceDiagram` for request/response, `classDiagram` for type hierarchies, `stateDiagram-v2` for state machines.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
-- **External API fields:** reuse the client library schema/types when available; hardcode allowlists only when no library type encodes them, and cite the upstream source plus re-sync obligation.
 - **ADRs:** create `docs/adr/` records for significant architectural decisions: title, status, context, decision, consequences.
-- **Content-lint hooks:** scope to the file class and added lines only; smoke-test against an out-of-scope file that legitimately contains the pattern.
 - **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace each variable’s source, path, and meaning in the new context.
 - **No hardcoded env-specific constant beside a dynamic sibling:** before hardcoding OS, arch, version, or path, grep the file — if a sibling derives the same value dynamically (`uname -s`/`-m`, etc.), reuse that computation, never re-hardcode what a sibling derives.
-- **Niche standards** (example-format confirmation, tool-output/error-string parsing) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
-- **Env vars in docs:** document where stored, who can edit it, propagation, and unset default.
+- **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
 
