@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.29-222747'
+  version: '2026.06.30-001109'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -49,6 +49,9 @@ ensures quality before marking ready.
    Step 1–2. Every PR title/body, review body, and comment body ends with the
    canonical outbound footer per `wk-gh` Step 4 — inject at heredoc/template
    render time so no `gh pr create` / `gh pr edit` ships footer-less.
+   **Unconditional — independent of every other gate.** A "skip the review"
+   instruction waives only Rule 2's review; it never disables `wk-gh` routing or
+   the footer. Never conflate skipping the review with skipping `wk-gh`.
 1. **Preserve PR body metadata across description rewrites.** Before
    overwriting the PR description, preserve metadata lines — see
    `skills/pr/references/pr-description-metadata.md`.
@@ -379,7 +382,7 @@ When `$BEST_BASE` is another PR's head branch (the stacking signal from Step 1),
 populate the `## Stack` cross-reference links from the detected ordering — never
 leave them for manual post-creation `gh pr edit` passes:
 
-- Resolve each stack member's number/URL up front (`gh pr list --state open --json number,headRefName,baseRefName,url`), order by the base→head chain, and write canonical `[#NNN]({url})` links for prev/next into the body **before** `gh pr create` — so the first pass ships complete links.
+- Resolve each stack member's number/URL up front (`gh pr list --state open --json number,headRefName,baseRefName,url`), order by the base→head chain, and write canonical `[#NNN]({url})` prev/next links into the body **before** `gh pr create`.
 - After creating the new PR, back-link it into the immediate parent: one `gh pr edit {parent}` adding this PR as its "next". Edit only the adjacent member, not the whole chain.
 - A PR not yet created (later part) → list it as `pending` without a link; backfill when it exists.
 
@@ -418,11 +421,9 @@ lifecycle (description sync → CI poll → self-review → feedback triage → 
 a single invocation.
 
 **Side actions never terminate the workflow.** Ancillary actions after
-`gh pr create` — posting a cross-repo discussion comment, replying to a
-referenced PR, dropping a Slack/Jira link, updating an upstream tracking issue —
-do **not** count as task completion. The post-creation lifecycle (description
-sync → CI poll → self-review → feedback triage → ready) runs regardless. Treat
-any "I just posted on X" thought as a continue signal, not a stop signal:
+`gh pr create` (see table) do **not** count as task completion — the
+post-creation lifecycle runs regardless. Treat any "I just posted on X" thought
+as a continue signal, not a stop signal:
 
 | Post-creation side action | Correct next move |
 |---------------------------|-------------------|
