@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.30-001109'
+  version: '2026.06.30-001421'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -229,10 +229,14 @@ gh pr list --state open --json number,files \
 
 ### Adversarial-review gate (run before `gh pr create`)
 
-Invoke `wk-adversarial-review` against `$BEST_BASE...HEAD`. The skill performs
-the mechanical pre-push sweeps and the adversarial subagent critique. Do not
-proceed to `gh pr create` until the verdict is `clear` (or `suggestions-only`
-and the user accepted the offered A/B/C choice).
+**Honor a review waiver before dispatching.** User's current-session instruction
+waives review ("no review needed") → suppress this Skill call and continue to
+`gh pr create`; never rely on the user denying the permission prompt to enforce
+their own instruction. (Rule 0 `wk-gh` routing + footer still apply.)
+
+Invoke `wk-adversarial-review` against `$BEST_BASE...HEAD`. Do not proceed to
+`gh pr create` until the verdict is `clear` (or `suggestions-only` and the user
+accepted the offered A/B/C choice).
 
 On `blocked`, address each blocker with atomic `wk-commit` invocations, re-invoke
 `wk-adversarial-review`. Loop until clear.
@@ -251,8 +255,8 @@ grep -rliE '<branch-phase-or-feature-keyword>' docs/plans docs/specs 2>/dev/null
 
 - Found a plan under `docs/plans/` (or equivalent) → link it, anchored to the
   relevant phase section, under a `## Meta` block; link the spec too when present.
-- The plan is the authoritative source of acceptance criteria — always surface it
-  when one exists. A vision/spec link is not a substitute for the plan link.
+- The plan is the authoritative source of acceptance criteria — always surface it;
+  a spec link is not a substitute for the plan link.
 
 ### Resolve PR Body Template
 
@@ -324,8 +328,8 @@ EOF
 ```
 
 `--base "$BEST_BASE"` MUST be present on every `gh pr create` call — never omit
-it and rely on the default. The base resolved in Step 1 is authoritative;
-defaulting silently re-introduces the mis-basing failure mode.
+it and rely on the default; defaulting silently re-introduces the mis-basing
+failure mode.
 
 PR titles use the same conventional commit + emoji scheme as commit messages.
 
@@ -379,8 +383,7 @@ following the same format shown above.
 ### Auto-populate stacked cross-reference links
 
 When `$BEST_BASE` is another PR's head branch (the stacking signal from Step 1),
-populate the `## Stack` cross-reference links from the detected ordering — never
-leave them for manual post-creation `gh pr edit` passes:
+populate the `## Stack` cross-reference links from the detected ordering:
 
 - Resolve each stack member's number/URL up front (`gh pr list --state open --json number,headRefName,baseRefName,url`), order by the base→head chain, and write canonical `[#NNN]({url})` prev/next links into the body **before** `gh pr create`.
 - After creating the new PR, back-link it into the immediate parent: one `gh pr edit {parent}` adding this PR as its "next". Edit only the adjacent member, not the whole chain.
@@ -402,8 +405,7 @@ For each match, append to the PR body before posting:
 - [Rendered preview: {filename}](https://github.com/{owner}/{repo}/blob/{branch}/{path})
 ```
 
-Resolve `{branch}` from the current head ref name. Skip the section entirely
-when no `.md` files are in the diff.
+Resolve `{branch}` from the head ref; skip when no `.md` files are in the diff.
 
 ## Step 3: Post-Creation Workflow
 
@@ -435,8 +437,7 @@ as a continue signal, not a stop signal:
 After the draft PR is created (or after pushing new commits to an existing PR):
 
 - **Open it in the browser first** — run `gh pr view --web` as soon as
-  `gh pr create` succeeds so the user sees the PR without clicking the URL. Skip
-  only in a headless / non-interactive session.
+  `gh pr create` succeeds. Skip only in a headless / non-interactive session.
 
 1. **Update PR description** — Review the existing description; if it has
    drifted, update with `gh pr edit`. **Before overwriting**, preserve metadata
