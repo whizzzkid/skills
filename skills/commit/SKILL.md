@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.30-005359'
+  version: '2026.06.30-202825'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -241,7 +241,11 @@ like `lychee`, `shellcheck`, `bats`, etc.
 ### Hook and verify rules
 
 - Never use `--no-verify` when committing or pushing. Hook failing → stop and ask
-  the user to run the command manually.
+  the user to run the command manually, unless it is a self-healing class below.
+- **Self-heal stale-bundle hook failures.** A pre-push hook failing with
+  `GemNotFound` / `Bundler::GemNotFound` / `Could not find gem` (stale local bundle
+  after a base bump or rebase) → run `bundle install`, then retry the push once.
+  Escalate only if `bundle install` fails or the hook fails again after it.
 - Regular push rejected → tell the user and ask how to proceed rather than
   automatically force-pushing.
 - Push rejected non-fast-forward (remote diverged) → default to `git pull
