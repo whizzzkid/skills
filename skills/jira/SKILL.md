@@ -35,7 +35,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.23-213906'
+  version: '2026.06.30-203235'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -298,6 +298,10 @@ navigate to context:
 - `wk-pr` already built a description → **insert** the `## Ticket` section
   rather than overwriting the rest. Section already exists → refresh its
   content if the ticket summary changed.
+- **Link only the ticket being worked on.** Emit exactly one ticket link
+  (derived from the branch/commit). Never add `Related:`, `Epic:`, or
+  parent-ticket lines — the PR body is scoped to the work item, not the epic
+  hierarchy — unless the user explicitly requests them.
 
 **HARD RULE:** Any `gh pr edit --body` issued by this skill routes through
 `wk-gh` — the canonical outbound footer per `wk-gh` Step 4 stays at the
