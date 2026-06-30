@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.29-200930'
+  version: '2026.06.30-182454'
 ---
 
 # PR Resolve
@@ -229,6 +229,7 @@ at reply time.** A pending review blocks reply posting with HTTP 422. Capture
 
 - Track bot thrash by `(path_prefix, concern_class)` and total active findings per round.
 - Stop and ask before another fix when: same pair re-fires 3×; totals stop falling 2 rounds running; or a new finding contradicts an accepted fix.
+- Re-fires on prose in one non-code file → grep code/CI/prompt reading its *content* (not just path/bundle) before rewording; none → delete/restructure first.
 - Bot reply: documented command syntax if available, else a generic reply tagging the bot and stating the decision.
 - **Surface prior-round dismissals.** Before a judgment-required finding, check
   the session `dismissed` list and prior-round notes for the same field/concern
@@ -241,12 +242,9 @@ plausible skip rationale → offer one bulk action before per-item triage:
 > "All {N} findings are Minor. Bulk dismiss all, or triage individually?
 > (a) dismiss all  (b) triage individually"
 
-Enter per-item triage only when ≥1 finding is Major/Critical or any finding
-lacks a plausible skip rationale.
-
-**Order of processing — HARD RULE: triage every comment before applying any
-fix.** Classify the whole set first, then apply accepted fixes as one batched
-pass — never loop comment-by-comment through fix/commit/push.
+**Order — HARD RULE: triage every comment before applying any fix.** Apply
+accepted fixes as one batched pass; never loop comment-by-comment through
+fix/commit/push.
 
 - Process bot reviews first, then human comments.
 - For each: read full file context, the comment, and reply chain before a fix.
