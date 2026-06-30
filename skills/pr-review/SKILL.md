@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.24-202743'
+  version: '2026.06.30-215114'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -352,11 +352,20 @@ list before drafting each comment.
 | Phase 3 outcome | Phase 4 action |
 |---|---|
 | **Confirmed** | Silent skip at thread and body level. |
-| **Confirmed but narrower** | Reply with a scope note bounding the reproduced case. |
+| **Confirmed but narrower** | Reply only if the scope note cites a *new fact* (see gate below); else treat as Confirmed → silent skip. |
 | **Confirmed but broader** | Reply with the amplified impact as new evidence (e.g. a referenced target that 404s). |
 | **Refuted** | Reply `**Could not reproduce** — <counter-evidence>` and what was tested. |
 | **Inconclusive** + agent found it | Reply with the agent's evidence and fix. |
 | **Inconclusive** + agent did not | Leave the thread; surface in the summary for override. |
+
+**Narrower/broader requires a new fact, not an opinion.** The reply must cite
+something the bot's comment lacked — a grep result, test run, reachability/trigger
+check, or amplified downstream target. A standalone judgment about priority, blast
+radius, or whether it's "worth fixing now" is not narrower; it's Confirmed → silent
+skip.
+
+- Narrower: "✓ only fires when `FOO` is set; grep shows no caller sets it" (new fact).
+- Not narrower: "✗ lower priority, same-repo producer" (opinion, no new fact) → Confirmed, silent skip.
 
 **HARD RULE:** A per-thread bot reply or body anchor is justified only with new
 evidence beyond confirming the bot's exact claim. Pure Confirmed outcomes get
