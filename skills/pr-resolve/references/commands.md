@@ -57,6 +57,11 @@ git -C "$(git rev-parse --show-toplevel)" add <paths>
 
 ## Step 3 — Fetch unresolved comments
 
+**Pending review handling** (a pending review blocks reply posting, HTTP 422):
+
+- Author's/current-user's own → never submit (Hard Rule 13); note once; resolve worked threads via the no-body GraphQL mutation (not gated by the pending review). Defer the blocked replies; note the deferral in the summary — pushed fixes stand on their own and bots re-scan on green CI.
+- Another user's pending review → surface once, proceed without it.
+
 Build the comment map (GraphQL for unresolved threads, REST for full details):
 
 ```bash

@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.01-225119'
+  version: '2026.07.01-231923'
 ---
 
 # PR Resolve
@@ -121,9 +121,12 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
     name signals remaining work → read it fully, implement its items, delete it in
     the same commit as the last change. Plan first if the work is large or spans
     repos.
-13. **Never re-prompt the author to submit their own pending self-review.** Note
-    it once, route around via the GraphQL resolve path (Step 3) — never as a
-    precondition to fixing findings. Re-prompting >1×/session is a violation.
+13. **Never submit the author's own pending self-review, and never re-prompt for
+    it.** Submitting is destructive/irreversible — it publishes work the human is
+    holding for manual release (`wk-self-review` checkpoint). "Do not bother me
+    with it" means leave it alone, not submit it. Note it once, route around via
+    the GraphQL resolve path (Step 3); submit only on an explicit "submit my
+    review" instruction. Re-prompting >1×/session is a violation.
 
 ## Step 1: Identify the PR
 
@@ -216,11 +219,8 @@ missing section, or metadata/diff/docs drift as `surface: agent_observation`
 | `User` | Matches current user login in co-author session | Self-review |
 | `User` | Any other login | Reviewer |
 
-**Important — pre-check pending self-reviews here at Step 3, never at reply
-time.** A pending review blocks reply posting (HTTP 422). Capture
-`$PENDING_REVIEW_ID` (commands.md §3). Author's/current-user's own → note once,
-route around via the no-body GraphQL resolve path (Hard Rule 13); never demand
-submission. Another user's pending review → surface once, proceed without it.
+**Pre-check pending self-reviews at Step 3, never at reply time.** A pending
+review blocks reply posting (HTTP 422); handle per Hard Rule 13 + commands.md §3.
 
 **Filter and group:**
 
@@ -428,7 +428,7 @@ before posting replies or resolving threads, even when it looks current.
 
 **Post replies, reactions, resolve threads.** Re-run the pending self-review
 check before the first reply; route around the author's own pending review per
-Hard Rule 13 (submit only if the user chose to). Post
+Hard Rule 13 (never submit it). Post
 replies sequentially, routed by surface — full routing, reaction map, ID-refresh,
 and `404`/`NOT_FOUND`/outdated-thread/in-place-bot handling in commands.md §8.
 Key rules:
