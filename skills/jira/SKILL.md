@@ -35,7 +35,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.07.01-220810'
+  version: '2026.07.01-230049'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -114,6 +114,12 @@ ToolSearch select:mcp__claude_ai_Jira_Confluence__getJiraIssue,mcp__claude_ai_Ji
 - Direct user to https://claude.ai/customize/connectors only when they
   explicitly ask why a ticket didn't move.
 - Available → cache resolved tool names for the session.
+- **Resolve the Cloud tenant via `getAccessibleAtlassianResources` (no params)
+  first; never guess an `<org>.atlassian.net` slug.** Tenant subdomains do not
+  reliably match the org name → a guessed slug returns 404 ("Failed to fetch
+  tenant info for cloud ID"). Use the returned UUID `cloudId` for every
+  subsequent call; cache the resolved cloudId/hostname for the session. Never
+  derive the cloudId or hostname from the org name.
 
 **HARD RULE:** never read or write Jira via browser, WebFetch, or a
 web-search agent. All Jira reads/writes go through the MCP connector.
