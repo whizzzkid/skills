@@ -53,7 +53,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.01-202000'
+  version: '2026.07.01-212951'
 ---
 
 # Sitrep
@@ -266,6 +266,10 @@ Agent roster:
 - **GitHub:** PRs needing review (`--draft=false`); your open PRs with failing
   CI or review comments; assigned issues; mentions. All `gh` commands require
   `--owner="$GITHUB_ORG"`. ToolSearch: `"github"`.
+  - **HARD RULE — verify authorship, never infer it** (see the canonical
+    Authorship filter in Stage 4 §Code & PRs). A PR enters "Your PRs" only after
+    `gh pr view --json author` confirms it; route review-requested / mentions /
+    involvement to other buckets. Prevents teammate/bot PRs surfacing as own.
 - **Jira + Confluence:** assigned tickets needing action; ticket mentions;
   Confluence mentions. ToolSearch: `"jira"`, `"confluence"`.
 
@@ -382,7 +386,8 @@ Delegate formatting to [`wk-slack`](../slack/README.md) §Standup Snippet; this
 skill owns selection.
 
 - **Yesterday:** previous snapshot `## Achievements`, top 3–4 wins; never
-  reconstruct from memory when the file exists. Apply the authorship filter.
+  reconstruct from memory when the file exists. Apply the canonical Authorship
+  filter.
   - Re-confirm each PR's `author.login` via `gh` at compile
     (`gh search prs --author @me --merged --merged-at <range>`) — never trust
     carryover tracking or agent-reported attribution (ships another's merge as
@@ -495,8 +500,12 @@ generated_at: {ISO_8601_UTC}
 ### Code & PRs
 - {shipped, reviewed, unblocked — strong verbs, with links}
 
-**Authorship filter:** include a PR only when the user is author, co-author, or
-primary approving reviewer.
+**Authorship filter (canonical):** include a PR as the user's only when
+`gh pr view <pr> --json author` confirms author / co-author / primary approving
+reviewer — carry-over lists, review queues, and prior agent reports are NOT
+proof. Enumerate own PRs via `gh search prs --author @me` (add
+`--merged --merged-at <range>` for wins). Applies to "Your PRs", snapshot wins,
+and standup alike.
 
 ### Meetings & Collaboration
 - {decisions led, context shared, people unblocked}
@@ -602,15 +611,12 @@ files here; [`wk-sharpen`](../sharpen/README.md) owns `.learned.md` renames.
 
 Surface a quarterly-review nudge once per day; never block on it.
 
-- **`start`:** during QPR prep windows (last two weeks of Jan / Apr / Jul / Oct)
-  with recent `$SITREP_REPO/$EMPLOYER/QPR/brag-log.md` entries, add a
-  `📋 QPR Prep` banner atop `live.md` pointing to
-  [`/wk-self-perf quarter`](../self-perf/README.md).
-- **`end`:** during QPR season (Feb / Aug), add a `📋 QPR Season` banner to the
-  snapshot reminding the user to capture achievements via
-  [`/wk-self-perf quarter`](../self-perf/README.md).
-- QPR-worthy achievements continue to accrue to `QPR/brag-log.md` with `🌟`
-  regardless of season.
+- **`start`:** in QPR prep windows (last 2 weeks of Jan/Apr/Jul/Oct) with recent
+  `$SITREP_REPO/$EMPLOYER/QPR/brag-log.md` entries, add a `📋 QPR Prep` banner
+  atop `live.md` → [`/wk-self-perf quarter`](../self-perf/README.md).
+- **`end`:** in QPR season (Feb/Aug), add a `📋 QPR Season` banner to the
+  snapshot → [`/wk-self-perf quarter`](../self-perf/README.md).
+- QPR-worthy achievements accrue to `QPR/brag-log.md` with `🌟` year-round.
 
 ## Quick Reference
 
