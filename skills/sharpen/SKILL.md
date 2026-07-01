@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.30-203414'
+  version: '2026.07.01-203322'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -342,7 +342,7 @@ not in the diff will cause a 422 error from the GitHub API.
 
 Do not return control until all four pass:
 
-1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — must print `Done!`. Prefix the explicit `cd` (or use an absolute path); the Bash cwd persists across calls, so a `cd` from an earlier rename/scan step can leave a `.`-relative install in the wrong dir ("No valid skills found").
+1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — success = `Done!` or `Installed <N> skills` (accept either marker). Prefix the explicit `cd`; the Bash cwd persists across calls, so a `cd` from an earlier step can leave a `.`-relative install in the wrong dir ("No valid skills found").
 2. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Never blanket `git add -A` — the working tree routinely carries *unprocessed* inbox files (`learnings/`, `retrospect/`) from other sessions, and `-A` bundles them into this commit. Add processed paths explicitly. If `-A` is unavoidable, `git reset` every `learnings/`/`retrospect/` path this run did not process before committing.
    - Re-check the index after any hook-blocked commit.
