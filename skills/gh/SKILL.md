@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.01-220809'
+  version: '2026.07.01-225119'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -157,6 +157,15 @@ silent posts erode trust and make automated activity hard to audit.
   time defeats the verbatim guarantee and ships a non-canonical footer.
   Read this block from the skill and inject it; do not reconstruct it from
   memory.
+- **The commit-message footer is a DIFFERENT string — never ship it on a
+  GitHub/outbound body.** The `wk-commit` trailer (`🦾 Generated with
+  [wk-skills](...) and multiple models.`) belongs only in commit messages and
+  PR-body trailers; both footers open with "Generated ... wk-skills", so the two
+  are easy to conflate — type neither from memory. Pre-emit check: grep each
+  outbound body for the exact canonical footer below AND reject if the
+  commit-trailer variant (`🦾 Generated with`) is present. A footer defect on one
+  surface is almost always on every body posted the same way → sweep all
+  surfaces (PR body, review bodies, every comment/reply) in one pass.
 
 ```
 ---

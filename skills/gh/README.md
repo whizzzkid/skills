@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.07.01-220809`
+**Version:** `2026.07.01-225119`
 
 ## Invocation
 
