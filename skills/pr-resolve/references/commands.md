@@ -144,6 +144,16 @@ suggestion format):
 {additional context-specific options using non-reserved letters}
 ```
 
+Decision handling — record exactly one outcome per decision; `a`/`e`/`d`/`t` all
+mark `resolve_after_push`:
+
+- `a` Apply — record in `fixes_to_apply` `{path, line, description, code_change, threadId, commentId}`; draft "Fixed — {brief explanation}".
+- `e` Edit — ask how to adjust; record the refinement in `fixes_to_apply`; draft the adjusted reply.
+- `d` Dismiss — reuse the Step 4 `Why skip` rationale as the reason; do not re-ask. Ask only when it is empty / "No valid reason to skip", or to edit it. Draft "Dismissed — {reason}".
+- `t` Defer — ask for the ticket URL/key; record in `deferrals` `{path, line, ticket_url, ticket_key, threadId, commentId}`; draft "Tracked in [{ticket_key}]({ticket_url}) — will address in a follow-up.".
+- `s` Skip — record in `skipped`; leave the thread open and untouched.
+- `r` Rethink — re-read the comment, surrounding code, and referenced context; produce deeper analysis with alternatives/risks; re-present the same comment with the same reserved options.
+
 ## Step 6 — Issue-class scan before each fix
 
 ```bash

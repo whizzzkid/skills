@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.01-213515'
+  version: '2026.07.01-225119'
 ---
 
 # PR Resolve
@@ -76,6 +76,10 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
    any GitHub read/write; `gh api` is the only transport. Append the canonical
    outbound footer to every reply, PR-body edit, and thread message at render time.
 1. **Never push without explicit user confirmation.**
+   - **Holds under Auto Mode.** A user question/redirect ("why did you not
+     push?") is a reconsider prompt, not a go-ahead — require explicit
+     yes/approve/proceed (same for Hard Rule 4 force-push). Auto Mode acts on
+     evaluated recommendations, never on intent inferred from a question.
 2. **Never post reply comments without explicit user confirmation.**
    - **HARD RULE — every reply/dismissal body leads with substance (what
      changed, the decision, the commit SHA), never a pleasantry.** Praise/thanks
@@ -117,6 +121,9 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
     name signals remaining work → read it fully, implement its items, delete it in
     the same commit as the last change. Plan first if the work is large or spans
     repos.
+13. **Never re-prompt the author to submit their own pending self-review.** Note
+    it once, route around via the GraphQL resolve path (Step 3) — never as a
+    precondition to fixing findings. Re-prompting >1×/session is a violation.
 
 ## Step 1: Identify the PR
 
@@ -209,10 +216,11 @@ missing section, or metadata/diff/docs drift as `surface: agent_observation`
 | `User` | Matches current user login in co-author session | Self-review |
 | `User` | Any other login | Reviewer |
 
-**Important — pre-check pending self-reviews here at Step 3, never discover them
-at reply time.** A pending review blocks reply posting with HTTP 422. Capture
-`$PENDING_REVIEW_ID` (commands.md §3); one exists → ask the user to submit it as
-`COMMENT` or abort, then submit before any reply.
+**Important — pre-check pending self-reviews here at Step 3, never at reply
+time.** A pending review blocks reply posting (HTTP 422). Capture
+`$PENDING_REVIEW_ID` (commands.md §3). Author's/current-user's own → note once,
+route around via the no-body GraphQL resolve path (Hard Rule 13); never demand
+submission. Another user's pending review → surface once, proceed without it.
 
 **Filter and group:**
 
@@ -322,14 +330,8 @@ hard-stop unless both hold:
   ref (`A+C, D, B`) is unreadable even when the count passes.
 
 **Decision handling** — record exactly one outcome per decision; `a`/`e`/`d`/`t`
-all mark `resolve_after_push`:
-
-- `a` Apply — record in `fixes_to_apply` `{path, line, description, code_change, threadId, commentId}`; draft "Fixed — {brief explanation}".
-- `e` Edit — ask how to adjust; record the refinement in `fixes_to_apply`; draft the adjusted reply.
-- `d` Dismiss — reuse the Step 4 `Why skip` rationale as the reason; do not re-ask. Ask only when it is empty / "No valid reason to skip", or to edit it. Draft "Dismissed — {reason}".
-- `t` Defer — ask for the ticket URL/key; record in `deferrals` `{path, line, ticket_url, ticket_key, threadId, commentId}`; draft "Tracked in [{ticket_key}]({ticket_url}) — will address in a follow-up.".
-- `s` Skip — record in `skipped`; leave the thread open and untouched.
-- `r` Rethink — re-read the comment, surrounding code, and referenced context; produce deeper analysis with alternatives/risks; re-present the same comment with the same reserved options.
+all mark `resolve_after_push`. Per-letter record shapes, reply drafts, and
+`d`/`r` semantics: commands.md §5.
 
 **After all decisions collected**, report the counts per bucket (obvious queued,
 accepted, follow-ups, dismissals, deferrals, skipped), then: "Moving to
@@ -425,7 +427,8 @@ before posting replies or resolving threads, even when it looks current.
 - Invoke `wk-docs` against files touched this session; update docs/specs/README when behavior, signatures, or config changed.
 
 **Post replies, reactions, resolve threads.** Re-run the pending self-review
-check before the first reply; submit any pending review as `COMMENT` first. Post
+check before the first reply; route around the author's own pending review per
+Hard Rule 13 (submit only if the user chose to). Post
 replies sequentially, routed by surface — full routing, reaction map, ID-refresh,
 and `404`/`NOT_FOUND`/outdated-thread/in-place-bot handling in commands.md §8.
 Key rules:
