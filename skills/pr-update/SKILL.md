@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200515'
+  version: '2026.07.01-213515'
   internal: false
   model:
     openai: gpt-4.1
@@ -293,6 +293,12 @@ For each conflicted file:
 2. **Decide** the resolution. Prefer keeping the branch's intent (the work being
    integrated is why the PR exists) unless the base change supersedes it (e.g. file
    renamed on base → apply the branch's edits to the new filename).
+   - **Lockfile conflict** (`Gemfile.lock`, `package-lock.json`, `Cargo.lock`, …):
+     keep the branch's structural changes (remotes, added/removed deps, source
+     migration) and re-apply only the base's dependency version bumps onto it —
+     never take one whole side. Re-generating from the resolved manifest and
+     verifying a real install (Stage 5 pre-check) is authoritative over a
+     clean-looking textual merge.
 3. **Verify** the resolved file — open it, scan for stray markers, run a quick syntax
    check (`node --check`, `python -m py_compile`, `cargo check`, etc. — whatever is cheap
    for the language).

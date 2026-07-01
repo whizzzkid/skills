@@ -54,7 +54,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.30-201810'
+  version: '2026.07.01-213515'
 ---
 
 # PR Resolve
@@ -297,7 +297,10 @@ commit, push, or post replies.
 **Partition before any prompts.** Place every suggestion into exactly one list:
 `obvious_fixes[]` (tag == `obvious-fix`) or `judgment_required[]`. Re-read each
 skip rationale during partition; rationale concedes the comment is right →
-re-route into `obvious_fixes[]`. Severity does not bypass this.
+re-route into `obvious_fixes[]`. Severity does not bypass this. Auto Mode: a
+finding with a confident, evidence-backed disposition (apply *or* dismiss) is
+likewise decided → `obvious_fixes[]`, act and report; never confirm per-item.
+Consult is for genuine tradeoffs only.
 
 **Bulk-queue preview for obvious fixes.** Obvious-fix items exist → present the
 bulk-queue preview (commands.md §5) once before queueing. Default
