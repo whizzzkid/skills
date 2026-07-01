@@ -53,7 +53,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.18-170600'
+  version: '2026.07.01-202000'
 ---
 
 # Sitrep
@@ -383,6 +383,12 @@ skill owns selection.
 
 - **Yesterday:** previous snapshot `## Achievements`, top 3–4 wins; never
   reconstruct from memory when the file exists. Apply the authorship filter.
+  - Re-confirm each PR's `author.login` via `gh` at compile
+    (`gh search prs --author @me --merged --merged-at <range>`) — never trust
+    carryover tracking or agent-reported attribution (ships another's merge as
+    the user's own).
+  - One bullet per win, not a comma-joined line; append each PR's bare URL
+    (`<pre>` copy block renders no markdown links; bare URLs auto-link in Slack).
 - **Today:** top 3–4 🔴 ASAP items, deadline-first.
 - **Blockers:** `BLOCKED` or dependency conflicts; always present — `None` when empty (per [`wk-slack`](../slack/README.md) §Standup Snippet).
 - Apply [`wk-slack`](../slack/README.md) §Standup privacy filter — drop

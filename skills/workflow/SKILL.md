@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.30-003800'
+  version: '2026.07.01-202000'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -385,7 +385,7 @@ Final audit after all code is complete:
 
 **HARD RULE:** at the end of every session, invoke `wk-retro`. No exceptions.
 
-**HARD RULE:** never ask whether to capture learnings. Invoke `wk-learn` immediately after every skill run and every user correction.
+**HARD RULE:** never ask whether to capture learnings — offering to capture is still asking. Invoke `wk-learn` in the same turn a correction or mistake surfaces, and after every skill run.
 
 **HARD RULE:** `gh pr ready` is not a session terminus. After every successful `gh pr ready`, the next action is `Skill(wk-retro)`.
 
