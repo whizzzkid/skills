@@ -35,7 +35,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.30-203235'
+  version: '2026.07.01-220810'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -92,6 +92,13 @@ comment) **before** `wk-workflow` Phase 1 planning begins — `wk-workflow`'s
 "any development task" trigger must not fire first and skip the claim. The
 ticket lands In Progress at session start, not retroactively after the PR
 exists.
+
+**HARD RULE — footer on every agent-authored Jira body.** Every Jira body this
+skill composes ends with the canonical `wk-gh` Step 4 footer, injected at write
+time — lifecycle comments (`addCommentToJiraIssue`), description enrichments
+(`editJiraIssue`), and any `gh pr edit --body`. A terse factual lifecycle
+comment is not an exemption; the rule is every agent-authored outbound body
+across all external systems, not GitHub-only.
 
 ---
 
@@ -227,6 +234,11 @@ backlog — invisible on the sprint board, absent from velocity tracking.
   shape the field expects (often `[{ id: <sprintId> }]`).
 - Skip silently when no active sprint exists or field unavailable — not
   every board runs sprints.
+- **Verify the write landed.** After `editJiraIssue`, re-read the sprint field.
+  An active sprint was found but the field is still null → do not report
+  "sprint <name>"; surface the unset field so the ticket is not silently left
+  in the backlog. Silent-skip covers only the no-active-sprint case, never a
+  failed write masquerading as one.
 
 ### Progress comment (subroutine)
 
@@ -303,10 +315,9 @@ navigate to context:
   parent-ticket lines — the PR body is scoped to the work item, not the epic
   hierarchy — unless the user explicitly requests them.
 
-**HARD RULE:** Any `gh pr edit --body` issued by this skill routes through
-`wk-gh` — the canonical outbound footer per `wk-gh` Step 4 stays at the
-very end of the body, after the `## Ticket` insertion. Do not strip the
-footer when editing; preserve it exactly once.
+**HARD RULE — footer placement in a PR body.** Per the top-level footer rule,
+keep the `wk-gh` Step 4 footer at the very end of the body, after the
+`## Ticket` insertion; do not strip it when editing — preserve it exactly once.
 
 ### PR-opened comment
 

@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.26-230726'
+  version: '2026.07.01-220812'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -58,12 +58,17 @@ Scan the task description for these ambiguity signals:
 | Vague degree | "make it better", "clean this up" | Yes |
 | Missing "what must NOT change" | new feature touching shared code | Yes |
 | ≥2 distinct deliverables bundled | "add X, fix Y, and refactor Z" | Yes — confirm granularity |
+| Fix approach undetermined | symptom fixable by "add/produce/provision" OR "disable/suppress" | Yes |
 
 - When ≥1 signal fires → ask only the questions needed to unblock, via `AskUserQuestion` (not prose).
 - **HARD RULE — one question per message.** Ask a single question, wait for the answer, then ask the next; track answers as you go. Never present a batched/numbered list, even with recommended defaults — a wall of simultaneous questions is overwhelming. Generalizes the wk-pr-resolve one-comment-at-a-time rule to every grill/clarify/decision flow.
 - Proceed to Step 1 only when every blocker is resolved.
 
 **Multi-deliverable granularity.** When the prompt lists ≥2 deliverables that could each stand alone (own ticket, commit, or PR) → surface them as a numbered list and ask "one PR or separate?" **before** planning. A bundle of N tasks reads as a clear requirement but hides a granularity decision only the user owns; a single deliverable with sub-tasks does not trigger this.
+
+**Fix-philosophy branch.** When a symptom has multiple valid fixes that split into "add/produce/provision" vs "disable/suppress" branches → surface the branch choice as a `[HUMAN-IN-LOOP]` decision before implementing. The obvious make-it-work fix (provision the missing resource, produce the missing record) may violate the component's role — a consumer-only service must never produce or create. Confirm which branch is legal for the app's role before drafting; do not optimize for "make the feature work" when a role constraint is discoverable.
+
+**Already-done pre-check.** Before grilling, when the prompt may describe work already underway or complete (a re-fired/looped prompt, "continue X", a resumed session) → verify current state first: open/merged PR on the branch, ticket status (Done?), the described artifact already present. Already complete → report completion and stop; never re-execute finished work. A stale re-fired prompt is indistinguishable from a fresh one at the text level, so the check is explicit, not intuited.
 
 Structure each question with a concrete `header` label. Good question forms:
 

@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.30-203635'
+  version: '2026.07.01-220811'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -316,6 +316,14 @@ When using a repo template:
   Burying the distinction in a later section forces the reviewer to ask whether
   the change actually resolves the trigger.
 
+### PR-close keywords close issues, not PRs
+
+`Closes`/`Fixes`/`Resolves #N` auto-close only **issues** on merge — a `#N`
+reference to a PR renders as a link but never auto-closes that PR. Asked to
+"auto-close superseded PRs on merge" → use a close-on-merge Action or post close
+comments (e.g. a bot's own close command); keep `Closes #N` in the body as
+supersession documentation only.
+
 ### Simple PR (fallback — no repo template found)
 
 ```bash
@@ -384,32 +392,13 @@ Repo template used for a stacked PR → use the template as the body structure a
 inject the `## Stack` section listing all parts with PR numbers and status,
 following the same format shown above.
 
-### Auto-populate stacked cross-reference links
+### Body extras — stacked cross-links & markdown previews
 
-When `$BEST_BASE` is another PR's head branch (the stacking signal from Step 1),
-populate the `## Stack` cross-reference links from the detected ordering:
-
-- Resolve each stack member's number/URL up front (`gh pr list --state open --json number,headRefName,baseRefName,url`), order by the base→head chain, and write canonical `[#NNN]({url})` prev/next links into the body **before** `gh pr create`.
-- After creating the new PR, back-link it into the immediate parent: one `gh pr edit {parent}` adding this PR as its "next". Edit only the adjacent member, not the whole chain.
-- A PR not yet created (later part) → list it as `pending` without a link; backfill when it exists.
-
-### Markdown preview links
-
-After composing the PR body, detect changed markdown files and append preview
-links so reviewers can open the formatted view alongside the diff:
-
-```bash
-git diff "$BEST_BASE...HEAD" --name-only | grep '\.md$'
-```
-
-For each match, append to the PR body before posting:
-
-```markdown
-## Previews
-- [Rendered preview: {filename}](https://github.com/{owner}/{repo}/blob/{branch}/{path})
-```
-
-Resolve `{branch}` from the head ref; skip when no `.md` files are in the diff.
+Two mechanical body-composition sub-steps live in
+[`references/pr-body-extras.md`](references/pr-body-extras.md): auto-populating
+`## Stack` cross-reference links from the detected stack ordering (when
+`$BEST_BASE` is another PR's head), and appending rendered markdown-preview
+links for changed `.md` files. Apply both when composing the body.
 
 ## Step 3: Post-Creation Workflow
 

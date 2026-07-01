@@ -27,7 +27,7 @@ ALLOW=" me reviewer reviewers user users author authors owner repo repos bot bot
   keyframes media import font-face supports charset namespace page apply layer tailwind
   property dataclass staticmethod classmethod abstractmethod param params returns raises
   override deprecated example file attr attribute payload monitor dashboard slo notebook
-  pats sha pr_number code_review test return throws "
+  pats sha pr_number code_review test return throws dependabot "
 
 files=$(git diff --cached --name-only --diff-filter=ACM \
   | grep -vE '^\.githooks/' \

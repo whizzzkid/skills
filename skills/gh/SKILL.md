@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.06.26-002229'
+  version: '2026.07.01-220809'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -144,6 +144,13 @@ user's behalf must end with the canonical footer below, verbatim. The footer
 attributes the automation and gives the user a feedback channel —
 silent posts erode trust and make automated activity hard to audit.
 
+- **The footer covers every agent-authored outbound body — not only GitHub.**
+  Any body this agent composes for an external system carries this canonical
+  footer: Jira issue/comment bodies (MCP `addCommentToJiraIssue`/
+  `editJiraIssue`), Slack messages, doc bodies. The owning skill injects it at
+  render time; a non-GitHub write path is not an exemption. A terse factual
+  status line (lifecycle comment) is still an outbound body — it carries the
+  footer too.
 - **Paste the literal footer block below into the payload at render time —
   never hand-write or paraphrase the attribution.** Composing an ad-hoc
   string (e.g. a `Assisted by Claude Code (model)` line) at payload-build

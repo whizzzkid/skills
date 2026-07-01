@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.01-202000'
+  version: '2026.07.01-223423'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -134,11 +134,7 @@ Triggers: conditional became unconditional, helper lifted/inlined/replaced, path
 - Renamed string → grep specs for OLD literal incl negative `not_to include`; stale negatives pass trivially, losing coverage.
 - Major spec rewrite → STATUS UPDATE banner citing the SHA; schedule the full rewrite as a follow-up commit.
 
-### External-call reproduction before fix
-
-- Before fixing a failing external API/CLI call, reproduce locally with exact parameters and read the response body.
-- Before committing, rerun the same call and confirm 2xx.
-- If local reproduction is impossible, pause before commit with the exact command and success criterion.
+External-call reproduction before a fix: [`references/external-call-reproduction.md`](references/external-call-reproduction.md).
 
 ### Edit-scope pre-flights
 
@@ -165,9 +161,10 @@ Apply to ALL code:
 - **CLI flags:** verify any flag against the tool's `--help` (or `--help`-equivalent) before embedding it in a doc, skill, or committed script. An unverified flag name fails with `flag provided but not defined` (exit 2) on first run.
 - **File permissions:** executable scripts `chmod +x`; source-only scripts 644.
 - **Portable home paths:** in skills, configs, and committed scripts, reference user-land paths via `$HOME/...` (or `${HOME}`), never a hardcoded machine-absolute home directory (an OS user-home path literal).
-- **Diagrams:** Mermaid over ASCII. Use `flowchart`/`graph` for flows, `sequenceDiagram` for request/response, `classDiagram` for type hierarchies, `stateDiagram-v2` for state machines.
+- **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
-- **ADRs:** create `docs/adr/` records for significant architectural decisions: title, status, context, decision, consequences.
+- **Boot / internal-symbol calls:** code at app boot/load, or touching undocumented third-party internals (singleton, monitor, constant), ships its `rescue` + observability-notify in the first draft, not post-review. An existence-check on one raising object of several is not coverage; wrap-and-continue unless a halt is intended.
+- **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
 - **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace each variable’s source, path, and meaning in the new context.
 - **No hardcoded env-specific constant beside a dynamic sibling:** before hardcoding OS, arch, version, or path, grep the file — if a sibling derives the same value dynamically (`uname -s`/`-m`, etc.), reuse that computation, never re-hardcode what a sibling derives.
 - **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.

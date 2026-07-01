@@ -42,7 +42,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.30-203011'
+  version: '2026.07.01-223423'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -134,7 +134,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.23 | Seed/prepend before emptiness collapse | Trace whether decorative seed drives guard false. | Blocker | Add seed/decoration after substantive-content gate. |
 | 2.24 | External command with expanded names | Grep commands like tar/rm/cp/mv/grep/chmod/git/curl for missing `--` before untrusted expanded args. | Blocker | Insert `--` before positional args. |
 | 2.26 | New command capture | For each `FOO=$(...)`, verify canonical promotion before downstream reads. | Blocker | Add `CANONICAL=$FOO` or limit capture to same-block guard. |
-| 2.27 | Parallel guard/inference blocks | Build symmetry matrix for capture/guard/canonical assignment. | Blocker | Apply guard to all siblings or document intentional asymmetry. |
+| 2.27 | Parallel guard/inference blocks | Build symmetry matrix for capture/guard/canonical assignment. Before flagging asymmetry, confirm each sibling can host a step-level shell command — a plugin owning the runner's command hook makes a step-level guard inert. | Blocker | Apply guard to every guard-hosting sibling or document asymmetry; if a sibling cannot host it, look for an equivalent guard deeper in the shared path (entrypoint/install) before demanding one. |
 | 2.28 | CI trigger payload `commit` field | Verify it is not sourced from foreign-repo SHA envs (`REVIEW_`, `TARGET_`, `SOURCE_`). | Blocker | Use pipeline repo SHA. |
 | 2.29 | `curl -s` response parsing | Grep for silent mode without `-S`. | Suggestion | Require `-sS` plus exit-status check. |
 | 2.33 | Raw-presence parse fallback | Grep parse-with-fallback shapes. | Blocker | Parse first; fallback on parsed result; add invalid-primary test. |
