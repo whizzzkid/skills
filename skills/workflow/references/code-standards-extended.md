@@ -19,3 +19,14 @@ inline standards; relocation does not lower their priority.
   smoke-test against an out-of-scope file that legitimately contains the pattern.
 - **Env vars in docs:** document where stored, who can edit it, propagation, and
   unset default.
+- **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace
+  each variable's source, path, and meaning in the new context.
+- **No hardcoded env-specific constant beside a dynamic sibling:** before
+  hardcoding OS, arch, version, or path, grep the file — if a sibling derives the
+  same value dynamically (`uname -s`/`-m`, etc.), reuse that computation, never
+  re-hardcode what a sibling derives.
+- **Boot / internal-symbol calls:** code at app boot/load, or touching
+  undocumented third-party internals (singleton, monitor, constant), ships its
+  `rescue` + observability-notify in the first draft, not post-review. An
+  existence-check on one raising object of several is not coverage;
+  wrap-and-continue unless a halt is intended.

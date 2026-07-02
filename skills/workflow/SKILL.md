@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.01-223423'
+  version: '2026.07.02-221245'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -163,11 +163,8 @@ Apply to ALL code:
 - **Portable home paths:** in skills, configs, and committed scripts, reference user-land paths via `$HOME/...` (or `${HOME}`), never a hardcoded machine-absolute home directory (an OS user-home path literal).
 - **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
-- **Boot / internal-symbol calls:** code at app boot/load, or touching undocumented third-party internals (singleton, monitor, constant), ships its `rescue` + observability-notify in the first draft, not post-review. An existence-check on one raising object of several is not coverage; wrap-and-continue unless a halt is intended.
 - **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
-- **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace each variable’s source, path, and meaning in the new context.
-- **No hardcoded env-specific constant beside a dynamic sibling:** before hardcoding OS, arch, version, or path, grep the file — if a sibling derives the same value dynamically (`uname -s`/`-m`, etc.), reuse that computation, never re-hardcode what a sibling derives.
-- **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
+- **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
 
@@ -191,6 +188,7 @@ Verification:
 - Full pre-push gate passes before any `git push`; inspect hook config to enumerate every gate.
 - Re-run every gate against final HEAD, not a mid-session snapshot.
 - Validate transformations with a formerly-failing input.
+- **A fast/narrow check is never the authoritative gate.** A pre-commit hook may lint a narrower file set than the full CI-mirroring check — run the full gate before claiming lint/format clean. And never read `$?` from a pipe: after `a | b` it is `b`'s status, so `check | tail` reports `tail`'s success and hides the check's failure — read `${PIPESTATUS[0]}`, or redirect output to a file and check `$?`.
 
 In a mise-managed repo, `GemNotFound` on `bundle exec` / `bin/rspec` is a setup gap. Run `bin/setup`, then invoke tests via `mise exec -- <cmd>`.
 

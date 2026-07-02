@@ -2,7 +2,7 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
-**Version:** `2026.06.18-004259`
+**Version:** `2026.07.02-221245`
 
 ## Invocation
 

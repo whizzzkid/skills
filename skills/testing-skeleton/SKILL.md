@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.18-004259'
+  version: '2026.07.02-221245'
   internal: false
   model:
     openai: gpt-4.1
@@ -189,6 +189,17 @@ and tests fail with a missing-file error instead of a useful assertion.
 - Capture the value into a named variable **inside** the loop (e.g. `api_url="$1"`
   in the wildcard `case` branch), then read that variable after the loop.
 - Never rely on `$@` / `$1` surviving a complete shift-consuming loop.
+
+### Assert a literal tilde with a quoted glob, not a regex
+
+An unquoted leading `~` on the right of a bash `[[ =~ ]]` is tilde-expanded to
+`$HOME` before the regex runs, so a pattern meant to match a literal tilde — or a
+tilde-prefixed home path (a yarnrc dotfile, say) — instead matches the expanded
+`$HOME` value, and the assertion passes or fails for the wrong reason.
+
+- Assert a literal-tilde string with a quoted glob so no expansion happens:
+  `[[ "$output" == *'~'* ]]`; quote any tilde-prefixed path segment the same way.
+- When the substring can match a superset, add a negative assertion excluding it.
 
 ### Nil-out consumed env vars in stubbed-ENV tests
 
