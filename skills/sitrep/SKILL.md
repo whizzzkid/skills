@@ -53,7 +53,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.01-212951'
+  version: '2026.07.01-233808'
 ---
 
 # Sitrep
@@ -120,16 +120,6 @@ end   ──► Read live.md ──► 7 agents ──► snapshot + pending liv
 
 ```html
 <span class="st-item"><span class="st-cb" data-t="tN" data-done="false" onclick="var d=this.dataset.done==='true',t=this.dataset.t,q=String.fromCharCode(34);this.dataset.done=String(!d);window.client.space.readPage('$EMPLOYER/live').then(function(pg){var c=pg.text,s='data-t='+q+t+q+' data-done='+q+(d?'true':'false')+q,n='data-t='+q+t+q+' data-done='+q+String(!d)+q;return window.client.space.writePage('$EMPLOYER/live',c.replace(s,n))})"></span> Item text [link](url)</span>
-```
-
-## Restart SilverBullet after a compose change
-
-When this skill edits `docker-compose.yml` in `$SITREP_REPO`, restart after
-`git push` succeeds so the running service matches committed config:
-
-```bash
-docker compose down && docker compose up -d
-docker compose logs --tail=5   # confirm the new config is active
 ```
 
 ## Dismissed registry (cross-run de-dup)
@@ -251,6 +241,7 @@ SUBAGENT CONTRACT (mandatory):
   item `verified` (concrete artifact) or `claim` (single-source,
   unconfirmed). The orchestrator uses this to choose render styling
   and conflict detection.
+- PROBE TOOLS FIRST: your domain's MCP tools may not be inherited (subagents do NOT reliably get the orchestrator's connectors). Missing → return `tool_unavailable: true` at once; never fail item-by-item.
 ```
 
 Agent roster:
@@ -274,7 +265,9 @@ Agent roster:
   Confluence mentions. ToolSearch: `"jira"`, `"confluence"`.
 
 Soft/hard block handling per canonical subagent contract: OAuth soft blocks
-degrade with an authorization CTA; missing MCPs are hard blocks.
+degrade with an authorization CTA; missing MCPs are hard blocks. A
+`tool_unavailable` return = capability-inheritance failure — re-run that
+domain in the main context, not as "nothing found".
 
 #### Jira full open-ticket sweep
 
