@@ -11,3 +11,8 @@ severity: medium
   freshly created PR should open automatically.
 - **Where:** Step 3 (Post-Creation Workflow), leading "Open it in the browser
   first" bullet.
+- **Escalation (2026-07-02):** re-violated — the prose bullet was skipped again
+  under post-creation momentum. Bumped one notch (prose → `**Important:**`) and
+  reworded to bind `gh pr view --web` atomically to the same response that runs
+  `gh pr create`, before description sync / self-review / CI poll — not a
+  skippable later bullet.

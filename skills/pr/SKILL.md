@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.01-220811'
+  version: '2026.07.02-235219'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -429,8 +429,10 @@ as a continue signal, not a stop signal:
 
 After the draft PR is created (or after pushing new commits to an existing PR):
 
-- **Open it in the browser first** — run `gh pr view --web` as soon as
-  `gh pr create` succeeds. Skip only in a headless / non-interactive session.
+- **Important — open it in the browser first.** In the SAME response that runs
+  `gh pr create`, run `gh pr view --web` before any description sync, self-review,
+  or CI poll — bind it as one atomic create-then-open step, not a skippable later
+  bullet. Skip only in a confirmed headless / non-interactive session.
 
 1. **Update PR description** — Review the existing description; if it has
    drifted, update with `gh pr edit`. **Before overwriting**, preserve metadata

@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.01-203322'
+  version: '2026.07.02-235220'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -146,8 +146,8 @@ not in the diff will cause a 422 error from the GitHub API.
 
 ### HARD RULE: prohibited-subject gate — scan subject before drafting
 
-- Grep the source learning/memory's core subject term against `.skillprohibit` at distill time, before byte-budget or draft.
-- A lesson *about* an internal/prohibited tool can only produce edit text naming it — the collision is knowable now, not at the Step 5 staged scan.
+- Grep the source learning/memory's core subject term against `.skillprohibit` and shape-matching hooks (`check-relative-paths`) at distill time, before byte-budget or draft.
+- A lesson *about* an internal/prohibited tool or hook-blocked path shape can only produce edit text carrying it — the collision is knowable now, not at the Step 5 staged scan.
 - On match: the lesson cannot land in the public repo. Route it to the user's private `CLAUDE.md`, mark the source distilled, skip the fold (no byte-budget, no draft).
 - When recording a skipped or private-routed fold, name the subject by **category only** in the commit-message body — the `commit-msg` hook scans the message with the same term list as files, so a named token there fails the commit and forces a re-author cycle.
 
@@ -485,13 +485,9 @@ Invoked without a specific incident → batch mode.
 
 ## Requirements
 
-- Read access to the skill file being improved
-- Edit access to `skills/{skill-name}/SKILL.md`
-- Read access to `$HOME/.claude/memory/` (for batch mode)
-- Read/write/delete access to `$HOME/.claude/skills/learnings/`
-- Read/write access to `$WK_SKILLS_HOME/learnings/`
-- Read/write access to `$WK_SKILLS_HOME/.distilled-memories`
-- Read/write access to `$WK_SKILLS_HOME/learnings/retrospect`
+- Read the skill being improved; edit `skills/{skill-name}/SKILL.md`.
+- Read `$HOME/.claude/memory/` (batch mode); read/write/delete `$HOME/.claude/skills/learnings/`.
+- Read/write `$WK_SKILLS_HOME/{learnings,learnings/retrospect,.distilled-memories}`.
 
 ---
 
