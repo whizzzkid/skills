@@ -1,15 +1,11 @@
 ---
 name: wk-pr-update
 description: >-
-  Update a PR branch with the latest changes from its base branch. Picks
-  the right strategy automatically — merge by default (preserves SHAs,
-  no force-push), patch-replay (diff against old base, apply onto new
-  base) when the branch is ≥5 commits ahead, rebase only on explicit
-  user opt-in. Resolves conflicts interactively, re-validates the work
-  after integration (tests + build), syncs the PR description via
-  `wk-commit`'s PR Sync rule, and pushes. Use when asked to "update
-  PR", "merge in main", "sync with base", "pull in latest from main",
-  or after CI surfaces a base-branch conflict.
+  Update a PR branch with the latest from its base — merge by default (no
+  force-push), patch-replay when ≥5 commits ahead, rebase only on explicit
+  opt-in; resolves conflicts, re-validates, syncs the description, pushes.
+  Use for "update PR", "merge in main", "sync with base", or a CI
+  base-branch conflict.
 argument-hint: '[<base-branch>]'
 allowed-tools:
   - Bash
@@ -31,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.01-213515'
+  version: '2026.07.08-174545'
   internal: false
   model:
     openai: gpt-4.1

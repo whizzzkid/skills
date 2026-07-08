@@ -2,18 +2,10 @@
 name: wk-jira
 description: >-
   Coordinate Jira ticket state with the dev lifecycle and surface Jira
-  context on any Jira artifact. Auto-invoked on: a Jira URL (matches
-  `https?://[^/]+\.atlassian\.net/`, `/browse/<KEY>`, or a self-hosted
-  host); a key token (`[A-Z][A-Z0-9]+-\d+`) in a prompt, branch, commit,
-  PR body, or agent message; branch start; PR creation; PR draft→ready; PR
-  merge. Detects the key; assigns the ticket to the user; moves it to the
-  active sprint; transitions In Progress → In Review → Done in lockstep with
-  PR state; posts a progress comment at each lifecycle change; audits thin
-  descriptions and proposes a context block; ensures every PR title carries
-  a `[BOARD-NUM]` suffix referencing the ticket. Gates user write
-  operations (create, edit, batch transition) behind confirmation — Jira
-  writes are irreversible (no delete API). Requires the Jira MCP connector.
-  Not user-invocable — fires alongside `wk-commit`, `wk-pr`, `wk-workflow`.
+  context. Auto-invoked on a Jira URL, a key token (`[A-Z][A-Z0-9]+-\d+`)
+  in a prompt/branch/commit/PR/agent message, branch start, or PR
+  create/draft→ready/merge. Requires the Jira MCP connector. Not
+  user-invocable.
 allowed-tools:
   - Bash
   - Read
@@ -35,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.07.01-230049'
+  version: '2026.07.08-174545'
   internal: false
   model:
     openai: gpt-4.1-mini

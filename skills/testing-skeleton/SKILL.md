@@ -1,15 +1,11 @@
 ---
 name: wk-testing-skeleton
 description: >-
-  Frames how the agent writes tests for any code change. Auto-invoked
-  whenever the agent is about to write, add, or modify tests — new
-  features, bug fixes, refactors, regression coverage. Biases the test
-  plan toward behavioral tests over structural ones, requires both happy
-  and sad paths, requires mutation verification of new tests, and treats
-  coverage as a lagging indicator rather than a goal. Structural tests
-  are a last-resort fallback, not a default. Integrates with `wk-workflow`
-  Phase 3 (Test) — testing-skeleton produces the plan, Phase 3 verifies
-  the suite passes.
+  Frames how the agent writes tests for any code change — biases toward
+  behavioral over structural tests, requires happy+sad paths and mutation
+  verification, treats coverage as a lagging indicator. Auto-invoked
+  whenever the agent writes, adds, or modifies tests. Feeds wk-workflow
+  Phase 3.
 allowed-tools:
   - Bash
   - Read
@@ -25,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.02-221245'
+  version: '2026.07.08-174545'
   internal: false
   model:
     openai: gpt-4.1

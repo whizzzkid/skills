@@ -1,6 +1,6 @@
 # wk-workstyle
 
-> Code-quality orchestrator for every file the agent writes or edits. Runs the shared project-style-authority probe, then routes to focused `wk-workstyle-*` sub-skills (naming, structure, async, docs, testing, error-handling, and per-language idioms). Project settings always win; this family fills gaps only.
+> Code-quality orchestrator for every file the agent writes or edits — runs the style-authority probe, then routes to the `wk-workstyle-*` sub-skills (naming, structure, async, docs, testing, error-handling, per-language). Project linter wins.
 
 ## Invocation
 

@@ -3,7 +3,7 @@
 > Validate that a refactor preserved behavior — classifies the refactor kind, diffs against both the merge-base
 > and base branch, and runs a removed-line audit to catch dropped behavior before "ready for review."
 
-**Version:** `2026.06.15-200512`
+**Version:** `2026.07.08-174545`
 
 ## Invocation
 

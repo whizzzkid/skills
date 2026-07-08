@@ -1,14 +1,11 @@
 ---
 name: wk-pr-break
 description: >-
-  Take an existing PR that has grown too large and break it into a stack of
-  smaller, reviewable, individually-shippable PRs. Reads the PR description,
-  every comment surface (review threads, summaries, issue comments), the
-  full diff, related learnings, and any linked tickets, then proposes a
-  split plan where each child PR builds and passes in isolation, is ordered
-  to stand alone, and prioritizes reviewer digestibility over raw line count.
-  Use when asked to "split this PR", "break down this PR", "make smaller
-  PRs from this", or when wk-pr-review flags a PR as too large to review.
+  Break an over-large PR into a stack of smaller, individually-shippable
+  PRs — reads the description, all comment surfaces, the full diff, and
+  linked tickets, then proposes a split where each child builds in
+  isolation. Use for "split this PR", "break down this PR", or when
+  wk-pr-review flags a PR as too large.
 argument-hint: '[<pr-number-or-url>]'
 allowed-tools:
   - Bash
@@ -33,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200319'
+  version: '2026.07.08-174545'
   internal: false
   model:
     openai: gpt-4.1

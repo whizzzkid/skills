@@ -1,15 +1,10 @@
 ---
 name: wk-adversarial-review
 description: >-
-  Adversarial pre-flight review of the current branch before anything leaves the
-  machine. Activates whenever the agent is about to push, mark a PR ready, or
-  introduce new commits onto an existing PR. Spawns a fresh critique agent that
-  treats the diff as a stranger's code, runs mechanical pre-push checks
-  distilled from past reviewer/bot findings, validates assumptions in a
-  playground, and refuses to clear the branch until every blocker is resolved.
-  Auto-invoked from wk-workflow Phase 4, wk-pr before draft creation or push,
-  and wk-pr-resolve before Step 8 push. No code, no commit, no PR transition
-  leaves the machine without passing this skill.
+  Adversarial pre-flight review of the current branch before anything
+  leaves the machine; blocks until every finding clears. Activates before
+  any push, `gh pr ready`, or new commits on a PR; auto-invoked from
+  wk-workflow, wk-pr, and wk-pr-resolve.
 argument-hint: '[optional: explicit base branch]'
 allowed-tools:
   - "Bash(gh pr view:*)"
@@ -42,7 +37,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.02-235218'
+  version: '2026.07.08-174545'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash

@@ -2,12 +2,10 @@
 name: wk-format
 description: >-
   Apply the user's code-formatting preferences to any file the agent writes
-  or edits, reconciled with the repo's existing lint/style configs
-  (.editorconfig, .eslintrc, .prettierrc, pyproject.toml/ruff/black,
-  rubocop.yml, .pylintrc, gofmt, rustfmt, .clang-format). Auto-invoked
-  whenever the agent is about to write, edit, or refactor code. Manually
-  invoked via /wk-format to (re)scan a repo and report the active rule set.
-  Repo lint config is authoritative — preferences fill gaps, never override.
+  or edits, reconciled with the repo's lint/style configs (.editorconfig,
+  eslint, prettier, ruff/black, rubocop, gofmt, rustfmt). Auto-invoked on
+  any code write/edit/refactor; manual `/wk-format` reports the active rule
+  set. Repo config wins.
 argument-hint: '[scan|rules|check <path>]'
 allowed-tools:
   - Bash
@@ -24,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200030'
+  version: '2026.07.08-174545'
   internal: false
   model:
     openai: gpt-4.1-mini

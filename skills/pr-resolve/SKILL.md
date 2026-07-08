@@ -1,14 +1,11 @@
 ---
 name: wk-pr-resolve
 description: >-
-  Address PR review comments interactively — resolve feedback from reviewers by
-  implementing fixes, preparing response comments, and managing the full
-  resolution cycle. Use when asked to resolve PR comments, address review
-  feedback, fix PR issues, respond to reviewers, or handle PR conversations.
-  Also auto-activate on indirect references — "fix the comment", "there's a
-  description/comment issue", "address the feedback", "fix this on the PR" —
-  whenever an open PR exists on the current branch. Prefer activating over
-  asking a clarifying question; the open PR is the implied target.
+  Address PR review comments interactively — implement fixes, prepare
+  replies, drive the full resolution cycle. Use for "resolve PR comments",
+  "address the feedback", or indirect refs ("fix the comment", "fix this on
+  the PR") whenever an open PR exists on the branch. Prefer activating over
+  asking.
 argument-hint: '[PR number or URL]'
 allowed-tools:
   - "Bash(gh pr view:*)"
@@ -54,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.01-231923'
+  version: '2026.07.08-174545'
 ---
 
 # PR Resolve

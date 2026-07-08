@@ -1,16 +1,11 @@
 ---
 name: wk-refactor
 description: >-
-  Validate that a refactor preserved behavior. Auto-invoked after
-  `wk-pr-update` finishes a rebase or patch-replay, after `wk-pr-resolve`
-  resolves any conflict, after the agent extracts a helper / moves a file /
-  renames a symbol / splits a module, and before any "ready for review"
-  claim on a PR whose diff is dominated by movement rather than new
-  behavior. Diffs against both the merge-base and the post-refactor base,
-  classifies the refactor's expected diff shape, and runs a removed-line
-  audit checklist looking for behavior that was dropped instead of
-  relocated. Manual invocation: `/wk-refactor` to run the audit on the
-  current branch; `/wk-refactor <pr>` to run against a specific PR.
+  Validate that a refactor preserved behavior. Auto-invoked after a
+  rebase/patch-replay, after a conflict resolution, after extracting a
+  helper / moving a file / renaming a symbol / splitting a module, and
+  before any "ready for review" on a movement-dominated diff. Manual:
+  `/wk-refactor [<pr>]`.
 argument-hint: '[<pr-number-or-url>]'
 allowed-tools:
   - Bash
@@ -30,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200512'
+  version: '2026.07.08-174545'
   internal: false
   model:
     openai: gpt-4.1

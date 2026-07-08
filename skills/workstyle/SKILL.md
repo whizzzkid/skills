@@ -1,15 +1,11 @@
 ---
 name: wk-workstyle
 description: >-
-  Code-quality orchestrator applied to every file the agent writes or edits.
-  Runs the shared project-style-authority probe, then routes to the focused
-  wk-workstyle-* sub-skills (naming, structure, async, docs, testing,
-  error-handling, and per-language idioms for TypeScript, Python, Ruby, Go,
-  Rust, Shell), each of which is also independently model-invocable on adjacent
-  work. Always defers to the project's own linter or style guide. Auto-invoked
-  whenever the agent writes, edits, or refactors code. All skills that modify
-  code must invoke this skill before committing. Reminder: project settings are
-  authoritative — this family fills gaps only.
+  Code-quality orchestrator for every file the agent writes or edits — runs
+  the style-authority probe, then routes to the wk-workstyle-* sub-skills
+  (naming, structure, async, docs, testing, error-handling, per-language).
+  Auto-invoked whenever the agent writes/edits/refactors code;
+  code-modifying skills invoke it before committing. Project linter wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Bash
@@ -24,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.29-225549'
+  version: '2026.07.08-174545'
   internal: false
   model:
     openai: gpt-4.1-mini
