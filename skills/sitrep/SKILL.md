@@ -53,7 +53,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.01-233808'
+  version: '2026.07.02-235916'
 ---
 
 # Sitrep
@@ -100,9 +100,6 @@ end   ──► Read live.md ──► 7 agents ──► snapshot + pending liv
 - `live.md` is an HTML flexbox 3-column layout, not a Markdown table. Both
   `start` and `end` write frontmatter + `# Live — {DATE}` + one
   `<div class="sitrep-row">` containing three `<div class="sitrep-col">`.
-
-- No blank lines inside any `<div>`; CommonMark ends the HTML block at the first
-  blank line.
 - Actionable items use `<span class="st-item">` with a nested
   `<span class="st-cb" data-t="tN" data-done="false" onclick="HANDLER">`.
 - `data-t` is unique and sequential per page (`t1`…`tN`).
@@ -293,13 +290,15 @@ Fold assigned items from every connected tracker into one pending-on-me view:
 
 ### Stage 2b: Auto-transition merged-PR tickets
 
-After agents return and before writing `live.md`, close tickets the user already
-finished:
+After agents return and before writing `live.md`, close tickets already finished
+(`start` only; during `end`, render merged-but-open tickets as carry-forward,
+never transition):
 
 - For each Agent 5 ticket in `In Review` / `Ready for Review` with a linked PR,
   check merge state: `gh pr view <url> --json state,merged,mergedAt`.
-- If merged within last 14 days, fetch transitions and transition ticket to
-  `Done`.
+- If merged within last 14 days, fetch transitions and transition to `Done`; a
+  harness-denied write degrades to a pending carry-forward — never retry or fail
+  the run.
 - Render as a `data-done="true"` `⚙️ Auto-Actions` item with
   `✅ auto-transitioned to Done by agent`; never render as an open TODO.
 
@@ -632,16 +631,11 @@ Surface a quarterly-review nudge once per day; never block on it.
 
 ## Requirements
 
-- `$SITREP_REPO` — SilverBullet workspace repo path
-- `$EMPLOYER` — org slug used for path scoping
-- `$SITREP_PORT` — SilverBullet port (default: `3000`)
-- `$GITHUB_ORG` — org scope for `gh` commands
-- `jq` — JSON construction/validation for the dismissed registry
-- `silverbullet` CLI installed and able to serve `$SITREP_REPO`
-- MCP servers for Slack, Gmail, Calendar, Granola, Drive, Docs, GitHub, Jira,
-  and Lattice
-
----
+- Env: `$SITREP_REPO` (workspace repo path), `$EMPLOYER` (org slug for path
+  scoping), `$SITREP_PORT` (SilverBullet port, default `3000`), `$GITHUB_ORG`
+  (`gh` org scope).
+- `jq` (dismissed-registry JSON); `silverbullet` CLI able to serve `$SITREP_REPO`.
+- MCP servers for Slack, Gmail, Calendar, Granola, Drive, Docs, GitHub, Jira, Lattice.
 
 ## Post-Completion
 
