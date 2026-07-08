@@ -1,11 +1,10 @@
 ---
 name: wk-workstyle-async
 description: >-
-  Use when writing or editing asynchronous or concurrent code — promises,
-  async/await, callbacks, .then chains, goroutines, threads, channels, mutexes.
-  Forbids temporal coupling between concurrent operations, unbounded promise
-  chains, and silently swallowed async errors. Auto-invoked whenever the agent
-  touches async or concurrent code. Project linter config wins.
+  Async/concurrent code — promises, async/await, callbacks, goroutines,
+  threads, channels, mutexes. Forbids temporal coupling, unbounded promise
+  chains, silently-swallowed async errors. Auto-invoked on any async/concurrent
+  edit; project linter wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -19,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021633'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

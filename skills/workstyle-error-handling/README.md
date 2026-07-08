@@ -4,7 +4,7 @@
 > split between operational errors (handle gracefully) and programmer errors
 > (fail fast).
 
-**Version:** `2026.06.12-021635`
+**Version:** `2026.07.08-175435`
 
 ## Invocation
 

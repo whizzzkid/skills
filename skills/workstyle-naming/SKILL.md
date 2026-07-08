@@ -1,12 +1,11 @@
 ---
 name: wk-workstyle-naming
 description: >-
-  Use when naming or renaming any identifier in code the agent writes or edits —
-  variables, functions, methods, classes, constants, booleans. Enforces
-  descriptive names, ALL_CAPS constants, boolean predicate naming (isLoading,
-  hasPermission), and a semantic-accuracy gate — a name must truthfully describe
-  what its value means, not just pass casing rules. Auto-invoked whenever the
-  agent introduces or changes an identifier. Project linter config wins.
+  Naming or renaming any identifier — variables, functions, classes,
+  constants, booleans. Enforces descriptive names, ALL_CAPS constants, boolean
+  predicates (isLoading, hasPermission), and a semantic-accuracy gate (a name
+  must truthfully describe its value, not just pass casing). Auto-invoked on
+  any identifier change; project linter wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -20,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021637'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

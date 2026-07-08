@@ -1,13 +1,11 @@
 ---
 name: wk-workstyle-rails
 description: >-
-  Use when a Rails project command fails to start — `bundle exec`, `bin/*`,
-  `rake`, or `rails` erroring with a missing gem or uninitialized environment.
-  Enforces running the project's canonical bootstrap (`bin/setup`) before any
-  manual gem install or environment repair, so the agent fixes the root cause
-  instead of pivoting to unrelated changes. Auto-invoked whenever a Rails/Ruby
-  project command fails with a gem or environment error. Project bootstrap
-  scripts are authoritative.
+  Use when a Rails/Ruby project command (`bundle exec`, `bin/*`, `rake`,
+  `rails`) fails to start with a missing gem or uninitialized environment.
+  Enforces the canonical bootstrap (`bin/setup`) before any manual gem install
+  or env repair — fix the root cause, don't pivot. Project bootstrap scripts
+  are authoritative.
 argument-hint: '[check]'
 allowed-tools:
   - Read
@@ -21,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.29-225302'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

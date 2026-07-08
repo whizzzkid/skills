@@ -1,7 +1,11 @@
 ---
 name: wk-workstyle-typescript
 description: >-
-  Use when writing or editing TypeScript or JavaScript (.ts/.tsx/.js/.jsx/.mjs/.cjs) — enforces const-over-let and no var, no any (use unknown and narrow), explicit public return types, arrow callbacks, nullish coalescing over ||, optional chaining, destructuring, and Promise.all for independent async. Auto-invoked whenever the agent touches a TS/JS file. Project tsconfig/eslint/prettier config wins.
+  TypeScript/JavaScript (`.ts/.tsx/.js/.jsx/.mjs/.cjs`) — const over let, no
+  var, no `any` (use `unknown` + narrow), explicit public return types, arrow
+  callbacks, `??` over `||`, optional chaining, destructuring, `Promise.all`
+  for independent async. Auto-invoked on any TS/JS edit; tsconfig/eslint/prettier
+  config wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -15,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-215843'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

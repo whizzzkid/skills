@@ -1,7 +1,11 @@
 ---
 name: wk-workstyle-structure
 description: >-
-  Use when writing or restructuring code layout, functions, conditionals, or control flow — enforces imports-at-top, guard clauses, max nesting depth 3, single-responsibility, no nested ternaries, no magic numbers/strings, no boolean-trap params, no commented-out code, and a duplication threshold that triggers wk-refactor. Auto-invoked whenever the agent writes or edits a function body, branching logic, or file layout. Project linter config wins.
+  Code layout, functions, conditionals, control flow — imports-at-top, guard
+  clauses, max nesting depth 3, single-responsibility, no nested ternaries, no
+  magic numbers/strings, no boolean-trap params, no commented-out code, and a
+  duplication threshold that triggers wk-refactor. Auto-invoked on any function
+  body / branching / layout edit; project linter wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -15,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021642'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

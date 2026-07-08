@@ -1,7 +1,10 @@
 ---
 name: wk-workstyle-shell
 description: >-
-  Use when writing or editing shell scripts (bash/sh, .sh files, bin scripts) — enforces set -euo pipefail, quoting every variable, local in functions, [[ ]] over [ ], heredocs over echo chains, named constants, and capability-probing instead of parsing error-message text. Auto-invoked whenever the agent touches a shell script. Project shellcheck config wins.
+  Shell scripts (bash/sh, `.sh`, bin scripts) — `set -euo pipefail`, quote
+  every variable, `local` in functions, `[[ ]]` over `[ ]`, heredocs over echo
+  chains, named constants, capability-probing over parsing error text.
+  Auto-invoked on any shell edit; shellcheck config wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -15,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.26-002229'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

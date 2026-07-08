@@ -1,12 +1,10 @@
 ---
 name: wk-workstyle-testing
 description: >-
-  Use when planning, writing, or editing tests for a code change — requires
-  coverage of every new function/branch, behavioral (not implementation)
-  assertions, and mandatory sad-path tests for every error branch. Auto-invoked
-  whenever the agent writes or modifies tests. Complements wk-testing-skeleton
-  (which frames the plan) by enforcing the quality gate. Project linter config
-  wins.
+  Tests for a code change — requires coverage of every new function/branch,
+  behavioral (not implementation) assertions, sad-path tests for every error
+  branch. Complements wk-testing-skeleton (which frames the plan) by enforcing
+  the quality gate. Auto-invoked on any test edit; project linter wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -20,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021643'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

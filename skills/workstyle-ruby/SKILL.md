@@ -1,12 +1,11 @@
 ---
 name: wk-workstyle-ruby
 description: >-
-  Use when writing or editing Ruby (.rb files, bin scripts loaded as Ruby) —
-  enforces predicate `?` / bang `!` method naming, frozen_string_literal, guard
-  returns, enumerable methods over imperative loops, specific exception
-  subclasses (no bare RuntimeError, no rescue Exception), and ASCII-only
-  comments. Auto-invoked whenever the agent touches Ruby. Project RuboCop config
-  wins.
+  Ruby (`.rb`, bin scripts loaded as Ruby) — predicate `?` / bang `!` naming,
+  frozen_string_literal, guard returns, enumerable methods over imperative
+  loops, specific exception subclasses (no bare RuntimeError, no `rescue
+  Exception`), ASCII-only comments. Auto-invoked on any Ruby edit; RuboCop
+  config wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -20,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.26-170909'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

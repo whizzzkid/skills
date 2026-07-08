@@ -1,11 +1,10 @@
 ---
 name: wk-workstyle-error-handling
 description: >-
-  Use when writing or editing error-handling code — catch/rescue/except blocks,
-  error returns, raising or throwing exceptions. Forbids silently swallowed
-  errors (empty catch blocks) and requires distinguishing operational errors
-  (handle gracefully) from programmer errors (fail fast). Auto-invoked whenever
-  the agent touches an error path. Project linter config wins.
+  Error-handling code — catch/rescue/except, error returns, raise/throw.
+  Forbids silently-swallowed errors (empty catch); requires distinguishing
+  operational errors (handle gracefully) from programmer errors (fail fast).
+  Auto-invoked on any error path; project linter wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -19,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021635'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

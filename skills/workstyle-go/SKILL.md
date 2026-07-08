@@ -1,11 +1,10 @@
 ---
 name: wk-workstyle-go
 description: >-
-  Use when writing or editing Go (.go) — enforces handling errors immediately
-  as values, fmt.Errorf %w wrapping with context, table-driven tests for
-  multi-variant functions, minimal exported API, no panic in library code, and
-  defer for cleanup right after acquire. Auto-invoked whenever the agent
-  touches a .go file. Project golangci-lint/gofmt config wins.
+  Go (`.go`) idioms — handle errors as values, `fmt.Errorf %w` wrapping,
+  table-driven tests, minimal exported API, no panic in libraries, defer
+  cleanup right after acquire. Auto-invoked on any `.go` edit;
+  golangci-lint/gofmt config wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -19,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021636'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

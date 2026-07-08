@@ -2,7 +2,7 @@
 
 > Enforces safe asynchronous and concurrent patterns for every promise, await, callback, goroutine, thread, channel, and mutex the agent writes. Project config always wins; this skill fills gaps only.
 
-**Version:** `2026.06.12-021633`
+**Version:** `2026.07.08-175435`
 
 ## Invocation
 

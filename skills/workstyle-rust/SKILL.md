@@ -1,12 +1,10 @@
 ---
 name: wk-workstyle-rust
 description: >-
-  Use when writing or editing Rust (.rs) — forbids .unwrap()/.expect() in
-  production code paths (propagate with ? or match), prefers &str over String
-  for borrowed params, requires derive(Debug) on public types, clippy::all
-  passing before commit, and /// doc comments with an Examples section on
-  public items. Auto-invoked whenever the agent touches a .rs file. Project
-  rustfmt/clippy config wins.
+  Rust (`.rs`) — no `.unwrap()`/`.expect()` in production paths (use `?` or
+  match), `&str` over `String` for borrowed params, `derive(Debug)` on public
+  types, `clippy::all` clean before commit, `///` docs with an Examples section
+  on public items. Auto-invoked on any `.rs` edit; rustfmt/clippy config wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -20,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021640'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

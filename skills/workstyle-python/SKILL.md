@@ -1,11 +1,10 @@
 ---
 name: wk-workstyle-python
 description: >-
-  Use when writing or editing Python (.py) — enforces type hints on public
-  functions, f-strings over .format()/%, dataclass/TypedDict for structured
-  data, pathlib over os.path, context managers for resources, logging over
-  print, and no mutable default arguments. Auto-invoked whenever the agent
-  touches a .py file. Project ruff/black/mypy/pyproject config wins.
+  Python (`.py`) — type hints on public functions, f-strings over .format()/%,
+  dataclass/TypedDict for structured data, pathlib over os.path, context
+  managers for resources, logging over print, no mutable default args.
+  Auto-invoked on any `.py` edit; ruff/black/mypy/pyproject config wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -19,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021638'
+  version: '2026.07.08-175435'
   internal: false
   model:
     openai: gpt-4.1-mini

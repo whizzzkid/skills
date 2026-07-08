@@ -2,7 +2,7 @@
 
 > Enforces idiomatic Go authoring conventions on every `.go` file the agent writes or edits.
 
-**Version:** `2026.06.12-021636`
+**Version:** `2026.07.08-175435`
 
 ## Invocation
 
