@@ -1,8 +1,9 @@
 # wk-workstyle-docstrings
 
-Enforce terse, WHY-only docstrings and doc comments across all languages. Validates callable
-signature documentation (inputs/outputs), enforces full column-width utilization, and mandates
-stale-comment removal when editing adjacent code.
+Enforce terse, WHY-only **structured** docstrings (JSDoc, YARD, `///`, `@param`/`@return`) —
+distinct from [wk-workstyle-docs](../workstyle-docs/README.md), which handles inline/prose
+comments. Validates callable signature documentation (inputs/outputs), enforces full column-width
+utilization, and mandates stale-comment removal when editing adjacent code.
 
 ## Trigger
 

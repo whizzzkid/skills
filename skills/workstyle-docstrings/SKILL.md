@@ -1,12 +1,11 @@
 ---
 name: wk-workstyle-docstrings
 description: >-
-  Use when writing or editing documentation comments or docstrings — JSDoc, Python docstrings,
-  Rustdoc, Go doc comments, YARD, JavaDoc, or any language's structured comment syntax. Enforces
-  terse WHY-only comments, full column-width utilization, input/output type documentation for
-  callables, and mandatory removal of self-evident or stale comments. Auto-invoked whenever the
-  agent adds or edits a docstring, doc comment, or public function/class/method/interface.
-  Project linter config wins.
+  Structured docstrings — JSDoc, Python docstrings, Rustdoc, Go doc comments,
+  YARD, JavaDoc, `@param`/`@return`. Enforces terse WHY-only text, full
+  column-width use, input/output type docs for callables, and stale-comment
+  removal. Auto-invoked on any docstring / public-callable edit; project linter
+  wins.
 argument-hint: '[check <path>]'
 allowed-tools:
   - Bash
@@ -21,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.25-164842'
+  version: '2026.07.08-175643'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash

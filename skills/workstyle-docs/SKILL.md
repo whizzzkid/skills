@@ -1,12 +1,10 @@
 ---
 name: wk-workstyle-docs
 description: >-
-  Use when writing or editing documentation comments or inline comments —
-  JSDoc, docstrings, Rustdoc, Go doc comments, YARD. Requires public-API docs,
-  WHY-not-WHAT decision comments, and mandatory removal of stale comments when
-  editing adjacent code. Auto-invoked whenever the agent adds or edits a
-  comment, docstring, or public function/class/method. Project linter config
-  wins.
+  Inline and prose comments (NOT structured docstrings — that's
+  wk-workstyle-docstrings). Requires WHY-not-WHAT decision comments and
+  mandatory removal of stale comments when editing adjacent code. Auto-invoked
+  on any inline-comment edit; project linter wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -20,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.12-021634'
+  version: '2026.07.08-175643'
   internal: false
   model:
     openai: gpt-4.1-mini
