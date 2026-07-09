@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.06.25-223723'
+  version: '2026.07.09-172450'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -212,15 +212,16 @@ via `wk-learn scan --since=<N>d` or `wk-learn scan --all` (every transcript on
 disk).
 
 ```bash
-# Claude normalizes BOTH / and _ to - in project dir names; collapse both.
-PROJECT_SLUG=$(echo "$PWD" | sed 's|[/_]|-|g')
+# Claude normalizes EVERY non-alphanumeric (/, _, ., …) to - in project dir names.
+PROJECT_SLUG=$(echo "$PWD" | sed 's|[^A-Za-z0-9]|-|g')
 find "$TRANSCRIPT_ROOT/$PROJECT_SLUG" -name '*.jsonl' -mtime -7 -type f 2>/dev/null
 ```
 
-- **Slug-mismatch fallback:** a `sed 's|/|-|g'` that omits the `_`→`-` rule yields a
-  slug that silently matches nothing for any repo whose name contains an underscore.
-  If the slug-derived dir does not exist, list `$TRANSCRIPT_ROOT` and pick the entry
-  with the longest common substring before reporting zero transcripts.
+- **Slug-mismatch fallback:** any transform narrower than `[^A-Za-z0-9]` (e.g. only
+  `/`, or `/` + `_`) silently matches nothing for a path with an unhandled separator
+  — an underscore or a dotted segment (`first.last` home dir). If the slug-derived dir
+  does not exist, list `$TRANSCRIPT_ROOT` and pick the entry with the longest common
+  substring before reporting zero transcripts.
 
 ### Step S2: Extract interruption signals
 
