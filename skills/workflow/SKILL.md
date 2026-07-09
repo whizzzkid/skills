@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.02-221245'
+  version: '2026.07.09-172450'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -84,6 +84,7 @@ Skill(wk-plan, args="<task from session context>")
 - If `wk-plan` already produced an approved plan this session, skip Phase 1 and execute it.
 - If `wk-plan` surfaced unanswered questions, resolve them before proceeding.
 - Do not re-plan inline after an approved plan exists.
+- **Complex task → advisor:** when `wk-plan` flags the task complex (non-obvious architecture, unresolved failure mode, high blast radius), consult the `advisor` server tool before committing and fold its advice in. Reserve for real uncertainty, after orienting (not turn 1); skip when the beta tool is absent. See [`references/advisor-tool.md`](references/advisor-tool.md).
 
 **HARD RULE — wait for plan approval before the first Edit/Write/Bash write-action, any diff size.** "Small"/"2-line"/"obvious" is exactly the rationalization this forbids: present-plan → wait-for-approval → execute.
 
@@ -410,8 +411,6 @@ The retro scans the session, classifies interruptions/redirects by affected skil
 | `wk-buildkite` | Diagnosing Buildkite CI failures | 6 |
 | `wk-adversarial-review` | Single review gate; owned by Phase 4, idempotent re-entry on new commits | 4 |
 | `wk-pr-update` | Rebasing/syncing a PR branch with its base | 5, 6 |
-| `wk-pr-review` | Reviewing someone else's PR | — |
-| `wk-pr-resolve` | Addressing review feedback on your PR | — |
 | `wk-learn` | Post-completion learning capture | any |
 | `wk-retro` | End of every session | 8 |
 | `wk-docker` | Docker/containers | any |
