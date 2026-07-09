@@ -53,7 +53,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.02-235916'
+  version: '2026.07.09-172450'
 ---
 
 # Sitrep
@@ -229,15 +229,12 @@ SUBAGENT CONTRACT (mandatory):
 - Your output is markdown text the orchestrator pastes into a section
 - EVERY item you return MUST include a `url` field with a clickable
   link to the underlying artifact. Items without `url` are rejected at compile time.
-- If a canonical URL truly cannot be resolved, return
-  `link_unavailable: true` with a one-line `reason` plus the best
-  available `{system}:{id}` reference.
+- If no canonical URL resolves, return `link_unavailable: true` with a one-line
+  `reason` and the best `{system}:{id}` reference.
 - Inferred items still need a URL — link to the source artifact the
   inference came from and tag `(inferred)`.
-- Distinguish verified facts from single-source claims. Tag each
-  item `verified` (concrete artifact) or `claim` (single-source,
-  unconfirmed). The orchestrator uses this to choose render styling
-  and conflict detection.
+- Tag each item `verified` (concrete artifact) or `claim` (single-source) — the
+  orchestrator styles and conflict-detects by it.
 - PROBE TOOLS FIRST: your domain's MCP tools may not be inherited (subagents do NOT reliably get the orchestrator's connectors). Missing → return `tool_unavailable: true` at once; never fail item-by-item.
 ```
 
@@ -296,9 +293,10 @@ never transition):
 
 - For each Agent 5 ticket in `In Review` / `Ready for Review` with a linked PR,
   check merge state: `gh pr view <url> --json state,merged,mergedAt`.
-- If merged within last 14 days, fetch transitions and transition to `Done`; a
-  harness-denied write degrades to a pending carry-forward — never retry or fail
-  the run.
+- If merged within last 14 days, transition to `Done`. Denial is deterministic, so
+  block-register the key on first denial and skip the re-attempt on later runs:
+  re-verify merge, render `🔁 blocked N days` pinned in ASAP until a manual
+  transition. Never retry or fail the run.
 - Render as a `data-done="true"` `⚙️ Auto-Actions` item with
   `✅ auto-transitioned to Done by agent`; never render as an open TODO.
 
