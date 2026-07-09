@@ -37,7 +37,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.09-172450'
+  version: '2026.07.09-223429'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -142,8 +142,8 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.48 | Finding or identity/dedup key relies on an LLM round-trip preserving a field verbatim | Grep the prompt/skill builder for an explicit verbatim-echo instruction for that exact field — absence confirms the stability is an unenforced bet, not a guarantee. If test mocks return the field verbatim, the rephrase path is uncovered. | Blocker | Pin the field in the prompt (fix at source) over a downstream key workaround; add a rephrasing-mock regression test. |
 | 2.58 | URL/host from an external API response (even authenticated) fed to `curl`/fetch | Authenticated identity ≠ trusted payload. Grep an API-response field reaching `curl` (esp. `-L`/`-o`) or any URL-accepting shell command without an `https://` scheme guard. A string scheme guard covers only the first URL; with `-L` also require `--proto "=https" --proto-redir "=https"` — 30x hops to `http://`/internal hosts bypass the guard. | Blocker | Add a one-line `https://` scheme guard before the call; absence with `-L`/`-o` is a blocker (`file://`/`gopher://`/`dict://` SSRF / local-resource vector). With `-L`, also require `--proto "=https" --proto-redir "=https"`; absence alongside `-o` is a blocker (redirect-chain download to disk is highest-risk). |
 
-Lower-frequency and shape-specific sweeps (2.9.2, 2.18, 2.20, 2.30, 2.31, 2.32, 2.35, 2.36, 2.37,
-2.39, 2.25, 2.41, 2.42, 2.45, 2.46, 2.47, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57, 2.59, 2.60, 2.61, 2.62, 2.63, 2.64, 2.65) live in
+Lower-frequency sweeps (2.9.2, 2.18, 2.20, 2.30, 2.31, 2.32, 2.35, 2.36, 2.37,
+2.39, 2.25, 2.41, 2.42, 2.45, 2.46, 2.47, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57, 2.59, 2.60, 2.61, 2.62, 2.63, 2.64, 2.65, 2.66) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 
