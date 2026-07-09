@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.08-175435'
+  version: '2026.07.09-223249'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -62,6 +62,12 @@ Manual: `/wk-workstyle-ruby scan` (full working tree) · `/wk-workstyle-ruby che
 - **ASCII-only in source comments.** Use `-`, `->`, `--`, `...` — not em dash (`—`), en dash (`–`), smart quotes,
   or Unicode ellipsis. RuboCop's `Style/AsciiComments` enforces this in many Ruby shops; the cop default is
   ASCII-only. Applies to `.rb` files and bin scripts loaded as Ruby.
+- **Literal single space in a regex → `\x20`**, never a bare space (invisible) or `[ ]` (RuboCop `Style/RedundantRegexpCharacterClass` rejects the class).
+
+## Sorbet strict-mode friction (typed Rails apps)
+
+- **Exercise a shared base-controller `before_action` via a concrete named subclass in the spec**, not an anonymous `controller do … end` block — the block form trips `Sorbet/BlockMethodDefinition` against the no-metaprogramming cop.
+- **Prefer a plain sig'd class with an inlined filter over `ActiveSupport::Concern`** when the app has no concern precedent and Sorbet `requires_ancestor` + `included do` fails to type-check.
 
 ## Verify with RuboCop
 
