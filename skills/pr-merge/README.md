@@ -4,7 +4,7 @@
 > merge, transition the linked ticket to its terminal state, and surface
 > any follow-ups and deferred action items.
 
-**Version:** `2026.07.09-172450`
+**Version:** `2026.07.09-204522`
 
 ## Invocation
 

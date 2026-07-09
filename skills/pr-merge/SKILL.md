@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.09-172450'
+  version: '2026.07.09-204522'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -358,16 +358,19 @@ Follow-ups present → offer once:
 
 ## Step 10: Clean up the current worktree
 
-- Invoke [`wk-worktree-cleanup`](../worktree-cleanup/README.md) to remove the
-  worktree holding the just-merged branch:
+- Remove the just-merged worktree with the `git wtr <name>` alias — a one-shot
+  `git worktree remove worktrees/<name>` + `git branch -D <name>`. `<name>` is
+  the PR head branch, which is also the worktree dir name under `worktrees/`:
+  ```bash
+  # git worktree remove refuses the CURRENT worktree → chdir to main first.
+  main=$(git worktree list --porcelain | awk 'NR==1{print $2}')
+  cd "$main" && git wtr "{head}"
   ```
-  Skill(wk-worktree-cleanup, args="--current")
-  ```
-- Run only when the merge happened from inside a dedicated worktree for the PR
-  branch. `wk-worktree-cleanup` self-detects the main worktree and skips cleanup
-  there — never removes the repo root.
-- Step 9's `wk-retro` satisfies `wk-worktree-cleanup`'s pre-delete retro guard;
-  it will not re-run retro for the same session.
+- **Run only from inside a dedicated `worktrees/<name>` checkout.** Skip the
+  step entirely when the merge ran from the repo root — never remove it.
+- The merge is already confirmed (`state == "MERGED"`), so the branch-merged
+  safety check is moot; `git wtr` force-deletes the local branch and Step 6's
+  `--delete-branch` already removed the remote one.
 
 ---
 
@@ -394,6 +397,8 @@ Follow-ups present → offer once:
 - `gh` CLI authenticated and in PATH.
 - Jira MCP connector authenticated (for Jira ticket transitions).
 - `$GITHUB_ORG` set if repos are org-scoped.
+- `git wtr` alias defined (worktree cleanup in Step 10) — the bare `Bash` tool
+  already permits it; the alias itself must exist in git config.
 
 ---
 
