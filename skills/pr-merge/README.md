@@ -4,7 +4,7 @@
 > merge, transition the linked ticket to its terminal state, and surface
 > any follow-ups and deferred action items.
 
-**Version:** `2026.06.26-184429`
+**Version:** `2026.07.09-172450`
 
 ## Invocation
 
@@ -17,7 +17,8 @@
 
 ```mermaid
 flowchart TD
-    A["Step 1: Resolve PR<br/>(current branch or argument)"] --> B["Step 2: CI green?"]
+    A["Step 1: Resolve PR<br/>(current branch or argument)"] -->|state == MERGED| G
+    A -->|open| B["Step 2: CI green?"]
     B -->|failing/pending| BLOCK1["🚫 Block — list failing checks"]
     B -->|green| C["Step 3: Reviews approved?"]
     C -->|changes requested / no review| BLOCK2["🚫 Block — list reviewers"]

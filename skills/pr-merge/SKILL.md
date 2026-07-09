@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.26-184429'
+  version: '2026.07.09-172450'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -46,8 +46,8 @@ ticket → summarise follow-ups.
   ticket, it merged" triggers this skill **before any other action** — never
   transition the ticket inline via the Jira MCP. The merge event owns the ticket
   transition, follow-up collection, retro, and worktree cleanup; an inline MCP
-  call silently skips all but the transition. PR already `MERGED` → skip Steps
-  2–6 and resume at Step 7.
+  call silently skips all but the transition. An already-`MERGED` PR is detected
+  by the Step 1 state check, which skips Steps 2–6 and resumes at Step 7.
 - **NOT** for merging someone else's PR unless the user explicitly owns the merge.
 
 ## Step 1: Resolve the PR
@@ -55,7 +55,7 @@ ticket → summarise follow-ups.
 ```bash
 # If an argument was given (number or URL), use it directly.
 # Otherwise detect from the current branch:
-gh pr view --json number,title,baseRefName,headRefName,headRefOid,url,reviewDecision,body
+gh pr view --json number,title,baseRefName,headRefName,headRefOid,url,reviewDecision,body,state,mergeCommit
 ```
 
 Extract and record:
@@ -65,12 +65,19 @@ Extract and record:
 - `{head_sha}` — current HEAD SHA of the PR branch
 - `{url}` — PR URL
 - `{body}` — PR description (used in Steps 5 and 8)
+- `{state}` — PR state; `{merge_sha}` — `mergeCommit.oid` when merged
 
-- Command exits non-zero (not on a PR branch, no open PR) → stop:
-  > "No open PR found for the current branch. Pass a PR number or URL as an
+- Command exits non-zero (not on a PR branch, no PR) → stop:
+  > "No PR found for the current branch. Pass a PR number or URL as an
   > argument, or switch to a PR branch."
 - Announce:
   > "Checking PR #`{number}`: _{title}_ → `{base}`"
+
+- **Already merged → skip to Step 7.** Auto-merge / merge-queue commonly lands the
+  PR before this skill runs. `{state} == "MERGED"` → record `{merge_sha}` from
+  `mergeCommit.oid`, skip Steps 2–6 (CI, review, thread, and action-item gates are
+  moot on a merged PR), and resume at Step 7 (ticket transition, follow-ups, retro,
+  worktree cleanup). Never attempt to re-merge.
 
 ## Step 2: Verify CI is green
 
