@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.02-235219'
+  version: '2026.07.09-210544'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -125,9 +125,7 @@ BEST_BASE="$DEFAULT_BRANCH"
 BEST_DIST=999999
 HEAD_SHA=$(git rev-parse HEAD)
 for CAND in $CANDIDATES; do
-  # Resolve the candidate to a usable ref. A fetch failure must NOT exclude the
-  # candidate — it may be a local-only ref (worktree branch not yet pushed to
-  # origin). Prefer origin/<cand>; fall back to the local ref before skipping.
+  # Resolve to origin/<cand>, else the local ref; a fetch failure must not drop a local-only candidate.
   REF="origin/$CAND"
   git rev-parse --verify --quiet "$REF" >/dev/null 2>&1 \
     || git fetch origin "$CAND" --quiet 2>/dev/null \
@@ -143,9 +141,12 @@ for CAND in $CANDIDATES; do
 done
 ```
 
+- **`$BEST_DIST` unchanged (`999999`) after the loop = detection FAILURE, not
+  "base = default"** — no candidate yielded a merge-base. Require an explicit
+  `--base` (or the plan's stacking target) before `gh pr create`.
+
 If `$BEST_BASE` differs from `$DEFAULT_BRANCH`, surface to the user before doing
-anything else — silent mis-basing is hard to recover from once CI has run and
-reviewers have started reading:
+anything else — silent mis-basing is costly to undo:
 
 > "This branch was forked from `{BEST_BASE}` (open PR #{N}), not
 > `{DEFAULT_BRANCH}`. Choose:
@@ -192,8 +193,7 @@ a merged branch.
 ### Measure scope against the resolved base
 
 Use `$BEST_BASE` for both the scope diff and the eventual `gh pr create --base`
-flag — measuring against the wrong base inflates LOC and breaks the stacking
-decision below.
+flag — the wrong base inflates LOC and breaks the stacking decision below.
 
 ```bash
 git diff "$BEST_BASE...HEAD" --stat
