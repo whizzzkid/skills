@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.30-202825'
+  version: '2026.07.09-230847'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -242,6 +242,11 @@ like `lychee`, `shellcheck`, `bats`, etc.
 
 - Never use `--no-verify` when committing or pushing. Hook failing → stop and ask
   the user to run the command manually, unless it is a self-healing class below.
+- **Never truncate `git commit` output so a hook abort is hidden.** A short
+  `| tail -N` drops both the hook's `✗`/error block and the `[branch sha]`
+  success line, so a *blocked* commit reads as success. Show full output or
+  append `&& echo OK`, and confirm HEAD advanced (`git rev-parse HEAD`); treat an
+  absent `[branch sha]` confirmation as a failed commit, not a display artifact.
 - **Self-heal stale-bundle hook failures.** A pre-push hook failing with
   `GemNotFound` / `Bundler::GemNotFound` / `Could not find gem` (stale local bundle
   after a base bump or rebase) → run `bundle install`, then retry the push once.
