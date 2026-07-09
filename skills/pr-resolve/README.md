@@ -71,6 +71,10 @@ sequenceDiagram
 - **Bot-native reply commands are preferred:** Before drafting a freeform reply
   to a bot finding, the skill checks the bot's documented command grammar and
   uses it. Generic replies leave findings open and add noise.
+- **No plan-and-ask on a settled contradiction:** A new bot finding that
+  contradicts an earlier-accepted fix pauses for the user only when genuinely
+  unresolved; a dismissal backed by convention/schema is decided under Auto Mode
+  and acted on directly, with no plan.
 - **Self-review threads are excluded:** Threads where the root comment was
   authored by the PR author or the current user are skipped for triage and
   resolution — they are not reviewer feedback.

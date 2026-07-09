@@ -235,9 +235,9 @@ review blocks reply posting (HTTP 422); handle per Hard Rule 13 + commands.md §
 **Bot / non-convergence handling:**
 
 - Track bot thrash by `(path_prefix, concern_class)` and total active findings per round.
-- Stop and ask before another fix when: same pair re-fires 3×; totals stop falling 2 rounds running; or a new finding contradicts an accepted fix.
-- Re-fires on prose in one non-code file → grep code/CI/prompt reading its *content* (not just path/bundle) before rewording; none → delete/restructure first.
-- Bot reply: documented command syntax if available, else a generic reply tagging the bot and stating the decision.
+- Stop and ask before another fix when: same pair re-fires 3×; totals stop falling 2 rounds running; or a new finding contradicts an accepted fix — unless dismissal is Auto-Mode-confident (act, no plan).
+- Re-fires on prose → grep code/CI/prompt reading its *content* (not just path) before rewording; none → delete/restructure.
+- Bot reply: documented command syntax, else a generic reply tagging the bot with the decision.
 - **Surface prior-round dismissals.** Before a judgment-required finding, check
   the session `dismissed` list and prior-round notes for the same field/concern
   class — a bot re-firing on a dismissed field from a new angle is the same
