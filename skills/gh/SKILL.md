@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.01-225119'
+  version: '2026.07.09-172450'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -118,6 +118,21 @@ not a GraphQL node ID (`PRRC_…`) — passing the node ID returns 404.
 `in_reply_to` formatting entirely. If using the base endpoint, pass the ID with
 `--field in_reply_to=<int>`, never `-f` — `-f` sends a string and returns 422
 ("is not a number").
+
+**A pending review silently swallows a GraphQL reply.** When the acting user
+already has a PENDING review on the PR, the `addPullRequestReviewComment`
+mutation with `inReplyTo` set but `pullRequestReviewId` omitted attaches the
+reply to that pending draft instead of publishing it — no error, the new comment
+returns `state: "PENDING"`, and it stays invisible until the draft review is
+later submitted. Guard every reply post:
+
+- Query `pullRequest.reviews(states: PENDING)` for the acting user first. If a
+  pending review exists, use the REST `/replies` endpoint (it fails loudly with
+  422 `user_id can only have one pending review`) or surface the pending review
+  and wait for the user to resolve it — do not post via GraphQL.
+- Never treat a `state: "PENDING"` response from a reply mutation as success —
+  read the returned `state` and treat any non-published state as a failure needing
+  remediation.
 
 **Resolve the exact repo name before any GraphQL `$owner`/`$repo` call.** URL
 slugs normalize underscores to hyphens, but the GraphQL API requires the stored
