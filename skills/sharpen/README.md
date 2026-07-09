@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.02-235220`
+**Version:** `2026.07.09-172450`
 
 ## Invocation
 

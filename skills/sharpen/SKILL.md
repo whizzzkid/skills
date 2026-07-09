@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.02-235220'
+  version: '2026.07.09-172450'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -255,7 +255,7 @@ not in the diff will cause a 422 error from the GitHub API.
   ```
 
   Anonymize every hit. Pick a generic slug for a prohibited-subject lesson up front; never derive it from the subject.
-- Treat a NONE result as **unverified, not proof-of-clean**. A real hit in the staged scan IS the proof — skip the synthetic probe when the scan already matched. For a genuine NONE, prove grep fires by feeding it a string the patterns match (expand a regex line: `a[-_]?b` → `a-b`). The `check-prohibited` hook is the backstop — relying on it costs a failed-commit cycle.
+- Treat a NONE result as **unverified, not proof-of-clean**. A real hit in the staged scan IS the proof — skip the synthetic probe when the scan already matched. For a genuine NONE, prove grep fires with a token copied from a real `.skillprohibit` line (expand a regex: `a[-_]?b` → `a-b`), never a guess — a guess misses the local list. The `check-prohibited` hook is the backstop — relying on it costs a failed-commit cycle.
 
 ## Step 6: Present for Review
 
