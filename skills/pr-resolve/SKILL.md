@@ -51,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.08-174545'
+  version: '2026.07.09-172450'
 ---
 
 # PR Resolve
@@ -88,6 +88,8 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
    - **Resolution gates on the fix landing, never on CI.** Pushed commit
      addressed the finding → resolve in Step 8 now, never defer to the Step 9.5
      CI wait (later CI failures are a later commit's context).
+   - **A reply answering/fixing a finding auto-resolves its thread** — no
+     separate confirmation ask; hold open only a genuine follow-up question.
 4. **Never force-push** — regular `git push` only. *Exception:* a base-advance
    rebase (Step 2) may `git push --force-with-lease`; never bare `git push -f`.
 5. **Never commit without attempting verification.** Verification unavailable or
