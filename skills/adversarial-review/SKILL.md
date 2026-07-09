@@ -37,7 +37,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.08-174545'
+  version: '2026.07.09-172450'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -224,8 +224,9 @@ Deduplicate by `(file, line, category)`, then return one verdict.
 
 Bot reviewers exist (`*[bot]`) → append:
 
-- Post-push thread count may shrink; bots retract and repost replacement threads. Caller must re-fetch after push and match by `(path, line, body_excerpt)`, not REST comment ID.
-- Emit `session_resolved_classes` keyed by `(path_prefix, concern_class)` so callers mark bot echoes as already-addressed.
+- Bots retract and repost replacement threads post-push; re-fetch after push and match by `(path, line, body_excerpt)`, not REST comment ID.
+- Emit `session_resolved_classes` keyed by `(path_prefix, concern_class)` so callers skip bot echoes.
+- Bot flip-flop (re-flagging a line it earlier made you change) = self-contradiction → dismiss citing the invariant, never oscillate.
 
 ## Step 7: Fix Loop and Hand Back
 
