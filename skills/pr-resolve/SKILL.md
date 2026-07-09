@@ -51,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.09-172450'
+  version: '2026.07.09-231819'
 ---
 
 # PR Resolve
@@ -189,37 +189,31 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
 
 ## Step 3: Fetch Unresolved Comments
 
-Fetch all three feedback surfaces every run (build the comment map via
-commands.md §3 — GraphQL for unresolved threads, REST for full details):
+Build the comment map via commands.md §3 — GraphQL for unresolved threads, REST
+for details. Surfaces, map fields, and pending-review handling are specified there.
 
-| Surface | Endpoint | Holds |
-|---|---|---|
-| Inline review comments | `/pulls/{n}/comments` | Line-attached feedback |
-| Review summary bodies | `/pulls/{n}/reviews` | Overall review text |
-| PR conversation comments | `/issues/{n}/comments` | Top-of-PR discussion, bot summaries |
+**Gate — emit these two lines before Step 4 (already-distilled rules that failed
+as prose, so now enforced as output):**
 
-Map fields: `threadId`, `commentId`, `path`, `line`, `body`, `user`, `userType`,
-`replies[]`, `isOutdated`, `isResolved`.
+- `surfaces: inline=N reviews=N conversation=N` — fetch ALL THREE
+  (`/pulls/{n}/comments`, `/pulls/{n}/reviews`, `/issues/{n}/comments`); a surface
+  you did not fetch prints `0` — a fetch bug, not an empty surface; bot bulk
+  findings hide in conversation comments.
+- `pending-self-review: yes|no → reply route` — pre-check at fetch time, never at
+  reply time; a pending review blocks replies (HTTP 422). Route per Hard Rule 13.
 
 - **Bot REST comment IDs are unstable; thread node IDs are not.** After a bot replaces its review the REST `databaseId` 404s for *all* ops. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}` (reply-404: Step 8).
 
-**Agent-observed drift is first-class feedback.** Actively read the current PR
-description and diff it against branch state (commits, file list, test plan, CI)
-before triaging — never rely on passively noticing drift. Inject any staleness,
-missing section, or metadata/diff/docs drift as `surface: agent_observation`
-(`bot_badge` flag); triage like any finding.
+**Agent-observed drift is first-class feedback.** Diff the current PR description
+against branch state (commits, files, test plan, CI) before triaging; never rely
+on passively noticing drift. Inject staleness/missing-section/metadata/docs drift
+as `surface: agent_observation` (`bot_badge` flag); triage like any finding.
+- **Before replacing the PR description, capture the original** (`gh pr view
+  --json body`) — drop-detection needs the pre-edit text, not a reconstruction.
 
-**Classify comment authors:**
-
-| `user_type` | Pattern | Classification |
-|---|---|---|
-| `Bot` | Any bot suffix or custom bot login | Bot review |
-| `User` | Matches PR author login | Self-review |
-| `User` | Matches current user login in co-author session | Self-review |
-| `User` | Any other login | Reviewer |
-
-**Pre-check pending self-reviews at Step 3, never at reply time.** A pending
-review blocks reply posting (HTTP 422); handle per Hard Rule 13 + commands.md §3.
+**Classify authors:** `Bot` login → Bot review; `User` matching the PR-author
+login (or the current user in a co-author session) → Self-review; any other
+`User` → Reviewer.
 
 **Filter and group:**
 
