@@ -15,4 +15,4 @@ break modes: a `(#-heading)` link (leading hyphen the author guessed the emoji
 leaves but GitHub trims) silently 404s, and a naive `\s+`→single-hyphen
 validator false-positives on legitimate `#d1--…` links from ` — `.
 
-**Where:** Step 2 Mechanical Sweep Catalog — row 2.35 (extended catalog).
+**Where:** Step 2 Mechanical Sweep Catalog — row 2.68 (extended catalog; renumbered from 2.35 on 2026-07-10 to resolve an ID collision with the main-table row).
