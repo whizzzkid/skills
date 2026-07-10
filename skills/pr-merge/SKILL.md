@@ -2,7 +2,7 @@
 name: wk-pr-merge
 description: >-
   Use when ready to merge a PR — verifies CI is green, all reviews approved,
-  all review comments (including self-review) resolved, no open action items,
+  all reviewer comments resolved, no open action items,
   then merges, transitions the linked ticket to its terminal state, lists
   any follow-ups or deferred action items, captures a session retro, and
   cleans up the merged worktree.
@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.09-204522'
+  version: '2026.07.10-220916'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -138,11 +138,13 @@ gh pr view {number} --json reviewDecision,reviews \
           | map(select(.isResolved == false and .isOutdated == false))'
   ```
 
-- **HARD RULE — count ALL unresolved non-outdated threads, regardless of
-  author.** Do not filter out self-review threads. Branch protection has no
-  concept of "self-review"; every unresolved thread blocks the merge at the
-  platform level. Excluding self-authored threads passes the skill's own gate,
-  then GitHub rejects the merge with `base branch policy prohibits the merge`.
+- **HARD RULE — never preemptively resolve OR block on the author's own
+  self-review threads.** They are informational design-rationale notes, not the
+  agent's to close. Branch protection *may* count them at the platform level, but
+  whether it does is repo-specific — do not assume either way. The Step 6 merge
+  attempt is the ground-truth probe: do not resolve self-authored threads as
+  pre-merge cleanup, and do not report the PR un-mergeable solely because they
+  are open.
 - **Triage unresolved reviewer/bot threads by severity before blocking** — an
   unresolved thread is not automatically a merge blocker:
   - **Blocker or Major** (correctness, security, data-loss risk) → invoke
@@ -155,17 +157,14 @@ gh pr view {number} --json reviewDecision,reviews \
     do not block. Propose one Jira ticket per finding (or a single omnibus
     ticket): draft the body from the finding text, ask the user for the
     epic/parent, file it, then resolve each thread with a `Tracked in [<KEY>]`
-    reply (satisfies the count-ALL rule below). User declines filing → leave the
-    thread open and proceed anyway; Minor threads must not block a merge-ready PR.
+    reply. User declines filing → leave the thread open and proceed anyway;
+    Minor threads must not block a merge-ready PR.
 - `wk-pr-resolve` excludes self-review threads from triage → leaves
-  author-opened threads untouched. Remaining unresolved **self-review** threads
-  → resolve as pre-merge cleanup: confirm with user, then mark each resolved
-  by `id`:
-  ```bash
-  gh api graphql -f query='mutation($id:ID!){resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}' -F id=<threadId>
-  ```
-- Re-run the GraphQL query. Continue only when **zero** unresolved non-outdated
-  threads remain (any author).
+  author-opened threads untouched. Leave them open: proceed to Step 6 without
+  resolving them.
+- Re-run the GraphQL query. Continue to Step 6 once every **reviewer/bot** thread
+  is resolved or triaged; the author's own self-review threads may remain open
+  (Step 6 is the platform-level probe).
 
 ## Step 5: Verify no open action items
 
@@ -206,6 +205,14 @@ gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
   gh api repos/{owner}/{repo} --jq '{allow_squash_merge, allow_merge_commit, allow_rebase_merge}'
   ```
 - Never switch away from squash when the squash command succeeds.
+- **Squash rejected with `base branch policy prohibits the merge` and the only
+  unresolved threads left are the author's own self-review** → this is the sole
+  case that resolves them (not a method fallback — merge-commit won't help). Ask
+  the user first; on yes, mark each resolved by `id`, then retry the squash:
+  ```bash
+  gh api graphql -f query='mutation($id:ID!){resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}' -F id=<threadId>
+  ```
+  Never auto-resolve self-authored threads without the user's explicit yes.
 - `--delete-branch` deletes the head branch after merge. Repo has "delete branch
   on merge" disabled and user has not expressed a preference → ask once:
   > "Delete the branch `{head}` after merge? (yes / no)"
@@ -376,8 +383,9 @@ Follow-ups present → offer once:
 
 ## Common Mistakes
 
-- **Merging with unresolved self-review threads** — self-review threads must
-  be resolved (marked resolved in GitHub), not just replied to.
+- **Auto-resolving the author's own self-review threads** — never resolve them
+  as routine pre-merge cleanup; leave them open and let the Step 6 merge attempt
+  probe whether branch protection actually counts them.
 - **Skipping the CI re-check after a push** — CI runs are tied to a SHA;
   always verify the run is against the current `{head_sha}`.
 - **Assuming `Closes #N` auto-transitions Jira** — `Closes` only closes

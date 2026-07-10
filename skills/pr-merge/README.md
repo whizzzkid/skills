@@ -4,7 +4,7 @@
 > merge, transition the linked ticket to its terminal state, and surface
 > any follow-ups and deferred action items.
 
-**Version:** `2026.07.09-204522`
+**Version:** `2026.07.10-220916`
 
 ## Invocation
 
@@ -37,7 +37,7 @@ All four must pass; any failure blocks and reports what needs fixing:
 
 - CI: all required checks green on HEAD SHA (non-required checks are informational — never polled or blocked on)
 - Reviews: `reviewDecision = APPROVED` (or no required reviewers)
-- Threads: zero unresolved review threads (including self-review)
+- Threads: reviewer/bot threads resolved or triaged (author's own self-review threads may stay open)
 - Action items: no unchecked `- [ ]` outside designated deferred sections
 
 ## Ticket Handling
@@ -52,8 +52,9 @@ All four must pass; any failure blocks and reports what needs fixing:
 
 - **[`wk-pr-resolve`](../pr-resolve/README.md) first if threads exist** —
   resolve outstanding review comments before invoking this skill.
-- **Self-review threads count** — pending self-review comments submitted
-  as a GitHub Review must be explicitly resolved, not just replied to.
+- **Never auto-resolve the author's own self-review threads** — they are
+  informational and left open; the Step 6 merge attempt is the ground-truth
+  probe of whether branch protection actually counts them.
 - **Squash is the default** — the skill detects repo merge settings and
   respects overrides, but squash is the safe default for clean history.
 - **Jira auto-close does not happen via `Closes #N`** — GitHub's
