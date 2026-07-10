@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.09-172450'
+  version: '2026.07.10-220916'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -176,11 +176,16 @@ silent posts erode trust and make automated activity hard to audit.
   GitHub/outbound body.** The `wk-commit` trailer (`🦾 Generated with
   [wk-skills](...) and multiple models.`) belongs only in commit messages and
   PR-body trailers; both footers open with "Generated ... wk-skills", so the two
-  are easy to conflate — type neither from memory. Pre-emit check: grep each
-  outbound body for the exact canonical footer below AND reject if the
-  commit-trailer variant (`🦾 Generated with`) is present. A footer defect on one
-  surface is almost always on every body posted the same way → sweep all
-  surfaces (PR body, review bodies, every comment/reply) in one pass.
+  are easy to conflate — type neither from memory.
+- **Pre-emit gate — run mechanically on EVERY outbound body before posting, no
+  exceptions.** A footer defect on one surface is almost always on every body
+  posted the same way, so sweep all surfaces (PR body, review bodies, every
+  comment/reply) in one pass. For each body string:
+  ```bash
+  grep -qF 'DM me your feedback.</sup>' <<<"$body" || echo "REJECT: canonical footer absent"
+  grep -qF '🦾 Generated with' <<<"$body" && echo "REJECT: commit-trailer variant present"
+  ```
+  A REJECT on either line blocks the post — fix the footer and re-check before writing.
 
 ```
 ---
