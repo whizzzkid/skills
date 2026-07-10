@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.09-210544'
+  version: '2026.07.10-200831'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -308,13 +308,16 @@ When using a repo template:
   verification section as drift to fix before `gh pr create` — a
   description-check bot otherwise flags "Testing section missing" and forces a
   second cycle.
-- **State what the PR does NOT fix when fix-scope ≠ root cause.** When an
-  observable symptom (failing health check, error, outage) triggered the work but
-  the code change only addresses a related gap — not the symptom's root cause —
-  put a prominent one-liner in the first lines of the Summary: `Note: this does
-  not fix {symptom}; that requires {out-of-code work, tracked in {ticket}}.`
-  Burying the distinction in a later section forces the reviewer to ask whether
-  the change actually resolves the trigger.
+- **Incident-triggered bugfix → narrate the concrete root cause, and state what
+  it does NOT fix.** When a linked PR/issue/outage/symptom surfaced the work:
+  (a) `## Why`/Summary must give the step-by-step of how the incident occurred
+  (who did what, which API returned what, why the gate misfired), not only the
+  abstract defect class — that chain is not in the diff, so it is omitted unless
+  required as a bugfix-body element; (b) when the code change addresses only a
+  related gap, not the symptom's root cause, put a prominent first-line Summary
+  note: `Note: this does not fix {symptom}; that requires {out-of-code work,
+  tracked in {ticket}}.` Burying either forces the reviewer to ask whether the
+  change actually resolves the trigger.
 
 ### PR-close keywords close issues, not PRs
 
