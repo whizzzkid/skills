@@ -51,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.09-231819'
+  version: '2026.07.10-110307'
 ---
 
 # PR Resolve
@@ -160,15 +160,9 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
 - Otherwise delegate base integration to `wk-pr-update` (only if it preserves the
   no-force-push contract); on an unresolvable conflict, validation regression, or
   required forced push it reports → stop and surface the blocker.
-- **Base-advance conflict (upstream PR merged) → rebase onto the new base to
-  resolve.** Base moved → the new base is authoritative; replay the branch onto
-  it, resolving each conflict against the base:
-  ```bash
-  git fetch origin "$BASE_BRANCH"
-  git rebase --onto "origin/$BASE_BRANCH" "$(git merge-base HEAD "origin/$BASE_BRANCH")"
-  ```
-  Re-verify, resume only on a clean tree, push with `git push --force-with-lease`
-  (Hard Rule 4 exception) — never bare `-f`.
+- **Base-advance conflict (upstream PR merged) → rebase onto the new base**
+  (commands.md §2). Re-verify, resume only on a clean tree, push with
+  `git push --force-with-lease` (Hard Rule 4 exception) — never bare `-f`.
   - **A clean local merge does not clear GitHub's `mergeable: CONFLICTING` when
     upstream deleted a file the branch modified** — GitHub recomputes from the
     original PR ancestor, which still holds the file. `mergeable: CONFLICTING`
@@ -259,6 +253,10 @@ design rationale, or test-coverage questions.
 behavior/rationale/trade-off" finding, grep the diff, touched files, and repo
 docs; covered (or code is unambiguous) → cite and dismiss; else present normally.
 
+**Docs-ahead-of-code, stacked PR.** Docs describe behavior the diff lacks →
+check the PR body's stack section for the owning sibling PR. Owned → reword
+to future tense, name that PR. Unowned → normal code gap.
+
 **Verify pattern applicability before copying.** A finding citing a pattern used
 elsewhere → confirm the scenario matches (auth, runtime state, credential
 ownership) first; precedent alone never proves this context needs it.
@@ -343,8 +341,8 @@ commit only when they share the triage unit or were merged by Step 4.
 
 **Probe the real config path before editing a file named by user shorthand.**
 Shorthand names the concept, not the path — CI/pipeline step config often lives
-in a generator/template file. Grep the step key (`grep -rn '<step-key>'
-<config-dir>`) and edit the file the grep returns, not the named one.
+in a generator/template file. Grep the step key (commands.md §6) and edit the
+file the grep returns, not the named one.
 
 **For each fix:**
 

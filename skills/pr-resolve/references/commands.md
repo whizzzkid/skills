@@ -55,6 +55,13 @@ Stage resolved files from the repo root (session cwd may be a subdirectory where
 git -C "$(git rev-parse --show-toplevel)" add <paths>
 ```
 
+Base-advance conflict (upstream PR merged) — rebase onto the new base:
+
+```bash
+git fetch origin "$BASE_BRANCH"
+git rebase --onto "origin/$BASE_BRANCH" "$(git merge-base HEAD "origin/$BASE_BRANCH")"
+```
+
 ## Step 3 — Fetch unresolved comments
 
 **Pending review handling** (a pending review blocks reply posting, HTTP 422):
@@ -173,6 +180,20 @@ Per-class grep targets (a refactor clones the defect onto sibling lines):
 - Validation/exception/retry gaps → grep the affected symbol plus every entry/call site.
 - Race/TOCTOU → grep the resource path plus every read-then-write site.
 - Value/message/constant reporting → grep the **whole changed file** (not just the diff) for the same shape (`grep "timed out after %v" <file>`).
+
+Probe the real config path when a fix targets a file named by user shorthand
+(CI/pipeline step config often lives in a generator/template file, not the
+named one):
+
+```bash
+grep -rn '<step-key>' <config-dir>
+```
+
+Isolate overlapping fixes without interactive staging: when two accepted fixes
+land in the same file with interleaved lines, edit the *other* fix's lines
+back out temporarily, `git add`/commit the file with only the current fix's
+lines present, then re-apply the other fix's edit and repeat for its own
+commit — avoids `git add -p`'s hunk-splitting fragility.
 
 Commit (one commit per triage unit; omit the trailer in non-co-author sessions):
 
