@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.09-230847'
+  version: '2026.07.10-191234'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -433,6 +433,10 @@ defer cleanup to retro.
 - Auto mode blocks `git commit --amend` as history-rewriting → it needs explicit
   user confirmation. Ask once, at the fix site, rather than accumulating commits
   the user must later squash by hand (`git rebase -i HEAD~N`).
+- **The amend prohibition holds regardless of push state.** An unpushed commit is
+  not a license to self-initiate `--amend` — unpushed status changes the blast
+  radius, not the rule. Fold a follow-up by creating a NEW commit; surface the
+  amend/squash as an explicit suggestion for the user to approve.
 - Prior commit already pushed → the amend forces a force-push; flag that in the
   same ask (force-push rules below apply).
 
