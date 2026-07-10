@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.08-175435'
+  version: '2026.07.10-200831'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -82,6 +82,11 @@ Manual: `/wk-workstyle-naming scan` (full working tree) · `/wk-workstyle-naming
   (`lowRiskCount` / `highRiskCount`). This is a **required gate**, not
   advisory — surface an inaccurate-name finding even when formatting is
   clean.
+  - **Security/eligibility gates:** name each intermediate set for its precise
+    eligibility scope so "who counts" is answerable without tracing the method.
+    When a set is author-agnostic (humans + bots) but the human-only (or
+    role-specific) filter runs at a separate downstream site, the name — or an
+    adjacent comment — must say so, so a reader confirms the rule at a glance.
 
 ## Apply or Report
 
