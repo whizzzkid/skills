@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.08-174545'
+  version: '2026.07.10-110305'
   internal: false
   model:
     openai: gpt-4.1
@@ -204,6 +204,14 @@ When a test replaces the process environment (e.g., `stub_const("ENV", ENV.to_h.
 - Grep the code under test for every `ENV[...]`, `ENV.fetch(...)`, `os.environ[...]`, `process.env.X` call. Each must appear in the stub with a chosen value or explicitly `nil`.
 - `.compact` (or equivalent) strips `nil` entries from the stub. With `.compact`, "not in the hash" means "read from the real environment" — exactly the CI-leakage trap. Either keep the `nil` entries without compacting, or use the framework's `delete_env` API explicitly.
 - Local pass + CI fail with messages like "expected nil, got URL" or "expected nil, got <token>" is the canonical signature of this leak — CI runners inject `BUILDKITE_*`, `GITHUB_*`, `CI`, `RUNNER_*`, and similar vars the local shell does not.
+
+### Restore shared/global state a test mutates
+
+A test that mutates process- or framework-level shared state (redraws a web framework's route table, monkeypatches a class method, swaps a global registry/singleton) leaks that mutation into every test that runs after it unless it explicitly restores the original in an `after`/teardown hook.
+
+- The failure is order-dependent: the mutating test passes alone, and the polluted tests fail only when run after it — the signature is unrelated tests failing after a suite reorder or a new nearby test.
+- Standard test-runner isolation (transactional DB rollback, per-example object doubles) does not cover state a test explicitly replaces at the module/class/framework level — pair every such mutation with an explicit restore.
+- Rails example: a controller spec calling `routes.draw` to register a probe route must restore the real table afterward (`after { Rails.application.reload_routes! }`) — otherwise later request specs 404 against the stripped table.
 
 ---
 
