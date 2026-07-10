@@ -62,6 +62,25 @@ git fetch origin "$BASE_BRANCH"
 git rebase --onto "origin/$BASE_BRANCH" "$(git merge-base HEAD "origin/$BASE_BRANCH")"
 ```
 
+A clean local merge does not clear GitHub's `mergeable: CONFLICTING` when upstream
+deleted a file the branch modified — GitHub recomputes from the original PR
+ancestor, which still holds the file. `mergeable: CONFLICTING` after a merge →
+pivot to the rebase above, never a second merge.
+
+Stacked PR CLOSED with its base branch deleted (parent squash-merged under
+`delete_branch_on_merge`) — recover in order; the head branch must still exist:
+
+```bash
+# 1. recreate the deleted base ref at the merge target's current tip
+TARGET_SHA=$(gh api "repos/$OWNER/$REPO/git/refs/heads/$TRUNK" --jq .object.sha)
+gh api -X POST "repos/$OWNER/$REPO/git/refs" -f ref="refs/heads/$DELETED_BASE" -f sha="$TARGET_SHA"
+gh pr reopen "$NUMBER"                                          # 2. reopen (base now exists)
+gh api -X PATCH "repos/$OWNER/$REPO/pulls/$NUMBER" -f base="$TRUNK"  # 3. retarget to trunk
+gh api -X DELETE "repos/$OWNER/$REPO/git/refs/heads/$DELETED_BASE"   # 4. drop the temp branch
+# 5. drop the parent's squash-duplicated commits so the diff is only the child's
+git rebase --onto "$TRUNK" "$OLD_BASE_TIP" HEAD
+```
+
 ## Step 3 — Fetch unresolved comments
 
 **Pending review handling** (a pending review blocks reply posting, HTTP 422):

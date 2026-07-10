@@ -51,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.10-110307'
+  version: '2026.07.10-230918'
 ---
 
 # PR Resolve
@@ -162,17 +162,17 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
   required forced push it reports → stop and surface the blocker.
 - **Base-advance conflict (upstream PR merged) → rebase onto the new base**
   (commands.md §2). Re-verify, resume only on a clean tree, push with
-  `git push --force-with-lease` (Hard Rule 4 exception) — never bare `-f`.
-  - **A clean local merge does not clear GitHub's `mergeable: CONFLICTING` when
-    upstream deleted a file the branch modified** — GitHub recomputes from the
-    original PR ancestor, which still holds the file. `mergeable: CONFLICTING`
-    after a merge → pivot to the rebase above, never a second merge.
-- **HARD RULE — audit dropped safety guards after each conflict resolution.** The
-  base side (HEAD during rebase) is canonical `origin/$BASE_BRANCH`; a guard there
-  was intentional. Diff both sides for signal/cleanup primitives (signal stops,
-  `defer`, channel closes); any on the base side but absent from the result is a
-  dropped guard — restore unless the incoming commit removed it with rationale.
-  Green compile/tests do **not** prove it unneeded; block until each absence is confirmed.
+  `git push --force-with-lease` (Hard Rule 4 exception) — never bare `-f`. A
+  clean local merge may not clear `mergeable: CONFLICTING` → pivot to rebase (§2).
+- **HARD RULE — stacked PR CLOSED with its base branch deleted → recover before
+  triaging.** A child based on a parent's head branch auto-CLOSES (not retargets)
+  when the parent squash-merges under `delete_branch_on_merge`; it cannot be
+  reopened or retargeted while closed. Run the recovery sequence (commands.md §2)
+  first. Prevent: base stacked PRs on trunk, or retarget the child to trunk
+  before the parent merges.
+- **HARD RULE — after each conflict resolution, audit for dropped base-side
+  safety guards**; restore any present on the canonical base but absent from the
+  result. Detail: conflict-preflight.md.
 - **Stage resolved files from the repo root** — cwd may be a subdir where `git add`
   exits 128 (command in commands.md §2; here and Step 6).
 - **HARD RULE — Step 2 is unconditional.** Run fetch + ahead/behind before
