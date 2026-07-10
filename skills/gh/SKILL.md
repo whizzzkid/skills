@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.10-220916'
+  version: '2026.07.10-230918'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -112,6 +112,13 @@ Surfaces covered (non-exhaustive):
 `/pulls/{n}/comments/{id}/replies`) require the integer REST `id` from
 `GET /pulls/{n}/comments` (or `databaseId` from a GraphQL reviewThreads query),
 not a GraphQL node ID (`PRRC_…`) — passing the node ID returns 404.
+
+**Retarget a PR base via REST, not `gh pr edit --base`.** `gh pr edit --base`
+drives the change through the GraphQL `updatePullRequest` mutation, which
+intermittently 500s (`GraphQL: Something went wrong while executing your query`)
+for base changes — notably right after reopening a PR or recreating branches. Use
+`gh api -X PATCH repos/{owner}/{repo}/pulls/{n} -f base=<branch>`; fall back to it
+automatically after ONE GraphQL failure rather than retrying the mutation.
 
 **Prefer the `/replies` subresource over `in_reply_to`.** `POST
 /pulls/{n}/comments/{id}/replies --field body="…"` is simpler and sidesteps
