@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.10-200831'
+  version: '2026.07.13-064027'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -48,10 +48,12 @@ ensures quality before marking ready.
 0. **All GitHub reads/writes route through `wk-gh`.** Org scoping per `wk-gh`
    Step 1–2. Every PR title/body, review body, and comment body ends with the
    canonical outbound footer per `wk-gh` Step 4 — inject at heredoc/template
-   render time so no `gh pr create` / `gh pr edit` ships footer-less.
+   render time, and run the `wk-gh` pre-emit gate on the PR body (reject if the
+   `🦾 Generated with` commit-trailer variant is present or `DM me your
+   feedback.</sup>` is absent) before `gh pr create`/`gh pr edit`.
    **Unconditional — independent of every other gate.** A "skip the review"
    instruction waives only Rule 2's review; it never disables `wk-gh` routing or
-   the footer. Never conflate skipping the review with skipping `wk-gh`.
+   the footer.
 1. **Preserve PR body metadata across description rewrites.** Before
    overwriting the PR description, preserve metadata lines — see
    `skills/pr/references/pr-description-metadata.md`.
