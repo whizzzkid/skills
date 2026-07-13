@@ -54,7 +54,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.11-000826'
+  version: '2026.07.13-201250'
 ---
 
 # Sitrep
@@ -62,11 +62,6 @@ metadata:
 Unified daily ops log backed by a SilverBullet workspace. One persistent live
 page → replaces former morning/evening skills. No standalone HTML files, no
 per-day live directories; dated snapshots at close.
-
-```
-start ──► Bootstrap ──► 5 agents ──► auto-transition ──► live.md (+ standup) ──► open ──► commit/push
-end   ──► Read live.md ──► 7 agents ──► snapshot + pending live.md ──► open ──► commit/push
-```
 
 ## Sub-commands
 
@@ -231,8 +226,9 @@ Agent roster:
 - **Gmail:** unread emails needing response; sent emails without reply;
   announcements. ToolSearch: `"gmail"`.
 - **Calendar + Granola + Google Drive:** today's meetings with agenda docs and
-  last-session Granola notes; interview prep blocks. Invoke
-  [`wk-cal`](../cal/README.md) §Interview Prep Scan before launching.
+  last-session Granola notes; interviews lacking a prep/scorecard block (data
+  only — orchestrator creates them in Stage 2c, per
+  [`wk-cal`](../cal/README.md) §Interview Prep Scan).
   ToolSearch: `"gcal"`, `"granola"`, `"gdrive"`.
 - **GitHub:** PRs needing review (`--draft=false`); your open PRs with failing
   CI or review comments; assigned issues; mentions. All `gh` commands require
@@ -285,6 +281,20 @@ never transition):
   transition. Never retry or fail the run.
 - Render as a `data-done="true"` `⚙️ Auto-Actions` item with
   `✅ auto-transitioned to Done by agent`; never render as an open TODO.
+
+### Stage 2c: Create missing interview prep blocks (`start` only)
+
+Orchestrator action after agents return, before writing `live.md`. A referenced
+sibling-skill flow is an action to run, not framing to describe — subagents
+gather read-only; the orchestrator owns every write.
+
+- For each interview the Calendar agent reports lacking a prep/scorecard block,
+  call [`wk-cal`](../cal/README.md)'s block-creation flow: a 15-min prep block
+  before, a 30-min scorecard block after (scan forward in 30-min increments when
+  the immediate slot is busy).
+- Render each as a `data-done="true"` `⚙️ Auto-Actions` item, never a passive TODO.
+- Fall back to a 🔴 ASAP span only when calendar write access is unavailable or
+  no slot exists.
 
 ### Stage 3: Compile open items
 
@@ -606,6 +616,7 @@ Surface a quarterly-review nudge once per day; never block on it.
 | Jira | Full open-ticket sweep; collapse inactive/no-due backlog. |
 | Pending-on-me | Flag 🔁 status changes + ⏳ staleness; sort priority → age → due-date. |
 | Merged PR + open ticket | Auto-transition to Done; render as done auto-action. |
+| Interview w/o prep block | Orchestrator creates prep+scorecard via `wk-cal`; done auto-action. |
 | Resolved item re-discovered | Dismissed registry filters it; `jq`-write + validate; action-specific key. |
 | End of day | Invoke [`wk-sharpen`](../sharpen/README.md) on up to 5 highest-severity unprocessed learnings. |
 | QPR | `📋` banner on live.md (start) / snapshot (end); brag-log accrues 🌟. |
