@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.09-172450'
+  version: '2026.07.13-064027'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -40,7 +40,7 @@ Plan -> Implement (commit per step + docs) -> Test -> Refactor & Deletion Scan
 
 - Fires on EVERY task producing code changes, a commit, a push, a PR, or a CI build from a code change. No opt-out, no "too small" exemption.
 - Session resumption is a fresh start → before any write action after context compaction, rollover, or "continue where we left off", invoke `wk-workflow` again.
-- A planning discussion in chat is NOT a substitute for this invocation. Even when the plan is clear, invoke the skill before the first Edit/Write/Bash — it gates that first write and may surface branch hygiene, guardrails, or pre-flight steps the chat did not cover. "I already planned" is the rationalization this forbids.
+- A planning discussion in chat is NOT a substitute for this invocation — invoke the skill before the first Edit/Write/Bash; it may surface branch hygiene/guardrails/pre-flight the chat missed.
 
 ### Autonomy Rules
 
@@ -86,7 +86,7 @@ Skill(wk-plan, args="<task from session context>")
 - Do not re-plan inline after an approved plan exists.
 - **Complex task → advisor:** when `wk-plan` flags the task complex (non-obvious architecture, unresolved failure mode, high blast radius), consult the `advisor` server tool before committing and fold its advice in. Reserve for real uncertainty, after orienting (not turn 1); skip when the beta tool is absent. See [`references/advisor-tool.md`](references/advisor-tool.md).
 
-**HARD RULE — wait for plan approval before the first Edit/Write/Bash write-action, any diff size.** "Small"/"2-line"/"obvious" is exactly the rationalization this forbids: present-plan → wait-for-approval → execute.
+**HARD RULE — wait for plan approval before the first Edit/Write/Bash write-action (incl. fetching/reading *for* the build once it commits to a direction), any size.** Size-independent in BOTH directions: neither "small/2-line/obvious" nor "large/exciting/obviously-right — let me build" (momentum) waives it. Present-plan → wait-for-approval → execute.
 
 ---
 
