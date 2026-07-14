@@ -37,6 +37,7 @@ allowed-tools:
   - "Bash(git log:*)"
   - "Bash(gh search prs:*)"
   - "Bash(gh search issues:*)"
+  - "mcp__*playwright*__browser_*"
   - "mcp__claude_ai_Slack_*__*"
   - "mcp__claude_ai_Gmail_*__*"
   - "mcp__claude_ai_Gcal_*__*"
@@ -54,7 +55,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.13-201250'
+  version: '2026.07.14-180752'
 ---
 
 # Sitrep
@@ -101,6 +102,9 @@ per-day live directories; dated snapshots at close.
 - `data-t` is unique and sequential per page (`t1`…`tN`).
 - Auto-action items already done at generation start `data-done="true"`; nested
   sub-items use `class="st-item st-nested"`.
+- Group items only via the flat `st-item`/`st-nested` span pattern already in the
+  file. Never freelance a new tag or nesting shape — a nested unclassed `<div>`
+  inside `.sitrep-col` collapses the flex boundary → single-column render.
 - Non-actionable content (meeting lines, headers, standup block) is plain text
   or inline markdown.
 - Sort by priority/severity, staleness, due date, then undated. Lead with 🔴
@@ -111,9 +115,8 @@ per-day live directories; dated snapshots at close.
 
 ### Checkbox-span format
 
-```html
-<span class="st-item"><span class="st-cb" data-t="tN" data-done="false" onclick="var d=this.dataset.done==='true',t=this.dataset.t,q=String.fromCharCode(34);this.dataset.done=String(!d);window.client.space.readPage('$EMPLOYER/live').then(function(pg){var c=pg.text,s='data-t='+q+t+q+' data-done='+q+(d?'true':'false')+q,n='data-t='+q+t+q+' data-done='+q+String(!d)+q;return window.client.space.writePage('$EMPLOYER/live',c.replace(s,n))})"></span> Item text [link](url)</span>
-```
+Canonical span + concrete toggle-handler recipe:
+[`references/checkbox-span-handler.md`](references/checkbox-span-handler.md).
 
 ## Dismissed registry (cross-run de-dup)
 
@@ -356,9 +359,8 @@ generated_at: {ISO_8601_UTC}
   copy block, this-week goal spans, notes placeholder, backlog from the
   previous working day.
 
-Escape `#` in link text, lead each item with an urgency marker, and verify the
-render in a browser per
-[`wk-silverbullet`](../silverbullet/README.md) Step 6 before finishing.
+Escape `#` in link text and lead each item with an urgency marker (per the
+rendering contract).
 
 ### Stage 4b: Standup snippet
 
@@ -390,13 +392,26 @@ skill owns selection.
 - Verify `👈🏽` and `👉🏽` survive the write; re-emit via Write if either is
   missing.
 
-### Stage 5: Open in browser
+### Stage 5: Verify render, then open
+
+- **HARD RULE — gate the "Live page ready" announcement on a verified render.**
+  `open` launches a tab; it does not confirm the DOM. Before announcing,
+  `browser_navigate` to the live URL and `browser_evaluate`:
+
+  ```javascript
+  document.querySelectorAll('.sitrep-col').length===3 &&
+    [...document.querySelectorAll('.sitrep-col')].every(c=>c.textContent.trim())
+  ```
+
+  Must return `true` (3 non-empty columns). On `false`/single-column collapse, fix
+  the HTML per [`wk-silverbullet`](../silverbullet/README.md) Step 6 and re-verify —
+  never announce a broken layout.
 
 ```bash
 open "http://localhost:$SITREP_PORT/$EMPLOYER/live.md"
 ```
 
-Announce:
+Announce only after the assertion passes:
 
 > "Live page ready: http://localhost:$SITREP_PORT/$EMPLOYER/live.md
 >
