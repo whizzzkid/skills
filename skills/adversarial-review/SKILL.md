@@ -37,7 +37,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.11-000826'
+  version: '2026.07.14-170720'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -138,10 +138,9 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.44 | Merge/rebase conflict resolved at a function call site | Compare both sides' arg counts against the current base-branch signature; base is authoritative for required params (a side missing one is stale, not caller-wins). Also diff both sides for safety primitives (`signal.Stop`, `context.Cancel*`, `sync.*`, `defer`, `close(`, `os.RemoveAll`, resource releases) present on either side but absent from the result — base is canonical, so a missing guard is a dropped contract. | Blocker | Take the side matching the base signature; flag the short call. Restore any base-side safety primitive absent from the result unless the incoming commit removed it with rationale; green tests don't prove it unneeded. |
 | 2.44a | Merge/rebase introduces a new UNIQUE/CHECK DB constraint | Diff every incoming unique index against the model/ORM uniqueness validations; an unmirrored index lets a duplicate raise an unhandled DB exception (`RecordNotUnique`) instead of a graceful validation failure — post-merge conflict-only review misses incoming-side constraints. | Blocker | Add the `validates ... uniqueness: { scope: }` (or ORM equivalent) mirroring every incoming constraint; parity is mechanical — every unique index needs a model validation. |
 | 2.48 | Finding or identity/dedup key relies on an LLM round-trip preserving a field verbatim | Grep the prompt/skill builder for an explicit verbatim-echo instruction for that exact field — absence confirms the stability is an unenforced bet, not a guarantee. If test mocks return the field verbatim, the rephrase path is uncovered. | Blocker | Pin the field in the prompt (fix at source) over a downstream key workaround; add a rephrasing-mock regression test. |
-| 2.58 | URL/host from an external API response (even authenticated) fed to `curl`/fetch | Authenticated identity ≠ trusted payload. Grep an API-response field reaching `curl` (esp. `-L`/`-o`) or any URL-accepting shell command without an `https://` scheme guard. A string scheme guard covers only the first URL; with `-L` also require `--proto "=https" --proto-redir "=https"` — 30x hops to `http://`/internal hosts bypass the guard. | Blocker | Add a one-line `https://` scheme guard before the call; absence with `-L`/`-o` is a blocker (`file://`/`gopher://`/`dict://` SSRF / local-resource vector). With `-L`, also require `--proto "=https" --proto-redir "=https"`; absence alongside `-o` is a blocker (redirect-chain download to disk is highest-risk). |
 
 Lower-frequency sweeps (2.9.2, 2.18, 2.19, 2.20, 2.30, 2.31, 2.32, 2.34, 2.36, 2.37,
-2.38, 2.39, 2.25, 2.41, 2.42, 2.45, 2.46, 2.47, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57, 2.59, 2.60, 2.61, 2.62, 2.63, 2.64, 2.65, 2.66, 2.67, 2.68, 2.69, 2.70, 2.71, 2.72) live in
+2.38, 2.39, 2.25, 2.41, 2.42, 2.45, 2.46, 2.47, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57, 2.59, 2.60, 2.61, 2.62, 2.63, 2.64, 2.65, 2.66, 2.67, 2.68, 2.69, 2.70, 2.71, 2.72, 2.58) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 
@@ -188,6 +187,7 @@ fix-sketch: concrete code or command, not narrative
 Create `.review-playground/` only if needed (never commit a `.gitignore` entry for it); confine writes there.
 
 - One script per runtime-behavior finding; drive each with the production runtime.
+- Don't re-run the existing suite for general validation — CI owns suite pass/fail (a green local run adds nothing; a red one is usually environmental, not a PR defect). Spend local effort driving the change's failure paths (timeouts, exhausted retries, malformed/partial responses, degraded deps, non-zero exits). Running one targeted test to reproduce a specific suspected defect is fine.
 - Mutation-test each new test: flip a conditional, hardcode a return, swap args, remove an assertion → green = fake test.
 - App cannot boot → use standalone playground. Fetch pinned upstream source, replicate method signatures, cite SHA/tag:
 
