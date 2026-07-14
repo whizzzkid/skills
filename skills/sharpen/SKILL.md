@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.09-231145'
+  version: '2026.07.14-214323'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -126,7 +126,7 @@ not in the diff will cause a 422 error from the GitHub API.
 
 ## Step 2: Read the Full Skill
 
-- Determine which skill needs updating. If ambiguous, ask the user.
+- Determine which skill needs updating. Grep the learning's core subject across all of `skills/`; the defect's text may live in a skill other than the one filed — fold the principle into the API-mechanics home AND correct every over-general instance elsewhere in the same pass. If ambiguous, ask the user.
 - Read the entire `SKILL.md`, not just the target section.
 - Build a mental map of:
   - Hard rules
@@ -353,15 +353,6 @@ Do not return control until all four pass:
 4. **Clean tree:** `git status --short` must be empty.
 
 Report: one line per skill updated, then confirm tree clean, installed, pushed.
-
-## Anti-Patterns to Avoid
-
-| Anti-pattern | Correct approach |
-|---|---|
-| Embedding specific file names | Describe the type of file or the check |
-| Referencing specific line numbers | Describe the line's role or position |
-| Copying error descriptions verbatim | Extract the error code and failure mode |
-| Adding "if file is X, do Y" | Add a general rule that covers all repos |
 
 ## Quick Reference
 
