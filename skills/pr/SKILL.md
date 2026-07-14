@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.14-171109'
+  version: '2026.07.14-172952'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -415,17 +415,11 @@ Reporting the PR URL and stopping is a violation — the user expects the full
 lifecycle (description sync → CI poll → self-review → feedback triage → ready) on
 a single invocation.
 
-**Side actions never terminate the workflow.** Ancillary actions after
-`gh pr create` (see table) do **not** count as task completion — the
-post-creation lifecycle runs regardless. Treat any "I just posted on X" thought
-as a continue signal, not a stop signal:
-
-| Post-creation side action | Correct next move |
-|---------------------------|-------------------|
-| Posted cross-repo discussion comment | Continue to Step 3 (description sync). |
-| Replied to referenced PR / issue | Continue to Step 3. |
-| Linked the PR in Slack / Jira / docs | Continue to Step 3. |
-| Updated an upstream tracking issue | Continue to Step 3. |
+**Side actions never terminate the workflow.** Any ancillary action after
+`gh pr create` — cross-repo comment, reply to a referenced PR/issue,
+Slack/Jira/docs link, upstream tracking-issue update — is a continue signal, not
+task completion; the post-creation lifecycle runs regardless. Treat any "I just
+posted on X" thought as continue, never stop.
 
 After the draft PR is created (or after pushing new commits to an existing PR):
 
