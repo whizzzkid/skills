@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.10-230918'
+  version: '2026.07.14-213439'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -124,7 +124,10 @@ automatically after ONE GraphQL failure rather than retrying the mutation.
 /pulls/{n}/comments/{id}/replies --field body="…"` is simpler and sidesteps
 `in_reply_to` formatting entirely. If using the base endpoint, pass the ID with
 `--field in_reply_to=<int>`, never `-f` — `-f` sends a string and returns 422
-("is not a number").
+("is not a number"). A `GET` 404 on a review-comment ID is not evidence writes
+fail: after a bot replaces its review, `GET /pulls/{n}/comments/{id}` 404s the
+stale `databaseId` while `POST .../comments/{id}/replies` on that same ID still
+returns 201 — try the REST `/replies` POST before falling back to GraphQL.
 
 **A pending review silently swallows a GraphQL reply.** When the acting user
 already has a PENDING review on the PR, the `addPullRequestReviewComment`

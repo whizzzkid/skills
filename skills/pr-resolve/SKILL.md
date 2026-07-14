@@ -51,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.10-230918'
+  version: '2026.07.14-213440'
 ---
 
 # PR Resolve
@@ -196,9 +196,9 @@ as prose, so now enforced as output):**
 - `pending-self-review: yes|no → reply route` — pre-check at fetch time, never at
   reply time; a pending review blocks replies (HTTP 422). Route per Hard Rule 13.
 
-- **Bot REST comment IDs are unstable; thread node IDs are not.** After a bot replaces its review the REST `databaseId` 404s for *all* ops. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`, not REST `GET /pulls/{n}/comments/{id}` (reply-404: Step 8).
+- **Bot REST comment IDs 404 on reads, not writes.** After a bot replaces its review the REST `databaseId` 404s on `GET`, but `POST .../comments/{id}/replies` on the same ID still returns 201. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`; for replies, try the REST `/replies` POST before GraphQL (wk-gh).
 
-**Agent-observed drift is first-class feedback.** Diff the current PR description
+**Important — agent-observed drift is first-class feedback.** Diff the current PR description
 against branch state (commits, files, test plan, CI) before triaging; never rely
 on passively noticing drift. Inject staleness/missing-section/metadata/docs drift
 as `surface: agent_observation` (`bot_badge` flag); triage like any finding.

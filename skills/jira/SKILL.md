@@ -27,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.07.08-174545'
+  version: '2026.07.14-213442'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -308,7 +308,7 @@ navigate to context:
 - `wk-pr` already built a description → **insert** the `## Ticket` section
   rather than overwriting the rest. Section already exists → refresh its
   content if the ticket summary changed.
-- **Link only the ticket being worked on.** Emit exactly one ticket link
+- **Important — link only the ticket being worked on.** Emit exactly one ticket link
   (derived from the branch/commit). Never add `Related:`, `Epic:`, or
   parent-ticket lines — the PR body is scoped to the work item, not the epic
   hierarchy — unless the user explicitly requests them.
