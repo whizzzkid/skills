@@ -29,3 +29,18 @@ For each match, append to the PR body before posting:
 ```
 
 Resolve `{branch}` from the head ref; skip when no `.md` files are in the diff.
+
+## Incident-triggered bugfix body
+
+When a linked PR/issue/outage/symptom surfaced the work:
+
+- `## Why`/Summary must give the step-by-step of how the incident occurred (who did what, which API returned what, why the gate misfired), not only the abstract defect class — that chain is not in the diff, so narrate it here or it is lost.
+- When the code change addresses only a related gap, not the symptom's root cause, put a prominent first-line Summary note: `Note: this does not fix {symptom}; that requires {out-of-code work, tracked in {ticket}}.`
+- Burying either forces the reviewer to ask whether the change actually resolves the trigger.
+
+## Rollout section for prod-facing diffs
+
+Detect a prod-facing behavior change at composition time — the diff touches output posted to an external service/API, user-visible behavior, or a runtime gate.
+
+- Include a `## Rollout` note proactively: flag/canary/staged vs. plain release, backward-compatibility, and rollback shape.
+- Even a one-line "additive + backward-compatible, ships with the normal release, revert to roll back" satisfies a description-check bot and avoids a reactive post-create edit.
