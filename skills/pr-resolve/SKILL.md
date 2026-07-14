@@ -51,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.14-213440'
+  version: '2026.07.14-221500'
 ---
 
 # PR Resolve
@@ -186,15 +186,15 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
 Build the comment map via commands.md §3 — GraphQL for unresolved threads, REST
 for details. Surfaces, map fields, and pending-review handling are specified there.
 
-**Gate — emit these two lines before Step 4 (already-distilled rules that failed
-as prose, so now enforced as output):**
+**Gate — emit these two lines before Step 4 (enforced as output):**
 
 - `surfaces: inline=N reviews=N conversation=N` — fetch ALL THREE
   (`/pulls/{n}/comments`, `/pulls/{n}/reviews`, `/issues/{n}/comments`); a surface
   you did not fetch prints `0` — a fetch bug, not an empty surface; bot bulk
   findings hide in conversation comments.
 - `pending-self-review: yes|no → reply route` — pre-check at fetch time, never at
-  reply time; a pending review blocks replies (HTTP 422). Route per Hard Rule 13.
+  reply time; a pending review blocks replies (422) and PATCH edits to its own
+  comments (404). Route per Hard Rule 13 + wk-gh.
 
 - **Bot REST comment IDs 404 on reads, not writes.** After a bot replaces its review the REST `databaseId` 404s on `GET`, but `POST .../comments/{id}/replies` on the same ID still returns 201. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`; for replies, try the REST `/replies` POST before GraphQL (wk-gh).
 
@@ -465,8 +465,9 @@ threads resolved/open, conflicts, and PR URL.
 
 ## Step 11: Session Retro
 
-Invoke `wk-retro` to capture session-level learnings. Mandatory on every
-completion, including narrow directives.
+**Important — run `wk-retro` on every completion**, including narrow directives and
+autonomous/Auto-Mode runs. A full-cycle run invokes it or announces the deferral and
+why — never silently skip.
 
 ## Quick Reference
 

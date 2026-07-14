@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.14-213439'
+  version: '2026.07.14-221501'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -143,6 +143,13 @@ later submitted. Guard every reply post:
 - Never treat a `state: "PENDING"` response from a reply mutation as success —
   read the returned `state` and treat any non-published state as a failure needing
   remediation.
+- While the author's own review stays PENDING, its inline comments are not
+  addressable via standard REST: `POST /pulls/{n}/comments` (inline reply) returns
+  422 (`one pending review`), and `PATCH` on a comment belonging to that pending
+  review returns 404. Resolve the thread via GraphQL `resolveReviewThread`, post
+  the substantive reply as a top-level `POST /issues/{n}/comments`, and defer any
+  edit to the author's own annotation until the pending review is submitted or
+  dismissed — never submit it to unblock.
 
 **Resolve the exact repo name before any GraphQL `$owner`/`$repo` call.** URL
 slugs normalize underscores to hyphens, but the GraphQL API requires the stored
