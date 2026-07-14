@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.10-220916'
+  version: '2026.07.14-224421'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -373,6 +373,11 @@ Follow-ups present → offer once:
   main=$(git worktree list --porcelain | awk 'NR==1{print $2}')
   cd "$main" && git wtr "{head}"
   ```
+- **`git wtr` fails on dirty files → triage before escalating.** Run `git status
+  --short`; if every entry is a recognizable throwaway artifact (test-runner state
+  like rspec last-failures, `tmp/`, coverage output), delete just those files and
+  retry `git wtr` once. Reserve `--force` (and any confirmation ask) for genuine
+  uncommitted work the user might want — never default to `--force`.
 - **Run only from inside a dedicated `worktrees/<name>` checkout.** Skip the
   step entirely when the merge ran from the repo root — never remove it.
 - The merge is already confirmed (`state == "MERGED"`), so the branch-merged

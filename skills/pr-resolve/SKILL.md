@@ -51,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.14-221500'
+  version: '2026.07.14-224422'
 ---
 
 # PR Resolve
@@ -126,6 +126,9 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
     with it" means leave it alone, not submit it. Note it once, route around via
     the GraphQL resolve path (Step 3); submit only on an explicit "submit my
     review" instruction. Re-prompting >1×/session is a violation.
+14. **Never triage a comment on an unclean base.** Conflict markers present
+    (`git diff --check`) OR `$BEHIND > 0` against base → integrate base first
+    (Step 2); reporting the count/markers and continuing is a violation.
 
 ## Step 1: Identify the PR
 
@@ -148,22 +151,19 @@ Co-author session adds:
 
 Sync with both base and remote PR branch before triaging. Commands: commands.md §2.
 
-- **HARD RULE — conflict-marker pre-flight is the first action.** Before any
-  fetch or comment read, run `git diff --check`. Any markers → resolve (or
-  delegate to `wk-pr-update`) to a clean tree first. Never triage or fix on a
-  conflicted tree — it embeds markers in commits or builds suggestions on a stale diff.
+- **Conflict-marker pre-flight is the first action** (Hard Rule 14): run `git diff
+  --check`; any markers → resolve (or delegate to `wk-pr-update`) to a clean tree
+  before any fetch or comment read — a conflicted tree embeds markers in commits or
+  builds suggestions on a stale diff.
 - **Reconcile remote PR branch first** — fetch, rebase onto `origin/$HEAD_BRANCH`
   if remote is ahead. Keeps next push fast-forward; avoids a divergent merge.
-- **Integrate the base branch** — merge-aware pre-check: HEAD already has a base
-  merge and `$BEHIND <= 5` → plain `git merge`. `$BEHIND > 0` obligates the merge
-  before reading one comment; reporting the count and continuing is a violation.
-- Otherwise delegate base integration to `wk-pr-update` (only if it preserves the
-  no-force-push contract); on an unresolvable conflict, validation regression, or
-  required forced push it reports → stop and surface the blocker.
-- **Base-advance conflict (upstream PR merged) → rebase onto the new base**
-  (commands.md §2). Re-verify, resume only on a clean tree, push with
-  `git push --force-with-lease` (Hard Rule 4 exception) — never bare `-f`. A
-  clean local merge may not clear `mergeable: CONFLICTING` → pivot to rebase (§2).
+- **Integrate the base branch** (Hard Rule 14) — merge-aware pre-check: HEAD already
+  has a base merge and `$BEHIND <= 5` → plain `git merge`.
+- Otherwise delegate to `wk-pr-update` (must preserve no-force-push); on any
+  reported blocker (unresolvable conflict, validation regression, forced push) →
+  stop and surface it.
+- **Base-advance conflict (upstream PR merged)** → rebase onto the new base; a clean
+  local merge may not clear `mergeable: CONFLICTING`, so pivot to rebase (commands.md §2).
 - **HARD RULE — stacked PR CLOSED with its base branch deleted → recover before
   triaging.** A child based on a parent's head branch auto-CLOSES (not retargets)
   when the parent squash-merges under `delete_branch_on_merge`; it cannot be

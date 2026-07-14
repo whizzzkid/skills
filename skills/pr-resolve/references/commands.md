@@ -65,7 +65,9 @@ git rebase --onto "origin/$BASE_BRANCH" "$(git merge-base HEAD "origin/$BASE_BRA
 A clean local merge does not clear GitHub's `mergeable: CONFLICTING` when upstream
 deleted a file the branch modified — GitHub recomputes from the original PR
 ancestor, which still holds the file. `mergeable: CONFLICTING` after a merge →
-pivot to the rebase above, never a second merge.
+pivot to the rebase above, never a second merge. After rebasing: re-verify, resume
+only on a clean tree, and push with `git push --force-with-lease` (Hard Rule 4
+exception) — never bare `-f`.
 
 Stacked PR CLOSED with its base branch deleted (parent squash-merged under
 `delete_branch_on_merge`) — recover in order; the head branch must still exist:
