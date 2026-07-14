@@ -51,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.14-224422'
+  version: '2026.07.14-225157'
 ---
 
 # PR Resolve
@@ -331,8 +331,12 @@ verifying each."
 
 ## Step 6: Execute — Apply Fixes, Verify, Commit
 
-Apply all Step 5 decisions: process `fixes_to_apply`, `dismissals`, `deferrals`
-in order. Commands: commands.md §6.
+Apply all Step 5 decisions (`fixes_to_apply`, `dismissals`, `deferrals`) in
+order. Commands: commands.md §6.
+
+**Important — Step 5 decisions are binding; never pause mid-execution to
+re-confirm a decided action.** The consult gate already collected every
+decision; the only in-flow stop is a verification failure (sub-step 2).
 
 **Issue-class scan before each fix.** Identify the issue class; grep the full PR
 diff for sibling paths sharing it — per-class grep targets in commands.md §6 (a
@@ -347,15 +351,13 @@ file the grep returns, not the named one.
 **For each fix:**
 
 1. Apply the change with Edit.
-2. Verify with the repo's build/lint/test command. No build system → warn once. Verification fails → ask whether to fix, commit anyway, or skip. Go file → `goimports -local <module> -w <file>` before staging (not `-l`, which only lists → false pass; `go test` misses import-grouping CI rejects).
+2. Verify with the repo's build/lint/test command. No build system → warn once. Verification fails → ask whether to fix, commit anyway, or skip. Go file → run `goimports` before staging (commands.md §6).
 3. Commit one commit per triage unit (HEREDOC template, commands.md §6; co-author trailer per Hard Rule 9).
 4. Record the full SHA immediately: `FULL_SHA=$(git log --format=%H -1 <short_or_HEAD>)`.
 5. Update the drafted reply with a clickable commit link, full SHA from git (never infer from a short SHA; format in commands.md §6).
 
 **For each dismissal or deferral.** No code change — use the Step 5 reply.
 Deferrals reference the user-provided ticket; never create tickets here.
-
-**Do NOT push after each commit.** Push all commits together in Step 8.
 
 ## Step 7: Confirm Everything
 

@@ -216,6 +216,13 @@ back out temporarily, `git add`/commit the file with only the current fix's
 lines present, then re-apply the other fix's edit and repeat for its own
 commit — avoids `git add -p`'s hunk-splitting fragility.
 
+Verify before staging a Go file (`goimports` groups imports; `-l` only lists →
+a false pass, and `go test` misses the import grouping CI rejects):
+
+```bash
+goimports -local <module> -w <file>
+```
+
 Commit (one commit per triage unit; omit the trailer in non-co-author sessions):
 
 ```bash
