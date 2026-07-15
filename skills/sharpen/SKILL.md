@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.14-231242'
+  version: '2026.07.15-234336'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -336,7 +336,7 @@ not in the diff will cause a 422 error from the GitHub API.
 - **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list — and route a **new** such row straight there (add only its ID inline, ~6 B), never place-inline-then-reclaim; (2) delete scaffolding, blank lines, or a provably-duplicated rule — the latter outright with zero replacement (a cross-ref back re-spends the reclaim). A pure row/bullet merge reclaims ~3 B (prefix + newline), NOT content — count it only when it also drops the now-duplicated phrase. Reserve prose for the final margin.
 - **Budget the reclaim before drafting when headroom is tight.** Headroom under ~2× the drafted edit → measure the staged rule first, then pick reclaim target(s) whose *combined* size exceeds it with margin (≥1.2×, not merely strict) — budget ≥2 reclaims up front (one undershoots a multi-clause rule); net change must be non-positive on the first pass.
   - **Very important — measure exactly once.** Single-digit headroom → the new rule's *measured* byte size IS the reclaim quantity — stage the draft, never eyeball char count (a `→` is 3 B). Apply the cut in ONE pass; a second measure-and-trim cycle is the re-violation signal — stop and re-plan with one decisive scaffolding cut, not another prose nibble.
-  - **Important — measure with the hook's `measure()`, never `wc -c` or a fresh awk.** A divergent hand-rolled replica reports false headroom. Run the IDENTICAL staged-blob command pre-draft and at commit — `git add` first, then `git show ":path" | LC_ALL=C awk` (`length($0)+1`, body after `---`); never the working tree.
+  - **Very important — run the hook's `measure()` verbatim; never `wc -c` or an abbreviated awk.** Dropping its `state="pre"` init counts front-matter as body → false, self-consistent over-ceiling headroom. Copy `measure()` from `.githooks/check-skill-size.sh`, `git add` first, run pre-draft and at commit; never the working tree.
 
 ## Step 8: Verify and Commit (terminal gate)
 
@@ -472,15 +472,11 @@ Invoked without a specific incident → batch mode.
 - **Capture insights.** When external research surfaces a useful pattern, add it to the
   overfit-categories table or as a new rule in `wk-sharpen`.
 
----
-
 ## Requirements
 
 - Read the skill being improved; edit `skills/{skill-name}/SKILL.md`.
 - Read `$HOME/.claude/memory/` (batch mode); read/write/delete `$HOME/.claude/skills/learnings/`.
 - Read/write `$WK_SKILLS_HOME/{learnings,learnings/retrospect,.distilled-memories}`.
-
----
 
 ## Post-Completion
 
