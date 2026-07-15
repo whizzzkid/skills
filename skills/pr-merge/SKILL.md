@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.14-224421'
+  version: '2026.07.15-204739'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -48,6 +48,10 @@ ticket → summarise follow-ups.
   transition, follow-up collection, retro, and worktree cleanup; an inline MCP
   call silently skips all but the transition. An already-`MERGED` PR is detected
   by the Step 1 state check, which skips Steps 2–6 and resumes at Step 7.
+- **HARD RULE — enter the skill directly on a merge signal; never hand-do a
+  cosmetic pre-step first.** Do not tick PR-body checkboxes or edit the body
+  before entering — let the Step 5 action-item scan decide whether any checkbox
+  actually blocks.
 - **NOT** for merging someone else's PR unless the user explicitly owns the merge.
 
 ## Step 1: Resolve the PR
@@ -159,6 +163,10 @@ gh pr view {number} --json reviewDecision,reviews \
     epic/parent, file it, then resolve each thread with a `Tracked in [<KEY>]`
     reply. User declines filing → leave the thread open and proceed anyway;
     Minor threads must not block a merge-ready PR.
+  - **Bot-thrash → stop the push cycle.** A push produced new-only Minor/Info
+    findings for ≥1 round → surface the thrash explicitly and offer
+    merge-now-with-deferred-follow-ups. Only a fresh Blocker/Major justifies
+    another push; do not chase each new Minor with another round.
 - `wk-pr-resolve` excludes self-review threads from triage → leaves
   author-opened threads untouched. Leave them open: proceed to Step 6 without
   resolving them.
