@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.13-064027'
+  version: '2026.07.15-231418'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -26,13 +26,7 @@ metadata:
 
 # Workflow
 
-Master orchestration for development tasks. Follow this sequence exactly:
-
-```
-Plan -> Implement (commit per step + docs) -> Test -> Refactor & Deletion Scan
-  -> Live Preview (frontend only) -> Adversarial Review -> PR
-  -> CI Fix Loop -> Resolve Comments -> Docs Audit -> Retro
-```
+Master orchestration for development tasks. Phases run in order (`## Phase 1`–`8`); follow the sequence exactly.
 
 ---
 
@@ -291,7 +285,7 @@ After PR creation or any push to a PR branch, monitor, diagnose, and fix CI unti
 
 - Use `gh pr checks --watch --fail-fast` for generic checks.
 - Use `wk-buildkite` for Buildkite.
-- Run long watches in the background and continue with independent work.
+- Run long watches in the background and continue with independent work; before any wait >~1 min (suite, CI poll, flake re-runs) state what runs and rough duration so silence does not read as a hang.
 - **Never end a turn announcing a holding pattern or delegating its final action.** Watch CI to completion this turn; once green, run `gh pr ready` yourself — never hand "mark ready once CI passes" to the user.
 - Read actual logs first.
 
