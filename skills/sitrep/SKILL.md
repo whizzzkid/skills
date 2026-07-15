@@ -55,7 +55,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.14-180752'
+  version: '2026.07.15-201326'
 ---
 
 # Sitrep
@@ -103,8 +103,8 @@ per-day live directories; dated snapshots at close.
 - Auto-action items already done at generation start `data-done="true"`; nested
   sub-items use `class="st-item st-nested"`.
 - Group items only via the flat `st-item`/`st-nested` span pattern already in the
-  file. Never freelance a new tag or nesting shape — a nested unclassed `<div>`
-  inside `.sitrep-col` collapses the flex boundary → single-column render.
+  file. **Important — never freelance a new tag or nesting shape**; a nested
+  unclassed `<div>` inside `.sitrep-col` collapses the flex boundary → single-column render.
 - Non-actionable content (meeting lines, headers, standup block) is plain text
   or inline markdown.
 - Sort by priority/severity, staleness, due date, then undated. Lead with 🔴
@@ -429,7 +429,7 @@ git -C "$SITREP_REPO" push
 ```
 
 Fold auto-actions into the same commit, or a follow-up
-`chore(sitrep): ✅ {action}`.
+`chore(sitrep): ✅ {action}`. Then invoke [`wk-learn sitrep`](../learn/README.md).
 
 ## Sub-command: end
 
@@ -608,6 +608,7 @@ If `$WK_SKILLS_HOME` is set and unprocessed learning files exist: process
 highest severity first, cap at 5 per run, carry the rest. Invoke
 [`wk-sharpen`](../sharpen/README.md) with each file as input. Do not rename
 files here; [`wk-sharpen`](../sharpen/README.md) owns `.learned.md` renames.
+Then invoke [`wk-learn sitrep`](../learn/README.md).
 
 ## QPR season awareness
 
@@ -647,8 +648,3 @@ Surface a quarterly-review nudge once per day; never block on it.
   (`gh` org scope).
 - `jq` (dismissed-registry JSON); `silverbullet` CLI able to serve `$SITREP_REPO`.
 - MCP servers for Slack, Gmail, Calendar, Granola, Drive, Docs, GitHub, Jira, Lattice.
-
-## Post-Completion
-
-Invoke [`wk-learn`](../learn/README.md) with this skill's short name as the
-argument (for example, [`wk-learn sitrep`](../learn/README.md)).
