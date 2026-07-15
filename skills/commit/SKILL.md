@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.10-191234'
+  version: '2026.07.15-184218'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -284,6 +284,10 @@ not history — only settled docs (specs, ADRs) belong in committed history.
   equivalents) as ephemeral — never stage those.
 - Staging everything under `docs/` blindly leaks plan docs into the PR. Add
   spec/ADR paths explicitly; exclude the working-artifact dirs.
+- **Exception — user-directed in-repo artifacts are deliverables, not scratch.**
+  When the user explicitly directs artifacts to a specific in-repo path (not a
+  known-ephemeral dir), stage them with the work by default — never silently
+  withhold them as scratch (else the user must ask again to include them).
 
 ### Verify the staged set before a grouped commit
 
