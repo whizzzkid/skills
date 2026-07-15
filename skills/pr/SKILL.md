@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.14-172952'
+  version: '2026.07.15-221223'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -144,8 +144,10 @@ done
 ```
 
 - **`$BEST_DIST` unchanged (`999999`) after the loop = detection FAILURE, not
-  "base = default"** — no candidate yielded a merge-base. Require an explicit
-  `--base` (or the plan's stacking target) before `gh pr create`.
+  "base = default"** — no candidate yielded a merge-base. Before requiring an
+  explicit `--base`, retry the merge-base directly against
+  `origin/$DEFAULT_BRANCH` (fetch first); a stale local ref is the usual cause, so
+  trust a succeeding remote result rather than defaulting.
 
 If `$BEST_BASE` differs from `$DEFAULT_BRANCH`, surface to the user before doing
 anything else — silent mis-basing is costly to undo:
@@ -194,12 +196,14 @@ a merged branch.
 
 ### Measure scope against the resolved base
 
-Use `$BEST_BASE` for both the scope diff and the eventual `gh pr create --base`
-flag — the wrong base inflates LOC and breaks the stacking decision below.
+Use `$BEST_BASE` for the eventual `gh pr create --base` flag, but always
+diff/measure scope against `origin/$BEST_BASE` (fetch first) — a stale local base
+ref reports already-merged files as phantom additions and inflates LOC.
 
 ```bash
-git diff "$BEST_BASE...HEAD" --stat
-git diff "$BEST_BASE...HEAD" --shortstat
+git fetch origin "$BEST_BASE" --quiet
+git diff "origin/$BEST_BASE...HEAD" --stat
+git diff "origin/$BEST_BASE...HEAD" --shortstat
 ```
 
 - Diff exceeds ~30 lines → ask the user about splitting further via
