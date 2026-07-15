@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.25-214432'
+  version: '2026.07.15-191203'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -89,6 +89,7 @@ Tell the user:
 - Do NOT configure auth, create tokens, or work around auth failures. User must run `bk auth login` interactively.
 - Logs unfetchable after re-auth → ask user to download from the Buildkite web UI.
 - Never extract a token from the user's `bk` config/environment and call the Buildkite REST API directly via `curl` as a workaround. Token-based curl workarounds bypass scope checks, leak credentials into shell history, and have repeatedly produced multi-turn dead ends when the original failure was scope-shaped, not credential-shaped.
+- `Mutation operations are not allowed` (a GraphQL-only token) is NOT a stop-case — see [Retrying a failed build](#retrying-a-failed-build) for the rebuild fallback before escalating.
 - **Stop diagnosing once a failure is infra-shaped.** After ≥2 consecutive rebuilds fail with the same error string on the same step, classify as infra-side (e.g. mirror/network failure unrelated to the diff) and stop — report the pattern and recommend waiting for CI to recover. Do not list all jobs or re-diagnose; repeated identical errors across independent rebuilds add noise, not signal.
 
 ## Tool Selection
@@ -250,6 +251,17 @@ curl -s -X PUT \
 
 - Replace `{org}`, `{pipeline}`, `{build_number}` with actual values. Requires a token with the `write_builds` scope.
 
+## Retrying a failed build
+
+- `bk job retry <id>` needs a REST-mutation-capable token. A GraphQL-scoped token fails with "This API access token only allows GraphQL queries. Mutation operations are not allowed."
+- That error is NOT a full auth failure — the token still has read access. Try the build-level rebuild first (a different endpoint that may succeed with the same token):
+
+  ```bash
+  bk build rebuild <build-number> -p <pipeline> -y
+  ```
+
+- Escalate to `bk auth login` only if `bk build rebuild` also fails.
+
 ## Adding env vars to a CI pipeline
 
 A new env var must be present at **every** forwarding layer or it is silently dropped before reaching the container.
@@ -312,6 +324,7 @@ When saving any Buildkite artifact to disk — build JSON, job logs, artifact fi
 | Build URL shared | Parse pipeline/build number, fetch details |
 | "why did CI fail" | Progressive investigation: status -> logs -> analysis |
 | Auth error (401/403) | **Stop.** Tell user to run `bk auth login` |
+| `bk job retry` "mutation not allowed" | Try `bk build rebuild <n> -p <pipeline> -y` before escalating |
 | Missing scope | **Stop.** Tell user which scope is needed, run `bk auth login` |
 | After git push | Check build status, report result |
 | Cancel from within a build | `buildkite-agent build cancel` (no token needed) |
