@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.30-215114'
+  version: '2026.07.15-204310'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -120,6 +120,14 @@ fold findings into Phase 3 prioritisation, Phase 4 comments, and summary.
 **HARD RULE — spec/design docs are unconditional triggers.** Any changed file
 matching `docs/(specs|adr|arch|design|rfc)/` invokes `wk-arch-review` before
 Phase 3, even for a doc-only diff.
+
+- Grep the changed-file list mechanically — never eyeball it or treat it as a judgment call:
+
+  ```bash
+  gh pr diff <number> --name-only | grep -qE 'docs/(specs|adr|arch|design|rfc)/' && echo "ARCH-REVIEW REQUIRED"
+  ```
+
+- A match is a gate: invoke `wk-arch-review` even when the rest of the diff looks routine. A spec-doc addition triggers regardless of the surrounding code.
 
 Also trigger when any holds:
 
@@ -440,6 +448,17 @@ Every `comments[]` entry must be top-level with `path`, `line`, `side`.
 replies cannot ride in the pending payload (fold into the body, or live-post with
 opt-in).
 
+### Add comments to an existing pending review
+
+- `POST /pulls/{n}/comments` on an existing pending review fails with 422 "user_id can only have one pending review per pull request" — GitHub allows no append.
+- Delete the pending review, then recreate with the full comment set in one `reviews` POST:
+
+  ```bash
+  gh api repos/{owner}/{repo}/pulls/{number}/reviews/{review_id} --method DELETE
+  ```
+
+- Rebuild every comment from scratch — pending-review comments return `line: null` and cannot be round-tripped.
+
 ### Compose the review body
 
 The body is the verdict on the change as a whole, not an investigation log.
@@ -459,6 +478,8 @@ process meta-commentary about skills/tools; structurally-obvious findings ("no c
 concerns" for doc-only diffs); diff narration; bot re-narration.
 
 ### After posting
+
+**HARD RULE — fire the `open` on every review create AND recreate**, independent of whether the POST response parsed. If the create response fails to parse (e.g. a jq error), re-query the review to recover `html_url` — verify separately, but never drop the open.
 
 Capture `html_url` from the POST response and open it:
 
