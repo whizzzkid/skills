@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.14-221501'
+  version: '2026.07.15-173042'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -188,7 +188,16 @@ silent posts erode trust and make automated activity hard to audit.
   string (e.g. a `Assisted by Claude Code (model)` line) at payload-build
   time defeats the verbatim guarantee and ships a non-canonical footer.
   Read this block from the skill and inject it; do not reconstruct it from
-  memory.
+  memory. The block is verbatim except the `<UTC>` timestamp field (below).
+- **Pin the `wk-skills` link to the post-time snapshot.** The link path is
+  `tree/main@%7B<UTC>%7D`, where `<UTC>` is a render-time UTC timestamp — so a
+  reader sees the skills exactly as they were when the message posted. A bare
+  repo-root link tracks moving HEAD and misattributes once HEAD advances. Stamp
+  it per post:
+  - `date -u +%Y-%m-%dT%H:%M:%SZ` → substitute for `<UTC>`.
+  - URL-encode only the braces (`{`→`%7B`, `}`→`%7D`); `@`, `T`, `:`, `Z` stay
+    literal. Raw braces 404; GitHub resolves `main@{<ts>}` to the commit
+    at/before that instant and renders the tree as of then.
 - **The commit-message footer is a DIFFERENT string — never ship it on a
   GitHub/outbound body.** The `wk-commit` trailer (`🦾 Generated with
   [wk-skills](...) and multiple models.`) belongs only in commit messages and
@@ -201,12 +210,13 @@ silent posts erode trust and make automated activity hard to audit.
   ```bash
   grep -qF 'DM me your feedback.</sup>' <<<"$body" || echo "REJECT: canonical footer absent"
   grep -qF '🦾 Generated with' <<<"$body" && echo "REJECT: commit-trailer variant present"
+  grep -qE 'tree/main@%7B[0-9T:Z-]+%7D' <<<"$body" || echo "REJECT: footer link not pinned to post-time snapshot"
   ```
   A REJECT on either line blocks the post — fix the footer and re-check before writing.
 
 ```
 ---
-<sup>Generated using [wk-skills](https://github.com/whizzzkid/skills) and multiple agents/models. DM me your feedback.</sup>
+<sup>Generated using [wk-skills](https://github.com/whizzzkid/skills/tree/main@%7B<UTC>%7D) and multiple agents/models. DM me your feedback.</sup>
 ```
 
 Apply to:

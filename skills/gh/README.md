@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.07.14-221501`
+**Version:** `2026.07.15-173042`
 
 ## Invocation
 
@@ -34,4 +34,5 @@ flowchart TD
 - **Exceptions are explicit:** The org filter is bypassed only when the user names a different org, says "all orgs", or the command targets the current repo directly (e.g., `gh pr view`).
 - **Artifact download path:** Files saved from `gh` commands go to `/tmp/agent/gh/<owner>/<repo>/<resource_type>/<resource_id>/<filename>` — mirrors the Buildkite convention.
 - **Notification filtering uses `jq`:** Org-scoping for `gh api notifications` is applied via `.repository.owner.login == "$GITHUB_ORG"` in a jq filter, not a CLI flag.
+- **Point-in-time footer link:** The canonical outbound footer's [wk-skills](https://github.com/whizzzkid/skills) link pins to `tree/main@%7B<UTC>%7D` — a render-time UTC timestamp — so readers see the skills as they were when the message posted, not moving HEAD.
 - **Model-invocable only:** This skill is a guard rail, not a user command — it fires silently alongside any other skill that uses `gh`.
