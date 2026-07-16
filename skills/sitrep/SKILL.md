@@ -55,7 +55,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.15-201326'
+  version: '2026.07.16-201450'
 ---
 
 # Sitrep
@@ -246,7 +246,8 @@ Agent roster:
 Soft/hard block handling per canonical subagent contract: OAuth soft blocks
 degrade with an authorization CTA; missing MCPs are hard blocks. A
 `tool_unavailable` return = capability-inheritance failure — re-run that
-domain in the main context, not as "nothing found".
+domain in the main context, not as "nothing found". A stalled agent (idle only,
+no flag) → 3-nudge ceiling, then degrade + carry-forward (see contract).
 
 #### Jira full open-ticket sweep
 
@@ -316,8 +317,7 @@ Content inventory, skip empty:
 6. Jira — Tickets / Mentions
 7. Confluence — Mentions
 
-Every item needs a link or is omitted. FYI-only items render as read-only
-bullets. Sort and mark urgency per the rendering contract.
+Sort and mark urgency per the rendering contract.
 
 ### Stage 4: Write live.md
 

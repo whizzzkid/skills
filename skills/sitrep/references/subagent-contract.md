@@ -29,3 +29,16 @@ SUBAGENT CONTRACT (mandatory):
   orchestrator styles and conflict-detects by it.
 - PROBE TOOLS FIRST: your domain's MCP tools may not be inherited (subagents do NOT reliably get the orchestrator's connectors). Missing → return `tool_unavailable: true` at once; never fail item-by-item.
 ```
+
+## Orchestrator: unresponsive-agent ceiling
+
+An agent can stall indefinitely — emitting only idle events, never a substantive
+result and never a `tool_unavailable` flag — even after repeated nudges. The
+orchestrator does not poll, so a silent-failure loop is indistinguishable from
+"still working" without a ceiling.
+
+- Cap nudges at **3**. After 3 nudges with no substantive result, treat that
+  domain as `tool_unavailable` by default.
+- Degrade gracefully: carry forward the prior day's items for that domain with an
+  explicit "not reverified — agent unresponsive" note.
+- Move on — never block the whole run on one stalled agent.
