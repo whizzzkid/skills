@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.15-173042'
+  version: '2026.07.16-184249'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -251,6 +251,23 @@ Exceptions:
 If the calling skill emits a payload via a template (heredoc, file,
 jq construction), inject the footer at template-render time so a
 forgotten append cannot ship a footer-less message.
+
+## `gh pr checks --watch` is not proof of green
+
+`gh pr checks --watch` can return when a *subset* of checks resolves (a fast
+check finishes) while others are still `PENDING`/`IN_PROGRESS` — its exit is not
+a terminal-state guarantee. A single watch is not proof of green CI.
+
+- After the watch exits, re-query the full rollup and confirm every check is
+  terminal (`SUCCESS`/`FAILURE`, none `PENDING`/`IN_PROGRESS`) before treating
+  CI as green:
+
+  ```bash
+  gh pr view --json headRefOid,statusCheckRollup \
+    --jq '{head: .headRefOid, states: [.statusCheckRollup[].status] | unique}'
+  ```
+
+- Re-issue the watch if any check is still pending.
 
 ## Canonical download path
 

@@ -27,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.07.14-213442'
+  version: '2026.07.16-184248'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -146,6 +146,20 @@ Search in priority order; stop at first hit:
 - **No** key found → do not invent one. Skip transitions; in Stage 3 ask
   once whether a Jira ticket exists; if they say no, record it and stop
   offering for the rest of the branch.
+
+### Verify the key describes this work
+
+**HARD RULE — a detected key is a candidate, not a confirmed match.** An
+inherited or copy-pasted key from a branch/commit can point at unrelated work
+(a different component, or a Done ticket for another change). Before
+transitioning it or writing it into a PR title/body, fetch the issue
+(`getJiraIssue`) and confirm `fields.summary`, component/area, and `status`
+plausibly describe the current diff.
+
+- Mismatch signals: summary/component names a different service or feature than
+  the diff; ticket is `Done`/`Closed`/`Resolved` for unrelated work.
+- On mismatch → do not tag the stale key. Surface it, then locate or create the
+  correct ticket under the right parent and re-point all references.
 
 ---
 

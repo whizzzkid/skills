@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.15-231418'
+  version: '2026.07.16-184250'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -283,9 +283,9 @@ Before reworking a PR branch — force-push, restructure, content rewrite, big r
 
 After PR creation or any push to a PR branch, monitor, diagnose, and fix CI until green. Do not mark ready while CI is red.
 
-- Use `gh pr checks --watch --fail-fast` for generic checks.
+- Use `gh pr checks --watch --fail-fast` for generic checks; it can exit on partial resolution → re-confirm the rollup is terminal before calling CI green (`wk-gh`).
 - Use `wk-buildkite` for Buildkite.
-- Run long watches in the background and continue with independent work; before any wait >~1 min (suite, CI poll, flake re-runs) state what runs and rough duration so silence does not read as a hang.
+- Run long watches in the background; before any wait >~1 min (suite, CI poll, flake re-runs) state what runs and rough duration so silence isn't read as a hang.
 - **Never end a turn announcing a holding pattern or delegating its final action.** Watch CI to completion this turn; once green, run `gh pr ready` yourself — never hand "mark ready once CI passes" to the user.
 - Read actual logs first.
 
