@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.15-184218'
+  version: '2026.07.16-001241'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -319,6 +319,19 @@ in the working tree and block the commit.
   ```bash
   comm -12 <(git diff --name-only | sort) <(git diff --cached --name-only | sort)
   ```
+
+### Read committed content without mutating the tree
+
+To inspect a committed or staged version mid-run, use read-only `git show` —
+never `git stash`, `git checkout`, or `git reset`, which revert or discard the
+in-progress working tree.
+
+- Committed file at HEAD → `git show HEAD:<path>`; staged blob → `git show ":<path>"`.
+- `git stash` (no `--keep-index`) stashes staged + unstaged changes and resets
+  the tree to HEAD → silently reverts in-progress edits. Recovery needs `git
+  stash pop` of the right entry, made worse by unrelated stashes from other sessions.
+- Before any `stash`/`checkout`/`reset` in a run with uncommitted work, stop and
+  confirm it is intended.
 
 ## Prohibited Terms in Commit Messages
 
