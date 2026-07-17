@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.08-175435'
+  version: '2026.07.17-171348'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -111,6 +111,13 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
       fallback
   fi
   ```
+
+- **On macOS/BSD, options are not reordered after the first operand.** `mv src -v`
+  treats `-v` as the *destination*, silently renaming `src` to `./-v` — GNU would
+  read it as a flag. Put flags before operands, or terminate options with `--`.
+- **Run only commands with a known, intended effect** — never a speculative "guard"
+  line whose parse you have not verified; on BSD a stray flag lands as an operand
+  and mutates the filesystem.
 
 ## Apply or Report
 
