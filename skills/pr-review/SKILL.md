@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.17-164708'
+  version: '2026.07.17-165210'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -487,6 +487,12 @@ already posted/submitted + a new finding → post a **direct live** inline comme
 (`POST /pulls/{n}/comments` with commit_id + path + line) or a thread reply
 (`/comments/{id}/replies`); never open a second pending review for one incremental
 finding. Reserve a fresh pending review for an explicitly requested new complete pass.
+
+**HARD RULE — a distinct finding anchors at its own line.** Post it as its own
+comment on the diff line its subject lives on — never buried in a reply on a
+thematically-adjacent thread (thread-relatedness ≠ line-relatedness; a buried
+finding has no discoverable anchor). Reserve replies for continuing the *same*
+finding's thread (adding evidence to it).
 
 ### Compose the review body
 
