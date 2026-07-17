@@ -51,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.15-204856'
+  version: '2026.07.17-211532'
 ---
 
 # PR Resolve
@@ -78,6 +78,9 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
      yes/approve/proceed (same for Hard Rule 4 force-push). Auto Mode acts on
      evaluated recommendations, never on intent inferred from a question.
 2. **Never post reply comments without explicit user confirmation.**
+   - **A "don't post"/"no replies" directive bans publishing content (replies,
+     new comments, dismissal bodies) — never thread resolution**, an internal
+     state change that unblocks merge (resolve per Hard Rule 3).
    - **HARD RULE — every reply/dismissal body leads with substance (what
      changed, the decision, the commit SHA), never a pleasantry.** Praise/thanks
      openers ("Good catch!") are banned unconditionally. Route through
@@ -129,6 +132,9 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
 14. **Never triage a comment on an unclean base.** Conflict markers present
     (`git diff --check`) OR `$BEHIND > 0` against base → integrate base first
     (Step 2); reporting the count/markers and continuing is a violation.
+15. **User brevity scopes volume, not the step sequence.** "Just fix and push" =
+    fewer comments / faster lifecycle, never skip a later binding step (esp. Step
+    9.5 CI watch). Steps bind unless explicitly exempted ("skip CI wait").
 
 ## Step 1: Identify the PR
 
@@ -196,7 +202,6 @@ for details. Surfaces, map fields, and pending-review handling are specified the
   reply time; a pending review blocks replies (422) and PATCH edits to its own
   comments (404). Route per Hard Rule 13 + wk-gh.
 
-- **Bot REST comment IDs 404 on reads, not writes.** After a bot replaces its review the REST `databaseId` 404s on `GET`, but `POST .../comments/{id}/replies` on the same ID still returns 201. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`; for replies, try the REST `/replies` POST before GraphQL (wk-gh).
 
 **Important — agent-observed drift is first-class feedback.** Diff the current PR description
 against branch state (commits, files, test plan, CI) before triaging; never rely
@@ -419,8 +424,7 @@ before posting replies or resolving threads, even when it looks current.
 - Invoke `wk-docs` against files touched this session; update docs/specs/README when behavior, signatures, or config changed.
 
 **Post replies, reactions, resolve threads.** Re-run the pending self-review
-check before the first reply; route around the author's own pending review per
-Hard Rule 13 (never submit it). Post
+check first (route per Hard Rule 13). Post
 replies sequentially, routed by surface — full routing, reaction map, ID-refresh,
 and `404`/`NOT_FOUND`/outdated-thread/in-place-bot handling in commands.md §8.
 Key rules:

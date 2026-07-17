@@ -90,6 +90,8 @@ git rebase --onto "$TRUNK" "$OLD_BASE_TIP" HEAD
 - Author's/current-user's own → never submit (Hard Rule 13); note once; resolve worked threads via the no-body GraphQL mutation (not gated by the pending review). For a substantive reply that cannot post inline, use a top-level `POST /issues/{n}/comments` noting the constraint; defer any edit to the author's own annotation until the pending review is submitted or dismissed. Note the deferral in the summary — pushed fixes stand on their own and bots re-scan on green CI.
 - Another user's pending review → surface once, proceed without it.
 
+**Bot REST comment IDs 404 on reads, not writes.** After a bot replaces its review the REST `databaseId` 404s on `GET`, but `POST .../comments/{id}/replies` on the same ID still returns 201. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`; for replies, try the REST `/replies` POST before GraphQL (wk-gh).
+
 Build the comment map (GraphQL for unresolved threads, REST for full details):
 
 ```bash
