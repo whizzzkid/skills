@@ -3,7 +3,7 @@
 > Enforces the test quality bar — new-function/branch coverage, behavioral
 > assertions, and mandatory sad-path tests for every error branch.
 
-**Version:** `2026.07.08-175435`
+**Version:** `2026.07.17-223639`
 
 ## Invocation
 
@@ -16,6 +16,7 @@
 
 - Cover new lines: every non-trivial function/branch added in the diff needs a test (narrow exceptions only).
 - Tests assert observable behavior, not internal state or private method calls.
+- Shape/structure assertions never prove a feature works — drive the real path end-to-end against real values instead.
 - Sad-path tests are mandatory for every error-handling branch.
 
 ## Noteworthy

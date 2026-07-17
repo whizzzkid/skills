@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.08-175435'
+  version: '2026.07.17-223639'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -65,6 +65,16 @@ Manual: `/wk-workstyle-testing scan` (full working tree) · `/wk-workstyle-testi
 - **Tests assert behavior, not implementation.** Avoid tests that
   assert internal state or private method calls. Test the
   observable outcome.
+- **Shape assertions never prove a feature works.** Asserting a
+  config/data value equals an expected literal proves the input
+  *looks* right, not that the parse → lookup → compare path runs — it
+  still passes with a wrong lookup key, type mismatch, or comparison
+  bug. To validate a feature works, drive it end-to-end through its
+  real entry point (HTTP request, public method) against real values,
+  with no stub of the path under test (e.g. `and_call_original`),
+  asserting the observable outcome plus a negative case. Reserve
+  structural/shape assertions for genuine schema-contract tests, never
+  as a proxy for "it works."
 - **Sad-path tests are mandatory** for any error-handling branch.
   A function that throws/returns-error with no corresponding test
   is untested error handling.
