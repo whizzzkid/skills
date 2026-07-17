@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.08-174545'
+  version: '2026.07.17-220724'
   internal: false
   model:
     openai: gpt-4.1
@@ -281,6 +281,23 @@ markers, `git status` listing "both modified."
 ```bash
 git status --short | grep '^UU\|^AA\|^DD'
 ```
+
+**HARD RULE — never trust a rerere-cached resolution.** When merge/rebase/patch prints
+`Staged '<file>' using previous resolution`, `rerere.enabled` silently re-applied a
+prior resolution by content hash and left **no conflict markers** — a wrong-direction
+cached resolution (e.g. one that dropped this branch's own additions) applies invisibly,
+and `git diff --check` finds nothing because the file is already staged.
+
+- Do not accept the staged result. Recreate the real conflict and re-resolve by hand:
+
+  ```bash
+  git rerere forget <file>
+  git checkout --merge <file>   # restores <<<<<<< markers for manual resolution
+  ```
+
+- Hand-verify **both sides are represented** in the final result before staging.
+- For auto-generated files (schema dumps like `schema.rb`, `*.lock`), regenerate from
+  source and verify the merged output rather than accepting any textual resolution.
 
 For each conflicted file:
 
