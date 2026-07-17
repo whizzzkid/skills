@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.16-184249'
+  version: '2026.07.17-211225'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -128,6 +128,17 @@ automatically after ONE GraphQL failure rather than retrying the mutation.
 fail: after a bot replaces its review, `GET /pulls/{n}/comments/{id}` 404s the
 stale `databaseId` while `POST .../comments/{id}/replies` on that same ID still
 returns 201 — try the REST `/replies` POST before falling back to GraphQL.
+
+**Build any non-trivial `gh api` POST/PATCH JSON body with `jq -n`, never a heredoc.**
+Hand-escaping quotes/backticks in a heredoc-interpolated JSON literal corrupts the
+structure on any special char in the content, and the server returns an opaque
+`HTTP 400 "Problems parsing JSON"` — no local syntax error to catch it first. Let `jq`
+own the escaping regardless of body content:
+
+```bash
+jq -n --arg body "$text" '{body: $body, event: "COMMENT"}' \
+  | gh api repos/{owner}/{repo}/pulls/{n}/reviews --input -
+```
 
 **A pending review silently swallows a GraphQL reply.** When the acting user
 already has a PENDING review on the PR, the `addPullRequestReviewComment`
