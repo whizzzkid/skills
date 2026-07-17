@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.15-204310'
+  version: '2026.07.17-164708'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -141,6 +141,13 @@ Also trigger when any holds:
 Invoke with changed doc path when one changed; else pass PR number:
 `Skill(wk-arch-review, args="<changed-doc-path | PR number>")`. Treat high-severity
 findings as Phase 4 concerns.
+
+**HARD RULE — spec-doc claims about existing code are Unverified until checked.**
+For spec/design-doc reviews, treat every claim about existing code (named
+structs/fields, "reuses X", "within the existing Y", "~N-line port") as Unverified
+until grep/read confirms it — delegate the batch to one verification subagent.
+Doc-only diffs still owe this check. Re-verify a posted finding the moment a later
+result contradicts it.
 
 ## Phase 2: Existing Review Comments
 
@@ -289,6 +296,13 @@ On the returned findings:
 Verdict is advisory here: pr-review always proceeds to compose comments — never
 blocks the author or posts from the gate.
 
+**HARD RULE — logic-bearing findings need an empirical pass.** When the change
+contains executable logic (matcher, grader, parser, state machine, algorithm) —
+including findings returned from the Phase 1 `wk-arch-review` path — drive the real
+implementation or a minimal faithful harness with adversarial/edge inputs and
+record PASS/FAIL before Phase 4. Never compose comments from un-run reasoning; a
+finding you could have executed but only argued is unverified.
+
 ### Discriminate environmental failures from PR findings
 
 Before treating a local test/command failure as a PR finding:
@@ -333,6 +347,13 @@ one to two sentences. Tag each with a severity prefix:
 ### Comment format and suggestion blocks
 
 Body shape: `**{severity}:** {observation}` then optional context/evidence/fix.
+
+**HARD RULE — attribute agent evidence explicitly.** Render every evidence-backed
+claim with an agent stem — "My agent verified/simulated/ran `<X>` and found `<Y>`" —
+never a bare "I verified". Reserve bare first-person for the human's own posture
+("Approving with concerns"). Applies to inline comments and the review body — the
+reviewer posts on the user's identity, so a bare "I verified" misattributes a
+machine check to the human.
 
 When proposing a concrete replacement, prefer a GitHub ` ```suggestion ` fence
 over a language fence, only for target lines inside the PR diff:
@@ -459,14 +480,31 @@ opt-in).
 
 - Rebuild every comment from scratch — pending-review comments return `line: null` and cannot be round-tripped.
 
+### Follow-up finding after a review is posted
+
+Gate the mechanism on review state. No review yet → pending draft (above). A review
+already posted/submitted + a new finding → post a **direct live** inline comment
+(`POST /pulls/{n}/comments` with commit_id + path + line) or a thread reply
+(`/comments/{id}/replies`); never open a second pending review for one incremental
+finding. Reserve a fresh pending review for an explicitly requested new complete pass.
+
 ### Compose the review body
 
 The body is the verdict on the change as a whole, not an investigation log.
 
+- **HARD RULE — first clause is the verdict state, never a praise adjective.** Open
+  with `LGTM 🚀` (clean), `LGTM, one minor nit` (small items), or `Approving with
+  concerns — <biggest risk>` (concerns). Ban praise-adjective openers ("Solid",
+  "well-scoped", "great") — no information, reads as AI filler; genuine praise goes
+  in a later line, not the opener.
 - **HARD RULE — LGTM is one line.** No concerns → body is one line max (`LGTM 🚀`
   or equivalent) plus the footer.
 - Recommend a PR stack and sketch split lines if PR is too large or mixes concerns.
-- Describe change-spanning structural concerns in the body; leave instances inline.
+- **Body must not restate an inline finding.** Diff each body paragraph against the
+  inline `comments[]`; cut any that duplicates one. The body carries the verdict,
+  change-spanning concerns with no single inline anchor, and at most a one-line
+  pointer to the key thread ("see the L178 thread") — never a paragraph re-explaining
+  an inline comment.
 - Always end with the canonical outbound footer from `wk-gh` Step 4; apply the same
   footer to every inline comment at payload-render time.
 - Fold bot counter-evidence before the footer; only refuted/new-evidence cases earn

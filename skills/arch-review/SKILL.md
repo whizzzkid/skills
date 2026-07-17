@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200055'
+  version: '2026.07.17-164707'
   internal: false
   model:
     claude: claude-opus-4-8
@@ -120,9 +120,10 @@ exhaustive probe list. Summary:
   reliable," "third-party meets its SLA," "read:write ratio is N:1," "payload
   fits in memory," "clocks are synchronised," "the team can build X in Y weeks."
   For systems that declare behavior in config/frontmatter (e.g. `file_types:`,
-  routing/dispatch metadata), read the runtime to confirm the engine actually
-  consumes it — "the config gates behavior" is Unverified until the dispatch
-  code proves it, and specs often describe a capability the engine lacks.
+  routing/dispatch metadata), read — and for logic-bearing specs, *execute* (see
+  the empirical pass below) — the runtime to confirm the engine actually consumes
+  it — "the config gates behavior" is Unverified until the dispatch code proves it,
+  and specs often describe a capability the engine lacks.
 - **D · Scalability & Performance** — bottleneck at 10× and 100×; hot
   partition / hot key; O(n) or O(n²) hiding in a loop or fan-out; connection-pool
   and thread budgets; thundering herd on cold start or cache eviction; backpressure
@@ -142,6 +143,18 @@ exhaustive probe list. Summary:
   parties, other teams, hardware, procurement); unproven tech adding discovery
   risk; phasing into independently verifiable milestones; the minimum viable
   slice that validates the single riskiest assumption first.
+
+### Empirical pass — execute logic-bearing specs before returning
+
+**HARD RULE:** Lens findings on executable logic are hypotheses, not conclusions.
+When the reviewed doc describes executable logic (matcher, grader, parser, state
+machine, algorithm) — especially one naming a concrete existing implementation —
+drive the real implementation (or a minimal faithful harness) with adversarial /
+edge inputs and record actual PASS/FAIL before returning findings.
+
+- Static lenses miss emergent interactions (two orthogonal knobs coupling) and the
+  exact break points that only surface on execution.
+- Mark any finding you could have tested but only argued as **Unverified**.
 
 ## Step 4: Produce the Output
 
