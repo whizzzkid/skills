@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.16-184250'
+  version: '2026.07.17-194039'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -138,7 +138,7 @@ Enumerate every affected site and fix all in one pass before tests:
 - **Signature widening** — non-optional public param/required field → grep every caller/initializer, fix each in the same commit.
 - **`replace_all: true`** — grep the target string first; reject if any occurrence needs a different value/context or must stay unchanged.
 - **Coercion same-class** — a coercion (`.to_s`, `&.`, `String()`, optional-chaining, null-coalescing) on one arg/field → audit every arg of the same semantic class (role + nullability + type shape); also same-class guards, redactions, retry wrappers, logging.
-- **Structured-row insert** — before inserting/upserting a row into a tabular/list data file (CSV, YAML/JSON list, fixtures), scan sibling rows for convention-populated fields; if every existing row sets a field the new row leaves blank, ask the user to supply it — tools accept the omission silently.
+- **Env var in a sandboxed step** — a var read inside a container/CI-runner step is dead until the step's `env:` allowlist forwards it; env-stubbed tests still pass. Trace producer → allowlist → reader in one change (mirror a sibling secret); confirm via a real build log.
 
 ### Code Standards
 
@@ -159,7 +159,7 @@ Apply to ALL code:
 - **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
 - **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
-- **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
+- **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, structured-row insert, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
 

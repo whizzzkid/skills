@@ -19,6 +19,10 @@ inline standards; relocation does not lower their priority.
   smoke-test against an out-of-scope file that legitimately contains the pattern.
 - **Env vars in docs:** document where stored, who can edit it, propagation, and
   unset default.
+- **Structured-row insert:** before inserting/upserting a row into a tabular/list
+  data file (CSV, YAML/JSON list, fixtures), scan sibling rows for
+  convention-populated fields; if every existing row sets a field the new row
+  leaves blank, ask the user to supply it — tools accept the omission silently.
 - **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace
   each variable's source, path, and meaning in the new context.
 - **No hardcoded env-specific constant beside a dynamic sibling:** before
