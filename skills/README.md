@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **62 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
+> **63 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
 
 ---
 
@@ -78,6 +78,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-workflow`](./workflow/README.md) | **Master orchestrator** — Plan → Implement → Test → Review → PR → CI → Retro | Auto (any dev task) |
 | [`wk-plan`](./plan/README.md) | Grill → research → multi-persona validation → numbered, agent-parallelizable plan (Fable-class) | Auto (workflow Phase 1) + User |
 | [`wk-arch-review`](./arch-review/README.md) | Critical evaluation of architecture docs, specs, plans, estimates — SPOFs, unhappy paths, assumptions | User + Model |
+| [`wk-design-review`](./design-review/README.md) | Principal-level UX/design review — design language, accessibility, anti-patterns, dark patterns; consulted by wk-pr-review | User + Model |
 | [`wk-commit`](./commit/README.md) | Conventional commits with emoji, signing, and safe push | User + Model |
 | [`wk-docs`](./docs/README.md) | Check and update documentation affected by code changes | User + Model |
 | [`wk-testing-skeleton`](./testing-skeleton/README.md) | Frame the test plan for any code change — behavioral over structural, happy+sad paths | Auto (before writing tests) |

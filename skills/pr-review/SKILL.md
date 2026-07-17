@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.17-165210'
+  version: '2026.07.17-183624'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -114,20 +114,20 @@ Announce before moving on:
 
 ### Detect architecture-level changes → invoke [`wk-arch-review`](../arch-review/README.md)
 
-Run `wk-arch-review` before Phase 3 when diff changes architecture or design →
-fold findings into Phase 3 prioritisation, Phase 4 comments, and summary.
+Run `wk-arch-review` before Phase 3 when the diff changes architecture → fold
+findings into Phase 3/4 and the summary.
 
 **HARD RULE — spec/design docs are unconditional triggers.** Any changed file
 matching `docs/(specs|adr|arch|design|rfc)/` invokes `wk-arch-review` before
 Phase 3, even for a doc-only diff.
 
-- Grep the changed-file list mechanically — never eyeball it or treat it as a judgment call:
+- Grep the changed-file list mechanically, never eyeball it:
 
   ```bash
   gh pr diff <number> --name-only | grep -qE 'docs/(specs|adr|arch|design|rfc)/' && echo "ARCH-REVIEW REQUIRED"
   ```
 
-- A match is a gate: invoke `wk-arch-review` even when the rest of the diff looks routine. A spec-doc addition triggers regardless of the surrounding code.
+- A match is a gate: invoke `wk-arch-review` even when the rest of the diff looks routine.
 
 Also trigger when any holds:
 
@@ -138,9 +138,8 @@ Also trigger when any holds:
 - Diff changes a trust boundary, auth flow, public API/contract, or a migration
   that reshapes ownership or consistency.
 
-Invoke with changed doc path when one changed; else pass PR number:
-`Skill(wk-arch-review, args="<changed-doc-path | PR number>")`. Treat high-severity
-findings as Phase 4 concerns.
+Invoke `Skill(wk-arch-review, args="<changed-doc-path | PR number>")`; treat
+high-severity findings as Phase 4 concerns.
 
 **HARD RULE — spec-doc claims about existing code are Unverified until checked.**
 For spec/design-doc reviews, treat every claim about existing code (named
@@ -148,6 +147,13 @@ structs/fields, "reuses X", "within the existing Y", "~N-line port") as Unverifi
 until grep/read confirms it — delegate the batch to one verification subagent.
 Doc-only diffs still owe this check. Re-verify a posted finding the moment a later
 result contradicts it.
+
+### UX/design changes → consult [`wk-design-review`](../design-review/README.md)
+
+When `gh pr diff <n> --name-only` matches a design surface (styles, `design`,
+`tokens`, `theme`, `/components/`, `.stories.`, `a11y`) → `Skill(wk-design-review,
+args="consult <n>")` before Phase 3; fold blocker/major findings into Phase 4. May
+trigger alongside `wk-arch-review` (UX vs system layer).
 
 ## Phase 2: Existing Review Comments
 
