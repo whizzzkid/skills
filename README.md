@@ -69,7 +69,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | Skill | Description |
 |---|---|
 | [buildkite](skills/buildkite/) | Check build status, investigate failures, and view logs via `bk` CLI |
-| [datadog](skills/datadog/) | Create and manage Datadog dashboards, monitors, SLOs, and notebooks via REST API |
+| [datadog](skills/datadog/) | Create and manage Datadog dashboards, monitors, SLOs, and notebooks via the `pup` CLI |
 | [colima](skills/colima/) | Ensure Colima is running before container ops; start with the right profile; clean restart on failure |
 | [docker](skills/docker/) | Image tag verification, build debugging, ENTRYPOINT checks, and daemon troubleshooting |
 | [devcontainer](skills/devcontainer/) | Create or debug a devcontainer for a mise-managed Rails app — Dockerfile, docker-compose, devcontainer.json |
@@ -126,9 +126,9 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 |----------|-------------|-------------|
 | `WK_SKILLS_HOME` | All skills (learning capture) | Path to this skills repo (e.g., `~/gitc/skills`). Used by the post-completion learning hook on every skill and by [`wk-sharpen`](skills/sharpen/README.md) batch mode. |
 | `GITHUB_ORG` | gh, sitrep | GitHub organization to scope `gh` CLI queries (PRs, issues, notifications). |
-| `DATADOG_API_KEY` | datadog | Datadog API key for dashboard/monitor/SLO management. |
-| `DATADOG_APP_KEY` | datadog | Datadog application key (read/write access). |
-| `DATADOG_SITE` | datadog | Datadog site (optional, defaults to `datadoghq.com`). |
+| `DD_API_KEY` | datadog | Datadog API key for `pup` CLI (key-auth mode; or use `pup auth login`). |
+| `DD_APP_KEY` | datadog | Datadog application key for `pup` CLI (key-auth mode). |
+| `DD_SITE` | datadog | Datadog site for `pup` CLI (optional, defaults to `datadoghq.com`). |
 | `WK_SKILLS_TEAM_SLACK_HANDLE` | team-hud | Comma-separated Slack usergroup handles for the team(s) you track (e.g., `your-team`). Resolved to channels via a one-time cache at `$WK_SKILLS_HOME/config/team-hud.yaml`. |
 | `WK_SKILLS_TEAM_JIRA` | team-hud | Comma-separated Jira project keys to scope team activity queries (e.g., `ENG,DATA`). |
 | `WK_SKILLS_TEAM_GITHUB` | team-hud | GitHub org or `org/repo` filter to scope team PR/commit queries (e.g., `my-org`). |

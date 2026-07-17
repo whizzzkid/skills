@@ -1,8 +1,8 @@
 # wk-datadog
 
-> Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks via the Datadog REST API.
+> Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks via the `pup` CLI.
 
-**Version:** `2026.06.15-195921`
+**Version:** `2026.07.17-202044`
 
 ## Invocation
 
@@ -15,22 +15,23 @@
 
 ```mermaid
 flowchart TD
-    A[Check DATADOG_API_KEY<br/>DATADOG_APP_KEY] -->|Missing| B[Ask user to export keys<br/>from Org Settings]
-    A -->|Present| C{Resource type}
-    C -->|Dashboard| D[GET /v1/dashboard<br/>POST/PUT /v1/dashboard/id]
-    C -->|Monitor| E[GET /v1/monitor<br/>POST/PUT /v1/monitor/id<br/>POST mute/unmute]
-    C -->|SLO| F[GET /v1/slo<br/>POST/PUT /v1/slo/id<br/>GET /v1/slo/id/history]
-    C -->|Notebook| G[GET /v1/notebooks<br/>POST/PUT /v1/notebooks/id]
-    D & E & F & G -->|DELETE| H[Confirm with user first]
-    H -->|Confirmed| I[curl DELETE]
-    D & E & F & G -->|Write| J[Write payload.json to cwd<br/>curl POST/PUT<br/>Parse response with jq]
+    A[pup auth status] -->|Unauthenticated| B[pup auth login<br/>or set DD_API_KEY + DD_APP_KEY]
+    A -->|Authenticated| C{Resource type}
+    C -->|Dashboard| D[pup dashboards list/get/create/update]
+    C -->|Monitor| E[pup monitors list/get/create/update<br/>mute/unmute]
+    C -->|SLO| F[pup slos list/get/create/update<br/>status/history]
+    C -->|Notebook| G[pup notebooks list/get/create/update]
+    D & E & F & G -->|Delete| H[Confirm with user first]
+    H -->|Confirmed| I[pup ... delete id]
+    D & E & F & G -->|Write| J[Write payload.json to cwd<br/>pup ... create/update --file<br/>Parse with jq]
 ```
 
 ## Noteworthy
 
-- **`DATADOG_SITE` defaults to `datadoghq.com`** — override for EU (`datadoghq.eu`), US3 (`us3.datadoghq.com`), US5 (`us5.datadoghq.com`), or AP1 (`ap1.datadoghq.com`) orgs.
-- **Write tool is restricted to temporary JSON payload files** in the current directory only — never writes to project source, config, or other paths.
-- **Confirm-before-delete is a hard rule** for every resource type; there is no bulk-delete shortcut and no silent deletion.
-- **Clone pattern**: GET the dashboard, strip the `id` field, modify the title, then POST — no dedicated clone endpoint exists in v1.
-- **Rate limit handling**: on HTTP 429, read the `X-RateLimit-Reset` header and wait before retrying — do not retry immediately.
-- **All requests share a single auth header array** (`DD-API-KEY` + `DD-APPLICATION-KEY` + `Content-Type: application/json`) built once and reused across all curl calls in a session.
+- **`pup` is the interface** — Datadog's agent-ready CLI, preferred over raw REST/curl and over the Datadog MCP server. `pup api <METHOD> <path>` is the escape hatch for anything without a dedicated subcommand.
+- **`--no-agent` on handed-off commands** — agent mode wraps output in a `{status, data, metadata}` envelope; append `--no-agent` to any command written into a script/alias/runbook so the user's output shape matches.
+- **`DD_SITE` defaults to `datadoghq.com`** — override for EU (`datadoghq.eu`), US3/US5, or AP1 orgs, or pass `--site`.
+- **Write tool is restricted to temporary JSON payload files** in the current directory only — never project source, config, or other paths.
+- **Confirm-before-delete is a hard rule** for every resource type; never pass `--yes` to a delete without explicit user confirmation.
+- **Resolve resource-type intent first** — "create X per Y" splits into one filterable dashboard (template variables) vs. a new resource per instance; ask before building.
+- **Widget custom links** — `{{@attr.value}}` for external URLs, `{{@attr}}` for Datadog search URLs; mixing them breaks links.
