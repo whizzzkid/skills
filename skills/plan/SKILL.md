@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.01-220812'
+  version: '2026.07.17-181155'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -65,6 +65,8 @@ Scan the task description for these ambiguity signals:
 - Proceed to Step 1 only when every blocker is resolved.
 
 **Multi-deliverable granularity.** When the prompt lists ≥2 deliverables that could each stand alone (own ticket, commit, or PR) → surface them as a numbered list and ask "one PR or separate?" **before** planning. A bundle of N tasks reads as a clear requirement but hides a granularity decision only the user owns; a single deliverable with sub-tasks does not trigger this.
+
+**Is-a-fix-warranted gate.** When the investigated root cause is benign (correct behavior, external timing, no defect) → surface "no fix needed / close as working-as-intended" as an explicit `[HUMAN-IN-LOOP]` option alongside any fix options, and confirm the user wants a change before planning one. "Do nothing" is a legitimate — often the correct — outcome; do not default to scoping a fix just because a ticket exists.
 
 **Fix-philosophy branch.** When a symptom has multiple valid fixes that split into "add/produce/provision" vs "disable/suppress" branches → surface the branch choice as a `[HUMAN-IN-LOOP]` decision before implementing. The obvious make-it-work fix (provision the missing resource, produce the missing record) may violate the component's role — a consumer-only service must never produce or create. Confirm which branch is legal for the app's role before drafting; do not optimize for "make the feature work" when a role constraint is discoverable.
 
