@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.15-234336'
+  version: '2026.07.17-170247'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -81,26 +81,8 @@ behavior, not just the specific instance.
 
 ## Core Rule: Extract Principles, Not Examples
 
-**Anti-pattern:**
-
-```markdown
-### Validate line numbers
-
-Lines 232 and 60 in trust-boundaries.md and model.md must be checked
-against the diff. If the PB3 anchor is broken, skip the comment.
-```
-
-**Correct pattern:**
-
-```markdown
-### Validate line numbers
-
-Every inline comment must target a line that exists in the diff. Lines
-not in the diff will cause a 422 error from the GitHub API.
-```
-
-- Remove specific file names, line numbers, project context, and reviewer / commit names.
-- Keep error codes, API behavior, and structural patterns.
+- Remove specific file names, line numbers, project context, and reviewer / commit names — a rule reading "lines 232/60 in model.md" is overfit.
+- Keep error codes, API behavior, and structural patterns — e.g. "a line not in the diff causes a 422 from the GitHub API" generalizes.
 
 ## IMPORTANT — high-severity learnings are not optional
 
@@ -259,12 +241,8 @@ not in the diff will cause a 422 error from the GitHub API.
 
 ## Step 6: Present for Review
 
-- Show the user:
-  1. Distilled principle
-  2. Edit location
-  3. Proposed diff
-  4. Cleanup found during audit
-- Wait for approval before editing.
+- Show the user: distilled principle, edit location, proposed diff, cleanup found during audit.
+- A direct `/wk-sharpen` invocation (and auto mode) IS the approval — apply/commit/push without re-asking; the show-list is a report, not a gate. Ask explicitly only for ambiguous `wk-learn`-vs-`wk-sharpen` routing or a destructive/irreversible action.
 
 ## Step 7: Apply the Update
 

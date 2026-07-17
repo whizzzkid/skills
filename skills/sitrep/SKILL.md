@@ -55,7 +55,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.16-201450'
+  version: '2026.07.17-170247'
 ---
 
 # Sitrep
@@ -406,6 +406,8 @@ skill owns selection.
   Must return `true` (3 non-empty columns). On `false`/single-column collapse, fix
   the HTML per [`wk-silverbullet`](../silverbullet/README.md) Step 6 and re-verify —
   never announce a broken layout.
+- `browser_close` the automation window after the assertion, before `open` — it and
+  the user-facing tab have distinct lifecycles; a leftover window clutters the desktop.
 
 ```bash
 open "http://localhost:$SITREP_PORT/$EMPLOYER/live.md"
@@ -539,36 +541,18 @@ Append QPR-worthy items to `$SITREP_REPO/$EMPLOYER/QPR/brag-log.md` with `🌟`.
 
 ### Stage 5: Rewrite live.md
 
-- Re-read `$LIVE_FILE` immediately before rewriting. Merge completed spans into
-  the snapshot done set rather than re-surfacing them.
-- Record dismissed keys before scrubbing: for each completed span, write its
-  action-specific key to `$WEEK_MEM_FILE` via the Dismissed registry pattern.
-- Rewrite `$LIVE_FILE` to hold every pending item. Drop completed spans and
-  date-specific FYI content (Calendar, Announcements, standup). Fold pending
-  spans plus tomorrow's prep, unresolved follow-ups, Lattice feedback, peer
-  feedback opportunities, DX improvements. Re-number `data-t` from `t1`; sort and
-  mark urgency per the rendering contract.
+- Re-read `$LIVE_FILE` before rewriting; merge completed spans into the snapshot
+  done set, don't re-surface them.
+- Before scrubbing, write each completed span's action-specific key to
+  `$WEEK_MEM_FILE` via the Dismissed registry pattern.
+- Rewrite `$LIVE_FILE` with every pending item; drop completed spans and
+  date-specific FYI (Calendar, Announcements, standup). Fold pending spans +
+  tomorrow's prep, unresolved follow-ups, Lattice/peer feedback, DX improvements.
+  Re-number `data-t` from `t1`; sort and mark urgency per the rendering contract.
 
-```markdown
----
-date: {TODAY}
-note: "Scrubbed {N} completed items — full record in snapshot"
----
-
-# Live — carry-forward from {TODAY}
-
-<div class="sitrep-row">
-<div class="sitrep-col">
-{col1}
-</div>
-<div class="sitrep-col">
-{col2}
-</div>
-<div class="sitrep-col">
-{col3}
-</div>
-</div>
-```
+Reuse the Stage 3 `sitrep-row`/`sitrep-col` skeleton; frontmatter `date: {TODAY}` +
+`note: "Scrubbed {N} completed items — full record in snapshot"`, heading
+`# Live — carry-forward from {TODAY}`.
 
 - **col1 — Tomorrow's Meeting Prep:** meeting lines and prep spans.
 - **col2 — Carry-forward + Follow-ups & Feedback + DX:** carry-forward,
