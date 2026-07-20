@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.17-194039'
+  version: '2026.07.20-181223'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -61,7 +61,7 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 
 The Phase 1 plan is the session contract.
 
-- **Important:** Read the prompt to the end and enumerate every deliverable before acting. A message opening with a noun task ("create a ticket") and closing with an imperative ("fix this") is two work items — commit to the full list first; never stop after the first deliverable.
+- **Important:** Read the prompt to the end and enumerate every deliverable before acting. A message opening with a noun task ("create a ticket") and closing with an imperative ("fix this") is two work items — commit to the full list first; never stop after the first deliverable. Order left implicit → state the intended sequence in one line before the first write-action so a redirect stays cheap.
 - On interruption mid-plan: stop, update the active plan/TodoWrite list, re-state the new top item in one line, resume from the earliest incomplete item.
 - Final completeness gate: before claiming completion, re-read the plan and ensure every numbered step is finished or explicitly deferred/removed.
 
@@ -155,11 +155,10 @@ Apply to ALL code:
 
 - **CLI flags:** verify any flag against the tool's `--help` (or `--help`-equivalent) before embedding it in a doc, skill, or committed script. An unverified flag name fails with `flag provided but not defined` (exit 2) on first run.
 - **File permissions:** executable scripts `chmod +x`; source-only scripts 644.
-- **Portable home paths:** in skills, configs, and committed scripts, reference user-land paths via `$HOME/...` (or `${HOME}`), never a hardcoded machine-absolute home directory (an OS user-home path literal).
 - **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
 - **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
-- **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, structured-row insert, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
+- **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, structured-row insert, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling, portable home paths) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
 
@@ -329,7 +328,6 @@ Rules:
 - Coupled config rule: when changing a tool version, audit every config file that tool reads in the same commit.
 - CI-only fix evidence: prove the concrete environment delta and keep the fix scoped to it.
 - If failure was caused by stale base, integrate latest base first.
-- Full local pre-push gate must pass before any push.
 - If CI cannot be reproduced locally, inspect the full remote log before changing code.
 
 Loop limits:

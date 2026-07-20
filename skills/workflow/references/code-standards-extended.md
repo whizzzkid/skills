@@ -29,6 +29,9 @@ inline standards; relocation does not lower their priority.
   hardcoding OS, arch, version, or path, grep the file — if a sibling derives the
   same value dynamically (`uname -s`/`-m`, etc.), reuse that computation, never
   re-hardcode what a sibling derives.
+- **Portable home paths:** in skills, configs, and committed scripts, reference
+  user-land paths via `$HOME/...` (or `${HOME}`), never a hardcoded
+  machine-absolute home directory.
 - **Boot / internal-symbol calls:** code at app boot/load, or touching
   undocumented third-party internals (singleton, monitor, constant), ships its
   `rescue` + observability-notify in the first draft, not post-review. An
