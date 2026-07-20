@@ -37,7 +37,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.20-210619'
+  version: '2026.07.20-235059'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -136,11 +136,10 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.40 | Diff touches token scope, secret access, or privilege escalation | Verify the PR body carries `## Problem` (why the elevated scope), `## Approach` (why narrower alternatives were ruled out), and `## Testing` (how the permission was exercised). | Blocker | Any section absent on a security-sensitive diff is a finding; placeholder-only bodies fail checks. |
 | 2.43 | New field beside an existing same-primitive-type field | Grep for a resolver/normalizer/sanitizer on the sibling (`resolve*`/`normalize*`/`sanitize*`); confirm the new field gets equivalent treatment. | Blocker | Apply the same normalizer. Blocker when the field feeds a security-sensitive consumer (paths, URLs, shell args, allow-dir lists) — a raw path/URL field is a traversal/SSRF vector. |
 | 2.44 | Merge/rebase conflict resolved at a function call site | Compare both sides' arg counts against the current base-branch signature; base is authoritative for required params (a side missing one is stale, not caller-wins). Also diff both sides for safety primitives (`signal.Stop`, `context.Cancel*`, `sync.*`, `defer`, `close(`, `os.RemoveAll`, resource releases) present on either side but absent from the result — base is canonical, so a missing guard is a dropped contract. | Blocker | Take the side matching the base signature; flag the short call. Restore any base-side safety primitive absent from the result unless the incoming commit removed it with rationale; green tests don't prove it unneeded. |
-| 2.44a | Merge/rebase introduces a new UNIQUE/CHECK DB constraint | Diff every incoming unique index against the model/ORM uniqueness validations; an unmirrored index lets a duplicate raise an unhandled DB exception (`RecordNotUnique`) instead of a graceful validation failure — post-merge conflict-only review misses incoming-side constraints. | Blocker | Add the `validates ... uniqueness: { scope: }` (or ORM equivalent) mirroring every incoming constraint; parity is mechanical — every unique index needs a model validation. |
 | 2.48 | Finding or identity/dedup key relies on an LLM round-trip preserving a field verbatim | Grep the prompt/skill builder for an explicit verbatim-echo instruction for that exact field — absence confirms the stability is an unenforced bet, not a guarantee. If test mocks return the field verbatim, the rephrase path is uncovered. | Blocker | Pin the field in the prompt (fix at source) over a downstream key workaround; add a rephrasing-mock regression test. |
 
 Lower-frequency sweeps (2.9.2, 2.18, 2.19, 2.20, 2.30, 2.31, 2.32, 2.34, 2.36, 2.37,
-2.38, 2.39, 2.25, 2.41, 2.42, 2.44b, 2.45, 2.46, 2.47, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57, 2.58, 2.59, 2.60, 2.61, 2.62, 2.63, 2.64, 2.65, 2.66, 2.67, 2.68, 2.69, 2.70, 2.71, 2.72, 2.73, 2.74, 2.75, 2.76) live in
+2.38, 2.39, 2.25, 2.41, 2.42, 2.44a, 2.44b, 2.45, 2.46, 2.47, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57, 2.58, 2.59, 2.60, 2.61, 2.62, 2.63, 2.64, 2.65, 2.66, 2.67, 2.68, 2.69, 2.70, 2.71, 2.72, 2.73, 2.74, 2.75, 2.76) live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 
@@ -230,6 +229,8 @@ Bot reviewers exist (`*[bot]`) → append:
 ## Step 7: Fix Loop and Hand Back
 
 On blocked verdict:
+
+- **Scope off-ramp first.** When a blocker's remedy is a nontrivial new mechanism/feature or design change (not a contained fix), offer *narrow/revert the triggering change + defer the deeper fix to a follow-up PR* alongside fix-inline — prefer it when the blocker sits in complexity this PR introduced (removing that code often beats adding more to make it correct).
 
 1. Caller fixes each blocker via `wk-commit` (one atomic conventional commit per fix).
 2. Fix every structurally-parallel sibling in the same round. For a value/message/constant-reporting defect, grep the **entire changed file** (not just the flagged line) for every site of the same shape (e.g. `grep "timed out after %v" <file>`) — a refactor that extracts a helper clones the defect onto a different line; treat each match as the same fix unless divergence is justified.

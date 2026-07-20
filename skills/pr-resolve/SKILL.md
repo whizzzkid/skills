@@ -51,7 +51,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.17-211532'
+  version: '2026.07.20-235059'
 ---
 
 # PR Resolve
@@ -276,6 +276,13 @@ X", "what happens if {edge}", "why do we need this", "duplicated with", "contrac
 unclear"). Fired → present the design change first, a clarifying reply second; in
 Step 5 `(a)` applies the design option unless edited.
 
+**Gate fix footprint, not just severity.** A fix beyond a localized patch — new
+mechanism/feature, design change, or cross-cutting work — defaults to
+dismiss-with-rationale + a tracked follow-up PR, not inline build-out (esp. stacked
+or explicitly-narrow PRs); build inline only for a confirmed blocker of THIS PR's
+stated scope. A self-re-review-surfaced adjacent finding is a defer signal, not
+license to expand the PR.
+
 **Classify suggestions** — tag each `obvious-fix` or `judgment-required`:
 
 | Tag | Condition |
@@ -393,18 +400,10 @@ before `git push`. Push is conditional on a `clear` verdict or accepted
 `suggestions-only` A/B/C choice. On `blocked`, address each blocker with a fresh
 atomic commit, re-invoke, loop until clear.
 
-**Post-rewrite divergence guard.** History rewritten this session → re-check
-divergence before pushing (compute `$AHEAD`/`$BEHIND`, commands.md §8): `BEHIND ==
-0` → safe; both > 0 → cherry-pick remote-only commits onto the rewritten tip,
-re-check; cherry-pick conflicts or remote-only rewritten duplicates → stop and
-surface.
-
-**Push** (`git push`). Rejected non-fast-forward: no rewrite → re-run
-reconciliation; Step 2 base-advance rebase → `--force-with-lease` (Hard Rule 4),
-reconciling remote-only commits first on a rejected lease; any other rewrite →
-the divergence-guard cherry-pick above. Never bare `git push -f`. Auto-mode blocks
-the authorized `--force-with-lease` (HR4) → set `dangerouslyDisableSandbox: true`
-on that Bash call; never ask the user to run it manually.
+**Push & divergence guard.** History rewritten this session → re-check
+`$AHEAD`/`$BEHIND` and reconcile before pushing. `git push`; rejected
+non-fast-forward → reconcile per commands.md §8 (decision, cherry-pick, and the
+Hard Rule 4 `--force-with-lease` exception live there).
 
 **Draft PR → mark ready.** Push landed and every reviewer thread resolved on a
 draft PR → run `gh pr ready {number}` without being asked; a fully-resolved draft
