@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.08-175435'
+  version: '2026.07.20-183910'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -65,6 +65,11 @@ Manual: `/wk-workstyle-async scan` (full working tree) · `/wk-workstyle-async c
 - **Propagate errors from async operations.** Never `.catch(() => {})`
   silently. At minimum log and re-throw. If ignoring the error is
   intentional, leave a one-line comment saying why.
+  - **Swallow a rejection only on a fire-and-forget branch, never the
+    return-path promise.** A no-op `.catch()` is acceptable on a background
+    task (e.g. cache revalidation) whose caller already returned a value;
+    swallowing the promise a downstream fallback awaits (offline/error path)
+    silently kills that fallback.
 
 ## Apply or Report
 

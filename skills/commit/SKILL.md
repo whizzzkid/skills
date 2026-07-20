@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.16-001241'
+  version: '2026.07.20-183909'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -303,6 +303,27 @@ preceding `git add`. Anything already staged — a prior `git mv`, an earlier
 
 - Unstage strays with `git restore --staged <paths>` (or `git stash`) before
   committing. Treat `git mv` as already-staged.
+
+### Stage generated artifacts individually — never blanket `git add` the output dir
+
+Generated artifacts derived from mutable local state (ORM/type stubs, RBI/schema
+dumps, snapshot fixtures) are not deterministic from the branch's own source. On a
+shared machine a sibling branch's migration pollutes the local DB/cache, so
+regeneration emits accessors/columns absent from this branch's schema; CI
+regenerates against clean state and the verify gate fails on the diff. The
+staged-set check above catches strays, not a legitimately-touched-yet-polluted
+generated file.
+
+- Stage generated artifacts one path at a time — never `git add <generation-dir>`.
+- On a branch that changes none of an artifact's source, restore it to base
+  instead of trusting local regeneration:
+
+  ```bash
+  git checkout <base> -- <generated-path>
+  ```
+
+- Only artifacts genuinely changed by this branch's source (e.g. route-helper
+  stubs on a routes-only PR) should differ from base.
 
 ### Re-stage a file edited after it was staged
 
