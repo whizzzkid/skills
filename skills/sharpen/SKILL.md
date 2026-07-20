@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.20-204925'
+  version: '2026.07.20-210854'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -313,7 +313,7 @@ behavior, not just the specific instance.
 - Keep skills under the ceilings proactively — never rely on the hook as the only guard. When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list. Coverage-preserving only — never trim by dropping a HARD RULE, error code, or failure-mode.
 - **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list — and route a **new** such row straight there (add only its ID inline, ~6 B), never place-inline-then-reclaim; (2) delete scaffolding, blank lines, or a provably-duplicated rule — the latter outright with zero replacement (a cross-ref back re-spends the reclaim). A pure row/bullet merge reclaims ~3 B (prefix + newline), NOT content — count it only when it also drops the now-duplicated phrase. Reserve prose for the final margin.
 - **Measure the staged body BEFORE drafting any content-adding fold** — unconditional, not gated on "looks tight"; the at-ceiling state is invisible until measured. Headroom under ~2× the edit → pick reclaim target(s) whose *combined* size exceeds it with margin (≥1.2×, not merely strict) — budget ≥2 reclaims up front (one undershoots a multi-clause rule); net change must be non-positive on the first pass.
-  - **Very important — measure exactly once.** Single-digit headroom → the new rule's *measured* byte size IS the reclaim quantity — stage the draft, never eyeball char count (a `→` is 3 B). Apply the cut in ONE pass; a second measure-and-trim cycle is the re-violation signal — stop and re-plan with one decisive scaffolding cut, not another prose nibble.
+  - **Very important — measure exactly once.** Stage the addition AND the reclaim cuts together, then measure ONCE — never eyeball either side (a `→` is 3 B; a prose reclaim misleads as much as an addition). A second measure-and-trim cycle is the re-violation signal — stop and re-plan with one decisive structural cut, not another prose nibble.
   - **Very important — run the hook's `measure()` verbatim; never `wc -c` or an abbreviated awk.** Dropping its `state="pre"` init counts front-matter as body → false, self-consistent over-ceiling headroom. Copy `measure()` from `.githooks/check-skill-size.sh`, `git add` first, run pre-draft and at commit; never the working tree.
 
 ## Step 8: Verify and Commit (terminal gate)
