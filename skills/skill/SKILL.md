@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200558'
+  version: '2026.07.20-201927'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -255,6 +255,13 @@ ready:
   a concrete step. Remove orphaned entries.
 - Missing entries fail silently at runtime. Orphaned entries grant unnecessary
   permissions and rot into stale config.
+- A write/mutating command the skill exists to run (`gh pr merge`, `git push`,
+  `gh pr edit`) needs its own granular `Bash(<cmd>:*)` grant — bare `Bash` alone
+  leaves the auto-mode classifier gating it per-command, forcing a redundant
+  confirmation even when invoking the skill IS the authorization. Grant it in the
+  skill's OWN `allowed-tools`, never by self-editing global
+  `$HOME/.claude/settings.json` (that edit is itself classifier-blocked and wrongly
+  widens global scope).
 
 Confirm the skill appears in the registry:
 
