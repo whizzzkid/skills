@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.17-211225'
+  version: '2026.07.20-203903'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -222,6 +222,7 @@ silent posts erode trust and make automated activity hard to audit.
   grep -qF 'DM me your feedback.</sup>' <<<"$body" || echo "REJECT: canonical footer absent"
   grep -qF '🦾 Generated with' <<<"$body" && echo "REJECT: commit-trailer variant present"
   grep -qE 'tree/main@%7B[0-9T:Z-]+%7D' <<<"$body" || echo "REJECT: footer link not pinned to post-time snapshot"
+  awk 'prev!="" && $0=="---"{f=1} {prev=$0} END{exit f}' <<<"$body" || echo "REJECT: non-blank line directly above ---  → renders as setext H2 heading"
   ```
   A REJECT on either line blocks the post — fix the footer and re-check before writing.
 
@@ -242,7 +243,10 @@ Apply to:
 Footer placement rules:
 
 - Footer is the **last** content in the message. Nothing follows it.
-- Separate from prior content with a blank line above the `---`.
+- Separate from prior content with a **blank line** above the `---` — build the
+  block as `"\n\n---\n<sup>…"` (two newlines). A single `\n` is a line break, not
+  a blank line: a non-blank line immediately followed by `---` is a GFM setext H2
+  heading (renders the paragraph large/bold), not a horizontal rule.
 - When the calling skill already specifies a richer footer (e.g.,
   `wk-commit` PR-body sync footer, `wk-pr-review` review-body
   closing line), append this footer **after** the skill-specific

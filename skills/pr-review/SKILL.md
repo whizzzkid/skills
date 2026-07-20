@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.17-183624'
+  version: '2026.07.20-203903'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -114,39 +114,34 @@ Announce before moving on:
 
 ### Detect architecture-level changes → invoke [`wk-arch-review`](../arch-review/README.md)
 
-Run `wk-arch-review` before Phase 3 when the diff changes architecture → fold
-findings into Phase 3/4 and the summary.
-
 **HARD RULE — spec/design docs are unconditional triggers.** Any changed file
 matching `docs/(specs|adr|arch|design|rfc)/` invokes `wk-arch-review` before
-Phase 3, even for a doc-only diff.
-
-- Grep the changed-file list mechanically, never eyeball it:
+Phase 3, even for a doc-only diff. Grep the changed-file list mechanically,
+never eyeball it:
 
   ```bash
   gh pr diff <number> --name-only | grep -qE 'docs/(specs|adr|arch|design|rfc)/' && echo "ARCH-REVIEW REQUIRED"
   ```
 
-- A match is a gate: invoke `wk-arch-review` even when the rest of the diff looks routine.
-
 Also trigger when any holds:
 
-- Filename contains `architecture`, `design`, `spec`, `rfc`, `adr`, `hld`, `lld`,
-  or `tech-spec`.
+- Filename contains `architecture`, `design`, `spec`, `rfc`, `adr`, or `tech-spec`.
 - Diff adds infrastructure/topology: new service, datastore, queue/cache, external
   hot-path dependency, IaC, or deploy/runtime topology.
 - Diff changes a trust boundary, auth flow, public API/contract, or a migration
   that reshapes ownership or consistency.
 
-Invoke `Skill(wk-arch-review, args="<changed-doc-path | PR number>")`; treat
-high-severity findings as Phase 4 concerns.
+- **HARD RULE — satisfy the gate ONLY with `Skill(wk-arch-review, args="<changed-doc-path | PR number>")`.**
+  A general-purpose subagent running an arch-review-shaped prompt does NOT satisfy
+  it — that skips the Eight Lenses, the empirical-pass rule, and the findings
+  contract. Delegating spec-claim verification to a subagent is a valid ADDITION,
+  never a REPLACEMENT. Fold findings into Phase 3/4; treat high-severity as Phase 4
+  concerns.
 
 **HARD RULE — spec-doc claims about existing code are Unverified until checked.**
-For spec/design-doc reviews, treat every claim about existing code (named
-structs/fields, "reuses X", "within the existing Y", "~N-line port") as Unverified
-until grep/read confirms it — delegate the batch to one verification subagent.
-Doc-only diffs still owe this check. Re-verify a posted finding the moment a later
-result contradicts it.
+Treat every claim about existing code (named structs/fields, "reuses X", "~N-line
+port") as Unverified until grep/read confirms it — delegate the batch to one
+subagent; re-verify a posted finding the moment a later result contradicts it.
 
 ### UX/design changes → consult [`wk-design-review`](../design-review/README.md)
 
