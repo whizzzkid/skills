@@ -37,7 +37,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.20-203903'
+  version: '2026.07.20-210619'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -150,14 +150,15 @@ After sweeps, dispatch a fresh subagent with no prior session context. Pipe `git
 
 Subagent must be adversarial, objective, naming-aware, and diff-sensitive, plus the stances below:
 
-- **Coverage-aware:** test-only commits → enumerate code paths, flag unexercised paths. But a private helper exercised transitively through its public caller *is* covered — do not flag a line-coverage gap on a transitively-tested private method, nor on a sibling severity/branch already exercised by an equivalent case; a line-coverage lens reports both as gaps, but coupling tests to private helpers couples them to implementation detail.
+- **Coverage-aware:** test-only commits → enumerate paths, flag unexercised ones. But a private helper exercised transitively through its public caller *is* covered — don't flag a coverage gap on it, nor on a sibling branch already exercised by an equivalent case (coupling tests to private helpers couples them to implementation detail).
+- **Narrate the "why" on a narrow merge-resolution/bugfix diff:** name the kept conflict side and the bugfix's exact defect mechanism, and tell the subagent to verify those claims against the diff, not assert them. A large/organic diff still needs the generic sweep.
 - **Refactor-aware:** demand removed-line audit; every removed line is relocated or intentionally dropped.
 - **Relocation-aware:** downgrade inherited pre-existing issues carried unchanged by a pure move.
 - **Introduction-claim-aware:** before calling a behavior newly introduced, grep the `-` lines of the same hunk.
-- **Runtime-behavior-cautious:** any claim about tool behavior under failure (exit codes, signal handling, `--write-out`/buffering, subshell/pipe semantics) is at most `question` with a repro request — never `blocker` from first principles; verify in the playground (Step 5).
+- **Runtime-behavior-cautious:** never `blocker` a tool-behavior-under-failure claim (exit codes, signals, buffering, pipe semantics) from first principles — at most `question` pending the Step 5 repro (contract #8).
 - **Absence-claim-cautious:** a finding that a "safe no-op" or missing error-path write is a defect must cite a concrete failure scenario. Absence of defensive code is not itself a defect — writing a default (e.g. `{}`) on read failure can clobber legitimate local-only state. Cap at `question` without a repro.
 - **Intent-aware:** weigh the PR title/body purpose (piped in above). A change the PR explicitly documents as intentional, test-only, or throwaway (e.g. a CI gate removed to force a step to run) is stated context — do not flag documented-intentional design as a `blocker`. The guard still holds on production branches, where the pattern is unflagged.
-- **Design-invariant-aware:** when a diff adds a helper/function beside existing code carrying a design-rationale comment (e.g. "X is global so the EXIT trap cleans it on SIGINT/SIGTERM"), verify the new code honors that stated invariant; a divergence is a structural bug even if it compiles and tests pass.
+- **Design-invariant-aware:** when a diff adds a helper/function beside existing code carrying a design-rationale comment (e.g. a global cleaned by an EXIT trap on signal), verify the new code honors that stated invariant; a divergence is a structural bug.
 
 ### Categories to Hunt
 
