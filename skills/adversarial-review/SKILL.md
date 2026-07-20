@@ -37,7 +37,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.20-200318'
+  version: '2026.07.20-203903'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -124,7 +124,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.17 | Dynamic-language diff; inline refactor of a helper | For each call kept/added, grep module/imported namespace for the definition. Inverse: for each helper defined/kept, grep non-test files for a caller — zero after an inline refactor is dead code whose tests assert a dead path. | Blocker | Restore/remove call or add definition; delete dead helpers and retarget their tests at the live caller. |
 | 2.19a | Added Struct/Record/interface/Go field | Grep tests for direct concrete-value assertion on the new field. When the field is serialized via `.to_s`/equivalent, also include a nil/false/0 case — the zero-value path through a serialization boundary is the common production path and a `NoMethodError` there escapes happy-path specs. | Blocker | Add direct assertion; `respond_to?`/presence alone is insufficient; add the nil/zero-value serialization case. |
 | 2.21 | New numeric security-gating config | Trace consumer path; verify positive lower bound and hard ceiling before control gates. | Blocker | Add bounds/ceiling constants. |
-| 2.22 | New structured-artifact plumbing | Detect `<collection>["key"]`/`.get(key)` feeding downstream calls. | Suggestion | Add integration test for the wire. |
+| 2.22 | New structured-artifact plumbing | Detect `<collection>["key"]`/`.get(key)` feeding downstream calls. When one call builds a correlation map consumed by another and a guard warns/skips on the partial-join (item present in the consumer, absent from the map), a uniform "every item joins" mock never exercises the skip branch. | Suggestion | Add integration test for the wire; for a partial-join guard, feed the consumer a non-empty-but-incomplete map (omit one live item, bypass the empty-map early return) and assert warn/skip fires with no downstream call. |
 | 2.23 | Seed/prepend before emptiness collapse | Trace whether decorative seed drives guard false. | Blocker | Add seed/decoration after substantive-content gate. |
 | 2.24 | External command with expanded names | Grep commands like tar/rm/cp/mv/grep/chmod/git/curl for missing `--` before untrusted expanded args. | Blocker | Insert `--` before positional args. |
 | 2.26 | New command capture | For each `FOO=$(...)`, verify canonical promotion before downstream reads. | Blocker | Add `CANONICAL=$FOO` or limit capture to same-block guard. |
