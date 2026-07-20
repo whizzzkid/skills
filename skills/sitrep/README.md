@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.07.20-155353`
+**Version:** `2026.07.20-160337`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -11,7 +11,9 @@ no per-day live directories, and dated snapshots at close.
 - `/wk-sitrep start` — workday start: gathers inbox via 5 parallel agents,
   carries forward open items from the previous live page, compiles every
   item into `$SITREP_REPO/$EMPLOYER/live.md`, verifies the 3-column layout
-  actually rendered, then opens it in the browser.
+  actually rendered, opens it in the browser, then auto-launches a
+  `/wk-pr-review` subagent (via `git wta` worktree) for each PR awaiting your
+  review in a locally-cloned `$GITC_ROOT/$EMPLOYER/<repo>`.
 - `/wk-sitrep end` — workday end: runs 7 parallel agents, writes a
   historical snapshot to `$EMPLOYER/YYYY/MM/DD/snapshot.md` (completed
   items + notes only), then rewrites `live.md` to hold all pending work for

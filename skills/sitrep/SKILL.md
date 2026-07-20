@@ -10,6 +10,7 @@ argument-hint: 'start|end'
 env-vars:
   - SITREP_REPO
   - EMPLOYER
+  - GITC_ROOT
 allowed-tools:
   - Skill
   - Agent
@@ -55,7 +56,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.20-155353'
+  version: '2026.07.20-160337'
 ---
 
 # Sitrep
@@ -129,28 +130,11 @@ can rediscover them. A week-scoped JSONL registry suppresses those keys.
   (event, direct scorecard, sub-path anchor). If stages share a URL, append
   `{url}#action=<slug>` so dismissing prep does not suppress follow-up.
 - **Write:** `jq`-constructed JSON only; never raw interpolation. Strip
-  markdown escapes, validate the file still parses, and remove the last line on
-  failure.
-
-```bash
-title=$(printf '%s' "$raw_title" | sed 's/\\#/#/g')   # strip markdown escapes
-jq -nc --arg key "$key" --arg type "$type" --arg title "$title" \
-   --arg at "$TODAY" --arg because "$reason" --arg week "$YEAR-W$WEEK" \
-   '{key:$key,type:$type,title:$title,dismissed_at:$at,dismissed_because:$because,week:$week}' \
-   >> "$WEEK_MEM_FILE"
-if ! jq -r '.key' "$WEEK_MEM_FILE" >/dev/null 2>&1; then
-  echo "ERROR: $WEEK_MEM_FILE failed to parse after write — removing last line"
-  sed -i '' '$d' "$WEEK_MEM_FILE"
-fi
-```
-
+  markdown escapes, validate the file still parses, remove the last line on failure.
 - **Filter (`start`):** drop any gathered or carry-over item whose key is in
   this week's registry.
-
-```bash
-is_dismissed() { [ -f "$WEEK_MEM_FILE" ] && jq -e --arg k "$1" \
-  'select(.key==$k)' "$WEEK_MEM_FILE" >/dev/null 2>&1; }
-```
+- Canonical `jq` write + `is_dismissed` filter recipes:
+  [`references/dismissed-registry.md`](references/dismissed-registry.md).
 
 ## Step 0: Bootstrap (both sub-commands)
 
@@ -429,7 +413,22 @@ git -C "$SITREP_REPO" push
 ```
 
 Fold auto-actions into the same commit, or a follow-up
-`chore(sitrep): ✅ {action}`. Then invoke [`wk-learn sitrep`](../learn/README.md).
+`chore(sitrep): ✅ {action}`.
+
+### Stage 7: Auto-launch PR reviews (`start` only)
+
+Auto-action after the live page commits — one review worktree per PR awaiting
+your review; render each as a done ⚙️ Auto-Action, never interactive triage.
+
+- Source PRs from the Stage 2 GitHub "PRs to review" bucket; never re-query.
+- Restrict to repos cloned at `$GITC_ROOT/$EMPLOYER/<repo>` (`$GITC_ROOT`
+  default `$HOME/gitc`); skip + report uncloned repos, never implicitly clone.
+- Cap at 5 concurrent review subagents; carry the rest to the next run.
+- Per PR, one gathering subagent: `cd` the clone, `git wta <pr-head-branch>`
+  (worktree alias), invoke [`/wk-pr-review`](../pr-review/README.md).
+- Mechanics: [`references/auto-review.md`](references/auto-review.md).
+
+Then invoke [`wk-learn sitrep`](../learn/README.md).
 
 ## Sub-command: end
 
@@ -487,21 +486,6 @@ Snapshot is historical only; never write pending items into it. If
 `$SNAPSHOT_FILE` exists, re-read and merge — append newly completed items and
 meeting notes rather than overwriting.
 
-```markdown
----
-date: {TODAY}
-employer: {EMPLOYER}
-generated_with: {SKILL_VERSION}
-generated_at: {ISO_8601_UTC}
----
-
-# Snapshot — {TODAY}
-
-## Achievements
-
-### Code & PRs
-- {shipped, reviewed, unblocked — strong verbs, with links}
-
 **Authorship filter (canonical):** include a PR as the user's only when
 `gh pr view <pr> --json author` confirms author / co-author / primary approving
 reviewer — carry-over lists, review queues, and prior agent reports are NOT
@@ -509,31 +493,8 @@ proof. Enumerate own PRs via `gh search prs --author @me` (add
 `--merged --merged-at <range>` for wins). Applies to "Your PRs", snapshot wins,
 and standup alike.
 
-### Meetings & Collaboration
-- {decisions led, context shared, people unblocked}
-
-### Communication
-- {threads closed, announcements, knowledge shared}
-
-### Feedback
-- {given / received}
-
-## Meeting Notes
-{per-meeting summaries — decisions made, action items, open questions}
-
-## Issues Created Today
-- [{repo}\#{N}: {title}](url)
-
-## DX Metrics
-| Metric | You | Team | Org | Trend |
-|--------|-----|------|-----|-------|
-| Review turnaround | | | | |
-| PR cycle time | | | | |
-| Deploy frequency | | | | |
-
-## Day Stats
-- Completed: {N} items · Meetings: {N} · PRs: {created}/{reviewed}/{merged} · Commits: {N}
-```
+Snapshot template (front-matter + Achievements / Meeting Notes / Issues / DX /
+Day Stats): [`references/snapshot-template.md`](references/snapshot-template.md).
 
 Append QPR-worthy items to `$SITREP_REPO/$EMPLOYER/QPR/brag-log.md` with `🌟`.
 
@@ -607,7 +568,8 @@ Surface a quarterly-review nudge once per day; never block on it.
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk-sitrep start` | Gather → auto-transition merged PR tickets → compile → write live.md + standup → open → commit/push |
+| `/wk-sitrep start` | Gather → auto-transition merged PR tickets → compile → write live.md + standup → open → commit/push → auto-launch PR reviews |
+| PR awaiting your review | Stage 7 spawns a review subagent per PR (cloned repos only); `git wta` worktree + `/wk-pr-review`; done auto-action. |
 | `/wk-sitrep end` | Gather → write snapshot → rewrite live.md with pending work → open → commit/push |
 | `/wk-sitrep` (no arg) | Defaults to `start`. |
 | Writes | Re-read target first; preserve `data-done`; prefer `Edit` over full overwrite. |
@@ -627,6 +589,7 @@ Surface a quarterly-review nudge once per day; never block on it.
 
 - Env: `$SITREP_REPO` (workspace repo path), `$EMPLOYER` (org slug for path
   scoping), `$SITREP_PORT` (SilverBullet port, default `3000`), `$GITHUB_ORG`
-  (`gh` org scope).
+  (`gh` org scope), `$GITC_ROOT` (local clone root for Stage 7 reviews, default
+  `$HOME/gitc`).
 - `jq` (dismissed-registry JSON); `silverbullet` CLI able to serve `$SITREP_REPO`.
 - MCP servers for Slack, Gmail, Calendar, Granola, Drive, Docs, GitHub, Jira, Lattice.
