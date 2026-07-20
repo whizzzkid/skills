@@ -55,7 +55,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.17-170247'
+  version: '2026.07.20-155353'
 ---
 
 # Sitrep
@@ -212,8 +212,7 @@ fi
   carry-overs against live external state in Stage 2.
 - Read previous working day's snapshot before standup compilation. Resolve
   `$PREV_SNAPSHOT_FILE`; use its `## Achievements / ### Code & PRs` as primary
-  Yesterday source. Fall back to session memory only when a filesystem check
-  proves the file absent.
+  Yesterday source; when absent, follow the Stage 4b fallback chain.
 
 ### Stage 2: Parallel data gathering
 
@@ -375,11 +374,10 @@ skill owns selection.
 
 - **Yesterday:** previous snapshot `## Achievements`, top 3–4 wins; never
   reconstruct from memory when the file exists. Apply the canonical Authorship
-  filter.
-  - Re-confirm each PR's `author.login` via `gh` at compile
-    (`gh search prs --author @me --merged --merged-at <range>`) — never trust
-    carryover tracking or agent-reported attribution (ships another's merge as
-    the user's own).
+  filter (at compile).
+  - Snapshot AND session memory both empty (e.g. `end` skipped ≥1 day) →
+    reconstruct wins from live trackers: the canonical `gh` win search plus Jira
+    tickets moved to Done in range. Never emit an empty Yesterday.
   - One bullet per win, not a comma-joined line; append each PR's bare URL
     (`<pre>` copy block renders no markdown links; bare URLs auto-link in Slack).
 - **Today:** top 3–4 🔴 ASAP items, deadline-first.
