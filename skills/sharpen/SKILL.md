@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.20-210854'
+  version: '2026.07.20-215034'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -124,7 +124,6 @@ behavior, not just the specific instance.
   - What behavior needs to change?
   - What check or mechanism was missing?
   - What failure mode should the agent anticipate?
-- Remove specifics; keep mechanisms.
 
 ### HARD RULE: prohibited-subject gate — scan subject before drafting
 
@@ -207,7 +206,7 @@ behavior, not just the specific instance.
 - Resolve contradictions.
 - Consolidate repeated API calls or CLI commands.
 - Tighten sections that run past four bullets.
-- Remove dead labels left by earlier edits.
+- Remove dead labels; revert any uncommitted edit to the target not made this run that doesn't address the lesson (prior partial fold may encode a wrong model).
 - Bundle cleanup into the same change.
 
 ### Mechanical overfit scan
@@ -286,7 +285,6 @@ behavior, not just the specific instance.
 - Frontmatter `description` still matches the behavior.
 - `argument-hint` matches the current argument shape.
 - `allowed-tools` lists every tool the new edits reference.
-- Sibling `README.md` `Version:` matches `metadata.version` and is staged (hook-enforced on every commit).
 - Quick-reference table, Trigger table, and Step list match the body.
 - README counts of any set whose size changed — recount from source, never increment.
 - Cross-references still resolve.
