@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.15-221223'
+  version: '2026.07.20-195843'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -395,13 +395,9 @@ following the same format shown above.
 
 ### Body extras — cross-links, previews, incident & rollout sections
 
-Four body-composition sub-steps live in
-[`references/pr-body-extras.md`](references/pr-body-extras.md): auto-populating
-`## Stack` cross-reference links (when `$BEST_BASE` is another PR's head);
-appending rendered markdown-preview links for changed `.md` files; the
-incident-triggered bugfix body (root-cause chain + what it does NOT fix); and a
-`## Rollout` section for prod-facing diffs (release shape, backward-compat,
-rollback — a one-liner satisfies the description-check bot). Apply each that
+Four body-composition sub-steps (Stack cross-links, markdown-preview links,
+incident bugfix body, Rollout section) live in
+[`references/pr-body-extras.md`](references/pr-body-extras.md). Apply each that
 matches when composing the body.
 
 ## Step 3: Post-Creation Workflow
@@ -420,10 +416,8 @@ lifecycle (description sync → CI poll → self-review → feedback triage → 
 a single invocation.
 
 **Side actions never terminate the workflow.** Any ancillary action after
-`gh pr create` — cross-repo comment, reply to a referenced PR/issue,
-Slack/Jira/docs link, upstream tracking-issue update — is a continue signal, not
-task completion; the post-creation lifecycle runs regardless. Treat any "I just
-posted on X" thought as continue, never stop.
+`gh pr create` (cross-repo comment, Slack/Jira/docs link, tracking-issue update)
+is a continue signal, not completion — treat "I just posted on X" as continue.
 
 After the draft PR is created (or after pushing new commits to an existing PR):
 
@@ -494,6 +488,13 @@ After the draft PR is created (or after pushing new commits to an existing PR):
    "How would you like to handle these automated review comments?" Wait for the
    user's response before proceeding.
 
+   **Triage bias — fix small correct findings; defer is the exception.** A small
+   (<~10-line), correct-premise finding is cheaper to fix in-round than to defer,
+   which forces a re-approval round. Fix any correct-premise finding with a small
+   fix; reserve defer for large, contested, or out-of-scope findings; when
+   unsure, fix. Frame it as "fixing these, deferring X because Y", not "fix one,
+   defer the rest".
+
 ## Step 5: Mark Ready
 
 **HARD RULE — never end a turn with a draft PR whose work is done.** Any push to
@@ -526,7 +527,9 @@ CI result against an earlier HEAD does not satisfy the gate. Every push that
 lands new commits starts a fresh CI run — confirm the run for the current HEAD
 SHA has **completed** and is green before marking ready; never race `gh pr ready`
 ahead of a still-`running` build, and never assume a prior run covers the new
-commits. Each push = one CI run that must finish.
+commits. Each push = one CI run that must finish. An **empty**
+`statusCheckRollup` is vacuously green — require the provider's checks present,
+not merely absence of red (an unregistered build reads as premature all-green).
 
 ```bash
 gh pr view --json statusCheckRollup,headRefOid \
