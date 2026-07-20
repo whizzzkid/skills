@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.15-204739'
+  version: '2026.07.20-213546'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -213,6 +213,16 @@ gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
   gh api repos/{owner}/{repo} --jq '{allow_squash_merge, allow_merge_commit, allow_rebase_merge}'
   ```
 - Never switch away from squash when the squash command succeeds.
+- **HARD RULE — host permission-classifier denial is a failure mode distinct from
+  branch protection.** A "Blocked by classifier" / permission-layer denial of `gh
+  pr merge` is NOT a non-zero merge error → do **not** retry verbatim and do
+  **not** fall back to another merge method (the host layer blocks irreversible
+  actions independent of the skill's own tool allowlist; a different method is
+  denied identically). Explain the two-layer model (skill allowlist vs. host
+  classifier) and that an explicit `Bash(gh pr merge:*)` **settings.json** rule —
+  or a manual user merge — is required to proceed.
+  - A manual or past-tense merge by the user after denial IS the already-`MERGED`
+    path — re-run Step 1; on `state == "MERGED"`, resume Step 7. Never re-attempt.
 - **Squash rejected with `base branch policy prohibits the merge` and the only
   unresolved threads left are the author's own self-review** → this is the sole
   case that resolves them (not a method fallback — merge-commit won't help). Ask
