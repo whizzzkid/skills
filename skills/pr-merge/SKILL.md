@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.20-213546'
+  version: '2026.07.21-200430'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -223,6 +223,14 @@ gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
   or a manual user merge — is required to proceed.
   - A manual or past-tense merge by the user after denial IS the already-`MERGED`
     path — re-run Step 1; on `state == "MERGED"`, resume Step 7. Never re-attempt.
+- **Post-merge read-only verification needs standing allow rules.** Step 6's
+  `gh pr view` / `gh pr checks` state polls are blocked by the auto-mode
+  classifier unless `Bash(gh pr view:*)` and `Bash(gh pr checks:*)` are in the
+  allowed tools — recommend adding both as a prerequisite. Run each read-only call
+  as a standalone invocation: an allow rule matches only when the allowed command
+  is the whole invocation, so a pipe to `grep`/`jq` or a compound (`&&`, e.g.
+  `rm … && gh pr view`) re-triggers the classifier. Do any grep/jq filtering in a
+  separate step (`--jq` is a `gh` flag, not a pipe → still matches).
 - **Squash rejected with `base branch policy prohibits the merge` and the only
   unresolved threads left are the author's own self-review** → this is the sole
   case that resolves them (not a method fallback — merge-commit won't help). Ask
