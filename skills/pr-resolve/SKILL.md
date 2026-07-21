@@ -49,9 +49,11 @@ model-invocable: true
 user-invocable: true
 license: MIT
 group: pull-request
+env-vars:
+  - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.20-235059'
+  version: '2026.07.21-002033'
 ---
 
 # PR Resolve
@@ -113,8 +115,9 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
      session changed the finding or a new item needs callout. Still requires
      Hard Rule 2.
 9. **Co-author attribution.** Current user not the PR author → add a
-   `Co-authored-by:` trailer for the PR author on every commit. Real identities
-   only; never invent agent co-authors.
+   `Co-authored-by:` trailer for the PR author on every commit. Real emails per
+   wk-commit's HARD RULE (current user = `$WK_SKILLS_EMPLOYEE_EMAIL`, never a
+   `<login>@<domain>` guess); never invent.
 10. **Include bot reviews** as first-class feedback. Evaluate each for
     correctness before accepting or dismissing.
 11. **Adversarial-review gate before push** — new commits this session must pass
@@ -150,8 +153,8 @@ Announce:
 > "Resolving review comments on PR #{number}: *title*. Base: `{base_branch}`."
 
 Co-author session adds:
-> "Note: PR authored by @{pr_author}. Commits will include co-author attribution.
-> Comments from both you and @{pr_author} are excluded from triage."
+> "Note: PR authored by @{pr_author}. Commits carry co-author attribution;
+> comments from both are excluded from triage."
 
 ## Step 2: Sync Branch
 

@@ -22,9 +22,11 @@ model-invocable: true
 user-invocable: true
 license: MIT
 group: workflows
+env-vars:
+  - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.20-183909'
+  version: '2026.07.21-002033'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -114,6 +116,16 @@ This skill is model-invocable → any commit it produces is agent-created.
 - Omit only for a purely human-authored commit with no agent involvement.
 - Never invent a version — if unknown, use the tool name alone
   (`Assisted-by: <Tool/Agent Name>`).
+
+### HARD RULE — never fabricate a `Co-Authored-By:` email
+
+- Never build a human's email from a GitHub login + a guessed domain
+  (`<login>@<company>`) — a fabricated address misattributes every commit.
+- Current user's co-author trailer → use `$WK_SKILLS_EMPLOYEE_EMAIL` verbatim.
+- **`$WK_SKILLS_EMPLOYEE_EMAIL` unset/empty → STOP.** Do not emit a human
+  co-author trailer; require the var (never guess, never silently omit it).
+- Another person's co-author → their `<id>+<login>@users.noreply.github.com`
+  form only; omit the email if unknown. Never a corporate-domain guess.
 
 ## Commit Signing
 

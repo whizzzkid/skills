@@ -3,7 +3,7 @@
 Take over a pull request being worked on by someone else and drive it to
 completion using the full [`wk-workflow`](../workflow/README.md).
 
-**Version:** `2026.06.15-200404`
+**Version:** `2026.07.21-002033`
 
 ## Purpose
 

@@ -26,9 +26,11 @@ model-invocable: true
 user-invocable: true
 license: MIT
 group: pull-request
+env-vars:
+  - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.20-195843'
+  version: '2026.07.21-002033'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash

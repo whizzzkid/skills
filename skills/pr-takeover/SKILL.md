@@ -24,9 +24,11 @@ model-invocable: true
 user-invocable: true
 license: MIT
 group: pull-request
+env-vars:
+  - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200404'
+  version: '2026.07.21-002033'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -367,6 +369,10 @@ All new commits carry `Co-Authored-By: @{original_author}`.
 EOF
 )"
 ```
+
+Build the `Co-Authored-By:` email per wk-commit's HARD RULE: the current user's
+address is `$WK_SKILLS_EMPLOYEE_EMAIL` (unset → STOP); `@{original_author}` uses
+their `<id>+<login>@users.noreply.github.com` form. Never guess `<login>@<domain>`.
 
 ---
 
