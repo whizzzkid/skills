@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.20-203903'
+  version: '2026.07.21-220614'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -139,6 +139,14 @@ own the escaping regardless of body content:
 jq -n --arg body "$text" '{body: $body, event: "COMMENT"}' \
   | gh api repos/{owner}/{repo}/pulls/{n}/reviews --input -
 ```
+
+**Build `gh pr edit --body`/`--body-file` from a heredoc or a written file — never
+stream edits through `sed`/`awk`.** BSD `sed` `i`/`a`/`c` need a backslash-newline
+continuation, not the GNU inline form; a parse failure emits nothing, so
+`BODY=$(echo "$BODY" | sed …)` silently becomes an empty string and `gh pr edit`
+overwrites the description with a blank body while reporting success. Always
+re-fetch after any body edit — `gh pr view --json body --jq '.body | length'` — a
+"Body updated" message is not proof the content survived.
 
 **A pending review silently swallows a GraphQL reply.** When the acting user
 already has a PENDING review on the PR, the `addPullRequestReviewComment`

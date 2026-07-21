@@ -23,6 +23,14 @@ inline standards; relocation does not lower their priority.
   data file (CSV, YAML/JSON list, fixtures), scan sibling rows for
   convention-populated fields; if every existing row sets a field the new row
   leaves blank, ask the user to supply it — tools accept the omission silently.
+- **Coercion same-class:** a coercion (`.to_s`, `&.`, `String()`,
+  optional-chaining, null-coalescing) on one arg/field → audit every arg of the
+  same semantic class (role + nullability + type shape); also same-class guards,
+  redactions, retry wrappers, logging.
+- **Sandboxed-step env forwarding:** a var read inside a container/CI-runner
+  step is dead until the step's `env:` allowlist forwards it; env-stubbed tests
+  still pass. Trace producer → allowlist → reader in one change (mirror a sibling
+  secret); confirm via a real build log.
 - **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace
   each variable's source, path, and meaning in the new context. Reusing a
   bounded helper in a broader-range context: verify the helper's internal bounds
