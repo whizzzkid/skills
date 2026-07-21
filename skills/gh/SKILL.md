@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.21-220614'
+  version: '2026.07.21-230704'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -233,6 +233,10 @@ silent posts erode trust and make automated activity hard to audit.
   awk 'prev!="" && $0=="---"{f=1} {prev=$0} END{exit f}' <<<"$body" || echo "REJECT: non-blank line directly above ---  → renders as setext H2 heading"
   ```
   A REJECT on either line blocks the post — fix the footer and re-check before writing.
+  A render-time append is NOT this gate — appending is not verifying. Re-run these
+  greps on the FINAL body string immediately before EACH POST (every inline reply,
+  not only the PR description); a per-reply body composed from memory is the
+  common skip that ships the commit-trailer variant.
 
 ```
 ---
