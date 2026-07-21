@@ -30,7 +30,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.21-002033'
+  version: '2026.07.21-193513'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -319,13 +319,14 @@ When using a repo template:
 - **Prod-facing diff & incident-triggered bugfix bodies** have extra required
   sections — see the Body extras reference below; apply at composition time.
 
-### PR-close keywords close issues, not PRs
+### Superseded & closed PRs
 
-`Closes`/`Fixes`/`Resolves #N` auto-close only **issues** on merge — a `#N`
-reference to a PR renders as a link but never auto-closes that PR. Asked to
-"auto-close superseded PRs on merge" → use a close-on-merge Action or post close
-comments (e.g. a bot's own close command); keep `Closes #N` in the body as
-supersession documentation only.
+`Closes`/`Fixes`/`Resolves #N` auto-close only **issues** on merge, never a PR (a
+`#N` PR reference just links). To close a superseded PR use a close-on-merge Action
+or a close comment; keep `Closes #N` as supersession doc. A PR auto-closed by a
+squash-merged + deleted base cannot be reopened or retargeted (`gh pr reopen` /
+`gh pr edit --base` both fail) — create a fresh superseding PR (rebase mechanics:
+wk-pr-takeover Step 3).
 
 ### Simple PR (fallback — no repo template found)
 
