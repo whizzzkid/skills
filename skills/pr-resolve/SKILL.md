@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.21-002033'
+  version: '2026.07.21-210806'
 ---
 
 # PR Resolve
@@ -77,16 +77,17 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
 1. **Never push without explicit user confirmation.**
    - **Holds under Auto Mode.** A user question/redirect ("why did you not
      push?") is a reconsider prompt, not a go-ahead — require explicit
-     yes/approve/proceed (same for Hard Rule 4 force-push). Auto Mode acts on
-     evaluated recommendations, never on intent inferred from a question.
+     yes/approve/proceed (same for Hard Rule 4 force-push).
 2. **Never post reply comments without explicit user confirmation.**
    - **A "don't post"/"no replies" directive bans publishing content (replies,
      new comments, dismissal bodies) — never thread resolution**, an internal
      state change that unblocks merge (resolve per Hard Rule 3).
    - **HARD RULE — every reply/dismissal body leads with substance (what
      changed, the decision, the commit SHA), never a pleasantry.** Praise/thanks
-     openers ("Good catch!") are banned unconditionally. Route through
-     `Skill(wk-tone)` before render; the ban holds even if routing is skipped.
+     openers ("Good catch!") are banned unconditionally — pre-emit lint every
+     body's first sentence against `^(good catch|great|thanks|nice|well
+     spotted|good point)` and reject before the POST (the prose ban slips exactly
+     when the finding impresses). Route through `Skill(wk-tone)` before render.
 3. **Only resolve threads you actually worked on** — after a fix, explicit
    dismissal, or tracked deferral. Never resolve follow-up questions, skipped,
    rethink-pending, or ordinary self-review threads.
@@ -207,8 +208,8 @@ for details. Surfaces, map fields, and pending-review handling are specified the
 
 
 **Important — agent-observed drift is first-class feedback.** Diff the current PR description
-against branch state (commits, files, test plan, CI) before triaging; never rely
-on passively noticing drift. Inject staleness/missing-section/metadata/docs drift
+against branch state (commits, files, test plan, CI) before triaging. Inject
+staleness/missing-section/metadata/docs drift
 as `surface: agent_observation` (`bot_badge` flag); triage like any finding.
 - **Before replacing the PR description, capture the original** (`gh pr view
   --json body`) — drop-detection needs the pre-edit text, not a reconstruction.
@@ -350,8 +351,8 @@ Apply all Step 5 decisions (`fixes_to_apply`, `dismissals`, `deferrals`) in
 order. Commands: commands.md §6.
 
 **Important — Step 5 decisions are binding; never pause mid-execution to
-re-confirm a decided action.** The consult gate already collected every
-decision; the only in-flow stop is a verification failure (sub-step 2).
+re-confirm a decided action.** The only in-flow stop is a verification failure
+(sub-step 2).
 
 **Issue-class scan before each fix.** Identify the issue class; grep the full PR
 diff for sibling paths sharing it — per-class grep targets in commands.md §6 (a

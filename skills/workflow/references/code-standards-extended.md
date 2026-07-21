@@ -37,3 +37,11 @@ inline standards; relocation does not lower their priority.
   `rescue` + observability-notify in the first draft, not post-review. An
   existence-check on one raising object of several is not coverage;
   wrap-and-continue unless a halt is intended.
+- **Full-boot repro through a secrets layer:** before the first boot, read the
+  config resolver/schema and the repo's existing env-override (dev-container /
+  compose) file to enumerate every required key in one pass; inject them
+  together, then boot once. Reuse that env-override convention rather than
+  editing a generated "DO NOT EDIT" file. A trial-and-error boot loop (boot →
+  read the missing-key error → add → re-boot) is the signal to stop and read the
+  schema. Prove the root cause by matching produced-artifact fingerprints
+  against the exact failing artifacts.
