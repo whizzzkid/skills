@@ -28,7 +28,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.21-002033'
+  version: '2026.07.21-191914'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -130,6 +130,33 @@ Summarize internally:
 ---
 
 ## Step 3: Check Out the Branch
+
+### Revive precheck — closed PR whose base was merged + deleted
+
+- A PR auto-closes when its base branch is squash-merged into the default branch
+  and deleted. GitHub then forbids **both** reopen and base-retarget on it.
+- Detect before any checkout:
+
+  ```bash
+  gh pr view "$PR_NUMBER" --json state,baseRefName
+  git ls-remote --heads origin "$BASE_BRANCH"   # empty output = base ref gone
+  ```
+
+- `state: CLOSED` + empty `ls-remote` → do NOT `gh pr reopen` (returns
+  `Could not open the pull request`) or `gh pr edit --base` (returns
+  `GraphQL: Cannot change the base branch of a closed pull request`). There is
+  no in-place revive.
+- Recovery — re-parent only the PR's own commits onto the default branch, then
+  supersede with a fresh PR:
+
+  ```bash
+  git rebase --onto "origin/$DEFAULT_BRANCH" "$LAST_BASE_COMMIT" HEAD
+  git push --force-with-lease
+  ```
+
+  Open a NEW PR to `$DEFAULT_BRANCH`; cross-link both ways with a lifecycle
+  comment noting it supersedes the closed one. Reuse prior adversarial-review
+  clearance only after recording a fresh clearance for the rebased HEAD.
 
 ### Overwrite Mode (default)
 
