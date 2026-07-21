@@ -13,6 +13,11 @@ dispatches read-only-gathering subagents that each drive one review.
 - **Source, never re-query.** Reuse the Stage 2 GitHub agent's "PRs to review"
   bucket (already `--draft=false --owner="$GITHUB_ORG"`). Re-querying risks
   drift from the compiled report.
+- **Repo allowlist required.** Filter candidates to repos in the project's
+  config `review_repos` allowlist before dispatching any subagent — scope to
+  repos the user actively works in, not every repo cloned locally.
+  - No allowlist configured → review nothing; report the skipped PRs. Never
+    fall back to "all cloned repos".
 - **Local clone required.** Base clones at `$GITC_ROOT/$EMPLOYER/<repo>`
   (`$GITC_ROOT` default `$HOME/gitc`). The orchestrator checks
   `test -d "$GITC_ROOT/$EMPLOYER/<repo>"` per PR.
@@ -20,6 +25,20 @@ dispatches read-only-gathering subagents that each drive one review.
     — cloning an unfamiliar repo is a side effect the user did not request.
 - **Cap concurrency at 5** review subagents per run; carry the remainder to the
   next `start`. Prevents a large review queue from spawning an unbounded fleet.
+
+## Pending draft only — never submit a live review
+
+- The subagent drives [`/wk-pr-review`](../../pr-review/README.md) Phase 5, which
+  posts a **PENDING** (draft) review the user submits from the GitHub UI.
+- Never call an endpoint that submits, approves, or requests changes on the
+  user's behalf: no `gh pr review --approve/--request-changes/--comment`, no
+  `POST /pulls/{n}/reviews` with an `event` field.
+- A prose "invoke `/wk-pr-review`" instruction does NOT guarantee the skill's
+  exact posting mechanics — an orchestrator can improvise a live submit. Hold
+  the subagent to the pending-review contract against its own tool calls, not
+  the prose.
+- Live reviews are irreversible: per the GitHub API only a still-`PENDING`
+  review can be deleted; a submitted approve/request-changes cannot be undone.
 
 ## Per-PR subagent
 

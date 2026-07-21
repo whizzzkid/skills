@@ -56,7 +56,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.20-160337'
+  version: '2026.07.21-172236'
 ---
 
 # Sitrep
@@ -418,11 +418,15 @@ Fold auto-actions into the same commit, or a follow-up
 ### Stage 7: Auto-launch PR reviews (`start` only)
 
 Auto-action after the live page commits — one review worktree per PR awaiting
-your review; render each as a done ⚙️ Auto-Action, never interactive triage.
+your review, rendered as a done ⚙️ Auto-Action.
 
 - Source PRs from the Stage 2 GitHub "PRs to review" bucket; never re-query.
-- Restrict to repos cloned at `$GITC_ROOT/$EMPLOYER/<repo>` (`$GITC_ROOT`
-  default `$HOME/gitc`); skip + report uncloned repos, never implicitly clone.
+- Restrict to repos both in the config `review_repos` allowlist and cloned at
+  `$GITC_ROOT/$EMPLOYER/<repo>` (`$GITC_ROOT` default `$HOME/gitc`); skip +
+  report the rest, never implicitly clone.
+- **Pending draft only.** Subagent follows wk-pr-review Phase 5; never submit,
+  approve, or request changes — live reviews are irreversible (only PENDING is
+  deletable).
 - Cap at 5 concurrent review subagents; carry the rest to the next run.
 - Per PR, one gathering subagent: `cd` the clone, `git wta <pr-head-branch>`
   (worktree alias), invoke [`/wk-pr-review`](../pr-review/README.md).
@@ -569,7 +573,7 @@ Surface a quarterly-review nudge once per day; never block on it.
 | Trigger | Behavior |
 |---------|----------|
 | `/wk-sitrep start` | Gather → auto-transition merged PR tickets → compile → write live.md + standup → open → commit/push → auto-launch PR reviews |
-| PR awaiting your review | Stage 7 spawns a review subagent per PR (cloned repos only); `git wta` worktree + `/wk-pr-review`; done auto-action. |
+| PR awaiting your review | Stage 7 spawns a review subagent per PR (allowlisted repos only); `git wta` worktree + `/wk-pr-review` pending draft; done auto-action. |
 | `/wk-sitrep end` | Gather → write snapshot → rewrite live.md with pending work → open → commit/push |
 | `/wk-sitrep` (no arg) | Defaults to `start`. |
 | Writes | Re-read target first; preserve `data-done`; prefer `Edit` over full overwrite. |
