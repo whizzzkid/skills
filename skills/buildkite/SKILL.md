@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.07.15-191203'
+  version: '2026.07.21-212305'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -189,6 +189,7 @@ Progressive disclosure pattern:
 | 17 | Docker build failed |
 | 127 | Command not found |
 | 137 | OOM killed |
+| 143 | SIGTERM — job killed (spot-instance reclaim / agent shutdown). If the step's real work already printed success, treat as infra noise, not a code failure: rebuild once, do not diagnose the diff. |
 
 ## Reading upstream step status from a downstream step
 

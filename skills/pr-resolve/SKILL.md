@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.21-210806'
+  version: '2026.07.21-212305'
 ---
 
 # PR Resolve
@@ -266,10 +266,6 @@ docs; covered (or code is unambiguous) → cite and dismiss; else present normal
 check the PR body's stack section for the owning sibling PR. Owned → reword
 to future tense, name that PR. Unowned → normal code gap.
 
-**Verify pattern applicability before copying.** A finding citing a pattern used
-elsewhere → confirm the scenario matches (auth, runtime state, credential
-ownership) first; precedent alone never proves this context needs it.
-
 **Suggestion format** — see commands.md §4. Every suggestion gives `Why this fix`
 / `Why skip` reasoning; `{bot_badge}` = `🤖 (bot)` for bots, else omitted. Be
 honest in the skip rationale; none exists → say so.
@@ -285,7 +281,10 @@ mechanism/feature, design change, or cross-cutting work — defaults to
 dismiss-with-rationale + a tracked follow-up PR, not inline build-out (esp. stacked
 or explicitly-narrow PRs); build inline only for a confirmed blocker of THIS PR's
 stated scope. A self-re-review-surfaced adjacent finding is a defer signal, not
-license to expand the PR.
+license to expand the PR. Reopening a previously-deferred finding voids its
+deferral — re-derive the footprint from scratch, never rubber-stamp. Cross-cutting
+= a shared interface or ≥2 call sites, named in the rationale; else localized →
+fix inline.
 
 **Classify suggestions** — tag each `obvious-fix` or `judgment-required`:
 

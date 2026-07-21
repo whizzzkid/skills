@@ -24,7 +24,11 @@ inline standards; relocation does not lower their priority.
   convention-populated fields; if every existing row sets a field the new row
   leaves blank, ask the user to supply it — tools accept the omission silently.
 - **Reuse hygiene:** before copying fallback chains/defaults/conditionals, trace
-  each variable's source, path, and meaning in the new context.
+  each variable's source, path, and meaning in the new context. Reusing a
+  bounded helper in a broader-range context: verify the helper's internal bounds
+  fit the new range first — a range-capping helper reused for a same-day / wider
+  query silently returns empty (no error). Fix by extracting a bounds-free shared
+  helper, not by calling the capped one.
 - **No hardcoded env-specific constant beside a dynamic sibling:** before
   hardcoding OS, arch, version, or path, grep the file — if a sibling derives the
   same value dynamically (`uname -s`/`-m`, etc.), reuse that computation, never

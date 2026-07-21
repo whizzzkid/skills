@@ -152,6 +152,10 @@ Every suggestion includes reasoning for applying and discarding:
 `{bot_badge}` is `🤖 (bot)` for bots, omitted otherwise. Be honest in the skip
 rationale; if no good skip reason exists, say so.
 
+**Verify pattern applicability before copying.** A finding citing a pattern used
+elsewhere → confirm the scenario matches (auth, runtime state, credential
+ownership) first; precedent alone never proves this context needs it.
+
 ## Step 5 — Consultation prompts
 
 Bulk-queue preview (obvious fixes; ask once before queueing):
