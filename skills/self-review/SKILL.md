@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.06.29-202140'
+  version: '2026.07.22-174224'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -100,6 +100,12 @@ built → wastes the work.
 
 - Never downgrade to a published `.../comments` call to dodge the prompt →
   violates the pending-review HARD RULE.
+- On a blocked POST, preserve the work: write the composed payload with the
+  **Write tool** to `/tmp/agent/gh/<owner>/<repo>/pulls/{n}/self-review.json`,
+  then hand the user a one-line `gh api … --input <file>` to post it. Never
+  rebuild the payload in a bash command that mentions the blocked endpoint
+  (`gh api repos/*/pulls/*/reviews`) — the classifier matches command text, not
+  execution, so even a `jq … > file.json` write re-trips the same denial.
 
 ## Step 1: Gather Context
 
