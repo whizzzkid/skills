@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.07.22-195336`
+**Version:** `2026.07.22-211710`
 
 ## Invocation
 
@@ -61,7 +61,7 @@ flowchart TD
   the assumption that a branch "obviously" targets the default.
 - **Stacking delegates to `gh stack`:** For a stack of dependent PRs the skill prefers the `github/gh-stack`
   extension (when installed and the repo is enabled for the stacks preview), delegating branch creation, base
-  chaining, and linked submission; it falls back to the manual `[Part X/Y]` + `--base` convention otherwise.
+  chaining, and linked submission; it falls back to the manual `[<feature>-part-N/M]` + `--base` convention otherwise.
 - **Source plan is linked:** Step 2 pre-flights `docs/plans/` for the implementation plan the work derives
   from and links it (anchored to the phase) under `## Meta` — a vision/spec link is not a substitute.
 - **PR template detection:** Repo `.github/pull_request_template.md` takes precedence over the hardcoded

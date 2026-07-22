@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.22-195336'
+  version: '2026.07.22-211710'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -108,7 +108,7 @@ ensures quality before marking ready.
 Detect the branch's actual fork point before measuring scope. Assuming the
 default branch is the base → PR with unrelated commits in the diff (from a
 parent in-flight branch), CI failures against the wrong target, and a silent
-stacked-PR lacking the `[Part X/Y]` annotation.
+stacked-PR lacking the `[<feature>-part-N/M]` annotation.
 
 Compute merge-base distance between the current branch and every candidate base
 — the default branch plus every open PR's `headRefName` (yours and others'). The
@@ -160,7 +160,7 @@ anything else — silent mis-basing is costly to undo:
 > `{DEFAULT_BRANCH}`. Choose:
 >
 > **A)** Create this PR with `--base {BEST_BASE}` and treat it as stacked (adds
-> `[Part X/Y]` and `## Stack` to the body).
+> `[<feature>-part-N/M]` and `## Stack` to the body).
 > **B)** Rebase onto `{DEFAULT_BRANCH}` first, then create against the default
 > base.
 > **C)** Cancel.
@@ -376,8 +376,11 @@ hand-chain `--base`.
 
 - Probe once (`gh stack view`); non-zero / not-installed / repo-not-enabled →
   manual fallback.
-- Manual fallback: `[Part X/Y]` title + injected `## Stack` body +
-  `--base previous-branch`, each PR green in isolation.
+- Every PR in a merged stack gets `[<feature>-part-N/M]` as its final title
+  token (N = 1-based position, M = stack size; after any `[<KEY>]`), in both the
+  `gh stack` and manual paths.
+- Manual fallback: `[<feature>-part-N/M]` title suffix + injected `## Stack`
+  body + `--base previous-branch`, each PR green in isolation.
 
 `gh stack` command sequence, availability probe, and the manual fallback recipe:
 [`references/gh-stack-stacking.md`](references/gh-stack-stacking.md).
@@ -562,7 +565,7 @@ the appropriate project files.
 | Trigger | Behavior |
 |---------|----------|
 | "create a PR" | Full workflow: draft → CI → self-review → ready → retro |
-| "stack this PR" | Delegate to `gh stack` when available; else manual `[Part X/Y]` + `--base` |
+| "stack this PR" | Delegate to `gh stack` when available; else manual `[<feature>-part-N/M]` + `--base` |
 | "mark PR ready" | Skip to step 5 |
 | New commits pushed | Re-run from step 3 (update description, re-poll CI) |
 

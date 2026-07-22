@@ -36,20 +36,24 @@ gh extension list | grep -q 'github/gh-stack' \
 - `gh stack rebase` — cascading rebase from trunk up (switches to `--onto` for
   merged PRs); `--continue` / `--abort` on conflict.
 - `gh stack view` — inspect branches, ordering, PR links.
-- Let the extension set PR bases and `[Part X/Y]`-equivalent linkage — do not
-  also hand-edit `--base` or inject a manual `## Stack` section.
+- Let the extension set PR bases and stack linkage — do not also hand-edit
+  `--base` or inject a manual `## Stack` section.
+- The extension does NOT set the title's stack label — still append the
+  `[<feature>-part-N/M]` suffix (see below) to every PR title in the stack.
 
 ## Manual fallback (extension absent or repo not in preview)
 
-- Append `[Part X/Y]` at the end of the PR title (e.g.
-  `feat(auth): ✨ add OAuth2 login [Part 1/3]`).
+- Append the stack label `[<feature>-part-N/M]` as the FINAL title token —
+  after any Jira `[<KEY>]` suffix. `<feature>` is the stack's shared feature
+  slug, `N` the PR's 1-based position in the merge order, `M` the total PR
+  count in the stack (e.g. `feat(auth): ✨ add OAuth2 login [<KEY>] [oauth-part-1/3]`).
 - Base each PR on the previous one: `--base previous-branch`.
 - Each PR must pass CI in isolation — no forward dependencies.
 - Inject a `## Stack` section listing all parts with PR numbers and status:
 
 ```bash
 gh pr create --draft --base previous-branch \
-  --title "feat(scope): ✨ description [Part X/Y]" \
+  --title "feat(scope): ✨ description [<feature>-part-N/M]" \
   --body "$(cat <<'EOF'
 ## Summary
 - What changed and why
