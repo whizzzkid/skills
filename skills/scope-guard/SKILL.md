@@ -21,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.06.12-123500'
+  version: '2026.07.22-214113'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -54,8 +54,24 @@ guard does not train you to disable it.
 
 ## Opt out
 
-Set `SCOPE_GUARD_OFF=1` for the session when an out-of-scope search is
-genuinely required (e.g. locating a system binary).
+- Export `SCOPE_GUARD_OFF=1` for the session when an out-of-scope search is
+  genuinely required (e.g. locating a system binary).
+- **The opt-out must be an exported/session env var, never a command prefix.**
+  `SCOPE_GUARD_OFF=1 grep -r …` in a single Bash call does not disable the guard
+  — the hook runs as a separate `PreToolUse` process that inspects the command
+  payload before it executes, so a var set on that command line never reaches
+  the hook's own environment.
+
+## False block: recursive search + unexpanded glob
+
+- A recursive flag (`-r`/`-R`/`-rl`) plus an unexpanded glob token (`*.go`) can
+  be blocked as an unbounded search root even when CWD already resolves inside
+  the repo/worktree — the lexical token check flags the glob independently of
+  the CWD-based root resolution that clears the non-recursive form.
+- Do not reach for the env opt-out here (a command prefix will not work anyway).
+  Instead: list the files explicitly and grep those (drop `-r`), or omit `-r`
+  when CWD is already the intended search root — the non-recursive form from the
+  same CWD passes cleanly.
 
 ## Invocation
 
