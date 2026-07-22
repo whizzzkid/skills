@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.08-174545'
+  version: '2026.07.22-222532'
   internal: false
   model:
     openai: gpt-4.1
@@ -181,6 +181,7 @@ For each candidate seam, ask:
 - Can this side build, lint, pass tests with the **other side reverted**? (Invariant 2.)
 - Can a reviewer read this side as a coherent change without having seen the other side? (Invariant 3.)
 - Does this side leave a dead-end (unused symbol, half-wired feature, dangling test) a future child cleans up? Yes → the description must explicitly call it out.
+- Does this side add a gate / validation / enforcement that goes CI-red when the data it checks is absent? Yes → the PR **providing that data must be an ancestor**, never a descendant. Order by data-dependency, not conceptual layer (schema → enforcement → data inverts it); a mis-ordered gate is CI-red in isolation and needs post-hoc `git rebase --onto` surgery to reorder.
 
 Seam needs a temporary scaffold to satisfy invariant 2 (e.g., a stub returning a default until a later child fills it in) → document the scaffold in the child's description and tag the future child that removes it.
 
