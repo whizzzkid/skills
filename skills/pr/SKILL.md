@@ -16,6 +16,8 @@ allowed-tools:
   - "Bash(gh pr ready:*)"
   - "Bash(gh pr diff:*)"
   - "Bash(gh pr reviews:*)"
+  - "Bash(gh stack:*)"
+  - "Bash(gh extension list:*)"
   - "Bash(gh api repos:*)"
   - Read
   - AskUserQuestion
@@ -30,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.21-193513'
+  version: '2026.07.22-195336'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -364,37 +366,21 @@ token: `feat(scope): ✨ description [<KEY>]`. Prevents wk-jira Stage 3 from
 patching a keyless title after the PR already exists. No key found → compose the
 title without a suffix; do not invent one.
 
-### Stacked PR (fallback — no repo template found)
+### Stacking multiple PRs
 
-When splitting work into stacked PRs:
+Splitting work into a stack of dependent PRs → **prefer the `gh stack` extension**
+(`github/gh-stack`) when available: it is installed AND the repo is enabled for
+the stacks preview (gh v2.0+). Delegate the whole stack lifecycle (branch
+creation, base chaining, cascading rebase, linked submission) to it — never
+hand-chain `--base`.
 
-- Append `[Part X/Y]` at the end of the PR title.
-- Base each PR on the previous one: `--base previous-branch`.
-- Each PR must pass CI in isolation — no forward dependencies.
-- Example: `feat(auth): ✨ add OAuth2 login [Part 1/3]`
+- Probe once (`gh stack view`); non-zero / not-installed / repo-not-enabled →
+  manual fallback.
+- Manual fallback: `[Part X/Y]` title + injected `## Stack` body +
+  `--base previous-branch`, each PR green in isolation.
 
-```bash
-gh pr create --draft --base previous-branch \
-  --title "feat(scope): ✨ description [Part X/Y]" \
-  --body "$(cat <<'EOF'
-## Summary
-- What changed and why
-
-## Stack
-- Part 1: #PR_NUMBER (merged/open)
-- **Part 2: this PR**
-- Part 3: pending
-
-## Test plan
-- [ ] How to verify the changes
-
-EOF
-)"
-```
-
-Repo template used for a stacked PR → use the template as the body structure and
-inject the `## Stack` section listing all parts with PR numbers and status,
-following the same format shown above.
+`gh stack` command sequence, availability probe, and the manual fallback recipe:
+[`references/gh-stack-stacking.md`](references/gh-stack-stacking.md).
 
 ### Body extras — cross-links, previews, incident & rollout sections
 
@@ -576,7 +562,7 @@ the appropriate project files.
 | Trigger | Behavior |
 |---------|----------|
 | "create a PR" | Full workflow: draft → CI → self-review → ready → retro |
-| "stack this PR" | Stacked PR with `[Part X/Y]` and `--base` |
+| "stack this PR" | Delegate to `gh stack` when available; else manual `[Part X/Y]` + `--base` |
 | "mark PR ready" | Skip to step 5 |
 | New commits pushed | Re-run from step 3 (update description, re-poll CI) |
 
