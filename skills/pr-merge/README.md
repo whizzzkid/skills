@@ -4,7 +4,7 @@
 > merge, transition the linked ticket to its terminal state, and surface
 > any follow-ups and deferred action items.
 
-**Version:** `2026.07.22-002132`
+**Version:** `2026.07.22-212216`
 
 ## Invocation
 
@@ -26,7 +26,7 @@ flowchart TD
     D -->|unresolved threads| BLOCK3["🚫 Block — list open threads"]
     D -->|all resolved| E["Step 5: No open action items?"]
     E -->|unchecked non-deferred items| BLOCK4["🚫 Block — list items"]
-    E -->|clear| F["Step 6: Merge PR (squash)"]
+    E -->|clear| F["Step 6: Retarget stacked children onto base,<br/>then merge PR (squash)"]
     F --> G["Step 7: Transition linked ticket to Done"]
     G --> H["Step 8: Output follow-ups and action items"]
 ```

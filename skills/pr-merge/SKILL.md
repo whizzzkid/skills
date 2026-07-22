@@ -3,7 +3,8 @@ name: wk-pr-merge
 description: >-
   Use when ready to merge a PR — verifies CI is green, all reviews approved,
   all reviewer comments resolved, no open action items,
-  then merges, transitions the linked ticket to its terminal state, lists
+  then retargets any stacked child PRs onto its base, merges, transitions
+  the linked ticket to its terminal state, lists
   any follow-ups or deferred action items, captures a session retro, and
   cleans up the merged worktree.
 argument-hint: '[<pr-number-or-url>]'
@@ -26,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.22-002132'
+  version: '2026.07.22-212216'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -66,6 +67,7 @@ Extract and record:
 - `{number}` — PR number
 - `{title}` — PR title
 - `{base}` — base branch
+- `{head}` — head branch (this PR's own branch)
 - `{head_sha}` — current HEAD SHA of the PR branch
 - `{url}` — PR URL
 - `{body}` — PR description (used in Steps 5 and 8)
@@ -192,6 +194,20 @@ echo "{body}" | grep -nE '^\s*- \[ \]'
 - `- [x]` items are already done → skip.
 
 ## Step 6: Merge the PR
+
+- **HARD RULE — retarget stacked children BEFORE merging with `--delete-branch`.**
+  A child PR based on this PR's head branch is closed/orphaned when the merge
+  deletes the head: GitHub's automatic base-change on parent merge races with the
+  branch deletion and does not complete first. Detect children:
+  ```bash
+  gh pr list --repo "$GITHUB_ORG/{repo}" --base {head} --state open --json number,headRefName
+  ```
+  - Empty result → proceed to merge.
+  - Any result → retarget EACH child onto this PR's base first, then merge this PR:
+    ```bash
+    gh pr edit {child} --base {base} --repo "$GITHUB_ORG/{repo}"
+    ```
+  - Re-query and confirm every child's `baseRefName == {base}` before running the merge command below.
 
 ```bash
 gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
