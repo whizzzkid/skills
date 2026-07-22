@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.22-002132'
+  version: '2026.07.22-174954'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -277,6 +277,10 @@ like `lychee`, `shellcheck`, `bats`, etc.
   --no-rebase` (merge), then retry the regular push. Rebasing rewrites published
   commits and forces a force-push the classifier blocks; only rebase when the
   user explicitly asks for clean linear history.
+- Force-push classifier-blocked after a rewrite → push the rewritten commits
+  under a **new branch name** (a plain new-ref push, not a history rewrite, lands
+  cleanly), then repoint the PR to the new branch. Never `--no-verify` or
+  otherwise bypass the block.
 
 ### Stage handoff-doc removal with the work it describes
 
