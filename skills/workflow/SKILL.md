@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.21-220614'
+  version: '2026.07.22-173723'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -285,6 +285,7 @@ After PR creation or any push to a PR branch, monitor, diagnose, and fix CI unti
 - Use `wk-buildkite` for Buildkite.
 - Run long watches in the background; before any wait >~1 min (suite, CI poll, flake re-runs) state what runs and rough duration so silence isn't read as a hang.
 - **Never end a turn announcing a holding pattern or delegating its final action.** Watch CI to completion this turn; once green, run `gh pr ready` yourself — never hand "mark ready once CI passes" to the user.
+- **Don't idle on the CI barrier — interleave.** While a background poll runs, start the next plan task that has no dependency on this PR's green state; the poll re-invokes you on completion. Hard-wait only when nothing else can progress (last PR in stack, or a step genuinely needs green: auto-merge, or a later stacked PR that builds on this one). Tail of PR N + body of PR N+1 in parallel is the default.
 - Read actual logs first.
 
 | Failure type | Action |
@@ -293,15 +294,7 @@ After PR creation or any push to a PR branch, monitor, diagnose, and fix CI unti
 | Flaky test | Re-trigger once; if it repeats, treat as real |
 | Infrastructure | Re-trigger; if persistent, inform user — no code fix |
 
-Diagnosis rules:
-
-| Error signal | Check |
-|---|---|
-| `no version is set`, `couldn't resolve latest`, `unknown tag` | Version-pinning rule |
-| `auth failed`, `unauthorized`, `expired token` | Env-var / secrets provenance |
-| `permission denied` on a script | Executable bit (`chmod +x`) |
-| `command not found` for a project tool | Tool manifest (`mise.toml`, `.tool-versions`) |
-| New third-party Action on org-managed runner | Prefer `actions/*` or non-action install; ask before adding |
+Diagnosis rules — map error signal to first check: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md).
 
 Fix and re-push:
 
