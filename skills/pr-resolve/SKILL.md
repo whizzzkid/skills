@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.22-002730'
+  version: '2026.07.22-192458'
 ---
 
 # PR Resolve
@@ -78,6 +78,10 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
    - **Holds under Auto Mode.** A user question/redirect ("why did you not
      push?") is a reconsider prompt, not a go-ahead — require explicit
      yes/approve/proceed (same for Hard Rule 4 force-push).
+   - **Standing authorization:** "make it merge-ready"/"mergeable"/"land this"
+     in the invocation authorizes pushes for the whole resolution lifecycle (CI
+     re-pushes included) — confirm once, then push each round. A bare "resolve
+     comments" does not.
 2. **Never post reply comments without explicit user confirmation.**
    - **A "don't post"/"no replies" directive bans publishing content (replies,
      new comments, dismissal bodies) — never thread resolution**, an internal
@@ -286,7 +290,7 @@ fix inline.
 
 | Tag | Condition |
 |---|---|
-| `obvious-fix` | Skip rationale empty, "no valid reason", "no good reason to skip", `—`, or otherwise concedes the comment is right. **Fail-open** (swallowed errors, silent returns) in a script writing/publishing external artifacts also lands here, absent an idempotent-pass-through requirement. |
+| `obvious-fix` | Skip rationale empty, "no valid reason", "no good reason to skip", `—`, or otherwise concedes the comment is right. A fail-open defect in artifact-producing code also lands here. |
 | `judgment-required` | A real tradeoff, false-positive possibility, scope question, multiple valid approaches, or security/performance judgment exists. |
 
 Default to `judgment-required` when uncertain.
