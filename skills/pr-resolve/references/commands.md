@@ -156,6 +156,10 @@ rationale; if no good skip reason exists, say so.
 elsewhere → confirm the scenario matches (auth, runtime state, credential
 ownership) first; precedent alone never proves this context needs it.
 
+**Missing-documentation findings.** Before surfacing a bot "undocumented
+behavior/rationale/trade-off" finding, grep the diff, touched files, and repo
+docs; covered (or code is unambiguous) → cite and dismiss; else present normally.
+
 ## Step 5 — Consultation prompts
 
 Bulk-queue preview (obvious fixes; ask once before queueing):

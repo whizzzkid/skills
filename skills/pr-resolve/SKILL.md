@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.21-212305'
+  version: '2026.07.22-002730'
 ---
 
 # PR Resolve
@@ -258,10 +258,6 @@ the configured KB first and cite an authoritative doc; fall back to general
 knowledge only if the KB is empty, flagging it. Skip for code-level intent,
 design rationale, or test-coverage questions.
 
-**Missing-documentation findings.** Before surfacing a bot "undocumented
-behavior/rationale/trade-off" finding, grep the diff, touched files, and repo
-docs; covered (or code is unambiguous) → cite and dismiss; else present normally.
-
 **Docs-ahead-of-code, stacked PR.** Docs describe behavior the diff lacks →
 check the PR body's stack section for the owning sibling PR. Owned → reword
 to future tense, name that PR. Unowned → normal code gap.
@@ -433,9 +429,11 @@ Key rules:
 
 - Quote the original on issue-comment replies; suggestions split from one issue
   comment (Step 4) → **one combined reply** (no sub-section replies).
-- Refresh bot thread IDs against post-push HEAD before bot replies; skip dropped findings.
-- Post-push comments matching `(path, line, concern)` from this session are
-  already-addressed echoes: reply with the commit link, resolve, no re-prompt/re-commit.
+- Post-push, refresh bot threads against HEAD and fetch full comment BODIES (not
+  just thread IDs); skip dropped findings. Classify each by `(path, line,
+  concern)`: a match from this session is an already-addressed echo → reply with
+  the commit link, resolve, no re-prompt/re-commit; a non-match is a
+  genuinely-new finding → route to Step 4 triage, never ID-refresh-only.
 
 ## Step 9: Check Merge Conflicts
 
