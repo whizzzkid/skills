@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.22-173723'
+  version: '2026.07.22-230739'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -48,6 +48,7 @@ Execute the workflow without asking permission at each step.
 | Review blocks | Fix blockers, re-invoke `wk-adversarial-review` | Ask “should I fix these?” |
 | Docs need updating | Invoke `wk-docs` | Ask “should I update docs?” |
 | Session ending | Invoke `wk-retro` | Ask “should I do a retro?” |
+| Terminal directive as a question (“mark ready?”, “merge?”, “push?”) | Query current state and act now | Wait/poll on CI or approvals as if conditional |
 
 Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a finding requires a user-owned design decision; user explicitly requested a pause/check-in; or a destructive/shared-state action is required.
 
@@ -285,7 +286,7 @@ After PR creation or any push to a PR branch, monitor, diagnose, and fix CI unti
 - Use `wk-buildkite` for Buildkite.
 - Run long watches in the background; before any wait >~1 min (suite, CI poll, flake re-runs) state what runs and rough duration so silence isn't read as a hang.
 - **Never end a turn announcing a holding pattern or delegating its final action.** Watch CI to completion this turn; once green, run `gh pr ready` yourself — never hand "mark ready once CI passes" to the user.
-- **Don't idle on the CI barrier — interleave.** While a background poll runs, start the next plan task that has no dependency on this PR's green state; the poll re-invokes you on completion. Hard-wait only when nothing else can progress (last PR in stack, or a step genuinely needs green: auto-merge, or a later stacked PR that builds on this one). Tail of PR N + body of PR N+1 in parallel is the default.
+- **Don't idle on the CI barrier — interleave.** While a background poll runs, start the next plan task with no dependency on this PR's green state; the poll re-invokes you on completion. Hard-wait only when nothing else can progress (last PR in stack, or a step needing green like auto-merge).
 - Read actual logs first.
 
 | Failure type | Action |
