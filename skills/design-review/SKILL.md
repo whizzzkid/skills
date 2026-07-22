@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.17-183354'
+  version: '2026.07.22-232208'
   internal: false
   model:
     claude: claude-opus-4-8
@@ -104,6 +104,9 @@ Flag on sight (each maps to a Step 2 lens):
 
 - Hardcoded colors/spacing bypassing tokens; a new scale value with no rationale.
 - Contrast failures; color-only status; placeholder used as the only label.
+- Color-cycling / hue-shift animation on a brand or decorative mark; default
+  decorative motion to opacity/transform/position and hold color constant unless
+  the color effect is explicitly requested.
 - Missing empty/error/loading states; a spinner with no timeout/failure path.
 - Modal-on-modal, or a modal where inline/expand would do.
 - Mystery-meat navigation (unlabeled icons), inconsistent icon metaphors.
@@ -149,6 +152,9 @@ Invoked by another skill/agent (e.g. `wk-pr-review`) with `consult <pr|path>`:
 
 - **Reviewing source without rendering.** A stylesheet reads fine and still ships
   a broken layout. Render when a live surface exists.
+- **Signing off a theme-aware surface in one theme.** Validate in BOTH light and
+  dark before declaring done — a token that reads fine on one background can fail
+  contrast on the other.
 - **Taste dressed as principle.** If you cannot name the heuristic and the user
   harm, it is a nit at most — say so.
 - **Ignoring the baseline.** Flagging a "new" inconsistency that is actually the

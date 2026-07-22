@@ -1,6 +1,6 @@
 # wk-design-review
 
-**Version:** `2026.07.17-183354`
+**Version:** `2026.07.22-232208`
 
 Principal-level UX / product-design review. Critically evaluates design changes —
 visual, interaction, information architecture, accessibility, and the design
