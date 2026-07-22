@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.22-185836'
+  version: '2026.07.22-215511'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -369,10 +369,14 @@ New commits pushed to a PR that already has self-review comments:
 
 1. **Resolve stale comments** that no longer apply — use `gh api` to resolve
    review threads or delete outdated comments.
-2. **Branch force-pushed since the review was staged? Delete and re-post the
-   pending review.** A pending review's `commit_id` pins it to a HEAD SHA; a
-   force-push replaces that HEAD, orphaning the review and every inline comment
-   (the comments endpoint returns empty, and GitHub does not migrate them). Run
+2. **HEAD rewritten since the review was staged? Delete and re-post the pending
+   review.** A pending review's `commit_id` pins it to a HEAD SHA; ANY event that
+   rewrites the pushed HEAD orphans the review and every inline comment (the
+   comments endpoint returns empty, and GitHub does not migrate them) — a
+   self-initiated force-push OR a host-initiated auto-rebase when the base branch
+   merges and the child is retargeted onto new SHAs. Before treating a staged
+   review as live, confirm its `commit_id` still equals the current HEAD
+   (`gh pr view --json headRefOid`); on mismatch, run
    `DELETE /pulls/{n}/reviews/{id}`, then re-stage a fresh pending review
    anchored to the new HEAD SHA.
 3. **Add new comments** for any critical changes introduced by the new commits.

@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.22-185534'
+  version: '2026.07.22-215511'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -301,6 +301,12 @@ a terminal-state guarantee. A single watch is not proof of green CI.
            pending: [.statusCheckRollup[] | select(.status // .state | IN("QUEUED","IN_PROGRESS","PENDING"))] | length}'
   ```
 
+- **Confirm the rollup's `headRefOid` equals the pushed tip before trusting its
+  state.** Webhook propagation lags a push, so the rollup (and a `--watch` exit)
+  can report the *prior* commit entirely — a staleness axis distinct from the
+  subset-resolve above. Compare `.headRefOid` against `git ls-remote origin
+  <branch>`; on mismatch, re-query until it catches up, or fall back to the CI
+  provider's build-by-branch query (ground truth for the current commit).
 - Re-issue the watch if any check is still pending.
 
 ## Canonical download path

@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.22-212216'
+  version: '2026.07.22-215511'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -208,6 +208,11 @@ echo "{body}" | grep -nE '^\s*- \[ \]'
     gh pr edit {child} --base {base} --repo "$GITHUB_ORG/{repo}"
     ```
   - Re-query and confirm every child's `baseRefName == {base}` before running the merge command below.
+  - **Transient 500-class errors here are benign — do not pause the merge.** The
+    `gh pr edit --base` (REST) path above is the robust one; if any GraphQL
+    mutation in this flow returns a 500-class error ("Something went wrong while
+    executing your query"), it is a retryable transient — retry up to 2×, then
+    use the REST equivalent. Never treat it as a hard failure.
 
 ```bash
 gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
