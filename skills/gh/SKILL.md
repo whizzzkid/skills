@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.21-230704'
+  version: '2026.07.22-185534'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -286,12 +286,19 @@ check finishes) while others are still `PENDING`/`IN_PROGRESS` — its exit is n
 a terminal-state guarantee. A single watch is not proof of green CI.
 
 - After the watch exits, re-query the full rollup and confirm every check is
-  terminal (`SUCCESS`/`FAILURE`, none `PENDING`/`IN_PROGRESS`) before treating
-  CI as green:
+  terminal before treating CI as green.
+- **`statusCheckRollup` is a heterogeneous union — inspect BOTH state fields.**
+  CheckRun nodes expose `.status`/`.conclusion`; legacy commit Status nodes
+  expose `.state` and have `.status == null`. A predicate over one field silently
+  passes a pending entry of the other type.
+  - Non-terminal when `.status ∈ {QUEUED,IN_PROGRESS,PENDING}` **OR** `.state == "PENDING"`.
+  - Failing when `.conclusion ∈ {FAILURE,TIMED_OUT,CANCELLED}` **OR** `.state ∈ {FAILURE,ERROR}`.
+  - Never gate on `.status` alone.
 
   ```bash
   gh pr view --json headRefOid,statusCheckRollup \
-    --jq '{head: .headRefOid, states: [.statusCheckRollup[].status] | unique}'
+    --jq '{head: .headRefOid,
+           pending: [.statusCheckRollup[] | select(.status // .state | IN("QUEUED","IN_PROGRESS","PENDING"))] | length}'
   ```
 
 - Re-issue the watch if any check is still pending.

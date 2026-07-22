@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.17-220724'
+  version: '2026.07.22-185705'
   internal: false
   model:
     openai: gpt-4.1
@@ -209,6 +209,25 @@ git rebase --onto "$BASE_REF" <merged-parent-tip-sha>
   parent branch merged.
 - Find the parent tip via `git log --oneline` (last commit before this branch's own
   work); re-run with `--onto`.
+
+**Base moved / stacked parent merged mid-flight → rebase the WHOLE stack.** Treat a moved
+base as a first-class event. When a stacked PR's parent merges externally, or GitHub's
+auto-update-branch silently merges the new default into a descendant (injecting an
+unrelated lockfile delta and a synthetic `Merge branch …` commit, and retargeting the
+base), rebase the entire current stack onto the new base — never patch around the injected
+merge or accept the pollution:
+
+```bash
+git rebase --onto <newbase> <oldbase> <branch> --update-refs
+```
+
+- Detect an auto-merge: the remote branch head is a SHA absent from locally-fetched
+  history (a `bad object`/unknown-SHA head). Re-fetch and inspect before trusting local refs.
+- **After any `--update-refs` (or stack-rewriting) rebase, verify HEAD before the next Write
+  or commit.** `--update-refs` moves branch *pointers* but leaves HEAD on whatever branch was
+  checked out for the rebase — not the topmost branch. Run `git branch --show-current` /
+  `git status` and explicitly `git checkout` the intended branch, or the next commit lands on
+  the wrong branch of the stack.
 
 - Rebase reports conflicts → **conflict resolution loop** (Stage 4). Clean rebase → jump
   to Stage 5.
