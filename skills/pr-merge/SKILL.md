@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.22-215511'
+  version: '2026.07.22-235103'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -412,6 +412,14 @@ Follow-ups present → offer once:
 
 ## Step 10: Clean up the current worktree
 
+- **HARD RULE — worktree cleanup is the point of no return; run it dead last,
+  only after every pending question is answered.** Removing the worktree destroys
+  the branch / PR / local context that filing follow-ups (the Step 8 offer),
+  answering a user digression, or acting on any accepted item depends on — a
+  question raised after cleanup cannot be resolved. Before removing: confirm zero
+  questions are outstanding — the Step 8 follow-up-filing offer is answered and any
+  accepted filing is done. A pending reply blocks cleanup; wait for it, act on the
+  answer, then clean up. Never clean up early to "finish faster".
 - Remove the just-merged worktree with the `git wtr <name>` alias — a one-shot
   `git worktree remove worktrees/<name>` + `git branch -D <name>`. `<name>` is
   the PR head branch, which is also the worktree dir name under `worktrees/`:
