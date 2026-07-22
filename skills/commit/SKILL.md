@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.21-002033'
+  version: '2026.07.22-002132'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -145,8 +145,16 @@ All commits MUST be signed. Never use `--no-gpg-sign`, `-n`, or
    ```bash
    echo "$GIT_CONFIG_PARAMETERS"   # signing config present but not inherited?
    ssh-add -l                       # agent holds the signing key?
+   git config user.signingkey; ssh-add -L   # SSH signing: is the CONFIGURED key among the LOADED ones?
    ```
 
+2b. **SSH signing (`gpg.format=ssh`), error `Couldn't find key in agent?`:**
+   compare the configured key against the loaded set before proposing anything. A
+   configured key present but ABSENT from `ssh-add -L` means the agent rotated /
+   re-provisioned it mid-session (common with hardware-backed / auto-provisioning
+   agents) — the key is not loaded, not misconfigured. Ask the user to re-add that
+   exact key to the agent; never a config change. Only an entirely empty agent
+   means no signing key at all.
 3. Key loaded but env missing → run the commit through the user's shell (carries
    the env) or ask the user to run it directly. Do not declare the env broken.
 4. Tell the user: "Commit signing failed. Please check your GPG/SSH agent

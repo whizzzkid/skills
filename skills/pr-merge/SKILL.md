@@ -26,7 +26,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.21-200430'
+  version: '2026.07.22-002132'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -158,11 +158,11 @@ gh pr view {number} --json reviewDecision,reviews \
     Skill(wk-pr-resolve, args="{number}")
     ```
   - **Minor or Info** (style, abstraction quality, non-critical coverage gap) →
-    do not block. Propose one Jira ticket per finding (or a single omnibus
-    ticket): draft the body from the finding text, ask the user for the
-    epic/parent, file it, then resolve each thread with a `Tracked in [<KEY>]`
-    reply. User declines filing → leave the thread open and proceed anyway;
-    Minor threads must not block a merge-ready PR.
+    **never gate the merge.** Do not file (or ask to file) tickets pre-merge —
+    merge first, then in the Step 8 output offer to file follow-up Jira/GitHub
+    tickets. Ask for the epic/parent only if the user accepts the offer; on a
+    filed ticket resolve each thread with a `Tracked in [<KEY>]` reply. The
+    ask-and-file flow is a post-merge follow-up gate, not a merge gate.
   - **Bot-thrash → stop the push cycle.** A push produced new-only Minor/Info
     findings for ≥1 round → surface the thrash explicitly and offer
     merge-now-with-deferred-follow-ups. Only a fresh Blocker/Major justifies
