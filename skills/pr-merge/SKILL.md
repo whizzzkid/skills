@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.22-235103'
+  version: '2026.07.23-164330'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -92,6 +92,17 @@ gh pr checks {number} --json name,state,required \
   | jq '.[] | select(.required == true) | {name, state}'
 ```
 
+- **HARD RULE — a `--json` field error must degrade, never block; the `required`
+  field is version-dependent.** `gh pr checks --json …,required` errors
+  `Unknown JSON field: "required"` on `gh` builds that omit it. On that error,
+  fall back to per-check conclusions from the check-runs API against
+  `{head_sha}`, and cross-verify with the CI provider's own CLI when available:
+  ```bash
+  gh api repos/{owner}/{repo}/commits/{head_sha}/check-runs \
+    --jq '.check_runs[] | {name, status, conclusion}'
+  ```
+  Treat `conclusion` `success`/`neutral`/`skipped` as passing. Never let a
+  `--json` field error stall the gate — degrade to an alternate source.
 - **Important — poll and gate on `required == true` only.** The `jq` filter above
   drops non-required checks for a reason: informational checks (security scanners,
   dependency bots) often queue indefinitely. Never wait on, poll, or block the
