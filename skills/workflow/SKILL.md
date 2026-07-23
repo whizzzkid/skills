@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.22-230739'
+  version: '2026.07.23-002413'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -52,7 +52,7 @@ Execute the workflow without asking permission at each step.
 
 Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a finding requires a user-owned design decision; user explicitly requested a pause/check-in; or a destructive/shared-state action is required.
 
-- When soliciting feedback, block on it → end the turn after asking; do not implement past that point until answered.
+- When soliciting feedback, block on it → end the turn after asking; do not implement past that point until answered. When the user asks for decisions gathered individually AND collected first, treat decision-collection as a barrier phase: gather and confirm the full set before executing any — never interleave asking with acting.
 - Skill invocation is mandatory → use the Skill tool for prescribed skills, do not approximate with raw commands. Run the invoked skill's full flow; user prose is additive context, not a license to skip parts.
 - **Announce-and-invoke in the same turn:** a skill counts as invoked only when its `Skill` call appears in the same response as the text announcing it. "Now running X" with no same-turn `Skill(X)` call is a protocol violation — narration is not action. On catching a self-announcement without its call, invoke the skill before any other action.
 - **HARD RULE — never report a skill absent from the session available-skills list alone.** The list is not exhaustive; a skill can exist on disk yet be missing from it. Confirm via `ls "$WK_SKILLS_HOME/skills/" | grep <name>` before telling the user a skill is missing; report absent only when that returns nothing.
@@ -117,18 +117,9 @@ For normalization, renames, required fields, schema changes, or similar recurrin
 4. Run adversarial review once.
 5. Fix residuals in ≤1 follow-up commit.
 
-### Design pivots travel with their docs
+### Artifact sync with code changes
 
-When a commit changes a feature's logical structure, update every artifact describing the old shape in the same commit: design spec, implementation plan, inline comments, test names/comments, ADR, and spec sections enumerating tests.
-
-Triggers: conditional became unconditional, helper lifted/inlined/replaced, paths merged/split, interface signature changed, state lifecycle moved.
-
-### File/table/test sync
-
-- New file → update the spec’s New/Modified Files tables in the same commit.
-- Test added/removed/renamed → grep specs/plans/READMEs for the file/function and count phrases, update hits in the same commit.
-- Renamed string → grep specs for OLD literal incl negative `not_to include`; stale negatives pass trivially, losing coverage.
-- Major spec rewrite → STATUS UPDATE banner citing the SHA; schedule the full rewrite as a follow-up commit.
+Keep every doc/spec/test artifact in sync with structural code changes in the same commit — design-pivot propagation, new-file/table/test-sync mechanics: [`references/doc-sync-mechanics.md`](references/doc-sync-mechanics.md).
 
 External-call reproduction before a fix: [`references/external-call-reproduction.md`](references/external-call-reproduction.md).
 
@@ -378,6 +369,7 @@ The retro scans the session, classifies interruptions/redirects by affected skil
 
 - **AWS / ECR:** on auth/credential errors, prompt for `aws sso login`; do not retry without valid creds.
 - **Docker:** on daemon/socket errors, prompt for Docker Desktop or Colima; use `wk-docker`.
+- **Devcontainer-first:** when a repo ships a runnable `.devcontainer/`, prefer it over host-native runners; probe for one before selecting a build/test toolchain, and when the host toolchain breaks, check the containerized alternative before repairing the host in place. Absence of a documented devcontainer workflow is not evidence one is absent.
 - **Configuration:** add permission rules, settings, and MCP servers to `$HOME/.claude/settings.json` (global), not `.claude/settings.local.json`, unless intentionally local. For MCP servers, use `--scope user`. Never add MCPs to `$HOME/.claude.json`.
 - **CI:** use `wk-buildkite` for Buildkite; read actual logs, do not guess.
 

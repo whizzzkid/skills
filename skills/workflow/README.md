@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.07.22-230739`
+**Version:** `2026.07.23-002413`
 
 ## Invocation
 
@@ -52,8 +52,9 @@ flowchart TD
   Jira pre-flight, user-provided artifact first, prefactor probe, intra-file duplication probe,
   spec pre-flight, new-capability probe, rule-set doc sync probe, tool-swap flag-parity probe,
   and producer-audit probe.
-- **Design pivots travel with their docs** — a commit changing logical structure must update
-  spec, plan, inline comments, test names, and any ADR in the same commit. No deferred rewrites.
+- **Artifact sync with code changes** — a commit changing logical structure must update spec,
+  plan, inline comments, test names, and any ADR in the same commit (mechanics in
+  [`references/doc-sync-mechanics.md`](references/doc-sync-mechanics.md)). No deferred rewrites.
 - **One review gate** — [`wk-adversarial-review`](../adversarial-review/README.md) runs once, at Phase 4. It is not
   re-run per phase or per push; the gate is keyed to new commits since the last clear verdict, so later pushes
   (CI fixes, rework) re-fire it only on the delta and otherwise reuse the prior clearance.
