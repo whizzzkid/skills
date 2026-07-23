@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.20-215034'
+  version: '2026.07.23-193552'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -308,9 +308,9 @@ behavior, not just the specific instance.
   - **Front-matter** block ≤ **8192 bytes** (`SKILL_FRONTMATTER_MAX_BYTES`)
   - **`description:`** field ≤ **1024 bytes** (`SKILL_DESC_MAX_BYTES`)
   - **`allowed-tools:`** ≤ **36 lines** (`SKILL_TOOLS_MAX_LINES`)
-- Keep skills under the ceilings proactively — never rely on the hook as the only guard. When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list. Coverage-preserving only — never trim by dropping a HARD RULE, error code, or failure-mode.
-- **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list — and route a **new** such row straight there (add only its ID inline, ~6 B), never place-inline-then-reclaim; (2) delete scaffolding, blank lines, or a provably-duplicated rule — the latter outright with zero replacement (a cross-ref back re-spends the reclaim). A pure row/bullet merge reclaims ~3 B (prefix + newline), NOT content — count it only when it also drops the now-duplicated phrase. Reserve prose for the final margin.
-- **Measure the staged body BEFORE drafting any content-adding fold** — unconditional, not gated on "looks tight"; the at-ceiling state is invisible until measured. Headroom under ~2× the edit → pick reclaim target(s) whose *combined* size exceeds it with margin (≥1.2×, not merely strict) — budget ≥2 reclaims up front (one undershoots a multi-clause rule); net change must be non-positive on the first pass.
+- Keep skills under the ceilings proactively — never rely on the hook as the only guard. When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list.
+- **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list — and route a **new** such row straight there (add only its ID inline, ~6 B), never place-inline-then-reclaim; (2) delete scaffolding, blank lines, or a provably-duplicated rule — the latter outright with zero replacement (a cross-ref back re-spends the reclaim). Count reclaim NET: a prose-block relocation nets gross MINUS the stub it leaves (heading + pointer + sentence), which dominates a short block — prefer a LARGE block; a row/bullet merge nets ~3 B unless it drops the now-duplicated phrase. Reserve prose for the final margin.
+- **Measure the staged body BEFORE drafting any content-adding fold** — unconditional, not gated on "looks tight"; the at-ceiling state is invisible until measured. Headroom under ~2× the edit → pick reclaim target(s) whose *combined NET* reclaim exceeds it with ≥1.2× margin — budget ≥2 reclaims up front (one undershoots a multi-clause rule); net change must be non-positive on the first pass.
   - **Very important — measure exactly once.** Stage the addition AND the reclaim cuts together, then measure ONCE — never eyeball either side (a `→` is 3 B; a prose reclaim misleads as much as an addition). A second measure-and-trim cycle is the re-violation signal — stop and re-plan with one decisive structural cut, not another prose nibble.
   - **Very important — run the hook's `measure()` verbatim; never `wc -c` or an abbreviated awk.** Dropping its `state="pre"` init counts front-matter as body → false, self-consistent over-ceiling headroom. Copy `measure()` from `.githooks/check-skill-size.sh`, `git add` first, run pre-draft and at commit; never the working tree.
 
