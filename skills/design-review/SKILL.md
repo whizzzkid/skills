@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.22-232208'
+  version: '2026.07.23-002552'
   internal: false
   model:
     claude: claude-opus-4-8
@@ -69,6 +69,14 @@ and a concrete fix.
 - For a rendered UI, drive it with the Playwright MCP (`browser_navigate` →
   `browser_snapshot`/`browser_take_screenshot`) to review the actual output, not
   just the source. Run headless; `browser_close` when done.
+- **Verify the render target before trusting it.** A port returning HTTP 200
+  proves only that *something* answers, not that it is this app's dev server on
+  the current branch — a stale SSH port-forward or unrelated service renders a
+  plausible-looking wrong page. Grep the fetched source for a project-specific
+  marker from the current diff (a known class/id/string); on mismatch,
+  `lsof -i :<port>` to confirm the listener is the project's own process. If it
+  is not, fall back to static source analysis and say so in the findings — never
+  silently skip the render.
 - Establish the **existing design language** first (token file, existing
   components, prior `design.md`) — you cannot flag an inconsistency without the
   baseline. A change that matches an established-but-poor pattern is a separate,
@@ -160,6 +168,9 @@ Invoked by another skill/agent (e.g. `wk-pr-review`) with `consult <pr|path>`:
 - **Ignoring the baseline.** Flagging a "new" inconsistency that is actually the
   established pattern; establish the design language before judging.
 - **Gate-creep.** Marking polish as a blocker erodes trust in the severity ladder.
+- **Trusting a 200 as proof the app is live.** Confirm the render target is the
+  project's own dev server (diff-specific marker in the source, `lsof` the port)
+  before reviewing — a wrong-page screenshot looks plausible.
 
 ## Quick Reference
 
