@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.22-192458'
+  version: '2026.07.23-002927'
 ---
 
 # PR Resolve

@@ -319,9 +319,16 @@ Reply routing & resolution rules:
 
 - Before bot replies, refresh bot thread IDs: re-run the GraphQL `reviewThreads`
   query against post-push HEAD, match by `(path, line, root_comment.body_excerpt)`;
-  skip replies for dropped findings.
+  skip replies for dropped findings. A bot re-review regenerates its thread node
+  IDs AND its finding set on every push, so **never resolve or reply using
+  pre-push thread IDs** — a stale ID fails `NOT_FOUND` and resolving by it
+  silently no-ops. Re-derive the `(path, line, concern)` map each push, since the
+  finding set itself changes.
 - Resolve via `resolveReviewThread`; `NOT_FOUND` → refresh IDs once, match by
   stable identity, retry; no match / retry fails → log and continue.
+  `resolveReviewThread` is an internal state change, NOT blocked by the author's
+  pending self-review (unlike REST reply-creation, which 422s) — thread resolution
+  stays available even when replies are blocked.
 - Inline-reply `404` (REST IDs unstable, see Step 3) → log and keep the thread in
   `resolve_after_push`.
 - Fully outdated thread (`line: null`) → skip the REST reply (every REST op 404s,

@@ -13,7 +13,11 @@ triage. Never ID-refresh-only.
 **Why** — A push that triggers CI can spawn new bot inline findings (review bots). An ID-only refresh registers that a thread exists but not its
 content, so a genuinely-new finding stays invisible until a manual Step 3 re-run
 or a user redirect surfaces it. Fetching bodies post-push makes new findings
-discoverable without a second invocation.
+discoverable without a second invocation. The bot also regenerates its thread
+node IDs on every push, so a cached pre-push ID fails `NOT_FOUND` and resolving
+by it silently no-ops — never resolve/reply with pre-push IDs. `resolveReviewThread`
+itself is NOT blocked by the author's pending self-review (unlike REST replies,
+which 422), so resolution stays available even when replies are blocked.
 
 **Where** — `wk-pr-resolve` Step 8 (post-push handling); the CI-pass Step 3
 re-run (Step 9.5) remains the backstop.
