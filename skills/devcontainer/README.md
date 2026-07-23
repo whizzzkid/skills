@@ -2,7 +2,7 @@
 
 > Use when creating or debugging a devcontainer for a Rails app (or any mise-managed project).
 
-**Version:** `2026.06.15-200014`
+**Version:** `2026.07.23-001939`
 
 ## Invocation
 
@@ -31,3 +31,4 @@ flowchart TD
 - **`BUNDLE_PATH` and `BUNDLE_APP_CONFIG` must both be set** in the Dockerfile to `/usr/local/bundle`; without them the named `bundle-cache` volume is bypassed and gems reinstall on every restart.
 - **`trilogy` adapter does not need `libmysqlclient-dev`** — only the `mysql2` adapter links against libmysqlclient; adding it for trilogy is a common unnecessary dependency.
 - **`MISE_TRUSTED_CONFIG_PATHS: /workspace` is required** in the compose environment — the bind mount replaces the `/workspace` directory that was trusted at image build time, so trust must be re-granted at runtime.
+- **Pin the Compose project name in every teardown/rebuild command** — `devcontainer up`/VS Code create the stack under `<basename>_devcontainer`; a bare `docker compose -f … down` targets an empty project and silently leaves it running.

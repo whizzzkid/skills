@@ -9,7 +9,7 @@ description: >
   container".
 group: tools
 metadata:
-  version: 2026.06.15-200014
+  version: 2026.07.23-001939
   model: sonnet
   effort: medium
   user-invocable: true
@@ -221,6 +221,22 @@ ruby = "3.4.7"   # must match .ruby-version exactly
 Ruby version must match `.ruby-version` exactly → mismatch causes Bundler
 lockfile platform conflicts.
 
+## Teardown / rebuild the stack
+
+**HARD RULE: pin the Compose project name in every teardown/rebuild command.**
+`devcontainer up` and VS Code "Reopen in Container" create the stack under
+project `<workspace-folder-basename>_devcontainer`. A bare `docker compose -f
+.devcontainer/docker-compose.yml down` defaults the project to the compose
+file's parent-directory basename (`devcontainer`) → targets an empty project and
+silently leaves the real stack running.
+
+```bash
+proj="$(basename "$PWD")_devcontainer"
+docker compose -p "$proj" ps                                          # verify target before acting
+docker compose -p "$proj" -f .devcontainer/docker-compose.yml down    # stop (add -v to drop volumes)
+docker compose -p "$proj" -f .devcontainer/docker-compose.yml build   # rebuild
+```
+
 ## Common Mistakes
 
 | Symptom | Root cause | Fix |
@@ -232,6 +248,7 @@ lockfile platform conflicts.
 | Build fails: file not found during COPY | `context: .devcontainer` instead of project root | Set `context: ..` on the app build |
 | DB connection uses `localhost` | Service hostname confusion | Use `db` (service name) as MySQL host inside Compose network |
 | Tools silently absent | `auto_install = true` missing from `mise.toml` | Add `[settings] auto_install = true` |
+| `down` reports success but containers stay up | Teardown used bare `-f` with no `-p` → empty/wrong project | Pin `-p "$(basename "$PWD")_devcontainer"` to match `devcontainer up`/VS Code |
 
 ## Quick Reference
 
