@@ -335,6 +335,11 @@ Reply routing & resolution rules:
 - Detect in-place bot summary updates by re-fetching each captured bot issue
   comment: active→clean = positive resolution; added findings = regression →
   re-enter Step 4.
+- Post-push echo-vs-new classification: fetch full comment BODIES (not just thread
+  IDs) and skip dropped findings. A `(path, line, concern)` matching a finding
+  addressed this session is an already-addressed echo → reply with the commit
+  link and resolve, no re-prompt/re-commit. A non-match is a genuinely-new finding
+  → route to Step 4 triage, never ID-refresh-only.
 
 ## Step 9 — Check merge conflicts
 

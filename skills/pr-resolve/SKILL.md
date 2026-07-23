@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.23-164331'
+  version: '2026.07.23-204110'
 ---
 
 # PR Resolve
@@ -78,20 +78,22 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
    - **Holds under Auto Mode.** A user question/redirect ("why did you not
      push?") is a reconsider prompt, not a go-ahead — require explicit
      yes/approve/proceed (same for Hard Rule 4 force-push).
-   - **Standing authorization:** "make it merge-ready"/"mergeable"/"land this"
-     in the invocation authorizes pushes for the whole resolution lifecycle (CI
-     re-pushes included) — confirm once, then push each round. A bare "resolve
-     comments" does not.
-2. **Never post reply comments without explicit user confirmation.**
+   - **Standing authorization:** "make it merge-ready"/"mergeable"/"land
+     this"/"resolve to merge" authorizes the whole lifecycle — pushes (CI
+     re-pushes included), replies, AND resolving worked-on threads; confirm once,
+     then proceed each round. A bare "resolve comments" does not; a redundant
+     per-action re-ask reads as unpredictable.
+2. **Never post reply comments without explicit user confirmation** — a
+   land-intent invocation (Hard Rule 1) is that authorization; do not re-ask.
    - **A "don't post"/"no replies" directive bans publishing content (replies,
      new comments, dismissal bodies) — never thread resolution**, an internal
      state change that unblocks merge (resolve per Hard Rule 3).
-   - **HARD RULE — every reply/dismissal body leads with substance (what
-     changed, the decision, the commit SHA), never a pleasantry.** Praise/thanks
-     openers ("Good catch!") are banned unconditionally — pre-emit lint every
-     body's first sentence against `^(good catch|great|thanks|nice|well
-     spotted|good point)` and reject before the POST (the prose ban slips exactly
-     when the finding impresses). Route through `Skill(wk-tone)` before render.
+   - **HARD RULE — every reply/dismissal body leads with substance (what changed,
+     the decision, the commit SHA), never a pleasantry** (the ban slips exactly
+     when the finding impresses). Praise/thanks openers ("Good catch!") banned
+     unconditionally — pre-emit lint the first sentence against `^(good
+     catch|great|thanks|nice|well spotted|good point)`, reject before POST. Route
+     through `Skill(wk-tone)` before render.
 3. **Only resolve threads you actually worked on** — after a fix, explicit
    dismissal, or tracked deferral. Never resolve follow-up questions, skipped,
    rethink-pending, or ordinary self-review threads.
@@ -179,11 +181,10 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
 - **Base-advance conflict (upstream PR merged)** → rebase onto the new base; a clean
   local merge may not clear `mergeable: CONFLICTING`, so pivot to rebase (commands.md §2).
 - **HARD RULE — stacked PR CLOSED with its base branch deleted → recover before
-  triaging.** A child based on a parent's head branch auto-CLOSES (not retargets)
-  when the parent squash-merges under `delete_branch_on_merge`; it cannot be
-  reopened or retargeted while closed. Run the recovery sequence (commands.md §2)
-  first. Prevent: base stacked PRs on trunk, or retarget the child to trunk
-  before the parent merges.
+  triaging** (recovery sequence: commands.md §2). A child on a parent's head
+  branch auto-CLOSES (not retargets) on the parent's squash-merge under
+  `delete_branch_on_merge`, and cannot be reopened/retargeted while closed.
+  Prevent: base stacked PRs on trunk, or retarget the child before it merges.
 - **HARD RULE — after each conflict resolution, audit for dropped base-side
   safety guards**; restore any present on the canonical base but absent from the
   result. Detail: conflict-preflight.md.
@@ -433,11 +434,10 @@ Key rules:
 
 - Quote the original on issue-comment replies; suggestions split from one issue
   comment (Step 4) → **one combined reply** (no sub-section replies).
-- Post-push, refresh bot threads against HEAD and fetch full comment BODIES (not
-  just thread IDs); skip dropped findings. Classify each by `(path, line,
-  concern)`: a match from this session is an already-addressed echo → reply with
-  the commit link, resolve, no re-prompt/re-commit; a non-match is a
-  genuinely-new finding → route to Step 4 triage, never ID-refresh-only.
+- Post-push, refresh bot threads against HEAD, fetch full comment BODIES, and
+  classify each `(path, line, concern)` as already-addressed echo (reply+resolve,
+  no re-commit) or genuinely-new finding (route to Step 4, never ID-refresh-only)
+  — mechanics in commands.md §8.
 
 ## Step 9: Check Merge Conflicts
 
