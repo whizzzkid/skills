@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.22-222532'
+  version: '2026.07.23-190838'
   internal: false
   model:
     openai: gpt-4.1
@@ -184,6 +184,8 @@ For each candidate seam, ask:
 - Does this side add a gate / validation / enforcement that goes CI-red when the data it checks is absent? Yes → the PR **providing that data must be an ancestor**, never a descendant. Order by data-dependency, not conceptual layer (schema → enforcement → data inverts it); a mis-ordered gate is CI-red in isolation and needs post-hoc `git rebase --onto` surgery to reorder.
 
 Seam needs a temporary scaffold to satisfy invariant 2 (e.g., a stub returning a default until a later child fills it in) → document the scaffold in the child's description and tag the future child that removes it.
+
+**HARD RULE — ordinals track the base graph, order is read only from `baseRefName`.** Reordering a stack after its PRs exist (`git rebase --onto` to re-parent a child) invalidates the `part-N/M` ordinals — they now imply a merge order the base graph contradicts and become an actively-misleading source of truth. In the same step either renumber the labels to the new topological order, or drop ordinal labels and state each PR's parent explicitly (`base: <branch>`). Derive any merge/dependency order strictly from `baseRefName` edges (`gh pr view <n> --json headRefName,baseRefName`) — never from `part-N` labels or memory; after any re-parent, confirm the ordinal sequence still matches the base graph and fix mismatches before stating the order anywhere.
 
 ---
 

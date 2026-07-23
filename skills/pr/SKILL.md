@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.22-211710'
+  version: '2026.07.23-190838'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -218,22 +218,11 @@ git diff "origin/$BEST_BASE...HEAD" --shortstat
 
 ### Check open PRs for a related spec before adding a new one
 
-When this branch adds a doc under `docs/specs/` (or equivalent), search open PRs
-for a spec in the same domain before treating the new doc as standalone — a
-parallel spec in another in-flight PR forces a later merge/consolidation
-request.
-
-```bash
-gh pr list --state open --json number,files \
-  --jq '.[] | {number, specs: [.files[].path | select(test("docs/specs"))]}' \
-  | grep -v '"specs":\[\]'
-```
-
-- Open PR carries a spec for the same feature/domain → prefer stacking onto it
-  (extend the existing spec) over adding a parallel doc. Surface the overlap to
-  the user with both PR links.
-- Reuses the open-PR list already fetched for base detection — no extra round
-  trip.
+Branch adds a doc under `docs/specs/` (or equivalent) → search open PRs for a
+same-domain spec before treating it as standalone; prefer stacking onto an
+existing spec over a parallel doc (a parallel in-flight spec forces a later
+consolidation). Query + routing:
+[`references/check-open-prs-for-spec.md`](references/check-open-prs-for-spec.md).
 
 ## Step 2: Create Draft PR
 
@@ -323,12 +312,10 @@ When using a repo template:
 
 ### Superseded & closed PRs
 
-`Closes`/`Fixes`/`Resolves #N` auto-close only **issues** on merge, never a PR (a
-`#N` PR reference just links). To close a superseded PR use a close-on-merge Action
-or a close comment; keep `Closes #N` as supersession doc. A PR auto-closed by a
-squash-merged + deleted base cannot be reopened or retargeted (`gh pr reopen` /
-`gh pr edit --base` both fail) — create a fresh superseding PR (rebase mechanics:
-wk-pr-takeover Step 3).
+`Closes`/`Fixes`/`Resolves #N` close **issues** only, never a PR; a
+squash-merged + deleted-base PR cannot be reopened or retargeted. Full close
+semantics and the fresh-superseding-PR recipe:
+[`references/superseded-closed-prs.md`](references/superseded-closed-prs.md).
 
 ### Simple PR (fallback — no repo template found)
 
@@ -379,6 +366,10 @@ hand-chain `--base`.
 - Every PR in a merged stack gets `[<feature>-part-N/M]` as its final title
   token (N = 1-based position, M = stack size; after any `[<KEY>]`), in both the
   `gh stack` and manual paths.
+- **Read merge/dependency order from `baseRefName`, never `part-N` labels or
+  memory** — query each PR's base (`gh pr view <n> --json baseRefName`); a
+  trunk-based PR is independent, a PR merges only after the PR owning its base.
+  Labels drift after any re-parent and fabricate nonexistent dependencies.
 - Manual fallback: `[<feature>-part-N/M]` title suffix + injected `## Stack`
   body + `--base previous-branch`, each PR green in isolation.
 
