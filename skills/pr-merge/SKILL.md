@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.23-164330'
+  version: '2026.07.23-185305'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -218,7 +218,15 @@ echo "{body}" | grep -nE '^\s*- \[ \]'
     ```bash
     gh pr edit {child} --base {base} --repo "$GITHUB_ORG/{repo}"
     ```
-  - Re-query and confirm every child's `baseRefName == {base}` before running the merge command below.
+  - **HARD RULE — an unconfirmed child retarget is a HARD STOP; never merge past it.**
+    Re-query children after retargeting and verify EVERY child's
+    `baseRefName == {base}`. Any child still based on `{head}` — after the
+    transient-error retries below are exhausted — means the retarget did not land →
+    **stop, do NOT run the merge command.** Merging with `--delete-branch` deletes
+    `{head}` and closes/orphans that child; a failed retarget followed by a merge is
+    exactly how children get silently closed. Report the un-retargeted child numbers
+    and the failure to the user; let them retarget manually or fix permissions, then
+    re-run. Never continue on a partial or failed retarget.
   - **Transient 500-class errors here are benign — do not pause the merge.** The
     `gh pr edit --base` (REST) path above is the robust one; if any GraphQL
     mutation in this flow returns a 500-class error ("Something went wrong while
