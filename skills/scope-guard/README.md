@@ -2,7 +2,7 @@
 
 > A PreToolUse hook that blocks filesystem-root searches and out-of-repo recursive searches, and warns on Edit/Write outside the project root — the mechanical backstop for [wk-plan](../plan/README.md)'s simplest-viable scope gate.
 
-**Version:** `2026.07.24-190504`
+**Version:** `2026.07.24-210848`
 
 ## Purpose
 
@@ -28,7 +28,7 @@ flowchart TD
     B -- yes --> C{tool}
     C -- Bash --> D{recursive search?<br/>find · fd · grep -r · rg · ls -R}
     D -- no --> Z
-    D -- yes --> E{search-root path<br/>/ or outside repo?}
+    D -- yes --> E{"quote-aware tokens →<br/>search-root path<br/>/ or outside repo?"}
     E -- yes --> F[exit 2 · BLOCK]
     E -- no --> Z
     C -- Edit/Write --> G{abs path outside repo?}
@@ -47,12 +47,17 @@ flowchart TD
   grant, never the agent's to self-authorize**. Retrying a blocked search with the var
   added is a bypass attempt; a denial of that retry is the correct outcome and must be
   treated as settled.
-- **False blocks are reshaped, not bypassed.** Token inspection is lexical, so three
-  shapes read as out-of-scope even when they are not: a recursive flag plus an
-  unexpanded glob, a path glued to a trailing shell separator (`cd <root>;` tokenizes
-  as `<root>;` — the hook now strips `;&|)` before comparing), and a search rooted in
-  another repo's worktree (the root resolves from the session's CWD). Drop `-r`, drop
-  the `cd`, or use `git grep -n "<term>"`; ask the user for scope if none fit.
+- **False blocks are reshaped, not bypassed.** Token inspection is lexical, so two
+  shapes read as out-of-scope even when they are not: a path glued to a trailing shell
+  separator (`cd <root>;` tokenizes as `<root>;` — the hook strips `;&|)` before
+  comparing), and a search rooted in another repo's worktree (the root resolves from
+  the session's CWD). Drop the `cd`, or use `git grep -n "<term>"`; ask the user for
+  scope if neither fits.
+- Tokenization is **quote-aware** (`shlex`), so quoted prose cannot synthesize a path
+  argument — a `/` used as a word separator in an `echo` banner no longer blocks a
+  fully in-scope search in the same compound command. A quoted out-of-repo root
+  (`find "/etc"`) still unwraps and still blocks; unbalanced quotes fall back to a
+  whitespace split rather than skipping the check.
 - Allows everything when `cwd` is not a git repo (no repo root to reason about).
 
 ## Files
@@ -61,7 +66,7 @@ flowchart TD
   `$HOME/.agents/skills/wk-scope-guard/hooks/`)
   Registered in `$HOME/.claude/settings.json` → `hooks.PreToolUse` via
   `scripts/register-hooks.sh` (declared in `scripts/hooks-manifest.json`)
-- Tests: `skills/scope-guard/tests/scope-guard.bats` (20 cases)
+- Tests: `skills/scope-guard/tests/scope-guard.bats` (23 cases)
 
 To wire this (and every other skill-shipped hook) into a fresh machine, run
 `scripts/install-skills.sh` — it installs the skills and then calls

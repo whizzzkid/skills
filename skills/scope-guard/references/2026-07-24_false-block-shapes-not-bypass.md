@@ -8,9 +8,11 @@ severity: medium
 - **Rule:** A lexical scope guard produces false blocks; the response is to reshape
   the command, never to reach for the env opt-out. The opt-out is the user's to grant,
   not the agent's to self-authorize — a denial of a bypass retry is the correct
-  outcome and is settled, not an obstacle. Three shapes read as out-of-scope while
-  being in scope: recursive flag plus unexpanded glob; an absolute path glued to a
-  trailing shell separator; a search rooted in another repo's checked-out worktree.
+  outcome and is settled, not an obstacle. Two shapes read as out-of-scope while
+  being in scope: an absolute path glued to a trailing shell separator; a search
+  rooted in another repo's checked-out worktree. (A third shape recorded here —
+  recursive flag plus unexpanded glob — was later disproved against the hook source
+  and removed; see the quote-aware-tokenization reference.)
 - **Why:** The guard inspects tokens without shell-expanding them, so a `cd <root>;`
   prefix yields the token `<root>;`, which matches neither the repo root nor its
   prefix — an in-scope path is judged outside. Stripping trailing `;&|)` before the

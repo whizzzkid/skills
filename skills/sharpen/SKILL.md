@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-205057'
+  version: '2026.07.24-210848'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -106,7 +106,7 @@ behavior, not just the specific instance.
 
 ### HARD RULE: the report is a hypothesis — verify against the owning source
 
-- Treat the report's "Root cause" and "Suggested fix" as non-authoritative; the reporter saw a symptom and inferred a mechanism.
+- Treat the report's "Root cause" and "Suggested fix" as non-authoritative; the reporter saw a symptom and inferred a mechanism. A workaround that works is not evidence for that mechanism — it can succeed by another. Confirm a claimed cause exists in the source before documenting it; delete a documented cause the source disproves.
 - Learning names a deterministic artifact (hook, script, CI check) → read that artifact's source, and reproduce the failure where cheap, before drafting. Ground truth is cheaply readable and routinely contradicts the inference.
 - Reject any fold that would *relax* a guard or check → hunt the correctness bug instead. A guard honoring caller-supplied scope is weaker than one deriving scope from the environment, and forfeits the property that makes the guard un-rationalizable.
 - Record the rejected suggestion and the rationale in the reference file so it is not re-proposed.

@@ -83,11 +83,28 @@ print(d.get("tool_input",{}).get("command",""))' 2>/dev/null)
     # Block only when a search-root *path argument* is "/" or resolves outside
     # the repo. Absolute paths INSIDE the repo are fine; relative paths resolve
     # against cwd (inside) and are fine. This is the key false-positive guard.
-    # Split safely (no glob expansion of the raw command) and strip surrounding
-    # quotes so a quoted root like find "/etc" is still inspected.
+    # Tokenize quote-aware (no glob expansion of the raw command). A plain
+    # whitespace split turns prose inside a quoted string into path-shaped
+    # fragments, so a `/` used as a word separator in an `echo` banner reads as
+    # a filesystem-root search argument and false-blocks the whole compound
+    # command. shlex keeps a quoted string as ONE token while still unwrapping a
+    # genuinely quoted root (`find "/etc"`), so no true positive is relaxed.
+    # Unbalanced quotes raise — fall back to the whitespace split rather than
+    # skipping the check (fail closed).
     offending=""
-    read -ra _toks <<<"$CMD"
+    _toks=()
+    _tokenized=0
+    while IFS= read -r -d '' tok; do _toks+=("$tok"); _tokenized=1; done < <(
+      printf '%s' "$CMD" | python3 -c 'import shlex,sys
+cmd = sys.stdin.read()
+try: toks = shlex.split(cmd)
+except ValueError: toks = cmd.split()
+sys.stdout.write("".join(t + "\0" for t in toks))' 2>/dev/null)
+    [ "$_tokenized" -eq 0 ] && read -ra _toks <<<"$CMD"
+
     for tok in ${_toks[@]+"${_toks[@]}"}; do
+      # Strip surrounding quotes — a no-op on shlex output, load-bearing on the
+      # whitespace fallback so a quoted root like find "/etc" is still inspected.
       tok="${tok#[\"\']}"; tok="${tok%[\"\']}"
       # Strip trailing shell separators glued to the token. `cd /repo; find …`
       # tokenizes as `/repo;`, which matches neither the repo root nor its

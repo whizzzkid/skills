@@ -21,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.07.24-190504'
+  version: '2026.07.24-210848'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -72,10 +72,6 @@ guard does not train you to disable it.
 Token inspection is lexical, so a path that *is* in scope can still read as
 outside. Reshape the command; do not reach for the opt-out.
 
-- **Recursive flag + unexpanded glob** — `-r`/`-R`/`-rl` plus a glob token
-  (`*.go`) is flagged as an unbounded root even when CWD resolves inside the
-  repo. Fix: drop `-r` (the non-recursive form from the same CWD passes), or list
-  the files explicitly and grep those.
 - **Path glued to a shell separator** — a `cd <root>;`-style prefix tokenizes as
   `<root>;`, matching neither the repo root nor its prefix, so an in-repo path
   reads as outside. The hook strips trailing `;&|)` before comparing; if a block
@@ -125,9 +121,13 @@ The hook reads the tool payload from stdin, emits any message to stderr
 ## How it decides "outside the repo"
 
 1. Resolve the repo root via `git -C <cwd> rev-parse --show-toplevel`.
-2. Strip surrounding quotes and any trailing shell separator (`;&|)`) from each
-   candidate token, then normalize it (`os.path.normpath`, no existence required).
-3. A path is "outside" when its normalized form does not sit under the repo
+2. Tokenize the command quote-aware (`shlex`), so a quoted string stays ONE
+   token — prose inside quotes cannot synthesize a path argument. A genuinely
+   quoted root (`find "/etc"`) still unwraps and blocks. Unbalanced quotes fall
+   back to a whitespace split (fail closed, never skip the check).
+3. Strip any trailing shell separator (`;&|)`) from each candidate token, then
+   normalize it (`os.path.normpath`, no existence required).
+4. A path is "outside" when its normalized form does not sit under the repo
    root. Relative paths resolve against `cwd` and are treated as inside.
 
 ## Files

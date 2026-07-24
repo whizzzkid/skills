@@ -16,8 +16,13 @@ print(json.dumps({"tool_name": tool, "tool_input": {key: val}, "cwd": cwd}))
 ' "$1" "$2" "$3" "$REPO"
 }
 
-run_bash()  { run bash -c "echo '$(payload Bash "$1" command)' | '$HOOK'"; }
-run_edit()  { run bash -c "echo '$(payload Edit "$1" file_path)' | '$HOOK'"; }
+# Pass the payload through the environment, never interpolated into the command
+# string — a single quote in the command under test would otherwise close the
+# wrapping quote and silently mangle the JSON.
+run_hook() { export PAYLOAD; run bash -c 'printf %s "$PAYLOAD" | "$1"' _ "$HOOK"; }
+
+run_bash()  { PAYLOAD="$(payload Bash "$1" command)";   run_hook; }
+run_edit()  { PAYLOAD="$(payload Edit "$1" file_path)"; run_hook; }
 
 # -- Bash: block searches rooted outside the repo ----------------------------
 @test "blocks find /" {
@@ -101,6 +106,21 @@ run_edit()  { run bash -c "echo '$(payload Edit "$1" file_path)' | '$HOOK'"; }
   [ "$status" -eq 2 ]
 }
 
+@test "allows a bare / used as a word separator inside a quoted echo banner" {
+  run_bash 'echo "=== a / b ==="; grep -rn token skills/'
+  [ "$status" -eq 0 ]
+}
+
+@test "allows a bare / inside the search command's own quoted pattern" {
+  run_bash "grep -rn 'a / b' skills/"
+  [ "$status" -eq 0 ]
+}
+
+@test "still blocks an unbalanced-quote command (tokenizer falls back, fails closed)" {
+  run_bash 'grep -rn "foo /etc'
+  [ "$status" -eq 2 ]
+}
+
 # -- Edit/Write: warn (never block) outside the repo -------------------------
 @test "Edit outside the repo warns but does not block" {
   run_edit "$HOME/.claude/settings.json"
@@ -116,7 +136,9 @@ run_edit()  { run bash -c "echo '$(payload Edit "$1" file_path)' | '$HOOK'"; }
 
 # -- Escape hatch + non-git safety -------------------------------------------
 @test "SCOPE_GUARD_OFF=1 bypasses the block" {
-  run bash -c "echo '$(payload Bash "find / -name x" command)' | SCOPE_GUARD_OFF=1 '$HOOK'"
+  PAYLOAD="$(payload Bash "find / -name x" command)"
+  export PAYLOAD
+  run bash -c 'printf %s "$PAYLOAD" | SCOPE_GUARD_OFF=1 "$1"' _ "$HOOK"
   [ "$status" -eq 0 ]
 }
 
