@@ -21,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.07.24-210848'
+  version: '2026.07.24-222028'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -42,7 +42,7 @@ simplest-viable scope gate in [wk-plan](../plan/README.md).
 
 | Tool | Condition | Action |
 |------|-----------|--------|
-| `Bash` | A recursive search (`find`, `fd`, `grep -r/-R`, `rg`, `ls -R`) whose search-root path argument is `/` or resolves **outside** the repo | **Block** (exit 2) |
+| `Bash` | A recursive search (`find`, `fd`, `grep -r/-R`, `rg`, `ls -R`) whose search-root path argument is `/` or normalizes **outside** the repo | **Block** (exit 2) |
 | `Bash` | Same search rooted at `.`, a relative path, or an absolute path **inside** the repo | Allow |
 | `Edit` / `Write` / `MultiEdit` / `NotebookEdit` | Target file is an absolute path **outside** the repo root | **Warn** (exit 0) — never blocks; writing to `$HOME/.claude` config is legitimate |
 | anything | `cwd` is not inside a git repo | Allow (cannot reason about scope) |
@@ -51,6 +51,13 @@ The block is deliberately narrow — only recursive **search** commands, and onl
 when a path argument is genuinely outside the repo. Absolute paths inside the
 repo and `cat /etc/hosts`-style non-search reads are never blocked, so the
 guard does not train you to disable it.
+
+It is a nudge against accidental scope creep, not a security boundary — an
+unexpanded root (see "How it decides", step 2) is not judged at all. **Never
+exploit that as a bypass:** rewriting a literal root into `$VAR` to clear a block
+is the same self-authorization the opt-out HARD RULE forbids. It matters only for
+diagnosis — a passing var-rooted command is not evidence the guard is broken, and
+a blocked literal is not evidence the workflow is forbidden.
 
 ## Opt out
 
@@ -82,6 +89,13 @@ outside. Reshape the command; do not reach for the opt-out.
   even when the target worktree is the intentional one. Fix: `git grep -n
   "<term>"` (single pattern, no `-r`) is read-only and passes cleanly; otherwise
   ask the user to grant scope for the task.
+- **Hand-expanded path where a `$VAR`-rooted one was documented** — a block names
+  the token as written, so the same logical path decides differently expanded vs
+  `$VAR`-rooted. Fix: leave a documented out-of-repo path in the form its owning
+  skill specifies rather than pasting an expanded literal. Never generalize one
+  block into "the guard forbids `<workflow>`" — drive the hook with the exact
+  command first, or the defect is filed against the wrong axis and the workflow
+  degraded to route around a block that was never there.
 
 ## Invocation
 
@@ -124,7 +138,10 @@ The hook reads the tool payload from stdin, emits any message to stderr
 2. Tokenize the command quote-aware (`shlex`), so a quoted string stays ONE
    token — prose inside quotes cannot synthesize a path argument. A genuinely
    quoted root (`find "/etc"`) still unwraps and blocks. Unbalanced quotes fall
-   back to a whitespace split (fail closed, never skip the check).
+   back to a whitespace split (fail closed, never skip the check). Tokens are
+   inspected as written and never shell-expanded, so a `$VAR`-rooted or
+   command-substituted root is judged as the literal text `$VAR/…` — not an
+   absolute path, so no comparison happens.
 3. Strip any trailing shell separator (`;&|)`) from each candidate token, then
    normalize it (`os.path.normpath`, no existence required).
 4. A path is "outside" when its normalized form does not sit under the repo

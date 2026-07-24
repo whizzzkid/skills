@@ -142,6 +142,23 @@ run_edit()  { PAYLOAD="$(payload Edit "$1" file_path)"; run_hook; }
   [ "$status" -eq 0 ]
 }
 
+# Matching is lexical and never shell-expands, so an out-of-repo root arriving as
+# `$VAR/...` is not an absolute path and is never compared. Pinned deliberately: this
+# by-design gap has twice been mis-reported as "the guard blocks recursive out-of-repo
+# enumeration", and the paired block case below shows recursion is not the axis.
+@test "does not judge an unexpanded \$VAR-rooted out-of-repo search root" {
+  run_bash 'find "$HOME/.claude/skills/learnings" -type f'
+  [ "$status" -eq 0 ]
+}
+
+# Differs from the case above ONLY in quote style: single quotes keep `$HOME` literal
+# in the payload, double quotes expand it here so the hook receives the absolute path.
+# Same logical destination, opposite verdicts — the spelling is what decides.
+@test "blocks the same out-of-repo root once hand-expanded to a literal" {
+  run_bash "find $HOME/.claude/skills/learnings -type f"
+  [ "$status" -eq 2 ]
+}
+
 @test "allows when cwd is not a git repo (cannot reason about scope)" {
   run bash -c "printf '%s' '{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"find / -name x\"},\"cwd\":\"/tmp\"}' | '$HOOK'"
   [ "$status" -eq 0 ]

@@ -2,7 +2,7 @@
 
 > A PreToolUse hook that blocks filesystem-root searches and out-of-repo recursive searches, and warns on Edit/Write outside the project root — the mechanical backstop for [wk-plan](../plan/README.md)'s simplest-viable scope gate.
 
-**Version:** `2026.07.24-210848`
+**Version:** `2026.07.24-222028`
 
 ## Purpose
 
@@ -39,7 +39,7 @@ flowchart TD
 ## Key rules
 
 - Blocks **only** recursive search commands, and **only** when a path argument
-  is `/` or resolves outside the repo. Absolute paths inside the repo, relative
+  is `/` or normalizes outside the repo. Absolute paths inside the repo, relative
   paths, and non-search reads (`cat /etc/hosts`) are never blocked.
 - Edit/Write outside the repo **warns, never blocks** — `$HOME/.claude` config
   writes are legitimate.
@@ -47,12 +47,17 @@ flowchart TD
   grant, never the agent's to self-authorize**. Retrying a blocked search with the var
   added is a bypass attempt; a denial of that retry is the correct outcome and must be
   treated as settled.
-- **False blocks are reshaped, not bypassed.** Token inspection is lexical, so two
+- **False blocks are reshaped, not bypassed.** Token inspection is lexical, so three
   shapes read as out-of-scope even when they are not: a path glued to a trailing shell
   separator (`cd <root>;` tokenizes as `<root>;` — the hook strips `;&|)` before
-  comparing), and a search rooted in another repo's worktree (the root resolves from
-  the session's CWD). Drop the `cd`, or use `git grep -n "<term>"`; ask the user for
-  scope if neither fits.
+  comparing), a search rooted in another repo's worktree (the root resolves from
+  the session's CWD), and a documented `$VAR`-rooted path pasted as an expanded
+  literal. Drop the `cd`, use `git grep -n "<term>"`, or leave the path in its
+  documented form; ask the user for scope if none fits.
+- **A block names the token as written, not the logical path.** Tokens are never
+  shell-expanded, so an unexpanded root is not judged at all. That is for diagnosis
+  only — never rewrite a literal root into `$VAR` to clear a block. Drive the hook
+  with the exact command before reporting that the guard forbids a workflow.
 - Tokenization is **quote-aware** (`shlex`), so quoted prose cannot synthesize a path
   argument — a `/` used as a word separator in an `echo` banner no longer blocks a
   fully in-scope search in the same compound command. A quoted out-of-repo root
@@ -66,7 +71,7 @@ flowchart TD
   `$HOME/.agents/skills/wk-scope-guard/hooks/`)
   Registered in `$HOME/.claude/settings.json` → `hooks.PreToolUse` via
   `scripts/register-hooks.sh` (declared in `scripts/hooks-manifest.json`)
-- Tests: `skills/scope-guard/tests/scope-guard.bats` (23 cases)
+- Tests: `skills/scope-guard/tests/scope-guard.bats` (25 cases)
 
 To wire this (and every other skill-shipped hook) into a fresh machine, run
 `scripts/install-skills.sh` — it installs the skills and then calls
