@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.09-172450'
+  version: '2026.07.24-185819'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -145,10 +145,14 @@ severity: <low | medium | high>
 Use a 2–4 word kebab-case slug (e.g., `missing-null-check`,
 `wrong-api-endpoint`, `good-parallel-pattern`).
 
-**Validate the filename suffix before staging.** A new learning ends in `.md`,
-never `.learned.md` — the `.learned.md` suffix marks an already-distilled file
-and makes `wk-sharpen` skip it. Confirm the path matches `<YYYY-MM-DD>_<slug>.md`
-(ISO date, kebab slug, single `.md`) before writing or `git add`.
+**HARD RULE — leave a new learning untracked; never `git add` it.** A new learning
+ends in `.md`, never `.learned.md` — that suffix marks an already-distilled file and
+makes `wk-sharpen` skip it. `.githooks/check-learning-filenames.sh` accepts only
+`<YYYY-MM-DD>_<kebab>.learned.md`, so staging a plain `.md` blocks the commit: the
+repo deliberately keeps undistilled learnings out of history. The distillation pass
+is what renames the file to `.learned.md` and commits it — unstage and leave it
+untracked if already added. Confirm the path matches `<YYYY-MM-DD>_<slug>.md` (ISO
+date, kebab slug, single `.md`) before writing.
 
 **HARD RULE — scrub all internal references before writing.** A learning file is
 committed to a **public** repo. Capture the principle and root cause, never the
@@ -188,7 +192,8 @@ After writing, output:
 > `wk-sharpen` when ready."
 
 Learnings accumulate in `$WK_SKILLS_HOME/learnings/skills/` → batch-distilled
-into skill improvements via `wk-sharpen`.
+into skill improvements via `wk-sharpen`. The file stays **untracked** until that
+pass — a "clean tree" check must treat it as expected state, not leftover debris.
 
 ## Scan Mode: mine session transcripts for interruptions
 

@@ -2,7 +2,7 @@
 
 > Post-completion learning capture for any wk-* skill. Writes a structured learning file for later distillation via wk-sharpen.
 
-**Version:** `2026.07.09-172450`
+**Version:** `2026.07.24-185819`
 
 ## Invocation
 
@@ -40,4 +40,4 @@ flowchart TD
 - **Deduplication before write:** Scan mode checks for existing `(skill, slug)` files including `.learned.md` archives. Duplicate findings append a `## Additional evidence` bullet rather than creating a parallel file.
 - **`.learned.md` extension signals absorption:** After [`wk-sharpen`](../sharpen/README.md) distills a learning into a skill, the owning skill renames the file from `.md` to `.learned.md` so it is never re-processed.
 - **Feeds batch distillation:** Learnings accumulate during the day and are batch-distilled when [`wk-sharpen`](../sharpen/README.md) runs on unprocessed files.
-- **Validate the filename suffix before staging:** a new learning ends in `.md`, never `.learned.md` (which marks an already-distilled file and is skipped by [`wk-sharpen`](../sharpen/README.md)); confirm the path matches `<YYYY-MM-DD>_<slug>.md`.
+- **HARD RULE — a new learning stays untracked, never `git add`ed:** it ends in `.md`, never `.learned.md` (which marks an already-distilled file and is skipped by [`wk-sharpen`](../sharpen/README.md)); confirm the path matches `<YYYY-MM-DD>_<slug>.md`. The pre-commit filename hook accepts only the `.learned.md` form, so the repo deliberately keeps undistilled learnings out of history — the distillation pass is what renames and commits them, and a "clean tree" check must treat the untracked file as expected state.

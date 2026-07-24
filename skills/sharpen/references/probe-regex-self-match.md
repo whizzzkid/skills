@@ -16,3 +16,6 @@ rule silently assumed every pattern line doubles as known-positive sample text, 
 holds only for plain-literal lines.
 
 **Where** — Step 5, Mechanical overfit scan: the NONE-result verification bullet.
+
+**Superseded (2026-07-24):** the probe class is retired for hook-covered scans — Step 5
+executes `.githooks/*.sh` against the staged index instead of reimplementing the matcher.

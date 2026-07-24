@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.23-193552'
+  version: '2026.07.24-185819'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -92,8 +92,6 @@ behavior, not just the specific instance.
   - Reference-file-only routing is forbidden.
   - The processed-state record must show full distillation.
   - Rename to `.learned.md` only after the edit and version bump land.
-- If a high-severity learning is `already-covered`, cite the exact existing lines that
-  prove full coverage and escalate the rule one notch.
 - Treat unrecognized log actions as `unverified` and re-audit.
 - When in doubt, ask before renaming.
 
@@ -174,7 +172,6 @@ behavior, not just the specific instance.
 ## Step 4: Draft the Skill Update
 
 - Skip Step 4 for `one-off` lessons.
-- For `principle` lessons, continue.
 - Locate the edit target:
   - New step
   - Missing check
@@ -227,16 +224,20 @@ behavior, not just the specific instance.
 - Apply replacement maps longest-first.
 - Reject ticket-shaped example tokens. Grep case-sensitive (never `-i` — it widens to `Word-Number` noise (`Step-5`)) against `[A-Z][A-Z0-9]+-\d+`; any match — even an invented placeholder — trips the `check-ticket-refs` hook, which matches shape, not provenance. Replace with `<child-key>`/`<KEY>` or the repo's `BOARD-NUM` form.
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
-- **Important — scrub staged `.learned.md`/retro archives too** (they trip `scrub-staged.sh`'s employer/org denylist, a hook SEPARATE from `check-prohibited` — run it too) — a rename commits them publicly. A term-handling learning's example IS the term; scrub it.
-- Grep every staged file against the repo's authoritative term lists. Scan file **contents AND staged path strings** — `check-prohibited` greps content + commit msg, never filenames, so a slug/filename term ships clean. Scan per-file (NUL-delimited), never a bare multi-line `$files` — a stricter `grep` alias false-cleans one bad path; a `No such file` warning is a scan failure, not clean:
+- **CRITICAL — run the owning hook scripts against the staged index; never reimplement their matcher.** A hook's pattern file is not portable across matchers: it carries `#` comments and matcher-specific constructs (PCRE `(?i)` inline flags) that a hand-rolled `grep -iEf` turns into false noise (`#` matches every markdown heading) or a false-clean. Run every hook after staging → real gate semantics, no synthetic probe:
 
   ```bash
-  git diff --cached --name-only -z | xargs -0 grep -iEnHf .skillprohibit
+  for h in .githooks/check-*.sh .githooks/scrub-staged.sh; do "$h" || echo "FAIL: $h"; done
+  ```
+
+- Hand-roll only what no hook covers: **staged path strings** — content hooks grep the diff and commit msg, never filenames, so a slug/filename term ships clean. Scan per-file, never a bare multi-line list (a stricter `grep` alias false-cleans one bad path; a `No such file` warning is a scan failure, not clean):
+
+  ```bash
   git diff --cached --name-only | grep -iEf .skillprohibit
   ```
 
-  Anonymize every hit. Pick a generic slug for a prohibited-subject lesson up front; never derive it from the subject.
-- Treat a NONE result as **unverified, not proof-of-clean**. A real hit in the staged scan IS the proof — skip the synthetic probe when the scan already matched. For a genuine NONE, prove grep fires with a token copied from a real `.skillprohibit` line (expand a regex: `a[-_]?b` → `a-b`), never a guess — a guess misses the local list. The `check-prohibited` hook is the backstop — relying on it costs a failed-commit cycle.
+  Anonymize every hit. Pick a generic slug for a prohibited-subject lesson up front; never derive it from the subject. Scrub staged `.learned.md`/retro archives too — a rename commits them publicly, and a term-handling learning's example IS the term.
+- Treat a hand-rolled NONE as **unverified**: prove the grep fires with a literal expanded from a real **non-comment, non-blank** denylist line (`a[-_]?b` → `a-b`), never a guess or a comment line — a comment line is itself a valid regex matching its own text, so the probe "fires" while proving nothing.
 
 ## Step 6: Present for Review
 
@@ -247,10 +248,8 @@ behavior, not just the specific instance.
 
 - Edit `skills/{skill-name}/SKILL.md` and every audit cleanup item.
 - Verify each new or edited section follows the style rules.
-- Write distilled context to `skills/{skill-name}/references/`.
 - Bump `metadata.version` to a fresh CalVer.
 - Re-read the final file end-to-end.
-- Commit happens in Step 8.
 
 ### Write distilled references to `skills/{name}/references/`
 
@@ -326,7 +325,7 @@ Do not return control until all four pass:
    - Rename `.learned.md` with `mv`, not `git mv` — a freshly materialized learning is untracked, so `git mv` aborts (`fatal: not under version control`). Then `git add` the new path.
    - On signing failure, stop — don't re-run install/scan or re-stage; ask the user for an interactive signer unlock. A listed agent key (`ssh-add -l` ok) ≠ signing capability; only a completed signed commit proves it. On the next run the staged fold is resumable, not done — retry the gate; never re-distill.
 3. **Push once:** after all commits exist, push a single time.
-4. **Clean tree:** `git status --short` must be empty.
+4. **Clean tree:** no modified tracked path in `git status --short` — untracked *unprocessed* learnings/retros are expected state, never debris to delete.
 
 Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
@@ -396,7 +395,6 @@ Invoked without a specific incident → batch mode.
 - **Retrospects (Source 4):** same as learnings.
 - **Memories (Source 3):** tracked by a gitignored marker at `$WK_SKILLS_HOME/.distilled-memories`.
 - Reprocess on change.
-- Force reprocessing on `/wk-sharpen --scan --force`.
 
 ### Batch mode presentation
 
