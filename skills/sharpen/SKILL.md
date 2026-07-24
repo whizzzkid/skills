@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-185819'
+  version: '2026.07.24-191252'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -102,7 +102,14 @@ behavior, not just the specific instance.
   - What the agent was supposed to do
   - What went wrong
   - Which artifacts failed
-  - Root cause
+  - Root cause — a claim to verify, never a fact
+
+### HARD RULE: the report is a hypothesis — verify against the owning source
+
+- Treat the report's "Root cause" and "Suggested fix" as non-authoritative; the reporter saw a symptom and inferred a mechanism.
+- Learning names a deterministic artifact (hook, script, CI check) → read that artifact's source, and reproduce the failure where cheap, before drafting. Ground truth is cheaply readable and routinely contradicts the inference.
+- Reject any fold that would *relax* a guard or check → hunt the correctness bug instead. A guard honoring caller-supplied scope is weaker than one deriving scope from the environment, and forfeits the property that makes the guard un-rationalizable.
+- Record the rejected suggestion and the rationale in the reference file so it is not re-proposed.
 
 ## Step 2: Read the Full Skill
 
@@ -345,9 +352,6 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 memory/retro lesson as a learning via `wk-learn` → Process each via single mode →
 Rename learnings **and retros** to `.learned.md` → Update the memory marker
 
-**Improve mode:** Inventory scope → Parallel audit → Consolidate findings → Phased
-proposal (user approval per phase) → Apply → Verify & commit
-
 ## Batch Mode: Scan Learnings, Memories, and Retrospects
 
 Invoked without a specific incident → batch mode.
@@ -411,40 +415,13 @@ Invoked without a specific incident → batch mode.
 
 ## Improve Mode: Refactor and Optimize
 
-`/wk-sharpen improve [scope]` → suite-level cleanup, not incident-specific fixes.
-
-- Set `[scope]` to omitted / `all`, `<skill-name>`, or a glob pattern.
-- Inventory every skill in scope.
-- Build a per-skill map of hard rules, phases/steps, recurring sections, and cross-skill references.
-- Audit for:
-  - duplicate or overlapping instructions
-  - overfit residue
-  - bloated sections
-  - cross-skill duplication
-  - stale or contradictory references
-  - missing structure
-- Optionally research best-practice patterns that survive overfit scrutiny.
-- Consolidate findings by skill and cross-cutting theme.
-- Rank by leverage:
-  - **High** — clear win with no information loss
-  - **Low** — nitpick or style preference
-- Present phased proposals for suite-scale changes.
-  - **Phase A** — extract shared boilerplate to referenced fragments
-  - **Phase B** — per-skill deduplication and bloat trimming
-  - **Phase C** — cross-skill consolidation
-  - **Phase D** — apply external best-practice insights that survived review
-- Wait for explicit user approval per phase.
-- Apply approved edits with the single-mode audit.
-- Bump each skill's `metadata.version`.
-- Commit per skill or phase, then push once at the end.
+`/wk-sharpen improve [scope]` → suite-level cleanup, not incident-specific fixes. Scope is omitted / `all`, `<skill-name>`, or a glob. Procedure — inventory, audit targets, leverage ranking, Phase A–D proposals, apply: [`references/improve-mode.md`](references/improve-mode.md).
 
 ### Hard rules for improve mode
 
 - **No information loss.** Remove a rule only if it is provably duplicated elsewhere or superseded by a stricter rule.
 - **Phased approval required.** Auto mode does not short-circuit this.
-- **Cohort overfit scan applies.** Every proposed edit goes through the mechanical overfit scan.
-- **Capture insights.** When external research surfaces a useful pattern, add it to the
-  overfit-categories table or as a new rule in `wk-sharpen`.
+- **Capture insights.** External research surfacing a useful pattern → add it to the overfit-categories table or as a new `wk-sharpen` rule.
 
 ## Requirements
 

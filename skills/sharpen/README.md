@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.24-185819`
+**Version:** `2026.07.24-191252`
 
 ## Invocation
 
@@ -18,7 +18,8 @@ flowchart TD
     A{Invocation mode} -->|single| B[Read incident report]
     A -->|batch| G[Scan 4 sources]
     A -->|improve| K[Inventory all skills in scope]
-    B --> C[Read full SKILL.md]
+    B --> B2[Verify reported cause against the owning source]
+    B2 --> C[Read full SKILL.md]
     C --> D[Distill lesson — extract principle, strip specifics]
     D --> E[Draft skill update]
     E --> F[Audit: overlaps, contradictions, bloat, stale refs]
@@ -46,6 +47,10 @@ flowchart TD
 - **HARD RULE: [`wk-learn`](../learn/README.md) vs [`wk-sharpen`](../sharpen/README.md)** — [`wk-learn`](../learn/README.md) captures to `learnings/` only;
   [`wk-sharpen`](../sharpen/README.md) edits `SKILL.md`. Ambiguous phrasing ("learn from this") defaults to
   [`wk-learn`](../learn/README.md); only explicit "sharpen" or `/wk-sharpen` triggers SKILL.md edits.
+- **The report is a hypothesis** — a learning's "Root cause" and "Suggested fix" are claims,
+  not authority. When the subject is a deterministic artifact (hook, script, CI check), its
+  source is read (and the failure reproduced where cheap) before drafting, and any fold that
+  would *relax* a guard is rejected in favor of the underlying correctness bug.
 - **Mechanical overfit scan** is mandatory before presenting any diff — 9 categories
   (reviewer logins, org prefixes, employer/internal project names, ticket IDs, repo names,
   line numbers, tool versions, person names, hardcoded branch names) are grepped against the
