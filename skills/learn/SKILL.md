@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-185819'
+  version: '2026.07.24-215250'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -96,14 +96,14 @@ and ask the user; never reroute to memory as a fallback.
 
 Set `SKILL_NAME` to the argument passed (e.g., `pr-review`).
 
-**HARD RULE — strip a leading `wk-` before building the path.** The directory
-under `learnings/skills/` must match the skill's directory name in `skills/`,
-which never carries the `wk-` prefix (the prefix lives only in the `name:`
-frontmatter field). A caller passing the full name (`wk-workflow`) must still
-land in `learnings/skills/workflow/`.
+**HARD RULE — strip a leading `wk-` before building the path.** Canonicalize the
+directory under `learnings/skills/`, which never carries the `wk-` prefix, so a
+caller passing the full name (`wk-workflow`) still lands in
+`learnings/skills/workflow/`. Do not reuse the stripped token as a `skills/`
+path — dir naming there is not invariant, so resolve that one by listing.
 
 ```bash
-SKILL_NAME="${SKILL_NAME#wk-}"   # normalize: directory never carries the prefix
+SKILL_NAME="${SKILL_NAME#wk-}"   # canonical learnings dir: never prefixed
 mkdir -p "$WK_SKILLS_HOME/learnings/skills/$SKILL_NAME"
 ```
 

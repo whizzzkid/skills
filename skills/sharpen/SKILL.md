@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-213700'
+  version: '2026.07.24-215249'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -114,6 +114,8 @@ behavior, not just the specific instance.
 ## Step 2: Read the Full Skill
 
 - Determine which skill needs updating. Grep the learning's core subject across all of `skills/`; the defect's text may live in a skill other than the one filed — fold the principle into the API-mechanics home AND correct every over-general instance elsewhere in the same pass. If ambiguous, ask the user.
+- **Resolve the on-disk skill dir by listing, never by transforming the display name.** Dir naming is not invariant with `name:` — most drop a leading `wk-`, some keep it, so both a blind strip and a blind reuse mis-resolve. Glob once, reuse the result: `d=$(ls -d skills/*"${n#wk-}" | head -1)`.
+- Treat a zero-match grep whose emptiness is load-bearing as **unverified until the path is confirmed to exist** — a mis-resolved path reads identical to a genuine gap and inverts the `already-covered` call. Never trust a missing-path warning; grep tools vary in emitting one.
 - Read the entire `SKILL.md`, not just the target section.
 - Build a mental map of:
   - Hard rules
@@ -296,11 +298,10 @@ behavior, not just the specific instance.
   - **`description:`** field ≤ **1024 bytes** (`SKILL_DESC_MAX_BYTES`)
   - **`allowed-tools:`** ≤ **36 lines** (`SKILL_TOOLS_MAX_LINES`)
 - Keep skills under the ceilings proactively — never rely on the hook as the only guard. When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list.
-- **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list — and route a **new** such row straight there (add only its ID inline, ~6 B), never place-inline-then-reclaim; (2) delete scaffolding, blank lines, or a provably-duplicated rule — the latter outright with zero replacement (a cross-ref back re-spends the reclaim). Count reclaim NET: a prose-block relocation nets gross MINUS the stub it leaves (heading + pointer + sentence), which dominates a short block — prefer a LARGE block; a row/bullet merge nets ~3 B unless it drops the now-duplicated phrase. Reserve prose for the final margin.
+- **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): relocate narrow, tool-specific catalog rows to a `references/` file and update the pointer's ID list — route a **new** such row straight there (ID only inline), never place-inline-then-reclaim; delete scaffolding or a provably-duplicated rule outright.
 - **Measure the staged body BEFORE drafting any content-adding fold** — unconditional, not gated on "looks tight"; the at-ceiling state is invisible until measured. Headroom under ~2× the edit → budget ≥2 reclaim targets up front whose *combined NET* exceeds the edit by ≥1.2×; net change must be non-positive on the first pass.
-  - **CRITICAL — state the budget as arithmetic before applying any edit:** byte-measure the addition (scratch fragment, `LC_ALL=C wc -c`) and each reclaim's net (`old - new`), and write the numbers down. Estimating either side of a two-digit margin is a coin flip.
-  - **Very important — stage addition + reclaim cuts together, then measure exactly once** (multibyte inflates: a `→` is 3 B). A second measure-and-trim cycle is the re-violation signal — re-plan with one decisive structural cut, not another prose nibble.
-  - **Very important — run the hook's `measure()` verbatim after `git add`**; never `wc -c` a whole `SKILL.md`, never an abbreviated awk, never the working tree. Mechanics and failure modes: [`references/byte-budget.md`](references/byte-budget.md).
+  - **CRITICAL — state the budget as arithmetic before applying any edit:** byte-measure the addition and each reclaim's NET; write the numbers down.
+  - **Very important — stage addition + reclaim cuts together, then measure exactly once**, running the hook's `measure()` verbatim after `git add` — never the working tree. A second measure-and-trim cycle is the re-violation signal → re-plan with one decisive structural cut. Mechanics: [`references/byte-budget.md`](references/byte-budget.md).
 
 ## Step 8: Verify and Commit (terminal gate)
 
