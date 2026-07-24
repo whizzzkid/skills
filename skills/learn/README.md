@@ -2,7 +2,7 @@
 
 > Post-completion learning capture for any wk-* skill. Writes a structured learning file for later distillation via wk-sharpen.
 
-**Version:** `2026.07.24-215250`
+**Version:** `2026.07.24-223443`
 
 ## Invocation
 
@@ -36,6 +36,7 @@ flowchart TD
 
 - **Not every run produces a learning:** If all four reflection lenses (wrong, missing, worked, surprised) are empty, no file is written — avoiding noise in the learnings directory.
 - **Scan mode mines session transcripts:** `wk-learn scan` parses `$HOME/.claude/projects/` `.jsonl` transcripts for `[Request interrupted by user]` markers and stop-word user messages, then classifies each by the skill involved.
+- **HARD RULE — root-cause provenance:** when a learning names a deterministic artifact (hook, script, CI check, linter, generator), the frontmatter carries `verified-against-source: <yes | no | n/a>` and an unconfirmed mechanism is marked `(unverified — inferred from symptom)`. A workaround that works is not evidence for the mechanism it avoided, so an unmarked guess would otherwise reach [`wk-sharpen`](../sharpen/README.md) with the authority of a finding.
 - **HARD RULE — strip incident-specific tokens:** Learning files must not contain session IDs, transcript paths, exact timestamps, or verbatim user prose naming third parties. The principle is distilled, not the incident.
 - **Deduplication before write:** Scan mode checks for existing `(skill, slug)` files including `.learned.md` archives. Duplicate findings append a `## Additional evidence` bullet rather than creating a parallel file.
 - **`.learned.md` extension signals absorption:** After [`wk-sharpen`](../sharpen/README.md) distills a learning into a skill, the owning skill renames the file from `.md` to `.learned.md` so it is never re-processed.

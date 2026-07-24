@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-215250'
+  version: '2026.07.24-223443'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -131,13 +131,15 @@ skill: wk-<SKILL_NAME>
 date: <YYYY-MM-DD>
 type: <correction | gap | pattern | surprise>
 severity: <low | medium | high>
+verified-against-source: <yes | no | n/a>
 ---
 
 <One-line summary>
 
 **What happened:** <What the skill did or failed to do>
 
-**Root cause:** <Why — missing instruction, wrong assumption, edge case>
+**Root cause:** <Why — missing instruction, wrong assumption, edge case; mark
+`(unverified — inferred from symptom)` if not confirmed against the artifact>
 
 **Suggested fix:** <What should change in the skill to prevent this>
 ```
@@ -145,14 +147,32 @@ severity: <low | medium | high>
 Use a 2–4 word kebab-case slug (e.g., `missing-null-check`,
 `wrong-api-endpoint`, `good-parallel-pattern`).
 
-**HARD RULE — leave a new learning untracked; never `git add` it.** A new learning
-ends in `.md`, never `.learned.md` — that suffix marks an already-distilled file and
-makes `wk-sharpen` skip it. `.githooks/check-learning-filenames.sh` accepts only
-`<YYYY-MM-DD>_<kebab>.learned.md`, so staging a plain `.md` blocks the commit: the
-repo deliberately keeps undistilled learnings out of history. The distillation pass
-is what renames the file to `.learned.md` and commits it — unstage and leave it
-untracked if already added. Confirm the path matches `<YYYY-MM-DD>_<slug>.md` (ISO
-date, kebab slug, single `.md`) before writing.
+**HARD RULE — mark root-cause provenance whenever the learning names a
+deterministic artifact** (hook, script, CI check, linter, generator). Set
+`verified-against-source: no` and prefix the root cause with `(unverified —
+inferred from symptom)` unless you read or drove that artifact and confirmed the
+mechanism. Use `n/a` only when no such artifact is implicated.
+
+- A workaround that works is **not** evidence for the mechanism it avoided — it can
+  succeed for an unrelated reason. "I could not reproduce it another way" is a
+  symptom, not a cause.
+- Never state an inferred mechanism in the declarative voice the template models;
+  the field has one slot, so an unmarked guess ships with the authority of a
+  finding.
+- An unverified claim that slips through makes the distiller route the skill around
+  a block that was never there — the failure this rule prevents.
+
+**HARD RULE — leave a new learning untracked; never `git add` it.**
+
+- Confirm the path matches `<YYYY-MM-DD>_<slug>.md` (ISO date, kebab slug, single
+  `.md`) before writing.
+- Never end it `.learned.md` — that suffix marks an already-distilled file and makes
+  `wk-sharpen` skip it.
+- `.githooks/check-learning-filenames.sh` accepts only
+  `<YYYY-MM-DD>_<kebab>.learned.md` → staging a plain `.md` blocks the commit; the
+  repo deliberately keeps undistilled learnings out of history.
+- Unstage and leave untracked if already added; the distillation pass is what renames
+  to `.learned.md` and commits it.
 
 **HARD RULE — scrub all internal references before writing.** A learning file is
 committed to a **public** repo. Capture the principle and root cause, never the
@@ -303,7 +323,9 @@ For each classified interruption, write
 same frontmatter and body shape as Step 3 — including the Step 3 `wk-` strip so
 `<skill-name>` never carries the prefix. Set `type: correction` and `severity` by
 impact: data loss / wrong artifact shipped → `high`; cosmetic / scope drift →
-`medium`; minor clarification → `low`.
+`medium`; minor clarification → `low`. Default `verified-against-source: no` — a
+transcript-derived mechanism is inferred unless the turns show the artifact was
+read or driven.
 
 **HARD RULE: strip incident-specific tokens.** Do not embed session IDs,
 transcript paths, exact timestamps, file paths the user did not authorize
