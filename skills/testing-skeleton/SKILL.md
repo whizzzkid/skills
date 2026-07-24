@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.24-212031'
+  version: '2026.07.24-224247'
   internal: false
   model:
     openai: gpt-4.1
@@ -240,6 +240,14 @@ A test that mutates process- or framework-level shared state (redraws a web fram
 - The failure is order-dependent: the mutating test passes alone, and the polluted tests fail only when run after it — the signature is unrelated tests failing after a suite reorder or a new nearby test.
 - Standard test-runner isolation (transactional DB rollback, per-example object doubles) does not cover state a test explicitly replaces at the module/class/framework level — pair every such mutation with an explicit restore.
 - Rails example: a controller spec calling `routes.draw` to register a probe route must restore the real table afterward (`after { Rails.application.reload_routes! }`) — otherwise later request specs 404 against the stripped table.
+
+### Roll back or re-prepare after an ad-hoc probe
+
+An interactive verification script run through the framework's runner against the test database is a state mutation with no safety net: runners **commit by default**, unlike the spec suite, which wraps each example in a rolled-back transaction.
+
+- Wrap every probe in an explicit always-rollback transaction, or re-prepare the test database immediately after the probe and before the next suite run.
+- Treat an unexplained failure in a spec the current change does not touch as self-inflicted state pollution **first**, not a regression — leftover rows are indistinguishable from a fixture the suite never created, so the phantom failures read as real ones.
+- The rule covers any out-of-suite write path (console session, seed script, one-off migration), not only a runner invocation.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
-**Version:** `2026.07.24-212031`
+**Version:** `2026.07.24-224247`
 
 ## Invocation
 
@@ -44,5 +44,9 @@ flowchart TD
   upstream docs, not from intuition — intuition-based validators routinely reject legal inputs.
 - [`wk-testing-skeleton`](../testing-skeleton/README.md) produces the plan; [`wk-workflow`](../workflow/README.md) Phase 3 verifies the suite passes —
   they are complementary, not redundant.
+- **An ad-hoc probe against the test database is a state mutation.** Framework runners commit
+  by default, so a throwaway verification script leaves rows the suite never created — wrap the
+  probe in an always-rollback transaction or re-prepare the database before the next run, and
+  read an unexplained failure in an untouched spec as self-inflicted pollution first.
 - Coverage % is explicitly treated as a lagging indicator — CI coverage gate failures must be
   solved by finding the missing behavioral path, never by adding structural tests to touch lines.
