@@ -23,7 +23,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200628'
+  version: '2026.07.24-183816'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -75,9 +75,10 @@ Read before writing any SilverBullet content.
 
 ### HTML blocks — no blank lines inside
 
-- **HARD RULE:** Never put a blank line inside a `<div>` block.
+- **HARD RULE:** Never put a blank line anywhere inside an open `<div>` block — nesting depth is irrelevant.
 - CommonMark type-6 HTML blocks end at the first blank line → a blank line inside a `<div>` terminates the block, ejects subsequent content as separate blocks, `<div>` renders empty.
-- Replace blank-line separators inside columns with `<br>` or contiguous lines.
+- **CRITICAL — a blank line before or after a NESTED element ends the OUTER block too.** Markdown-style padding around an inner `<div>`/`<pre>` ejects that child out of its parent: it renders full-width below the layout while the parent still holds its other content, so a parent-level "is it non-empty" check passes.
+- Treat a container's entire body as one contiguous run of lines; replace blank-line separators with `<br>`.
 - Applies to ALL type-6 elements — `<div>`, `<span>`, `<section>`, etc.
 
 ### Input elements are disabled
@@ -288,7 +289,13 @@ Run this loop (Playwright MCP, or browser console for steps 1/3/4):
    el.disabled                          // is the element unexpectedly disabled?
    ```
 
-4. **Test interactivity** — `.click()` a checkbox span, re-read the page (`window.client.space.readPage`) to confirm the toggle persisted to file.
+4. **Assert containment, not presence** (`browser_evaluate`) — a count/non-empty assertion on the parents passes while a nested block has escaped its parent. For every nested marker class, its scoped count must equal its global count:
+
+   ```javascript
+   document.querySelectorAll('PARENT CHILD').length === document.querySelectorAll('CHILD').length
+   ```
+
+5. **Test interactivity** — `.click()` a checkbox span, re-read the page (`window.client.space.readPage`) to confirm the toggle persisted to file.
 
 Key Playwright MCP tools: `browser_navigate`, `browser_take_screenshot`, `browser_evaluate`, `browser_click`.
 
@@ -297,6 +304,8 @@ Key Playwright MCP tools: `browser_navigate`, `browser_take_screenshot`, `browse
 All known failure modes:
 
 - **Blank line inside `<div>`** → column renders empty; content falls below layout.
+- **Blank line padding a nested `<div>`/`<pre>`** → child ejected full-width below the parent, which still renders its other content.
+- **Verifying with a presence/count assertion only** → escaped nested content still counts as present; assert containment.
 - **`<input type="checkbox">`** → disabled by SilverBullet; handler silently stripped.
 - **`=>` in onclick attribute** → handler truncated at `>`; function never called.
 - **`"` inside `"..."` attribute** → attribute closes early; handler and subsequent attributes break.
@@ -314,6 +323,7 @@ All known failure modes:
 | Problem | Fix |
 |---------|-----|
 | Column renders empty | Remove all blank lines inside `<div>` tags |
+| Nested block renders below the layout | Delete the blank lines padding the nested `<div>` |
 | Checkbox not clickable | Replace `<input>` with `<span onclick>` |
 | Handler truncated | Remove `=>` (use `function(){}`); no `"` in attribute |
 | File read returns HTML | Use `window.client.space.readPage()` not `fetch()` |

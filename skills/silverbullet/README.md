@@ -3,7 +3,7 @@
 Working guide for SilverBullet 2.x — interactive HTML dashboards, `space-style` CSS,
 the `window.client` file API, and every rendering constraint discovered in production.
 
-**Version:** `2026.06.15-200628`
+**Version:** `2026.07.24-183816`
 
 ## When It Activates
 
@@ -19,7 +19,8 @@ Auto-invoked whenever the agent works with SilverBullet content:
 
 | Rule | Detail |
 |------|--------|
-| No blank lines inside `<div>` | CommonMark type-6 rule — blank line ends the block |
+| No blank lines inside `<div>` | CommonMark type-6 rule — blank line ends the block, at any nesting depth |
+| Verify containment, not presence | Scoped count of every nested marker must equal its global count |
 | No `<input>` elements | SilverBullet disables all form elements in HTML widgets |
 | No `>` or `"` in onclick | Use `function(){}` syntax; `String.fromCharCode(34)` for quotes |
 | No `fetch()` for page I/O | Service worker returns SPA shell; use `window.client.space.readPage/writePage` |

@@ -56,7 +56,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.21-172236'
+  version: '2026.07.24-183816'
 ---
 
 # Sitrep
@@ -104,8 +104,11 @@ per-day live directories; dated snapshots at close.
 - Auto-action items already done at generation start `data-done="true"`; nested
   sub-items use `class="st-item st-nested"`.
 - Group items only via the flat `st-item`/`st-nested` span pattern already in the
-  file. **Important — never freelance a new tag or nesting shape**; a nested
-  unclassed `<div>` inside `.sitrep-col` collapses the flex boundary → single-column render.
+  file. **Important — never freelance a new tag or nesting shape**; only a
+  documented classed `<div>` (the standup copy block) may nest inside
+  `.sitrep-col`, and never with a blank line before or after it — a blank line
+  anywhere in a column body ends that column's HTML block and ejects the rest
+  full-width below the row, at any nesting depth.
 - Non-actionable content (meeting lines, headers, standup block) is plain text
   or inline markdown.
 - Sort by priority/severity, staleness, due date, then undated. Lead with 🔴
@@ -138,51 +141,12 @@ can rediscover them. A week-scoped JSONL registry suppresses those keys.
 
 ## Step 0: Bootstrap (both sub-commands)
 
-### Verify environment and paths
-
-Resolution order for each key: `.sitrep.yml` at the working repo root → env
-var → skill default. The config probe runs first so per-project config can
-supply the vars without shell-profile exports.
-
-```bash
-# Per-project overrides: .sitrep.yml at the working repo root wins over env/defaults.
-_CFG="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)/.sitrep.yml"
-if [ -f "$_CFG" ]; then
-  _yml() { sed -n "s/^$1:[[:space:]]*\"\{0,1\}\([^\"]*\)\"\{0,1\}[[:space:]]*\$/\1/p" "$_CFG"; }
-  _v=$(_yml sitrep_repo); [ -n "$_v" ] && SITREP_REPO="$_v"
-  _v=$(_yml employer);    [ -n "$_v" ] && EMPLOYER="$_v"
-  _v=$(_yml sitrep_port); [ -n "$_v" ] && SITREP_PORT="$_v"
-fi
-
-test -n "$SITREP_REPO" || { echo "SITREP_REPO is not set"; exit 1; }
-test -n "$EMPLOYER"    || { echo "EMPLOYER is not set"; exit 1; }
-SITREP_PORT="${SITREP_PORT:-3000}"
-
-TODAY=$(date +%Y-%m-%d)
-YEAR=$(date +%Y); WEEK=$(date +%V)
-LIVE_FILE="$SITREP_REPO/$EMPLOYER/live.md"
-SNAPSHOT_DIR="$SITREP_REPO/$EMPLOYER/$(date +%Y)/$(date +%m)/$(date +%d)"
-SNAPSHOT_FILE="$SNAPSHOT_DIR/snapshot.md"
-WEEK_MEM_FILE="$SITREP_REPO/$EMPLOYER/.dismissed/$YEAR-W$WEEK.jsonl"
-
-mkdir -p "$SITREP_REPO/$EMPLOYER" "$SNAPSHOT_DIR" "$(dirname "$WEEK_MEM_FILE")"
-```
-
-### Verify SilverBullet is running
-
-```bash
-if ! pgrep -f "silverbullet" > /dev/null 2>&1; then
-  if docker ps --filter name=silverbullet --format '{{.Names}}' 2>/dev/null | grep -q .; then
-    :  # already served by a docker-compose deployment — treat as running
-  elif command -v silverbullet >/dev/null 2>&1; then
-    silverbullet "$SITREP_REPO" &
-    sleep 2
-  else
-    echo "SilverBullet is not installed. Install it, run: silverbullet $SITREP_REPO, then re-run."
-    exit 1
-  fi
-fi
-```
+Resolve config → env → default for `$SITREP_REPO`, `$EMPLOYER`, `$SITREP_PORT`
+(`.sitrep.yml` at the working repo root wins), export `$TODAY`, `$LIVE_FILE`,
+`$SNAPSHOT_FILE`, `$WEEK_MEM_FILE`, `mkdir -p` their parents, then ensure
+SilverBullet is serving `$SITREP_REPO` (docker deployment counts as running;
+auto-start the CLI; hard-fail when neither exists). Canonical probe + start
+recipes: [`references/bootstrap.md`](references/bootstrap.md).
 
 ## Sub-command: start
 
@@ -353,6 +317,10 @@ Render standup in col3 as a copy block:
 <div class="st-copy-block"><button class="st-copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.innerText)">Copy</button><pre class="st-standup">{standup text}</pre></div>
 ```
 
+**No blank line before or after this `<div>`** — it sits flush against the
+neighbouring col3 lines, or col3's HTML block ends there and the standup renders
+full-width below the row.
+
 Delegate formatting to [`wk-slack`](../slack/README.md) §Standup Snippet; this
 skill owns selection.
 
@@ -382,12 +350,15 @@ skill owns selection.
 
   ```javascript
   document.querySelectorAll('.sitrep-col').length===3 &&
-    [...document.querySelectorAll('.sitrep-col')].every(c=>c.textContent.trim())
+    [...document.querySelectorAll('.sitrep-col')].every(c=>c.textContent.trim()) &&
+    ['.st-copy-block','.st-item'].every(s=>document.querySelectorAll('.sitrep-col '+s).length===document.querySelectorAll(s).length)
   ```
 
-  Must return `true` (3 non-empty columns). On `false`/single-column collapse, fix
-  the HTML per [`wk-silverbullet`](../silverbullet/README.md) Step 6 and re-verify —
-  never announce a broken layout.
+  Must return `true` — 3 non-empty columns AND every nested marker still inside a
+  column. **Assert containment, not presence:** a count/non-empty check passes while
+  an ejected block sits full-width below the row. On `false`, fix the HTML per
+  [`wk-silverbullet`](../silverbullet/README.md) Step 6 and re-verify — never
+  announce a broken layout. A screenshot is not a substitute for the assertion.
 - `browser_close` the automation window after the assertion, before `open` — it and
   the user-facing tab have distinct lifecycles; a leftover window clutters the desktop.
 
