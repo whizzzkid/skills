@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-215249'
+  version: '2026.07.24-230812'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -41,7 +41,6 @@ metadata:
 
 # Sharpen
 
-Improve and de-bloat skills from field reports or incident retrospectives.
 Extract the **principle** behind a failure → update the skill to prevent the
 behavior, not just the specific instance.
 
@@ -107,7 +106,7 @@ behavior, not just the specific instance.
 ### HARD RULE: the report is a hypothesis — verify against the owning source
 
 - Treat the report's "Root cause" and "Suggested fix" as non-authoritative; the reporter saw a symptom and inferred a mechanism. A workaround that works is not evidence for that mechanism — it can succeed by another. Confirm a claimed cause exists in the source before documenting it; delete a documented cause the source disproves.
-- Learning names a deterministic artifact (hook, script, CI check) → read that artifact's source, and reproduce the failure where cheap, before drafting. Ground truth is cheaply readable and routinely contradicts the inference. A red result from your own verification tooling is not a verdict either: a newly added case failing while every pre-existing case passes indicts the harness first — drive the artifact directly with the same input, and fix the harness in the same pass as audit cleanup when the two disagree.
+- Learning names a deterministic artifact (hook, script, CI check) → read that artifact's source, and reproduce the failure where cheap, before drafting. A red result from your own verification tooling is not a verdict either: a newly added case failing while every pre-existing case passes indicts the harness first — drive the artifact directly with the same input, and fix the harness in the same pass as audit cleanup when the two disagree.
 - Reject any fold that would *relax* a guard or check → hunt the correctness bug instead. A guard honoring caller-supplied scope is weaker than one deriving scope from the environment, and forfeits the property that makes the guard un-rationalizable.
 - Record the rejected suggestion and the rationale in the reference file so it is not re-proposed.
 
@@ -358,7 +357,7 @@ Invoked without a specific incident → batch mode.
 - Materialize each matched memory as a learning via `wk-learn`, then distill it through the Source 2 path.
 - **Gate the listing by parse-as-memory BEFORE diffing the marker.** Require a frontmatter block with a `type:` key — match it at column 0 *or* nested under `metadata:`; a bare `^type:` grep silently drops memories that nest it. Non-memory residents (a hand-maintained index, another skill's append-only archive) are out-of-scope-by-rule, never backlog.
 - **Never add a marker entry for a file this run did not process.** The marker records distillation, not suppression — mixing them destroys any way to tell a real completion from a silenced non-memory.
-- **Normalize both sides before diffing against the marker.** `comm` does exact string matching; the directory listing and `.distilled-memories` must share one path form. Collapse repeated slashes (`sed 's#//#/#g'`) and `sort -u` both sides first — a trailing-slash glob yields `dir//file.md` and silently mismatches every entry. Treat a result where *every* memory shows un-distilled as a probable format mismatch, not a real backlog — sanity-check before processing.
+- **Normalize both sides before diffing against the marker.** `comm` does exact string matching; the directory listing and `.distilled-memories` must share one path form. Collapse repeated slashes (`sed 's#//#/#g'`) and `sort -u` both sides first — a trailing-slash glob yields `dir//file.md` and silently mismatches every entry. Treat a result where *every* memory shows un-distilled as a probable format mismatch, not a real backlog — sanity-check before processing. A refused invocation → drop only the blocked element (stage both lists in-repo, or feed a here-string); never swap the comparison primitive, or the substitute's tooling difference reads as real backlog.
 
 ### Source 4: Session retrospects
 

@@ -21,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.07.24-222028'
+  version: '2026.07.24-230812'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -96,6 +96,12 @@ outside. Reshape the command; do not reach for the opt-out.
   block into "the guard forbids `<workflow>`" — drive the hook with the exact
   command first, or the defect is filed against the wrong axis and the workflow
   degraded to route around a block that was never there.
+- **Reshape by subtraction — never swap the verification method.** Drop only the
+  blocked element (an out-of-repo temp path, a recursive flag) and keep the
+  prescribed matcher, primitive, and comparison. A refused check rewritten with a
+  different primitive makes the substitute's tooling difference indistinguishable
+  from a real finding. Substitute and prescribed method disagree → the substitute
+  is wrong until direct inspection of the underlying data says otherwise.
 
 ## Invocation
 

@@ -2,7 +2,7 @@
 
 > A PreToolUse hook that blocks filesystem-root searches and out-of-repo recursive searches, and warns on Edit/Write outside the project root — the mechanical backstop for [wk-plan](../plan/README.md)'s simplest-viable scope gate.
 
-**Version:** `2026.07.24-222028`
+**Version:** `2026.07.24-230812`
 
 ## Purpose
 
@@ -54,6 +54,10 @@ flowchart TD
   the session's CWD), and a documented `$VAR`-rooted path pasted as an expanded
   literal. Drop the `cd`, use `git grep -n "<term>"`, or leave the path in its
   documented form; ask the user for scope if none fits.
+- **Reshape by subtraction, never by swapping the verification method.** Drop only the
+  blocked element and keep the prescribed matcher and comparison — a refused check
+  rewritten with a different primitive turns a tooling difference into a phantom
+  finding, indistinguishable from a real one.
 - **A block names the token as written, not the logical path.** Tokens are never
   shell-expanded, so an unexpanded root is not judged at all. That is for diagnosis
   only — never rewrite a literal root into `$VAR` to clear a block. Drive the hook
