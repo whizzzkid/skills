@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.10-233833'
+  version: '2026.07.24-212031'
   internal: false
   model:
     openai: gpt-4.1
@@ -199,6 +199,20 @@ and tests fail with a missing-file error instead of a useful assertion.
 - Capture the value into a named variable **inside** the loop (e.g. `api_url="$1"`
   in the wildcard `case` branch), then read that variable after the loop.
 - Never rely on `$@` / `$1` surviving a complete shift-consuming loop.
+
+### Pass harness payloads through the environment, never string interpolation
+
+A fixture that interpolates the input under test into a shell command string
+cannot represent input containing a quote character — the input's own quote closes
+the wrapping quote and silently mangles the payload before the artifact ever sees it.
+
+- Export the payload and read it inside the child process instead of building the
+  command text around it: `PAYLOAD=… run bash -c 'printf %s "$PAYLOAD" | "$1"' _ "$TOOL"`.
+- The corruption fails open-looking — the case reports a plausible assertion failure
+  rather than an error, so it reads as evidence about the code, not about the fixture.
+- A newly added case failing while every pre-existing case passes indicts the harness
+  first: re-run the same input against the artifact directly before changing the
+  implementation. Disagreement means the fixture is the defect.
 
 ### Assert a literal tilde with a quoted glob, not a regex
 

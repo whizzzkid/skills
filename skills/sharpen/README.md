@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.24-210848`
+**Version:** `2026.07.24-212031`
 
 ## Invocation
 
@@ -50,7 +50,10 @@ flowchart TD
 - **The report is a hypothesis** — a learning's "Root cause" and "Suggested fix" are claims,
   not authority. When the subject is a deterministic artifact (hook, script, CI check), its
   source is read (and the failure reproduced where cheap) before drafting, and any fold that
-  would *relax* a guard is rejected in favor of the underlying correctness bug.
+  would *relax* a guard is rejected in favor of the underlying correctness bug. The run's own
+  verification tooling is no more authoritative: a newly added case failing while every
+  pre-existing case passes indicts the harness first, so the artifact is driven directly with
+  the same input before the fold is touched.
 - **Mechanical overfit scan** is mandatory before presenting any diff — 9 categories
   (reviewer logins, org prefixes, employer/internal project names, ticket IDs, repo names,
   line numbers, tool versions, person names, hardcoded branch names) are grepped against the
