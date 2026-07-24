@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.24-212031`
+**Version:** `2026.07.24-213700`
 
 ## Invocation
 
@@ -28,7 +28,7 @@ flowchart TD
     P --> Q[Apply edits + bump CalVer version]
     Q --> Q2[Sync skill README + diagram + repo index/docs]
     Q2 --> R[De-bloat pass + size-ceiling check]
-    R --> S[Install + commit + push terminal gate]
+    R --> S["Install + suite + commit + push terminal gate"]
     G --> G1[Global learnings inbox $HOME/.claude/skills/learnings/]
     G --> G2[Repo learnings/skills/]
     G --> G3[$HOME/.claude/memory/ feedback type only]
@@ -63,7 +63,8 @@ flowchart TD
   or a false-clean, so the scan executes `.githooks/*.sh` against the staged index. Only
   staged **path strings** are hand-rolled, because every content hook greps the diff and
   commit message but never filenames.
-- **Terminal gate** (Step 8) requires all four checks: install prints `Done!`, commits land,
+- **Terminal gate** (Step 8) requires all five checks: install prints `Done!`, the owning
+  skill's test suite runs when the fold touched a shipped executable artifact, commits land,
   single push, and no modified tracked path — untracked *unprocessed* learnings/retros are
   expected state, not debris. Silence after edits is a violation.
 - **Batch mode** mirrors the global learnings inbox (`$HOME/.claude/skills/learnings/`) into the

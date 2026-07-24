@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-212031'
+  version: '2026.07.24-213700'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -297,24 +297,25 @@ behavior, not just the specific instance.
   - **`allowed-tools:`** ≤ **36 lines** (`SKILL_TOOLS_MAX_LINES`)
 - Keep skills under the ceilings proactively — never rely on the hook as the only guard. When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list.
 - **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list — and route a **new** such row straight there (add only its ID inline, ~6 B), never place-inline-then-reclaim; (2) delete scaffolding, blank lines, or a provably-duplicated rule — the latter outright with zero replacement (a cross-ref back re-spends the reclaim). Count reclaim NET: a prose-block relocation nets gross MINUS the stub it leaves (heading + pointer + sentence), which dominates a short block — prefer a LARGE block; a row/bullet merge nets ~3 B unless it drops the now-duplicated phrase. Reserve prose for the final margin.
-- **Measure the staged body BEFORE drafting any content-adding fold** — unconditional, not gated on "looks tight"; the at-ceiling state is invisible until measured. Headroom under ~2× the edit → pick reclaim target(s) whose *combined NET* reclaim exceeds it with ≥1.2× margin — budget ≥2 reclaims up front (one undershoots a multi-clause rule); net change must be non-positive on the first pass.
-  - **CRITICAL — state the budget as arithmetic before applying any edit.** Byte-measure the *draft* too: write the addition to a scratch file, `LC_ALL=C wc -c` it (right for a bare fragment, never for a `SKILL.md`); for a rewrite-style reclaim measure the replacement and net it `old - new`. Write the numbers down — addition, each reclaim's net, the total. A budget that cannot be stated as arithmetic has not been computed; estimating either side of a two-digit margin is a coin flip.
-  - **Very important — measure exactly once.** Stage the addition AND the reclaim cuts together, then measure ONCE (multibyte inflates: a `→` is 3 B). A second measure-and-trim cycle is the re-violation signal — stop and re-plan with one decisive structural cut, not another prose nibble.
-  - **Very important — run the hook's `measure()` verbatim; never `wc -c` or an abbreviated awk.** Dropping its `state="pre"` init counts front-matter as body → false, self-consistent over-ceiling headroom. Copy `measure()` from `.githooks/check-skill-size.sh`, `git add` first, run pre-draft and at commit; never the working tree.
+- **Measure the staged body BEFORE drafting any content-adding fold** — unconditional, not gated on "looks tight"; the at-ceiling state is invisible until measured. Headroom under ~2× the edit → budget ≥2 reclaim targets up front whose *combined NET* exceeds the edit by ≥1.2×; net change must be non-positive on the first pass.
+  - **CRITICAL — state the budget as arithmetic before applying any edit:** byte-measure the addition (scratch fragment, `LC_ALL=C wc -c`) and each reclaim's net (`old - new`), and write the numbers down. Estimating either side of a two-digit margin is a coin flip.
+  - **Very important — stage addition + reclaim cuts together, then measure exactly once** (multibyte inflates: a `→` is 3 B). A second measure-and-trim cycle is the re-violation signal — re-plan with one decisive structural cut, not another prose nibble.
+  - **Very important — run the hook's `measure()` verbatim after `git add`**; never `wc -c` a whole `SKILL.md`, never an abbreviated awk, never the working tree. Mechanics and failure modes: [`references/byte-budget.md`](references/byte-budget.md).
 
 ## Step 8: Verify and Commit (terminal gate)
 
-Do not return control until all four pass:
+Do not return control until all five pass:
 
 1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — success = `Done!` or `Installed <N> skills` (accept either marker). Prefix the explicit `cd`; the Bash cwd persists across calls, so a `cd` from an earlier step can leave a `.`-relative install in the wrong dir ("No valid skills found").
-2. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
+2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing; a shipped-code edit must never reach the commit gate unrun. Red result → apply the Step 1 harness-defect rule.
+3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Never blanket `git add -A` — the working tree routinely carries *unprocessed* inbox files (`learnings/`, `retrospect/`) from other sessions, and `-A` bundles them into this commit. Add processed paths explicitly. If `-A` is unavoidable, `git reset` every `learnings/`/`retrospect/` path this run did not process before committing.
    - Re-check the index after any hook-blocked commit.
    - **Untracked skill dir from another session blocks `check-readme-index`** — the hook scans the whole `skills/` tree on disk, not staged paths. Don't `git add` or index another session's incomplete skill: move it aside (`mv skills/<name> /tmp/agent/...`), land the scoped commit, push, then restore it untouched.
    - Rename `.learned.md` with `mv`, not `git mv` — a freshly materialized learning is untracked, so `git mv` aborts (`fatal: not under version control`). Then `git add` the new path.
    - On signing failure, stop — don't re-run install/scan or re-stage; ask the user for an interactive signer unlock. A listed agent key (`ssh-add -l` ok) ≠ signing capability; only a completed signed commit proves it. On the next run the staged fold is resumable, not done — retry the gate; never re-distill.
-3. **Push once:** after all commits exist, push a single time.
-4. **Clean tree:** no modified tracked path in `git status --short` — untracked *unprocessed* learnings/retros are expected state, never debris to delete.
+4. **Push once:** after all commits exist, push a single time.
+5. **Clean tree:** no modified tracked path in `git status --short` — untracked *unprocessed* learnings/retros are expected state, never debris to delete.
 
 Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
