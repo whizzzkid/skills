@@ -41,6 +41,15 @@ inline standards; relocation does not lower their priority.
   hardcoding OS, arch, version, or path, grep the file — if a sibling derives the
   same value dynamically (`uname -s`/`-m`, etc.), reuse that computation, never
   re-hardcode what a sibling derives.
+- **Validation bounds derive from the schema:** derive a length / range / enum bound
+  from the live schema or authoritative source, never a hardcoded copy — a widening
+  migration then needs no code change. Pair it with a drift-guard test asserting the
+  derived bound still matches the source, so divergence fails in CI instead of in
+  staging.
+- **Publish an enforced limit in the same change that enforces it:** surface the
+  per-field bound in the contract clients actually read (API schema, docs, error
+  payload) alongside the new enforcement. A limit enforced but unpublished is
+  discovered by losing data.
 - **Portable home paths:** in skills, configs, and committed scripts, reference
   user-land paths via `$HOME/...` (or `${HOME}`), never a hardcoded
   machine-absolute home directory.

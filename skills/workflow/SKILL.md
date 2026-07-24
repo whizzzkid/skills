@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.23-002413'
+  version: '2026.07.24-224708'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -148,7 +148,7 @@ Apply to ALL code:
 - **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
 - **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
-- **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, structured-row insert, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling, full-boot config-dependency enumeration, sandboxed-step env forwarding, coercion same-class audit, portable home paths) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
+- **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, structured-row insert, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling, full-boot config-dependency enumeration, sandboxed-step env forwarding, coercion same-class audit, schema-derived validation bounds, published enforced limits, portable home paths) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
 - **HARD RULE — reuse the mechanism the codebase already provides for config/secret resolution; never invent a parallel override (dummy env exports, a new config path). Repeated user pushback naming an existing convention is a hard stop — adopt the named mechanism, never defend the invented one.** (See reuse-hygiene, code-standards-extended.)
@@ -360,8 +360,6 @@ Final audit after all code is complete:
 **HARD RULE:** never ask whether to capture learnings — offering to capture is still asking. Invoke `wk-learn` in the same turn a correction or mistake surfaces, and after every skill run.
 
 **HARD RULE:** `gh pr ready` is not a session terminus. After every successful `gh pr ready`, the next action is `Skill(wk-retro)`.
-
-The retro scans the session, classifies interruptions/redirects by affected skill, writes per-skill learning files, reviews mistakes/corrections/gaps/decisions/successes, writes a dated entry to the global retro log, and promotes actionable rules globally.
 
 ---
 
