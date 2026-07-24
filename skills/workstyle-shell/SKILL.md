@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.17-171348'
+  version: '2026.07.24-224451'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -118,6 +118,11 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
 - **Run only commands with a known, intended effect** — never a speculative "guard"
   line whose parse you have not verified; on BSD a stray flag lands as an operand
   and mutates the filesystem.
+- **Never emit `sed -i` for an in-place edit.** BSD/macOS `sed` requires an explicit
+  backup-suffix argument, so the GNU spelling `sed -i 's/a/b/' file` consumes the
+  script as the suffix and fails. Use `perl -pi -e 's{a}{b};' file` — identical
+  semantics on both platforms, no platform branch, and `{}` delimiters avoid escaping
+  slashes in paths. Reserve `sed` for read-only stream transforms.
 
 ## Apply or Report
 
