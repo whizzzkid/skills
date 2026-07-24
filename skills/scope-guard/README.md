@@ -2,7 +2,7 @@
 
 > A PreToolUse hook that blocks filesystem-root searches and out-of-repo recursive searches, and warns on Edit/Write outside the project root — the mechanical backstop for [wk-plan](../plan/README.md)'s simplest-viable scope gate.
 
-**Version:** `2026.07.22-214113`
+**Version:** `2026.07.24-190504`
 
 ## Purpose
 
@@ -43,7 +43,16 @@ flowchart TD
   paths, and non-search reads (`cat /etc/hosts`) are never blocked.
 - Edit/Write outside the repo **warns, never blocks** — `$HOME/.claude` config
   writes are legitimate.
-- `SCOPE_GUARD_OFF=1` bypasses the guard for the session.
+- `SCOPE_GUARD_OFF=1` bypasses the guard for the session — but it is **the user's to
+  grant, never the agent's to self-authorize**. Retrying a blocked search with the var
+  added is a bypass attempt; a denial of that retry is the correct outcome and must be
+  treated as settled.
+- **False blocks are reshaped, not bypassed.** Token inspection is lexical, so three
+  shapes read as out-of-scope even when they are not: a recursive flag plus an
+  unexpanded glob, a path glued to a trailing shell separator (`cd <root>;` tokenizes
+  as `<root>;` — the hook now strips `;&|)` before comparing), and a search rooted in
+  another repo's worktree (the root resolves from the session's CWD). Drop `-r`, drop
+  the `cd`, or use `git grep -n "<term>"`; ask the user for scope if none fit.
 - Allows everything when `cwd` is not a git repo (no repo root to reason about).
 
 ## Files
@@ -52,7 +61,7 @@ flowchart TD
   `$HOME/.agents/skills/wk-scope-guard/hooks/`)
   Registered in `$HOME/.claude/settings.json` → `hooks.PreToolUse` via
   `scripts/register-hooks.sh` (declared in `scripts/hooks-manifest.json`)
-- Tests: `skills/scope-guard/tests/scope-guard.bats` (18 cases)
+- Tests: `skills/scope-guard/tests/scope-guard.bats` (20 cases)
 
 To wire this (and every other skill-shipped hook) into a fresh machine, run
 `scripts/install-skills.sh` — it installs the skills and then calls

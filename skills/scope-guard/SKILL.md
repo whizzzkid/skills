@@ -21,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.07.22-214113'
+  version: '2026.07.24-190504'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -56,22 +56,36 @@ guard does not train you to disable it.
 
 - Export `SCOPE_GUARD_OFF=1` for the session when an out-of-scope search is
   genuinely required (e.g. locating a system binary).
+- **HARD RULE — the opt-out is the user's to grant, never the agent's to
+  self-authorize.** Reaching for it after a block is a bypass attempt, and a
+  denial of that retry is the correct outcome — treat it as settled, not as an
+  obstacle to route around. Reshape the command per the false-block shapes below,
+  or ask the user for scope. Never re-attempt the same search with the var added.
 - **The opt-out must be an exported/session env var, never a command prefix.**
   `SCOPE_GUARD_OFF=1 grep -r …` in a single Bash call does not disable the guard
   — the hook runs as a separate `PreToolUse` process that inspects the command
   payload before it executes, so a var set on that command line never reaches
   the hook's own environment.
 
-## False block: recursive search + unexpanded glob
+## False blocks — recognize the shape, never bypass
 
-- A recursive flag (`-r`/`-R`/`-rl`) plus an unexpanded glob token (`*.go`) can
-  be blocked as an unbounded search root even when CWD already resolves inside
-  the repo/worktree — the lexical token check flags the glob independently of
-  the CWD-based root resolution that clears the non-recursive form.
-- Do not reach for the env opt-out here (a command prefix will not work anyway).
-  Instead: list the files explicitly and grep those (drop `-r`), or omit `-r`
-  when CWD is already the intended search root — the non-recursive form from the
-  same CWD passes cleanly.
+Token inspection is lexical, so a path that *is* in scope can still read as
+outside. Reshape the command; do not reach for the opt-out.
+
+- **Recursive flag + unexpanded glob** — `-r`/`-R`/`-rl` plus a glob token
+  (`*.go`) is flagged as an unbounded root even when CWD resolves inside the
+  repo. Fix: drop `-r` (the non-recursive form from the same CWD passes), or list
+  the files explicitly and grep those.
+- **Path glued to a shell separator** — a `cd <root>;`-style prefix tokenizes as
+  `<root>;`, matching neither the repo root nor its prefix, so an in-repo path
+  reads as outside. The hook strips trailing `;&|)` before comparing; if a block
+  still names a path that looks correct, re-read the reported path for a glued
+  separator. Fix: drop the `cd` (CWD already persists between calls).
+- **Search rooted in another repo's worktree** — the root resolves from the
+  session's CWD, so a delegated cross-repo review trips every recursive search
+  even when the target worktree is the intentional one. Fix: `git grep -n
+  "<term>"` (single pattern, no `-r`) is read-only and passes cleanly; otherwise
+  ask the user to grant scope for the task.
 
 ## Invocation
 
@@ -111,7 +125,8 @@ The hook reads the tool payload from stdin, emits any message to stderr
 ## How it decides "outside the repo"
 
 1. Resolve the repo root via `git -C <cwd> rev-parse --show-toplevel`.
-2. Normalize each candidate path (`os.path.normpath`, no existence required).
+2. Strip surrounding quotes and any trailing shell separator (`;&|)`) from each
+   candidate token, then normalize it (`os.path.normpath`, no existence required).
 3. A path is "outside" when its normalized form does not sit under the repo
    root. Relative paths resolve against `cwd` and are treated as inside.
 

@@ -91,6 +91,16 @@ run_edit()  { run bash -c "echo '$(payload Edit "$1" file_path)' | '$HOOK'"; }
   [ "$status" -eq 0 ]
 }
 
+@test "allows an in-repo root glued to a trailing semicolon by a cd prefix" {
+  run_bash "cd $REPO; grep -rn foo skills/"
+  [ "$status" -eq 0 ]
+}
+
+@test "still blocks an out-of-repo root glued to a trailing semicolon" {
+  run_bash "cd /etc; find /etc -name x"
+  [ "$status" -eq 2 ]
+}
+
 # -- Edit/Write: warn (never block) outside the repo -------------------------
 @test "Edit outside the repo warns but does not block" {
   run_edit "$HOME/.claude/settings.json"

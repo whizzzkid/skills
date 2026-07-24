@@ -89,6 +89,12 @@ print(d.get("tool_input",{}).get("command",""))' 2>/dev/null)
     read -ra _toks <<<"$CMD"
     for tok in ${_toks[@]+"${_toks[@]}"}; do
       tok="${tok#[\"\']}"; tok="${tok%[\"\']}"
+      # Strip trailing shell separators glued to the token. `cd /repo; find …`
+      # tokenizes as `/repo;`, which matches neither the repo root nor its
+      # prefix, so the in-repo path reads as outside and the call is blocked.
+      # Stripping sharpens the comparison both ways: `/etc;` still blocks.
+      tok="${tok%%[;&|)]*}"
+      [ -z "$tok" ] && continue
       case "$tok" in
         /) offending="/" ; break ;;
         /*) if is_outside "$tok"; then offending="$tok"; break; fi ;;
