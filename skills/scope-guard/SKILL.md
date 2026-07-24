@@ -21,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.07.24-230812'
+  version: '2026.07.24-232325'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -102,6 +102,14 @@ outside. Reshape the command; do not reach for the opt-out.
   different primitive makes the substitute's tooling difference indistinguishable
   from a real finding. Substitute and prescribed method disagree → the substitute
   is wrong until direct inspection of the underlying data says otherwise.
+  - **Blocked element may live in a different sub-command.** Both tests scan the
+    whole payload, so a compound call trips when one part carries the search verb
+    and an unrelated part carries the out-of-repo path — neither alone blocks.
+    Tell: the reported out-of-scope path is not the search's root. Fix: split into
+    single-purpose calls; every primitive survives.
+  - **Stage out-of-repo scratch through `Write`/`Edit`, not a Bash call** — the
+    file-write guard only warns, so a written draft leaves no Bash payload to trip
+    while the measuring primitive stays intact.
 
 ## Invocation
 

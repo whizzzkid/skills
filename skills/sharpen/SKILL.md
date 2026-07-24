@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-230812'
+  version: '2026.07.24-232325'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -357,7 +357,7 @@ Invoked without a specific incident → batch mode.
 - Materialize each matched memory as a learning via `wk-learn`, then distill it through the Source 2 path.
 - **Gate the listing by parse-as-memory BEFORE diffing the marker.** Require a frontmatter block with a `type:` key — match it at column 0 *or* nested under `metadata:`; a bare `^type:` grep silently drops memories that nest it. Non-memory residents (a hand-maintained index, another skill's append-only archive) are out-of-scope-by-rule, never backlog.
 - **Never add a marker entry for a file this run did not process.** The marker records distillation, not suppression — mixing them destroys any way to tell a real completion from a silenced non-memory.
-- **Normalize both sides before diffing against the marker.** `comm` does exact string matching; the directory listing and `.distilled-memories` must share one path form. Collapse repeated slashes (`sed 's#//#/#g'`) and `sort -u` both sides first — a trailing-slash glob yields `dir//file.md` and silently mismatches every entry. Treat a result where *every* memory shows un-distilled as a probable format mismatch, not a real backlog — sanity-check before processing. A refused invocation → drop only the blocked element (stage both lists in-repo, or feed a here-string); never swap the comparison primitive, or the substitute's tooling difference reads as real backlog.
+- **Normalize both sides before diffing against the marker.** `comm` does exact string matching; the directory listing and `.distilled-memories` must share one path form. Collapse repeated slashes (`sed 's#//#/#g'`) and `sort -u` both sides first — a trailing-slash glob yields `dir//file.md` and silently mismatches every entry. Treat a result where *every* memory shows un-distilled as a probable format mismatch, not a real backlog — sanity-check before processing. A refused invocation → drop only the blocked element (stage both lists in-repo); never swap the comparison primitive, or the substitute's tooling difference reads as real backlog.
 
 ### Source 4: Session retrospects
 
