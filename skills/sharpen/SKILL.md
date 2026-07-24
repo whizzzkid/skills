@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-232325'
+  version: '2026.07.24-233845'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -91,7 +91,6 @@ behavior, not just the specific instance.
   - Reference-file-only routing is forbidden.
   - The processed-state record must show full distillation.
   - Rename to `.learned.md` only after the edit and version bump land.
-- Treat unrecognized log actions as `unverified` and re-audit.
 - When in doubt, ask before renaming.
 
 ## Step 1: Read the Incident Report
@@ -105,8 +104,9 @@ behavior, not just the specific instance.
 
 ### HARD RULE: the report is a hypothesis — verify against the owning source
 
-- Treat the report's "Root cause" and "Suggested fix" as non-authoritative; the reporter saw a symptom and inferred a mechanism. A workaround that works is not evidence for that mechanism — it can succeed by another. Confirm a claimed cause exists in the source before documenting it; delete a documented cause the source disproves.
+- Treat the report's "Root cause" and "Suggested fix" as non-authoritative; the reporter saw a symptom and inferred a mechanism. A workaround that works is not evidence for that mechanism — it can succeed by another. Confirm a claimed cause exists in the source before documenting it; delete a documented cause the source disproves. A reproduction that disproves or sharpens the reported mechanism voids the draft → re-derive the fold from the source's semantics instead of patching wording, and prefer the formulation the source can be driven to demonstrate.
 - Learning names a deterministic artifact (hook, script, CI check) → read that artifact's source, and reproduce the failure where cheap, before drafting. A red result from your own verification tooling is not a verdict either: a newly added case failing while every pre-existing case passes indicts the harness first — drive the artifact directly with the same input, and fix the harness in the same pass as audit cleanup when the two disagree.
+  - Guard gates the agent's own tool calls → stage each test payload with the file-write tool and feed it to the hook by redirect; the same shape composed inline in a Bash call is itself the blocked call. Never reach for the guard's opt-out to run the test — it voids the result.
 - Reject any fold that would *relax* a guard or check → hunt the correctness bug instead. A guard honoring caller-supplied scope is weaker than one deriving scope from the environment, and forfeits the property that makes the guard un-rationalizable.
 - Record the rejected suggestion and the rationale in the reference file so it is not re-proposed.
 
@@ -197,16 +197,7 @@ behavior, not just the specific instance.
 
 ### Mechanical overfit scan
 
-- Before presenting the diff, grep the proposed edit text against these categories:
-  - Reviewer / bot logins
-  - Organization prefixes
-  - Employer / internal project names
-  - Specific ticket IDs
-  - Specific repo / file / package names
-  - Line numbers / SHAs / PR numbers
-  - Specific tool versions
-  - Concrete person names
-  - Hardcoded branch names
+- Before presenting the diff, grep the edit text against the overfit categories: [`references/overfit-categories.md`](references/overfit-categories.md).
 - Replace each match with a generic mechanism or placeholder.
 - Parameterize real paths instead of dropping them.
 - Justify inline only when the literal token is required.
@@ -319,16 +310,6 @@ Do not return control until all five pass:
 
 Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
-## Quick Reference
-
-| Trigger | Behavior |
-|---|---|
-| `/wk-sharpen pr-review incident.md` | Read incident, distill lesson, audit full skill, propose update |
-| `/wk-sharpen commit "agent skipped signing"` | Distill verbal report, audit, propose skill improvement |
-| `/wk-sharpen` (no args) | Batch mode — scan learnings + memories + retrospects, distill all |
-| `/wk-sharpen --scan --force` | Batch mode — reprocess everything, ignore log |
-| `/wk-sharpen improve [scope]` | Improve mode — refactor and prune accumulated entropy |
-
 ## Batch Mode: Scan Learnings, Memories, and Retrospects
 
 Invoked without a specific incident → batch mode.
@@ -374,7 +355,7 @@ Invoked without a specific incident → batch mode.
 - **Learnings (Source 1 & 2):** processed state is the `.learned.md` rename.
 - **Retrospects (Source 4):** same as learnings.
 - **Memories (Source 3):** tracked by a gitignored marker at `$WK_SKILLS_HOME/.distilled-memories`.
-- Reprocess on change.
+- Reprocess on change. `--scan --force` ignores every marker and rename-state, re-distilling all.
 
 ### Batch mode presentation
 

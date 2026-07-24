@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.24-232325`
+**Version:** `2026.07.24-233845`
 
 ## Invocation
 
@@ -54,6 +54,14 @@ flowchart TD
   verification tooling is no more authoritative: a newly added case failing while every
   pre-existing case passes indicts the harness first, so the artifact is driven directly with
   the same input before the fold is touched.
+- **A disproof voids the draft** — verification is not a pass/delete filter on the reported
+  mechanism. Once reproduction disproves *or sharpens* it, the fold is re-derived from the
+  source's semantics rather than reworded, since a corrected mechanism usually changes what the
+  rule should say and upgrades a heuristic remediation to a deterministic one. The formulation a
+  later run can drive the source to demonstrate wins.
+- **Verifying a guard on the agent's own tool calls** — the faithful test input is itself a
+  blocked call, so each payload is staged with the file-write tool and fed to the hook by
+  redirect. The guard's opt-out is never used to run its own test.
 - **Mechanical overfit scan** is mandatory before presenting any diff — 9 categories
   (reviewer logins, org prefixes, employer/internal project names, ticket IDs, repo names,
   line numbers, tool versions, person names, hardcoded branch names) are grepped against the
