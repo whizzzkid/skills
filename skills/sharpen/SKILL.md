@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-191252'
+  version: '2026.07.24-203616'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -164,15 +164,7 @@ behavior, not just the specific instance.
 
 - `principle` — the failure mode generalizes. Route to `SKILL.md` plus a reference file.
 - `one-off` — the scenario is narrow, repo-specific, or unlikely to recur. Route to a reference file only.
-- Classify as `principle` when any of these are true:
-  - The pattern appears in ≥ 2 prior learnings, memories, or `.learned.md` archives.
-  - The failure mode would surface on every invocation that touches the affected step.
-  - The fix is expressible in one bullet without naming specific tools, versions, or repos.
-- Classify as `one-off` when any of these are true:
-  - The fix requires a verbatim recipe that only works for one tool version or repo layout.
-  - The failure mode only fires under a rare configuration.
-  - The user described it as a corner case or one-time workaround.
-  - Distilling the principle leaves nothing actionable that is not already covered.
+- Enumerated tests for either class (consult when the class is not obvious): [`references/classify-criteria.md`](references/classify-criteria.md).
 - Record the classification in the run report and in the reference file frontmatter.
 - When ambiguous, ask once.
 
@@ -346,12 +338,6 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 | `/wk-sharpen --scan --force` | Batch mode — reprocess everything, ignore log |
 | `/wk-sharpen improve [scope]` | Improve mode — refactor and prune accumulated entropy |
 
-**Single mode:** Read report → Read full skill → Distill → Classify → Draft → Audit → Present → Apply → Verify & commit
-
-**Batch mode:** Scan learnings + memories + retrospects → Filter → Materialize each
-memory/retro lesson as a learning via `wk-learn` → Process each via single mode →
-Rename learnings **and retros** to `.learned.md` → Update the memory marker
-
 ## Batch Mode: Scan Learnings, Memories, and Retrospects
 
 Invoked without a specific incident → batch mode.
@@ -375,12 +361,11 @@ Invoked without a specific incident → batch mode.
 ### Source 3: Global memory files
 
 - Scan `$HOME/.claude/memory/` for memory files.
-- Only process memories of type `feedback`.
-- Read each file's frontmatter.
+- Process `feedback` memories; process `user` / `project` only when they carry explicit instructions on how a skill should behave.
 - Determine which skill the feedback applies to.
-- Materialize each matched memory as a learning via `wk-learn`.
-- Distill that new learning through the Source 2 path.
-- Only process `user` or `project` type memories if they contain explicit instructions about how a skill should behave.
+- Materialize each matched memory as a learning via `wk-learn`, then distill it through the Source 2 path.
+- **Gate the listing by parse-as-memory BEFORE diffing the marker.** Require a frontmatter block with a `type:` key — match it at column 0 *or* nested under `metadata:`; a bare `^type:` grep silently drops memories that nest it. Non-memory residents (a hand-maintained index, another skill's append-only archive) are out-of-scope-by-rule, never backlog.
+- **Never add a marker entry for a file this run did not process.** The marker records distillation, not suppression — mixing them destroys any way to tell a real completion from a silenced non-memory.
 - **Normalize both sides before diffing against the marker.** `comm` does exact string matching; the directory listing and `.distilled-memories` must share one path form. Collapse repeated slashes (`sed 's#//#/#g'`) and `sort -u` both sides first — a trailing-slash glob yields `dir//file.md` and silently mismatches every entry. Treat a result where *every* memory shows un-distilled as a probable format mismatch, not a real backlog — sanity-check before processing.
 
 ### Source 4: Session retrospects
@@ -402,16 +387,8 @@ Invoked without a specific incident → batch mode.
 
 ### Batch mode presentation
 
-- Present a summary before processing:
-  - Learnings count
-  - Memories count
-  - Retrospects count
-  - Processing count
-- After processing, report:
-  - Skills updated
-  - Learnings absorbed
-  - Memories distilled
-  - Skipped items
+- Before processing, present counts: learnings, memories, retrospects, processing.
+- After processing, report: skills updated, learnings absorbed, memories distilled, skipped items.
 
 ## Improve Mode: Refactor and Optimize
 
