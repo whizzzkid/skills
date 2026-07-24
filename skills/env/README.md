@@ -3,6 +3,8 @@
 Diagnoses environment variable availability before skill execution and provides
 actionable remediation.
 
+**Version:** `2026.07.24-224005`
+
 ## Purpose
 
 All user settings live in `$HOME/.profile`. When Claude Code is not launched
@@ -22,9 +24,14 @@ to add to `$HOME/.profile` for vars that are genuinely missing.
 
 - Source `$HOME/.profile` in a read-only subprocess to test resolution.
 - Exit 0 (all set), 1 (resolved after sourcing → restart), 2 (still missing →
-  add to `$HOME/.profile`).
+  add to `$HOME/.profile`, or stale-in-process → restart the session).
 - Never write to global config, shell RCs, or `.env` files to "fix" a missing
   var.
+- **`set` means inherited, not valid.** A rotated secret still reads `set`, so an
+  auth failure on a `set` var routes to the stale-value check: fingerprint the value
+  (length + hash prefix), source once, re-fingerprint. Unchanged → stale-in-process,
+  ask for a session restart. Never hunt a second shell file or retry a third time —
+  a static profile cannot import a value minted after this process started.
 
 ## Frontmatter integration
 

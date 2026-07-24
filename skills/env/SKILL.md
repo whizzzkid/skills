@@ -4,8 +4,9 @@ description: >-
   Use when diagnosing environment setup issues — checks that all env vars
   declared in a skill's frontmatter are present, sources $HOME/.profile when
   they are not, reports what is still missing, and provides remediation. Also
-  invoked automatically by the Skill PreToolUse hook before any skill that
-  declares env-vars in its frontmatter.
+  diagnoses a set-but-stale value (rotated secret) and stops the retry loop it
+  causes. Also invoked automatically by the Skill PreToolUse hook before any
+  skill that declares env-vars in its frontmatter.
 argument-hint: '[skill-name | --check <VAR> ... | --all]'
 allowed-tools:
   - Bash
@@ -19,7 +20,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.06.01-215946'
+  version: '2026.07.24-224005'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -66,6 +67,9 @@ Diagnose and report environment variable availability before skill execution.
 For each var, check if it is set in the current process. Build a status
 table: `set` (non-empty), `empty` (set to `""`), or `missing` (unset).
 
+- `set` proves the var was **inherited**, never that the value is still **valid** —
+  a rotated secret reads `set`. Route an auth failure on a `set` var to Step 3.5.
+
 ```bash
 source "$HOME/.profile" 2>/dev/null || true
 
@@ -107,6 +111,32 @@ Report the result as one of:
 
 ---
 
+## Step 3.5: Diagnose a set-but-stale value
+
+Enter only when a var reads `set` **and** the command consuming it fails auth
+(401 / 403 / expired token). A secrets manager injects the value into the *interactive*
+shell, so a credential rotated after this process started leaves a stale copy here.
+
+- Fingerprint before and after **one** source attempt — compare length + hash prefix,
+  never print the secret:
+
+  ```bash
+  fp() { printf '%s:%s\n' "${#1}" "$(printf %s "$1" | shasum | cut -c1-8)"; }
+  fp "${{VAR}}"                                                            # in-process
+  fp "$(bash -c "source \"$HOME/.profile\" 2>/dev/null; printenv {VAR}")"   # after source
+  ```
+
+- Fingerprint **changed** → the fresh value is on disk; report resolved-after-sourcing
+  and remediate per Step 4.
+- Fingerprint **unchanged** → declare the value **stale-in-process**. Stop and ask the
+  user to restart the session, or to run the failing command in their own shell.
+- **HARD RULE — never hunt a second shell file, and never retry the command a third
+  time.** Sourcing a static profile cannot import a value minted after this process
+  started, so every further attempt fails identically — the multi-turn loop this rule
+  prevents.
+
+---
+
 ## Step 4: Report and remediate
 
 Print a structured report:
@@ -143,7 +173,7 @@ export {VAR}=<value>
 
 - Exit 0 when all declared vars are `set`.
 - Exit 1 (soft warning) when any var is resolved-after-sourcing.
-- Exit 2 (hard warning) when any var is still-missing.
+- Exit 2 (hard warning) when any var is still-missing or stale-in-process.
 
 The `PreToolUse` hook uses the exit code to decide message severity —
 it never blocks skill execution, only warns.
