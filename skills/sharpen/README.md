@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.24-203616`
+**Version:** `2026.07.24-205057`
 
 ## Invocation
 
@@ -73,7 +73,9 @@ flowchart TD
 - **De-bloat pass** is mandatory on every run (not only when a learning prompts it) and
   enforces a hard 24 KiB ceiling per `SKILL.md` — over-ceiling skills are refactored, split into
   references/sub-skills, or scoped down, coverage-preserving. A pre-commit hook backstops the
-  same ceiling.
+  same ceiling. The byte budget for a near-ceiling fold is stated as explicit arithmetic —
+  measured addition, each reclaim's measured net — before any edit is applied; estimating
+  either side makes the mandated single pass a coin flip.
 - The gitignored `.distilled-memories` marker prevents re-distilling the same global memory
   across runs (`--force` bypasses it); learnings **and retrospects** track their own processed
   state via the `.learned.md` rename — no marker. Retros are write-once per-session files, so

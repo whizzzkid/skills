@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-203616'
+  version: '2026.07.24-205057'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -176,17 +176,7 @@ behavior, not just the specific instance.
   - Missing check
   - Wrong instruction
   - New HARD RULE
-- Format the update as instructions, not narrative:
-
-```markdown
-### [Step name]
-
-[What to do, in imperative voice]
-
-[Why this matters — the failure mode it prevents]
-
-[How to do it — concrete commands or checks]
-```
+- Format the update as instructions, not narrative — heading, then what to do (imperative), why it matters, how (commands or checks).
 
 ## Step 5: Audit the Full Skill
 
@@ -309,7 +299,8 @@ behavior, not just the specific instance.
 - Keep skills under the ceilings proactively — never rely on the hook as the only guard. When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list.
 - **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): (1) relocate narrow, language/tool-specific catalog rows to a `references/` extended file and update the inline pointer's ID list — and route a **new** such row straight there (add only its ID inline, ~6 B), never place-inline-then-reclaim; (2) delete scaffolding, blank lines, or a provably-duplicated rule — the latter outright with zero replacement (a cross-ref back re-spends the reclaim). Count reclaim NET: a prose-block relocation nets gross MINUS the stub it leaves (heading + pointer + sentence), which dominates a short block — prefer a LARGE block; a row/bullet merge nets ~3 B unless it drops the now-duplicated phrase. Reserve prose for the final margin.
 - **Measure the staged body BEFORE drafting any content-adding fold** — unconditional, not gated on "looks tight"; the at-ceiling state is invisible until measured. Headroom under ~2× the edit → pick reclaim target(s) whose *combined NET* reclaim exceeds it with ≥1.2× margin — budget ≥2 reclaims up front (one undershoots a multi-clause rule); net change must be non-positive on the first pass.
-  - **Very important — measure exactly once.** Stage the addition AND the reclaim cuts together, then measure ONCE — never eyeball either side (a `→` is 3 B; a prose reclaim misleads as much as an addition). A second measure-and-trim cycle is the re-violation signal — stop and re-plan with one decisive structural cut, not another prose nibble.
+  - **CRITICAL — state the budget as arithmetic before applying any edit.** Byte-measure the *draft* too: write the addition to a scratch file, `LC_ALL=C wc -c` it (right for a bare fragment, never for a `SKILL.md`); for a rewrite-style reclaim measure the replacement and net it `old - new`. Write the numbers down — addition, each reclaim's net, the total. A budget that cannot be stated as arithmetic has not been computed; estimating either side of a two-digit margin is a coin flip.
+  - **Very important — measure exactly once.** Stage the addition AND the reclaim cuts together, then measure ONCE (multibyte inflates: a `→` is 3 B). A second measure-and-trim cycle is the re-violation signal — stop and re-plan with one decisive structural cut, not another prose nibble.
   - **Very important — run the hook's `measure()` verbatim; never `wc -c` or an abbreviated awk.** Dropping its `state="pre"` init counts front-matter as body → false, self-consistent over-ceiling headroom. Copy `measure()` from `.githooks/check-skill-size.sh`, `git add` first, run pre-draft and at commit; never the working tree.
 
 ## Step 8: Verify and Commit (terminal gate)
@@ -399,12 +390,6 @@ Invoked without a specific incident → batch mode.
 - **No information loss.** Remove a rule only if it is provably duplicated elsewhere or superseded by a stricter rule.
 - **Phased approval required.** Auto mode does not short-circuit this.
 - **Capture insights.** External research surfacing a useful pattern → add it to the overfit-categories table or as a new `wk-sharpen` rule.
-
-## Requirements
-
-- Read the skill being improved; edit `skills/{skill-name}/SKILL.md`.
-- Read `$HOME/.claude/memory/` (batch mode); read/write/delete `$HOME/.claude/skills/learnings/`.
-- Read/write `$WK_SKILLS_HOME/{learnings,learnings/retrospect,.distilled-memories}`.
 
 ## Post-Completion
 
