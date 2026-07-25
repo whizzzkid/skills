@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.22-215511'
+  version: '2026.07.24-235129'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -301,6 +301,12 @@ a terminal-state guarantee. A single watch is not proof of green CI.
            pending: [.statusCheckRollup[] | select(.status // .state | IN("QUEUED","IN_PROGRESS","PENDING"))] | length}'
   ```
 
+- **The rollup is one entry per registered check, not one per pipeline job.** A
+  single entry can cover an entire pipeline, so a green rollup cannot distinguish
+  "that job passed" from "that job never ran / was skipped / soft-failed." Gate the
+  coarse is-the-pipeline-green question on the rollup; any claim resting on a
+  *specific* job's outcome must cite the CI provider's per-job view and that job's
+  exit status.
 - **Confirm the rollup's `headRefOid` equals the pushed tip before trusting its
   state.** Webhook propagation lags a push, so the rollup (and a `--watch` exit)
   can report the *prior* commit entirely — a staleness axis distinct from the

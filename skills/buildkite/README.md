@@ -2,7 +2,7 @@
 
 > Use when working with Buildkite CI — checking build status, investigating failures, viewing job logs, or monitoring builds after push.
 
-**Version:** `2026.07.21-212305`
+**Version:** `2026.07.24-235129`
 
 ## Invocation
 
@@ -31,6 +31,7 @@ flowchart TD
 
 ## Noteworthy
 
+- **A green check rollup is not per-job evidence** — one entry covers a whole pipeline, so a skipped or soft-failed step reads as a pass. Any claim about a specific job cites the per-job view: build number + that job's `exit_status`.
 - **`broken` jobs are almost never the root cause** — `broken` usually means skipped due to upstream failure or conditional logic. Always investigate `failed` jobs first.
 - **Never use `WebFetch` on a Buildkite URL** — the HTML view omits structured job data. Always use `bk build view --json` with `jq`.
 - **Cross-step status must use `buildkite-agent step get "outcome"`**, not sentinel files or artifact presence — if a step crashes before its cleanup trap runs, file-based signals are never written.

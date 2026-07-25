@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.07.21-212305'
+  version: '2026.07.24-235129'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -135,6 +135,14 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | \
 
 - **Current branch:** canonical build query, selecting failed/broken jobs.
 - **Specific build:** pass the build number positionally — `bk build view -p <pipeline> <build-number> --json` — filtering on `.type == "script"` jobs. Never pass the build number to `-b` (that flag selects a branch).
+- **A green host-side check rollup is not per-job evidence.** The rollup carries one entry per registered check — often one for the whole pipeline — so a conditional, skipped, or soft-failed step reads as a pass. Any claim resting on a specific job's outcome ("the local failure does not reproduce in CI") needs the per-job view, cited as build number + that job's exit status:
+
+  ```bash
+  bk build view -p <pipeline> <build-number> --json 2>&1 | grep -v '^Warning:' | \
+    jq -r '.jobs[] | select(.name | test("<step-name>")) | "\(.name) \(.state) exit=\(.exit_status)"'
+  ```
+
+- Reserve the rollup for the coarse is-the-pipeline-green gate only.
 
 ## Understanding Build States
 
@@ -330,6 +338,7 @@ When saving any Buildkite artifact to disk — build JSON, job logs, artifact fi
 | After git push | Check build status, report result |
 | Cancel from within a build | `buildkite-agent build cancel` (no token needed) |
 | Cancel from outside a build | REST API `PUT .../builds/{n}/cancel` with `write_builds` token |
+| Claim rests on one specific job | Per-job view; cite build number + that job's `exit_status`, never the rollup |
 | Saving any `bk` payload to disk | Use `/tmp/agent/buildkite/<build>/...` |
 
 ---
