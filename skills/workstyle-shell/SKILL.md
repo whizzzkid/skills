@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.24-224451'
+  version: '2026.07.24-235129'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -90,6 +90,30 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   if [[ -z "${VAR:-}" ]]; then echo "VAR is required" >&2; exit 1; fi
   ```
 
+- **Presence-check with a test builtin, never a value expansion.** `${VAR:-x}` /
+  `${VAR-x}` substitutes the default only when the var is *unset* — on the set path it
+  emits the value. `${VAR:+yes}${VAR:-NO}` reads like a ternary but is two independent
+  expansions, so the common (set) path writes a live secret verbatim to the transcript.
+  Treat any `${SECRET:-` / `${SECRET-` on a line reaching stdout/stderr as a disclosure
+  requiring rotation. Never put a secret on an argv `ps` can read.
+
+  ```bash
+  [ -n "$VAR" ] && echo set || echo unset                      # presence
+  printf '%s:%s\n' "${#VAR}" "$(printf %s "$VAR" | shasum | cut -c1-8)"   # fingerprint
+  ```
+
+- **Keep any snippet a skill documents for the agent to run portable to zsh, not just
+  bash** — the agent's shell is not guaranteed to be bash, and a shell-dependent
+  expansion fails as a plausible *domain* error (nothing matched, var missing) rather
+  than a syntax error, so it is diagnosed as a real result. Two traps:
+  - `for x in $LIST` — unquoted **parameter** expansion does not word-split under zsh,
+    so the body runs once over the whole newline-joined blob; every element-wise command
+    fails and any no-match sentinel survives untouched. Use
+    `while IFS= read -r x; do …; done <<< "$LIST"`. (Unquoted **command substitution**
+    `$(cmd)` does split under both, but still breaks on whitespace within an element.)
+  - `${!var}` indirect expansion — bash-only; aborts the whole snippet under zsh with
+    `bad substitution`. Distinguish unset from empty by exit status instead:
+    `if val=$(printenv "$var"); then …` (rc 1 = unset, rc 0 + empty = set-but-empty).
 - **Target bash 3.2** for any hook or script that may run under the macOS
   system bash (`/bin/bash`). Avoid bash-4+ builtins — `mapfile`/`readarray`,
   associative arrays (`declare -A`), `${var^^}`/`${var,,}` case conversion,

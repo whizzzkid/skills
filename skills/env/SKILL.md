@@ -20,7 +20,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.07.24-224005'
+  version: '2026.07.24-235129'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -69,18 +69,27 @@ table: `set` (non-empty), `empty` (set to `""`), or `missing` (unset).
 
 - `set` proves the var was **inherited**, never that the value is still **valid** —
   a rotated secret reads `set`. Route an auth failure on a `set` var to Step 3.5.
+- **Never echo the value of a secret-shaped var** (name matching
+  `TOKEN|KEY|SECRET|PASS|CRED|PAT`) — printing even a prefix discloses it and forces a
+  rotation. Report those as `<len N sha XXXXXXXX>`; print the literal value only for
+  non-secret vars (paths, org names), where it is the actionable diagnostic.
+- Distinguish unset from empty by `printenv` exit status, never `${!var+x}` — indirect
+  expansion is bash-only and aborts under zsh with `bad substitution`.
 
 ```bash
 source "$HOME/.profile" 2>/dev/null || true
 
 for var in {VARS}; do
-  val=$(printenv "$var" 2>/dev/null || echo "")
-  if [ -z "${!var+x}" ] 2>/dev/null; then
+  if ! val=$(printenv "$var"); then
     echo "missing  $var"
   elif [ -z "$val" ]; then
     echo "empty    $var"
   else
-    echo "set      $var  = ${val:0:60}"
+    case "$var" in
+      *TOKEN*|*KEY*|*SECRET*|*PASS*|*CRED*|*PAT)
+        echo "set      $var  = <len ${#val} sha $(printf %s "$val" | shasum | cut -c1-8)>" ;;
+      *) echo "set      $var  = ${val:0:60}" ;;
+    esac
   fi
 done
 ```
@@ -148,6 +157,7 @@ SKILL: {name} (or "session default" if no skill given)
 ─────────────────────────────────────────────────────────
 ✅  WK_SKILLS_HOME = /path/to/skills
 ✅  GITHUB_ORG     = org-name
+✅  REGISTRY_TOKEN = <len 40 sha 1a2b3c4d>   (secret-shaped: never printed)
 ⚠️  MY_VAR         → resolved after sourcing ~/.profile
                       (restart Claude Code from a shell that sources ~/.profile)
 ❌  OTHER_VAR      → still missing after sourcing ~/.profile
@@ -189,8 +199,9 @@ it never blocks skill execution, only warns.
 2. **Source `$HOME/.profile` read-only in a subprocess.** Never `source`
    it in the current process — the skill runs in a non-interactive context
    where the sourced state would not persist anyway.
-3. **Report, don't guess.** Show the actual value when set; show the exact
-   unresolved state when missing. Never fabricate a default.
+3. **Report, don't guess.** Show the value for a non-secret var, a length + hash
+   fingerprint for a secret-shaped one; show the exact unresolved state when
+   missing. Never fabricate a default.
 
 ---
 

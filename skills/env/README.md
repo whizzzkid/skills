@@ -3,7 +3,7 @@
 Diagnoses environment variable availability before skill execution and provides
 actionable remediation.
 
-**Version:** `2026.07.24-224005`
+**Version:** `2026.07.24-235129`
 
 ## Purpose
 
@@ -27,6 +27,9 @@ to add to `$HOME/.profile` for vars that are genuinely missing.
   add to `$HOME/.profile`, or stale-in-process → restart the session).
 - Never write to global config, shell RCs, or `.env` files to "fix" a missing
   var.
+- **Never print a secret-shaped value** (`TOKEN|KEY|SECRET|PASS|CRED|PAT`) — report
+  `<len N sha XXXXXXXX>`; a printed prefix is a disclosure. Literal values are shown
+  only for non-secret vars, where the value is the actionable diagnostic.
 - **`set` means inherited, not valid.** A rotated secret still reads `set`, so an
   auth failure on a `set` var routes to the stale-value check: fingerprint the value
   (length + hash prefix), source once, re-fingerprint. Unchanged → stale-in-process,
