@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.07.23-190838`
+**Version:** `2026.07.24-235129`
 
 ## Invocation
 
@@ -58,7 +58,9 @@ flowchart TD
 - **Base detection is non-trivial:** The skill computes the closest merge-base across all open PR branches, not
   just `main`. Silent mis-basing causes wrong CI targets and inflated diffs; the detected `$BEST_BASE` is used
   for both `--base` and scope measurement. `gh pr create` is gated on the loop having actually run — never on
-  the assumption that a branch "obviously" targets the default.
+  the assumption that a branch "obviously" targets the default. The loop iterates candidates with
+  `while IFS= read -r`: an unquoted `for CAND in $CANDIDATES` does not word-split under zsh, which drops every
+  candidate and leaves the `999999` sentinel looking like a genuine detection failure.
 - **Stacking delegates to `gh stack`:** For a stack of dependent PRs the skill prefers the `github/gh-stack`
   extension (when installed and the repo is enabled for the stacks preview), delegating branch creation, base
   chaining, and linked submission; it falls back to the manual `[<feature>-part-N/M]` + `--base` convention otherwise.

@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.23-190838'
+  version: '2026.07.24-235129'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -130,7 +130,7 @@ CANDIDATES=$(
 BEST_BASE="$DEFAULT_BRANCH"
 BEST_DIST=999999
 HEAD_SHA=$(git rev-parse HEAD)
-for CAND in $CANDIDATES; do
+while IFS= read -r CAND; do
   # Resolve to origin/<cand>, else the local ref; a fetch failure must not drop a local-only candidate.
   REF="origin/$CAND"
   git rev-parse --verify --quiet "$REF" >/dev/null 2>&1 \
@@ -144,14 +144,17 @@ for CAND in $CANDIDATES; do
     BEST_DIST=$DIST
     BEST_BASE=$CAND
   fi
-done
+done <<< "$CANDIDATES"
 ```
 
 - **`$BEST_DIST` unchanged (`999999`) after the loop = detection FAILURE, not
-  "base = default"** — no candidate yielded a merge-base. Before requiring an
-  explicit `--base`, retry the merge-base directly against
-  `origin/$DEFAULT_BRANCH` (fetch first); a stale local ref is the usual cause, so
-  trust a succeeding remote result rather than defaulting.
+  "base = default"** — no candidate yielded a merge-base. Suspect the iteration form
+  before the refs: an unquoted `for CAND in $CANDIDATES` does not word-split under
+  zsh, so the body runs once over the whole blob and every candidate drops out,
+  leaving the sentinel intact (wk-workstyle-shell owns the rule). With the read-loop
+  form confirmed, retry the merge-base directly against `origin/$DEFAULT_BRANCH`
+  (fetch first); a stale local ref is the usual cause, so trust a succeeding remote
+  result rather than defaulting.
 
 If `$BEST_BASE` differs from `$DEFAULT_BRANCH`, surface to the user before doing
 anything else — silent mis-basing is costly to undo:
@@ -171,32 +174,15 @@ anything else — silent mis-basing is costly to undo:
   the stacked-PR convention covers the metadata.
 - **B** invokes `wk-pr-update` to rebase before proceeding.
 
-**Draft-base override.** Before defaulting to **A**, check whether `$BEST_BASE`
-is the head of an open PR still in **draft** state:
-
-```bash
-DRAFT=$(gh pr list --state open --head "$BEST_BASE" \
-          --json isDraft --jq '.[0].isDraft')
-```
-
-If `DRAFT == true`, the parent has not merged and stacking produces two PRs the
-reviewer must sequence — usually a false split where both changesets should land
-together. Surface the draft status in the prompt and **default auto mode to B**
-(retarget to `$DEFAULT_BRANCH`, include both changesets) instead of A. Stacking
-on a draft base then requires explicit user opt-in.
-
-**Merged-base check.** Before targeting any explicitly-named base branch — a
-`wk-pr` base argument, or a reviewed branch chosen for a follow-up PR — verify it
-is not already merged. Auto-detection only scans `--state open` PRs, so a merged
-branch never enters the candidate set; the explicit-base path has no such guard.
-
-```bash
-gh pr view "$BASE_CANDIDATE" --json state --jq .state
-```
-
-If `state == "MERGED"`, the branch is gone and the follow-up must target
-`$DEFAULT_BRANCH`. Retarget to `$DEFAULT_BRANCH`, notify the user, never push to
-a merged branch.
+- **Draft-base override.** `$BEST_BASE` is the head of a still-**draft** PR → stacking
+  is usually a false split; surface it and default auto mode to **B**, not A. Stacking
+  on a draft base needs explicit opt-in. Query:
+  [`references/draft-base-override.md`](references/draft-base-override.md).
+- **Merged-base check.** Targeting an explicitly-named base (base argument, follow-up
+  branch) → verify it is not already merged; auto-detection filters merged branches
+  implicitly, the explicit path does not. `MERGED` → retarget to `$DEFAULT_BRANCH`,
+  notify, never push to it. Query:
+  [`references/merged-base-check.md`](references/merged-base-check.md).
 
 ### Measure scope against the resolved base
 
