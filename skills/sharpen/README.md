@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.24-233845`
+**Version:** `2026.07.24-235129`
 
 ## Invocation
 
@@ -77,6 +77,12 @@ flowchart TD
   expected state, not debris. Silence after edits is a violation.
 - **Batch mode** mirrors the global learnings inbox (`$HOME/.claude/skills/learnings/`) into the
   repo tree before distilling, then drains the inbox by deleting originals after copy.
+- **A re-scan arrival is not automatically this run's work.** An item whose mtime postdates
+  the run's start is unowned, not assigned — peer sharpen agents share the tree and there is no
+  lock, lease, or ownership marker to arbitrate a collision. Such items are reported as
+  unclaimed backlog for the dispatcher, and the terminal state reads "processed N, M unclaimed
+  arrivals" rather than "drained". A dispatcher's own claim that no peer is mid-fold is treated
+  as a hypothesis that loses to contradicting evidence from the tree.
 - **External memories become learnings first** — each `$HOME/.claude/memory/` feedback file is
   materialized as a version-controlled learning via [`wk-learn`](../learn/README.md) and distilled through the
   Source 2 path; the memory file itself is never renamed (only the materialized learning is).

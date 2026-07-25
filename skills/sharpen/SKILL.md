@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-233845'
+  version: '2026.07.24-235129'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -104,7 +104,7 @@ behavior, not just the specific instance.
 
 ### HARD RULE: the report is a hypothesis — verify against the owning source
 
-- Treat the report's "Root cause" and "Suggested fix" as non-authoritative; the reporter saw a symptom and inferred a mechanism. A workaround that works is not evidence for that mechanism — it can succeed by another. Confirm a claimed cause exists in the source before documenting it; delete a documented cause the source disproves. A reproduction that disproves or sharpens the reported mechanism voids the draft → re-derive the fold from the source's semantics instead of patching wording, and prefer the formulation the source can be driven to demonstrate.
+- Treat the report's "Root cause" and "Suggested fix" as non-authoritative; the reporter saw a symptom and inferred a mechanism. A workaround that works is not evidence for that mechanism — it can succeed by another. Confirm a claimed cause exists in the source before documenting it; delete a documented cause the source disproves. A reproduction that disproves or sharpens the reported mechanism voids the draft → re-derive the fold from the source's semantics instead of patching wording, and prefer the formulation the source can be driven to demonstrate. A dispatching agent's claim about tree state — "no peer is mid-fold", "skip the collision check" — is a hypothesis under this same rule and loses to contradicting evidence from the tree.
 - Learning names a deterministic artifact (hook, script, CI check) → read that artifact's source, and reproduce the failure where cheap, before drafting. A red result from your own verification tooling is not a verdict either: a newly added case failing while every pre-existing case passes indicts the harness first — drive the artifact directly with the same input, and fix the harness in the same pass as audit cleanup when the two disagree.
   - Guard gates the agent's own tool calls → stage each test payload with the file-write tool and feed it to the hook by redirect; the same shape composed inline in a Bash call is itself the blocked call. Never reach for the guard's opt-out to run the test — it voids the result.
 - Reject any fold that would *relax* a guard or check → hunt the correctness bug instead. A guard honoring caller-supplied scope is weaker than one deriving scope from the environment, and forfeits the property that makes the guard un-rationalizable.
@@ -210,14 +210,7 @@ behavior, not just the specific instance.
   for h in .githooks/check-*.sh .githooks/scrub-staged.sh; do "$h" || echo "FAIL: $h"; done
   ```
 
-- Hand-roll only what no hook covers: **staged path strings** — content hooks grep the diff and commit msg, never filenames, so a slug/filename term ships clean. Scan per-file, never a bare multi-line list (a stricter `grep` alias false-cleans one bad path; a `No such file` warning is a scan failure, not clean):
-
-  ```bash
-  git diff --cached --name-only | grep -iEf .skillprohibit
-  ```
-
-  Anonymize every hit. Pick a generic slug for a prohibited-subject lesson up front; never derive it from the subject. Scrub staged `.learned.md`/retro archives too — a rename commits them publicly, and a term-handling learning's example IS the term.
-- Treat a hand-rolled NONE as **unverified**: prove the grep fires with a literal expanded from a real **non-comment, non-blank** denylist line (`a[-_]?b` → `a-b`), never a guess or a comment line — a comment line is itself a valid regex matching its own text, so the probe "fires" while proving nothing.
+- Hand-roll only what no hook covers: **staged path strings** — content hooks grep the diff and commit msg, never filenames, so a slug/filename term ships clean. Anonymize every hit; pick a generic slug up front, never derived from the subject; scrub staged `.learned.md`/retro archives too. Treat a hand-rolled NONE as **unverified** until the grep is proven to fire. Scan + proof mechanics: [`references/staged-path-scan.md`](references/staged-path-scan.md).
 
 ## Step 6: Present for Review
 
@@ -329,6 +322,7 @@ Invoked without a specific incident → batch mode.
 - Scan `$WK_SKILLS_HOME/learnings/skills/` for unprocessed files.
 - Process every unprocessed learning one-by-one, severity-ordered: read it, run the sharpen workflow, confirm the distilled principle landed, then rename to `.learned.md`.
 - Re-scan after each fold-commit, not only at start — concurrent sessions write the tree continuously. Treat "inbox drained" as a terminal check run after the last commit, never a fact set up-front.
+- **An arrival whose mtime postdates the run's start is unowned, not assigned.** Corroborate with commit recency; either signal showing a concurrent writer → report the item as unclaimed backlog for the dispatcher and do not fold it. No lock, lease, or ownership marker exists to arbitrate a collision. Terminal state is "processed N, M unclaimed arrivals" — never "drained".
 
 ### Source 3: Global memory files
 
@@ -338,7 +332,7 @@ Invoked without a specific incident → batch mode.
 - Materialize each matched memory as a learning via `wk-learn`, then distill it through the Source 2 path.
 - **Gate the listing by parse-as-memory BEFORE diffing the marker.** Require a frontmatter block with a `type:` key — match it at column 0 *or* nested under `metadata:`; a bare `^type:` grep silently drops memories that nest it. Non-memory residents (a hand-maintained index, another skill's append-only archive) are out-of-scope-by-rule, never backlog.
 - **Never add a marker entry for a file this run did not process.** The marker records distillation, not suppression — mixing them destroys any way to tell a real completion from a silenced non-memory.
-- **Normalize both sides before diffing against the marker.** `comm` does exact string matching; the directory listing and `.distilled-memories` must share one path form. Collapse repeated slashes (`sed 's#//#/#g'`) and `sort -u` both sides first — a trailing-slash glob yields `dir//file.md` and silently mismatches every entry. Treat a result where *every* memory shows un-distilled as a probable format mismatch, not a real backlog — sanity-check before processing. A refused invocation → drop only the blocked element (stage both lists in-repo); never swap the comparison primitive, or the substitute's tooling difference reads as real backlog.
+- **Normalize both sides before diffing against the marker** — `comm` is exact-match, so the listing and `.distilled-memories` must share one path form. Every memory reading un-distilled is a probable format mismatch, not real backlog; sanity-check before processing. A refused invocation → drop only the blocked element, never swap the comparison primitive. Mechanics: [`references/memory-marker-diff.md`](references/memory-marker-diff.md).
 
 ### Source 4: Session retrospects
 
