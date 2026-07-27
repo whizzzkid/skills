@@ -31,6 +31,15 @@ env-tunable, so a deliberate exception needs no hook edit):
   staged-blob read stays real. Prefer this over swapping the blob source for `cat`: any
   edit to `measure()` forfeits the "verbatim" guarantee the rules below depend on.
   `unset GIT_INDEX_FILE` afterward or every later git call silently uses the copy.
+
+  ```bash
+  P="${TMPDIR:-/tmp}/probe-index"; cp .git/index "$P"; export GIT_INDEX_FILE="$P"
+  git add <paths>; for h in .githooks/check-*.sh; do "$h" || echo "FAIL: $h"; done
+  unset GIT_INDEX_FILE   # else every later git call silently uses the copy
+  ```
+
+  The same copy serves the Step 5 hook run, so one index copy covers both gates.
+
 - Run it twice: once pre-draft (to learn headroom) and once at commit (to confirm). The
   pre-draft measure is unconditional, never gated on the file "looking tight" — the
   at-ceiling state is invisible until measured, and a fold drafted blind is already spent.

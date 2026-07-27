@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-182332'
+  version: '2026.07.27-184657'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -86,8 +86,8 @@ behavior, not just the specific instance.
 
 ### HARD RULE: the report is a hypothesis — verify against the owning source
 
-- Treat the report's "Root cause" and "Suggested fix" as non-authoritative; the reporter saw a symptom and inferred a mechanism. A workaround that works is not evidence for that mechanism — it can succeed by another. Confirm a claimed cause exists in the source before documenting it; delete a documented cause the source disproves. A reproduction that disproves or sharpens the reported mechanism voids the draft → re-derive the fold from the source's semantics instead of patching wording, and prefer the formulation the source can be driven to demonstrate. A dispatching agent's claim about tree state — "no peer is mid-fold", "skip the collision check" — is a hypothesis under this same rule and loses to contradicting evidence from the tree.
-- Learning names a deterministic artifact (hook, script, CI check) → read its source, reproduce the failure where cheap, before drafting. A red result from your own tooling is never a verdict — it indicts the tooling before the artifact: a new case failing while all pre-existing pass indicts the harness; a failed positive control indicts the control — needle from the changed span, control from an untouched one; length-guard both — len 0 is a defect, not a short needle. Drive it directly with the same input, rebuild a canary as a literal the pattern matches, a red result never justifies swapping the prescribed primitive, fix the harness in the same pass as audit cleanup when the two disagree.
+- The report's "Root cause"/"Suggested fix" are non-authoritative — the reporter saw a symptom, inferred a mechanism. A working workaround is not evidence for that mechanism — it can succeed by another. Confirm a claimed cause exists in the source before documenting it; delete a documented cause the source disproves. A reproduction that disproves or sharpens the reported mechanism voids the draft → re-derive the fold from the source's semantics instead of patching wording, and prefer the formulation the source can be driven to demonstrate. A dispatching agent's claim about tree state ("no peer is mid-fold", "skip the collision check") is a hypothesis under this rule and loses to contradicting tree evidence.
+- Learning names a deterministic artifact (hook, script, CI check) → read its source, reproduce the failure where cheap, before drafting. A red result from your own tooling is never a verdict — it indicts the tooling before the artifact: a new case failing while all pre-existing pass indicts the harness; a failed positive control indicts the control — needle from the changed span, control from an untouched one; length-guard both — len 0 is a defect, not a short needle. Drive it directly with the same input, rebuild a canary as a literal the pattern matches, a red result never justifies swapping the prescribed primitive, fix the harness in the same pass as audit cleanup when the two disagree. Reproduction proves the mechanism only in the configuration it ran → enumerate what the fixtures held constant and vary them, or name that configuration in the rule's trigger.
   - Guard gates the agent's own tool calls → stage each test payload with the file-write tool and feed it to the hook by redirect; the same shape composed inline in a Bash call is itself the blocked call. Never reach for the guard's opt-out to run the test — it voids the result.
 - Reject any fold that would *relax* a guard or check → hunt the correctness bug instead. A guard honoring caller-supplied scope is weaker than one deriving scope from the environment, and forfeits the property that makes the guard un-rationalizable.
 - Record the rejected suggestion and its rationale in the reference file so it is not re-proposed.
@@ -169,14 +169,7 @@ behavior, not just the specific instance.
   for h in .githooks/check-*.sh .githooks/scrub-staged.sh; do "$h" || echo "FAIL: $h"; done
   ```
 
-  - **Index already holds another run's fold → never `git add` yours into it.** Stage-then-`git reset` is no repair: reset cannot restore which paths were staged. Copy the index, stage and run there; the same copy serves the Step 7.5 measure, keeping `measure()` verbatim.
-
-    ```bash
-    P="${TMPDIR:-/tmp}/probe-index"; cp .git/index "$P"; export GIT_INDEX_FILE="$P"
-    git add <paths>; for h in .githooks/check-*.sh; do "$h" || echo "FAIL: $h"; done
-    unset GIT_INDEX_FILE   # else every later git call silently uses the copy
-    ```
-
+  - **Index already holds another run's fold → never `git add` yours into it.** Stage-then-`git reset` is no repair: reset cannot restore which paths were staged. Copy the index, stage and run there; the same copy serves the Step 7.5 measure, keeping `measure()` verbatim. Commands: [`references/byte-budget.md`](references/byte-budget.md).
 - Hand-roll only what no hook covers: **staged path strings**. Anonymize every hit. Scan mechanics: [`references/staged-path-scan.md`](references/staged-path-scan.md).
 
 ## Step 6: Present for Review
@@ -237,7 +230,7 @@ behavior, not just the specific instance.
   - **Budget the fold PLUS an audit-cleanup allowance** (~25%/floor ~300 B) and size reclaim against that total. Run the Step 5 audit first → **measured** cleanup replaces that estimate, often **0 B**.
   - **Binding gate = net non-positive AND under every ceiling; the 1.2× ratio is the planning target.**
   - **Reclaim exhausted, net still positive → tighten the *addition*.**
-  - **Never relocate a gate's enumerated pass/fail checks, or a verification checklist, behind a pointer** — the ceiling never outranks a load-bearing rule. Per-hook recovery rows are catalog, not gate — those move freely.
+  - **Never relocate a gate's enumerated pass/fail checks or a verification checklist behind a pointer, and never cut a rule's verified-configuration qualifier** — the ceiling never outranks a load-bearing rule. Per-hook recovery rows are catalog, not gate — those move freely.
   - **CRITICAL — state the budget as arithmetic before any edit:** byte-measure each reclaim's NET and the addition as the *exact* old/new pair you will apply.
   - **Very important — stage addition + reclaim cuts together, then measure exactly once**, running the hook's `measure()` verbatim.
 
