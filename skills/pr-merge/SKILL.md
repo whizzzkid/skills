@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.23-185305'
+  version: '2026.07.27-225034'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -248,11 +248,20 @@ gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
   disallowed by branch protection, or a merge error).
 - Squash failure → detect allowed methods, retry next best in order
   **`--rebase` then `--merge`** (first allowed wins — rebase keeps linear
-  history; merge commit is the universal fallback):
+  history; merge commit is the universal fallback). **Read the ruleset, not the
+  repo-level fields** — `repos/{owner}/{repo}`'s `allow_*_merge` describe repo
+  *settings* and report every method allowed even where a ruleset forbids it
+  (`wk-gh` Step 3):
   ```bash
-  gh api repos/{owner}/{repo} --jq '{allow_squash_merge, allow_merge_commit, allow_rebase_merge}'
+  gh api repos/{owner}/{repo}/rulesets/{id} \
+    --jq '.rules[] | select(.type=="pull_request").parameters.allowed_merge_methods'
   ```
 - Never switch away from squash when the squash command succeeds.
+- **Squash collapses the branch into one new commit, so every per-branch SHA
+  recorded elsewhere becomes unreachable from the base.** Before squashing a branch
+  whose individual commits are cited outside git (plan doc, PR body, tracking
+  issue), tell the user the citations will break and agree the remap first — a
+  squash-only repo makes this a hard constraint, not a preference.
 - **HARD RULE — host permission-classifier denial is a failure mode distinct from
   branch protection.** A "Blocked by classifier" / permission-layer denial of `gh
   pr merge` is NOT a non-zero merge error → do **not** retry verbatim and do

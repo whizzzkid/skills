@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.27-180922'
+  version: '2026.07.27-225034'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -177,6 +177,26 @@ later submitted. Guard every reply post:
   the substantive reply as a top-level `POST /issues/{n}/comments`, and defer any
   edit to the author's own annotation until the pending review is submitted or
   dismissed — never submit it to unblock.
+
+**Effective merge methods come from repository *rulesets* — neither `gh repo view`
+nor the branch-protection endpoint reports them.** The three surfaces are disjoint:
+`gh repo view --json squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed`
+returns repo *settings*, `branches/{branch}/protection` 404s (`Branch not
+protected`) unless classic protection is configured, and neither reflects a
+ruleset. "All three allowed" from `gh repo view` is **not** evidence a method will
+be accepted. Read the ruleset before any merge:
+
+```bash
+gh api repos/{owner}/{repo}/rulesets --jq '.[] | {id, name, target}'
+gh api repos/{owner}/{repo}/rulesets/{id} \
+  --jq '.rules[] | select(.type=="pull_request").parameters.allowed_merge_methods'
+```
+
+- Empty array (rc 0, `[]`) → no ruleset governs the repo; only then do the
+  repo-level fields describe effective policy.
+- `allowed_merge_methods` is authoritative where present. A method absent from it
+  is a hard stop, not a fallback candidate — surface the restriction to the user
+  *before* merging rather than discovering it when the merge is refused.
 
 **Resolve the exact repo name before any GraphQL `$owner`/`$repo` call.** URL
 slugs normalize underscores to hyphens, but the GraphQL API requires the stored

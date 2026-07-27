@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.23-204110'
+  version: '2026.07.27-230305'
 ---
 
 # PR Resolve
@@ -257,6 +257,9 @@ fix/commit/push.
 
 - Process bot reviews first, then human comments.
 - For each: read full file context, the comment, and reply chain before a fix.
+- **Reproduce an externally-sourced finding before fixing it** — a bot/scanner
+  finding is a hypothesis; driving it settles real-defect vs. style-nit and yields
+  the regression test.
 
 **Org-specific policy questions.** Reviewer question touches org policy → search
 the configured KB first and cite an authoritative doc; fall back to general
@@ -484,14 +487,6 @@ why — never silently skip.
 |---|---|
 | "resolve PR comments" / "address review feedback" / "fix PR #{number}" | Full workflow |
 | "fix the comment" / "description issue" with an open PR | Auto-activate on the open PR |
-| Session ends | Emit adversarial-review learnings, then run `wk-retro` |
-
-## Requirements
-
-- `gh` CLI authenticated with repo access
-- Git repository with a GitHub remote
-- Shell access for verification commands
-- Commit signing configured
 
 ---
 

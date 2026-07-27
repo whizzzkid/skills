@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.27-203036'
+  version: '2026.07.27-224719'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -69,20 +69,14 @@ Full list: `skills/commit/references/emoji-cheatsheet.md`
 
 - Pick the single most specific emoji that names the change.
 - Primary action emoji + classifier both fit → **use the classifier** (more
-  signal: `📌` beats `🔧` for a version pin; `⬇️` beats 🐛 for a downgrade).
+  signal: `📌` beats `🔧` for a version pin; `⬇️` beats 🐛 for a downgrade; `🛡️`
+  beats ✨ for a guardrail).
 - Two classifiers both relevant → pick the one a future reader would `grep` first.
 - **Fallback when no emoji fits: 🤖** — for a change that defies classification
   (mixed-bag commit, agent-driven mechanical change with no single observable
   shape, "miscellaneous"). Use 🤖 rather than stacking emojis or picking a poor
   fit. 🤖 is also right for fully agent-authored commits with no human-curated
   intent.
-
-| Pick this | Over this | Why |
-|-----------|-----------|-----|
-| `📌` | `🔧` | Pinning is the specific change; config tuning is the category |
-| `⬇️` | `🐛` | Downgrade names the action; bug-fix is the outcome |
-| `🛡️` | `✨` | Guardrail is the shape; feature is the bucket |
-| `🤖` | `✨🐛` | One emoji always beats two |
 
 Always pass commit messages via HEREDOC for correct formatting:
 
@@ -93,7 +87,6 @@ feat(scope): ✨ description of the change
 Optional body with more detail.
 
 Assisted-by: <Tool/Agent Name> <version>
-Co-Authored-By: Agent Name <noreply@example.com>
 EOF
 )"
 ```
@@ -112,16 +105,26 @@ This skill is model-invocable → any commit it produces is agent-created.
 - Fill both fields from the **running agent**: tool/CLI name + model or release
   version (e.g., `Assisted-by: Claude Code (claude-opus-4-8)`).
 - One `Assisted-by:` line per distinct agent that materially authored the commit;
-  place alongside any `Co-Authored-By:` / `Generated with` trailers.
+  place alongside any co-author / `Generated with` trailer the rules below admit.
 - Omit only for a purely human-authored commit with no agent involvement.
 - Never invent a version — if unknown, use the tool name alone
   (`Assisted-by: <Tool/Agent Name>`).
+
+### HARD RULE — the trailer set is closed; never copy a neighbour's
+
+- `Assisted-by:` is the only trailer this skill adds on its own initiative.
+- Any other trailer lands **only** where the user, or an invoking skill's explicit
+  directive, calls for it on that commit — never inferred from sibling commits,
+  branch history, or the mere availability of an employee-email env var.
+- Never derive a trailer block from neighbouring commits: a human stamped one
+  there by decision, and that decision does not transfer.
 
 ### HARD RULE — never fabricate a `Co-Authored-By:` email
 
 - Never build a human's email from a GitHub login + a guessed domain
   (`<login>@<company>`) — a fabricated address misattributes every commit.
-- Current user's co-author trailer → use `$WK_SKILLS_EMPLOYEE_EMAIL` verbatim.
+- Current user's co-author trailer, **once directed per the closed-set rule
+  above** → use `$WK_SKILLS_EMPLOYEE_EMAIL` verbatim.
 - **`$WK_SKILLS_EMPLOYEE_EMAIL` unset/empty → STOP.** Do not emit a human
   co-author trailer; require the var (never guess, never silently omit it).
 - Another person's co-author → their `<id>+<login>@users.noreply.github.com`
@@ -201,6 +204,12 @@ commits and drop the original signature unless re-signed.
 
 - A rewritten commit that loses its signature drops verified status and can fail
   branch protection requiring signed commits.
+- **A trailer edit on already-pushed commits is a history rewrite — its real cost
+  is the fan-out of SHAs recorded outside git.** Before rewriting, enumerate every
+  place a rewritten SHA was recorded (plan docs, PR body, tracking issues, review
+  comments); after, remap old→new and re-verify each with an ancestry check.
+  The sweep belongs to the same task, never a follow-up; confirm zero stale
+  references before returning control.
 
 #### "No signature" can be a local-verification false alarm
 
@@ -251,18 +260,10 @@ commits and drop the original signature unless re-signed.
 
 ### Mise-managed repos
 
-Project uses mise (`.mise.toml` or `.tool-versions`) → invoke push (and any
-commit-time hook trigger) via `mise exec --` so git hooks (lefthook, husky, etc.)
-find mise-managed binaries:
-
-```bash
-mise exec -- git push
-```
-
-Never use `eval "$(mise activate bash)"` — the supported single-command form is
-`mise exec --`. Bash tool sessions don't inherit the user's interactive shell, so
-without `mise exec --` hooks fail with "command not found" (exit 127) for tools
-like `lychee`, `shellcheck`, `bats`, etc.
+Repo has `.mise.toml` / `.tool-versions` → run push and any commit-time hook
+trigger as `mise exec -- git push`; never `eval "$(mise activate bash)"`. Without
+it hooks exit 127 (`command not found`) for mise-managed tools. Rationale:
+[`references/2026-05-28_mise-exec-not-activate.md`](references/2026-05-28_mise-exec-not-activate.md).
 
 ### Hook and verify rules
 
@@ -403,10 +404,9 @@ is to remove those tokens from files.
 
 ### Enforcement
 
-Repo ships a prohibited-terms file (commonly `.prohibited-terms`, `.denylist`, or
-similar gitignored config) → the `commit-msg` hook should read it and block any
-matching message. When installing or updating commit hooks, verify prohibited-term
-matching is included.
+Repo ships a prohibited-terms file (`.prohibited-terms`, `.denylist`, or similar
+gitignored config) → the `commit-msg` hook must read it and block any matching
+message. Verify that matching is wired in when installing or updating commit hooks.
 
 ## Post-Push: PR Sync
 
@@ -484,16 +484,9 @@ Rules for the refresh:
 
 ### Step 4: Report
 
-Tell the user explicitly that the PR was synced (or that no drift was found):
-
-> "Pushed to `<branch>`. PR #<N> title/body updated to reflect the new
-> commits."
-
-Or:
-
-> "Pushed to `<branch>`. PR #<N> already in sync — no edit needed."
-
-Silence after a push that touched an open PR is itself a violation of this rule.
+State the outcome explicitly — `Pushed to <branch>. PR #<N> title/body updated`,
+or `… already in sync — no edit needed`. Silence after a push that touched an open
+PR is itself a violation of this rule.
 
 ## Post-CI-Fix Squash Offer
 

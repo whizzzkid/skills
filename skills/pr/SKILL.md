@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.24-235129'
+  version: '2026.07.27-225417'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -100,6 +100,18 @@ ensures quality before marking ready.
    never paraphrase from memory. A claim broader or narrower than the code (e.g.
    dropping a scope qualifier like "project-wide") misleads reviewers from the
    first draft, before any drift.
+
+   **Identifiers obey the same rule, with a command as their source.** Every run
+   id, SHA, count, and artifact URL in the body is pasted from a command run this
+   turn — never reconstructed from context. The surrounding sentence can be wholly
+   true while the identifier in it names nothing that exists, so a *plausible*
+   value is the failure mode, not a typo. A ticked checkbox is a claim too, and a
+   link inside it is an identifier.
+
+   ```bash
+   gh run list --branch "$(git rev-parse --abbrev-ref HEAD)" \
+     --json databaseId,headSha,conclusion --limit 1
+   ```
 
 ## Step 1: Assess Scope
 
@@ -318,21 +330,15 @@ EOF
 )"
 ```
 
-`--base "$BEST_BASE"` MUST be present on every `gh pr create` call — never omit
-it and rely on the default; defaulting silently re-introduces the mis-basing
-failure mode.
+`--base "$BEST_BASE"` MUST be present on every `gh pr create` — omitting it and
+relying on the default re-introduces the mis-basing failure (Hard Rule 3).
 
 PR titles use the same conventional commit + emoji scheme as commit messages.
 
 ### Jira key suffix
 
-Before composing the title, detect a Jira key (`[A-Z][A-Z0-9]+-\d+`) from the
-branch name and most recent commit message:
-
-```bash
-JIRA_KEY=$(git rev-parse --abbrev-ref HEAD | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1)
-[ -z "$JIRA_KEY" ] && JIRA_KEY=$(git log -1 --pretty=%B | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1)
-```
+Before composing the title, detect a Jira key via `wk-jira`'s resolution order
+(branch name, then most recent commit message) — never re-implement it here.
 
 Key found and title does not already end with `[<KEY>]` → append it as the last
 token: `feat(scope): ✨ description [<KEY>]`. Prevents wk-jira Stage 3 from
@@ -512,6 +518,8 @@ The CI-green sync (Step 4.2) is a blocking precondition for `gh pr ready`, not a
 aspiration: re-read the PR body and tick every test-plan checkbox now satisfied
 by green CI and passing local checks. Unchecked boxes on a ready PR read as work
 not done. Do not call `gh pr ready` until the body's checkboxes match reality.
+Any run id, SHA, or link written while ticking comes from a command run this turn
+(Hard Rule 4) — this step is where invented identifiers get in.
 
 After the self-review is posted, automated feedback is addressed, the test-plan
 checkboxes are synced, and the adversarial-review verdict is `clear`:
@@ -545,11 +553,6 @@ the appropriate project files.
 | "stack this PR" | Delegate to `gh stack` when available; else manual `[<feature>-part-N/M]` + `--base` |
 | "mark PR ready" | Skip to step 5 |
 | New commits pushed | Re-run from step 3 (update description, re-poll CI) |
-
-## Requirements
-
-- `gh` CLI authenticated with repo access
-- Git repository with a GitHub remote
 
 ---
 
