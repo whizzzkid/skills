@@ -21,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.07.24-232325'
+  version: '2026.07.25-015339'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -42,8 +42,10 @@ simplest-viable scope gate in [wk-plan](../plan/README.md).
 
 | Tool | Condition | Action |
 |------|-----------|--------|
-| `Bash` | A recursive search (`find`, `fd`, `grep -r/-R`, `rg`, `ls -R`) whose search-root path argument is `/` or normalizes **outside** the repo | **Block** (exit 2) |
+| `Bash` | A recursive search (`find`, `fd`, `grep -r/-R`, `rg`, `ls -R`) one of whose **path operands** is `/` or normalizes **outside** the repo | **Block** (exit 2) |
 | `Bash` | Same search rooted at `.`, a relative path, or an absolute path **inside** the repo | Allow |
+| `Bash` | Search whose out-of-repo text sits in its **pattern** operand, or in an unrelated non-search segment | Allow (not a root) |
+| `Bash` | Search preceded by `cd`/`pushd` to an out-of-repo path (effective root moved) | **Block** (exit 2) |
 | `Edit` / `Write` / `MultiEdit` / `NotebookEdit` | Target file is an absolute path **outside** the repo root | **Warn** (exit 0) — never blocks; writing to `$HOME/.claude` config is legitimate |
 | anything | `cwd` is not inside a git repo | Allow (cannot reason about scope) |
 
@@ -102,11 +104,12 @@ outside. Reshape the command; do not reach for the opt-out.
   different primitive makes the substitute's tooling difference indistinguishable
   from a real finding. Substitute and prescribed method disagree → the substitute
   is wrong until direct inspection of the underlying data says otherwise.
-  - **Blocked element may live in a different sub-command.** Both tests scan the
-    whole payload, so a compound call trips when one part carries the search verb
-    and an unrelated part carries the out-of-repo path — neither alone blocks.
-    Tell: the reported out-of-scope path is not the search's root. Fix: split into
-    single-purpose calls; every primitive survives.
+  - **A preceding `cd` outside the repo still blocks the search that follows** —
+    its target is the search's effective root even when the search names only `.`.
+    Tell: the reported path is the `cd` target, not the search's own root. Fix:
+    drop the `cd` (CWD already persists between calls). An out-of-repo path in an
+    unrelated *non-search* segment is not charged against the search, so splitting
+    a compound into single-purpose calls is no longer needed for that shape.
   - **Stage out-of-repo scratch through `Write`/`Edit`, not a Bash call** — the
     file-write guard only warns, so a written draft leaves no Bash payload to trip
     while the measuring primitive stays intact.
@@ -156,10 +159,25 @@ The hook reads the tool payload from stdin, emits any message to stderr
    inspected as written and never shell-expanded, so a `$VAR`-rooted or
    command-substituted root is judged as the literal text `$VAR/…` — not an
    absolute path, so no comparison happens.
-3. Strip any trailing shell separator (`;&|)`) from each candidate token, then
+3. Split the tokens into command segments at shell separators and keep only
+   segments that are themselves in-scope searches. Emit only each segment's
+   **path operands**, resolved under that tool's own grammar:
+   - A grep-family tool's first positional is the *pattern*, not a path — and it
+     is absent entirely when `-e`/`-f` supplies the pattern. So a pattern
+     carrying path-shaped text (a scrub check grepping *for* absolute-path
+     shapes) is never charged as a search root.
+   - `find`/`fd` path operands precede the first expression flag, so `-name <x>`
+     values are not roots.
+   - An unrelated segment's arguments are not search roots at all.
+   - **A preceding `cd`/`pushd` target IS charged** against the next in-scope
+     search — it moves the *effective* root, so `cd <outside> && grep -r x .`
+     blocks even though the search names only `.`.
+4. Strip any trailing shell separator (`;&|)`) from each candidate token, then
    normalize it (`os.path.normpath`, no existence required).
-4. A path is "outside" when its normalized form does not sit under the repo
+5. A path is "outside" when its normalized form does not sit under the repo
    root. Relative paths resolve against `cwd` and are treated as inside.
+6. `python3` unavailable → fall back to scanning every whitespace token of the
+   whole command (noisier, still closed; never fails open).
 
 ## Files
 

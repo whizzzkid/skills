@@ -15,11 +15,22 @@ SKILL_NAME=$(printf '%s' "$INPUT" \
   2>/dev/null) || { exit 0; }
 [ -z "$SKILL_NAME" ] && exit 0
 
-# -- Resolve skill directory (strip wk- prefix) --------------------------------
-DIR_NAME="${SKILL_NAME#wk-}"
+# -- Resolve skill directory by listing, never by transforming the name --------
+# Dir naming is not invariant with the skill's `name:` — most drop the leading
+# `wk-`, some keep it — so a blind strip silently no-ops for a prefix-retaining
+# dir and skips every var it declares. Try the name verbatim first, then the
+# stripped form, and take the first path that exists.
 [ -z "$SKILLS_HOME" ] && exit 0
-SKILL_FILE="$SKILLS_HOME/skills/$DIR_NAME/SKILL.md"
-[ -f "$SKILL_FILE" ] || exit 0
+SKILL_FILE=""
+for cand in "$SKILL_NAME" "${SKILL_NAME#wk-}"; do
+  if [ -f "$SKILLS_HOME/skills/$cand/SKILL.md" ]; then
+    SKILL_FILE="$SKILLS_HOME/skills/$cand/SKILL.md"
+    break
+  fi
+done
+# Unresolvable name is the legitimate majority case — plugin and third-party
+# skills ship no dir in this repo. Stay silent; only a resolved skill is checked.
+[ -n "$SKILL_FILE" ] || exit 0
 
 # -- Extract env-vars from frontmatter ----------------------------------------
 # Parses the YAML frontmatter between the two --- markers.

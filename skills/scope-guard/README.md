@@ -2,7 +2,7 @@
 
 > A PreToolUse hook that blocks filesystem-root searches and out-of-repo recursive searches, and warns on Edit/Write outside the project root — the mechanical backstop for [wk-plan](../plan/README.md)'s simplest-viable scope gate.
 
-**Version:** `2026.07.24-232325`
+**Version:** `2026.07.25-015339`
 
 ## Purpose
 
@@ -28,7 +28,7 @@ flowchart TD
     B -- yes --> C{tool}
     C -- Bash --> D{recursive search?<br/>find · fd · grep -r · rg · ls -R}
     D -- no --> Z
-    D -- yes --> E{"quote-aware tokens →<br/>search-root path<br/>/ or outside repo?"}
+    D -- yes --> E{"quote-aware tokens → per-segment<br/>path operands (+ preceding cd) →<br/>/ or outside repo?"}
     E -- yes --> F[exit 2 · BLOCK]
     E -- no --> Z
     C -- Edit/Write --> G{abs path outside repo?}
@@ -38,9 +38,15 @@ flowchart TD
 
 ## Key rules
 
-- Blocks **only** recursive search commands, and **only** when a path argument
-  is `/` or normalizes outside the repo. Absolute paths inside the repo, relative
-  paths, and non-search reads (`cat /etc/hosts`) are never blocked.
+- Blocks **only** recursive search commands, and **only** when one of their **path
+  operands** is `/` or normalizes outside the repo. Absolute paths inside the repo,
+  relative paths, and non-search reads (`cat /etc/hosts`) are never blocked.
+- **Argument role decides, not token shape.** Only a search segment's path operands
+  are checked — a grep-family tool's first positional is the *pattern* (absent under
+  `-e`/`-f`), and `find`/`fd` paths precede the first expression flag. So grepping
+  repo-relative files *for* absolute-path shapes is allowed, as is an out-of-repo
+  path sitting in an unrelated non-search segment. A preceding `cd`/`pushd` outside
+  the repo still blocks, because it moves the search's effective root.
 - Edit/Write outside the repo **warns, never blocks** — `$HOME/.claude` config
   writes are legitimate.
 - `SCOPE_GUARD_OFF=1` bypasses the guard for the session — but it is **the user's to
@@ -57,9 +63,9 @@ flowchart TD
 - **Reshape by subtraction, never by swapping the verification method.** Drop only the
   blocked element and keep the prescribed matcher and comparison — a refused check
   rewritten with a different primitive turns a tooling difference into a phantom
-  finding, indistinguishable from a real one. Both tests scan the whole payload, so the
-  blocked element can sit in an unrelated sub-command of a compound call — split into
-  single-purpose calls, and stage out-of-repo scratch through `Write`/`Edit`, which only warns.
+  finding, indistinguishable from a real one. When the reported path is not the search's
+  own root, it is a preceding `cd`/`pushd` target — drop the `cd` rather than rewriting
+  the check. Stage out-of-repo scratch through `Write`/`Edit`, which only warns.
 - **A block names the token as written, not the logical path.** Tokens are never
   shell-expanded, so an unexpanded root is not judged at all. That is for diagnosis
   only — never rewrite a literal root into `$VAR` to clear a block. Drive the hook
@@ -77,7 +83,7 @@ flowchart TD
   `$HOME/.agents/skills/wk-scope-guard/hooks/`)
   Registered in `$HOME/.claude/settings.json` → `hooks.PreToolUse` via
   `scripts/register-hooks.sh` (declared in `scripts/hooks-manifest.json`)
-- Tests: `skills/scope-guard/tests/scope-guard.bats` (25 cases)
+- Tests: `skills/scope-guard/tests/scope-guard.bats` (34 cases)
 
 To wire this (and every other skill-shipped hook) into a fresh machine, run
 `scripts/install-skills.sh` — it installs the skills and then calls

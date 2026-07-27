@@ -20,7 +20,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.07.24-235129'
+  version: '2026.07.25-002741'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -47,13 +47,27 @@ Diagnose and report environment variable availability before skill execution.
 
 ## Step 1: Identify vars to check
 
-- If invoked with a skill name, read `$WK_SKILLS_HOME/skills/{name}/SKILL.md`
-  and extract the `env-vars:` frontmatter list:
+- If invoked with a skill name, **resolve its dir by listing, never by transforming the
+  name** — most dirs drop the leading `wk-`, some keep it, so a blind strip builds a path
+  that does not exist and reports a false "declares nothing". Take the first candidate
+  that exists, verbatim before stripped:
+
+  ```bash
+  for cand in "{name}" "${name#wk-}"; do
+    f="$WK_SKILLS_HOME/skills/$cand/SKILL.md"
+    [ -f "$f" ] && { SKILL_FILE="$f"; break; }
+  done
+  ```
+
+- Then extract the `env-vars:` frontmatter list:
 
   ```bash
   awk '/^---/{n++} n==1 && /^env-vars:/{f=1;next} f && /^  -/{print $2;next} f && !/^  -/{exit}' \
-    "$WK_SKILLS_HOME/skills/{name}/SKILL.md"
+    "$SKILL_FILE"
   ```
+
+- An unresolvable name is normal input, not an error — plugin and third-party skills ship
+  no dir here. Report it as unresolved; never conflate it with "declares no env-vars".
 
 - If invoked with `--check VAR1 VAR2`, use those vars directly.
 - If invoked with `--all`, collect every unique var from every

@@ -26,11 +26,16 @@ severity: medium
   originate inside a quoted string. That relaxes a covered true positive — a quoted
   out-of-repo root is exactly the shape the guard must keep catching. Quote-aware
   tokenization gets the same false-positive relief without the loss.
-- **Deliberately not promoted (2):** the source lesson proposed attributing tokens to
-  the specific command under test by splitting on shell separators first. Unnecessary
-  once tokenization is quote-aware, and a net weakening: an unquoted out-of-repo
-  absolute path in a non-search segment (`cd <outside> && grep -r x .`) currently
-  blocks, and per-segment attribution would let it through.
+- **Deliberately not promoted (2) — SUPERSEDED, see the argument-role reference:**
+  this note rejected attributing tokens to the specific command under test by
+  splitting on shell separators, because an out-of-repo path in a non-search segment
+  (`cd <outside> && grep -r x .`) then stops blocking. The rejection identified a real
+  hole but drew too wide a conclusion: only the `cd` shape depends on cross-segment
+  attribution, because `cd` moves the search's *effective* root. Per-segment
+  classification was later adopted with that one case compensated explicitly (a
+  preceding `cd`/`pushd` target is charged against the next in-scope search) and
+  pinned by a bats case, so the false-positive relief costs no true positive.
+  Quote-aware tokenization alone did **not** cover the pattern-operand shape.
 - **Corrected in the same pass:** a previously documented false-block shape — recursive
   flag plus unexpanded glob — was disproved against the hook source. No code path
   inspects a glob token, and the shape verifiably does not block. The prescribed

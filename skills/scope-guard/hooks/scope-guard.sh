@@ -74,42 +74,159 @@ print(d.get("tool_input",{}).get("command",""))' 2>/dev/null)
 
     # Only a recursive/filesystem search is in scope for this guard:
     #   find … | fd … | grep -r/-R … | rg … (recursive by default) | ls -R …
-    is_search=1
-    printf '%s' "$CMD" | grep -qE '(^|[ ;|&(])(find|fd|rg)([ ]|$)' && is_search=0
-    printf '%s' "$CMD" | grep -qE 'grep[ ]+(-[^ ]*[ ]+)*(-[A-Za-z]*[rR]|--recursive)' && is_search=0
-    printf '%s' "$CMD" | grep -qE 'ls[ ]+(-[^ ]*[ ]+)*-[A-Za-z]*R' && is_search=0
-    [ "$is_search" -ne 0 ] && exit 0
-
-    # Block only when a search-root *path argument* is "/" or resolves outside
-    # the repo. Absolute paths INSIDE the repo are fine; relative paths resolve
-    # against cwd (inside) and are fine. This is the key false-positive guard.
-    # Tokenize quote-aware (no glob expansion of the raw command). A plain
-    # whitespace split turns prose inside a quoted string into path-shaped
-    # fragments, so a `/` used as a word separator in an `echo` banner reads as
-    # a filesystem-root search argument and false-blocks the whole compound
-    # command. shlex keeps a quoted string as ONE token while still unwrapping a
-    # genuinely quoted root (`find "/etc"`), so no true positive is relaxed.
-    # Unbalanced quotes raise — fall back to the whitespace split rather than
-    # skipping the check (fail closed).
+    #
+    # Scope-check ONLY the *path operands* of such an invocation. Two shapes
+    # false-block an entirely in-repo command when every absolute-looking token
+    # is charged as a search root instead:
+    #   1. A search tool's own PATTERN operand carries path-shaped text — a
+    #      scrub check greps repo-relative files FOR absolute-path shapes.
+    #   2. A compound command pairs one search with unrelated commands whose
+    #      arguments are not search roots at all.
+    # So: segment the command at shell separators, classify each segment by its
+    # own argv under that tool's grammar, and emit only its path operands. This
+    # does not relax the matcher — a genuine out-of-repo root is still a path
+    # operand and still blocks.
+    #
+    # Tokenize quote-aware (no glob expansion). shlex keeps a quoted string as
+    # ONE token while still unwrapping a genuinely quoted root (`find "/etc"`).
+    # Unbalanced quotes raise — fall back to a whitespace split rather than
+    # skipping the check (fail closed). A `__OK__` sentinel distinguishes "python
+    # ran and found no path operands" from "python unavailable"; without it the
+    # bash whole-string scan below runs so the guard never fails open.
     offending=""
-    _toks=()
-    _tokenized=0
-    while IFS= read -r -d '' tok; do _toks+=("$tok"); _tokenized=1; done < <(
-      printf '%s' "$CMD" | python3 -c 'import shlex,sys
-cmd = sys.stdin.read()
-try: toks = shlex.split(cmd)
-except ValueError: toks = cmd.split()
-sys.stdout.write("".join(t + "\0" for t in toks))' 2>/dev/null)
-    [ "$_tokenized" -eq 0 ] && read -ra _toks <<<"$CMD"
+    candidates=()
+    _parsed=0
+    while IFS= read -r -d '' tok; do
+      if [ "$tok" = "__OK__" ]; then _parsed=1; continue; fi
+      candidates+=("$tok")
+    done < <(
+      printf '%s' "$CMD" | python3 -c '
+import shlex, sys
 
-    for tok in ${_toks[@]+"${_toks[@]}"}; do
+SEPS = {";", "&&", "||", "|", "&"}
+# Tools whose FIRST positional operand is the pattern, not a path.
+PATTERN_FIRST = {"grep", "egrep", "fgrep", "rg", "ag", "ack"}
+# Long/short flags whose NEXT token is a value, never a search root.
+VALUE_FLAGS = {
+    "-e", "--regexp", "-f", "--file", "-m", "--max-count", "--include",
+    "--exclude", "--exclude-dir", "-A", "-B", "-C", "-D", "-d", "-g",
+    "--glob", "-t", "-T", "--type", "--type-not",
+}
+PATTERN_FLAGS = {"-e", "--regexp", "-f", "--file"}
+
+cmd = sys.stdin.read()
+try:
+    toks = shlex.split(cmd)
+except ValueError:
+    toks = cmd.split()
+
+# Split into command segments; a separator may be glued to a token end.
+segs, cur = [], []
+for t in toks:
+    if t in SEPS:
+        segs.append(cur)
+        cur = []
+        continue
+    core = t.rstrip(";&|")
+    if core != t:
+        if core:
+            cur.append(core)
+        segs.append(cur)
+        cur = []
+        continue
+    cur.append(t)
+segs.append(cur)
+
+out = []
+pending_cd = []
+for seg in segs:
+    i = 0
+    # Skip VAR=value prefixes to reach the real command name.
+    while i < len(seg) and not seg[i].startswith("-") and "=" in seg[i] \
+            and "/" not in seg[i].split("=", 1)[0]:
+        i += 1
+    if i >= len(seg):
+        continue
+    name = seg[i].rsplit("/", 1)[-1]
+    args = seg[i + 1:]
+
+    # A cd/pushd outside the repo changes the EFFECTIVE root of any search that
+    # follows (`cd <outside> && grep -r x .` searches outside while naming only
+    # `.`). Per-segment classification alone would let that through, so charge a
+    # preceding cd target against the first in-scope search after it.
+    if name in ("cd", "pushd"):
+        pending_cd.extend(a for a in args if not a.startswith("-"))
+        continue
+    flags = [a for a in args if a.startswith("-") and a != "-"]
+    shorts = [f for f in flags if not f.startswith("--")]
+
+    # stop_at_flag: find/fd take paths BEFORE the expression, so the first
+    # flag ends the path list (`-name x` is an expression, not a root).
+    if name in ("find", "fd"):
+        in_scope, stop_at_flag, value_short = True, True, ""
+    elif name in ("grep", "egrep", "fgrep"):
+        in_scope = any(f in ("--recursive", "-R") for f in flags) or \
+            any("r" in f or "R" in f for f in shorts)
+        stop_at_flag, value_short = False, "efmABCDd"
+    elif name in ("rg", "ag", "ack"):
+        in_scope, stop_at_flag, value_short = True, False, "efgtTmABC"
+    elif name == "ls":
+        in_scope = any("R" in f for f in shorts)
+        stop_at_flag, value_short = False, ""
+    else:
+        continue
+    if not in_scope:
+        continue
+
+    out.extend(pending_cd)
+    pending_cd = []
+
+    # A positional pattern is consumed only by a pattern-first tool that did
+    # not already get its pattern from -e/-f.
+    pattern_taken = name not in PATTERN_FIRST or any(
+        a.split("=", 1)[0] in PATTERN_FLAGS or
+        (a.startswith("-") and not a.startswith("--") and a[-1:] in ("e", "f"))
+        for a in flags
+    )
+
+    skip_next = False
+    for a in args:
+        if skip_next:
+            skip_next = False
+            continue
+        if a.startswith("-") and a != "-":
+            if stop_at_flag:
+                break
+            base = a.split("=", 1)[0]
+            if "=" in a:
+                pass
+            elif base in VALUE_FLAGS:
+                skip_next = True
+            elif not a.startswith("--") and value_short and a[-1] in value_short:
+                skip_next = True
+            continue
+        if not pattern_taken:
+            pattern_taken = True
+            continue
+        out.append(a)
+
+sys.stdout.write("__OK__\0")
+sys.stdout.write("".join(p + "\0" for p in out))
+' 2>/dev/null)
+
+    # python3 unavailable → fall back to scanning every whitespace token of the
+    # whole command (the pre-role-classification behavior): noisier, but closed.
+    if [ "$_parsed" -eq 0 ]; then
+      printf '%s' "$CMD" | grep -qE '(^|[ ;|&(])(find|fd|rg)([ ]|$)|grep[ ]+(-[^ ]*[ ]+)*(-[A-Za-z]*[rR]|--recursive)|ls[ ]+(-[^ ]*[ ]+)*-[A-Za-z]*R' || exit 0
+      read -ra candidates <<<"$CMD"
+    fi
+
+    for tok in ${candidates[@]+"${candidates[@]}"}; do
       # Strip surrounding quotes — a no-op on shlex output, load-bearing on the
       # whitespace fallback so a quoted root like find "/etc" is still inspected.
       tok="${tok#[\"\']}"; tok="${tok%[\"\']}"
-      # Strip trailing shell separators glued to the token. `cd /repo; find …`
-      # tokenizes as `/repo;`, which matches neither the repo root nor its
-      # prefix, so the in-repo path reads as outside and the call is blocked.
-      # Stripping sharpens the comparison both ways: `/etc;` still blocks.
+      # Strip trailing shell separators glued to the token (`/repo;` from a
+      # `cd /repo; find …` prefix would otherwise read as outside the repo).
       tok="${tok%%[;&|)]*}"
       [ -z "$tok" ] && continue
       case "$tok" in

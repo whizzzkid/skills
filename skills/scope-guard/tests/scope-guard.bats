@@ -65,6 +65,44 @@ run_edit()  { PAYLOAD="$(payload Edit "$1" file_path)"; run_hook; }
   [ "$status" -eq 2 ]
 }
 
+# Role classification must not relax a true positive: the SAME command whose
+# pattern carries path shapes still blocks when a real out-of-repo root is also
+# a path operand. Pairs with the allow case below — pattern vs path is the axis.
+@test "still blocks an out-of-repo root when the pattern also carries path shapes" {
+  run_bash "grep -rniE '/opt/vendor/x|widget' /etc"
+  [ "$status" -eq 2 ]
+}
+
+@test "still blocks when -e supplies the pattern and the operand is a real root" {
+  run_bash "grep -rn -e /opt/vendor/x /etc"
+  [ "$status" -eq 2 ]
+}
+
+@test "still blocks an out-of-repo root in a later segment of a compound" {
+  run_bash "rg -l widget skills/ && find /etc -name y"
+  [ "$status" -eq 2 ]
+}
+
+@test "blocks ls -R with a value-less short flag cluster before the root" {
+  run_bash "ls -Rt /etc"
+  [ "$status" -eq 2 ]
+}
+
+# Pinned deliberately: per-segment role classification must NOT let this through.
+# The search names only `.`, but a preceding cd moved the effective root outside
+# the repo. A previous design note rejected per-segment attribution solely because
+# it dropped this case; the cd target is charged against the following search so
+# the false-positive relief costs no true positive.
+@test "blocks a search whose effective root is moved outside by a preceding cd" {
+  run_bash "cd /opt/vendor && grep -r needle ."
+  [ "$status" -eq 2 ]
+}
+
+@test "allows a search after a cd that stays inside the repo" {
+  run_bash "cd $REPO/skills && grep -r needle ."
+  [ "$status" -eq 0 ]
+}
+
 # -- Bash: allow in-scope searches (false-positive guards) -------------------
 @test "allows find with an absolute path INSIDE the repo" {
   run_bash "find $REPO/skills -name SKILL.md"
@@ -113,6 +151,26 @@ run_edit()  { PAYLOAD="$(payload Edit "$1" file_path)"; run_hook; }
 
 @test "allows a bare / inside the search command's own quoted pattern" {
   run_bash "grep -rn 'a / b' skills/"
+  [ "$status" -eq 0 ]
+}
+
+# A scrub check greps repo-relative files FOR absolute-path shapes: the shapes
+# are the pattern operand, every path operand is relative. Charging the pattern
+# as a search root false-blocks a fully in-scope command.
+@test "allows abs path shapes in a recursive grep's pattern with relative operands" {
+  run_bash "grep -rniE '/opt/vendor/x|/srv/data/y|widget' README.md AGENTS.md"
+  [ "$status" -eq 0 ]
+}
+
+# Search-family detection is per-segment, not per-command-string: one search
+# binary must not put an unrelated segment's arguments in scope.
+@test "allows abs shapes in a non-recursive grep alongside a search in a compound" {
+  run_bash "rg -l widget skills/ && grep -niE '/opt/vendor/x|widget' README.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "allows -f patternfile with relative operands (patterns never in argv)" {
+  run_bash "grep -rEf patterns.txt README.md"
   [ "$status" -eq 0 ]
 }
 

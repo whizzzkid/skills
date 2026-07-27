@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.22-190044'
+  version: '2026.07.25-014131'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -155,6 +155,24 @@ All commits MUST be signed. Never use `--no-gpg-sign`, `-n`, or
    agents) — the key is not loaded, not misconfigured. Ask the user to re-add that
    exact key to the agent; never a config change. Only an entirely empty agent
    means no signing key at all.
+
+2c. **Materialize `user.signingkey` before any file-taking probe flag.** Under
+   `gpg.format=ssh` it commonly holds the key *literal*, not a path (git writes
+   that literal to its own temp file internally).
+
+   ```bash
+   git config --get user.signingkey > "$tmp"   # accepts a literal or a path
+   ssh-keygen -Y sign -n git -f "$tmp" "$probe_file"
+   ```
+
+   - `-f "$(git config --get user.signingkey)"` fails `Couldn't load public key
+     …: No such file or directory` → a probe defect, not a missing key; it never
+     reaches the agent, so it masks the real fault.
+   - Treat a probe error naming the probe's own operand as probe-shaped — never
+     evidence about the key or the agent — until the value is confirmed a path.
+   - Only a completed signed commit proves signing works; a loaded agent key
+     (`ssh-add -l`) does not.
+
 3. Key loaded but env missing → run the commit through the user's shell (carries
    the env) or ask the user to run it directly. Do not declare the env broken.
 4. Tell the user: "Commit signing failed. Please check your GPG/SSH agent
@@ -186,32 +204,20 @@ commits and drop the original signature unless re-signed.
 
 #### "No signature" can be a local-verification false alarm
 
-For SSH-signed commits, `git log --show-signature` reporting "No signature" (and
-`%G?` returning `N`) does **not** mean the commit is unsigned. It usually means
-`gpg.ssh.allowedSignersFile` is absent from the subprocess env (delivered via
-`GIT_CONFIG_PARAMETERS` in the interactive shell, not inherited here), so git has
-no public key to verify against — even though the commit object carries a valid
-signature.
-
-- Confirm the commit is actually signed before reacting — check the raw object
-  for the signature header:
+- An SSH-signed commit reported "No signature" (or `%G?` = `N`) is usually
+  *unverifiable*, not unsigned — `gpg.ssh.allowedSignersFile` arrives via
+  `GIT_CONFIG_PARAMETERS` in the interactive shell and is not inherited here, so
+  git has no public key to check against.
+- Confirm from the raw object before reacting; `gpgsig` header present → signed:
 
   ```bash
   git cat-file commit HEAD   # signed if: gpgsig -----BEGIN SSH SIGNATURE-----
   ```
 
-- `gpgsig` header present → the commit IS signed. Never re-commit, re-sign, or
-  delay a push on a "No signature" report alone.
-- To verify locally, build a temp allowed-signers from the loaded key:
-
-  ```bash
-  git -c gpg.ssh.allowedSignersFile=<(ssh-add -L | \
-    awk -v e="$(git log -1 --format='%ce')" '{print e, $1, $2}') \
-    log -1 --show-signature
-  ```
-
-- The hosting service verifies against the account's registered keys server-side,
-  so a locally-unverifiable-but-signed commit still lands as verified after push.
+- Never re-commit, re-sign, or delay a push on a "No signature" report alone.
+- The hosting service verifies server-side, so a locally-unverifiable-but-signed
+  commit still lands verified after push. Local-verify command:
+  [no-signature false alarm](references/2026-06-01_ssh-sig-no-signature-false-alarm.md).
 
 ## Pushing
 
@@ -504,41 +510,19 @@ defer cleanup to retro.
   same ask (force-push rules below apply).
 
 After the CI fix loop (`wk-workflow` Phase 6) exits green, before marking the PR
-ready, check whether the branch has a long tail of small `fix(ci):` commits that
-would be more readable as one.
+ready, offer to squash a long tail of small `fix(ci):` commits into one.
 
-**Detection:** count commits on the branch ahead of the base whose message
-matches `^fix(\(ci\))?:`. Count ≥3 **and** net diff across those commits small
-(<50 lines, single config file or a handful of related ones) → offer to squash
-them into a single commit naming the actual change that shipped:
-
-```bash
-BASE=$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null || echo "main")
-N=$(git log --oneline "$(git merge-base HEAD "$BASE")..HEAD" \
-    --grep '^fix(\(ci\))\?:' | wc -l | tr -d ' ')
-LINES=$(git diff "$(git merge-base HEAD "$BASE")..HEAD" \
-    -- $(git log --name-only --pretty=format: "$(git merge-base HEAD "$BASE")..HEAD" \
-    --grep '^fix(\(ci\))\?:' | sort -u) | wc -l | tr -d ' ')
-```
-
-If `N >= 3 && LINES < 50`, ask:
-
-> "The branch has {N} `fix(ci):` commits whose net diff is {LINES}
-> lines. Want me to squash them into a single
-> `fix(ci): <emoji> <what-actually-shipped>` commit before marking the
-> PR ready? (a) yes  (b) keep separate"
-
-**Rules:**
-
-- **Do not auto-squash.** This is destructive — the user must approve.
-- **Do not squash across user-authored commits.** Only squash the agent's own
-  back-to-back CI fix commits. User commit in the middle → leave the chain intact.
-- **Force-push is required after squash.** Confirm the user accepts the force-push
-  before rewriting history on a pushed branch.
-- **Use the new subject to name the actual fix**, not the journey.
-  "fix(ci): ⬇️ downgrade and pin {dep} {version}" beats "squashed CI fix attempts."
-
-User declines or thresholds not met → leave history alone.
+- Threshold: ≥3 commits matching `^fix(\(ci\))?:` ahead of base **and** their net
+  diff <50 lines (single config file or a handful of related ones). Detection
+  commands and ask template:
+  [`references/ci-fix-squash-detection.md`](references/ci-fix-squash-detection.md).
+- **Do not auto-squash** — destructive; the user must approve.
+- **Never squash across user-authored commits.** A user commit mid-chain → leave
+  the chain intact.
+- **Confirm the force-push** a squash forces on an already-pushed branch.
+- **Name the actual fix in the new subject, not the journey** —
+  `fix(ci): ⬇️ downgrade and pin {dep} {version}` beats "squashed CI fix attempts".
+- Thresholds unmet or user declines → leave history alone.
 
 ## Quick Reference
 

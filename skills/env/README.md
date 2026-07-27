@@ -3,7 +3,7 @@
 Diagnoses environment variable availability before skill execution and provides
 actionable remediation.
 
-**Version:** `2026.07.24-235129`
+**Version:** `2026.07.25-002741`
 
 ## Purpose
 
@@ -30,6 +30,11 @@ to add to `$HOME/.profile` for vars that are genuinely missing.
 - **Never print a secret-shaped value** (`TOKEN|KEY|SECRET|PASS|CRED|PAT`) — report
   `<len N sha XXXXXXXX>`; a printed prefix is a disclosure. Literal values are shown
   only for non-secret vars, where the value is the actionable diagnostic.
+- **Resolve a skill's dir by listing, never by transforming its name.** Most dirs drop the
+  leading `wk-`, some keep it — a blind strip builds a path that never exists, so the hook
+  exits silently and checks none of the declared vars. Try verbatim, then stripped, and
+  take the first that exists. An unresolvable name is normal (plugin and third-party
+  skills ship no dir here) and must stay silent, never conflated with "declares nothing".
 - **`set` means inherited, not valid.** A rotated secret still reads `set`, so an
   auth failure on a `set` var routes to the stale-value check: fingerprint the value
   (length + hash prefix), source once, re-fingerprint. Unchanged → stale-in-process,
@@ -49,6 +54,12 @@ env-vars:
 The hook script ships inside this skill at `skills/env/hooks/check-skill-env-vars.sh`
 (installed to `$HOME/.agents/skills/wk-env/hooks/`). It reads this field and warns
 about missing/unresolved env vars before the skill body executes.
+
+Its test suite lives at `skills/env/tests/env-hook.bats` — run `bats skills/env/tests/env-hook.bats`
+before committing any change to the hook. It covers both dir-naming conventions, both
+silent exit-0 branches, and each var state. Every assertion carries an explicit
+`|| return 1`: this bats does not apply `errexit` to test bodies, so a bare assertion
+that is not the final command in a test is inert and the test passes regardless.
 
 Hooks cannot auto-register from a plain skill — Claude Code loads hooks only from
 `settings.json` or a plugin manifest. So the script lives with the skill, but a
