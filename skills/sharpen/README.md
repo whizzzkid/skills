@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.27-191345`
+**Version:** `2026.07.27-195553`
 
 ## Invocation
 
@@ -128,7 +128,12 @@ flowchart TD
 - **De-bloat pass** is mandatory on every run (not only when a learning prompts it) and
   enforces a hard 24 KiB ceiling per `SKILL.md` — over-ceiling skills are refactored, split into
   references/sub-skills, or scoped down, coverage-preserving. A pre-commit hook backstops the
-  same ceiling. The byte budget for a near-ceiling fold is stated as explicit arithmetic —
+  same ceiling. Only a ceiling blocks — the hook tests nothing else — so a net-non-positive
+  fold is owed only once the headroom trigger fires (headroom under ~2× the edit); with the
+  trigger silent no reclaim is owed and a positive net lands. Stated as a flat gate instead,
+  the rule is unsatisfiable whenever the reclaim pool is empty, since the only routes to a
+  non-positive net are a forbidden load-bearing cut or an abandoned fold.
+  The byte budget for a near-ceiling fold is stated as explicit arithmetic —
   measured addition, each reclaim's measured net — before any edit is applied; estimating
   either side makes the mandated single pass a coin flip. Reclaim is searched in a fixed
   order — an inline rule whose own linked reference already states it in full is deleted

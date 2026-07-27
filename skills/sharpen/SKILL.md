@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-191345'
+  version: '2026.07.27-195553'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -169,7 +169,7 @@ behavior, not just the specific instance.
   for h in .githooks/check-*.sh .githooks/scrub-staged.sh; do "$h" || echo "FAIL: $h"; done
   ```
 
-  - **Index already holds another run's fold → never `git add` yours into it.** Stage-then-`git reset` is no repair: reset cannot restore which paths were staged. Throwaway-index procedure: [`references/byte-budget.md`](references/byte-budget.md).
+  - **Index already holds another run's fold → never `git add` yours into it.** Throwaway-index procedure: [`references/byte-budget.md`](references/byte-budget.md).
 - Hand-roll only what no hook covers: **staged path strings**. Anonymize every hit. Scan mechanics: [`references/staged-path-scan.md`](references/staged-path-scan.md).
 
 ## Step 6: Present for Review
@@ -229,8 +229,7 @@ behavior, not just the specific instance.
   - **A target rejected purely on reading order is mis-tested, not exhausted** — re-test it under a cut-site pointer before recording the pool exhausted or the ratio unreachable.
 - **Measure the staged body BEFORE drafting any content-adding fold.** Headroom under ~2× the edit → budget ≥2 reclaim targets up front whose *combined NET* exceeds the edit by ≥1.2×.
   - **Budget the fold PLUS an audit-cleanup allowance** (~25%/floor ~300 B) and size reclaim against that total. Run the Step 5 audit first → **measured** cleanup replaces that estimate, often **0 B**.
-  - **Binding gate = net non-positive AND under every ceiling; the 1.2× ratio is the planning target.**
-  - **Reclaim exhausted, net still positive → tighten the *addition*.**
+  - **Only a ceiling blocks. Net non-positive is owed only when that trigger fires; 1.2× is the hunt's planning target.** Trigger silent → no reclaim owed. Hunt exhausted, net still positive → tighten the *addition*.
   - **Never relocate a gate's enumerated pass/fail checks or a verification checklist behind a pointer, and never cut a rule's verified-configuration qualifier** — the ceiling never outranks a load-bearing rule. Per-hook recovery rows are catalog, not gate — those move freely.
   - **CRITICAL — state the budget as arithmetic before any edit:** byte-measure each reclaim's NET and the addition as the *exact* old/new pair you will apply.
   - **Very important — stage addition + reclaim cuts together, then measure exactly once**, running the hook's `measure()` verbatim.

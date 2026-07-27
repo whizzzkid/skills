@@ -31,6 +31,9 @@ env-tunable, so a deliberate exception needs no hook edit):
   staged-blob read stays real. Prefer this over swapping the blob source for `cat`: any
   edit to `measure()` forfeits the "verbatim" guarantee the rules below depend on.
   `unset GIT_INDEX_FILE` afterward or every later git call silently uses the copy.
+  Stage-then-`git reset` is no repair: reset cannot restore *which* paths were staged, so
+  the separation is destroyed the moment you `git add` into the real index — the copy must
+  come first.
 
   ```bash
   P="${TMPDIR:-/tmp}/probe-index"; cp .git/index "$P"; export GIT_INDEX_FILE="$P"
@@ -93,10 +96,24 @@ env-tunable, so a deliberate exception needs no hook edit):
     widening the hunt until it reaches load-bearing content — trades a correctness property
     for a byte count, and the ceiling never outranks a load-bearing rule.
   - Reserve the ~25%/floor-300 B estimate only while the audit is still outstanding.
-- **The binding gate is: net non-positive AND every ceiling clear.** The ≥1.2× reclaim
-  ratio is a planning target, not the gate. When post-draft cleanup pushes the ratio under
-  1.2× while net stays non-positive and the body stays under ceiling, report the arithmetic
-  and stop — a second reclaim hunt at that point only endangers load-bearing rules.
+- **Only a ceiling blocks — that is the whole of what the hook enforces.** `check-skill-size.sh`
+  tests four ceilings and nothing else; "net non-positive" appears nowhere in it. It is a
+  reclaim *discipline*, not the blocking condition, and calling it "the binding gate"
+  mislabels a conditional target as the thing that fails the commit.
+- **Net non-positive is owed only once the headroom trigger fires** (headroom under ~2× the
+  edit). Trigger silent → no reclaim is owed and a positive net lands; the ≥1.2× ratio is
+  that hunt's planning target, not a second gate.
+  - Read as an unconditional gate, the rule is **unsatisfiable**: an empty reclaim pool
+    leaves only a load-bearing cut or an abandoned fold, and the file's own escape hatch
+    ("the ceiling never outranks a load-bearing rule") forbids the first. A rule no
+    compliant run can satisfy gets quietly ignored — which is worse than a scoped one.
+  - Hunt entered and exhausted with net still positive → tighten the *addition* (target 5).
+    Exhausted under ample headroom → land the fold, report the arithmetic, stop. Widening
+    the hunt past that point only endangers load-bearing rules.
+- Generalize: **state a threshold's trigger in the same breath as the threshold.** A
+  conditional discipline restated flatly one bullet away from its own trigger reads as
+  universal, and the two bullets then contradict each other with nothing in the text to
+  arbitrate.
 - **Never buy the ratio back by moving a gate's checks or a verification checklist behind
   a pointer.** That trades a correctness property for a byte count.
 
