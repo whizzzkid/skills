@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.24-235129'
+  version: '2026.07.27-080007'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -102,18 +102,42 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   printf '%s:%s\n' "${#VAR}" "$(printf %s "$VAR" | shasum | cut -c1-8)"   # fingerprint
   ```
 
-- **Keep any snippet a skill documents for the agent to run portable to zsh, not just
-  bash** — the agent's shell is not guaranteed to be bash, and a shell-dependent
-  expansion fails as a plausible *domain* error (nothing matched, var missing) rather
-  than a syntax error, so it is diagnosed as a real result. Two traps:
-  - `for x in $LIST` — unquoted **parameter** expansion does not word-split under zsh,
-    so the body runs once over the whole newline-joined blob; every element-wise command
-    fails and any no-match sentinel survives untouched. Use
-    `while IFS= read -r x; do …; done <<< "$LIST"`. (Unquoted **command substitution**
-    `$(cmd)` does split under both, but still breaks on whitespace within an element.)
+- **Keep every shell command the agent runs portable to zsh, not just bash — one a skill
+  documents *and* one composed ad-hoc mid-task.** The agent's shell is not guaranteed to
+  be bash, and a shell-dependent expansion fails as a plausible *domain* error (nothing
+  matched, var missing) rather than a syntax error, so it is diagnosed as a real result.
+  Portability is a property of the shell, never of the authoring context — an ad-hoc
+  command passes no review, so the trap lands there unchallenged. Traps run **both**
+  directions — a bash-ism zsh rejects, *and* a zsh-ism the shell declines to honor — so
+  clearing a command against the bash-only entries below proves nothing. Four traps:
+  - **Important:** unquoted **parameter** expansion does not word-split under zsh — in
+    **any** position, not only a `for` list. `for x in $LIST` runs the body once over the
+    whole newline-joined blob; `cmd $FILES` hands the tool a *single* argument containing
+    every path, so it reports `No such file or directory` naming a blob it was never
+    given. Either way every element-wise command fails and any no-match sentinel survives
+    untouched, so the run reads as a clean zero. Iterate with
+    `while IFS= read -r x; do …; done <<< "$LIST"` and pass one operand per call.
+    (Unquoted **command substitution** `$(cmd)` does split under both, but still breaks on
+    whitespace within an element.)
   - `${!var}` indirect expansion — bash-only; aborts the whole snippet under zsh with
     `bad substitution`. Distinguish unset from empty by exit status instead:
     `if val=$(printenv "$var"); then …` (rc 1 = unset, rc 0 + empty = set-but-empty).
+  - `${PIPESTATUS[…]}` — bash-only; zsh spells it `pipestatus` and leaves the uppercase
+    name unset, so `rc=${PIPESTATUS[0]}` expands empty and a `${rc:-0}` default reads as
+    success. This inverts rather than empties the result: the guard emits an affirmative
+    *pass* for a command that failed. Drop the pipeline from any status-bearing probe —
+    redirect to a file and read `$?`, or run the command bare.
+  - **Glob qualifiers** (`(N)`, `(.)`) — zsh-only, and when `bareglobqual` is off
+    (verified off in an agent shell, zsh 5.9) they are *reparsed*, not ignored: `(N)`
+    becomes a pattern group matching a literal `N`, so `*.md(N)` silently means "files
+    ending `.mdN`". It then reports `no matches found` on a directory full of `.md`
+    files, and — worse — matches the *wrong* files with status 0 once a `.mdN` exists.
+    Never let a composed command depend on a glob qualifier or on `nullglob`/`failglob`
+    state; enumerate with `find … -print` fed through `while IFS= read -r`, which cannot
+    conflate "nothing matched" with "pattern unsupported".
+  - **A verdict that contradicts the output it summarizes indicts the guard, not the
+    output.** Re-derive the status with a dialect-independent construct before believing
+    a green whose own captured output reports a failure.
 - **Target bash 3.2** for any hook or script that may run under the macOS
   system bash (`/bin/bash`). Avoid bash-4+ builtins — `mapfile`/`readarray`,
   associative arrays (`declare -A`), `${var^^}`/`${var,,}` case conversion,
@@ -139,14 +163,176 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
 - **On macOS/BSD, options are not reordered after the first operand.** `mv src -v`
   treats `-v` as the *destination*, silently renaming `src` to `./-v` — GNU would
   read it as a flag. Put flags before operands, or terminate options with `--`.
+- **Never pass a variable pattern as a bare `grep` operand — use `grep -e "$pat"`.** A
+  pattern beginning with `-` is parsed as options; unlike the BSD rule above this is POSIX
+  everywhere, and the pattern already *is* before the operand. The failure is bimodal and
+  the quiet half is the dangerous one: an unrecognized letter aborts loudly (`grep "-Werror"
+  f` → rc=2, `invalid option -- W`), but a pattern that happens to *be* a valid option is
+  consumed as one — the file operand then becomes the pattern and `grep` reads **stdin**, so
+  `grep "--color" f` and `grep "-x" f` return rc=1 with empty stdout *and* empty stderr. A
+  needle scores a false MISSING for its first character alone, and an interactive stdin
+  hangs rather than returns. `-e` binds the next word as a pattern in any position; `--`
+  also fixes it but demotes every later word to an operand, so a trailing `-r` silently
+  becomes a filename. Applies to any tool taking a pattern or path operand from a variable.
 - **Run only commands with a known, intended effect** — never a speculative "guard"
   line whose parse you have not verified; on BSD a stray flag lands as an operand
   and mutates the filesystem.
+- **Never use PCRE shorthand escapes in an `awk` / POSIX-ERE pattern** — `\S`, `\s`,
+  `\d`, `\w`, `\b` do not exist in ERE. `awk` treats the unknown escape as the escaped
+  *literal* character, so `type:[[:space:]]*\S` silently becomes "…then a literal `S`":
+  syntactically valid, no stderr warning, exit status 0, and zero matches. Use bracket
+  expressions — `[^[:space:]]`, `[[:space:]]`, `[0-9]`, `[A-Za-z0-9_]` — or reach for
+  `grep -E` / `perl` when genuine PCRE semantics are required.
+- **Never carry a verdict in an `awk` rule body's `exit N` when `END` also exits with an
+  argument.** `exit` in a rule body stops reading input but *falls through to `END`*, and
+  an argument-bearing `END { exit 1 }` replaces the status — so the qualifying and
+  rejecting branches converge on one code, yielding a silent all-reject. Set a flag and
+  let `END` compute the verdict; an arg-less `exit` preserves the rule-body status:
+
+  ```awk
+  /qualifies/ { ok = 1; exit }   # stop reading, fall into END
+  END { exit !ok }
+  ```
+
+  Identical in BSD `awk` and `gawk` — POSIX semantics, not a vendor quirk.
+- **`awk`'s `ENVIRON[]` and `-v` / `var=val` assignments are disjoint — `export` anything you
+  intend to read through `ENVIRON[]`.** `ENVIRON[]` exposes only the *process* environment, so a
+  `-v name=val` option or a command-line `name=val` operand never appears in it and
+  `ENVIRON["name"]` expands to the empty string: valid program, empty stderr, rc=0. **Inverse
+  polarity to the two `awk` traps above** — the empty value propagates as a plausible one, so
+  `substr($0, start, ENVIRON["LEN"])` yields a **zero-length** needle and `grep -qF -e ""`
+  matches every input, turning a per-item check into a *unanimous pass it never performed*. A
+  length guard catches this only if it treats len 0 as a defect, not a short value. Read a `-v`
+  variable by its bare name; export anything `ENVIRON[]` must see.
+
+  ```bash
+  awk '{ print ENVIRON["LEN"] }' LEN=5 f   # WRONG — empty; operand is not in the environment
+  LEN=5 awk '{ print ENVIRON["LEN"] }' f   # CORRECT — exported into the process environment
+  ```
+
+- **Prefix `command` on any tool call whose clean/zero result is load-bearing.** A bare
+  name resolves to a shell function or alias *before* the binary, and an agent shell may
+  wrap a standard tool to re-exec a **different engine** with implicit options the caller
+  never passed (file filtering, dialect changes). Identical flags then diverge in
+  semantics, and the divergence surfaces as a **missing match, not an error** — empty
+  output, empty stderr, so a gate reads clean. `type <name>` reporting only an alias is
+  not a clearance: a non-interactive shell skips alias expansion yet still honors the
+  function. Probe both layers before trusting a zero:
+
+  ```bash
+  declare -f grep                       # the alias can hide a function behind it
+  grep --version; command grep --version  # different engines print different banners
+  ```
+
+- **Treat any zero / all-reject result from a matcher or a file enumeration as unproven
+  until a positive control moves the count.** Every *status-0* silent-zero mechanism here
+  — the two `awk` ones, a reparsed glob qualifier, and a shadowed command name — yields a
+  valid program, empty stderr, and status 0, so a broken matcher is indistinguishable from
+  a real finding. Feed one input known to qualify and confirm the count changes.
+  - **Run the control in the same invocation form as the real scan, in the same command.**
+    A control run bare while the scan runs `command`-prefixed (or the reverse) certifies
+    an engine the scan never used — it proves nothing about the result being cleared.
+  - **A loud per-invocation failure still lands as a silent all-reject when the caller
+    keeps only stdout.** `out=$(parser "$f")` in a per-file loop discards both status and
+    stderr, so a parser that aborts on *every* input returns an empty string every time
+    and each file falls into the default bucket. The tool is screaming; the call site sees
+    a clean empty result. Never infer "no match" from empty stdout alone — branch on the
+    status (`out=$(parser "$f") || return`) and keep the positive control.
+  - **Require the control to reach a known *true* count, not merely a changed one.** A
+    truncated aggregate still moves 0 → 1, so a "the count changed" criterion clears while
+    the number stays false; conversely a control demanding "> 1" is unsatisfiable against a
+    capped counter and reads as a permanent failure to explain away. A plausible wrong
+    number is worse than a missing one — nothing in its shape signals corruption — so
+    confirm the counting flag's own semantics before any count becomes evidence.
+- **Never let `}` directly terminate a `sed` command that takes an optional argument**
+  (`q`, `Q`). BSD/macOS `sed` reads the brace as trailing text of the argument and aborts
+  the entire script with `extra characters at the end of q command` — whether or not any
+  command follows the block, so "only when more commands follow" is the wrong trigger to
+  memorize. Close with `;` or a newline inside the brace: `sed -n '1{/^x$/!q;}'`, never
+  `sed -n '1{/^x$/!q}'`. GNU accepts both spellings, so the script passes on Linux CI and
+  aborts on macOS. Prefer `awk` outright for frontmatter/range extraction.
 - **Never emit `sed -i` for an in-place edit.** BSD/macOS `sed` requires an explicit
   backup-suffix argument, so the GNU spelling `sed -i 's/a/b/' file` consumes the
   script as the suffix and fails. Use `perl -pi -e 's{a}{b};' file` — identical
   semantics on both platforms, no platform branch, and `{}` delimiters avoid escaping
   slashes in paths. Reserve `sed` for read-only stream transforms.
+- **Never write `\|` alternation in a BRE — pass `-E` and use `(A|B)`.** POSIX BRE has
+  no alternation operator, and BSD/macOS `sed` reads `\|` as a **literal pipe**, so
+  `s/^\(A\|B\): //` matches only the three-character run `A|B` and leaves every intended
+  line byte-identical, rc=0, empty stderr. GNU implements `\|` as an extension, so the
+  same script strips correctly on Linux CI and silently no-ops on macOS. **A different
+  failure mode from the two `sed` traps above:** those abort at the tool (loud unless a
+  `$(…)` call site keeps only stdout), whereas a no-op substitution is indistinguishable
+  from a correct pass-through — a *wrong result*, not an error, consumed as data with
+  nothing to diagnose. A prefix that silently survives normalization makes every entry
+  miss its counterpart downstream, inverting the verdict for an entire source. Check
+  which of the two you face before reaching for a diagnostic: gate any load-bearing
+  normalization on a positive control proving the transform actually fired.
+- **Never escape `|` in an ERE (`grep -E`, `grep -rE`, `awk`) — `\|` is a literal pipe.**
+  The exact inverse of the BRE rule above, with the same silent failure: `'a\|b\|c'` under
+  `-E` is not "a or b or c" but the single literal `a|b|c`, so one keystroke kills every
+  alternative at once. Valid pattern, empty stderr, rc=1 — a **unanimous zero** across every
+  file searched, indistinguishable from genuine absence and readily misread as "these records
+  are missing", manufacturing work to restore what was never gone. The two characters mean
+  opposite things in the two dialects, so the habit carried either direction disables the
+  match with no diagnostic. Prove any alternation pattern live before its *zero* becomes a
+  verdict (positive-control rule above); a zero unanimous across several independent
+  alternation patterns indicts the pattern syntax first, the data only after the control fires.
+- **Never pair `-l` with `-c` in one `grep` — BSD silently caps every count at 1.** The
+  flags contradict in intent and neither implementation rejects the pair; `-l`
+  short-circuits each file at its first match, so the counter never advances past it. On
+  BSD/macOS a file containing the term twice reports `file:1`, and the stream *interleaves
+  both output shapes* — `file:count` lines plus bare filename lines — so a consumer
+  splitting on `:` mis-parses the bare names. Flag order (`-lc` / `-cl`) changes nothing;
+  rc=0, empty stderr. The platform split runs **opposite** to the `sed` traps above: GNU
+  degrades safely (`-l` wins, no number printed at all), so the plausible-but-false count
+  is the macOS-only outcome and Linux CI looks clean. Pick the flag matching the question
+  — `-l` for which files, `-c` for how many — and run two invocations when both are wanted.
+- **Never let a line-oriented matcher's zero stand over hard-wrapped prose — its matching
+  unit is the line, so a needle spanning a wrap can never hit.** A quoted phrase longer than
+  the columns left on a wrapped line is broken by a newline plus leading indent, so no single
+  line holds it: valid pattern, empty stderr, rc=1 — indistinguishable from genuine absence,
+  and *load-bearing* wherever the zero certifies "not stated here" and gates a deletion. The
+  mismatch is systematic, not occasional: prose is wrapped to a column budget by convention
+  while the phrases quoted out of it are not, so the two are mismatched by construction.
+  Normalize the unit up to the needle first — `tr '\n' ' ' | tr -s ' '` — and run **both**
+  controls in that same normalized form, since collapsing structure the needle relied on can
+  turn a false zero into a false positive. **Count that normalized stream with `grep -o … |
+  wc -l`, never `-c`:** normalizing collapses the file to one line and `-c` counts *matching
+  lines*, so it caps at 1 however many occurrences exist — leaving the known-true-count rule
+  above unsatisfiable by construction rather than by any defect, one counting fix silently
+  installing the next. General form of the trap: the matcher's unit must be at least as large
+  as the needle, and a count is evidence only where its counting unit survives every transform
+  applied upstream of it.
+- **`printf` silently re-runs its format string when arguments outnumber conversion
+  specifiers — make the argument count an exact multiple of the specifier count.**
+  `printf '%s=%s\n' a 1 b 2` emits *two* rows, not one; `printf '%s\n' x y z` emits three.
+  rc=0, empty stderr, identical across the `bash`/`zsh`/`sh` builtins and `/usr/bin/printf`,
+  so nothing marks the surplus rows as unintended. **Inverse polarity to every zero-trap
+  above:** the count comes out too high, not too low, so a row-counting probe reporting `2`
+  where the loop ran once reads as corroboration rather than corruption — the
+  plausible-wrong-number rule applies with its sign flipped, and a doubled count is the very
+  shape a positive control is hoping to see. Emit one record per call, or assemble the line
+  in a variable and print it with a single `%s\n`.
+- **Never pair `|| echo <default>` with a command that prints its result on the non-zero
+  path.** The idiom assumes non-zero means *failed, emitted nothing* — true where exit
+  status signals an **error**, false where it is a **predicate about the result**, whose
+  failure path is a successful run that found nothing and already printed. `grep -c`
+  writes `0` *and* returns rc=1, so `n=$(grep -c -e "$pat" f || echo 0)` appends instead
+  of substituting and `n` becomes the two-line string `0\n0`. `[ "$n" -eq 0 ]` then exits
+  **2** (`integer expression expected`) — neither true nor false, so the misfire
+  direction is set by the guard's polarity, not by the data: `[ … ] && flag` skips the
+  branch and scores the item clean, `if [ … ]; then … else flag; fi` takes the `else` and
+  flags a present item, and under `set -e` the 2 aborts the run mid-loop. **Third
+  polarity of the counting traps above:** not too low, not too high, but *non-numeric* —
+  and the corruption (`0`, then `0`) is the exact digit the fallback existed to supply,
+  so the tally reads plausibly either way. Classify the status before writing any
+  fallback (`diff` is predicate-status too — it prints the delta *and* returns 1), then
+  capture output and default only on genuine emptiness:
+
+  ```bash
+  n=$(command grep -c -e "$pat" "$file"); n=${n:-0}
+  ```
 
 ## Apply or Report
 

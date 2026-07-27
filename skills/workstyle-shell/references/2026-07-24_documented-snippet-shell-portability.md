@@ -3,9 +3,15 @@ skill: wk-workstyle-shell
 class: principle
 ---
 
-**Rule** — Keep any snippet a skill documents for the agent to run portable across
-bash *and* zsh. Two verified traps: `for x in $LIST` (unquoted parameter expansion) and
-`${!var}` (indirect expansion).
+**Rule** — Keep every shell command the agent runs portable across bash *and* zsh. Two
+verified traps: `for x in $LIST` (unquoted parameter expansion) and `${!var}` (indirect
+expansion).
+
+**Scope widened (superseding this file's original wording)** — first stated as "any
+snippet a skill documents", which a later run read past: the failing command was one the
+agent composed ad-hoc, not a documented snippet. The mechanism is a property of the
+shell, not of the authoring context, so the rule now covers documented and ad-hoc
+commands alike.
 
 **Why** — The agent's shell is not guaranteed to be bash. Verified by reproduction
 under zsh 5.9:
