@@ -2,7 +2,7 @@
 
 > Use when working with Buildkite CI — checking build status, investigating failures, viewing job logs, or monitoring builds after push.
 
-**Version:** `2026.07.24-235129`
+**Version:** `2026.07.27-232055`
 
 ## Invocation
 
@@ -22,7 +22,7 @@ flowchart TD
     D -->|OK| F[Canonical build query<br/>bk build view --json]
     F --> G{Goal}
     G -->|Status check| H[Filter failed/broken jobs<br/>Report summary]
-    G -->|Investigate failure| I[Step 1: overall status<br/>Step 2: fetch job logs<br/>Step 3: classify exit code<br/>Step 4: check if pre-existing on main]
+    G -->|Investigate failure| I[Step 1: overall status<br/>Step 2: fetch job logs<br/>Step 3: classify infra vs. code<br/>Step 4: classify exit code<br/>Step 5: check if pre-existing on main]
     G -->|Monitor after push| J[bk build view → state<br/>Report running/passed/failed]
     G -->|Cancel build| K{Inside build?}
     K -->|Yes| L[buildkite-agent build cancel]
@@ -39,5 +39,6 @@ flowchart TD
 - **Env vars must be forwarded at every layer** (pipeline YAML → build script → docker-compose → Dockerfile `ENV`) or they are silently dropped before reaching the container.
 - **Artifact downloads use a namespaced path** `/tmp/agent/buildkite/<build>/<job_id>/...` to prevent cross-session overwrites and provide a greppable audit trail.
 - **Never foreground-poll** — an `until`/`while` loop on `bk build view` blocks the turn for minutes; run a single status check, or watch with `run_in_background: true`.
+- **An agent-side failure wears the step’s own name.** `job_executor_error`, a failed `agent environment` hook, or a lost agent is stamped with the step name and a synthetic exit status (255/-1), so the check list is indistinguishable from a real test failure — only the log body separates them. The tell is position: it prints *before* the step’s command runs. Retry the single job; never bisect the diff.
 - **A GraphQL-only token blocks `bk job retry`** ("mutation operations are not allowed") but not `bk build rebuild <n> -p <pipeline> -y` — try the rebuild before treating it as an auth failure.
 - **A monitoring announcement carries URL + failing step + next action** — never just "monitoring in background"; the user must be able to tell whether the failure is already identified. Non-required checks (security scanners, dep bots) never gate a merge — gate only on GitHub `required == true` checks (pr-merge Step 2 owns this).

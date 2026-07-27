@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.07.24-235129'
+  version: '2026.07.27-232055'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -185,8 +185,35 @@ Progressive disclosure pattern:
 
 1. **Overall status:** canonical build query, selecting only `failed` jobs, extracting `{name, exit_status}`.
 2. **Logs for failed jobs:** fetch and analyze. Look for error messages/stack traces, exit codes (below), file paths/line numbers, missing dependencies or commands.
-3. **Common CI exit codes** (below).
-4. **Check if pre-existing:** canonical build query against `-b main`, selecting the specific failing step by name.
+3. **Classify infra vs. code** (below) *before* attributing the failure to the diff.
+4. **Common CI exit codes** (below).
+5. **Check if pre-existing:** canonical build query against `-b main`, selecting the specific failing step by name.
+
+### HARD RULE: classify infra vs. code before attributing a red build to the diff
+
+An agent-side failure is reported under the **step's own name** with a synthetic
+exit status, so the GitHub check list and `bk build view` render it identically to
+a genuine test failure — step name plus a plausible non-zero status. Only the log
+body separates them. Read it before bisecting anything.
+
+- The tell is **position**: the failure prints *before* the step's command runs.
+  A failure inside the agent's own environment hook never reached your code.
+- Treat any of these markers as infrastructure — retry, do not touch the diff:
+  - `Error setting up job executor` / `job_executor_error`
+  - `updating command exit code -1`
+  - any failure inside `Running agent environment hook` or a `pre-exit` hook
+  - agent lost / instance terminated / unhealthy-instance indicators
+- Retry the **single job**, not the whole build — `bk job retry <job-uuid>`; token
+  caveat and the `bk build rebuild` fallback live in
+  [Retrying a failed build](#retrying-a-failed-build).
+- Only once the log shows the step's command actually executed does the failure
+  read as signal about the change.
+- Retry succeeded with no code change → that *is* the classification, recorded.
+  Retry fails identically twice → infra-side but not transient; stop diagnosing
+  per [Auth Error Handling](#auth-error-handling).
+- Reading a raw REST log payload instead (only under [Tool Selection](#tool-selection)) →
+  strip ANSI escapes **and** inline `_bk;t=<epoch-ms>` timestamp markers first;
+  the tail is unreadable with either left in.
 
 ### Common CI Exit Codes
 
@@ -198,6 +225,7 @@ Progressive disclosure pattern:
 | 127 | Command not found |
 | 137 | OOM killed |
 | 143 | SIGTERM — job killed (spot-instance reclaim / agent shutdown). If the step's real work already printed success, treat as infra noise, not a code failure: rebuild once, do not diagnose the diff. |
+| 255 / -1 | Synthetic, not the command's own status — an agent-side setup failure is stamped with it under the step's name. Classify from the log (above) before reading it as a code failure. |
 
 ## Reading upstream step status from a downstream step
 
@@ -339,6 +367,7 @@ When saving any Buildkite artifact to disk — build JSON, job logs, artifact fi
 | Cancel from within a build | `buildkite-agent build cancel` (no token needed) |
 | Cancel from outside a build | REST API `PUT .../builds/{n}/cancel` with `write_builds` token |
 | Claim rests on one specific job | Per-job view; cite build number + that job's `exit_status`, never the rollup |
+| Log shows `job_executor_error` / env-hook failure | Infra, not the diff — `bk job retry <job-uuid>`, leave the code alone |
 | Saving any `bk` payload to disk | Use `/tmp/agent/buildkite/<build>/...` |
 
 ---
