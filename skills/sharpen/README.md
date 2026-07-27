@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.27-195553`
+**Version:** `2026.07.27-201552`
 
 ## Invocation
 
@@ -149,6 +149,15 @@ flowchart TD
   positive, the *addition* is the next target rather than the last resort — a draft's first
   size is an estimate, not a requirement, and it is the only lever that cannot endanger
   existing load-bearing content.
+- **A fold that rewrites a gate governing its own landing is bound by the stricter of the
+  pre-edit and post-edit text.** Every other fold's rules and its target are independent, so
+  "apply the skill as written" has one referent; it has two only when the edit rewrites the
+  rule deciding that edit's own admissibility. A loosened rule takes effect on the next run
+  once installed — never on the run that writes it — which is the same installed-vs-worktree
+  distinction the escalation gate already applies in the punitive direction. This is also the
+  case where the permissive reading is most attractive and least checkable: a loosened rule's
+  first beneficiary is the run that loosened it, and the commit looks fully compliant under
+  its own new text. The run report records which reading was applied.
 - **A unanimous verdict at any memory-scan stage indicts the tooling, not the files** — and the
   two stages fail in opposite directions, so neither guard generalizes to the other. All-reject
   at the parse gate under-reports as a false *empty*, which is the more dangerous half: it

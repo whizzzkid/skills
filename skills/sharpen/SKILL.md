@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-195553'
+  version: '2026.07.27-201552'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -144,6 +144,7 @@ behavior, not just the specific instance.
 
 - Skip Step 4 for `one-off` lessons.
 - Locate the edit target: a new step, a missing check, a wrong instruction, or a new HARD RULE.
+- **Edit target is a gate governing this fold's own landing → apply the stricter of its pre-edit and post-edit text**, and record which in the run report; a loosened rule takes effect next run, once installed.
 - Format the update as instructions, not narrative — heading, then what to do (imperative), why it matters, how (commands or checks).
 
 ## Step 5: Audit the Full Skill
@@ -170,7 +171,7 @@ behavior, not just the specific instance.
   ```
 
   - **Index already holds another run's fold → never `git add` yours into it.** Throwaway-index procedure: [`references/byte-budget.md`](references/byte-budget.md).
-- Hand-roll only what no hook covers: **staged path strings**. Anonymize every hit. Scan mechanics: [`references/staged-path-scan.md`](references/staged-path-scan.md).
+- Hand-roll only what no hook covers: **staged path strings**. Anonymize every hit.
 
 ## Step 6: Present for Review
 
@@ -242,7 +243,6 @@ Do not return control until all five pass:
 2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing; a shipped-code edit must never reach the commit gate unrun. Red result → apply the Step 1 harness-defect rule.
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Recovery for a blocked commit, signing failure included: [`references/commit-gate.md`](references/commit-gate.md).
-   - On signing failure, stop and ask the user for an interactive signer unlock — never loop on commit, re-stage, or re-distill.
    - Anti-thrash ≠ gate discharge: an inherited fold's gates are **unrun** until the tree records otherwise — run the shipped-code suite and the owning hooks (Step 5 throwaway index), and leave the index partitioned as the prior run left it.
 4. **Push once:** after all commits exist, push a single time.
 5. **Clean tree:** no modified tracked path in `git status --short` — untracked *unprocessed* learnings/retros are expected state, never debris to delete.
