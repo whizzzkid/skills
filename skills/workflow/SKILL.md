@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.24-224708'
+  version: '2026.07.27-223148'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -76,12 +76,11 @@ The Phase 1 plan is the session contract.
 Skill(wk-plan, args="<task from session context>")
 ```
 
-- If `wk-plan` already produced an approved plan this session, skip Phase 1 and execute it.
+- **Plan supplied by the user, or `wk-plan`'s from this session → never re-plan it; supplying it is the approval.** Validate only — references resolve, order still valid, nothing already done — fix stale references in place, then start Phase 2.
 - If `wk-plan` surfaced unanswered questions, resolve them before proceeding.
-- Do not re-plan inline after an approved plan exists.
 - **Complex task → advisor:** when `wk-plan` flags the task complex (non-obvious architecture, unresolved failure mode, high blast radius), consult the `advisor` server tool before committing and fold its advice in. Reserve for real uncertainty, after orienting (not turn 1); skip when the beta tool is absent. See [`references/advisor-tool.md`](references/advisor-tool.md).
 
-**HARD RULE — wait for plan approval before the first Edit/Write/Bash write-action (incl. fetching/reading *for* the build once it commits to a direction), any size.** Size-independent in BOTH directions: neither "small/2-line/obvious" nor "large/exciting/obviously-right — let me build" (momentum) waives it. Present-plan → wait-for-approval → execute.
+**HARD RULE — wait for plan approval before the first Edit/Write/Bash write-action (incl. fetching/reading *for* the build once it commits to a direction), any size.** Size-independent in BOTH directions: neither "small/2-line/obvious" nor "large/exciting/obviously-right — let me build" (momentum) waives it. Present-plan → wait-for-approval → execute; a plan the user supplied arrives approved.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.07.24-224708`
+**Version:** `2026.07.27-223148`
 
 ## Invocation
 
@@ -51,7 +51,8 @@ flowchart TD
 - **Phase 1 delegates to [`wk-plan`](../plan/README.md)** — all planning gates and probes live there:
   Jira pre-flight, user-provided artifact first, prefactor probe, intra-file duplication probe,
   spec pre-flight, new-capability probe, rule-set doc sync probe, tool-swap flag-parity probe,
-  and producer-audit probe.
+  and producer-audit probe. A plan the user supplies — or one produced earlier this session —
+  is never re-planned: it is validated for stale references, then executed from Phase 2.
 - **Artifact sync with code changes** — a commit changing logical structure must update spec,
   plan, inline comments, test names, and any ADR in the same commit (mechanics in
   [`references/doc-sync-mechanics.md`](references/doc-sync-mechanics.md)). No deferred rewrites.
