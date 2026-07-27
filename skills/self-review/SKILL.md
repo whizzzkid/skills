@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.22-215511'
+  version: '2026.07.27-203326'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -379,6 +379,15 @@ New commits pushed to a PR that already has self-review comments:
    (`gh pr view --json headRefOid`); on mismatch, run
    `DELETE /pulls/{n}/reviews/{id}`, then re-stage a fresh pending review
    anchored to the new HEAD SHA.
+   - **`commit_id` is only one drift axis — check the comments too.** Anchors rot
+     while a review is still nominally current, so compare each comment's
+     `position` against its `original_position`. A mismatch on either axis means
+     delete and re-stage.
+   - A pending comment reports `line: null`, so `position`/`original_position`
+     are the only usable drift signal — never gate comment staleness on `line`.
+   - **Preserve every comment body before the DELETE.** Write them to a temp file
+     with the **Write tool** first: the delete becomes safe, and the re-staged
+     version can correct any bullet that went factually stale meanwhile.
 3. **Add new comments** for any critical changes introduced by the new commits.
 4. Present the updated comment set for approval before posting.
 
