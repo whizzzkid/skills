@@ -36,6 +36,15 @@ git diff --cached --name-only | command grep -iEf .skillprohibit
     is by construction a prohibited term, so writing it to a path trips the very hook under
     test and pollutes the tree.
 
+**Never reimplement an owning hook's matcher** — run the script itself against the staged
+index:
+
+- A hook's pattern file is the script's **private config** — often gitignored, so comment
+  style and matcher constructs (PCRE `(?i)`) vary per checkout. A hand-rolled `grep -iEf`
+  then returns a silent NONE — rc=1, no stderr — on a term the hook flags.
+- **Never audit comment style to license a hand-roll.** The governing risk is the
+  false-*clean*, and comment style is no evidence against it.
+
 **Why** — Content hooks grep the diff and the commit message, never filenames, so a
 prohibited term living in a slug or filename ships clean. Pick a generic slug for a
 prohibited-subject lesson up front; never derive it from the subject. Scrub staged

@@ -60,3 +60,11 @@ hunt stopped after the one proven target rather than widening into load-bearing 
 
 **Where** — `SKILL.md` → Step 7.5 de-bloat HARD RULE (positional constraint stated) and the
 size-ceiling reclaim search order (cross-reference forward).
+
+**Amended 2026-07-27 — the rule is about the pointer, not the content.** The
+reading-order objection holds for a *deletion* (the surviving statement is elsewhere and
+later). A *relocation* is exempt whenever the surviving pointer is written into the bullet
+the block was cut from: the rule stays reachable at exactly the position it occupied.
+Reserve the protection for content that cannot be pointed at from its own position — a
+gate's enumerated pass/fail checks, a verification checklist. See
+[`2026-07-27_pointer-at-cut-site.md`](2026-07-27_pointer-at-cut-site.md).

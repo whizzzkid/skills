@@ -8,6 +8,13 @@ The gate's enumerated pass/fail checks stay inline in `SKILL.md`; this file carr
 recovery procedure for each specific way the commit can be blocked. Relocated because
 these are per-hook catalog rows, not gate checks — a gate is never moved behind a pointer.
 
+## Signing failure — a listed key is not signing capability
+
+- `ssh-add -l` listing an agent key proves the agent holds it, **not** that it can sign.
+  Only a completed signed commit proves signing capability.
+- Stop and ask for an interactive signer unlock; looping on commit, re-staging, or
+  re-distilling cannot recover a locked signer.
+
 ## Re-check the index after any hook-blocked commit
 
 - A hook that rejects the commit leaves the index as-is, but a scrubbing hook

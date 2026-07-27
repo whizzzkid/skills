@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-184657'
+  version: '2026.07.27-191345'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -163,13 +163,13 @@ behavior, not just the specific instance.
 - Apply replacement maps longest-first.
 - Reject ticket-shaped example tokens. Grep case-sensitive (never `-i` — it widens to `Word-Number` noise (`Step-5`)) against `[A-Z][A-Z0-9]+-\d+`; any match — even an invented placeholder — trips the `check-ticket-refs` hook, which matches shape, not provenance. Replace with `<child-key>`/`<KEY>` or the repo's `BOARD-NUM` form.
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
-- **CRITICAL — run the owning hook scripts against the staged index; never reimplement their matcher.** Same flags ≠ same engine; a pattern file is the script's private config — often gitignored, so comment style and matcher constructs (PCRE `(?i)`) vary per checkout. A hand-rolled `grep -iEf` can return a silent NONE — rc=1, no stderr — on a term the hook flags. Never audit comment style to license a hand-roll; the governing risk is the false-*clean*. Run every hook after staging → real gate semantics, no synthetic probe:
+- **CRITICAL — run the owning hook scripts against the staged index; never reimplement their matcher.** Same flags ≠ same engine; the governing risk is the false-*clean*: [`references/staged-path-scan.md`](references/staged-path-scan.md). Run every hook after staging → real gate semantics, no synthetic probe:
 
   ```bash
   for h in .githooks/check-*.sh .githooks/scrub-staged.sh; do "$h" || echo "FAIL: $h"; done
   ```
 
-  - **Index already holds another run's fold → never `git add` yours into it.** Stage-then-`git reset` is no repair: reset cannot restore which paths were staged. Copy the index, stage and run there; the same copy serves the Step 7.5 measure, keeping `measure()` verbatim. Commands: [`references/byte-budget.md`](references/byte-budget.md).
+  - **Index already holds another run's fold → never `git add` yours into it.** Stage-then-`git reset` is no repair: reset cannot restore which paths were staged. Throwaway-index procedure: [`references/byte-budget.md`](references/byte-budget.md).
 - Hand-roll only what no hook covers: **staged path strings**. Anonymize every hit. Scan mechanics: [`references/staged-path-scan.md`](references/staged-path-scan.md).
 
 ## Step 6: Present for Review
@@ -214,7 +214,7 @@ behavior, not just the specific instance.
 - Run on **every** sharpening, not only when a learning prompts it.
 - **Bulletize, do not compress prose.** One rule per line, imperative voice, `→` for causality, drop articles/connectives in procedural text.
 - State a rule once; cross-reference instead of restating; cut explanatory filler.
-- **Merging duplicates → keep the occurrence a run reaches first, cross-reference forward.** Deleting a rule's earliest statement moves it later in reading order — the defect a reachability fold exists to fix.
+- **Merging duplicates → keep the occurrence a run reaches first, cross-reference forward.** Deleting a rule's earliest statement moves it later in reading order — the defect a reachability fold exists to fix. Relocation is exempt: write the pointer at the cut site and the rule stays reachable where it was.
 - **Preserve every rule, failure mode, and command.** Reject any edit that drops a HARD RULE, error code, or failure-mode explanation.
 - Re-run the Drift check after de-bloat edits land.
 
@@ -226,6 +226,7 @@ behavior, not just the specific instance.
   - **Search duplicates first, relocate last, prose-tighten only for the final margin.**
   - **Never reclaim a rule's earliest statement** — score duplicates by reading order; only the later occurrence is deletable.
   - **Grep `references/` for a recorded stay-inline / rejected-relocation note before proposing any relocation.**
+  - **A target rejected purely on reading order is mis-tested, not exhausted** — re-test it under a cut-site pointer before recording the pool exhausted or the ratio unreachable.
 - **Measure the staged body BEFORE drafting any content-adding fold.** Headroom under ~2× the edit → budget ≥2 reclaim targets up front whose *combined NET* exceeds the edit by ≥1.2×.
   - **Budget the fold PLUS an audit-cleanup allowance** (~25%/floor ~300 B) and size reclaim against that total. Run the Step 5 audit first → **measured** cleanup replaces that estimate, often **0 B**.
   - **Binding gate = net non-positive AND under every ceiling; the 1.2× ratio is the planning target.**
@@ -241,8 +242,9 @@ Do not return control until all five pass:
 1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — success = `Done!` or `Installed <N> skills` (accept either marker). Prefix the explicit `cd`; the Bash cwd persists across calls, so a `cd` from an earlier step can leave a `.`-relative install in the wrong dir ("No valid skills found").
 2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing; a shipped-code edit must never reach the commit gate unrun. Red result → apply the Step 1 harness-defect rule.
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
-   - Recovery for a blocked commit: [`references/commit-gate.md`](references/commit-gate.md).
-   - On signing failure, stop — don't loop on commit, re-stage, or re-distill; ask the user for an interactive signer unlock. A listed agent key (`ssh-add -l` ok) ≠ signing capability; only a completed signed commit proves it. Anti-thrash ≠ gate discharge: an inherited fold's gates are **unrun** until the tree records otherwise — run the shipped-code suite and the owning hooks (Step 5 throwaway index), and leave the index partitioned as the prior run left it.
+   - Recovery for a blocked commit, signing failure included: [`references/commit-gate.md`](references/commit-gate.md).
+   - On signing failure, stop and ask the user for an interactive signer unlock — never loop on commit, re-stage, or re-distill.
+   - Anti-thrash ≠ gate discharge: an inherited fold's gates are **unrun** until the tree records otherwise — run the shipped-code suite and the owning hooks (Step 5 throwaway index), and leave the index partitioned as the prior run left it.
 4. **Push once:** after all commits exist, push a single time.
 5. **Clean tree:** no modified tracked path in `git status --short` — untracked *unprocessed* learnings/retros are expected state, never debris to delete.
 

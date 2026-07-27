@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.27-184657`
+**Version:** `2026.07.27-191345`
 
 ## Invocation
 
@@ -136,7 +136,11 @@ flowchart TD
   recorded stay-inline decision is honored rather than reopened under ceiling pressure.
   Duplicates are scored by reading order: only the *later* occurrence is deletable, because
   removing a rule's earliest statement moves it later and recreates the reachability defect
-  the reading-order fixes exist to prevent. When that pool is exhausted and the net is still
+  the reading-order fixes exist to prevent. Relocation is exempt from that objection — it
+  bites only when the surviving pointer sits later, so writing the pointer into the bullet
+  the block was cut from leaves the rule reachable exactly where it was. A target rejected
+  purely on reading order is therefore mis-tested rather than exhausted, and is re-tested
+  under a cut-site pointer before the pool is declared empty. When that pool is exhausted and the net is still
   positive, the *addition* is the next target rather than the last resort — a draft's first
   size is an estimate, not a requirement, and it is the only lever that cannot endanger
   existing load-bearing content.

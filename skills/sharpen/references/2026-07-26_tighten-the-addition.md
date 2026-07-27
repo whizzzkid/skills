@@ -68,3 +68,10 @@ hunt stopped rather than widening.
 **Where** — `SKILL.md` → Step 7.5, immediately after the binding-gate bullet. The ordered
 search gains it as entry 5, with the two draft-audit categories, in
 [`byte-budget.md`](byte-budget.md) "Where to look, in order".
+
+**Amended 2026-07-27 — "every category-1 candidate carries a recorded rejection" was a
+mis-test, not an exhausted pool.** Those rejections were scored against the candidates'
+content, so a cut-site pointer was never tried. Re-testing them under a cut-site pointer
+reopened targets both prior passes walked past. Do not read the "ratio unreachable at
+1.15x" record as evidence the pool is empty. See
+[`2026-07-27_pointer-at-cut-site.md`](2026-07-27_pointer-at-cut-site.md).
