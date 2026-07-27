@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.25-014131'
+  version: '2026.07.27-203036'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -472,8 +472,13 @@ Rules for the refresh:
 - Keep the title under ~70 chars; details belong in the body.
 - **Route through `wk-gh`.** Any `gh pr edit --body` issued by this skill ends
   with the canonical outbound footer per `wk-gh` Step 4 — emitted exactly once at
-  the end of the body. If the existing body already contains the footer, do not
-  duplicate it on edit.
+  the end of the body.
+- **Important:** a body sync is not complete until the footer gate runs on the
+  NEW body string — never the one it replaced. An inherited body is the usual
+  carrier of the wrong block: the commit-message trailer and the canonical
+  outbound footer open alike, so a carried-over trailer passes an "already has a
+  footer" glance. Match the exact canonical string; replace a trailer variant,
+  never preserve it.
 - Unsure whether a section is human- vs agent-authored → ask the user before
   overwriting. Better to ask once than clobber a hand-edited test plan.
 
