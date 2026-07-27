@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.24-235129'
+  version: '2026.07.27-180922'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -162,6 +162,14 @@ later submitted. Guard every reply post:
 - Never treat a `state: "PENDING"` response from a reply mutation as success —
   read the returned `state` and treat any non-published state as a failure needing
   remediation.
+- **A client-side JSON parse failure is not a write failure.** A successful
+  `POST /pulls/{n}/reviews` can return a body a strict decoder rejects (`Invalid
+  control character` — an unescaped control char inside a string field), so capture
+  the HTTP status separately from the body and never infer failure from the parse.
+  On any parse error re-query `GET /pulls/{n}/reviews`, filtering `state` and
+  `user.login`, to establish ground truth before retrying — a blind retry 422s
+  (`one pending review`) and reads as a second, unrelated bug. Re-parse leniently
+  (`json.loads(..., strict=False)`) rather than treating the response as garbage.
 - While the author's own review stays PENDING, its inline comments are not
   addressable via standard REST: `POST /pulls/{n}/comments` (inline reply) returns
   422 (`one pending review`), and `PATCH` on a comment belonging to that pending
