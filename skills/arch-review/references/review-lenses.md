@@ -42,6 +42,12 @@ answered, that gap is itself a finding.
   stable read:write ratio; synchronised clocks; single-region latency; team
   velocity; data fits in memory; eventually-consistent reads are acceptable to
   the product.
+- Cross-check every settled / resolved / "pin exactly" value against the rest of
+  the document set for the same value or concept marked pending / TBD — any hit
+  is a finding; leave the cell unresolved and name the item that resolves it.
+- Reject a consistency assertion whose two sides trace to the same literal; it
+  compares a guess against a copy of itself. Demand derivations from the named
+  source of truth over restated literals.
 
 ## Lens D — Scalability & Performance
 

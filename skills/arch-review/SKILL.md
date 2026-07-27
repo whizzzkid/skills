@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.17-164707'
+  version: '2026.07.27-202433'
   internal: false
   model:
     claude: claude-opus-4-8
@@ -124,6 +124,14 @@ exhaustive probe list. Summary:
   the empirical pass below) — the runtime to confirm the engine actually consumes
   it — "the config gates behavior" is Unverified until the dispatch code proves it,
   and specs often describe a capability the engine lacks.
+  - **Settled-vs-pending cross-check** — for every value in a section headed
+    settled / resolved / "pin exactly", grep the whole document set for that value
+    or concept marked pending / TBD / unresolved. Any hit is a finding: leave the
+    cell explicitly unresolved and name the item that resolves it.
+  - **A self-referential assertion proves nothing** — when both sides of a
+    consistency check trace back to the same literal, it compares a guess against a
+    copy of itself and passes green. Require every derived value stated as a
+    derivation (read from the named source of truth), never as a second literal.
 - **D · Scalability & Performance** — bottleneck at 10× and 100×; hot
   partition / hot key; O(n) or O(n²) hiding in a loop or fan-out; connection-pool
   and thread budgets; thundering herd on cold start or cache eviction; backpressure
