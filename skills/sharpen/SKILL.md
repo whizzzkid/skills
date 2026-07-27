@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-201552'
+  version: '2026.07.27-204318'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -129,7 +129,6 @@ behavior, not just the specific instance.
 - **Escalate only against *installed* text.** A rule strengthened only in an uncommitted worktree fold never steered the failing run — installed diverges from worktree → classify `already-covered (unshipped)` and spend no notch. Repeat tracing to the rule's *shape* → the framing fix is load-bearing; the notch only records it. Escalation evidence only — a *landing* check reads **worktree** bytes, never installed or a tool's rendering.
   - **Needle from the learning's own subject; a supplied slug→line map is an unverified hint.** Every line in a rewritten span is new → novelty proves no *particular* lesson landed. Print each match beside its slug.
 - Escalate exactly one notch up the 8-rung ladder: [`references/escalation-ladder.md`](references/escalation-ladder.md).
-- Record the bump in the reference file.
 - Treat an escalation as a principle edit.
 
 ### Classify: principle vs one-off
@@ -203,7 +202,7 @@ behavior, not just the specific instance.
 - `argument-hint` matches the current argument shape.
 - `allowed-tools` lists every tool the new edits reference.
 - Quick-reference table, Trigger table, and Step list match the body.
-- Recount any documented set from source, never increment; shape the probe to the source markup, prove it fires on a known member (mismatch → 0 = phantom drift).
+- Recount any documented set from source, never increment; shape the probe to the source markup, prove it fires on a known member, and prove a range probe's anchor **unique** before trusting its count (mismatch → 0 = phantom drift; a repeated anchor over-counts, and a member control cannot see it): [`references/recount-probe-bounds.md`](references/recount-probe-bounds.md).
 - Cross-references still resolve.
 - Examples reflect the post-edit behavior.
 - Fix every drift item in the same pass.
@@ -230,7 +229,6 @@ behavior, not just the specific instance.
   - **A target rejected purely on reading order is mis-tested, not exhausted** — re-test it under a cut-site pointer before recording the pool exhausted or the ratio unreachable.
 - **Measure the staged body BEFORE drafting any content-adding fold.** Headroom under ~2× the edit → budget ≥2 reclaim targets up front whose *combined NET* exceeds the edit by ≥1.2×.
   - **Budget the fold PLUS an audit-cleanup allowance** (~25%/floor ~300 B) and size reclaim against that total. Run the Step 5 audit first → **measured** cleanup replaces that estimate, often **0 B**.
-  - **Only a ceiling blocks. Net non-positive is owed only when that trigger fires; 1.2× is the hunt's planning target.** Trigger silent → no reclaim owed. Hunt exhausted, net still positive → tighten the *addition*.
   - **Never relocate a gate's enumerated pass/fail checks or a verification checklist behind a pointer, and never cut a rule's verified-configuration qualifier** — the ceiling never outranks a load-bearing rule. Per-hook recovery rows are catalog, not gate — those move freely.
   - **CRITICAL — state the budget as arithmetic before any edit:** byte-measure each reclaim's NET and the addition as the *exact* old/new pair you will apply.
   - **Very important — stage addition + reclaim cuts together, then measure exactly once**, running the hook's `measure()` verbatim.
