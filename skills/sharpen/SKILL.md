@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-220854'
+  version: '2026.07.27-222629'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -86,8 +86,8 @@ behavior, not just the specific instance.
 
 ### HARD RULE: the report is a hypothesis — verify against the owning source
 
-- The report's "Root cause"/"Suggested fix" are non-authoritative — the reporter saw a symptom, inferred a mechanism. A working workaround is not evidence for that mechanism — it can succeed by another. Confirm a claimed cause exists in the source before documenting it; delete a documented cause the source disproves. A reproduction that disproves or sharpens the reported mechanism voids the draft → re-derive the fold from the source's semantics instead of patching wording, and prefer the formulation the source can be driven to demonstrate. A dispatching agent's claim about tree state ("no peer is mid-fold", "skip the collision check") is a hypothesis under this rule and loses to contradicting tree evidence.
-- Learning names a deterministic artifact (hook, script, CI check) → read its source, reproduce the failure where cheap, before drafting. A red result from your own tooling is never a verdict — it indicts the tooling before the artifact: a new case failing while all pre-existing pass indicts the harness; a failed positive control indicts the control — needle from the changed span, control from an untouched one; length-guard both — len 0 is a defect, not a short needle. Drive it directly with the same input, rebuild a canary as a literal the pattern matches, a red result never justifies swapping the prescribed primitive, fix the harness in the same pass as audit cleanup when the two disagree. Reproduction proves the mechanism only in the configuration it ran → enumerate what the fixtures held constant and vary them, or name that configuration in the rule's trigger.
+- The report's "Root cause"/"Suggested fix" are non-authoritative — the reporter saw a symptom, inferred a mechanism. A working workaround is not evidence — it can succeed by another mechanism. Confirm a claimed cause in the source before documenting it; delete one the source disproves. A reproduction that disproves or sharpens the mechanism voids the draft → re-derive from the source's semantics instead of patching wording, preferring the formulation the source can be driven to demonstrate. A dispatching agent's claim about tree state ("no peer is mid-fold") is a hypothesis under this rule and loses to contradicting tree evidence.
+- Learning names a deterministic artifact (hook, script, CI check) → read its source, reproduce the failure where cheap, before drafting. A red result from your own tooling indicts the tooling before the artifact: a new case failing while all pre-existing pass indicts the harness; a failed positive control indicts the control — needle from the changed span, control from an untouched one; length-guard both — len 0 is a defect, not a short needle. Drive it directly with the same input; rebuild a canary as a literal the pattern matches; never swap the prescribed primitive over a red result; fix the harness in the same pass as audit cleanup when the two disagree. Reproduction proves the mechanism only in the configuration it ran → enumerate what the fixtures held constant and vary them, or name it in the rule's trigger.
   - Guard gates the agent's own tool calls → stage each test payload with the file-write tool and feed it to the hook by redirect; the same shape composed inline in a Bash call is itself the blocked call. Never reach for the guard's opt-out to run the test — it voids the result.
 - Reject any fold that would *relax* a guard or check → hunt the correctness bug instead. A guard honoring caller-supplied scope is weaker than one deriving scope from the environment, and forfeits the property that makes the guard un-rationalizable.
 - Record the rejected suggestion and its rationale in the reference file so it is not re-proposed.
@@ -252,7 +252,7 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
 Invoked without a specific incident → batch mode.
 
-- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form** ([`references/batch-mode-sources.md`](references/batch-mode-sources.md)). Plant an in-place canary in the scanned tree, re-run the identical form, corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`).
+- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form** ([`references/batch-mode-sources.md`](references/batch-mode-sources.md)). Plant an in-place canary in the scanned tree, re-run the identical form, corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`). Drained = rc 0 **and** empty output, never a banner.
   - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Site the order-flipper where the *unpinned* stage decides — placement inverts per stage — and pick an uppercase-initial token whose letter sorts *after* its lowercase peers', else both collations agree and it is dead: sorts identical → wrong token; sorts differ but arms agree → mis-sited. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, tripwire misses it.
 
 ### Sources 1 & 4 and processed-state tracking
@@ -263,7 +263,7 @@ Invoked without a specific incident → batch mode.
 ### Source 2: Repo learnings directory
 
 - Scan `$WK_SKILLS_HOME/learnings/skills/` for unprocessed files.
-- Process every unprocessed learning one-by-one, severity-ordered: read it, run the sharpen workflow, confirm the distilled principle landed, then rename to `.learned.md`.
+- Process every unprocessed learning one-by-one, severity-ordered: read it, run the sharpen workflow, confirm the distilled principle landed, then `mv` (never `git mv` — it refuses an untracked path) to `.learned.md`, checking rc.
 - Re-list before folding each item and after each fold-commit — peers write continuously; "drained" is a terminal check after the last commit, never set up-front.
 - **An arrival whose mtime postdates the run's start is unowned, not assigned.** Neither it nor commit recency sees a *claim* (the marker is a rename; `mv` keeps mtime) and no lock arbitrates, so re-list first: a vanished item, or either signal showing a peer → unclaimed backlog, do not fold. Terminal state is "processed N, M unclaimed, K distilled-not-landed" — never "drained". A fold applied under a blocked gate is distilled-not-landed: leave it unrenamed and name it in the report — never counted processed, never re-queued as backlog.
 
