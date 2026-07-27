@@ -47,3 +47,12 @@ Step 7.5, the throwaway-index fence, the overfit-scan stay-inline rows, the
 ticket-shape rejection, the reclaim-order forward cross-reference, and the
 Source 3 marker-suppression clause: all carry prior recorded stay-inline
 decisions.
+
+**Amended 2026-07-27 — "the reclaim pool is exhausted, every remaining candidate
+carries a recorded note" is a pool summary, not a per-candidate veto.** It scores
+no individual target and states no grounds, so it cannot be retired by evidence
+and must not be read as closing the pool. Re-score each candidate individually,
+naming the edit shape it is judged under, before recording exhaustion again. The
+enumerated rejections above stand on their own stated grounds; the aggregate
+sentence does not. See [`byte-budget.md`](byte-budget.md) "A rejection note is a
+verdict under an edit shape".

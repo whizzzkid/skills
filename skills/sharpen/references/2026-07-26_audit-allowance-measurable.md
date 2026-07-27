@@ -46,6 +46,13 @@ targets are exhausted, and every remaining candidate carries a recorded stay-inl
 rejected-relocation note. Rather than widen the hunt, the *addition* was tightened until net
 went non-positive. The binding gate — net non-positive and every ceiling clear — is met.
 
+**Amended 2026-07-27 — the "every remaining candidate carries a recorded note"
+sentence above is a pool summary, not a per-candidate veto.** It names no target and
+states no grounds, so no later evidence can retire it; read as a closed pool it turns
+every historical rejection into a permanent one. Re-score candidates individually,
+naming the edit shape each is judged under, before recording exhaustion. See
+[`byte-budget.md`](byte-budget.md) "A rejection note is a verdict under an edit shape".
+
 **Rejected drafts (do not re-propose)** — A three-sub-bullet version (+487 B) was cut: its
 "beats widening the reclaim hunt into load-bearing content" clause restates the adjacent
 binding-gate bullet, and its enumerated list of zero-ceiling artifacts belongs in the linked

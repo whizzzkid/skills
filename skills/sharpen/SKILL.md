@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-205752'
+  version: '2026.07.27-211422'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -225,8 +225,8 @@ behavior, not just the specific instance.
 - **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): relocate narrow, tool-specific catalog rows to a `references/` file and update the pointer's ID list — route a **new** such row straight there (ID only inline), never place-inline-then-reclaim; delete scaffolding or a provably-duplicated rule outright.
   - **Search duplicates first, relocate last, prose-tighten only for the final margin.**
   - **Never reclaim a rule's earliest statement** — score duplicates by reading order; only the later occurrence is deletable.
-  - **Grep `references/` for a recorded stay-inline / rejected-relocation note before proposing any relocation.**
-  - **A target rejected purely on reading order is mis-tested, not exhausted** — re-test it under a cut-site pointer before recording the pool exhausted or the ratio unreachable.
+  - **Grep `references/` for a recorded stay-inline / rejected-relocation note before relocating — a hit vetoes only while its stated grounds still hold.**
+  - **Grounds unstated, aggregate, or scored before a now-reachable shape (reading order) → re-test under a cut-site pointer**, before recording the pool exhausted or the ratio unreachable.
 - **Measure the staged body BEFORE drafting any content-adding fold.** Headroom under ~2× the edit → budget ≥2 reclaim targets up front whose *combined NET* exceeds the edit by ≥1.2×.
   - **Budget the fold PLUS an audit-cleanup allowance** (~25%/floor ~300 B) and size reclaim against that total. Run the Step 5 audit first → **measured** cleanup replaces that estimate, often **0 B**.
   - **Never relocate a gate's enumerated pass/fail checks or a verification checklist behind a pointer, and never cut a rule's verified-configuration qualifier** — the ceiling never outranks a load-bearing rule. Per-hook recovery rows are catalog, not gate — those move freely.

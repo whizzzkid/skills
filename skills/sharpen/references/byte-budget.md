@@ -168,3 +168,27 @@ env-tunable, so a deliberate exception needs no hook edit):
   skill's own history already rejected, and the note is the only thing preventing a later
   pass from undoing a deliberate decision. A note covering a block you still intend to move
   is a decision to reopen explicitly, not to route around.
+
+### A rejection note is a verdict under an edit shape, not a fact about the target
+
+- A note records that a candidate lost *under the edit shapes available when it was scored*.
+  Widen the shapes — a cut-site pointer, a new reference to point at — and the verdict can
+  go stale, yet the note reads identically before and after. Treated as a fact about the
+  target, every historical rejection hardens into a permanent veto.
+- So a hit suppresses a candidate **only while the grounds it states still hold**. Three
+  patterns do not survive the test:
+  - **Grounds unstated** — the note records a verdict with no reason. Unfalsifiable, so
+    it can never be retired; re-test it.
+  - **Grounds aggregate** — "every remaining candidate carries a recorded note" scores no
+    individual target. It is a pool summary, never a per-candidate veto.
+  - **Grounds scored before a now-reachable shape** — reading order is the known instance:
+    rejected because the surviving pointer would sit later, before cut-site pointers were
+    understood as available.
+- Grounds that name a property the ceiling never outranks — a gate's enumerated pass/fail
+  checks, a verification checklist, a rule's verified-configuration qualifier — hold under
+  every shape. Those vetoes are permanent by design.
+- **Write every stay-inline, rejected-relocation, or pool-exhaustion note so it names the
+  edit shape it was scored under**, and score candidates individually. A later pass can then
+  separate durable protection from a shape-contingent verdict without re-deriving the whole
+  record. Amend a note in place when a fold invalidates it — a stale blanket rejection gets
+  either wrongly obeyed or wrongly ignored.
