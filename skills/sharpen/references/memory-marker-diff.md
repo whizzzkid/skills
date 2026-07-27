@@ -83,11 +83,32 @@ backlog.
   value → fabricated backlog rows (against a truth of zero, a phantom row); pin both sides to
   one locale → the true count. Require the two arms to **differ**; arms that agree mean the
   control never exercised the bug and must be rebuilt before any conclusion is drawn.
+- **Site the order-flipping element by which stage is unpinned — the two placements are
+  inverted, and each is dead in the other's case.** Verified by driving `comm -23` over every
+  placement, not inferred:
+
+  | order-flipping element  | compare unpinned, inputs sorted alike | one input's sort unpinned    |
+  | ----------------------- | ------------------------------------- | ---------------------------- |
+  | matched pair, both sides | **dead** — consumed by the equality step | **live** — phantom row emitted |
+  | differs between streams  | **live** — merge must pick a stream to advance | **dead** — verdict invariant |
+
+  - A row present on one side only is emitted as unique by *any* walk, correctly ordered or
+    not, so its verdict cannot move. Such a control reads exercised and is dead.
+  - An order-flipping **matched pair** is the live element only when the two inputs are sorted
+    under *different* collations: the merge meets it at different offsets and mis-advances,
+    emitting a row both sides contain. Sort both inputs alike and the same pair is consumed by
+    the equality step, exercising nothing.
+  - Truth 0 (identical sets) is the clearest fixture: any row the unpinned arm emits is a
+    phantom by construction.
+  - Sort orders differing between arms is **not** liveness — only diverging *verdicts* are.
+    "Sorts provably differ but the arms agree" means the element is mis-sited, not that the pin
+    is decorative.
 - The load-bearing requirement is therefore **uniform pinning across both sorts and the
   comparison** — not the presence of mixed case.
 - This dead control does **not** present as a zero: it can return a non-empty, correct-looking
   backlog identically in both arms, so the zero-based control tripwire never fires. Judge such
-  a control by whether its arms diverge, never by whether it produced rows.
+  a control by whether its arms diverge — never by whether it produced rows, and never by
+  whether the two arms' sort orders differ.
 - It fails in **both** directions: the visible symptom is inflated backlog, but a mis-walk
   can equally skip a genuinely-absent entry and under-report — a false drain.
 - Confirm a suspected mis-walk by exact-line match rather than re-reasoning about the diff:

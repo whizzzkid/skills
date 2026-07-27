@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-175902'
+  version: '2026.07.27-182332'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -259,8 +259,8 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
 Invoked without a specific incident → batch mode.
 
-- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form.** A traversal that skips a class of node (`find -type f` never descends a symlinked dir) returns zero for any content when rooted where those nodes live — dead, yet indistinguishable from a real drain. Plant an in-place canary in the scanned tree, re-run the identical form, and corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`).
-  - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Make the differing element order-flipping, on the arm-under-test side. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, so the tripwire misses it.
+- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form.** A traversal skipping a class of node (`find -type f` never descends a symlinked dir) returns zero for content rooted where those nodes live — dead, yet indistinguishable from a real drain. Plant an in-place canary in the scanned tree, re-run the identical form, corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`).
+  - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Site the order-flipper where the *unpinned* stage decides — placement inverts per stage. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, tripwire misses it.
 
 ### Sources 1 & 4 and processed-state tracking
 

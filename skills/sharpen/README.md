@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.27-175902`
+**Version:** `2026.07.27-182332`
 
 ## Invocation
 
@@ -162,11 +162,16 @@ flowchart TD
   a confirmed drain. Every drain is re-proved with an in-place canary re-run through the
   identical form, plus a primitive that does not share the scan's blind spot.
 - **A two-stage-disagreement control must *reach* the deciding comparison, not merely permit
-  it.** Correct data shape and correct intent both leave the decision reachable-but-unreached: a
-  merge consults ordering only where the two streams differ, so the differing element must
-  itself be the order-flipping one and must sit on the side feeding the arm under test.
-  Otherwise the arms agree — at the known truth or away from it — which reads as proof the
-  guard is decorative rather than as a dead control.
+  it — and the right placement inverts with which stage is left unpinned.** Correct data shape
+  and correct intent both leave the decision reachable-but-unreached. With the *comparison*
+  unpinned and both inputs sorted alike, a merge consults ordering only where the streams
+  differ, so the order-flipping element must be the differing one; a matched pair is consumed
+  by the equality step and exercises nothing. With one input's *sort* unpinned the inverse
+  holds: only an order-flipping **matched pair** is met at mismatched offsets and mis-emitted as
+  a phantom, while a row unique to one side is emitted as unique by any walk, so its verdict
+  cannot move. Liveness is the arms' *verdicts* diverging — never their sort orders differing,
+  and never the bare fact that rows were produced. Placements are tabulated in
+  [`references/memory-marker-diff.md`](references/memory-marker-diff.md).
 - The gitignored `.distilled-memories` marker prevents re-distilling the same global memory
   across runs (`--force` bypasses it); learnings **and retrospects** track their own processed
   state via the `.learned.md` rename — no marker. Retros are write-once per-session files, so
