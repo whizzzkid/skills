@@ -56,7 +56,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.24-183816'
+  version: '2026.07.27-200906'
 ---
 
 # Sitrep
@@ -103,6 +103,10 @@ per-day live directories; dated snapshots at close.
 - `data-t` is unique and sequential per page (`t1`…`tN`).
 - Auto-action items already done at generation start `data-done="true"`; nested
   sub-items use `class="st-item st-nested"`.
+- **Mark done only what is terminal.** An auto-action leaving an artifact the
+  user must still act on (unsubmitted draft, unsent reply) renders its launch
+  done but stays open work — re-query and re-surface it every run until the
+  artifact is terminal.
 - Group items only via the flat `st-item`/`st-nested` span pattern already in the
   file. **Important — never freelance a new tag or nesting shape**; only a
   documented classed `<div>` (the standup copy block) may nest inside
@@ -187,6 +191,9 @@ Agent roster:
     Authorship filter in Stage 4 §Code & PRs). A PR enters "Your PRs" only after
     `gh pr view --json author` confirms it; route review-requested / mentions /
     involvement to other buckets. Prevents teammate/bot PRs surfacing as own.
+  - **Sweep your own unsubmitted reviews** — reviews you authored in `state:
+    PENDING`, org-wide every run, never only re-checking known PRs; surface each
+    as ASAP until submitted or discarded.
 - **Jira + Confluence:** assigned tickets needing action; ticket mentions;
   Confluence mentions. ToolSearch: `"jira"`, `"confluence"`.
 
@@ -243,7 +250,6 @@ gather read-only; the orchestrator owns every write.
   call [`wk-cal`](../cal/README.md)'s block-creation flow: a 15-min prep block
   before, a 30-min scorecard block after (scan forward in 30-min increments when
   the immediate slot is busy).
-- Render each as a `data-done="true"` `⚙️ Auto-Actions` item, never a passive TODO.
 - Fall back to a 🔴 ASAP span only when calendar write access is unavailable or
   no slot exists.
 
@@ -391,17 +397,12 @@ Fold auto-actions into the same commit, or a follow-up
 Auto-action after the live page commits — one review worktree per PR awaiting
 your review, rendered as a done ⚙️ Auto-Action.
 
-- Source PRs from the Stage 2 GitHub "PRs to review" bucket; never re-query.
-- Restrict to repos both in the config `review_repos` allowlist and cloned at
-  `$GITC_ROOT/$EMPLOYER/<repo>` (`$GITC_ROOT` default `$HOME/gitc`); skip +
-  report the rest, never implicitly clone.
 - **Pending draft only.** Subagent follows wk-pr-review Phase 5; never submit,
   approve, or request changes — live reviews are irreversible (only PENDING is
-  deletable).
-- Cap at 5 concurrent review subagents; carry the rest to the next run.
-- Per PR, one gathering subagent: `cd` the clone, `git wta <pr-head-branch>`
-  (worktree alias), invoke [`/wk-pr-review`](../pr-review/README.md).
-- Mechanics: [`references/auto-review.md`](references/auto-review.md).
+  deletable). A launched draft is not terminal — the Stage 2 PENDING sweep
+  re-surfaces it until submitted or discarded.
+- Mechanics (source bucket, allowlist, local clone, concurrency cap, per-PR
+  worktree flow): [`references/auto-review.md`](references/auto-review.md).
 
 Then invoke [`wk-learn sitrep`](../learn/README.md).
 
@@ -530,14 +531,8 @@ Then invoke [`wk-learn sitrep`](../learn/README.md).
 
 ## QPR season awareness
 
-Surface a quarterly-review nudge once per day; never block on it.
-
-- **`start`:** in QPR prep windows (last 2 weeks of Jan/Apr/Jul/Oct) with recent
-  `$SITREP_REPO/$EMPLOYER/QPR/brag-log.md` entries, add a `📋 QPR Prep` banner
-  atop `live.md` → [`/wk-self-perf quarter`](../self-perf/README.md).
-- **`end`:** in QPR season (Feb/Aug), add a `📋 QPR Season` banner to the
-  snapshot → [`/wk-self-perf quarter`](../self-perf/README.md).
-- QPR-worthy achievements accrue to `QPR/brag-log.md` with `🌟` year-round.
+Once-per-day quarterly-review nudge, never blocking: banner windows, placement,
+and brag-log accrual — [`references/qpr-nudge.md`](references/qpr-nudge.md).
 
 ## Quick Reference
 
@@ -549,7 +544,7 @@ Surface a quarterly-review nudge once per day; never block on it.
 | `/wk-sitrep` (no arg) | Defaults to `start`. |
 | Writes | Re-read target first; preserve `data-done`; prefer `Edit` over full overwrite. |
 | Jira | Full open-ticket sweep; collapse inactive/no-due backlog. |
-| Pending-on-me | Flag 🔁 status changes + ⏳ staleness; sort priority → age → due-date. |
+| Pending-on-me | Flag 🔁 status changes + ⏳ staleness; sort priority → age → due-date. Own `PENDING` reviews swept org-wide until submitted. |
 | Merged PR + open ticket | Auto-transition to Done; render as done auto-action. |
 | Interview w/o prep block | Orchestrator creates prep+scorecard via `wk-cal`; done auto-action. |
 | Resolved item re-discovered | Dismissed registry filters it; `jq`-write + validate; action-specific key. |
