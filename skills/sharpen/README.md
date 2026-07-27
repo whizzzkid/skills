@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.27-214817`
+**Version:** `2026.07.27-220854`
 
 ## Invocation
 
@@ -76,9 +76,15 @@ flowchart TD
   proposed text.
 - **Run the hooks, never reimplement their matcher** — a hook's pattern file carries `#`
   comments and PCRE inline flags that a hand-rolled `grep -iEf` turns into either false noise
-  or a false-clean, so the scan executes `.githooks/*.sh` against the staged index. Only
-  staged **path strings** are hand-rolled, because every content hook greps the diff and
-  commit message but never filenames.
+  or a false-clean, so the scan executes `.githooks/*.sh` against the staged index. Two
+  scans stay hand-rolled: staged **path strings** (every content hook greps the diff and
+  commit message but never filenames) and the **overfit category** scan over drafted text.
+- **The verdict protocol binds the construction, not the named scan.** A discipline written
+  for one scan does not travel to a sibling of the same shape, even inside the same step —
+  so *every* hand-rolled scan uses one quoted path per `grep` and branches its verdict on
+  that scan's own rc. A printed "clean" banner is a decoration, never a verdict: a
+  multi-path grep returns a single status for the whole set and a read failure **dominates
+  a genuine match**, so rc≥2 can mask a hit that still printed.
 - **Terminal gate** (Step 8) requires all five checks: install prints `Done!`, the owning
   skill's test suite runs when the fold touched a shipped executable artifact, commits land,
   single push, and no modified tracked path — untracked *unprocessed* learnings/retros are

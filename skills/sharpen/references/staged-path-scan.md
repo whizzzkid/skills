@@ -25,10 +25,35 @@ git diff --cached --name-only | command grep -iEf .skillprohibit
   invocation form the scan uses.
 
 - A stricter `grep` alias false-cleans one bad path inside a multi-line argument.
-- **Branch on the scan's exit status, never on its warning text.** rc=1 is "read the input,
-  matched nothing"; rc>=2 is "never read it" — `scan || echo NONE` maps both onto the clean
-  branch. A `No such file` warning is a scan failure, not a clean result, and a scan whose
-  stderr is redirected has no warning left to read.
+
+## The verdict protocol binds every hand-rolled scan this skill runs
+
+A verification rule attached to one *named* scan does not travel to a sibling scan of the
+same construction, even inside the same step. Step 5 runs two hand-rolled scans — the
+staged **path** scan and the **overfit category** scan over drafted edit text — and both
+inherit everything below. Scope the discipline to the construction, never to the name.
+
+- **Branch on the scan's exit status, never on its warning text — and never on a printed
+  banner.** rc=1 is "read the input, matched nothing"; rc>=2 is "at least one path was not
+  read", never a clean result. Both `scan || echo NONE` and an unconditional
+  `echo "(none above = clean)"` after the grep map *every* status onto the clean branch —
+  the banner is a decoration, not a verdict. A `No such file` warning is a scan failure,
+  and a scan whose stderr is redirected has no warning left to read.
+- **One quoted path per invocation, via a read loop.** A multi-path grep returns one status
+  for the whole set, and a read failure **dominates a genuine match** — verified on BSD and
+  GNU grep, one missing path turns rc=0 into rc=2 while the matching file's hit still
+  prints. So a multi-path rc is not attributable to any file, and "did it print anything?"
+  is no substitute for it. Worst form: a space-joined path list passed as one quoted
+  argument — grep sees a single nonexistent filename, reads nothing, and rc=2 on every
+  pattern while the banner still reports clean.
+
+  ```bash
+  while IFS= read -r f; do
+    command grep -nE "$pat" "$f"; rc=$?
+    case $rc in 0) hit=1 ;; 1) ;; *) err=1 ;; esac
+  done < paths.txt
+  # err=1 -> scan FAILED, not a result;  hit=1 -> HIT;  else clean (input provably read)
+  ```
 - **Important:** treat a hand-rolled `NONE` as **unverified** until the grep is proven to
   fire: probe it with a literal expanded from a real **non-comment, non-blank** denylist
   line (`a[-_]?b` → `a-b`) — never a guess, and never a comment line: a plain-prose
@@ -70,4 +95,6 @@ prohibited-subject lesson up front; never derive it from the subject. Scrub stag
 `.learned.md` / retro archives too — a rename commits them publicly, and a
 term-handling learning's example IS the term.
 
-**Where** — wk-sharpen Step 5, mechanical overfit scan, after the owning hooks run.
+**Where** — wk-sharpen Step 5: the staged **path** scan and the **overfit category** scan,
+after the owning hooks run. The verdict protocol above governs both, and any later
+hand-rolled scan the skill grows.

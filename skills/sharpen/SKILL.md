@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-214817'
+  version: '2026.07.27-220854'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -171,7 +171,7 @@ behavior, not just the specific instance.
   ```
 
   - **Index already holds another run's fold → never `git add` yours into it.** Throwaway-index procedure: [`references/byte-budget.md`](references/byte-budget.md).
-- Hand-roll only what no hook covers: **staged path strings**. Anonymize every hit.
+- Hand-roll only what no hook covers: **staged path strings** and the category scan above. Anonymize every hit; **one quoted path per grep, verdict on that scan's own rc — a banner is not a verdict.**
 
 ## Step 6: Present for Review
 
