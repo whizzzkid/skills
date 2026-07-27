@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.27-080007'
+  version: '2026.07.27-194158'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -110,13 +110,15 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   command passes no review, so the trap lands there unchallenged. Traps run **both**
   directions — a bash-ism zsh rejects, *and* a zsh-ism the shell declines to honor — so
   clearing a command against the bash-only entries below proves nothing. Four traps:
-  - **Important:** unquoted **parameter** expansion does not word-split under zsh — in
+  - **Very important:** unquoted **parameter** expansion does not word-split under zsh — in
     **any** position, not only a `for` list. `for x in $LIST` runs the body once over the
     whole newline-joined blob; `cmd $FILES` hands the tool a *single* argument containing
     every path, so it reports `No such file or directory` naming a blob it was never
     given. Either way every element-wise command fails and any no-match sentinel survives
-    untouched, so the run reads as a clean zero. Iterate with
-    `while IFS= read -r x; do …; done <<< "$LIST"` and pass one operand per call.
+    untouched, so the run reads as a clean zero. Never materialize a file list in a variable
+    at all — pipe the producer into the loop (`producer | while IFS= read -r x; do …; done`),
+    one operand per call, so the unquoted form is never available to compose; `<<< "$LIST"`
+    is safe but leaves the blob in scope for the next line to expand bare.
     (Unquoted **command substitution** `$(cmd)` does split under both, but still breaks on
     whitespace within an element.)
   - `${!var}` indirect expansion — bash-only; aborts the whole snippet under zsh with
@@ -333,6 +335,18 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   ```bash
   n=$(command grep -c -e "$pat" "$file"); n=${n:-0}
   ```
+
+  - **Verdict-level twin — the fallback carries a *conclusion*, not a value: `scan || echo
+    NONE` maps rc=1 (read the input, matched nothing) and rc>=2 (never read it) onto one
+    clean branch.** The value trap appends a wrong number; this one asserts a wrong conclusion,
+    and on a prohibited-content gate the wrong conclusion is what ships the content. Only
+    stderr separates the two, so a scan that redirects stderr keeps no signal at all.
+    Discriminate all three statuses and treat rc>=2 as an aborting scan failure:
+
+    ```bash
+    rc=0; command grep -nE "$pat" "$f" || rc=$?
+    case $rc in 0) echo MATCH ;; 1) : ;; *) echo "SCAN FAILED: $f" >&2; exit 1 ;; esac
+    ```
 
 ## Apply or Report
 

@@ -16,7 +16,10 @@ git diff --cached --name-only | command grep -iEf .skillprohibit
   invocation form the scan uses.
 
 - A stricter `grep` alias false-cleans one bad path inside a multi-line argument.
-- A `No such file` warning is a scan failure, not a clean result.
+- **Branch on the scan's exit status, never on its warning text.** rc=1 is "read the input,
+  matched nothing"; rc>=2 is "never read it" — `scan || echo NONE` maps both onto the clean
+  branch. A `No such file` warning is a scan failure, not a clean result, and a scan whose
+  stderr is redirected has no warning left to read.
 - **Important:** treat a hand-rolled `NONE` as **unverified** until the grep is proven to
   fire: probe it with a literal expanded from a real **non-comment, non-blank** denylist
   line (`a[-_]?b` → `a-b`) — never a guess, and never a comment line: a plain-prose
