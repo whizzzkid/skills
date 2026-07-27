@@ -9,6 +9,15 @@ bare multi-line list:
 git diff --cached --name-only | command grep -iEf .skillprohibit
 ```
 
+- **A denylist is a pattern file, never a haystack — the direction is part of the rule.**
+  The subject text is the *input*; `.skillprohibit` supplies the *patterns* via `-f`. Prose
+  of the form "grep X against Y" does not fix which operand is which, so state the flag
+  wherever the gate is invoked. Inverted — denylist as haystack, subject as a literal
+  needle — the scan degrades to fixed-string matching against pattern *source*: it can only
+  hit the denylist's metachar-free lines and silently misses every regex one. It returns
+  rc=1 and a clean verdict, so the run gets no signal; the failure is **open**, and the
+  canary below is the only thing that distinguishes it.
+
 - **Use `command grep`, never bare `grep`.** A shell function or alias can route `grep`
   to a different implementation; identical flags then yield different semantics, and the
   scan can report **rc=1 with no stderr** on a path the owning hook would flag. Bare
@@ -32,6 +41,13 @@ git diff --cached --name-only | command grep -iEf .skillprohibit
     metacharacter (`[-_]?` → one literal char, drop `\b`, expand quantifiers) to reach a
     subject the pattern really matches. Pasted verbatim, `a[-_]?b` is five literal
     characters the pattern `a[-_]?b` cannot match.
+  - **Draw the canary from a pattern line that carries a metacharacter** — a metachar-free
+    denylist line matches under *both* directions (as a `-f` pattern and as a literal needle
+    found in the file), so a canary built from one fires green while proving nothing about
+    direction. Only a metachar-bearing line separates the two readings: expanded, it matches
+    via `-f` and does not appear verbatim in the pattern file. Verified by driving both
+    forms over the same denylist: the metachar-derived canary fired only via `-f`, the
+    metachar-free one fired under either.
   - **A failed control indicts the control, not the matcher.** Repair the canary and
     re-run before concluding anything about the grep; a red canary never licenses swapping
     the primitive (Step 1 verification-tooling rule).

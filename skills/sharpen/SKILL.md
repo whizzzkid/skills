@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-211422'
+  version: '2026.07.27-214817'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -109,8 +109,9 @@ behavior, not just the specific instance.
 
 ### HARD RULE: prohibited-subject gate — scan subject before drafting
 
-- `command grep` the source learning/memory's core subject term against `.skillprohibit` and shape-matching hooks (`check-relative-paths`) at distill time, before byte-budget or draft (every load-bearing zero in this skill takes the `command` prefix).
-- **Prove this gate's zero with a canary** — expand a denylist pattern to a literal it matches: [`references/staged-path-scan.md`](references/staged-path-scan.md).
+- `command grep` the source learning/memory's core subject term through `.skillprohibit` and shape-matching hooks (`check-relative-paths`) at distill time, before byte-budget or draft (every load-bearing zero in this skill takes the `command` prefix).
+- **Denylist = pattern file, never haystack** — subject on stdin, patterns via `-f` (`command grep -qiEf`); inverted → fails **open**.
+- **Prove this gate's zero with a canary** — expand a metachar-bearing pattern to a literal it matches: [`references/staged-path-scan.md`](references/staged-path-scan.md).
 - A lesson *about* an internal/prohibited tool or hook-blocked path shape can only produce edit text carrying it — the collision is knowable now, not at the Step 5 staged scan.
 - On match: the lesson cannot land in the public repo. Route it to the user's private `CLAUDE.md`, mark the source distilled, skip the fold (no byte-budget, no draft).
 - When recording a skipped or private-routed fold, name the subject by **category only** in the commit-message body — the `commit-msg` hook scans the message with the same term list as files, so a named token there fails the commit and forces a re-author cycle.
@@ -202,7 +203,7 @@ behavior, not just the specific instance.
 - `argument-hint` matches the current argument shape.
 - `allowed-tools` lists every tool the new edits reference.
 - Quick-reference table, Trigger table, and Step list match the body.
-- Recount any documented set from source, never increment; shape the probe to the source markup, prove it fires on a known member, and prove a range probe's anchor **unique** before trusting its count (mismatch → 0 = phantom drift; a repeated anchor over-counts, and a member control cannot see it): [`references/recount-probe-bounds.md`](references/recount-probe-bounds.md).
+- Recount any documented set from source, never increment; shape the probe to the source markup, prove it fires on a known member, and prove a range probe's anchor **unique** before trusting its count: [`references/recount-probe-bounds.md`](references/recount-probe-bounds.md).
 - Cross-references still resolve.
 - Examples reflect the post-edit behavior.
 - Fix every drift item in the same pass.
@@ -251,7 +252,7 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
 Invoked without a specific incident → batch mode.
 
-- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form** — a traversal skipping a class of node returns a dead zero ([`references/batch-mode-sources.md`](references/batch-mode-sources.md)). Plant an in-place canary in the scanned tree, re-run the identical form, corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`).
+- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form** ([`references/batch-mode-sources.md`](references/batch-mode-sources.md)). Plant an in-place canary in the scanned tree, re-run the identical form, corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`).
   - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Site the order-flipper where the *unpinned* stage decides — placement inverts per stage — and pick an uppercase-initial token whose letter sorts *after* its lowercase peers', else both collations agree and it is dead: sorts identical → wrong token; sorts differ but arms agree → mis-sited. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, tripwire misses it.
 
 ### Sources 1 & 4 and processed-state tracking

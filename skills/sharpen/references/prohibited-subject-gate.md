@@ -2,10 +2,15 @@
 class: principle
 ---
 
-**Rule:** At distill time (Step 3), grep the source learning/memory's core subject
-term against `.skillprohibit` — before byte-budgeting or drafting. On match, the
+**Rule:** At distill time (Step 3), run the source learning/memory's core subject
+term through `.skillprohibit` — before byte-budgeting or drafting. On match, the
 lesson cannot land in the public skill repo: route it to the user's private
 `CLAUDE.md`, mark the source distilled, and skip the fold entirely.
+
+**Direction is part of the rule.** The denylist is the *pattern* operand, never the
+haystack: `printf '%s\n' "$term" | command grep -qiEf .skillprohibit`. "Grep X against
+Y" does not fix which operand supplies the patterns, and the wrong reading fails open —
+see [`staged-path-scan.md`](staged-path-scan.md).
 
 **Why:** The Step 5 mechanical overfit scan greps the *drafted edit text* and runs
 late — after distill, classify, byte-budget, and draft. A lesson *about* an internal
