@@ -221,3 +221,46 @@ run_edit()  { PAYLOAD="$(payload Edit "$1" file_path)"; run_hook; }
   run bash -c "printf '%s' '{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"find / -name x\"},\"cwd\":\"/tmp\"}' | '$HOOK'"
   [ "$status" -eq 0 ]
 }
+
+# -- symlinked repo prefix: physical root vs logical operand ------------------
+# `git rev-parse --show-toplevel` reports the PHYSICAL root, while a path operand
+# keeps whatever logical prefix the caller typed. On macOS /tmp, /var and /etc are
+# symlinks, so a lexical compare judged an entirely in-repo search "outside" and
+# false-blocked it — reported in the field as "scope-guard blocks a cross-repo
+# subagent". Pinned: the regression is silent (a correct-looking BLOCKED banner).
+payload_cwd() {
+  python3 -c '
+import json, sys
+tool, val, key, cwd = sys.argv[1:5]
+print(json.dumps({"tool_name": tool, "tool_input": {key: val}, "cwd": cwd}))
+' "$1" "$2" "$3" "$4"
+}
+
+setup_symlinked_repo() {
+  SGREAL="$BATS_TEST_TMPDIR/real"
+  SGLINK="$BATS_TEST_TMPDIR/link"
+  mkdir -p "$SGREAL/r"
+  git -C "$SGREAL/r" init -q
+  ln -sfn "$SGREAL" "$SGLINK"
+}
+
+@test "allows an in-repo search when the repo is reached through a symlinked prefix" {
+  setup_symlinked_repo
+  PAYLOAD="$(payload_cwd Bash "find $SGLINK/r -name '*.rb'" command "$SGLINK/r")"
+  run_hook
+  [ "$status" -eq 0 ]
+}
+
+@test "still blocks an out-of-repo search when the repo is reached through a symlink" {
+  setup_symlinked_repo
+  mkdir -p "$SGREAL/elsewhere"
+  PAYLOAD="$(payload_cwd Bash "find $SGREAL/elsewhere -name '*.rb'" command "$SGLINK/r")"
+  run_hook
+  [ "$status" -eq 2 ]
+}
+
+@test "block message states the opt-out cannot be a command prefix" {
+  run_bash "find / -name foo"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"prefix cannot work"* ]]
+}

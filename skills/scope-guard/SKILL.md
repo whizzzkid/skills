@@ -21,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.07.25-015339'
+  version: '2026.07.27-180651'
   model:
     openai: gpt-4.1-nano
     google: gemini-2.5-flash-8b
@@ -86,11 +86,14 @@ outside. Reshape the command; do not reach for the opt-out.
   reads as outside. The hook strips trailing `;&|)` before comparing; if a block
   still names a path that looks correct, re-read the reported path for a glued
   separator. Fix: drop the `cd` (CWD already persists between calls).
-- **Search rooted in another repo's worktree** — the root resolves from the
-  session's CWD, so a delegated cross-repo review trips every recursive search
-  even when the target worktree is the intentional one. Fix: `git grep -n
-  "<term>"` (single pattern, no `-r`) is read-only and passes cleanly; otherwise
-  ask the user to grant scope for the task.
+- **Search rooted in another repo's worktree** — the boundary is the repo of the
+  *session's* CWD, so a delegated cross-repo review trips every recursive search
+  while the agent stays rooted in the calling repo. A `cd` into the target does
+  not move the boundary — its target is charged as the effective root. Fix: root
+  the delegated agent's session in the target worktree; searches inside it then
+  pass cleanly, because the guard scopes to that session's own repo. Otherwise
+  `git grep -n "<term>"` (single pattern, no `-r`) is read-only and passes
+  regardless, or ask the user to grant scope for the task.
 - **Hand-expanded path where a `$VAR`-rooted one was documented** — a block names
   the token as written, so the same logical path decides differently expanded vs
   `$VAR`-rooted. Fix: leave a documented out-of-repo path in the form its owning

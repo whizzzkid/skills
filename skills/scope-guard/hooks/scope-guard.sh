@@ -17,10 +17,13 @@
 # Best-effort, not airtight. This is a nudge against accidental scope creep,
 # not a security boundary — the agent can always set SCOPE_GUARD_OFF=1. It does
 # lexical token inspection and deliberately does NOT shell-expand the command,
-# so it does not catch: a prior `cd /outside && find .`, search roots from a
-# variable or command substitution (`find $HOME`, `find "$(…)"`), or an in-repo
-# symlink that points outside. Those slip through by design; the guard targets
-# the common literal-path case (`find /`, `grep -r … /etc`).
+# so it does not catch: a prior `cd /outside && find .`, or search roots from a
+# variable or command substitution (`find $HOME`, `find "$(…)"`). Those slip
+# through by design; the guard targets the common literal-path case (`find /`,
+# `grep -r … /etc`). Literal path operands ARE symlink-resolved before the
+# in-repo comparison, so a repo reached through a symlinked prefix (macOS
+# /tmp -> /private/tmp) is not false-blocked, and an in-repo symlink pointing
+# outside resolves outside and blocks.
 
 set -uo pipefail
 
@@ -53,15 +56,27 @@ is_outside() {
     /*) : ;;            # absolute — check it
     *)  return 1 ;;     # relative — resolved against cwd, treat as inside
   esac
-  # Normalize without requiring the path to exist (lexical: collapses `..`).
+  # Resolve symlinks on BOTH sides before comparing. `git rev-parse` always
+  # reports the PHYSICAL root (/private/tmp/r), while an operand keeps whatever
+  # logical prefix the caller typed (/tmp/r) — on macOS /tmp, /var and /etc are
+  # symlinks, so a lexical compare judges an entirely in-repo search "outside"
+  # and false-blocks it. realpath resolves the existing prefix and keeps any
+  # non-existent tail, so it still works for paths that do not exist yet.
+  # This only ever tightens the guard: an in-repo symlink pointing outside now
+  # resolves outside and blocks, where the old lexical compare let it through.
   local norm
-  norm=$(cd / && python3 -c 'import os,sys; print(os.path.normpath(sys.argv[1]))' "$p" 2>/dev/null) || norm="$p"
+  norm=$(cd / && python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$p" 2>/dev/null) \
+    || norm=$(cd / && python3 -c 'import os,sys; print(os.path.normpath(sys.argv[1]))' "$p" 2>/dev/null) \
+    || norm="$p"
+  local root
+  root=$(cd / && python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$REPO_ROOT" 2>/dev/null) \
+    || root="$REPO_ROOT"
   # Glob-safe prefix test (a `case` glob would mis-handle a repo path that
   # itself contains [ ] * ? — and the trailing slash keeps /a/skills from
   # matching the sibling /a/skills-foo).
-  [ "$norm" = "$REPO_ROOT" ] && return 1
-  [ "${norm#"$REPO_ROOT"/}" != "$norm" ] && return 1  # inside repo
-  return 0                                             # outside repo
+  [ "$norm" = "$root" ] && return 1
+  [ "${norm#"$root"/}" != "$norm" ] && return 1  # inside repo
+  return 0                                       # outside repo
 }
 
 case "$TOOL_NAME" in
@@ -243,7 +258,10 @@ sys.stdout.write("".join(p + "\0" for p in out))
         echo "│  Repo root: $REPO_ROOT"
         echo "│  Grep within the repo, or the tool-managed dependency path"
         echo "│  (\`bundle show <gem>\`, \`mise where\`, \`go env GOMODCACHE\`)."
-        echo "└─ If this is genuinely required, set SCOPE_GUARD_OFF=1 for the session."
+        echo "│  Working in another repo? Root this agent's session there — the"
+        echo "│  boundary is the repo of the session cwd, not the calling repo."
+        echo "└─ Ask the user for SCOPE_GUARD_OFF=1 in the session env; a"
+        echo "   \`SCOPE_GUARD_OFF=1 <cmd>\` prefix cannot work (this hook runs first)."
       } >&2
       exit 2
     fi
