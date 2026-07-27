@@ -19,6 +19,13 @@ the tracker into an unreadable mix of real completions and suppressions.
 **Rejected suggestion (do not re-propose)** — The field report's fix required "a frontmatter block
 containing a `type:` field", which reads as a column-0 `^type:` match. Verified against the actual
 store: genuine `feedback` memories nest the key as `metadata:` → `type:`, so a bare `^type:` grep
-drops real memories while admitting none of the residents it was meant to exclude. The gate must
-accept the nested form. Relaxing the gate to "has any frontmatter" was also rejected — it would
-re-admit any future non-memory resident that happens to carry a header.
+drops real memories while admitting none of the residents it was meant to exclude. Relaxing the
+gate to "has any frontmatter" was also rejected — it would re-admit any future non-memory resident
+that happens to carry a header.
+
+**Amended after a re-violation** — this note originally closed with "the gate must accept the
+nested form", which reads as though *nested* were the canonical shape. A later run obeyed that
+emphasis literally, built an indented-only matcher (`^[[:space:]]+type:`), and silently dropped
+every flat-form memory — the same defect this note records, with inverted polarity. The rule is
+**symmetric**: both shapes occur in the store and the gate must accept **both**; a matcher keyed on
+either one alone is broken. Do not restate the requirement in a way that privileges one shape.

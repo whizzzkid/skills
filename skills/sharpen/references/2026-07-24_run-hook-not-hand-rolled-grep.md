@@ -11,14 +11,25 @@ severity: medium
   (`(?i)`), and other matcher-specific constructs that only the owning script
   handles correctly. Hand-roll only what no hook covers (staged path strings — every
   content hook greps the diff and commit message, never filenames).
-- **Why:** Feeding such a file to a different matcher fails in both directions.
-  Comment lines fed to `grep -iEf` match every markdown heading, so the scan reports
-  hits on `# Title` / `## Section` and buries any real hit in noise. And a probe
-  token taken from the file's first line lands on the comment header — a comment line
-  is itself a valid regex that matches its own text, so the probe "fires" while
-  proving nothing, yielding a false-clean on a safety scan. Running each hook
-  directly costs seconds, uses the hook's real semantics, and surfaces the true
-  result before a failed-commit cycle.
+- **Why:** The pattern file is gitignored and machine-local (only a `.example` ships),
+  so its comment style and matcher-specific constructs vary per checkout — whether any
+  given mis-handling applies is unknowable from the skill, which is itself the reason to
+  run the hook rather than audit the file.
+  - **Engine shadowing is the mechanism that always applies.** The agent's `grep` may be
+    a shell function or alias routing to a different implementation, so identical flags
+    do not mean identical semantics: a hand-rolled `grep -iEf` can return **rc=1 with no
+    stderr** on a term the owning hook flags. Invoke `command grep` to bypass the
+    shadow, and still prove the scan with a canary.
+  - **Correction (verified against source):** the earlier claim that comment lines
+    "match every markdown heading" is *conditional, not general*, and is false for this
+    repo's live denylist — its comments are full sentences that, as EREs, match only
+    their own literal text; a heading fed through them does not fire while a real listed
+    term does. The noise mode needs bare `#` comment lines to occur. The companion claim
+    that a comment line always self-matches is likewise conditional — it holds for a
+    plain-prose comment but fails once the line contains regex metacharacters (`(`…`)`
+    parse as a group, not literals).
+  - Running each hook directly costs seconds, uses the hook's real semantics, and
+    surfaces the true result before a failed-commit cycle.
 - **Where:** Step 5, Mechanical overfit scan — replaced the two hand-rolled
   `grep -iEf` one-liners with a loop over `.githooks/*.sh`; escalated the bullet to
   `**CRITICAL**` (5th recurrence of hand-rolled-denylist-grep failures, prior refs:

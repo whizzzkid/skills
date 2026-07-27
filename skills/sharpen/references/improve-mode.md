@@ -1,8 +1,18 @@
 # Improve Mode — full procedure
 
 Extended detail for `/wk-sharpen improve [scope]`. The inline section in `SKILL.md`
-carries the trigger, the scope argument, and the hard rules; this file carries the
-procedure. Hard rules in `SKILL.md` win.
+carries the trigger, the scope argument, and the phased-approval gate; this file carries
+the procedure and the remaining hard rules. Anything stated in `SKILL.md` wins.
+
+## Hard rules
+
+- **No information loss.** Remove a rule only if it is provably duplicated elsewhere or
+  superseded by a stricter rule. (The suite-wide form of this gate lives in `SKILL.md`
+  Step 7.5: never drop a HARD RULE, error code, or failure-mode explanation.)
+- **Phased approval required.** Auto mode does not short-circuit this — also stated inline
+  in `SKILL.md`, because auto mode is exactly the context that would skip this file.
+- **Capture insights.** External research surfacing a useful pattern → add it to the
+  overfit-categories table or as a new `wk-sharpen` rule.
 
 ## Inventory
 

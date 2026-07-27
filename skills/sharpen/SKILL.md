@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.24-235129'
+  version: '2026.07.27-080007'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -46,37 +46,22 @@ behavior, not just the specific instance.
 
 ## When to Use
 
-- Another agent ran a skill and hit an error or gap
-- A field report describes what went wrong during skill execution
-- A retrospective identifies a behavioral pattern worth preventing
-- You're about to edit a skill based on a specific incident
-- A skill needs simplification or bloat reduction without losing critical rules
+- A field report, retro, or skill run surfaced an error, gap, or behavioral pattern worth preventing.
+- A skill needs simplification or bloat reduction without losing critical rules.
 
 ### HARD RULE: invocation routing — `wk-learn` vs `wk-sharpen`
 
 - `wk-sharpen` rewrites `SKILL.md` files; `wk-learn` only writes to `learnings/`.
 - Direct skill edits without explicit user consent are out of scope.
-- Route to `wk-learn` (capture only, no skill edits):
-  - "make a learning"
-  - "capture this"
-  - "note this for later"
-  - "log what happened"
-- Route to `wk-sharpen` (apply edits to `SKILL.md`):
-  - "sharpen the skill"
-  - "apply this to the skill"
-  - "update the skill now"
-  - explicit `/wk-sharpen` invocation
+- Route to `wk-learn` (capture only, no skill edits): "make a learning", "capture this", "note this for later", "log what happened".
+- Route to `wk-sharpen` (apply edits to `SKILL.md`): "sharpen the skill", "apply this to the skill", "update the skill now", explicit `/wk-sharpen`.
 - Ambiguous phrasing ("learn from this and sharpen") defaults to `wk-learn`. Ask before promoting to `wk-sharpen`.
 
 ## Style Rules for Every Edit
 
-- **Bullets over prose.** Use paragraphs only when a rule cannot be split without loss.
-- **Imperative voice.** Start bullets with verbs like "Run", "Verify", "Reject", "Skip", "Re-fetch".
-- **One rule per bullet.** Split chained instructions.
-- **Crisp.** Strip hedging and state the failure mode in one clause.
-- **Instructional, not explanatory.** Put the "why" in one trailing sub-bullet or parenthetical.
-- **Concrete commands** belong in fenced code blocks.
-- **No essays.** Split any section that grows past four bullets.
+- **Bullets over prose; imperative voice; one rule per bullet.** Split chained instructions.
+- **Instructional, not explanatory** — the "why" goes in one trailing parenthetical, concrete commands in fenced blocks.
+- Crispness, no-essays, and section-splitting rules: [`references/style-rules.md`](references/style-rules.md).
 
 ## Core Rule: Extract Principles, Not Examples
 
@@ -91,49 +76,41 @@ behavior, not just the specific instance.
   - Reference-file-only routing is forbidden.
   - The processed-state record must show full distillation.
   - Rename to `.learned.md` only after the edit and version bump land.
+- **Ownership resolves before thoroughness; severity never grants it.** MUST-FOLD sets how thoroughly to fold an item this run *owns* — never whether it owns it. An unowned or concurrently-claimed arrival stays unclaimed backlog for the dispatcher, at priority. A blocked commit gate defers by *target-path* state, not gate state: a path already carrying an uncommitted fold → extend it and advance its single version bump, never open a competing one; a clean unclaimed path → defer as blocked backlog. Fold only where it adds no entanglement the path did not already carry.
 - When in doubt, ask before renaming.
 
 ## Step 1: Read the Incident Report
 
 - Read the file path if given; otherwise internalize the verbal description.
-- Extract:
-  - What the agent was supposed to do
-  - What went wrong
-  - Which artifacts failed
-  - Root cause — a claim to verify, never a fact
+- Extract: intended behavior, what went wrong, which artifacts failed, and the root cause — a claim to verify, never a fact.
 
 ### HARD RULE: the report is a hypothesis — verify against the owning source
 
 - Treat the report's "Root cause" and "Suggested fix" as non-authoritative; the reporter saw a symptom and inferred a mechanism. A workaround that works is not evidence for that mechanism — it can succeed by another. Confirm a claimed cause exists in the source before documenting it; delete a documented cause the source disproves. A reproduction that disproves or sharpens the reported mechanism voids the draft → re-derive the fold from the source's semantics instead of patching wording, and prefer the formulation the source can be driven to demonstrate. A dispatching agent's claim about tree state — "no peer is mid-fold", "skip the collision check" — is a hypothesis under this same rule and loses to contradicting evidence from the tree.
-- Learning names a deterministic artifact (hook, script, CI check) → read that artifact's source, and reproduce the failure where cheap, before drafting. A red result from your own verification tooling is not a verdict either: a newly added case failing while every pre-existing case passes indicts the harness first — drive the artifact directly with the same input, and fix the harness in the same pass as audit cleanup when the two disagree.
+- Learning names a deterministic artifact (hook, script, CI check) → read its source, reproduce the failure where cheap, before drafting. A red result from your own tooling is never a verdict — it indicts the tooling before the artifact: a new case failing while all pre-existing pass indicts the harness; a failed positive control indicts the control — needle from the changed span, control from an untouched one; length-guard both — len 0 is a defect, not a short needle. Drive it directly with the same input, rebuild a canary as a literal the pattern matches, a red result never justifies swapping the prescribed primitive, fix the harness in the same pass as audit cleanup when the two disagree.
   - Guard gates the agent's own tool calls → stage each test payload with the file-write tool and feed it to the hook by redirect; the same shape composed inline in a Bash call is itself the blocked call. Never reach for the guard's opt-out to run the test — it voids the result.
 - Reject any fold that would *relax* a guard or check → hunt the correctness bug instead. A guard honoring caller-supplied scope is weaker than one deriving scope from the environment, and forfeits the property that makes the guard un-rationalizable.
-- Record the rejected suggestion and the rationale in the reference file so it is not re-proposed.
+- Record the rejected suggestion and its rationale in the reference file so it is not re-proposed.
+- A `Rejected` / `Deliberately not promoted` note covering a design you are now adopting is a coverage gap to **execute**, not prose to re-read. Drive the shape it names against the artifact before *and* after; verdicts must match. Suite green without that case → missing coverage, not safety; land it as a pinned test this pass. Adopted with a compensating rule → rewrite the note to what now holds (a stale blanket rejection gets wrongly obeyed or wrongly ignored).
 
 ## Step 2: Read the Full Skill
 
 - Determine which skill needs updating. Grep the learning's core subject across all of `skills/`; the defect's text may live in a skill other than the one filed — fold the principle into the API-mechanics home AND correct every over-general instance elsewhere in the same pass. If ambiguous, ask the user.
-- **Resolve the on-disk skill dir by listing, never by transforming the display name.** Dir naming is not invariant with `name:` — most drop a leading `wk-`, some keep it, so both a blind strip and a blind reuse mis-resolve. Glob once, reuse the result: `d=$(ls -d skills/*"${n#wk-}" | head -1)`.
-- Treat a zero-match grep whose emptiness is load-bearing as **unverified until the path is confirmed to exist** — a mis-resolved path reads identical to a genuine gap and inverts the `already-covered` call. Never trust a missing-path warning; grep tools vary in emitting one.
-- Read the entire `SKILL.md`, not just the target section.
-- Build a mental map of:
-  - Hard rules
-  - Phase / step coverage
-  - Recurring themes
-  - Tool usage patterns
+- **Resolve the on-disk skill dir by listing, never by transforming the display name.** Glob once, reuse the result: `d=$(ls -d skills/*"${n#wk-}" | head -1)`. Rationale: [`references/skill-dir-resolution.md`](references/skill-dir-resolution.md).
+  - Empty listing → treat `skill:` as the reporter's *guess* at ownership, not a resolved target (learnings dirs are created on demand and never prefixed, so an unresolvable value is expected input): route by the subject grep to the skill whose body owns the mechanics. Never retry the path or file it as a gap; the zero-match rule below governs a resolved dir, not an empty listing.
+- Treat a zero-match grep whose emptiness is load-bearing as **unverified until the path is confirmed to exist**.
+- Read the entire `SKILL.md`, not just the target section — map its hard rules, step coverage, recurring themes, and tool-usage patterns.
 - Partial reads do not satisfy the edit guard. Re-read narrow ranges when needed.
 
 ## Step 3: Distill the Lesson
 
 - Transform the incident into a generalizable principle.
-- Ask:
-  - What behavior needs to change?
-  - What check or mechanism was missing?
-  - What failure mode should the agent anticipate?
+- Ask: what behavior must change, what check was missing, what failure mode to anticipate.
 
 ### HARD RULE: prohibited-subject gate — scan subject before drafting
 
-- Grep the source learning/memory's core subject term against `.skillprohibit` and shape-matching hooks (`check-relative-paths`) at distill time, before byte-budget or draft.
+- `command grep` the source learning/memory's core subject term against `.skillprohibit` and shape-matching hooks (`check-relative-paths`) at distill time, before byte-budget or draft (every load-bearing zero in this skill takes the `command` prefix).
+- **Prove this gate's zero with a canary** — expand a denylist pattern to a literal it matches: [`references/staged-path-scan.md`](references/staged-path-scan.md).
 - A lesson *about* an internal/prohibited tool or hook-blocked path shape can only produce edit text carrying it — the collision is knowable now, not at the Step 5 staged scan.
 - On match: the lesson cannot land in the public repo. Route it to the user's private `CLAUDE.md`, mark the source distilled, skip the fold (no byte-budget, no draft).
 - When recording a skipped or private-routed fold, name the subject by **category only** in the commit-message body — the `commit-msg` hook scans the message with the same term list as files, so a named token there fails the commit and forces a re-author cycle.
@@ -149,17 +126,11 @@ behavior, not just the specific instance.
 
 - A fresh learning that repeats an existing rule proves the rule failed → escalate.
 - **Exception — positive-steering evidence blocks escalation:** before escalating an `already-covered` repeat, check for same-session evidence the rule fired correctly (a retro "What worked" bullet, or the learning conceding the existing behavior was right). If present, the rule worked: classify `already-covered`, cite the proving lines, do NOT escalate.
-- Escalate by exactly one notch:
-  1. baseline prose rule
-  2. `**Important:**`
-  3. `**Very important:**`
-  4. `**CRITICAL:**`
-  5. `**HIGH-PRIORITY:**`
-  6. `**HIGHER-PRIORITY:**`
-  7. `**VERY-HIGH-PRIORITY:**`
-  8. restructure the section so the rule is structurally impossible to skip
+- **Escalate only against *installed* text.** A rule strengthened only in an uncommitted worktree fold never steered the failing run — installed diverges from worktree → classify `already-covered (unshipped)` and spend no notch. Repeat tracing to the rule's *shape* → the framing fix is load-bearing; the notch only records it. Escalation evidence only — a *landing* check reads **worktree** bytes, never installed or a tool's rendering.
+  - **Needle from the learning's own subject; a supplied slug→line map is an unverified hint.** Every line in a rewritten span is new → novelty proves no *particular* lesson landed. Print each match beside its slug.
+- Escalate exactly one notch up the 8-rung ladder: [`references/escalation-ladder.md`](references/escalation-ladder.md).
 - Record the bump in the reference file.
-- Treat an escalation as a principle edit and bump `metadata.version`.
+- Treat an escalation as a principle edit.
 
 ### Classify: principle vs one-off
 
@@ -172,27 +143,15 @@ behavior, not just the specific instance.
 ## Step 4: Draft the Skill Update
 
 - Skip Step 4 for `one-off` lessons.
-- Locate the edit target:
-  - New step
-  - Missing check
-  - Wrong instruction
-  - New HARD RULE
+- Locate the edit target: a new step, a missing check, a wrong instruction, or a new HARD RULE.
 - Format the update as instructions, not narrative — heading, then what to do (imperative), why it matters, how (commands or checks).
 
 ## Step 5: Audit the Full Skill
 
 - Re-read the entire skill with the proposed edit mentally applied.
-- Check for:
-  - Overlap
-  - Contradiction
-  - Redundant tool usage
-  - Bloated sections
-  - Stale references
-  - Orphaned label artifacts
-- Merge overlapping instructions.
-- Resolve contradictions.
-- Consolidate repeated API calls or CLI commands.
-- Remove dead labels; revert any uncommitted edit to the target not made this run that doesn't address the lesson (prior partial fold may encode a wrong model).
+- Merge overlapping instructions; resolve contradictions; consolidate redundant tool usage and repeated API/CLI calls.
+- Bulletize bloated sections; refresh stale references; remove dead labels and orphaned label artifacts.
+- Revert any uncommitted edit to the target not made this run that doesn't address the lesson (prior partial fold may encode a wrong model).
 - Bundle cleanup into the same change.
 
 ### Mechanical overfit scan
@@ -204,13 +163,21 @@ behavior, not just the specific instance.
 - Apply replacement maps longest-first.
 - Reject ticket-shaped example tokens. Grep case-sensitive (never `-i` — it widens to `Word-Number` noise (`Step-5`)) against `[A-Z][A-Z0-9]+-\d+`; any match — even an invented placeholder — trips the `check-ticket-refs` hook, which matches shape, not provenance. Replace with `<child-key>`/`<KEY>` or the repo's `BOARD-NUM` form.
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
-- **CRITICAL — run the owning hook scripts against the staged index; never reimplement their matcher.** A hook's pattern file is not portable across matchers: it carries `#` comments and matcher-specific constructs (PCRE `(?i)` inline flags) that a hand-rolled `grep -iEf` turns into false noise (`#` matches every markdown heading) or a false-clean. Run every hook after staging → real gate semantics, no synthetic probe:
+- **CRITICAL — run the owning hook scripts against the staged index; never reimplement their matcher.** Same flags ≠ same engine; a pattern file is the script's private config — often gitignored, so comment style and matcher constructs (PCRE `(?i)`) vary per checkout. A hand-rolled `grep -iEf` can return a silent NONE — rc=1, no stderr — on a term the hook flags. Never audit comment style to license a hand-roll; the governing risk is the false-*clean*. Run every hook after staging → real gate semantics, no synthetic probe:
 
   ```bash
   for h in .githooks/check-*.sh .githooks/scrub-staged.sh; do "$h" || echo "FAIL: $h"; done
   ```
 
-- Hand-roll only what no hook covers: **staged path strings** — content hooks grep the diff and commit msg, never filenames, so a slug/filename term ships clean. Anonymize every hit; pick a generic slug up front, never derived from the subject; scrub staged `.learned.md`/retro archives too. Treat a hand-rolled NONE as **unverified** until the grep is proven to fire. Scan + proof mechanics: [`references/staged-path-scan.md`](references/staged-path-scan.md).
+  - **Index already holds another run's fold → never `git add` yours into it.** Stage-then-`git reset` is no repair: reset cannot restore which paths were staged. Copy the index, stage and run there; the same copy serves the Step 7.5 measure, keeping `measure()` verbatim.
+
+    ```bash
+    P="${TMPDIR:-/tmp}/probe-index"; cp .git/index "$P"; export GIT_INDEX_FILE="$P"
+    git add <paths>; for h in .githooks/check-*.sh; do "$h" || echo "FAIL: $h"; done
+    unset GIT_INDEX_FILE   # else every later git call silently uses the copy
+    ```
+
+- Hand-roll only what no hook covers: **staged path strings**. Anonymize every hit. Scan mechanics: [`references/staged-path-scan.md`](references/staged-path-scan.md).
 
 ## Step 6: Present for Review
 
@@ -223,24 +190,8 @@ behavior, not just the specific instance.
 - Verify each new or edited section follows the style rules.
 - Bump `metadata.version` to a fresh CalVer.
 - Re-read the final file end-to-end.
-
-### Write distilled references to `skills/{name}/references/`
-
-- Create the directory if missing.
-- Write one short reference file per learning.
-- Frontmatter:
-  - `class: principle` or `class: one-off`
-- `principle` files:
-  - **Rule**
-  - **Why**
-  - **Where**
-- `one-off` files:
-  - **Scenario**
-  - **Symptom**
-  - **Fix**
-  - **Why not promoted**
-- Do not link references from `SKILL.md`.
-- Run the overfit scan on reference files too.
+- Write one short reference file per learning (create the dir if missing); frontmatter `class:` and per-class body fields: [`references/reference-file-template.md`](references/reference-file-template.md).
+- Never link a per-learning reference from `SKILL.md` — they are the distillation record, not runtime pointers. (Curated shared procedure references are linked; those are a different artifact.) Run the overfit scan on both.
 
 ### Sync skill README, diagrams, and repo-level docs
 
@@ -258,7 +209,7 @@ behavior, not just the specific instance.
 - `argument-hint` matches the current argument shape.
 - `allowed-tools` lists every tool the new edits reference.
 - Quick-reference table, Trigger table, and Step list match the body.
-- README counts of any set whose size changed — recount from source, never increment.
+- Recount any documented set from source, never increment; shape the probe to the source markup, prove it fires on a known member (mismatch → 0 = phantom drift).
 - Cross-references still resolve.
 - Examples reflect the post-edit behavior.
 - Fix every drift item in the same pass.
@@ -267,24 +218,28 @@ behavior, not just the specific instance.
 
 ### HARD RULE: de-bloat every run — never let prose accrete
 
-- Run on **every** sharpening, not only when a learning prompts it. Bloat is the cumulative default of additive edits.
+- Run on **every** sharpening, not only when a learning prompts it.
 - **Bulletize, do not compress prose.** One rule per line, imperative voice, `→` for causality, drop articles/connectives in procedural text.
-- Remove redundancy, dead labels, explanatory filler. State a rule once; cross-reference instead of restating.
+- State a rule once; cross-reference instead of restating; cut explanatory filler.
+- **Merging duplicates → keep the occurrence a run reaches first, cross-reference forward.** Deleting a rule's earliest statement moves it later in reading order — the defect a reachability fold exists to fix.
 - **Preserve every rule, failure mode, and command.** Reject any edit that drops a HARD RULE, error code, or failure-mode explanation.
 - Re-run the Drift check after de-bloat edits land.
 
 ### HARD RULE: hard size ceilings per `SKILL.md`
 
-- `.githooks/check-skill-size.sh` blocks commits over any of (each env-tunable):
-  - **Body** (everything after the front-matter) ≤ **24576 bytes** (`SKILL_SIZE_MAX_BYTES`)
-  - **Front-matter** block ≤ **8192 bytes** (`SKILL_FRONTMATTER_MAX_BYTES`)
-  - **`description:`** field ≤ **1024 bytes** (`SKILL_DESC_MAX_BYTES`)
-  - **`allowed-tools:`** ≤ **36 lines** (`SKILL_TOOLS_MAX_LINES`)
-- Keep skills under the ceilings proactively — never rely on the hook as the only guard. When a skill exceeds (or the edit would push it over) a ceiling, before finishing: bulletize/refactor for concision, split content into `references/` or a sub-skill, tighten the description, or narrow the tool list.
+- `.githooks/check-skill-size.sh` blocks a commit breaching any of four env-tunable ceilings — **body ≤ 24576 bytes** (`SKILL_SIZE_MAX_BYTES`), plus front-matter / `description:` / `allowed-tools:` limits: [`references/byte-budget.md`](references/byte-budget.md).
+- Keep skills under the ceilings proactively — never rely on the hook as the only guard. The `description` and `allowed-tools` list are reclaim targets too.
 - **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): relocate narrow, tool-specific catalog rows to a `references/` file and update the pointer's ID list — route a **new** such row straight there (ID only inline), never place-inline-then-reclaim; delete scaffolding or a provably-duplicated rule outright.
-- **Measure the staged body BEFORE drafting any content-adding fold** — unconditional, not gated on "looks tight"; the at-ceiling state is invisible until measured. Headroom under ~2× the edit → budget ≥2 reclaim targets up front whose *combined NET* exceeds the edit by ≥1.2×; net change must be non-positive on the first pass.
-  - **CRITICAL — state the budget as arithmetic before applying any edit:** byte-measure the addition and each reclaim's NET; write the numbers down.
-  - **Very important — stage addition + reclaim cuts together, then measure exactly once**, running the hook's `measure()` verbatim after `git add` — never the working tree. A second measure-and-trim cycle is the re-violation signal → re-plan with one decisive structural cut. Mechanics: [`references/byte-budget.md`](references/byte-budget.md).
+  - **Search duplicates first, relocate last, prose-tighten only for the final margin.**
+  - **Never reclaim a rule's earliest statement** — score duplicates by reading order; only the later occurrence is deletable.
+  - **Grep `references/` for a recorded stay-inline / rejected-relocation note before proposing any relocation.**
+- **Measure the staged body BEFORE drafting any content-adding fold.** Headroom under ~2× the edit → budget ≥2 reclaim targets up front whose *combined NET* exceeds the edit by ≥1.2×.
+  - **Budget the fold PLUS an audit-cleanup allowance** (~25%/floor ~300 B) and size reclaim against that total. Run the Step 5 audit first → **measured** cleanup replaces that estimate, often **0 B**.
+  - **Binding gate = net non-positive AND under every ceiling; the 1.2× ratio is the planning target.**
+  - **Reclaim exhausted, net still positive → tighten the *addition*.**
+  - **Never relocate a gate's enumerated pass/fail checks, or a verification checklist, behind a pointer** — the ceiling never outranks a load-bearing rule. Per-hook recovery rows are catalog, not gate — those move freely.
+  - **CRITICAL — state the budget as arithmetic before any edit:** byte-measure each reclaim's NET and the addition as the *exact* old/new pair you will apply.
+  - **Very important — stage addition + reclaim cuts together, then measure exactly once**, running the hook's `measure()` verbatim.
 
 ## Step 8: Verify and Commit (terminal gate)
 
@@ -293,11 +248,8 @@ Do not return control until all five pass:
 1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — success = `Done!` or `Installed <N> skills` (accept either marker). Prefix the explicit `cd`; the Bash cwd persists across calls, so a `cd` from an earlier step can leave a `.`-relative install in the wrong dir ("No valid skills found").
 2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing; a shipped-code edit must never reach the commit gate unrun. Red result → apply the Step 1 harness-defect rule.
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
-   - Never blanket `git add -A` — the working tree routinely carries *unprocessed* inbox files (`learnings/`, `retrospect/`) from other sessions, and `-A` bundles them into this commit. Add processed paths explicitly. If `-A` is unavoidable, `git reset` every `learnings/`/`retrospect/` path this run did not process before committing.
-   - Re-check the index after any hook-blocked commit.
-   - **Untracked skill dir from another session blocks `check-readme-index`** — the hook scans the whole `skills/` tree on disk, not staged paths. Don't `git add` or index another session's incomplete skill: move it aside (`mv skills/<name> /tmp/agent/...`), land the scoped commit, push, then restore it untouched.
-   - Rename `.learned.md` with `mv`, not `git mv` — a freshly materialized learning is untracked, so `git mv` aborts (`fatal: not under version control`). Then `git add` the new path.
-   - On signing failure, stop — don't re-run install/scan or re-stage; ask the user for an interactive signer unlock. A listed agent key (`ssh-add -l` ok) ≠ signing capability; only a completed signed commit proves it. On the next run the staged fold is resumable, not done — retry the gate; never re-distill.
+   - Recovery for a blocked commit: [`references/commit-gate.md`](references/commit-gate.md).
+   - On signing failure, stop — don't loop on commit, re-stage, or re-distill; ask the user for an interactive signer unlock. A listed agent key (`ssh-add -l` ok) ≠ signing capability; only a completed signed commit proves it. Anti-thrash ≠ gate discharge: an inherited fold's gates are **unrun** until the tree records otherwise — run the shipped-code suite and the owning hooks (Step 5 throwaway index), and leave the index partitioned as the prior run left it.
 4. **Push once:** after all commits exist, push a single time.
 5. **Clean tree:** no modified tracked path in `git status --short` — untracked *unprocessed* learnings/retros are expected state, never debris to delete.
 
@@ -307,22 +259,20 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
 Invoked without a specific incident → batch mode.
 
-### Source 1: Global learnings inbox
+- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form.** A traversal that skips a class of node (`find -type f` never descends a symlinked dir) returns zero for any content when rooted where those nodes live — dead, yet indistinguishable from a real drain. Plant an in-place canary in the scanned tree, re-run the identical form, and corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`).
+  - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Make the differing element order-flipping, on the arm-under-test side. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, so the tripwire misses it.
 
-- Mirror unprocessed learnings from `$HOME/.claude/skills/learnings/` into the repo tree before distilling.
-- Skip the source if the directory does not exist.
-- For each `*.md` under the inbox:
-  - Resolve destination as `$WK_SKILLS_HOME/learnings/skills/<relative-path>`.
-  - Skip if the destination already exists.
-  - Copy the file, then delete the inbox original.
-- Fall through to Source 2.
+### Sources 1 & 4 and processed-state tracking
+
+- **Source 1** (mirror the global inbox into the repo tree) and **Source 4** (session retrospects) both feed the Source 2 path.
+- Full mirror / scan / rename mechanics — read before draining either source: [`references/batch-mode-sources.md`](references/batch-mode-sources.md).
 
 ### Source 2: Repo learnings directory
 
 - Scan `$WK_SKILLS_HOME/learnings/skills/` for unprocessed files.
 - Process every unprocessed learning one-by-one, severity-ordered: read it, run the sharpen workflow, confirm the distilled principle landed, then rename to `.learned.md`.
 - Re-scan after each fold-commit, not only at start — concurrent sessions write the tree continuously. Treat "inbox drained" as a terminal check run after the last commit, never a fact set up-front.
-- **An arrival whose mtime postdates the run's start is unowned, not assigned.** Corroborate with commit recency; either signal showing a concurrent writer → report the item as unclaimed backlog for the dispatcher and do not fold it. No lock, lease, or ownership marker exists to arbitrate a collision. Terminal state is "processed N, M unclaimed arrivals" — never "drained".
+- **An arrival whose mtime postdates the run's start is unowned, not assigned.** Corroborate with commit recency; either signal showing a concurrent writer → unclaimed backlog, do not fold it. No lock, lease, or ownership marker exists to arbitrate a collision. Terminal state is "processed N, M unclaimed, K distilled-not-landed" — never "drained". A fold applied under a blocked gate is distilled-not-landed: leave it unrenamed and name it in the report — never counted processed, never re-queued as backlog.
 
 ### Source 3: Global memory files
 
@@ -330,26 +280,9 @@ Invoked without a specific incident → batch mode.
 - Process `feedback` memories; process `user` / `project` only when they carry explicit instructions on how a skill should behave.
 - Determine which skill the feedback applies to.
 - Materialize each matched memory as a learning via `wk-learn`, then distill it through the Source 2 path.
-- **Gate the listing by parse-as-memory BEFORE diffing the marker.** Require a frontmatter block with a `type:` key — match it at column 0 *or* nested under `metadata:`; a bare `^type:` grep silently drops memories that nest it. Non-memory residents (a hand-maintained index, another skill's append-only archive) are out-of-scope-by-rule, never backlog.
-- **Never add a marker entry for a file this run did not process.** The marker records distillation, not suppression — mixing them destroys any way to tell a real completion from a silenced non-memory.
-- **Normalize both sides before diffing against the marker** — `comm` is exact-match, so the listing and `.distilled-memories` must share one path form. Every memory reading un-distilled is a probable format mismatch, not real backlog; sanity-check before processing. A refused invocation → drop only the blocked element, never swap the comparison primitive. Mechanics: [`references/memory-marker-diff.md`](references/memory-marker-diff.md).
-
-### Source 4: Session retrospects
-
-- Scan `$WK_SKILLS_HOME/learnings/retrospect` for unprocessed retrospect files.
-- Read each "What could've been better" and any "What worked" bullet that asserts a reusable practice.
-- Match each lesson to a skill by name/tool/phase.
-- Materialize each matched lesson as a learning via `wk-learn`.
-- Distill it through the Source 2 path and rename it to `.learned.md`.
-- After every lesson in the file is distilled, rename the retrospect file itself.
-- A lesson whose slug already exists is already distilled.
-
-### Tracking processed sources
-
-- **Learnings (Source 1 & 2):** processed state is the `.learned.md` rename.
-- **Retrospects (Source 4):** same as learnings.
-- **Memories (Source 3):** tracked by a gitignored marker at `$WK_SKILLS_HOME/.distilled-memories`.
-- Reprocess on change. `--scan --force` ignores every marker and rename-state, re-distilling all.
+- **Gate the listing by parse-as-memory BEFORE diffing the marker**, and never add a marker entry for a file this run did not process — the marker records distillation, not suppression.
+- **Unanimity indicts the tooling — both stages, both directions; non-unanimity never exonerates it.** Match `type:` at column 0 **and** nested under `metadata:`; build one positive control **per shape**.
+- **Normalize both sides, then pin `LC_ALL=C` on the `comm` itself — not just the sort.** Mechanics: [`references/memory-marker-diff.md`](references/memory-marker-diff.md).
 
 ### Batch mode presentation
 
@@ -358,13 +291,7 @@ Invoked without a specific incident → batch mode.
 
 ## Improve Mode: Refactor and Optimize
 
-`/wk-sharpen improve [scope]` → suite-level cleanup, not incident-specific fixes. Scope is omitted / `all`, `<skill-name>`, or a glob. Procedure — inventory, audit targets, leverage ranking, Phase A–D proposals, apply: [`references/improve-mode.md`](references/improve-mode.md).
-
-### Hard rules for improve mode
-
-- **No information loss.** Remove a rule only if it is provably duplicated elsewhere or superseded by a stricter rule.
-- **Phased approval required.** Auto mode does not short-circuit this.
-- **Capture insights.** External research surfacing a useful pattern → add it to the overfit-categories table or as a new `wk-sharpen` rule.
+`/wk-sharpen improve [scope]` → suite-level cleanup, not incident-specific fixes. Scope is omitted / `all`, `<skill-name>`, or a glob. Procedure and hard rules: [`references/improve-mode.md`](references/improve-mode.md). **Phased approval is required per phase; auto mode never short-circuits it.**
 
 ## Post-Completion
 
