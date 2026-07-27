@@ -94,5 +94,14 @@ backlog.
   `grep -Fxq "$row" "$marker"` — a row the marker provably contains is false backlog.
 - Generalize: when a pipeline sorts under a pinned locale and then feeds any
   collation-sensitive consumer (`comm`, `join`, `uniq`), pin the same locale on the consumer.
+- **The pin is a property of each invocation, not of the named pipeline.** Every
+  collation-sensitive comparison the run *creates* — ad-hoc reconciliation arms, control
+  arms, one-off sanity checks — carries the same pin as the sorts feeding it, not only the
+  invocation this snippet shows. The unpinned sibling is the dangerous one: a reconciliation
+  arm exists precisely to validate the primary result, so leaving it unpinned puts a
+  mis-walking comparison in the position of the check.
+- **Converse tripwire:** a reconciliation result that contradicts a verdict the run already
+  reached (a reject list naming files the run just accepted) indicts the reconciliation's own
+  invocation form first, before the verdict it questions.
 
 **Where** — wk-sharpen batch mode, Source 3 (global memory files).

@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-175524'
+  version: '2026.07.27-175902'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -278,11 +278,10 @@ Invoked without a specific incident → batch mode.
 
 - Scan `$HOME/.claude/memory/` for memory files.
 - Process `feedback` memories; process `user` / `project` only when they carry explicit instructions on how a skill should behave.
-- Determine which skill the feedback applies to.
 - Materialize each matched memory as a learning via `wk-learn`, then distill it through the Source 2 path.
 - **Gate the listing by parse-as-memory BEFORE diffing the marker**, and never add a marker entry for a file this run did not process — the marker records distillation, not suppression.
 - **Unanimity indicts the tooling — both stages, both directions; non-unanimity never exonerates it.** Match `type:` at column 0 **and** nested under `metadata:`; build one positive control **per shape**.
-- **Normalize both sides, then pin `LC_ALL=C` on the `comm` itself — not just the sort.** Mechanics: [`references/memory-marker-diff.md`](references/memory-marker-diff.md).
+- **Normalize both sides, pin `LC_ALL=C` on every `comm`/`join`/`uniq`, control and reconciliation arms included — not just the sorts.** Mechanics: [`references/memory-marker-diff.md`](references/memory-marker-diff.md).
 
 ### Batch mode presentation
 
