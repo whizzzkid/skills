@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-204318'
+  version: '2026.07.27-205752'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -97,10 +97,10 @@ behavior, not just the specific instance.
 
 - Determine which skill needs updating. Grep the learning's core subject across all of `skills/`; the defect's text may live in a skill other than the one filed — fold the principle into the API-mechanics home AND correct every over-general instance elsewhere in the same pass. If ambiguous, ask the user.
 - **Resolve the on-disk skill dir by listing, never by transforming the display name.** Glob once, reuse the result: `d=$(ls -d skills/*"${n#wk-}" | head -1)`. Rationale: [`references/skill-dir-resolution.md`](references/skill-dir-resolution.md).
-  - Empty listing → treat `skill:` as the reporter's *guess* at ownership, not a resolved target (learnings dirs are created on demand and never prefixed, so an unresolvable value is expected input): route by the subject grep to the skill whose body owns the mechanics. Never retry the path or file it as a gap; the zero-match rule below governs a resolved dir, not an empty listing.
+  - Empty listing → treat `skill:` as the reporter's *guess* at ownership, not a resolved target: route by the subject grep to the skill whose body owns the mechanics. Never retry the path or file it as a gap; the zero-match rule below governs a resolved dir, not an empty listing.
 - Treat a zero-match grep whose emptiness is load-bearing as **unverified until the path is confirmed to exist**.
 - Read the entire `SKILL.md`, not just the target section — map its hard rules, step coverage, recurring themes, and tool-usage patterns.
-- Partial reads do not satisfy the edit guard. Re-read narrow ranges when needed.
+- Partial reads do not satisfy the edit guard; a refused or content-less read → narrow ranged re-read. **Slice every exact-match anchor from the file's bytes, never a rendering** — silent word-drops stay grammatical, so the anchor misses or edits the wrong span.
 
 ## Step 3: Distill the Lesson
 
@@ -161,7 +161,7 @@ behavior, not just the specific instance.
 - Parameterize real paths instead of dropping them.
 - Justify inline only when the literal token is required.
 - Apply replacement maps longest-first.
-- Reject ticket-shaped example tokens. Grep case-sensitive (never `-i` — it widens to `Word-Number` noise (`Step-5`)) against `[A-Z][A-Z0-9]+-\d+`; any match — even an invented placeholder — trips the `check-ticket-refs` hook, which matches shape, not provenance. Replace with `<child-key>`/`<KEY>` or the repo's `BOARD-NUM` form.
+- Reject ticket-shaped example tokens: case-sensitive grep (never `-i`) for `[A-Z][A-Z0-9]+-\d+`, replace with `<KEY>` or the repo's `BOARD-NUM` form — [`references/ticket-shaped-example-tokens.md`](references/ticket-shaped-example-tokens.md).
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
 - **CRITICAL — run the owning hook scripts against the staged index; never reimplement their matcher.** Same flags ≠ same engine; the governing risk is the false-*clean*: [`references/staged-path-scan.md`](references/staged-path-scan.md). Run every hook after staging → real gate semantics, no synthetic probe:
 
@@ -237,7 +237,7 @@ behavior, not just the specific instance.
 
 Do not return control until all five pass:
 
-1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — success = `Done!` or `Installed <N> skills` (accept either marker). Prefix the explicit `cd`; the Bash cwd persists across calls, so a `cd` from an earlier step can leave a `.`-relative install in the wrong dir ("No valid skills found").
+1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — success = `Done!` or `Installed <N> skills` (accept either marker); always prefix the explicit `cd` ([`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md)).
 2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing; a shipped-code edit must never reach the commit gate unrun. Red result → apply the Step 1 harness-defect rule.
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Recovery for a blocked commit, signing failure included: [`references/commit-gate.md`](references/commit-gate.md).
@@ -251,8 +251,8 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
 Invoked without a specific incident → batch mode.
 
-- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form.** A traversal skipping a class of node (`find -type f` never descends a symlinked dir) returns zero for content rooted where those nodes live — dead, yet indistinguishable from a real drain. Plant an in-place canary in the scanned tree, re-run the identical form, corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`).
-  - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Site the order-flipper where the *unpinned* stage decides — placement inverts per stage. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, tripwire misses it.
+- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form** — a traversal skipping a class of node returns a dead zero ([`references/batch-mode-sources.md`](references/batch-mode-sources.md)). Plant an in-place canary in the scanned tree, re-run the identical form, corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`).
+  - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Site the order-flipper where the *unpinned* stage decides — placement inverts per stage — and pick an uppercase-initial token whose letter sorts *after* its lowercase peers', else both collations agree and it is dead: sorts identical → wrong token; sorts differ but arms agree → mis-sited. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, tripwire misses it.
 
 ### Sources 1 & 4 and processed-state tracking
 

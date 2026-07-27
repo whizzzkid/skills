@@ -19,6 +19,13 @@ exist. Missing-path warnings cannot be relied on as the signal: grep
 implementations differ in whether they emit one, and a wrapper or alias can
 suppress it.
 
+## An empty listing is expected input, not a failure
+
+Learnings directories are created on demand and are never `wk-`-prefixed, so a
+`skill:` value that resolves to nothing is normal. Treat the field as the
+reporter's *guess* at ownership and route by the subject grep instead. Never
+retry the path or file the miss as a gap.
+
 **Where** — Step 2 (read the full skill), before any cross-skill coverage sweep.
 Also applies to the canonical-path rule in the learnings-capture skill, whose
 strip is correct for its own directory but must not be reused as a `skills/`

@@ -27,6 +27,14 @@ unchanged — read this before draining either source.
 - After every lesson in the file is distilled, rename the retrospect file itself.
 - A lesson whose slug already exists is already distilled.
 
+## Why a "drained" verdict needs a structurally-capable control
+
+- A traversal that skips a class of node — `find -type f` never descends a symlinked
+  directory — returns zero for content rooted under those nodes. The zero is dead, yet
+  indistinguishable from a real drain.
+- So plant an in-place canary in the scanned tree, re-run the *identical* invocation form,
+  and corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`).
+
 ## Tracking processed sources
 
 - **Learnings (Source 1 & 2):** processed state is the `.learned.md` rename.
