@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.27-080007`
+**Version:** `2026.07.27-175524`
 
 ## Invocation
 
@@ -92,7 +92,12 @@ flowchart TD
   repo tree before distilling, then drains the inbox by deleting originals after copy.
 - **A re-scan arrival is not automatically this run's work.** An item whose mtime postdates
   the run's start is unowned, not assigned — peer sharpen agents share the tree and there is no
-  lock, lease, or ownership marker to arbitrate a collision. Such items are reported as
+  lock, lease, or ownership marker to arbitrate a collision. Neither mtime nor commit recency
+  can see a peer's *claim*: processed state is recorded by renaming the file, and `mv` preserves
+  mtime while advancing only ctime, so the two signals agree because both are blind in the same
+  direction — never as corroboration. The listing is therefore re-read immediately before each
+  item is folded, and an item that has vanished since the opening listing proves a concurrent
+  writer whatever the timestamps say. Such items are reported as
   unclaimed backlog for the dispatcher, and the terminal state reads "processed N, M unclaimed,
   K distilled-not-landed" rather than "drained". That third bucket holds a fold applied to the
   worktree but blocked from committing: the source learning stays unrenamed and is named in the

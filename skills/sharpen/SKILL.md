@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-080007'
+  version: '2026.07.27-175524'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -271,8 +271,8 @@ Invoked without a specific incident → batch mode.
 
 - Scan `$WK_SKILLS_HOME/learnings/skills/` for unprocessed files.
 - Process every unprocessed learning one-by-one, severity-ordered: read it, run the sharpen workflow, confirm the distilled principle landed, then rename to `.learned.md`.
-- Re-scan after each fold-commit, not only at start — concurrent sessions write the tree continuously. Treat "inbox drained" as a terminal check run after the last commit, never a fact set up-front.
-- **An arrival whose mtime postdates the run's start is unowned, not assigned.** Corroborate with commit recency; either signal showing a concurrent writer → unclaimed backlog, do not fold it. No lock, lease, or ownership marker exists to arbitrate a collision. Terminal state is "processed N, M unclaimed, K distilled-not-landed" — never "drained". A fold applied under a blocked gate is distilled-not-landed: leave it unrenamed and name it in the report — never counted processed, never re-queued as backlog.
+- Re-list before folding each item and after each fold-commit — peers write continuously; "drained" is a terminal check after the last commit, never set up-front.
+- **An arrival whose mtime postdates the run's start is unowned, not assigned.** Neither it nor commit recency sees a *claim* (the marker is a rename; `mv` keeps mtime) and no lock arbitrates, so re-list first: a vanished item, or either signal showing a peer → unclaimed backlog, do not fold. Terminal state is "processed N, M unclaimed, K distilled-not-landed" — never "drained". A fold applied under a blocked gate is distilled-not-landed: leave it unrenamed and name it in the report — never counted processed, never re-queued as backlog.
 
 ### Source 3: Global memory files
 
