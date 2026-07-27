@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.27-194158'
+  version: '2026.07.27-203725'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -337,8 +337,9 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   ```
 
   - **Verdict-level twin — the fallback carries a *conclusion*, not a value: `scan || echo
-    NONE` maps rc=1 (read the input, matched nothing) and rc>=2 (never read it) onto one
-    clean branch.** The value trap appends a wrong number; this one asserts a wrong conclusion,
+    NONE` maps rc=1 (read the input, matched nothing) and rc>=2 (a path it could not
+    read) onto one clean branch.** The value trap appends a wrong number; this one
+    asserts a wrong conclusion,
     and on a prohibited-content gate the wrong conclusion is what ships the content. Only
     stderr separates the two, so a scan that redirects stderr keeps no signal at all.
     Discriminate all three statuses and treat rc>=2 as an aborting scan failure:
@@ -347,6 +348,16 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
     rc=0; command grep -nE "$pat" "$f" || rc=$?
     case $rc in 0) echo MATCH ;; 1) : ;; *) echo "SCAN FAILED: $f" >&2; exit 1 ;; esac
     ```
+
+  - **`-s`/`-q` decide which status wins — neither is cosmetic.** `-s` hides the
+    *message* for a missing or unreadable path, never the status, removing the one
+    signal that separated rc=1 from rc>=2. Precedence also flips: without `-q` an
+    unreadable path yields rc=2 **even when the pattern matched another file**; with
+    `-q` a match yields rc=0 **even when a path errored**, so `grep -sq` over a path
+    set reports success whenever anything matched and swallows the failed path.
+    Verified identical on BSD and GNU greps — never branch on a supposed
+    BSD-vs-GNU status difference. Where a path may be absent, test `[[ -f "$f" ]]`
+    first or judge the check on its output, never status alone.
 
 ## Apply or Report
 
