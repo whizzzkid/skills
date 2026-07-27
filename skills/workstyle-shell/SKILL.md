@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.27-203725'
+  version: '2026.07.27-230022'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -124,11 +124,11 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   - `${!var}` indirect expansion — bash-only; aborts the whole snippet under zsh with
     `bad substitution`. Distinguish unset from empty by exit status instead:
     `if val=$(printenv "$var"); then …` (rc 1 = unset, rc 0 + empty = set-but-empty).
-  - `${PIPESTATUS[…]}` — bash-only; zsh spells it `pipestatus` and leaves the uppercase
-    name unset, so `rc=${PIPESTATUS[0]}` expands empty and a `${rc:-0}` default reads as
-    success. This inverts rather than empties the result: the guard emits an affirmative
-    *pass* for a command that failed. Drop the pipeline from any status-bearing probe —
-    redirect to a file and read `$?`, or run the command bare.
+  - `${PIPESTATUS[…]}` — bash-only; zsh spells it `pipestatus` (1-based) and leaves the
+    uppercase name unset, so `rc=${PIPESTATUS[0]}` expands empty and a `${rc:-0}` default
+    reads as success. This inverts rather than empties the result: the guard emits an
+    affirmative *pass* for a command that failed. Never reach for it to keep a pipe —
+    drop the pipeline instead, per the verdict-pipeline rule below.
   - **Glob qualifiers** (`(N)`, `(.)`) — zsh-only, and when `bareglobqual` is off
     (verified off in an agent shell, zsh 5.9) they are *reparsed*, not ignored: `(N)`
     becomes a pattern group matching a literal `N`, so `*.md(N)` silently means "files
@@ -148,19 +148,8 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   `/bin/bash script.sh` (3.2) before committing — `mapfile: command not found`
   is the classic 4-only failure. Detect support for a flag or feature by running it against a known-good input and branching on the exit code — never by grepping the stderr wording. Error strings differ between GNU coreutils, BSD/macOS, BusyBox, and library wrappers, so wording-based fallbacks fail closed on the variant they were supposed to handle.
 
-  ```bash
-  # WRONG — wording varies by vendor (BusyBox vs GNU vs macOS)
-  if tool -flag -- "$arg" 2>&1 | grep -q "invalid option"; then
-      fallback
-  fi
-
-  # CORRECT — capability probe
-  if tool -flag -- /known-good >/dev/null 2>&1; then
-      use_tool
-  else
-      fallback
-  fi
-  ```
+  Worked example:
+  [`references/2026-06-10_bash32-no-mapfile.md`](references/2026-06-10_bash32-no-mapfile.md).
 
 - **On macOS/BSD, options are not reordered after the first operand.** `mv src -v`
   treats `-v` as the *destination*, silently renaming `src` to `./-v` — GNU would
@@ -358,6 +347,21 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
     Verified identical on BSD and GNU greps — never branch on a supposed
     BSD-vs-GNU status difference. Where a path may be absent, test `[[ -f "$f" ]]`
     first or judge the check on its output, never status alone.
+- **Important — never pipe a scan whose exit status you act on into `head`/`tail`/
+  `sort`/`wc`.** `$?` after a pipeline is the *last* command's status, and a limiter
+  always succeeds, so the pipeline reports 0 whether the scan matched, matched
+  nothing, or never read its input. Which way it lies is set by the guard's
+  polarity, not the result: `rc == 0` → hit
+  scores a false **hit** on a clean scan, `rc != 0` → clean scores a false **clean**
+  on a real one. This is the pipeline sibling of the hard-coded banner: a second way
+  to lose the rc a verdict must come from. A limiter added for readability silently
+  becomes the status source. Run the scan bare, or redirect to a file and read `$?`
+  (`grep -c`-style counts are a *value*, not a verdict — piping those is fine):
+
+  ```bash
+  rc=0; command grep -nE "$pat" "$f" > "$out" || rc=$?   # verdict survives
+  command grep -nE "$pat" "$f" | head; echo $?           # WRONG — always 0
+  ```
 
 ## Apply or Report
 

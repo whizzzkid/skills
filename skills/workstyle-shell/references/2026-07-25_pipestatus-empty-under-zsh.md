@@ -21,7 +21,12 @@ warning, and exits 0.
 **Where** — `wk-workstyle-shell` → Rules → the zsh-portability rule, as its third trap
 alongside `for x in $LIST` and `${!var}`.
 
-## Found but deferred — an over-general instance elsewhere
+## Found but deferred — an over-general instance elsewhere (DISCHARGED 2026-07-27)
+
+**Discharged** in the pass that folded `2026-07-27_pipe-steals-the-verdict.md`: the
+tree was clean and `wk-workflow` unclaimed, so both instances below were corrected.
+The SKILL bullet now prescribes bare-or-redirect and names `${PIPESTATUS[0]}` only
+to forbid it; the paired reference carries a `Corrected 2026-07-27` note.
 
 - `wk-workflow`'s authoritative-gate rule (and its paired reference) prescribes reading
   `${PIPESTATUS[0]}` unqualified as the remedy for `$?`-after-a-pipe. Under zsh that

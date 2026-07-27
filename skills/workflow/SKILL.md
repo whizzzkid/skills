@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.27-223148'
+  version: '2026.07.27-230022'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -172,7 +172,8 @@ Verification:
 - Full pre-push gate passes before any `git push`; inspect hook config to enumerate every gate.
 - Re-run every gate against final HEAD, not a mid-session snapshot.
 - Validate transformations with a formerly-failing input.
-- **A fast/narrow check is never the authoritative gate.** A pre-commit hook may lint a narrower file set than the full CI-mirroring check — run the full gate before claiming lint/format clean. And never read `$?` from a pipe: after `a | b` it is `b`'s status, so `check | tail` reports `tail`'s success and hides the check's failure — read `${PIPESTATUS[0]}`, or redirect output to a file and check `$?`.
+- **A fast/narrow check is never the authoritative gate.** A pre-commit hook may lint a narrower file set than the full CI-mirroring check — run the full gate before claiming lint/format clean.
+- **Important — never take a verdict from `$?` after a pipe.** After `a | b` it is `b`'s status, and a limiter (`head`/`tail`/`sort`/`wc`) always succeeds — so `check | tail` pins the verdict to 0 whatever the check found — a false clean or a false hit, set by the guard's polarity. Run the check bare, or redirect its output to a file and read `$?`. `${PIPESTATUS[0]}` is bash-only and expands empty under zsh (`wk-workstyle-shell` owns that trap) — never reach for it to keep the pipe.
 
 In a mise-managed repo, `GemNotFound` on `bundle exec` / `bin/rspec` is a setup gap. Run `bin/setup`, then invoke tests via `mise exec -- <cmd>`.
 
@@ -296,15 +297,11 @@ Fix and re-push:
 5. Update PR description via `wk-commit`.
 6. Re-enter loop.
 
-Fix-candidate ordering:
-
-| Priority | Candidate | Notes |
-|---:|---|---|
-| 1 | Version downgrade | One minor/patch when dep upgrade is proximate cause |
-| 2 | Repo-rule compliance | Usually one-line config change |
-| 3 | Same-tool config tweak | Tool config before tool swap |
-| 4 | Same-tool backend/option change | Backend, installer flag, or runner option within existing tool |
-| 5 | Tool-stack change | Removing/replacing a user-named tool requires explicit confirmation |
+Fix-candidate ordering — least invasive first, never skip ahead: **1** version
+downgrade · **2** repo-rule compliance · **3** same-tool config tweak · **4**
+same-tool backend/option change · **5** tool-stack change (needs explicit
+confirmation). Per-candidate notes:
+[`references/ci-fix-candidate-ordering.md`](references/ci-fix-candidate-ordering.md).
 
 Rules:
 
