@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.28-073713`
+**Version:** `2026.07.28-081413`
 
 ## Invocation
 
@@ -47,6 +47,14 @@ flowchart TD
 - **HARD RULE: [`wk-learn`](../learn/README.md) vs [`wk-sharpen`](../sharpen/README.md)** — [`wk-learn`](../learn/README.md) captures to `learnings/` only;
   [`wk-sharpen`](../sharpen/README.md) edits `SKILL.md`. Ambiguous phrasing ("learn from this") defaults to
   [`wk-learn`](../learn/README.md); only explicit "sharpen" or `/wk-sharpen` triggers SKILL.md edits.
+- **Cross-cutting rules bind an operation, not the step hosting it** — a verification
+  discipline written as a property of the step that first needed it does not carry to the next
+  site that needs it, and each site then restates or omits it separately. Two such disciplines
+  are hoisted above the steps and govern every instance at any step: a control is dead unless
+  its target can produce a hit under the operation's own invocation form (including a control
+  for a gate the fold itself just wrote, where the trigger's own input count must be asserted
+  non-zero before the verdict is read), and any grep whose zero is load-bearing takes one
+  quoted path per invocation with the verdict from its own rc, never from `||` or a banner.
 - **The report is a hypothesis** — a learning's "Root cause" and "Suggested fix" are claims,
   not authority. When the subject is a deterministic artifact (hook, script, CI check), its
   source is read (and the failure reproduced where cheap) before drafting, and any fold that

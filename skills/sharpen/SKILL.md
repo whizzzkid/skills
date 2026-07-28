@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.28-073713'
+  version: '2026.07.28-081413'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -68,6 +68,11 @@ behavior, not just the specific instance.
 - Remove specific file names, line numbers, project context, and reviewer / commit names — a rule reading "lines 232/60 in model.md" is overfit.
 - Keep error codes, API behavior, and structural patterns — e.g. "a line not in the diff causes a 422 from the GitHub API" generalizes.
 
+## Cross-Cutting Rules — each binds its operation, not its step
+
+- **A control is dead unless its target can produce a hit under the operation's own invocation form** — source scans, drift probes, a gate this fold just wrote. Assert the **trigger's own input count is non-zero** before reading a gate's verdict: [`references/harness-defect-triage.md`](references/harness-defect-triage.md).
+- **Important — any grep whose zero over a resolved path is load-bearing:** `command grep`, one quoted path per invocation, rc 0/1/≥2 = hit/clean/error; never let `||` or a banner supply a verdict.
+
 ## IMPORTANT — high-severity learnings are not optional
 
 - Read the frontmatter and extract `severity`.
@@ -96,8 +101,6 @@ behavior, not just the specific instance.
 
 - Determine which skill needs updating. Grep the learning's core subject across all of `skills/`; the defect's text may live in a skill other than the one filed — fold the principle into the API-mechanics home AND correct every over-general instance elsewhere in the same pass. If ambiguous, ask the user.
 - **Resolve the on-disk skill dir by listing, never by transforming the display name.** Glob once, reuse the result: `d=$(ls -d skills/*"${n#wk-}" | head -1)`. Rationale: [`references/skill-dir-resolution.md`](references/skill-dir-resolution.md).
-  - Empty listing → treat `skill:` as the reporter's *guess* at ownership, not a resolved target: route by the subject grep to the skill whose body owns the mechanics. Never retry the path or file it as a gap; the zero-match rule below governs a resolved dir, not an empty listing.
-- Treat a zero-match grep whose emptiness is load-bearing as **unverified until the path is confirmed to exist**.
 - Read the entire `SKILL.md`, not just the target section — map its hard rules, step coverage, recurring themes, and tool-usage patterns.
 - Partial reads do not satisfy the edit guard; a refused or content-less read → narrow ranged re-read. **Slice every exact-match anchor from the file's bytes, never a rendering** — silent word-drops stay grammatical, so the anchor misses or edits the wrong span.
 
@@ -108,7 +111,7 @@ behavior, not just the specific instance.
 
 ### HARD RULE: prohibited-subject gate — scan subject before drafting
 
-- `command grep` the source learning/memory's core subject term through `.skillprohibit` and shape-matching hooks (`check-relative-paths`) at distill time, before byte-budget or draft (every load-bearing zero in this skill takes the `command` prefix).
+- `command grep` the source learning/memory's core subject term through `.skillprohibit` and shape-matching hooks (`check-relative-paths`) at distill time, before byte-budget or draft.
 - **Denylist = pattern file, never haystack** — subject on stdin, patterns via `-f`; inverted → fails **open**. Strip its comment/blank lines, as the owning hooks do — `-f` reads them as patterns: false **dirty**, hidden by `-q`.
 - **Prove this gate's zero with a canary**: [`references/staged-path-scan.md`](references/staged-path-scan.md).
 - A lesson *about* an internal/prohibited tool or hook-blocked path shape can only produce edit text carrying it — the collision is knowable now, not at the Step 5 staged scan.
@@ -171,7 +174,7 @@ behavior, not just the specific instance.
   ```
 
   - **Index already holds another run's fold → never `git add` yours into it.** Throwaway-index procedure: [`references/byte-budget.md`](references/byte-budget.md).
-- Hand-roll only what no hook covers: **staged path strings** and the category scan above. Anonymize every hit; **one quoted path per grep, verdict on that scan's own rc — a banner is not a verdict.**
+- Hand-roll only what no hook covers: **staged path strings** and the category scan above. Anonymize every hit; both take the load-bearing-zero rule above.
 
 ## Step 6: Present for Review
 
@@ -251,7 +254,7 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
 Invoked without a specific incident → batch mode.
 
-- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form** ([`references/batch-mode-sources.md`](references/batch-mode-sources.md)). Drained = rc 0 **and** empty output, never a banner.
+- **A "source drained" verdict needs a live control** — sourced per [`references/batch-mode-sources.md`](references/batch-mode-sources.md). Drained = rc 0 **and** empty output, never a banner.
   - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Site the order-flipper where the *unpinned* stage decides — placement inverts per stage — and pick an uppercase-initial token whose letter sorts *after* its lowercase peers', else both collations agree and it is dead: sorts identical → wrong token; sorts differ but arms agree → mis-sited. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, tripwire misses it.
 - **Source 1** (global inbox → repo tree) and **Source 4** (session retrospects) feed the Source 2 path; mirror / scan / rename / processed-state mechanics in the reference above — read before draining either.
 
