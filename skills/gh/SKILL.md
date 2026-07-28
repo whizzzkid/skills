@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: '2026.07.27-225034'
+  version: '2026.07.28-023401'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -307,18 +307,18 @@ If the calling skill emits a payload via a template (heredoc, file,
 jq construction), inject the footer at template-render time so a
 forgotten append cannot ship a footer-less message.
 
-## `gh pr checks --watch` is not proof of green
+## Reading `statusCheckRollup`
 
-`gh pr checks --watch` can return when a *subset* of checks resolves (a fast
-check finishes) while others are still `PENDING`/`IN_PROGRESS` — its exit is not
-a terminal-state guarantee. A single watch is not proof of green CI.
+Applies to **every** rollup consumer — `gh pr checks --watch`, a hand-rolled `until`
+poll, or a one-shot readiness check. Reach this section from any of them; the union
+rules are not `--watch`-specific.
 
-- After the watch exits, re-query the full rollup and confirm every check is
-  terminal before treating CI as green.
-- **`statusCheckRollup` is a heterogeneous union — inspect BOTH state fields.**
-  CheckRun nodes expose `.status`/`.conclusion`; legacy commit Status nodes
+- **Important — `statusCheckRollup` is a heterogeneous union; inspect BOTH state
+  fields.** CheckRun nodes expose `.status`/`.conclusion`; legacy commit Status nodes
   expose `.state` and have `.status == null`. A predicate over one field silently
-  passes a pending entry of the other type.
+  passes a pending entry of the other type: `select(.status != null)` drops every
+  status context, so an external provider posting commit statuses never gates the
+  poll and a still-building PR reads as green.
   - Non-terminal when `.status ∈ {QUEUED,IN_PROGRESS,PENDING}` **OR** `.state == "PENDING"`.
   - Failing when `.conclusion ∈ {FAILURE,TIMED_OUT,CANCELLED}` **OR** `.state ∈ {FAILURE,ERROR}`.
   - Never gate on `.status` alone.
@@ -329,6 +329,19 @@ a terminal-state guarantee. A single watch is not proof of green CI.
            pending: [.statusCheckRollup[] | select(.status // .state | IN("QUEUED","IN_PROGRESS","PENDING"))] | length}'
   ```
 
+- **Report with coalescing fallbacks** — project `{n: (.name // .context), r: (.conclusion // .state)}`.
+  An entry rendering all-null through check-run field names
+  (`{name:null,status:null,conclusion:null}`) is a status context read through the
+  wrong shape — re-read the raw rollup; it is never evidence of an empty gate.
+
+## `gh pr checks --watch` is not proof of green
+
+`gh pr checks --watch` can return when a *subset* of checks resolves (a fast
+check finishes) while others are still `PENDING`/`IN_PROGRESS` — its exit is not
+a terminal-state guarantee. A single watch is not proof of green CI.
+
+- After the watch exits, re-query the full rollup and confirm every check is
+  terminal before treating CI as green — apply the union rules above.
 - **The rollup is one entry per registered check, not one per pipeline job.** A
   single entry can cover an entire pipeline, so a green rollup cannot distinguish
   "that job passed" from "that job never ran / was skipped / soft-failed." Gate the

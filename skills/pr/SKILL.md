@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.27-225417'
+  version: '2026.07.28-023401'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -508,10 +508,10 @@ not merely absence of red (an unregistered build reads as premature all-green).
 
 ```bash
 gh pr view --json statusCheckRollup,headRefOid \
-  --jq '{head: .headRefOid, checks: [.statusCheckRollup[].status] | unique}'
+  --jq '{head: .headRefOid, checks: [.statusCheckRollup[]|(.status//.state)]|unique}'
 ```
 
-Re-poll until the run for the current `headRefOid` is `COMPLETED` and green.
+Re-poll until every entry for the current `headRefOid` is terminal and green.
 
 **HARD RULE — check off the test-plan boxes before `gh pr ready`, not after.**
 The CI-green sync (Step 4.2) is a blocking precondition for `gh pr ready`, not an

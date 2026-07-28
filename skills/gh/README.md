@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.07.27-225034`
+**Version:** `2026.07.28-023401`
 
 ## Invocation
 
@@ -35,5 +35,6 @@ flowchart TD
 - **Artifact download path:** Files saved from `gh` commands go to `/tmp/agent/gh/<owner>/<repo>/<resource_type>/<resource_id>/<filename>` — mirrors the Buildkite convention.
 - **Notification filtering uses `jq`:** Org-scoping for `gh api notifications` is applied via `.repository.owner.login == "$GITHUB_ORG"` in a jq filter, not a CLI flag.
 - **Point-in-time footer link:** The canonical outbound footer's [wk-skills](https://github.com/whizzzkid/skills) link pins to `tree/main@%7B<UTC>%7D` — a render-time UTC timestamp — so readers see the skills as they were when the message posted, not moving HEAD.
+- **Rollup union rules sit in their own section:** `Reading statusCheckRollup` is placed ahead of the `--watch` guidance and applies to every consumer — the watch subcommand, a hand-rolled `until` poll, or a one-shot readiness check. CheckRun nodes carry `.status`/`.conclusion`; commit Status nodes carry `.state` with `.status == null`, so a filter over one field alone reports green while a pending status context is still building.
 - **Rollup granularity:** `statusCheckRollup` has one entry per registered check, not per pipeline job — it answers "is the pipeline green", never "did that specific job pass"; a per-job claim must cite the CI provider's per-job view and exit status.
 - **Model-invocable only:** This skill is a guard rail, not a user command — it fires silently alongside any other skill that uses `gh`.
