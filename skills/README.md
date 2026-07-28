@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **64 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
+> **63 skills** organized into five groups. This file is an owned artifact — see [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root [README.md](../README.md) carries a mirror table; the `check-readme-index` pre-commit hook keeps both in sync with the `skills/` tree.
 
 ---
 
@@ -106,8 +106,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-tone`](./tone/README.md) | Apply the user's voice (encouraging, energetic, humorous, intent-emoji) to messages drafted on their behalf | Auto (posting as the user) + User |
 | [`wk-calver`](./calver/README.md) | Generate CalVer version strings (YYYY.MM.DD-HHMMSS UTC) — replaces semver | Auto (on version bumps) |
 | [`wk-learn`](./learn/README.md) | Capture per-skill learnings after each run → `learnings/skills/{skill}/` | User + Model |
-| [`wk-sharpen`](./sharpen/README.md) | Distill field reports and prune skill bloat without overfitting on examples | User + Model |
-| [`wk-sharpen-drain`](./sharpen-drain/README.md) | Drain the learning queue through [wk-sharpen](./sharpen/README.md) serially — one fold in flight, cadence ticks skip | User: `/wk-sharpen-drain` |
+| [`wk-sharpen`](./sharpen/README.md) | Distill field reports and prune skill bloat without overfitting on examples; `loop <N>mins` self-paces one fold at a time | User + Model |
 | [`wk-skill`](./skill/README.md) | Scaffold a new wk-* skill from the canonical template | User + Model |
 | [`wk-env`](./env/README.md) | Diagnose env-var availability; source `$HOME/.profile`, report missing vars | Auto (PreToolUse on Skill) + User |
 | [`wk-scope-guard`](./scope-guard/README.md) | PreToolUse hook — block out-of-repo searches (`find /`), warn on Edit/Write outside the project root | Auto (PreToolUse on Bash/Edit) + User |

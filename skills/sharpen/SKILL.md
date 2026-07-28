@@ -7,8 +7,10 @@ description: >-
   updating skills after agent runs surfaced gaps, errors, behavioral issues, or
   simplification opportunities. Prevents embedding specific file names, line
   numbers, or project details into skill instructions.
-argument-hint: '[skill-name] [incident-file or description]'
+argument-hint: '[skill-name] [incident-file] | loop <N>mins | improve [scope]'
 allowed-tools:
+  - Agent
+  - ScheduleWakeup
   - Read
   - Grep
   - Glob
@@ -29,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.28-081413'
+  version: '2026.07.28-160119'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -255,8 +257,8 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 Invoked without a specific incident → batch mode.
 
 - **A "source drained" verdict needs a live control** — sourced per [`references/batch-mode-sources.md`](references/batch-mode-sources.md). Drained = rc 0 **and** empty output, never a banner.
-  - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Site the order-flipper where the *unpinned* stage decides — placement inverts per stage — and pick an uppercase-initial token whose letter sorts *after* its lowercase peers', else both collations agree and it is dead: sorts identical → wrong token; sorts differ but arms agree → mis-sited. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, tripwire misses it.
 - **Source 1** (global inbox → repo tree) and **Source 4** (session retrospects) feed the Source 2 path; mirror / scan / rename / processed-state mechanics in the reference above — read before draining either.
+- **Source 3** (global memory files) — `$HOME/.claude/memory/`: `feedback`, plus `user` / `project` only when they instruct how a skill behaves; materialize each via `wk-learn` into the Source 2 path. Parse-as-memory gate before the marker diff, marker-records-distillation-not-suppression, per-shape controls, and uniform `LC_ALL=C` pinning: [`references/memory-marker-diff.md`](references/memory-marker-diff.md).
 
 ### Source 2: Repo learnings directory
 
@@ -264,18 +266,14 @@ Invoked without a specific incident → batch mode.
 - Re-list before folding each item and after each fold-commit — peers write continuously; "drained" is a terminal check after the last commit, never set up-front.
 - **An arrival whose mtime postdates the run's start is unowned, not assigned.** Neither it nor commit recency sees a *claim* (the marker is a rename; `mv` keeps mtime) and no lock arbitrates, so re-list first: a vanished item, or either signal showing a peer → unclaimed backlog, do not fold. Terminal state is "processed N, M unclaimed, K distilled-not-landed" — never "drained". A fold applied under a blocked gate is distilled-not-landed: leave it unrenamed and name it in the report — never counted processed, never re-queued as backlog.
 
-### Source 3: Global memory files
+## Loop Mode: `/wk-sharpen loop <N>mins`
 
-- Scan `$HOME/.claude/memory/`: process `feedback` memories; process `user` / `project` only when they carry explicit instructions on how a skill should behave.
-- Materialize each matched memory as a learning via `wk-learn`, then distill it through the Source 2 path.
-- **Gate the listing by parse-as-memory BEFORE diffing the marker**, and never add a marker entry for a file this run did not process — the marker records distillation, not suppression.
-- **Unanimity indicts the tooling — both stages, both directions; non-unanimity never exonerates it.** Match `type:` at column 0 **and** nested under `metadata:`; build one positive control **per shape**.
-- **Normalize both sides, pin `LC_ALL=C` on every `comm`/`join`/`uniq`, control and reconciliation arms included — not just the sorts.** Mechanics: [`references/memory-marker-diff.md`](references/memory-marker-diff.md).
+Self-paced batch mode — one background subagent per cycle, respawned N minutes after the previous cycle *finishes*. Spawn / schedule / stop mechanics: [`references/loop-mode.md`](references/loop-mode.md).
 
-### Batch mode presentation
-
-- Present counts before processing: learnings, memories, retrospects, processing.
-- After: skills updated, learnings absorbed, memories distilled, skipped items.
+- **Exactly one agent in flight, machine-wide.** Concurrent folds contend over one queue and one `SKILL.md`: two runs claim one learning, and one run's byte budget is voided by the other's edits landing mid-flight.
+- Wait for the running agent's completion signal before scheduling the next; never poll-spawn, never spawn while one is live, never state a pending agent's result.
+- **Time the delay from completion, never a fixed cadence** — an interval tick fires during an active run and stacks exactly the overlap this mode prevents; a slow cycle pushes the next one back.
+- Queue drained (rc 0 **and** empty output) → report counts and stop scheduling; never keep waking on an empty queue.
 
 ## Improve Mode: Refactor and Optimize
 

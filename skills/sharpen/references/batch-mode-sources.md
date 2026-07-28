@@ -41,3 +41,8 @@ unchanged — read this before draining either source.
 - **Retrospects (Source 4):** same as learnings.
 - **Memories (Source 3):** tracked by a gitignored marker at `$WK_SKILLS_HOME/.distilled-memories`.
 - Reprocess on change. `--scan --force` ignores every marker and rename-state, re-distilling all.
+
+## Batch mode presentation
+
+- Present counts before processing: learnings, memories, retrospects, processing.
+- After: skills updated, learnings absorbed, memories distilled, skipped items.

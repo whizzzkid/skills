@@ -2,13 +2,13 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.28-081413`
+**Version:** `2026.07.28-160119`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
-| User-invocable | `/wk-sharpen <skill> [incident]`, `/wk-sharpen` (batch), `/wk-sharpen improve [scope]` |
+| User-invocable | `/wk-sharpen <skill> [incident]`, `/wk-sharpen` (batch), `/wk-sharpen loop <N>mins`, `/wk-sharpen improve [scope]` |
 | Model-invocable | automatic: after [`wk-retro`](../retro/README.md) surfaces skill gaps |
 
 ## How It Works
@@ -18,6 +18,11 @@ flowchart TD
     A{Invocation mode} -->|single| B[Read incident report]
     A -->|batch| G[Scan 4 sources]
     A -->|improve| K[Inventory all skills in scope]
+    A -->|"loop &lt;N&gt;mins"| N1["Spawn ONE background agent<br/>batch-mode cycle"]
+    N1 --> N2{"Cycle complete?"}
+    N2 -->|"queue drained"| N4["Report counts, stop scheduling"]
+    N2 -->|"work remains"| N3["Schedule next cycle N mins<br/>AFTER completion — never a cron"]
+    N3 --> N1
     B --> B2[Verify reported cause against the owning source]
     B2 --> C[Read full SKILL.md]
     C --> D[Distill lesson — extract principle, strip specifics]
@@ -154,6 +159,9 @@ flowchart TD
 - **External memories become learnings first** — each `$HOME/.claude/memory/` feedback file is
   materialized as a version-controlled learning via [`wk-learn`](../learn/README.md) and distilled through the
   Source 2 path; the memory file itself is never renamed (only the materialized learning is).
+- **Loop mode** (`loop <N>mins`) self-paces the batch drain: exactly one background agent in
+  flight, and the next cycle is scheduled `N` minutes after the previous one *finishes* — never
+  on a wall-clock cron, which would fire mid-run and stack concurrent folds over one queue.
 - **Improve mode** requires explicit phased user approval even in auto mode — suite-scale
   refactoring is high blast-radius and can never be applied silently.
 - **De-bloat pass** is mandatory on every run (not only when a learning prompts it) and
