@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.27-222629`
+**Version:** `2026.07.27-235918`
 
 ## Invocation
 
@@ -56,6 +56,14 @@ flowchart TD
   harness, and a failed positive control indicts the control. The artifact is driven directly
   with the same input, a canary is rebuilt as a literal the pattern actually matches, and a red
   result never licenses swapping the prescribed primitive.
+- **A remedy must clear the target's installed rules before it is drafted** — a report's
+  suggested fix can be mechanically correct and still un-foldable, because the reporter wrote it
+  in whatever tooling the incident happened to involve. Before drafting, the prescribed remedy is
+  checked against the HARD RULEs and tool-selection rules already installed in the target skill;
+  where they conflict the installed rule wins, and the lesson is re-expressed in the sanctioned
+  tooling keeping only what survives translation. Deferring this to the Step 5 audit is too late
+  — once written, a new procedure contradicting an old HARD RULE reads as a second valid option
+  rather than as a defect.
 - **A disproof voids the draft** — verification is not a pass/delete filter on the reported
   mechanism. Once reproduction disproves *or sharpens* it, the fold is re-derived from the
   source's semantics rather than reworded, since a corrected mechanism usually changes what the

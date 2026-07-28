@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.27-222629'
+  version: '2026.07.27-235918'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -87,8 +87,7 @@ behavior, not just the specific instance.
 ### HARD RULE: the report is a hypothesis — verify against the owning source
 
 - The report's "Root cause"/"Suggested fix" are non-authoritative — the reporter saw a symptom, inferred a mechanism. A working workaround is not evidence — it can succeed by another mechanism. Confirm a claimed cause in the source before documenting it; delete one the source disproves. A reproduction that disproves or sharpens the mechanism voids the draft → re-derive from the source's semantics instead of patching wording, preferring the formulation the source can be driven to demonstrate. A dispatching agent's claim about tree state ("no peer is mid-fold") is a hypothesis under this rule and loses to contradicting tree evidence.
-- Learning names a deterministic artifact (hook, script, CI check) → read its source, reproduce the failure where cheap, before drafting. A red result from your own tooling indicts the tooling before the artifact: a new case failing while all pre-existing pass indicts the harness; a failed positive control indicts the control — needle from the changed span, control from an untouched one; length-guard both — len 0 is a defect, not a short needle. Drive it directly with the same input; rebuild a canary as a literal the pattern matches; never swap the prescribed primitive over a red result; fix the harness in the same pass as audit cleanup when the two disagree. Reproduction proves the mechanism only in the configuration it ran → enumerate what the fixtures held constant and vary them, or name it in the rule's trigger.
-  - Guard gates the agent's own tool calls → stage each test payload with the file-write tool and feed it to the hook by redirect; the same shape composed inline in a Bash call is itself the blocked call. Never reach for the guard's opt-out to run the test — it voids the result.
+- Learning names a deterministic artifact (hook, script, CI check) → read its source, reproduce the failure where cheap, before drafting. A red result from your own tooling indicts the tooling before the artifact; never swap the prescribed primitive over a red result. Triage rows — needle/control sourcing, length guards, canary rebuild, staging a payload past a guard: [`references/harness-defect-triage.md`](references/harness-defect-triage.md). Reproduction proves the mechanism only in the configuration it ran → enumerate what the fixtures held constant and vary them, or name it in the rule's trigger.
 - Reject any fold that would *relax* a guard or check → hunt the correctness bug instead. A guard honoring caller-supplied scope is weaker than one deriving scope from the environment, and forfeits the property that makes the guard un-rationalizable.
 - Record the rejected suggestion and its rationale in the reference file so it is not re-proposed.
 - A `Rejected` / `Deliberately not promoted` note covering a design you are now adopting is a coverage gap to **execute**, not prose to re-read. Drive the shape it names against the artifact before *and* after; verdicts must match. Suite green without that case → missing coverage, not safety; land it as a pinned test this pass. Adopted with a compensating rule → rewrite the note to what now holds (a stale blanket rejection gets wrongly obeyed or wrongly ignored).
@@ -144,6 +143,7 @@ behavior, not just the specific instance.
 
 - Skip Step 4 for `one-off` lessons.
 - Locate the edit target: a new step, a missing check, a wrong instruction, or a new HARD RULE.
+- **Check the report's prescribed remedy against the target's installed HARD RULEs and tool-selection rules before drafting** — a remedy naming a command, endpoint, or path the target already constrains is incidental to the lesson. Installed rule wins → re-express in the sanctioned tooling, keep only what survives translation (post-draft, the conflict reads as a second valid option, not a defect).
 - **Edit target is a gate governing this fold's own landing → apply the stricter of its pre-edit and post-edit text**, and record which in the run report; a loosened rule takes effect next run, once installed.
 - Format the update as instructions, not narrative — heading, then what to do (imperative), why it matters, how (commands or checks).
 
