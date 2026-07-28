@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.07.27-232055'
+  version: '2026.07.28-001124'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -139,10 +139,19 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | \
 
   ```bash
   bk build view -p <pipeline> <build-number> --json 2>&1 | grep -v '^Warning:' | \
-    jq -r '.jobs[] | select(.name | test("<step-name>")) | "\(.name) \(.state) exit=\(.exit_status)"'
+    jq -r --arg s '<step-name>' '.jobs[] | select(.name // "" | test($s)) | "\(.name) \(.state) exit=\(.exit_status)"'
   ```
 
 - Reserve the rollup for the coarse is-the-pipeline-green gate only.
+- **A check with no step renders identically to a pass.** Before reporting any named check's outcome, confirm a matching job exists in the job list — an empty match is a **finding** ("that check does not run here"), never a pass. A build can be green precisely *because* an unwired check never ran.
+
+  ```bash
+  bk build view -p <pipeline> <build-number> --json 2>&1 | grep -v '^Warning:' | \
+    jq -r --arg s '<step-name>' '[.jobs[] | select(.name // "" | test($s))] | length'
+  ```
+
+  - **Guard the name with `// ""`.** A null-named job (waiter/block steps) aborts `test()` at jq rc=5 with *no* stdout — a presence probe reads that as zero. Fails **open**, indistinguishable from real absence.
+  - Count `0` → grep the repo for the tool's wiring (pipeline definition, CI workflow dir, setup TODO) and report an **unwired gate**, never a green result. A config file present in the repo is not wiring; something must invoke it.
 
 ## Understanding Build States
 
@@ -367,6 +376,7 @@ When saving any Buildkite artifact to disk — build JSON, job logs, artifact fi
 | Cancel from within a build | `buildkite-agent build cancel` (no token needed) |
 | Cancel from outside a build | REST API `PUT .../builds/{n}/cancel` with `write_builds` token |
 | Claim rests on one specific job | Per-job view; cite build number + that job's `exit_status`, never the rollup |
+| "Did check X pass?" | Confirm a matching job exists first — no match = unwired gate, a finding, not a pass |
 | Log shows `job_executor_error` / env-hook failure | Infra, not the diff — `bk job retry <job-uuid>`, leave the code alone |
 | Saving any `bk` payload to disk | Use `/tmp/agent/buildkite/<build>/...` |
 
