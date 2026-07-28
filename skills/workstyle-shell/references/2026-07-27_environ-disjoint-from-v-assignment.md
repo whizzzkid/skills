@@ -53,3 +53,14 @@ and likewise excluded from that count. The word "silent-zero" carries the disamb
 Body 21052 → 22076, net **+1024 B**, ceiling 24576 (2500 B clear). Headroom before the fold was
 3524 B, comfortably over 2× the edit, so no reclaim was budgeted or taken — the measure-before-
 drafting rule was satisfied by the pre-edit measurement, not waived.
+
+## Worked example
+
+Relocated from `SKILL.md` (same bullet) to hold the body under the size ceiling. The
+imperative stays inline under a cut-site pointer, so the rule is still reachable where it
+was; only the demonstration and the inverse-polarity rationale moved.
+
+```bash
+awk '{ print ENVIRON["LEN"] }' LEN=5 f   # WRONG — empty; operand is not in the environment
+LEN=5 awk '{ print ENVIRON["LEN"] }' f   # CORRECT — exported into the process environment
+```

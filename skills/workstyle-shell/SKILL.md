@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.27-230022'
+  version: '2026.07.28-001124'
   internal: false
   model:
     openai: gpt-4.1-mini
@@ -146,7 +146,7 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   negative array indices. Replace `mapfile -t arr < <(cmd)` with
   `while IFS= read -r x; do …; done <<< "$(cmd)"`. Verify with
   `/bin/bash script.sh` (3.2) before committing — `mapfile: command not found`
-  is the classic 4-only failure. Detect support for a flag or feature by running it against a known-good input and branching on the exit code — never by grepping the stderr wording. Error strings differ between GNU coreutils, BSD/macOS, BusyBox, and library wrappers, so wording-based fallbacks fail closed on the variant they were supposed to handle.
+  is the classic 4-only failure. Detect support for a flag or feature by running it against a known-good input and branching on the exit code — never by grepping the stderr wording.
 
   Worked example:
   [`references/2026-06-10_bash32-no-mapfile.md`](references/2026-06-10_bash32-no-mapfile.md).
@@ -187,18 +187,18 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
 
   Identical in BSD `awk` and `gawk` — POSIX semantics, not a vendor quirk.
 - **`awk`'s `ENVIRON[]` and `-v` / `var=val` assignments are disjoint — `export` anything you
-  intend to read through `ENVIRON[]`.** `ENVIRON[]` exposes only the *process* environment, so a
-  `-v name=val` option or a command-line `name=val` operand never appears in it and
-  `ENVIRON["name"]` expands to the empty string: valid program, empty stderr, rc=0. **Inverse
-  polarity to the two `awk` traps above** — the empty value propagates as a plausible one, so
-  `substr($0, start, ENVIRON["LEN"])` yields a **zero-length** needle and `grep -qF -e ""`
-  matches every input, turning a per-item check into a *unanimous pass it never performed*. A
-  length guard catches this only if it treats len 0 as a defect, not a short value. Read a `-v`
-  variable by its bare name; export anything `ENVIRON[]` must see.
-
-  ```bash
-  awk '{ print ENVIRON["LEN"] }' LEN=5 f   # WRONG — empty; operand is not in the environment
-  LEN=5 awk '{ print ENVIRON["LEN"] }' f   # CORRECT — exported into the process environment
+  intend to read through `ENVIRON[]`, or read a `-v` variable by its bare name.** The lookup
+  expands to the empty string with rc=0 and empty stderr, and an empty needle makes a per-item
+  check report a *unanimous pass it never performed* — inverse polarity to the two `awk` traps
+  above. Worked example:
+  [`references/2026-07-27_environ-disjoint-from-v-assignment.md`](references/2026-07-27_environ-disjoint-from-v-assignment.md).
+- **`Illegal byte sequence` means an upstream stage cut a character in half**, never that the
+  input "contains UTF-8" — well-formed UTF-8 through the same consumer exits 0. The producer is
+  a byte-oriented slice: `LC_ALL=C awk … substr($0,1,N)` measures bytes, then cuts
+  mid-character. The diagnostic names the consumer; the defect is the slice width. Pin
+  `LC_ALL=C` on the consumer too when comparison is byte-wise anyway, else slice on character
+  boundaries. **A clean run is no proof** — on BSD/macOS only `sort` (rc 2) and `tr` (rc 1)
+  reject the stream; `grep`, `sed` and `uniq` pass the malformed bytes through silently.
   ```
 
 - **Prefix `command` on any tool call whose clean/zero result is load-bearing.** A bare
