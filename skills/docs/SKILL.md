@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.16-194053'
+  version: '2026.07.28-022825'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -43,6 +43,24 @@ docs root (check for `docs/`, `documentation/`, `doc/`, or `site/` — use which
 Never write or edit files outside the docs root.
 
 Read, Glob, and Grep may access any path (read-only) to understand code changes.
+
+## Claim-Grounding Gate
+
+Applies to every doc, README, announcement, and PR-body accuracy pass — not only
+Step 4 artifacts.
+
+**HARD RULE — ground capability verbs, not just figures.** An accuracy pass scoped to
+citable numbers ships false capability claims untouched: a claim carrying no number is
+never examined, so a rate gets three caveats while "runs your input" passes unread.
+
+- Extract every **capability verb** (runs, executes, validates, enforces, blocks,
+  prevents, detects, learns, remembers) and require each to name the file or symbol
+  implementing it. No implementing code path → downgrade to roadmap language or cut it.
+- Audit title, subtitle, and one-line summary first — they compress hardest, are least
+  likely to carry a citation, and set the reader's model of what the system does.
+- **Regeneration is a transform, not a rewrite.** Rebuilding an artifact from a source
+  file adds no claim absent from that source — invented content bypasses every
+  grounding check the source already passed.
 
 ## Step 1: Check for Affected Docs
 
