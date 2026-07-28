@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.28-065835'
+  version: '2026.07.28-073713'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -204,7 +204,7 @@ behavior, not just the specific instance.
 - `allowed-tools` lists every tool the new edits reference.
 - Quick-reference table, Trigger table, and Step list match the body.
 - Recount any documented set from source, never increment; shape the probe to the source markup, prove it fires on a known member, and prove a range probe's anchor **unique** before trusting its count: [`references/recount-probe-bounds.md`](references/recount-probe-bounds.md).
-- Cross-references still resolve.
+- Cross-references resolve both ways — links land, and no `references/` pointer HEAD carried was dropped while its file survives (`.githooks/check-reference-orphans.sh`).
 - Examples reflect the post-edit behavior.
 - Fix every drift item in the same pass.
 
@@ -253,23 +253,17 @@ Invoked without a specific incident → batch mode.
 
 - **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form** ([`references/batch-mode-sources.md`](references/batch-mode-sources.md)). Drained = rc 0 **and** empty output, never a banner.
   - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Site the order-flipper where the *unpinned* stage decides — placement inverts per stage — and pick an uppercase-initial token whose letter sorts *after* its lowercase peers', else both collations agree and it is dead: sorts identical → wrong token; sorts differ but arms agree → mis-sited. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, tripwire misses it.
-
-### Sources 1 & 4 and processed-state tracking
-
-- **Source 1** (mirror the global inbox into the repo tree) and **Source 4** (session retrospects) both feed the Source 2 path.
-- Full mirror / scan / rename mechanics — read before draining either source: [`references/batch-mode-sources.md`](references/batch-mode-sources.md).
+- **Source 1** (global inbox → repo tree) and **Source 4** (session retrospects) feed the Source 2 path; mirror / scan / rename / processed-state mechanics in the reference above — read before draining either.
 
 ### Source 2: Repo learnings directory
 
-- Scan `$WK_SKILLS_HOME/learnings/skills/` for unprocessed files.
-- Process every unprocessed learning one-by-one, severity-ordered: read it, run the sharpen workflow, confirm the distilled principle landed, then `mv` (never `git mv` — it refuses an untracked path) to `.learned.md`, checking rc.
+- Scan `$WK_SKILLS_HOME/learnings/skills/`; process every unprocessed learning one-by-one, severity-ordered: read it, run the sharpen workflow, confirm the distilled principle landed, then `mv` (never `git mv` — it refuses an untracked path) to `.learned.md`, checking rc.
 - Re-list before folding each item and after each fold-commit — peers write continuously; "drained" is a terminal check after the last commit, never set up-front.
 - **An arrival whose mtime postdates the run's start is unowned, not assigned.** Neither it nor commit recency sees a *claim* (the marker is a rename; `mv` keeps mtime) and no lock arbitrates, so re-list first: a vanished item, or either signal showing a peer → unclaimed backlog, do not fold. Terminal state is "processed N, M unclaimed, K distilled-not-landed" — never "drained". A fold applied under a blocked gate is distilled-not-landed: leave it unrenamed and name it in the report — never counted processed, never re-queued as backlog.
 
 ### Source 3: Global memory files
 
-- Scan `$HOME/.claude/memory/` for memory files.
-- Process `feedback` memories; process `user` / `project` only when they carry explicit instructions on how a skill should behave.
+- Scan `$HOME/.claude/memory/`: process `feedback` memories; process `user` / `project` only when they carry explicit instructions on how a skill should behave.
 - Materialize each matched memory as a learning via `wk-learn`, then distill it through the Source 2 path.
 - **Gate the listing by parse-as-memory BEFORE diffing the marker**, and never add a marker entry for a file this run did not process — the marker records distillation, not suppression.
 - **Unanimity indicts the tooling — both stages, both directions; non-unanimity never exonerates it.** Match `type:` at column 0 **and** nested under `metadata:`; build one positive control **per shape**.
@@ -277,8 +271,8 @@ Invoked without a specific incident → batch mode.
 
 ### Batch mode presentation
 
-- Before processing, present counts: learnings, memories, retrospects, processing.
-- After processing, report: skills updated, learnings absorbed, memories distilled, skipped items.
+- Present counts before processing: learnings, memories, retrospects, processing.
+- After: skills updated, learnings absorbed, memories distilled, skipped items.
 
 ## Improve Mode: Refactor and Optimize
 

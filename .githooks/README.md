@@ -149,6 +149,37 @@ basename does not match `YYYY-MM-DD_<kebab-name>[.learned].md`:
 retrospect is write-once — distilled and renamed to `.learned.md` by batch-mode
 [`wk-sharpen`](../skills/sharpen/README.md), exactly like a learning file.
 
+## check-reference-orphans.sh — reverse link guard for skills/*/references/
+
+Pre-commit hook that blocks a commit which drops a `references/…md` pointer
+while keeping the file it pointed at.
+
+`check-links.sh` and `check-skill-links.sh` validate the **forward** direction
+(every link resolves) and both put `references/` explicitly out of scope.
+Neither can see the opposite failure: relocated content whose pointer is deleted
+by a de-bloat pass reclaiming bytes, or never written in the first place. The
+content is then unreachable at runtime and nothing fails, because the broken
+thing is the *absence* of a link, not a link to a missing file.
+
+A whole-directory reachability sweep is not available — per-learning
+distillation records are unlinked **by design**, and neither filename shape nor
+the `class:` field separates one from relocated runtime content (`class:` types
+the lesson, not the file's role). So the check is **differential**, which needs
+no classification at all:
+
+- A reference `HEAD`'s `SKILL.md` already pointed at must still be pointed at.
+- Any tracked file under the skill dir counts as carrying the pointer, so a
+  pointer may legitimately move into another reference or into the README.
+- A file naming itself is ignored — a self-mention proves no reachability.
+- Retiring a reference stays allowed: delete the file in the same commit as its
+  pointer and the pair drops out together.
+
+Judged on staged blobs, so a partially-staged edit is checked on the bytes
+actually being committed. Landed by batch-mode
+[`wk-sharpen`](../skills/sharpen/README.md), whose Step 7 forbids linking a
+per-learning record and whose Step 7.5 requires a relocation to write its
+pointer at the cut site.
+
 ## scrub-staged.sh — identifier leakage guard
 
 Pre-commit hook that blocks any staged diff containing:

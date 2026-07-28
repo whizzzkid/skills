@@ -21,6 +21,8 @@ pre-commit:
       run: .githooks/check-links.sh
     check-mermaid-links:
       run: .githooks/check-mermaid-links.sh
+    check-reference-orphans:
+      run: .githooks/check-reference-orphans.sh
     check-learnings-dirs:
       run: .githooks/check-learnings-dirs.sh
     check-learning-filenames:
