@@ -14,6 +14,15 @@ these are per-hook catalog rows, not gate checks — a gate is never moved behin
   Only a completed signed commit proves signing capability.
 - Stop and ask for an interactive signer unlock; looping on commit, re-staging, or
   re-distilling cannot recover a locked signer.
+- **One refusal blocks item 3 AND item 4 — diagnose once.** Over an SSH remote the same
+  agent backs commit signing and push authentication, so a refusing agent fails both.
+  `Permission denied (publickey)` immediately after a signing failure is that same
+  outage, not a new access problem — its error string names a different concern (auth,
+  not signing), which invites a wasted second diagnosis of credentials, remote URL, or
+  org membership.
+- Probe once with `ssh -T git@<host>` and read the response: `agent refused operation`
+  resolves both symptoms to one cause. Report both gates blocked under that single root
+  cause; never attempt the push as a workaround for the blocked commit.
 
 ## Re-check the index after any hook-blocked commit
 

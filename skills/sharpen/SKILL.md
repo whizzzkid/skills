@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.28-001124'
+  version: '2026.07.28-024002'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -242,7 +242,7 @@ Do not return control until all five pass:
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Recovery for a blocked commit, signing failure included: [`references/commit-gate.md`](references/commit-gate.md).
    - Anti-thrash ≠ gate discharge: an inherited fold's gates are **unrun** until the tree records otherwise — run the shipped-code suite and the owning hooks (Step 5 throwaway index), and leave the index partitioned as the prior run left it.
-4. **Push once:** after all commits exist, push a single time.
+4. **Push once:** after all commits exist, push a single time. A signing failure at item 3 blocks this too — same agent, different error string.
 5. **Clean tree:** no modified tracked path in `git status --short` — untracked *unprocessed* learnings/retros are expected state, never debris to delete.
 
 Report: one line per skill updated, then confirm tree clean, installed, pushed.

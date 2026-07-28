@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.28-001124`
+**Version:** `2026.07.28-024002`
 
 ## Invocation
 
@@ -97,6 +97,11 @@ flowchart TD
   skill's test suite runs when the fold touched a shipped executable artifact, commits land,
   single push, and no modified tracked path — untracked *unprocessed* learnings/retros are
   expected state, not debris. Silence after edits is a violation.
+- **A signer outage blocks the commit gate and the push gate together.** Over an SSH remote
+  the same ssh-agent backs commit signing and push authentication, so one refusal fails both
+  Step 8 gates. `Permission denied (publickey)` right after a signing failure is that same
+  outage wearing a different error string — probe once with `ssh -T git@<host>`, report both
+  gates blocked under one root cause, and never attempt the push as a workaround.
 - **Anti-thrash is not gate discharge.** On a resumed signer-blocked fold the rule against
   re-running install/scan forbids *looping*, not *verifying*: an inherited fold's gates count as
   unrun until the tree records otherwise, so the shipped-code suite and the owning hooks still
