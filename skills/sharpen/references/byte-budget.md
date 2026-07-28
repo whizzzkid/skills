@@ -63,6 +63,20 @@ env-tunable, so a deliberate exception needs no hook edit):
   catch it: it never saw the priced string. Extract both sides with
   `sed -n '<n>p' <file> > old.txt`, feed those exact bytes to the editor, and the two edits
   cannot diverge.
+- **Revising either side after measuring voids the measurement — re-measure before
+  editing.** The pair can be sliced and priced correctly and *still* drift: a late trim
+  to lift the reclaim ratio over its planning target produces a variant that was never
+  measured, and that variant is what lands. Nothing in the ordinary sequence re-asserts
+  the binding, and the final "stage together, measure once" step reads as confirming a
+  decision already made rather than as the check that catches a drifted pair.
+  - **Reject "the trim only removes bytes, so the projection stays safe."** That is the
+    specific rationalization, and it is wrong twice over: a projection is a claim about a
+    *number*, and an unmeasured edit makes the number unverified regardless of sign.
+    Direction of change is not evidence of magnitude.
+  - Benign only when the margin absorbs it. At the near-zero headroom that triggers a
+    reclaim hunt in the first place, the projection says "clears" while the staged body
+    breaches — and the discovery comes from the commit hook, after the fold is written
+    and versioned, instead of from the plan.
 - **A hand-composed delta is an estimate to reconcile, never the budget itself.** If it
   disagrees with the single verbatim `measure()`, re-tighten until they agree — at near-zero
   headroom the slip surfaces only at the commit hook, after the fold is written and versioned.
