@@ -9,7 +9,7 @@ description: >
   container".
 group: tools
 metadata:
-  version: 2026.07.23-001939
+  version: 2026.07.28-023701
   model: sonnet
   effort: medium
   user-invocable: true
@@ -248,6 +248,7 @@ docker compose -p "$proj" -f .devcontainer/docker-compose.yml build   # rebuild
 | Build fails: file not found during COPY | `context: .devcontainer` instead of project root | Set `context: ..` on the app build |
 | DB connection uses `localhost` | Service hostname confusion | Use `db` (service name) as MySQL host inside Compose network |
 | Tools silently absent | `auto_install = true` missing from `mise.toml` | Add `[settings] auto_install = true` |
+| Dependency install fails on registry `401` in a fresh container | Expired package-registry credential; the provisioning script treats the registry as the only source | Not a hard stop — seed the dependency volume from a sibling container's volume on the same daemon and install offline (`wk-docker` → *Seed a Dependency Volume from a Sibling*) |
 | `down` reports success but containers stay up | Teardown used bare `-f` with no `-p` → empty/wrong project | Pin `-p "$(basename "$PWD")_devcontainer"` to match `devcontainer up`/VS Code |
 
 ## Quick Reference

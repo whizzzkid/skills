@@ -2,7 +2,7 @@
 
 > Use when working with Docker — building images, inspecting containers, debugging Dockerfile issues, verifying image tags exist, or troubleshooting Docker daemon connectivity.
 
-**Version:** `2026.06.23-220111`
+**Version:** `2026.07.28-023701`
 
 ## Invocation
 
@@ -29,6 +29,8 @@ flowchart TD
 ```
 
 ## Noteworthy
+
+- **A registry 401 is not a hard stop:** When a provisioning script cannot install dependencies because the package registry rejects an expired credential, the skill seeds the target volume from a sibling container's volume on the same daemon (throwaway container mounting both, `cp -a`) and installs offline — guarded on matching lockfile generation and on confirming both project-prefixed volume names first, since a mistyped destination silently creates an empty volume and copies into nothing.
 
 - **HARD RULE:** Always run `docker manifest inspect <image>:<tag>` before using any image tag in a `FROM` directive — never assume a tag exists.
 - **ENTRYPOINT reset:** Images with custom entrypoints break `docker-compose run` commands; the fix is `ENTRYPOINT []` in the Dockerfile. Verify with `docker run --rm <image> sh -c 'echo works'`.
