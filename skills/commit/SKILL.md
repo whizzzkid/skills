@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.27-224719'
+  version: '2026.07.28-001124'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -50,18 +50,18 @@ commits, and safe push behavior.
 
 Pick the emoji matching the conventional-commit action:
 
-| Action | Emoji | Example |
-|--------|-------|---------|
-| `fix` | 🐛 | `fix(parser): 🐛 handle empty input` |
-| `feat` | ✨ | `feat(auth): ✨ add OAuth2 login` |
-| `chore` | 🔧 | `chore(config): 🔧 tune lefthook timeouts` |
-| `refactor` | ♻️ | `refactor(api): ♻️ extract middleware` |
-| `docs` | 📝 | `docs(readme): 📝 update install guide` |
-| `test` | 🧪 | `test(auth): 🧪 add token expiry tests` |
-| `ci` | 👷 | `ci(deploy): 👷 add staging pipeline` |
-| `perf` | ⚡ | `perf(query): ⚡ index hot lookup column` |
-| `build` | 🏗️ | `build(deps): 🏗️ lock new dep tree` |
-| `revert` | ⏪ | `revert(api): ⏪ revert middleware extraction` |
+| Action | Emoji |
+|--------|-------|
+| `fix` | 🐛 |
+| `feat` | ✨ |
+| `chore` | 🔧 |
+| `refactor` | ♻️ |
+| `docs` | 📝 |
+| `test` | 🧪 |
+| `ci` | 👷 |
+| `perf` | ⚡ |
+| `build` | 🏗️ |
+| `revert` | ⏪ |
 
 Full list: `skills/commit/references/emoji-cheatsheet.md`
 
@@ -356,6 +356,12 @@ generated file.
 
 - Only artifacts genuinely changed by this branch's source (e.g. route-helper
   stubs on a routes-only PR) should differ from base.
+- **Required regeneration with host-varying output → declare it, never restore.** A
+  platform-stamped artifact (`IS_MAC` predicates, libc constants) regenerated on the
+  mandated host is legitimate, so the base-restore above does not apply. Name in the
+  body: generator, platform it ran on, platform the committed version came from, and
+  which hunks are platform churn, not change-driven. No verify gate for that
+  class → flag it as a follow-up.
 
 ### Re-stage a file edited after it was staged
 
