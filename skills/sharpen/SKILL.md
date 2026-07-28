@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.28-024002'
+  version: '2026.07.28-025925'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -126,7 +126,7 @@ behavior, not just the specific instance.
 
 - A fresh learning that repeats an existing rule proves the rule failed → escalate.
 - **Exception — positive-steering evidence blocks escalation:** before escalating an `already-covered` repeat, check for same-session evidence the rule fired correctly (a retro "What worked" bullet, or the learning conceding the existing behavior was right). If present, the rule worked: classify `already-covered`, cite the proving lines, do NOT escalate.
-- **Escalate only against *installed* text.** A rule strengthened only in an uncommitted worktree fold never steered the failing run — installed diverges from worktree → classify `already-covered (unshipped)` and spend no notch. Repeat tracing to the rule's *shape* → the framing fix is load-bearing; the notch only records it. Escalation evidence only — a *landing* check reads **worktree** bytes, never installed or a tool's rendering.
+- **Escalate only against text installed *before the report*.** A rule living only in an uncommitted worktree fold, or landing after it, never steered the failing run → `already-covered (unshipped)`, no notch, even when installed and worktree agree. Date from history, never inference: `git log -S '<needle>' -- <file>`; severity-ordered backlog makes report-older-than-rule normal. Repeat tracing to the rule's *shape* → the framing fix is load-bearing; the notch only records it. Escalation evidence only — a *landing* check reads **worktree** bytes, not installed or a rendering.
   - **Needle from the learning's own subject; a supplied slug→line map is an unverified hint.** Every line in a rewritten span is new → novelty proves no *particular* lesson landed. Print each match beside its slug.
 - Escalate exactly one notch up the 8-rung ladder: [`references/escalation-ladder.md`](references/escalation-ladder.md).
 - Treat an escalation as a principle edit.
@@ -251,7 +251,7 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 
 Invoked without a specific incident → batch mode.
 
-- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form** ([`references/batch-mode-sources.md`](references/batch-mode-sources.md)). Plant an in-place canary in the scanned tree, re-run the identical form, corroborate with a primitive lacking that blind spot (`ls -laR`, `find -L`). Drained = rc 0 **and** empty output, never a banner.
+- **A "source drained" verdict needs a control whose target can structurally produce a hit under the scan's own invocation form** ([`references/batch-mode-sources.md`](references/batch-mode-sources.md)). Drained = rc 0 **and** empty output, never a banner.
   - **Two-stage-disagreement control must *reach* the compare, not just permit it.** Site the order-flipper where the *unpinned* stage decides — placement inverts per stage — and pick an uppercase-initial token whose letter sorts *after* its lowercase peers', else both collations agree and it is dead: sorts identical → wrong token; sorts differ but arms agree → mis-sited. Agreeing arms exercised nothing yet read as decorative; agreement is no zero, tripwire misses it.
 
 ### Sources 1 & 4 and processed-state tracking

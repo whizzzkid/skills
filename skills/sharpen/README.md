@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.28-024002`
+**Version:** `2026.07.28-025925`
 
 ## Invocation
 
@@ -131,10 +131,14 @@ flowchart TD
   path already carrying an uncommitted fold is extended under its single version bump, while a
   clean unclaimed path is deferred as blocked backlog — folding only where it adds no
   entanglement the path did not already carry.
-- **A re-violation is scored against the *installed* skill, not the worktree.** A rule
-  strengthened only in an uncommitted fold never steered the run that "violated" it, so the
-  escalation ladder is spent only when installed and worktree text agree; a divergence is
-  classified `already-covered (unshipped)` instead. That rule is scoped to escalation
+- **A re-violation is scored against text installed *before the report was written*.** A rule
+  strengthened only in an uncommitted fold — or committed *after* the report — never steered
+  the run that "violated" it, so a notch is spent only when the rule provably predates the
+  report; date it from history (`git log -S`) rather than inferring it from installed-vs-
+  worktree agreement, which answers *where* a rule lives and not *when* it arrived. Severity-
+  ordered batch processing makes report-older-than-rule the normal case, so agreement between
+  installed and worktree is no evidence the rule was in force. Either way the item is
+  classified `already-covered (unshipped)`. That rule is scoped to escalation
   *evidence* only — the opposite question, "did this fold land?", is a landing check and reads
   the **worktree**, where an uncommitted fold lives by definition. Under divergence the two
   reads answer different questions, and substituting one for the other reports a landed fold
