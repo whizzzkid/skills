@@ -84,7 +84,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | Skill | Description |
 |---|---|
 | [workflow](skills/workflow/) | Master orchestration for development tasks — incremental commits, testing, review, PR lifecycle, and retro (model-invocable only) |
-| [plan](skills/plan/) | Grill → research → multi-persona validation → numbered, agent-parallelizable plan (Fable-class) |
+| [plan](skills/plan/) | Grill → research → multi-persona validation → numbered, agent-parallelizable plan (Opus-class, xhigh effort) |
 | [arch-review](skills/arch-review/) | Critical evaluation of architecture docs, specs, plans, and estimates — SPOFs, unhappy paths, assumptions |
 | [design-review](skills/design-review/) | Principal-level UX/design review — design language, accessibility, anti-patterns, dark patterns; consulted by pr-review |
 | [commit](skills/commit/) | Conventional commits with emoji, signing, and safe push behavior |

@@ -8,13 +8,13 @@ description: >-
   mandatory session retro. Supersedes and extends the global CLAUDE.md workflow.
 model-invocable: true
 user-invocable: false
-model: sonnet
-effort: low
+model: opus
+effort: medium
 license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.28-082116'
+  version: '2026.07.28-155027'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash

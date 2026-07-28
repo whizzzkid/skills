@@ -2,7 +2,7 @@
 
 > Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
 
-**Version:** `2026.07.17-181155`
+**Version:** `2026.07.28-155027`
 
 ## Invocation
 
@@ -87,7 +87,7 @@ Run these probes during research and validation:
 - **Progressive disclosure:** SKILL.md stays under 500 lines; detailed probes are compressed into gates and validation checklist.
 - **Multi-persona pass:** The plan is validated from Implementor, Reviewer, Security, Ops, and Product perspectives. Every concern is either addressed by a step or explicitly excluded with a rationale.
 - **[wk-workflow](../workflow/README.md) integration:** Phase 1 calls `Skill(wk-plan)` instead of inline planning. An approved plan from this session short-circuits the workflow's own planning step.
-- **Model:** Uses Fable/Mythos-class models (`claude-fable-5`, `o3`, `gemini-2.5-pro`) for deep multi-persona reasoning.
+- **Model:** Uses Opus-class models (`claude-opus-5`, `o3`, `gemini-2.5-pro`) at `xhigh` effort for deep multi-persona reasoning.
 
 ## Integration Points
 

@@ -17,14 +17,14 @@ allowed-tools:
   - Glob
   - Skill
 model: opus
-effort: high
+effort: xhigh
 model-invocable: true
 user-invocable: true
 license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.17-181155'
+  version: '2026.07.28-155027'
   model:
     openai: o3
     google: gemini-2.5-pro
