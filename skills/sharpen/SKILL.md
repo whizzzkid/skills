@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.28-025925'
+  version: '2026.07.28-061644'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -109,8 +109,8 @@ behavior, not just the specific instance.
 ### HARD RULE: prohibited-subject gate — scan subject before drafting
 
 - `command grep` the source learning/memory's core subject term through `.skillprohibit` and shape-matching hooks (`check-relative-paths`) at distill time, before byte-budget or draft (every load-bearing zero in this skill takes the `command` prefix).
-- **Denylist = pattern file, never haystack** — subject on stdin, patterns via `-f` (`command grep -qiEf`); inverted → fails **open**.
-- **Prove this gate's zero with a canary** — expand a metachar-bearing pattern to a literal it matches: [`references/staged-path-scan.md`](references/staged-path-scan.md).
+- **Denylist = pattern file, never haystack** — subject on stdin, patterns via `-f`; inverted → fails **open**. Strip its comment/blank lines, as the owning hooks do — `-f` reads them as patterns: false **dirty**, hidden by `-q`.
+- **Prove this gate's zero with a canary**: [`references/staged-path-scan.md`](references/staged-path-scan.md).
 - A lesson *about* an internal/prohibited tool or hook-blocked path shape can only produce edit text carrying it — the collision is knowable now, not at the Step 5 staged scan.
 - On match: the lesson cannot land in the public repo. Route it to the user's private `CLAUDE.md`, mark the source distilled, skip the fold (no byte-budget, no draft).
 - When recording a skipped or private-routed fold, name the subject by **category only** in the commit-message body — the `commit-msg` hook scans the message with the same term list as files, so a named token there fails the commit and forces a re-author cycle.
@@ -164,7 +164,7 @@ behavior, not just the specific instance.
 - Apply replacement maps longest-first.
 - Reject ticket-shaped example tokens: case-sensitive grep (never `-i`) for `[A-Z][A-Z0-9]+-\d+`, replace with `<KEY>` or the repo's `BOARD-NUM` form — [`references/ticket-shaped-example-tokens.md`](references/ticket-shaped-example-tokens.md).
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
-- **CRITICAL — run the owning hook scripts against the staged index; never reimplement their matcher.** Same flags ≠ same engine; the governing risk is the false-*clean*: [`references/staged-path-scan.md`](references/staged-path-scan.md). Run every hook after staging → real gate semantics, no synthetic probe:
+- **HIGH-PRIORITY — run the owning hook scripts against the staged index; never reimplement their matcher.** A hand-rolled verdict binds in **neither** direction — reconcile it against the owning hook's: [`references/staged-path-scan.md`](references/staged-path-scan.md). Run every hook after staging → real gate semantics, no synthetic probe:
 
   ```bash
   for h in .githooks/check-*.sh .githooks/scrub-staged.sh; do "$h" || echo "FAIL: $h"; done
@@ -226,7 +226,7 @@ behavior, not just the specific instance.
 - **Prefer content-removing structural moves over prose-mangling to reclaim bytes** (zero coverage risk): relocate narrow, tool-specific catalog rows to a `references/` file and update the pointer's ID list — route a **new** such row straight there (ID only inline), never place-inline-then-reclaim; delete scaffolding or a provably-duplicated rule outright.
   - **Search duplicates first, relocate last, prose-tighten only for the final margin.**
   - **Grep `references/` for a recorded stay-inline / rejected-relocation note before relocating — a hit vetoes only while its stated grounds still hold.**
-  - **Grounds unstated, aggregate, or scored before a now-reachable shape (reading order) → re-test under a cut-site pointer**, before recording the pool exhausted or the ratio unreachable.
+  - Grounds unstated, aggregate, or scored before a now-reachable shape → re-test, never obey.
 - **Measure the staged body BEFORE drafting any content-adding fold.** Headroom under ~2× the edit → budget ≥2 reclaim targets up front whose *combined NET* exceeds the edit by ≥1.2×.
   - **Budget the fold PLUS an audit-cleanup allowance** (~25%/floor ~300 B) and size reclaim against that total. Run the Step 5 audit first → **measured** cleanup replaces that estimate, often **0 B**.
   - **Never relocate a gate's enumerated pass/fail checks or a verification checklist behind a pointer, and never cut a rule's verified-configuration qualifier** — the ceiling never outranks a load-bearing rule. Per-hook recovery rows are catalog, not gate — those move freely.

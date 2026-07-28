@@ -8,9 +8,21 @@ lesson cannot land in the public skill repo: route it to the user's private
 `CLAUDE.md`, mark the source distilled, and skip the fold entirely.
 
 **Direction is part of the rule.** The denylist is the *pattern* operand, never the
-haystack: `printf '%s\n' "$term" | command grep -qiEf .skillprohibit`. "Grep X against
-Y" does not fix which operand supplies the patterns, and the wrong reading fails open —
-see [`staged-path-scan.md`](staged-path-scan.md).
+haystack. "Grep X against Y" does not fix which operand supplies the patterns, and the
+wrong reading fails open — see [`staged-path-scan.md`](staged-path-scan.md).
+
+**Strip the pattern file's comments and blanks before `-f`** — `grep` has no comment
+syntax, so every line of the file is a pattern. The owning hooks strip them
+(`grep -vE '^[[:space:]]*(#|$)'`) and a hand-roll that does not will fail **dirty**:
+
+```bash
+printf '%s\n' "$term" \
+  | command grep -inEf <(command grep -vE '^[[:space:]]*(#|$)' .skillprohibit)
+```
+
+- A bare `#` line matches any subject containing `#`; a blank line matches everything.
+- Drop `-q` in favour of `-in` — `-q` suppresses the matched pattern, which is the only
+  evidence that separates a real hit from a comment-line artefact.
 
 **Why:** The Step 5 mechanical overfit scan greps the *drafted edit text* and runs
 late — after distill, classify, byte-budget, and draft. A lesson *about* an internal

@@ -6,7 +6,8 @@ class: principle
 bare multi-line list:
 
 ```bash
-git diff --cached --name-only | command grep -iEf .skillprohibit
+git diff --cached --name-only \
+  | command grep -iEf <(command grep -vE '^[[:space:]]*(#|$)' .skillprohibit)
 ```
 
 - **A denylist is a pattern file, never a haystack — the direction is part of the rule.**
@@ -86,8 +87,18 @@ index:
 - A hook's pattern file is the script's **private config** — often gitignored, so comment
   style and matcher constructs (PCRE `(?i)`) vary per checkout. A hand-rolled `grep -iEf`
   then returns a silent NONE — rc=1, no stderr — on a term the hook flags.
-- **Never audit comment style to license a hand-roll.** The governing risk is the
-  false-*clean*, and comment style is no evidence against it.
+- **A hand-rolled verdict binds in neither direction.** The false-*clean* is the dangerous
+  one, but the false-*dirty* is the common one, and treating either as authoritative is the
+  same error. Reconcile any hand-rolled result — hit or zero — against the owning hook
+  before acting on it.
+- **`grep -f` has no comment syntax: every line of the pattern file is a pattern.** The
+  owning hooks strip comments and blanks first (`grep -vE '^[[:space:]]*(#|$)'`); a
+  hand-roll that skips that step inherits them as live patterns — a bare `#` line matches
+  any subject containing `#`, and a blank line matches everything. Verified by driving a
+  repo denylist both ways: unstripped, benign text carrying a markdown heading matched;
+  stripped, and through the owning hook, the same text came back clean.
+- **Never audit comment style to license a hand-roll** — comment style is evidence in
+  neither direction. Read the file to strip its comments, never to certify the hand-roll.
 
 **Why** — Content hooks grep the diff and the commit message, never filenames, so a
 prohibited term living in a slug or filename ships clean. Pick a generic slug for a
