@@ -29,7 +29,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.28-061644'
+  version: '2026.07.28-065835'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -117,10 +117,10 @@ behavior, not just the specific instance.
 
 ### HARD RULE: full-read before `already-covered`
 
-- Mark a learning `already-covered` only after reading the full file and matching every rule / bullet.
+- Mark a learning `already-covered` only after reading the body **plus every linked reference** and matching every rule / bullet.
 - Match at the rule level, not the topic level.
 - If any rule is missing, classify as `partial` and distill the missing part.
-- Cite exact existing lines that prove coverage.
+- Cite exact existing lines that prove coverage, each with its file; one resolving only to an *unlinked* per-learning record → `partial`.
 
 ### HARD RULE: re-violation escalation — `already-covered` is NOT "done"
 
@@ -185,7 +185,7 @@ behavior, not just the specific instance.
 - Bump `metadata.version` to a fresh CalVer.
 - Re-read the final file end-to-end.
 - Write one short reference file per learning (create the dir if missing); frontmatter `class:` and per-class body fields: [`references/reference-file-template.md`](references/reference-file-template.md).
-- Never link a per-learning reference from `SKILL.md` — they are the distillation record, not runtime pointers. (Curated shared procedure references are linked; those are a different artifact.) Run the overfit scan on both.
+- Never link a per-learning reference from `SKILL.md` — they are the distillation record, not runtime pointers. Run the overfit scan on both.
 
 ### Sync skill README, diagrams, and repo-level docs
 
@@ -238,7 +238,7 @@ behavior, not just the specific instance.
 Do not return control until all five pass:
 
 1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — success = `Done!` or `Installed <N> skills` (accept either marker); always prefix the explicit `cd` ([`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md)).
-2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing; a shipped-code edit must never reach the commit gate unrun. Red result → apply the Step 1 harness-defect rule.
+2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing. Red result → apply the Step 1 harness-defect rule.
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Recovery for a blocked commit, signing failure included: [`references/commit-gate.md`](references/commit-gate.md).
    - Anti-thrash ≠ gate discharge: an inherited fold's gates are **unrun** until the tree records otherwise — run the shipped-code suite and the owning hooks (Step 5 throwaway index), and leave the index partitioned as the prior run left it.
