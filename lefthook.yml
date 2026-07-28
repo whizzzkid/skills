@@ -35,6 +35,8 @@ pre-commit:
       run: .githooks/check-prohibited.sh
     check-skill-size:
       run: .githooks/check-skill-size.sh
+    check-model-routing:
+      run: .githooks/check-model-routing.sh
 
 commit-msg:
   commands:

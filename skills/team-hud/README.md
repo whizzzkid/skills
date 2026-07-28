@@ -9,6 +9,8 @@
 > and emails. Designed to be invoked in parallel by
 > [`wk-sitrep`](../sitrep/README.md) to produce the team-activity section of daily summaries.
 
+**Version:** `2026.07.28-171110`
+
 ## Invocation
 
 | Mode | Trigger |

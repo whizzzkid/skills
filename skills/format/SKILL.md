@@ -22,10 +22,10 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.08-174545'
+  version: "2026.07.28-171045"
   internal: false
   model:
-    openai: gpt-4.1-mini
+    openai: gpt-5.6-terra
     google: gemini-2.5-flash
     meta: llama-4-scout
     kimi: k2

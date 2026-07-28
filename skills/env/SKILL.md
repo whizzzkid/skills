@@ -20,9 +20,9 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: '2026.07.25-002741'
+  version: "2026.07.28-171043"
   model:
-    openai: gpt-4.1-nano
+    openai: gpt-5.6-luna
     google: gemini-2.5-flash-8b
     meta: llama-4-scout
     kimi: k2

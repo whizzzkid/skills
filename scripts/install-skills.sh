@@ -14,7 +14,7 @@ if [[ -d "$GLOBAL_SKILLS_DIR" ]]; then
   done
 fi
 
-npx -y skills add . -g -y -a=claude
+npx -y skills add . -g -y --agent claude-code
 
 # Wire the skill-shipped hooks into $HOME/.claude/settings.json (idempotent).
 "$(dirname "$0")/register-hooks.sh"

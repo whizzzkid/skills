@@ -2,6 +2,8 @@
 
 > Use for all Google Calendar operations — fetching events, creating events in smart free slots, checking availability, and scanning for upcoming interviews.
 
+**Version:** `2026.07.28-171032`
+
 ## Invocation
 
 | Mode | Trigger |

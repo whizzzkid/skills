@@ -44,7 +44,7 @@ Replace `skill-name` with the name from the skill's frontmatter.
 ## Target a Specific Agent
 
 ```bash
-npx skills add whizzzkid/skills -a claude
+npx skills add whizzzkid/skills --agent claude-code
 npx skills add whizzzkid/skills -a cursor
 npx skills add whizzzkid/skills -a copilot
 ```
@@ -60,10 +60,11 @@ Global skills are available across all your projects.
 ## Verify Installation
 
 ```bash
-npx skills check
+npx skills list -g
 ```
 
-Lists all installed skills and validates their configuration.
+Lists all globally installed skills. For local source validation, use
+`npx skills add . --list`.
 
 ## Update Skills
 

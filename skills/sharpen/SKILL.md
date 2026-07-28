@@ -31,9 +31,9 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: '2026.07.28-160119'
+  version: "2026.07.28-171105"
   model:
-    openai: o3
+    openai: gpt-5.6-sol
     google: gemini-2.5-pro
     meta: llama-4-maverick
     kimi: k2
@@ -242,7 +242,11 @@ behavior, not just the specific instance.
 
 Do not return control until all five pass:
 
-1. **Install:** `cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5` — success = `Done!` or `Installed <N> skills` (accept either marker); always prefix the explicit `cd` ([`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md)).
+1. **Install:**
+   `cd "$WK_SKILLS_HOME" && npx skills add . -g -y --agent claude-code 2>&1 | tail -5`
+   — success = `Done!` or `Installed <N> skills` (accept either marker). Always
+   prefix the explicit `cd`
+   ([`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md)).
 2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing. Red result → apply the Step 1 harness-defect rule.
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Recovery for a blocked commit, signing failure included: [`references/commit-gate.md`](references/commit-gate.md).

@@ -2,7 +2,7 @@
 
 > Layout & structure gate for code the agent writes — imports-at-top, guard clauses, bounded nesting, single-responsibility, no nested ternaries, no magic values, no boolean traps, no dead code, and a duplication threshold that triggers wk-refactor.
 
-**Version:** `2026.07.08-175435`
+**Version:** `2026.07.28-171126`
 
 ## Invocation
 

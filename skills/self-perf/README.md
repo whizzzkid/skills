@@ -2,7 +2,7 @@
 
 > Generate a self-performance review narrative by pulling data from all work systems.
 
-**Version:** `2026.06.15-200559`
+**Version:** `2026.07.28-171103`
 
 ## Invocation
 

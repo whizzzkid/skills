@@ -1,7 +1,16 @@
 ---
 name: wk-cloudsmith
 description: Working with Cloudsmith package registry — upload, query, and auth patterns
+model: sonnet
+effort: low
 model-invocable: true
+license: MIT
+group: tools
+metadata:
+  author: whizzzkid
+  version: "2026.07.28-171113"
+  model:
+    openai: gpt-5.6-terra
 ---
 
 # Cloudsmith

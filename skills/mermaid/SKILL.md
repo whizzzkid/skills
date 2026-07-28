@@ -15,7 +15,9 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.06.26-165301'
+  version: "2026.07.28-171050"
+  model:
+    openai: gpt-5.6-terra
 ---
 
 # Mermaid

@@ -3,7 +3,7 @@
 > Compose and send Slack messages — announcements, PR review requests, status updates, standup snippets, and
 > channel posts — in the user's established voice and correct Slack mrkdwn (never standard Markdown).
 
-**Version:** `2026.06.15-200722`
+**Version:** `2026.07.28-171109`
 
 ## Invocation
 

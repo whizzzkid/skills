@@ -26,9 +26,9 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.20-201927'
+  version: "2026.07.28-171108"
   model:
-    openai: gpt-4.1-mini
+    openai: gpt-5.6-terra
     google: gemini-2.5-flash
     meta: llama-4-scout
     kimi: k2
@@ -103,13 +103,13 @@ If description, model tier, effort, or group were not provided as arguments, ask
    - `workflows` — development process: commits, formatting, docs, testing, meta-skills
 3. **Model tier** — by task complexity:
 
-   | Tier | When | Claude | OpenAI | Gemini |
-   |------|------|--------|--------|--------|
-   | `sonnet` | Most skills — structured, multi-step work | claude-sonnet-4-6 | gpt-4.1-mini | gemini-2.5-flash |
-   | `opus` | Deep reasoning, adversarial review, batch distillation | claude-opus-4-7 | o3 | gemini-2.5-pro |
-   | `haiku` | Single lookups, calver generation, trivial transforms | claude-haiku-4-5 | gpt-4.1-nano | gemini-2.5-flash-8b |
+   | Tier | When | Claude Code | OpenAI | Gemini |
+   |------|------|-------------|--------|--------|
+   | `haiku` | Single lookups, CalVer, trivial transforms | `haiku` | `gpt-5.6-luna` | `gemini-2.5-flash-8b` |
+   | `sonnet` | Most skills — structured, multi-step work | `sonnet` | `gpt-5.6-terra` | `gemini-2.5-flash` |
+   | `opus` | Deep reasoning, adversarial review, batch distillation | `opus` | `gpt-5.6-sol` | `gemini-2.5-pro` |
 
-4. **Effort** — `low` (single action), `medium` (multi-step flow), `high` (long-running, many decisions)
+4. **Effort** — `low`, `medium`, `high`, `xhigh`, or `max`; increase only when task complexity warrants it
 5. **User-invocable** — `true` if the user calls it directly with `/`
 6. **Model-invocable** — `true` if another skill or agent auto-triggers it
 
@@ -238,7 +238,7 @@ user to "fill in the body"; it is already written.
 After writing the body and README (Step 6):
 
 ```bash
-cd "$WK_SKILLS_HOME" && npx skills add . -g -y -a=claude 2>&1 | tail -5
+cd "$WK_SKILLS_HOME" && npx skills add . -g -y --agent claude-code 2>&1 | tail -5
 ```
 
 Must print `Done!`. If it prints `No skills found` or exits non-zero:
@@ -266,7 +266,7 @@ ready:
 Confirm the skill appears in the registry:
 
 ```bash
-npx skills list -a=claude 2>/dev/null | grep "wk-<name>"
+npx skills list --agent claude-code 2>/dev/null | grep "wk-<name>"
 ```
 
 ## Step 9: Commit

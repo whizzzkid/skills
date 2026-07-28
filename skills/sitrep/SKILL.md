@@ -56,7 +56,9 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.07.27-200906'
+  version: "2026.07.28-171107"
+  model:
+    openai: gpt-5.6-terra
 ---
 
 # Sitrep

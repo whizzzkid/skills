@@ -225,8 +225,8 @@ After adding or updating any skill, always run:
 scripts/install-skills.sh
 ```
 
-This reinstalls all skills globally for the agent (`npx skills add . -g -y
--a=claude`) **and** registers the skill-shipped hooks into
+This reinstalls all skills globally for Claude Code (`npx skills add . -g -y
+--agent claude-code`) **and** registers the skill-shipped hooks into
 `$HOME/.claude/settings.json` via `scripts/register-hooks.sh` (idempotent;
 declared in `scripts/hooks-manifest.json`). Never skip this step — running bare
 `npx skills add` installs the skills but leaves new hooks unwired, so a fresh
@@ -256,6 +256,6 @@ Pre-commit check (add to `~/.claude/profile.sh`, substituting your employer toke
 git diff --cached | grep -iE '\byour-employer-token-here\b' && echo "BLOCKED: literal employer name in diff"
 ```
 
-## Workflow
+## Repository Delivery
 
 - Always commit and push after every change to this project

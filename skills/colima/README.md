@@ -3,6 +3,8 @@
 Ensures Colima is running before any container operation and provides a clean
 restart path when Colima or Docker misbehaves.
 
+**Version:** `2026.07.28-171034`
+
 ## Trigger
 
 Auto-invoked before any `docker` or `colima` command. Also triggers on Docker

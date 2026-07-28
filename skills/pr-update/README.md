@@ -3,7 +3,7 @@
 > Bring a PR branch up to date with its base using the right integration strategy — rebase for small branches,
 > patch-replay for large ones — with conflict resolution, re-validation, and force-with-lease push.
 
-**Version:** `2026.07.22-185705`
+**Version:** `2026.07.28-171058`
 
 ## Invocation
 

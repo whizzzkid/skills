@@ -26,11 +26,11 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.27-202433'
+  version: "2026.07.28-171030"
   internal: false
   model:
     claude: claude-opus-4-8
-    openai: o3
+    openai: gpt-5.6-sol
     google: gemini-2.5-pro
 ---
 

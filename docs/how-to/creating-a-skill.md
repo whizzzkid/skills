@@ -23,10 +23,14 @@ name: wk-your-skill-name
 description: >-
   Describe when agents should activate this skill. Be specific about
   trigger phrases, use cases, and the problem it solves.
+model: sonnet
+effort: medium
 license: MIT
 metadata:
   author: whizzzkid
   version: 'YYYY.MM.DD-HHMMSS'  # CalVer, generated via wk-calver
+  model:
+    openai: gpt-5.6-terra
 ---
 ```
 
@@ -34,7 +38,7 @@ metadata:
 
 | Field | Description |
 |-------|-------------|
-| `name` | Unique identifier with `wk-` prefix, e.g. `wk-my-skill` |
+| `name` | Unique identifier with `wk-` prefix, e.g. `wk-<name>` |
 | `description` | When and why to use this skill — agents match on this |
 
 **Optional fields:**
@@ -43,14 +47,31 @@ metadata:
 |-------|-------------|
 | `argument-hint` | Autocomplete hint for arguments (e.g., `[PR number or URL]`) |
 | `allowed-tools` | Array of tools the skill can access at runtime |
-| `model` | Per-provider model recommendations (nested map, see template) |
+| `model` | Claude Code model alias: `haiku`, `sonnet`, or `opus` |
+| `effort` | Claude Code effort: `low`, `medium`, `high`, `xhigh`, or `max` |
 | `model-invocable` | Set `true` to explicitly enable model invocation |
 | `disable-model-invocation` | Set `true` to opt out of model invocation |
 | `license` | License identifier (e.g., `MIT`) |
 | `metadata.author` | Skill author |
-| `metadata.version` | CalVer string `YYYY.MM.DD-HHMMSS` (UTC). Use `wk-calver` to generate. Semver is forbidden. |
-| `metadata.effort` | Complexity level: `low`, `medium`, or `high` |
+| `metadata.version` | UTC CalVer `YYYY.MM.DD-HHMMSS`; generate with [`wk-calver`]; semver forbidden |
+| `metadata.model.openai` | OpenAI provider recommendation aligned with the top-level Claude tier |
 | `metadata.internal` | Set `true` to hide from discovery |
+
+[`wk-calver`]: ../../skills/calver/README.md
+
+Keep the top-level `model` value Claude-native. Never replace it with an
+OpenAI model ID; Claude Code rejects unsupported model annotations. Use this
+provider mapping instead:
+
+| Claude tier | OpenAI provider model |
+|-------------|-----------------------|
+| `haiku` | `gpt-5.6-luna` |
+| `sonnet` | `gpt-5.6-terra` |
+| `opus` | `gpt-5.6-sol` |
+
+Codex discovers skills from `name` and `description`. The OpenAI value is a
+custom routing hint for provider-aware launchers or subagent dispatch; it does
+not replace the active Codex model by itself.
 
 ### 3. Write the skill body
 
@@ -83,10 +104,11 @@ Add your skill to the table in the root `README.md`:
 ### 6. Test locally
 
 ```bash
-npx skills check
+npx skills add . --list
+bats .githooks/test-model-routing.bats
 ```
 
-This validates that your skill is discoverable and the frontmatter is correct.
+These commands validate discovery and cross-provider model alignment.
 
 ## Authoring Quality Checklist
 

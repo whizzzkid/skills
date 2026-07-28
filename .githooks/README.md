@@ -180,6 +180,22 @@ actually being committed. Landed by batch-mode
 per-learning record and whose Step 7.5 requires a relocation to write its
 pointer at the cut site.
 
+## check-model-routing.sh — cross-provider model alignment
+
+Pre-commit hook that preserves Claude Code's native top-level `model` and
+`effort` fields while validating the custom OpenAI provider annotation:
+
+- `haiku` → `metadata.model.openai: gpt-5.6-luna`
+- `sonnet` → `metadata.model.openai: gpt-5.6-terra`
+- `opus` → `metadata.model.openai: gpt-5.6-sol`
+
+The optional `metadata.model.claude` value must contain the same tier as the
+top-level `model`. The hook judges staged `skills/<name>/SKILL.md` blobs, so
+partially staged changes cannot validate against uncommitted working-tree
+content.
+
+Behavioral coverage lives in `.githooks/test-model-routing.bats`.
+
 ## scrub-staged.sh — identifier leakage guard
 
 Pre-commit hook that blocks any staged diff containing:

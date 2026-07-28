@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.28-160119`
+**Version:** `2026.07.28-171105`
 
 ## Invocation
 
@@ -33,7 +33,7 @@ flowchart TD
     P --> Q[Apply edits + bump CalVer version]
     Q --> Q2[Sync skill README + diagram + repo index/docs]
     Q2 --> R[De-bloat pass + size-ceiling check]
-    R --> S["Install + suite + commit + push terminal gate"]
+    R --> S["Install for Claude Code + suite + commit + push terminal gate"]
     G --> G1[Global learnings inbox $HOME/.claude/skills/learnings/]
     G --> G2[Repo learnings/skills/]
     G --> G3[$HOME/.claude/memory/ feedback type only]

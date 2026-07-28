@@ -23,9 +23,9 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.07.24-183816'
+  version: "2026.07.28-171106"
   model:
-    openai: gpt-4.1-mini
+    openai: gpt-5.6-terra
     google: gemini-2.5-flash
     cursor: composer-2
 ---

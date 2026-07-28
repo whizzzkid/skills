@@ -35,9 +35,10 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.05.28-221500'
+  version: "2026.07.28-171110"
   internal: false
   model:
+    openai: gpt-5.6-terra
     claude: claude-sonnet-4-6
 ---
 

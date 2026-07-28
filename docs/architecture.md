@@ -30,16 +30,15 @@ learnings/
 name: wk-pr-resolve
 description: >-
   Address PR review comments interactively ...  ← agent trigger text
-model: opus                                      ← default model tier
+model: opus                                      ← Claude Code model alias
+effort: high                                     ← Claude Code effort
 allowed-tools: [Bash, Read, Edit, Write, ...]   ← capability sandbox
 metadata:
   version: '2026.04.22-070656'                  ← CalVer timestamp
   model:
-    openai:  o3              ← high-tier override
+    openai:  gpt-5.6-sol     ← OpenAI provider hint
     google:  gemini-2.5-pro
     meta:    llama-4-maverick
-    openai:  gpt-4.1-mini   ← (low-tier skills use cheaper models)
-    google:  gemini-2.5-flash
 ```
 
 ---
@@ -132,30 +131,36 @@ skill they describe.
 
 ## Agent-Agnostic Model Routing
 
-Every skill declares a default model tier (`sonnet` or `opus`) and a
-per-provider override table. The agent runtime picks the right model for
-the platform in use — no code changes needed to switch providers.
+Every skill declares a Claude Code model tier (`haiku`, `sonnet`, or `opus`),
+an effort level, and a per-provider recommendation table. Claude Code consumes
+the top-level fields. Codex discovers a skill from `name` and `description`;
+provider-aware launchers or subagent dispatch may consume
+`metadata.model.openai`.
 
 ```mermaid
 flowchart LR
     SK[SKILL.md<br/>model: opus]
-    SK --> CC[Claude Code → claude-opus-4-7]
-    SK --> OA[OpenAI → o3]
+    SK --> CC[Claude Code → opus alias]
+    SK --> OA[OpenAI → gpt-5.6-sol]
     SK --> GG[Google → gemini-2.5-pro]
     SK --> ME[Meta → llama-4-maverick]
     SK --> CU[Cursor → composer-2]
 
     SK2[SKILL.md<br/>model: sonnet]
-    SK2 --> CC2[Claude Code → claude-sonnet-4-6]
-    SK2 --> OA2[OpenAI → gpt-4.1-mini]
+    SK2 --> CC2[Claude Code → sonnet alias]
+    SK2 --> OA2[OpenAI → gpt-5.6-terra]
     SK2 --> GG2[Google → gemini-2.5-flash]
     SK2 --> ME2[Meta → llama-4-scout]
     SK2 --> CU2[Cursor → composer-1.5]
+
+    SK3[SKILL.md<br/>model: haiku]
+    SK3 --> CC3[Claude Code → haiku alias]
+    SK3 --> OA3[OpenAI → gpt-5.6-luna]
 ```
 
-Low-complexity skills (retro, calver, docs) use `sonnet`-tier models to
-keep costs low. High-reasoning skills (pr-review, sharpen, workflow) use
-`opus`-tier.
+Low-complexity skills use `haiku` or `sonnet`; high-reasoning skills use
+`opus`. The staged-frontmatter hook enforces the OpenAI mapping without
+rewriting Claude's native annotation.
 
 ---
 
@@ -192,7 +197,7 @@ npx skills add whizzzkid/skills
 npx skills add whizzzkid/skills -s pr-resolve
 
 # After editing skills locally, reinstall
-npx skills add . -g -y -a=claude
+npx skills add . -g -y --agent claude-code
 ```
 
 Skills are installed into `~/.claude/skills/` and discovered automatically

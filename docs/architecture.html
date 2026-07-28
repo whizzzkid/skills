@@ -256,6 +256,7 @@
   }
   .tag-opus   { background: rgba(139,92,246,0.18) !important; }
   .tag-sonnet { background: rgba(34,197,94,0.18) !important; }
+  .tag-haiku  { background: rgba(245,158,11,0.18) !important; }
 
   /* Skill card: animated SKILL.md file */
   .skill-file {
@@ -751,7 +752,9 @@
       </div>
     </div>
     <div class="panel-body">
-      <div class="blurb"><strong class="pop-sky">Any</strong> agent, <strong class="pop-purple">any</strong> provider. One <code>SKILL.md</code>. Runtime picks the model.</div>
+      <div class="blurb"><strong class="pop-sky">Any</strong> agent,
+        <strong class="pop-purple">any</strong> provider. One <code>SKILL.md</code>.
+        Claude reads its native tier; provider launchers read their hint.</div>
 
       <div class="mini">
         <div class="mini-label">per-provider model routing</div>
@@ -764,9 +767,20 @@
         </div>
         <div class="model-map">
           <span class="lbl">opus&nbsp;→</span>
-          <span class="val"><span class="tag tag-opus">o3</span><span class="tag tag-opus">composer-2</span><span class="tag tag-opus">gemini-pro</span></span>
+          <span class="val">
+            <span class="tag tag-opus">gpt-5.6-sol</span>
+            <span class="tag tag-opus">gemini-pro</span>
+          </span>
           <span class="lbl">sonnet&nbsp;→</span>
-          <span class="val"><span class="tag tag-sonnet">4.1-mini</span><span class="tag tag-sonnet">flash</span><span class="tag tag-sonnet">scout</span></span>
+          <span class="val">
+            <span class="tag tag-sonnet">gpt-5.6-terra</span>
+            <span class="tag tag-sonnet">flash</span>
+          </span>
+          <span class="lbl">haiku&nbsp;→</span>
+          <span class="val">
+            <span class="tag tag-haiku">gpt-5.6-luna</span>
+            <span class="tag tag-haiku">flash-8b</span>
+          </span>
         </div>
         <div class="agent-runs">
           <span class="agent-chip">claude code</span>

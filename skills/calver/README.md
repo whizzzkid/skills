@@ -2,6 +2,8 @@
 
 > Generate a CalVer version string in YYYY.MM.DD-HHMMSS format using UTC time.
 
+**Version:** `2026.07.28-171033`
+
 ## Invocation
 
 | Mode | Trigger |

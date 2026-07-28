@@ -2,7 +2,7 @@
 
 > Scaffold a new wk-* skill from the canonical template with full infrastructure wiring.
 
-**Version:** `2026.07.20-201927`
+**Version:** `2026.07.28-171108`
 
 ## Invocation
 
@@ -23,7 +23,7 @@ flowchart TD
     E --> F[mkdir + write SKILL.md skeleton]
     F --> G[Display scaffold + TDD prompt]
     G --> H{User fills in skill body}
-    H --> I[npx skills add . -g -y -a=claude]
+    H --> I[npx skills add . -g -y --agent claude-code]
     I --> J{Done! printed?}
     J -->|yes| K[Confirm registry entry]
     J -->|no| L[Re-run from repo root / check frontmatter]
@@ -45,8 +45,8 @@ flowchart TD
   it (e.g., skill name `wk-<name>` → directory `skills/<name>/`).
 - Step 3 surfaces unprocessed learnings relevant to the new skill's topic, which become the
   first draft of a `## Common Mistakes` section if matches are found.
-- **Three model tiers** with specific model mappings: `sonnet` (most skills), `opus` (deep
-  reasoning / adversarial), `haiku` (trivial transforms / calver generation).
+- **Three Claude-safe model tiers** with OpenAI mappings: `haiku` → `gpt-5.6-luna`,
+  `sonnet` → `gpt-5.6-terra`, and `opus` → `gpt-5.6-sol`.
 - `$WK_SKILLS_HOME` must be set; the skill stops immediately if missing — it does not guess
   or fall back to `$PWD`.
 - `## Post-Completion` section with `wk-learn <name>` call is always added to the skeleton —

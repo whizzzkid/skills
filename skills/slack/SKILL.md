@@ -25,12 +25,12 @@ license: MIT
 group: communication
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200722'
+  version: "2026.07.28-171109"
   internal: false
   model:
     claude: claude-sonnet-4-6
-    openai: gpt-4.1-mini
-    gemini: gemini-2.5-flash
+    openai: gpt-5.6-terra
+    google: gemini-2.5-flash
 
 ---
 

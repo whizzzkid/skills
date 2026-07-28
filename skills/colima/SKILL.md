@@ -23,10 +23,10 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: '2026.06.03-182948'
+  version: "2026.07.28-171034"
   internal: false
   model:
-    openai: gpt-4.1-nano
+    openai: gpt-5.6-luna
     google: gemini-2.5-flash-8b
     meta: llama-4-scout
     kimi: k2

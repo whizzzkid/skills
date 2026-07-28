@@ -23,9 +23,9 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: '2026.06.15-200559'
+  version: "2026.07.28-171103"
   model:
-    openai: o3
+    openai: gpt-5.6-terra
     google: gemini-2.5-pro
     meta: llama-4-maverick
     kimi: k2

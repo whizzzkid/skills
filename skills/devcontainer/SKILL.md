@@ -7,13 +7,17 @@ description: >
   Trigger phrases: "set up devcontainer", "create devcontainer", "devcontainer
   not working", "bundle install fails in devcontainer", "mise tools missing in
   container".
+model: sonnet
+effort: medium
+model-invocable: true
+user-invocable: true
+license: MIT
 group: tools
 metadata:
-  version: 2026.07.28-023701
-  model: sonnet
-  effort: medium
-  user-invocable: true
-  model-invocable: true
+  author: whizzzkid
+  version: "2026.07.28-171040"
+  model:
+    openai: gpt-5.6-terra
 ---
 
 # wk-devcontainer

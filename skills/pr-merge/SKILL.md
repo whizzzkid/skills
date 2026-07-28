@@ -20,7 +20,7 @@ allowed-tools:
   - "mcp__claude_ai_Jira_*__addCommentToJiraIssue"
   - "mcp__claude_ai_Jira_*__getTransitionsForJiraIssue"
   - "mcp__claude_ai_Jira_*__searchJiraIssuesUsingJql"
-model: haiku
+model: sonnet
 effort: medium
 model-invocable: false
 user-invocable: true
@@ -28,10 +28,11 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.28-164112'
+  version: "2026.07.28-171054"
   internal: false
   model:
     claude: claude-sonnet-4-6
+    openai: gpt-5.6-terra
 ---
 
 # PR Merge
