@@ -17,6 +17,7 @@ allowed-tools:
   - "Bash(git pull:*)"
   - "Bash(grep:*)"
   - Read
+  - Write
   - Grep
   - Glob
   - Agent
@@ -30,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.20-203903'
+  version: '2026.07.28-001124'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -451,24 +452,23 @@ submits, approves, or requests changes.
 
 ### Create the pending review
 
-```bash
-gh api repos/{owner}/{repo}/pulls/{number}/reviews \
-  --method POST \
-  --input - <<'EOF'
+Write the payload with the **Write tool**, never a heredoc (`wk-self-review` Step 0.5):
+
+```json
 {
   "body": "<composed verdict ending with the canonical footer>",
   "comments": [
     { "path": "src/file.ts", "line": 42, "side": "RIGHT",
-      "body": "**suggestion:** Extract this into a helper — candidate for a follow-up." }
+      "body": "**suggestion:** Extract into a helper." }
   ]
 }
-EOF
 ```
 
+```bash
+gh api repos/{owner}/{repo}/pulls/{n}/reviews --method POST --input <file>
+```
 Every `comments[]` entry must be top-level with `path`, `line`, `side`.
-`in_reply_to` is invalid on `DraftPullRequestReviewComment` (422); bot-thread
-replies cannot ride in the pending payload (fold into the body, or live-post with
-opt-in).
+Bot-thread replies cannot ride in `comments[]` — see Bot reply handling above.
 
 ### Add comments to an existing pending review
 

@@ -66,3 +66,7 @@ inline standards; relocation does not lower their priority.
   read the missing-key error → add → re-boot) is the signal to stop and read the
   schema. Prove the root cause by matching produced-artifact fingerprints
   against the exact failing artifacts.
+
+## Existing-gate preservation
+
+- **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.

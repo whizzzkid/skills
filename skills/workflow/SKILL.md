@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.27-230022'
+  version: '2026.07.28-001124'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -49,9 +49,13 @@ Execute the workflow without asking permission at each step.
 | Docs need updating | Invoke `wk-docs` | Ask “should I update docs?” |
 | Session ending | Invoke `wk-retro` | Ask “should I do a retro?” |
 | Terminal directive as a question (“mark ready?”, “merge?”, “push?”) | Query current state and act now | Wait/poll on CI or approvals as if conditional |
+| Defect diagnosed, owning file identified | Edit that file now | Re-state the tradeoffs again |
+| Feedback lands mid-action | Finish the authorized action, then adjust | Acknowledge and stop, leaving it undone |
 
 Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a finding requires a user-owned design decision; user explicitly requested a pause/check-in; or a destructive/shared-state action is required.
 
+- **Volunteered feedback is not a stop signal** (unlike a question you asked, below): unless it revokes the action, finish the authorized step in the same turn as the acknowledgement.
+- **A turn producing no new facts must end in a write** — no new file read or command output means analysis is done, so edit the owning file instead of re-deliberating.
 - When soliciting feedback, block on it → end the turn after asking; do not implement past that point until answered. When the user asks for decisions gathered individually AND collected first, treat decision-collection as a barrier phase: gather and confirm the full set before executing any — never interleave asking with acting.
 - Skill invocation is mandatory → use the Skill tool for prescribed skills, do not approximate with raw commands. Run the invoked skill's full flow; user prose is additive context, not a license to skip parts.
 - **Announce-and-invoke in the same turn:** a skill counts as invoked only when its `Skill` call appears in the same response as the text announcing it. "Now running X" with no same-turn `Skill(X)` call is a protocol violation — narration is not action. On catching a self-announcement without its call, invoke the skill before any other action.
@@ -78,7 +82,7 @@ Skill(wk-plan, args="<task from session context>")
 
 - **Plan supplied by the user, or `wk-plan`'s from this session → never re-plan it; supplying it is the approval.** Validate only — references resolve, order still valid, nothing already done — fix stale references in place, then start Phase 2.
 - If `wk-plan` surfaced unanswered questions, resolve them before proceeding.
-- **Complex task → advisor:** when `wk-plan` flags the task complex (non-obvious architecture, unresolved failure mode, high blast radius), consult the `advisor` server tool before committing and fold its advice in. Reserve for real uncertainty, after orienting (not turn 1); skip when the beta tool is absent. See [`references/advisor-tool.md`](references/advisor-tool.md).
+- **Complex task → advisor:** consult the `advisor` server tool during Phase 1: [`references/advisor-tool.md`](references/advisor-tool.md).
 
 **HARD RULE — wait for plan approval before the first Edit/Write/Bash write-action (incl. fetching/reading *for* the build once it commits to a direction), any size.** Size-independent in BOTH directions: neither "small/2-line/obvious" nor "large/exciting/obviously-right — let me build" (momentum) waives it. Present-plan → wait-for-approval → execute; a plan the user supplied arrives approved.
 
@@ -147,9 +151,8 @@ Apply to ALL code:
 - **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
 - **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
-- **Niche standards** (example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, structured-row insert, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling, full-boot config-dependency enumeration, sandboxed-step env forwarding, coercion same-class audit, schema-derived validation bounds, published enforced limits, portable home paths) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
+- **Niche standards** (existing-gate preservation, example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, structured-row insert, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling, full-boot config-dependency enumeration, sandboxed-step env forwarding, coercion same-class audit, schema-derived validation bounds, published enforced limits, portable home paths) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
-- **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
 - **HARD RULE — reuse the mechanism the codebase already provides for config/secret resolution; never invent a parallel override (dummy env exports, a new config path). Repeated user pushback naming an existing convention is a hard stop — adopt the named mechanism, never defend the invented one.** (See reuse-hygiene, code-standards-extended.)
 
 ---
