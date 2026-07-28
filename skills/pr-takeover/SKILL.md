@@ -28,7 +28,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.21-191914'
+  version: '2026.07.28-164112'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -325,7 +325,7 @@ EOF
 )"
 ```
 
-Push when adversarial review clears:
+Push ungated — the completion gate owns the single adversarial review before merge:
 
 ```bash
 git push origin HEAD

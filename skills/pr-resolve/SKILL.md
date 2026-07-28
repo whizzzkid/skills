@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.28-082712'
+  version: '2026.07.28-164112'
 ---
 
 # PR Resolve
@@ -127,8 +127,8 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
    `<login>@<domain>` guess); never invent.
 10. **Include bot reviews** as first-class feedback. Evaluate each for
     correctness before accepting or dismissing.
-11. **Adversarial-review gate before merge, not push** — new commits this
-    session must pass `wk-adversarial-review` before the PR merges (Step 8).
+11. **Adversarial-review gates merge, not push — never dispatched here.** New
+    commits need a `clear` verdict before merge; the gate runs it once (Step 8).
 12. **Implement handoff documents before deleting them.** A branch file whose
     name signals remaining work → read it fully, implement its items, delete it in
     the same commit as the last change. Plan first if the work is large or spans
@@ -402,10 +402,10 @@ former unless they confirm the latter.
 
 Commands: commands.md §8.
 
-**Adversarial-review gate.** Push is unconditional — run `wk-adversarial-review`
-against the new commits after pushing, so CI runs alongside. The *merge* is
-conditional on a `clear` verdict or accepted `suggestions-only` A/B/C choice. On
-`blocked`, fix each blocker in a fresh atomic commit, re-invoke, loop until clear.
+**Adversarial-review gate — never dispatched here.** Push is ungated; this skill
+only *reads* the record, so N resolve cycles cost zero extra runs. Fixes after the
+cleared SHA are swept by the one delta-scoped re-review the completion gate owns
+before merge; a recorded `blocked` → fix each in a fresh atomic commit, batched.
 
 **Push & divergence guard.** History rewritten this session → re-check
 `$AHEAD`/`$BEHIND` and reconcile before pushing. `git push`; rejected

@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.28-082712'
+  version: '2026.07.28-164112'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -211,9 +211,12 @@ The merge is where the review gate is enforced — publishing is ungated, so thi
 is the only step that blocks on it. Never merge, and never enable
 `gh pr merge --auto`, without a `clear` verdict covering current HEAD.
 
-- No verdict recorded, or the recorded clearance predates current HEAD → invoke
-  [`wk-adversarial-review`](../adversarial-review/README.md) now and block on it.
-  A clearance against an earlier SHA does not carry forward.
+- Read the clearance record first; a `clear` verdict covering current HEAD → merge,
+  never re-run it. This step adds no second review.
+- No record at all → the completion gate never ran: invoke
+  [`wk-adversarial-review`](../adversarial-review/README.md) once here and block on
+  it. Record present but predating HEAD → ONE delta-scoped re-review; a clearance
+  against an earlier SHA does not carry forward.
 - `blocked` → fix each blocker via `wk-commit`, re-invoke until clear. Do not
   merge past an open blocker.
 - Waived by an explicit current-session user instruction → note the waiver and

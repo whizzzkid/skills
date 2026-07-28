@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.28-001124'
+  version: '2026.07.28-164112'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -270,21 +270,20 @@ replies, not new top-level comments.
 
 ## Phase 3: Adversarial Investigation — delegate to [`wk-adversarial-review`](../adversarial-review/README.md)
 
-Hand the checked-out PR to the adversarial-review engine and consume its findings
-rather than re-deriving them:
+**Read before dispatching.** A clearance record covering this HEAD
+(`.review-playground/.cleared-{HEAD_SHA}.json`) → consume it; never re-run what the
+author's completion gate already ran. No record — the usual case when reviewing
+someone else's PR — dispatch once:
 
 ```
 Skill(wk-adversarial-review)
 ```
 
-It resolves the base from the PR, runs the full mechanical sweep catalog,
-dispatches a fresh adversarial subagent over the complete diff, validates
-runtime-behavior claims in `.review-playground/` (runtime matrix, mutation tests,
-standalone upstream-source harness, specialized producer/consumer, cluster,
-interface-contract, and allowlist checks), and returns structured findings
-(`severity`, `file`, `line`, `category`, `finding`, `rationale`, `fix-sketch`)
-plus a verdict. For docs/prose/compression diffs it substitutes read-based
-analysis (gate-survival-by-substance, count cross-checks, relocation portability).
+It resolves the base from the PR, runs its full sweep catalog, dispatches a fresh
+adversarial subagent over the complete diff, validates runtime claims in
+`.review-playground/`, and returns structured findings (`severity`, `file`, `line`,
+`category`, `finding`, `rationale`, `fix-sketch`) plus a verdict — substituting
+read-based analysis for docs/prose/compression diffs.
 
 On the returned findings:
 

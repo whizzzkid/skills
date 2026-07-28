@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.07.28-082712`
+**Version:** `2026.07.28-164112`
 
 ## Invocation
 
@@ -28,7 +28,7 @@ flowchart TD
     L --> P[Step 4: wk-self-review]
     P --> Q[Address automated review feedback]
     Q --> S[gh pr ready]
-    S --> R[Step 5: wk-adversarial-review gate — pre-merge]
+    S --> R[Step 5: wk-adversarial-review — the one dispatch, pre-merge]
     S -.->|CI runs concurrently| M[Poll CI → fix loop]
     R --> G{Verdict?}
     G -->|blocked| H[Fix blockers via wk-commit → re-invoke]
@@ -46,8 +46,8 @@ flowchart TD
 - **HARD RULE — always draft first:** PRs are always created with `--draft`. Never create a non-draft PR
   unless the user explicitly requests it.
 - **Adversarial review gates the merge, not the publish:** `gh pr create`, pushes, and `gh pr ready` are
-  ungated — publishing is reversible. The review runs once after the PR is marked ready, so CI runs alongside
-  it, and a `clear` verdict is required before any merge or `--auto` enablement. No size exemption.
+  ungated — publishing is reversible. The review is dispatched exactly once, after the PR is marked ready, so CI runs alongside
+  it — later pushes and resolve cycles read the record rather than re-running, and a `clear` verdict is required before any merge or `--auto` enablement. No size exemption.
 - **Fresh CI per push before merge:** Every push that lands new commits starts a new CI run. The skill verifies
   the run for the *current* HEAD SHA has completed and is green before merging — a prior green run against
   older commits never satisfies the gate.

@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.28-155027'
+  version: '2026.07.28-164112'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -254,10 +254,9 @@ With the PR published and marked ready, invoke `wk-adversarial-review`. **This i
 
 **HARD RULE — the gate anchors to merge, not to leaving the machine.** Publishing is reversible and needs no prior verdict — push, `gh pr create`, and `gh pr ready` proceed without one. Merging is not → no merge, and no `gh pr merge --auto` enablement, without a clear verdict covering current HEAD. No size/docs-only exemption.
 
-- Run once on the finalized change, after publishing. Never per incremental commit — small chunks make a per-push sweep cost more than the change it guards.
-- Publishing first lets CI run during the review → fold its comments and the review's findings into one pass.
-- Idempotent re-entry: a later push re-fires the gate only when commits landed since the last clearance, and then sweeps only the delta. No new commits → it prints the prior clearance.
-- Fix residuals in ≤1 follow-up commit, then re-run once.
+- **The only dispatch point in the workflow** — one run on the finalized change, never per commit, push, or resolve cycle. Every other skill (`wk-pr-resolve`, `wk-pr-review`, `wk-pr-takeover`, `wk-pr-merge`, `wk-refactor`) reads the clearance record; a missing record means the work has not reached this phase yet.
+- Publishing first lets CI run alongside → its comments and the review's findings fold into one pass.
+- Re-entry is idempotent: no commits since the last clearance → it prints that record; commits → ONE delta-scoped re-review. Fix residuals in ≤1 follow-up commit.
 
 `wk-adversarial-review` returns **clear**, **blocked**, or **suggestions-only**.
 

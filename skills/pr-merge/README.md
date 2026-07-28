@@ -6,7 +6,7 @@
 > adversarial-review gate is enforced — publishing is ungated, so this skill is
 > the step that blocks on a stale or missing verdict.
 
-**Version:** `2026.07.28-082712`
+**Version:** `2026.07.28-164112`
 
 ## Invocation
 

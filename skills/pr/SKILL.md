@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.28-082712'
+  version: '2026.07.28-164112'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -61,11 +61,10 @@ ensures quality before marking ready.
 1. **Preserve PR body metadata across description rewrites.** Before
    overwriting the PR description, preserve metadata lines — see
    `skills/pr/references/pr-description-metadata.md`.
-2. **Adversarial review gates the merge, not the publish.** Publishing is
-   reversible and needs no prior verdict — push, `gh pr create`, and
-   `gh pr ready` proceed ungated. Invoke `wk-adversarial-review` once the
-   change is finalized and published (Step 5 marks ready first), so CI runs
-   alongside it. It must return `clear` before:
+2. **Adversarial review gates the merge, not the publish — once per change.**
+   Publishing is ungated: push, `gh pr create`, `gh pr ready` need no verdict.
+   Dispatch `wk-adversarial-review` exactly once, at the completion gate after
+   Step 5 marks ready, so CI runs alongside it. It must return `clear` before:
    - Any merge, including `gh pr merge --auto` *enablement*.
    - Re-clearance after a force-push or rebase that rewrites pushed history.
 
@@ -479,15 +478,12 @@ commitment — each push restarts the path to ready, not the licence to stop.
 
 ### Adversarial-review gate (after ready, before merge)
 
-Invoke `wk-adversarial-review` against PR HEAD once the PR is marked ready. This
-is the single gate: it must return `clear` before any merge or `--auto`
-enablement, and CI runs concurrently so both sets of findings fold into one pass.
-
-**Scoped skip — mechanical-only delta.** If the *only* commits since the last
-`clear` verdict are direct mechanical responses to that verdict's own blockers
-(no new logic, no refactor, no scope addition), re-running may be skipped. Note
-the skip and the cleared HEAD SHA in the PR. Any commit touching logic or adding
-behavior still requires re-running the gate.
+Invoke `wk-adversarial-review` against PR HEAD once the PR is marked ready. **This
+is the completion gate — the one dispatch point for the whole change.** It must
+return `clear` before any merge or `--auto` enablement; CI runs concurrently so
+both sets of findings fold into one pass. A record already covering this HEAD is
+read, not re-run, and fix rounds batch into the single delta-scoped re-review.
+No other skill and no later push dispatches a second run.
 
 **HARD RULE — verify CI for the *current* HEAD before merge, not before ready.**
 Marking ready never waits on CI. A green CI result against an earlier HEAD does

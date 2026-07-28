@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.07.28-001124`
+**Version:** `2026.07.28-164112`
 
 ## Invocation
 
@@ -20,7 +20,7 @@ flowchart TD
     A[Phase 1: Gather context + extract author review-focus] --> B[Phase 2: Fetch existing review comments]
     B --> C[Resolve stale threads with user consent]
     C --> D[Build exclusion list + bot-findings validation queue]
-    D --> E["Phase 3: Delegate to wk-adversarial-review<br/>(sweeps + adversarial subagent + playground)"]
+    D --> E["Phase 3: Read clearance record;<br/>dispatch wk-adversarial-review only if none"]
     E --> F[Consume findings; prioritize review-focus; validate bot findings]
     F --> G[Phase 4: Formulate inline comments]
     G --> H[Deduplicate against exclusion list]
@@ -32,7 +32,8 @@ flowchart TD
 
 ## Noteworthy
 
-- **Investigation is delegated:** Phase 3 invokes [`wk-adversarial-review`](../adversarial-review/README.md),
+- **Investigation is delegated, and never re-run:** Phase 3 consumes an existing clearance record when one covers
+  this HEAD, else dispatches [`wk-adversarial-review`](../adversarial-review/README.md) once,
   which owns the mechanical sweep catalog, the fresh adversarial subagent, and all `.review-playground/`
   validation (runtime matrix, mutation testing, standalone upstream-source harness, producer/consumer, cluster,
   interface-contract, allowlist, and doc/prose/compression checks). pr-review consumes its structured findings

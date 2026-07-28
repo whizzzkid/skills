@@ -54,7 +54,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [pr-break](skills/pr-break/) | Break an oversized PR into a stack of smaller, individually-shippable PRs |
 | [pr-takeover](skills/pr-takeover/) | Take over another author's PR — overwrite or stack mode, full workflow, co-authorship |
 | [pr-merge](skills/pr-merge/) | Merge a PR once CI is green, reviews approved, and all threads resolved; transition ticket, retro, cleanup |
-| [adversarial-review](skills/adversarial-review/) | Pre-flight adversarial review before any push or PR transition |
+| [adversarial-review](skills/adversarial-review/) | The single review gate — one run per change at the completion gate, before merge (never per push) |
 | [self-review](skills/self-review/) | Post design-decision comments on your own PR for human reviewers |
 | [jira](skills/jira/) | Sync Jira ticket state with the PR lifecycle — In Progress → In Review → Done |
 

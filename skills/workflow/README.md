@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.07.28-155027`
+**Version:** `2026.07.28-164112`
 
 ## Invocation
 
@@ -57,8 +57,8 @@ flowchart TD
 - **Artifact sync with code changes** — a commit changing logical structure must update spec,
   plan, inline comments, test names, and any ADR in the same commit (mechanics in
   [`references/doc-sync-mechanics.md`](references/doc-sync-mechanics.md)). No deferred rewrites.
-- **One review gate, anchored to merge** — [`wk-adversarial-review`](../adversarial-review/README.md) runs once, at
-  Phase 5.5, *after* the PR is published and marked ready. Publishing is reversible and needs no verdict; merging
+- **One review gate, anchored to merge — and Phase 5.5 is its only dispatch point** (every other skill reads the
+  clearance record). [`wk-adversarial-review`](../adversarial-review/README.md) runs once, at Phase 5.5, *after* the PR is published and marked ready. Publishing is reversible and needs no verdict; merging
   is not, so no merge (and no `--auto` enablement) happens without a clear verdict covering current HEAD. Reviewing
   after publish lets CI run concurrently, so its comments fold into the same fix pass. The gate is keyed to new
   commits since the last clear verdict, so later pushes re-fire it only on the delta.

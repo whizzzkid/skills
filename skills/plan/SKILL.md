@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.28-155027'
+  version: '2026.07.28-164112'
   model:
     openai: o3
     google: gemini-2.5-pro
@@ -240,7 +240,8 @@ Every plan must contain these elements before it is valid:
 2. Commit boundary after each meaningful unit
 3. Documentation update step (`wk-docs`) for every changed behavior
 4. Testing step: happy path, sad path, edge cases
-5. Adversarial review step (`wk-adversarial-review`) before push
+5. Adversarial review step (`wk-adversarial-review`) — exactly one, at the
+   completion gate after the PR is published and ready; never per push
 6. PR offer step
 7. CI fix loop step (monitor + auto-diagnose up to 3 rounds)
 8. Session retro step (`wk-retro`)

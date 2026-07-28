@@ -2,7 +2,7 @@
 
 > Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
 
-**Version:** `2026.07.28-155027`
+**Version:** `2026.07.28-164112`
 
 ## Invocation
 
@@ -83,7 +83,7 @@ Run these probes during research and validation:
 - **HARD RULE:** Do not start executing any step until the user explicitly approves the plan — silence is not approval.
 - **HARD RULE:** Stop at Step 0 when requirements are vague, missing acceptance criteria, or conflicting — planning a wrong requirement produces more rework than grilling.
 - **Parallelism default:** Steps that don't share a write target and don't have a data dependency go in the same parallel phase. Sequential ordering must be justified.
-- **Mandatory 8 elements:** Every plan must include implementation steps, commit boundaries, docs updates, testing, adversarial review, PR offer, CI fix loop, and session retro — the plan is invalid without all 8. A 9th element fires conditionally: when a ticket key is in scope, Jira lifecycle transitions appear as named numbered steps (each `[AGENT-READY]` with an auto-mode-may-block caveat), not invisible side-effects.
+- **Mandatory 8 elements:** Every plan must include implementation steps, commit boundaries, docs updates, testing, one adversarial review at the completion gate, PR offer, CI fix loop, and session retro — the plan is invalid without all 8. A 9th element fires conditionally: when a ticket key is in scope, Jira lifecycle transitions appear as named numbered steps (each `[AGENT-READY]` with an auto-mode-may-block caveat), not invisible side-effects.
 - **Progressive disclosure:** SKILL.md stays under 500 lines; detailed probes are compressed into gates and validation checklist.
 - **Multi-persona pass:** The plan is validated from Implementor, Reviewer, Security, Ops, and Product perspectives. Every concern is either addressed by a step or explicitly excluded with a rationale.
 - **[wk-workflow](../workflow/README.md) integration:** Phase 1 calls `Skill(wk-plan)` instead of inline planning. An approved plan from this session short-circuits the workflow's own planning step.
@@ -95,5 +95,5 @@ Run these probes during research and validation:
 |---|---|
 | [wk-workflow](../workflow/README.md) | Phase 1 delegates to this skill; executes the approved plan |
 | [wk-jira](../jira/README.md) | Step 1 pre-flight fetches ticket acceptance criteria via Stage 0+1+2 |
-| [wk-adversarial-review](../adversarial-review/README.md) | Every plan includes an adversarial review step pre-push |
+| [wk-adversarial-review](../adversarial-review/README.md) | Every plan includes exactly one adversarial review step, at the completion gate |
 | [wk-arch-review](../arch-review/README.md) | Invoked when the plan touches system architecture |

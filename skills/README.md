@@ -40,7 +40,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-pr-break`](./pr-break/README.md) | Split an oversized PR into a reviewable, individually-shippable stack | User + Model |
 | [`wk-pr-takeover`](./pr-takeover/README.md) | Take over a PR from another author — overwrite or stack mode, full workflow, co-authorship | User + Model |
 | [`wk-pr-merge`](./pr-merge/README.md) | Merge a PR once CI is green, reviews approved, threads resolved — transition ticket, retro, cleanup | User + Model |
-| [`wk-adversarial-review`](./adversarial-review/README.md) | Pre-flight adversarial review before any push or PR transition | Auto (pre-push) |
+| [`wk-adversarial-review`](./adversarial-review/README.md) | The single review gate — one run per change at the completion gate, before merge | Auto (once, pre-merge) |
 | [`wk-self-review`](./self-review/README.md) | Post inline self-review comments documenting design decisions for human reviewers | User + Model |
 | [`wk-jira`](./jira/README.md) | Sync Jira ticket state with PR lifecycle — auto-transitions, description audit | Auto (on Jira key/URL) |
 

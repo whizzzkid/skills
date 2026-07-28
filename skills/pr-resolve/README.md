@@ -4,7 +4,7 @@
 > and manage the full resolution cycle from branch sync through push, CI
 > polling, and session retro.
 
-**Version:** `2026.07.28-082712`
+**Version:** `2026.07.28-164112`
 
 ## Invocation
 
@@ -35,7 +35,7 @@ sequenceDiagram
     S->>S: Step 6 — apply unified queue, verify, commit (one commit per triage unit)
     S->>U: Step 7 — full summary, ask for confirmation only if decisions were ambiguous
     U->>S: Proceed
-    S->>S: wk-adversarial-review gate
+    S->>S: read adversarial-review record (no dispatch — gate owns the run)
     S->>GH: Step 8 — push, post replies, resolve threads
     S->>S: Step 9.4 — wk-learn adversarial-review (one per issue class, pre-CI)
     S->>S: Step 9.5 — poll CI, loop on new findings (each cycle re-runs 9.4)
