@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171029"
+  version: "2026.07.28-182019"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -63,6 +63,7 @@ Resolve base → surface map → mechanical sweeps → fresh adversarial subagen
 7. **Reproduce before claim.** Runtime-behavior findings reproduced in `.review-playground/` or downgraded to `question`.
 8. **Diff-anchored findings.** Commentable findings map to diff lines; outside-diff issues → file-level or verdict-body notes.
 9. **Gate, not actor.** Do not push, edit the PR, or post review comments from this skill.
+10. **Arch layer hands over, once.** Arch-bearing artifact or topology change in the diff (`wk-arch-review`'s trigger) → read its record, else dispatch it once and fold the findings; never re-derive topology critique here.
 
 ## Step 1: Resolve Context and Build Surface Map
 

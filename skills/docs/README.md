@@ -2,7 +2,7 @@
 
 > Check for and update documentation affected by code changes. Bootstraps a docs structure if the project doesn't have one.
 
-**Version:** `2026.07.28-171042`
+**Version:** `2026.07.28-182019`
 
 ## Invocation
 

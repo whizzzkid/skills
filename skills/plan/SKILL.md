@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171052"
+  version: "2026.07.28-182019"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -245,7 +245,15 @@ Every plan must contain these elements before it is valid:
 6. PR offer step
 7. CI fix loop step (monitor + auto-diagnose up to 3 rounds)
 8. Session retro step (`wk-retro`)
-9. Jira lifecycle steps — **only when a ticket key is in scope** (see below)
+9. Architecture review step (`wk-arch-review`) — **whenever the plan authors or
+   modifies an arch-bearing artifact** (spec, ADR, RFC, design doc, HLD/LLD,
+   tech-spec, implementation plan, delivery estimate) or changes system topology,
+   per that skill's contract. This skill is the owner on the authoring path: the
+   review runs once at draft-complete, **before the plan is presented for
+   approval** — not deferred to the PR gate, where the design is already built.
+   Run its mechanical detector over the artifacts the plan will write; a hit makes
+   the step mandatory, doc-only work included.
+10. Jira lifecycle steps — **only when a ticket key is in scope** (see below)
 
 ### Jira lifecycle as explicit plan steps
 
@@ -362,6 +370,8 @@ Before presenting, run a validation checklist against the draft plan.
 
 **Mandatory elements**
 - All 8 mandatory elements from Step 3 are present and numbered.
+- Arch-bearing artifact in scope → element 9 (`wk-arch-review` at draft-complete) is
+  present; its absence on a spec/estimate plan is a validation failure, not a choice.
 - Ticket in scope → Jira lifecycle steps (element 9) are present, named, and carry the auto-mode caveat.
 
 **Probe coverage**

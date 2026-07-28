@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171042"
+  version: "2026.07.28-182019"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -119,6 +119,13 @@ Ensure every doc file is listed and no stale entries remain.
 Applies ONLY when authoring or finalizing a **spec, RFC, design doc, ADR, or
 plan** — not routine README/code-doc updates (those use Steps 1-3). Before
 writing or delivering such a doc, enforce every gate below:
+
+- **Arch review is mandatory on this class of doc**, per
+  [`wk-arch-review`](../arch-review/README.md)'s contract: it runs once on the
+  finished draft, before the doc is delivered. Read its record when one covers this
+  artifact; otherwise the authoring gate (this step, or `wk-plan` when the plan owns
+  the doc) is the owner and dispatches it. Never deliver an arch-bearing doc with no
+  recorded verdict.
 
 - **Frontmatter (machine-readable YAML):** include `title`, `type` (RFC | spec |
   ADR | plan), `status`, `author`, `created`, `last_updated`, `epic` (ticket

@@ -2,7 +2,7 @@
 
 > Post inline self-review comments on your own PR to document design decisions for human reviewers.
 
-**Version:** `2026.07.28-171104`
+**Version:** `2026.07.28-182019`
 
 ## Invocation
 
@@ -51,5 +51,5 @@ sequenceDiagram
   comments; formatting fixes and obvious renames do not.
 - **Architecture changes escalate to [`wk-arch-review`](../arch-review/README.md):** Step 2 detects
   diffs that introduce/alter architecture (design docs, new services/datastores/IaC, trust-boundary
-  or API/contract changes, ownership-reshaping migrations), runs the review, and seeds self-review
-  context — a rationale note plus inline comments on the flagged SPOFs and risky assumptions.
+  or API/contract changes, ownership-reshaping migrations), reads the recorded verdict rather than
+  dispatching a second run, and seeds self-review context — a rationale note plus inline comments on the flagged SPOFs and risky assumptions.

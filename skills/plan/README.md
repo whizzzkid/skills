@@ -2,7 +2,7 @@
 
 > Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
 
-**Version:** `2026.07.28-171052`
+**Version:** `2026.07.28-182019`
 
 ## Invocation
 
@@ -97,4 +97,4 @@ Run these probes during research and validation:
 | [wk-workflow](../workflow/README.md) | Phase 1 delegates to this skill; executes the approved plan |
 | [wk-jira](../jira/README.md) | Step 1 pre-flight fetches ticket acceptance criteria via Stage 0+1+2 |
 | [wk-adversarial-review](../adversarial-review/README.md) | Every plan includes exactly one adversarial review step, at the completion gate |
-| [wk-arch-review](../arch-review/README.md) | Invoked when the plan touches system architecture |
+| [wk-arch-review](../arch-review/README.md) | Mandatory element 9 — owns the authoring path: one review at draft-complete, before the plan is presented |

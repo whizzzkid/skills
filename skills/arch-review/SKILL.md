@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171030"
+  version: "2026.07.28-182019"
   internal: false
   model:
     claude: claude-opus-4-8
@@ -50,6 +50,21 @@ failure modes.
 - **Earn trust with balance** — one short section acknowledges sound choices; the rest is problems.
 - **Severity-rate everything** — 🔴 Critical · 🟠 High · 🟡 Medium · 🟢 Low · ℹ️ Info.
 - **Quantify when you can** — "~200ms p99 per hop × 4 hops = 800ms" beats "may be slow."
+
+## Non-Negotiable Contract
+
+1. **Mandatory trigger — an arch-bearing artifact always gets a review.** Fires on the artifact, never on the caller's judgement: any spec, ADR, RFC, design doc, HLD/LLD, tech-spec, implementation plan, or delivery estimate — **authored or reviewed** — plus any change to system topology (new service, datastore, queue/cache, hot-path external dependency, IaC, deploy/runtime shape), trust boundary, auth flow, public API/contract, or a migration reshaping data ownership or consistency. Detect mechanically:
+
+   ```bash
+   git diff --name-only "$BASE...HEAD" \
+     | grep -qiE 'docs/(specs?|adr|arch|design|rfc|plans?)/|architecture|design|spec|rfc|adr|hld|lld|tech-spec' \
+     && echo "ARCH-REVIEW REQUIRED"
+   ```
+
+   - No docs-only exemption, and **authoring counts** — a doc this session wrote is reviewed before it is presented for approval, not only when someone else reviews the PR.
+2. **One dispatch per artifact version.** The owner is the first gate at which the artifact is complete: the authoring skill at draft-complete for a doc it wrote, the completion gate (post-ready, pre-merge) for a PR. Record the verdict at `.review-playground/.arch-cleared-{SHA}.json`. Every other caller reads that record; a missing record at a non-owner caller means the artifact has not reached its gate yet — route it there, never dispatch a second run.
+3. **Re-review only on artifact change.** Doc and topology unchanged since the recorded verdict → print the record. Changed → ONE re-review scoped to the delta.
+4. **Only this skill satisfies the gate.** A general-purpose subagent running an arch-shaped prompt skips the Eight Lenses, the empirical pass, and the findings contract — it is a valid addition, never a replacement.
 
 ## Step 1: Resolve the Input
 

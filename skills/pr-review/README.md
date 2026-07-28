@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.07.28-171056`
+**Version:** `2026.07.28-182019`
 
 ## Invocation
 
@@ -49,7 +49,7 @@ flowchart TD
 - **Author review-focus items must be answered:** Explicit questions or flagged areas in the PR description are
   captured as a `review_focus` list in Phase 1. Every item must be answered inline or in the review body before
   the review is presented — unanswered author asks are a review gap.
-- **Architecture changes escalate to [`wk-arch-review`](../arch-review/README.md):** Phase 1 detects diffs that
-  introduce/alter architecture (design docs, new services/datastores/IaC, trust-boundary or API/contract
-  changes, ownership-reshaping migrations) and folds its SPOF / unhappy-path / assumption findings into the
-  review as concerns.
+- **Architecture changes escalate to [`wk-arch-review`](../arch-review/README.md), once:** Phase 1 runs that
+  skill's mechanical detector (design docs, new services/datastores/IaC, trust-boundary or API/contract changes,
+  ownership-reshaping migrations), consumes a recorded verdict when one covers this HEAD, and dispatches only
+  when none exists — folding its SPOF / unhappy-path / assumption findings in as concerns.

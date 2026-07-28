@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171104"
+  version: "2026.07.28-182019"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -171,23 +171,15 @@ comment on the first in-hunk line of that file:
 
 ### Architecture-level change → invoke [`wk-arch-review`](../arch-review/README.md)
 
-Diff introduces/alters the project's architecture → run `wk-arch-review` first,
-seed self-review context with its findings. Human reviewer needs design
-rationale + known gotchas up front.
+Diff introduces/alters the project's architecture → seed self-review context with
+arch-review findings. The human reviewer needs design rationale + known gotchas up
+front.
 
-- **Trigger when any holds:**
-  - Changed path is an architecture/design doc — case-insensitive match on
-    `docs/(specs|adr|arch|design|rfc)/`, or a filename containing
-    `architecture`, `design`, `spec`, `rfc`, `adr`, `hld`, `lld`, or `tech-spec`.
-  - Diff introduces infrastructure/topology change (new service, datastore,
-    queue, cache, external dependency, IaC), trust-boundary/auth change, public
-    API/contract change, or a migration that reshapes data ownership.
-- **Invoke** (changed doc path when one changed, else the PR):
-
-  ```
-  Skill(wk-arch-review, args="<changed-doc-path | PR number>")
-  ```
-
+- **Trigger and one-dispatch rule: apply that skill's contract**, including its
+  mechanical detector — authored docs and doc-only diffs both count.
+- **Read, do not dispatch.** Consume the recorded verdict
+  (`.review-playground/.arch-cleared-{SHA}.json`). No record → the artifact has not
+  reached its gate: note it for the gate rather than starting a run here.
 - Fold the result in: post a top-level self-review note linking the design
   rationale; add inline comments on the components arch-review flagged (SPOFs,
   unhappy paths, risky assumptions) so reviewers see them in context.

@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171056"
+  version: "2026.07.28-182019"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -115,29 +115,16 @@ Announce before moving on:
 
 ### Detect architecture-level changes → invoke [`wk-arch-review`](../arch-review/README.md)
 
-**HARD RULE — spec/design docs are unconditional triggers.** Any changed file
-matching `docs/(specs|adr|arch|design|rfc)/` invokes `wk-arch-review` before
-Phase 3, even for a doc-only diff. Grep the changed-file list mechanically,
-never eyeball it:
+**The trigger and the one-dispatch rule live in that skill's contract — apply it,
+do not restate it.** Run its mechanical detector over `gh pr diff <number>
+--name-only`; a hit means a review is required, doc-only diffs included.
 
-  ```bash
-  gh pr diff <number> --name-only | grep -qE 'docs/(specs|adr|arch|design|rfc)/' && echo "ARCH-REVIEW REQUIRED"
-  ```
-
-Also trigger when any holds:
-
-- Filename contains `architecture`, `design`, `spec`, `rfc`, `adr`, or `tech-spec`.
-- Diff adds infrastructure/topology: new service, datastore, queue/cache, external
-  hot-path dependency, IaC, or deploy/runtime topology.
-- Diff changes a trust boundary, auth flow, public API/contract, or a migration
-  that reshapes ownership or consistency.
-
-- **HARD RULE — satisfy the gate ONLY with `Skill(wk-arch-review, args="<changed-doc-path | PR number>")`.**
-  A general-purpose subagent running an arch-review-shaped prompt does NOT satisfy
-  it — that skips the Eight Lenses, the empirical-pass rule, and the findings
-  contract. Delegating spec-claim verification to a subagent is a valid ADDITION,
-  never a REPLACEMENT. Fold findings into Phase 3/4; treat high-severity as Phase 4
-  concerns.
+- Record covering this HEAD (`.review-playground/.arch-cleared-{SHA}.json`) → consume
+  it; never re-run what the author's gate already ran.
+- No record → dispatch once, and only as
+  `Skill(wk-arch-review, args="<changed-doc-path | PR number>")`; a general-purpose
+  subagent does not satisfy the gate. Fold findings into Phase 3/4; high-severity
+  become Phase 4 concerns.
 
 **HARD RULE — spec-doc claims about existing code are Unverified until checked.**
 Treat every claim about existing code (named structs/fields, "reuses X", "~N-line

@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171059"
+  version: "2026.07.28-182019"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -72,8 +72,8 @@ ensures quality before marking ready.
    `wk-commit`), re-invoke until clear. No size or scope exemption.
 
    **No-ask on review findings.** Findings from any mandatory pre-flight review
-   (`wk-adversarial-review`, and `wk-arch-review` when a spec/design doc is in
-   the diff) are mandatory to incorporate — never ask "should I fold these in?".
+   (`wk-adversarial-review`, and `wk-arch-review` once per its own contract when
+   the diff carries an arch-bearing artifact) are mandatory to incorporate — never ask "should I fold these in?".
    After review returns, immediately act on every finding against the artifact:
    fix blockers, fold in improvements, update doc/spec/code, commit each via
    `wk-commit`. Incorporation is not user-gated. Pause only when a single

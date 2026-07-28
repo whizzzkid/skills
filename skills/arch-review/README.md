@@ -6,9 +6,16 @@ and underlying assumptions. Can also author architecture documents and generate
 interactive HTML playgrounds that visualise a proposed design and its failure
 modes.
 
-**Version:** `2026.07.28-171030`
+**Version:** `2026.07.28-182019`
 
 ## Trigger
+
+**Mandatory and artifact-driven, not caller-judged** — an arch-bearing artifact
+always gets a review, and **one review per artifact version**: the owner is the
+first gate where the artifact is complete (the authoring skill at draft-complete;
+the completion gate for a PR). Every other caller reads
+`.review-playground/.arch-cleared-{SHA}.json` instead of dispatching. Contract:
+[`SKILL.md`](SKILL.md) "Non-Negotiable Contract".
 
 - Reviewing an architecture doc, RFC, spec, or ADR
 - Authoring a new architecture document or implementation plan
