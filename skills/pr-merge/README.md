@@ -2,9 +2,11 @@
 
 > Gate the merge of a pull request behind a full pre-merge checklist, then
 > merge, transition the linked ticket to its terminal state, and surface
-> any follow-ups and deferred action items.
+> any follow-ups and deferred action items. The merge is where the
+> adversarial-review gate is enforced — publishing is ungated, so this skill is
+> the step that blocks on a stale or missing verdict.
 
-**Version:** `2026.07.27-225034`
+**Version:** `2026.07.28-082712`
 
 ## Invocation
 
@@ -26,7 +28,9 @@ flowchart TD
     D -->|unresolved threads| BLOCK3["🚫 Block — list open threads"]
     D -->|all resolved| E["Step 5: No open action items?"]
     E -->|unchecked non-deferred items| BLOCK4["🚫 Block — list items"]
-    E -->|clear| F["Step 6: Retarget stacked children onto base,<br/>then merge PR (squash)"]
+    E -->|clear| E2["Step 5.5: Clear adversarial-review<br/>verdict against current HEAD?"]
+    E2 -->|missing / stale / blocked| BLOCK5["🚫 Block — run wk-adversarial-review"]
+    E2 -->|clear| F["Step 6: Retarget stacked children onto base,<br/>then merge PR (squash)"]
     F --> G["Step 7: Transition linked ticket to Done"]
     G --> H["Step 8: Output follow-ups and action items"]
     H --> I["Step 9: Capture session retro"]

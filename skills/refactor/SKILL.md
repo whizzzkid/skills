@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.08-174545'
+  version: '2026.07.28-082712'
   internal: false
   model:
     openai: gpt-4.1
@@ -268,7 +268,7 @@ Fires after `wk-pr-update` or `wk-pr-resolve` resolved conflicts → run an addi
 - **`wk-pr`** invokes `wk-refactor` before `gh pr ready` when the
   branch's diff is movement-dominated (renames > 50% of touched
   files, or net-zero LOC across many files).
-- **`wk-workflow`** Phase 4 (Code Review) treats a `wk-refactor`
+- **`wk-workflow`** Phase 5.5 (Adversarial Review) treats a `wk-refactor`
   PASS as a precondition for the adversarial code review when the
   task was framed as a refactor.
 - **`wk-testing-skeleton`** complements: it writes tests for new

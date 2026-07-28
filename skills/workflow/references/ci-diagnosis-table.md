@@ -4,6 +4,14 @@ class: reference
 
 # CI failure diagnosis signals
 
+Map a failure type to its action.
+
+| Failure type | Action |
+|---|---|
+| Code failure | Diagnose root cause; apply the smallest fix |
+| Flaky test | Re-trigger once; if it repeats, treat as real |
+| Infrastructure | Re-trigger; if persistent, inform user — no code fix |
+
 Map a CI error signal to the first thing to check.
 
 | Error signal | Check |

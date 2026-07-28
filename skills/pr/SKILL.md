@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: '2026.07.28-023401'
+  version: '2026.07.28-082712'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -61,16 +61,16 @@ ensures quality before marking ready.
 1. **Preserve PR body metadata across description rewrites.** Before
    overwriting the PR description, preserve metadata lines — see
    `skills/pr/references/pr-description-metadata.md`.
-2. **Adversarial review gates every transition.** Invoke
-   `wk-adversarial-review` before:
-   - First push that creates the PR (before `gh pr create`).
-   - Every subsequent push to the PR branch.
-   - `gh pr ready` (Step 5).
-   - Any force-push or rebase that rewrites pushed history.
+2. **Adversarial review gates the merge, not the publish.** Publishing is
+   reversible and needs no prior verdict — push, `gh pr create`, and
+   `gh pr ready` proceed ungated. Invoke `wk-adversarial-review` once the
+   change is finalized and published (Step 5 marks ready first), so CI runs
+   alongside it. It must return `clear` before:
+   - Any merge, including `gh pr merge --auto` *enablement*.
+   - Re-clearance after a force-push or rebase that rewrites pushed history.
 
-   `blocked` verdict → no `gh pr create`, no `gh pr ready`, no push. Fix
-   blockers (each via `wk-commit`), re-invoke until clear. No size or scope
-   exemption.
+   `blocked` verdict → no merge and no `--auto`. Fix blockers (each via
+   `wk-commit`), re-invoke until clear. No size or scope exemption.
 
    **No-ask on review findings.** Findings from any mandatory pre-flight review
    (`wk-adversarial-review`, and `wk-arch-review` when a spec/design doc is in
@@ -224,19 +224,13 @@ consolidation). Query + routing:
 
 ## Step 2: Create Draft PR
 
-### Adversarial-review gate (run before `gh pr create`)
+Creating the PR is ungated — the single adversarial-review gate runs after
+Step 5 marks it ready, so CI runs alongside it.
 
-**Honor a review waiver before dispatching.** User's current-session instruction
-waives review ("no review needed") → suppress this Skill call and continue to
-`gh pr create`; never rely on the user denying the permission prompt to enforce
-their own instruction. (Rule 0 `wk-gh` routing + footer still apply.)
-
-Invoke `wk-adversarial-review` against `$BEST_BASE...HEAD`. Do not proceed to
-`gh pr create` until the verdict is `clear` (or `suggestions-only` and the user
-accepted the offered A/B/C choice).
-
-On `blocked`, address each blocker with atomic `wk-commit` invocations, re-invoke
-`wk-adversarial-review`. Loop until clear.
+**Honor a review waiver.** User's current-session instruction waives review ("no
+review needed") → suppress the Step 5 gate call; never rely on the user denying
+the permission prompt to enforce their own instruction. (Rule 0 `wk-gh` routing +
+footer still apply.)
 
 **Always create PRs in draft mode** (`--draft` flag). Never create a non-draft
 PR unless the user explicitly asks.
@@ -473,35 +467,33 @@ After the draft PR is created (or after pushing new commits to an existing PR):
 ## Step 5: Mark Ready
 
 **HARD RULE — never end a turn with a draft PR whose work is done.** Any push to
-an open draft PR carries an implicit commitment: re-run the adversarial gate,
-then `gh pr ready` once CI is green. The only valid exits before `gh pr ready`:
+an open draft PR carries an implicit commitment to `gh pr ready`, which waits on
+neither CI nor a verdict. The only valid exits before `gh pr ready`:
 
-- CI failing after 3 fix-loop attempts.
-- An open `blocked` adversarial-review verdict.
 - Explicit user instruction to pause / hold-as-draft.
+- Work genuinely unfinished (not merely unreviewed or CI-red).
 
 Iteration rounds (refactor, dedup, follow-up commits) do not reset this
 commitment — each push restarts the path to ready, not the licence to stop.
 "Pushed the fix" is not "work complete"; "marked ready" is.
 
-### Final adversarial-review gate
+### Adversarial-review gate (after ready, before merge)
 
-Invoke `wk-adversarial-review` one more time against PR HEAD before
-`gh pr ready`. Self-review, CI fixes, and automated-feedback resolution may have
-introduced new commits since Step 2's gate. Re-running catches drift between
-draft and ready.
+Invoke `wk-adversarial-review` against PR HEAD once the PR is marked ready. This
+is the single gate: it must return `clear` before any merge or `--auto`
+enablement, and CI runs concurrently so both sets of findings fold into one pass.
 
 **Scoped skip — mechanical-only delta.** If the *only* commits since the last
 `clear` verdict are direct mechanical responses to that verdict's own blockers
-(no new logic, no refactor, no scope addition), the final gate may be skipped.
-Note the skip and the cleared HEAD SHA in the PR. Any commit touching logic or
-adding behavior still requires re-running the gate.
+(no new logic, no refactor, no scope addition), re-running may be skipped. Note
+the skip and the cleared HEAD SHA in the PR. Any commit touching logic or adding
+behavior still requires re-running the gate.
 
-**HARD RULE — verify CI for the *current* HEAD before `gh pr ready`.** A green
-CI result against an earlier HEAD does not satisfy the gate. Every push that
-lands new commits starts a fresh CI run — confirm the run for the current HEAD
-SHA has **completed** and is green before marking ready; never race `gh pr ready`
-ahead of a still-`running` build, and never assume a prior run covers the new
+**HARD RULE — verify CI for the *current* HEAD before merge, not before ready.**
+Marking ready never waits on CI. A green CI result against an earlier HEAD does
+not satisfy the merge gate. Every push that lands new commits starts a fresh CI
+run — confirm the run for the current HEAD SHA has **completed** and is green
+before merging, and never assume a prior run covers the new
 commits. Each push = one CI run that must finish. An **empty**
 `statusCheckRollup` is vacuously green — require the provider's checks present,
 not merely absence of red (an unregistered build reads as premature all-green).
@@ -514,15 +506,16 @@ gh pr view --json statusCheckRollup,headRefOid \
 Re-poll until every entry for the current `headRefOid` is terminal and green.
 
 **HARD RULE — check off the test-plan boxes before `gh pr ready`, not after.**
-The CI-green sync (Step 4.2) is a blocking precondition for `gh pr ready`, not an
-aspiration: re-read the PR body and tick every test-plan checkbox now satisfied
-by green CI and passing local checks. Unchecked boxes on a ready PR read as work
-not done. Do not call `gh pr ready` until the body's checkboxes match reality.
-Any run id, SHA, or link written while ticking comes from a command run this turn
-(Hard Rule 4) — this step is where invented identifiers get in.
+Marking ready does not wait on CI or on a review verdict — both run after it —
+but the body must never overstate: re-read it and tick every test-plan checkbox
+already satisfied by passing local checks, leave the rest unticked, and re-sync
+the moment CI goes terminal. Unchecked boxes on a ready PR read as work not
+done; ticked-but-unverified boxes are worse. Any run id, SHA, or link written
+while ticking comes from a command run this turn (Hard Rule 4) — this step is
+where invented identifiers get in.
 
-After the self-review is posted, automated feedback is addressed, the test-plan
-checkboxes are synced, and the adversarial-review verdict is `clear`:
+After the self-review is posted, automated feedback is addressed, and the
+test-plan checkboxes are synced:
 
 ```bash
 gh pr ready
@@ -532,12 +525,14 @@ Confirm to the user:
 > "PR #{number} is marked ready for review: {url}"
 
 **Trivial-PR auto-merge fast path.** When the net diff is under 25 lines
-(`git diff $BASE...HEAD --shortstat`) **and** the final adversarial-review
-verdict is `clear` with zero findings, skip the poll-and-wait CI loop: mark
-ready, then `gh pr merge --auto --squash` so it lands the moment required checks
-pass. Note the line count and auto-merge intent in the PR body so reviewers see
-why. Any logic-bearing change, or a diff at/over the threshold, takes the full
-CI poll above — the fast path is for mechanical, low-risk deltas only.
+(`git diff $BASE...HEAD --shortstat`) **and** the adversarial review has already
+returned `clear` with zero findings, skip the poll-and-wait CI loop:
+`gh pr merge --auto --squash` so it lands the moment required checks pass. The
+verdict is a precondition, not a formality — enabling `--auto` is a merge
+decision, so never enable it before the review clears. Note the line count and
+auto-merge intent in the PR body so reviewers see why. Any logic-bearing change,
+or a diff at/over the threshold, takes the full CI poll above — the fast path is
+for mechanical, low-risk deltas only.
 
 ## Step 6: Session Retro
 

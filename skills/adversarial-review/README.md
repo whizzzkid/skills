@@ -1,15 +1,15 @@
 # wk-adversarial-review
 
-> Adversarial pre-flight review of the current branch before anything leaves the machine.
+> Adversarial review of the current branch before it merges.
 
-**Version:** `2026.07.28-022825`
+**Version:** `2026.07.28-082712`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
 | User-invocable | `/wk-adversarial-review [base-branch]` |
-| Model-invocable | automatic on: push, `gh pr ready`, new commits on existing PR, any force-push |
+| Model-invocable | automatic once the PR is marked ready, and before any merge or `--auto` enablement; re-fires on new commits since the last clearance |
 
 ## How It Works
 

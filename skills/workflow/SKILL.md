@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: '2026.07.28-001124'
+  version: '2026.07.28-082116'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -26,7 +26,7 @@ metadata:
 
 # Workflow
 
-Master orchestration for development tasks. Phases run in order (`## Phase 1`–`8`); follow the sequence exactly.
+Master orchestration for development tasks. Phases run in ascending order; follow the sequence exactly. The review gate is Phase 5.5 — it follows publishing, so no Phase 4 exists.
 
 ---
 
@@ -43,7 +43,7 @@ Execute the workflow without asking permission at each step.
 | Situation | Do this | Do NOT do this |
 |---|---|---|
 | Ready to commit | Invoke `wk-commit` | Ask “shall I commit?” |
-| Tests pass, review clean | Invoke `wk-pr` | Ask “would you like a PR?” |
+| Tests pass | Invoke `wk-pr` | Ask “would you like a PR?” |
 | CI fails | Enter fix loop automatically | Ask “should I investigate?” |
 | Review blocks | Fix blockers, re-invoke `wk-adversarial-review` | Ask “should I fix these?” |
 | Docs need updating | Invoke `wk-docs` | Ask “should I update docs?” |
@@ -117,7 +117,7 @@ For normalization, renames, required fields, schema changes, or similar recurrin
 
 2. Implement all sites.
 3. Commit.
-4. Run adversarial review once.
+4. Publish, then run adversarial review once.
 5. Fix residuals in ≤1 follow-up commit.
 
 ### Artifact sync with code changes
@@ -186,13 +186,13 @@ Shell-script structure & symlink-guard tests: [`references/shell-script-test-che
 
 ## Phase 3.5: Refactor & Deletion-Safety Scan
 
-After tests pass and before adversarial review, scan the diff and neighboring code for refactor/reuse opportunities.
+After tests pass and before publishing, scan the diff and neighboring code for refactor/reuse opportunities.
 
 For every new/modified function, helper, constant, or block, scan same file, sibling files, and imported modules for: existing helpers/constants/types, repeated literals, near-duplicate blocks (≥3 similar lines), long conditional chains, nested blocks, re-implemented language/framework patterns.
 
 Classify each opportunity:
 
-- **Apply now** — reuse existing helper/constant, lift near-duplicate into a helper, flatten conditionals. Land as one commit before Phase 4.
+- **Apply now** — reuse existing helper/constant, lift near-duplicate into a helper, flatten conditionals. Land as one commit before Phase 5.
 - **Defer with note** — real but out-of-scope; add TODO to PR "Follow-ups".
 - **Skip** — no real win or premature abstraction.
 
@@ -216,34 +216,10 @@ Run only when the diff changes browser-rendered UI: client components, templates
 - Launch the app via the `run` skill or documented dev-server command.
 - Drive every changed view in a real browser with Playwright tools; exercise happy paths.
 - Capture snapshots and console messages.
-- Treat load failure, console error on the changed surface, or broken interaction as a Phase 4 blocker.
-- Leave app/browser running and hand off the URL; continue Phase 4 onward while the user inspects.
+- Treat load failure, console error on the changed surface, or broken interaction as a blocker — fix before publishing.
+- Leave app/browser running and hand off the URL; continue Phase 5 onward while the user inspects.
 
 Skip backend/config/docs-only diffs and record "frontend preview: N/A" in Phase 8.
-
----
-
-## Phase 4: Adversarial Review — the single review gate
-
-After implementation, tests, refactor scan, and frontend preview (if applicable), invoke `wk-adversarial-review`. **This is the only place the workflow runs it**; later phases never re-declare it as a separate step.
-
-**HARD RULE:** adversarial review is one session gate keyed to *new commits since the last clear verdict* — not per-phase, not per-commit.
-
-- Run once on the complete logical change, then push. Never push-and-review per incremental commit.
-- Idempotent re-entry: a later push (Phase 6 CI fix, Phase 5 rework, `gh pr ready`) re-fires the gate only when commits landed since the last clearance, and then sweeps only the delta. No new commits → it prints the prior clearance instead of re-running.
-- Fix residuals in ≤1 follow-up commit, then re-run once.
-
-`wk-adversarial-review` returns **clear**, **blocked**, or **suggestions-only**.
-
-- **Clear** — proceed to Phase 5.
-- **Blocked** — fix each blocker via `wk-commit`, re-invoke until clear. Never push, `gh pr ready`, or `gh pr create` on a blocked verdict.
-- **Suggestions only** — follow the skill's A/B/C prompt.
-
-Pre-flight findings are mandatory actions, not options → fold blockers/improvements into the relevant artifact and commit. Pause only for a genuine user-owned design decision.
-
-**HARD RULE — never defer a security guard.** A missing guard or input validation (SSRF, injection, path traversal, scheme check) is blocker-class regardless of scope — apply it now; never propose deferring it without explicit user instruction. Split a larger tooling swap into a follow-up, never the guard itself.
-
-**HARD RULE:** nothing leaves the machine without a clear verdict covering current HEAD — every push, PR transition (`gh pr create`, `gh pr ready`), force-push. Satisfy this through the idempotent gate above, never a fresh full review per step. No size/docs-only exemption.
 
 ---
 
@@ -260,7 +236,7 @@ Branching is the default, not an absolute. Probe first:
 - Branch only when evidence points to PR-gated workflow; otherwise commit straight to default and skip auto-PR.
 - If signals conflict/are absent for a non-trivial change, branch and say why in one line.
 
-After code review passes, invoke `wk-pr` (never raw `gh pr create`) — it handles draft creation, stacking, CI polling, self-review, feedback triage, and marking ready.
+After tests and the Phase 3.5/3.6 scans pass, invoke `wk-pr` (never raw `gh pr create`) — it handles draft creation, stacking, self-review, feedback triage, and marking ready. Publishing precedes the review gate; it does not wait on a verdict.
 
 ### Post-push sync
 
@@ -272,24 +248,41 @@ Before reworking a PR branch — force-push, restructure, content rewrite, big r
 
 ---
 
+## Phase 5.5: Adversarial Review — the single review gate
+
+With the PR published and marked ready, invoke `wk-adversarial-review`. **This is the only place the workflow runs it**; other phases never re-declare it.
+
+**HARD RULE — the gate anchors to merge, not to leaving the machine.** Publishing is reversible and needs no prior verdict — push, `gh pr create`, and `gh pr ready` proceed without one. Merging is not → no merge, and no `gh pr merge --auto` enablement, without a clear verdict covering current HEAD. No size/docs-only exemption.
+
+- Run once on the finalized change, after publishing. Never per incremental commit — small chunks make a per-push sweep cost more than the change it guards.
+- Publishing first lets CI run during the review → fold its comments and the review's findings into one pass.
+- Idempotent re-entry: a later push re-fires the gate only when commits landed since the last clearance, and then sweeps only the delta. No new commits → it prints the prior clearance.
+- Fix residuals in ≤1 follow-up commit, then re-run once.
+
+`wk-adversarial-review` returns **clear**, **blocked**, or **suggestions-only**.
+
+- **Clear** — proceed to Phase 6.
+- **Blocked** — fix each blocker via `wk-commit`, re-invoke until clear. Never merge or enable auto-merge on a blocked verdict.
+- **Suggestions only** — follow the skill's A/B/C prompt.
+
+Pre-flight findings are mandatory actions, not options → fold blockers/improvements into the relevant artifact and commit. Pause only for a genuine user-owned design decision.
+
+**HARD RULE — never defer a security guard.** A missing guard or input validation (SSRF, injection, path traversal, scheme check) is blocker-class regardless of scope — apply it now; never propose deferring it without explicit user instruction. Split a larger tooling swap into a follow-up, never the guard itself.
+
+---
+
 ## Phase 6: CI Fix Loop
 
-After PR creation or any push to a PR branch, monitor, diagnose, and fix CI until green. Do not mark ready while CI is red.
+After PR creation or any push to a PR branch, monitor, diagnose, and fix CI until green. CI runs concurrently with the Phase 5.5 review — fold its failures and comments into the same fix pass.
 
 - Use `gh pr checks --watch --fail-fast` for generic checks; it can exit on partial resolution → re-confirm the rollup is terminal before calling CI green (`wk-gh`).
 - Use `wk-buildkite` for Buildkite.
 - Run long watches in the background; before any wait >~1 min (suite, CI poll, flake re-runs) state what runs and rough duration so silence isn't read as a hang.
-- **Never end a turn announcing a holding pattern or delegating its final action.** Watch CI to completion this turn; once green, run `gh pr ready` yourself — never hand "mark ready once CI passes" to the user.
+- **Never end a turn announcing a holding pattern or delegating its final action.** Watch CI to completion this turn and act on the result yourself — never hand "merge once CI passes" to the user.
 - **Don't idle on the CI barrier — interleave.** While a background poll runs, start the next plan task with no dependency on this PR's green state; the poll re-invokes you on completion. Hard-wait only when nothing else can progress (last PR in stack, or a step needing green like auto-merge).
 - Read actual logs first.
 
-| Failure type | Action |
-|---|---|
-| Code failure | Diagnose root cause; apply the smallest fix |
-| Flaky test | Re-trigger once; if it repeats, treat as real |
-| Infrastructure | Re-trigger; if persistent, inform user — no code fix |
-
-Diagnosis rules — map error signal to first check: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md).
+Diagnosis rules — map failure type to action and error signal to first check: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md).
 
 Fix and re-push:
 
@@ -320,7 +313,7 @@ Loop limits:
 - Before attempt 3, state the axis being varied; if prior attempts varied the same axis, broaden.
 - After 3 failures, stop and hand off with what was tried and the current failure.
 
-Exit when all checks pass, max attempts are reached, or infrastructure/flaky failure is confirmed. After green, resume `wk-pr` post-creation: self-review, automated feedback triage, and mark ready.
+Exit when all checks pass, max attempts are reached, or infrastructure/flaky failure is confirmed. After green, resume `wk-pr` post-creation: self-review and automated feedback triage.
 
 **HARD RULE:** verify every test-plan checkbox before updating the PR description. Run every runnable verification command; leave a box unchecked only when genuinely impossible and note why.
 
@@ -383,7 +376,7 @@ Final audit after all code is complete:
 | `wk-pr` | Creating/updating a pull request | 5 |
 | `wk-self-review` | Invoked automatically by `wk-pr` after CI passes | 5 |
 | `wk-buildkite` | Diagnosing Buildkite CI failures | 6 |
-| `wk-adversarial-review` | Single review gate; owned by Phase 4, idempotent re-entry on new commits | 4 |
+| `wk-adversarial-review` | Single review gate; owned by Phase 5.5, post-publish and pre-merge | 5.5 |
 | `wk-pr-update` | Rebasing/syncing a PR branch with its base | 5, 6 |
 | `wk-learn` | Post-completion learning capture | any |
 | `wk-retro` | End of every session | 8 |
@@ -401,7 +394,7 @@ Use this as a final gate before claiming work is complete:
 - [ ] `wk-workstyle` pass completed on all touched files
 - [ ] Documentation updated alongside each code change
 - [ ] Tests cover happy path, sad path, and edge cases
-- [ ] `wk-adversarial-review` returned a clear verdict against current HEAD
+- [ ] `wk-adversarial-review` returned a clear verdict against current HEAD before merge
 - [ ] CI fix loop exited green
 - [ ] PR description reflects current branch state
 - [ ] Self-review posted for critical changes only

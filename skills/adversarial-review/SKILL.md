@@ -1,10 +1,10 @@
 ---
 name: wk-adversarial-review
 description: >-
-  Adversarial pre-flight review of the current branch before anything
-  leaves the machine; blocks until every finding clears. Activates before
-  any push, `gh pr ready`, or new commits on a PR; auto-invoked from
-  wk-workflow, wk-pr, and wk-pr-resolve.
+  Adversarial review of the current branch before it merges; blocks until
+  every finding clears. Runs once on the finalized change after the PR is
+  published and marked ready, so CI runs alongside it — not per push or
+  per commit; auto-invoked from wk-workflow, wk-pr, and wk-pr-resolve.
 argument-hint: '[optional: explicit base branch]'
 allowed-tools:
   - "Bash(gh pr view:*)"
@@ -37,7 +37,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.28-022825'
+  version: '2026.07.28-082712'
   model:
     openai: gpt-4.1-mini
     google: gemini-2.5-flash
@@ -53,9 +53,9 @@ Resolve base → surface map → mechanical sweeps → fresh adversarial subagen
 
 ## Non-Negotiable Contract
 
-1. **No push without clear verdict.** Run before every push, `gh pr ready`, force-push, and rebase that rewrites pushed history. No opt-out.
+1. **No merge without clear verdict.** Publishing is reversible and ungated — push, `gh pr create`, and `gh pr ready` need no prior verdict. Merging is not: no merge, and no `gh pr merge --auto` enablement, without a verdict covering current HEAD. No opt-out. A force-push or rebase rewriting pushed history invalidates the prior clearance → re-run before merge.
 2. **No docs-only exemption.** Docs, specs, skills, executable instructions can carry logic errors, stale counts, bad commands.
-3. **Per-feature gate.** Run once on complete implementation before publishing → fix residuals in ≤1 follow-up → re-review.
+3. **Per-feature gate.** Run once on the complete implementation after publishing, before merge → fix residuals in ≤1 follow-up → re-review.
 4. **Idempotent within a session.** No new commits since last clear verdict → print prior clearance record.
 5. **Scope re-reviews.** After clear verdict, sweep only `git diff <cleared-sha>..HEAD`; record clearance at `.review-playground/.cleared-{HEAD_SHA}.json`.
 6. **Mechanical first.** Run all sweeps before LLM reasoning.
@@ -63,6 +63,7 @@ Resolve base → surface map → mechanical sweeps → fresh adversarial subagen
 8. **Reproduce before claim.** Runtime-behavior findings reproduced in `.review-playground/` or downgraded to `question`.
 9. **Diff-anchored findings.** Commentable findings map to diff lines; outside-diff issues → file-level or verdict-body notes.
 10. **Gate, not actor.** Do not push, edit the PR, or post review comments from this skill.
+11. **One re-review per session; a waiver is final.** After the first verdict, batch every remaining fix into ONE re-review scoped to `git diff <cleared-sha>..HEAD` — intermediate pushes in a fix loop never each earn a full run, and N fix rounds must never cost N full reviews. State which invocation number this is so the cost stays visible. A user waiver or fatigue signal ("skip the review", "these reviews are driving me insane") is an immediate hard waiver → stop dispatching for the rest of the session, in this and every later step, and never re-litigate it.
 
 ## Step 1: Resolve Context and Build Surface Map
 

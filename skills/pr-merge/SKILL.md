@@ -2,7 +2,8 @@
 name: wk-pr-merge
 description: >-
   Use when ready to merge a PR — verifies CI is green, all reviews approved,
-  all reviewer comments resolved, no open action items,
+  all reviewer comments resolved, no open action items, a clear
+  adversarial-review verdict against current HEAD,
   then retargets any stacked child PRs onto its base, merges, transitions
   the linked ticket to its terminal state, lists
   any follow-ups or deferred action items, captures a session retro, and
@@ -27,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: '2026.07.27-225034'
+  version: '2026.07.28-082712'
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -204,7 +205,19 @@ echo "{body}" | grep -nE '^\s*- \[ \]'
   containing those phrases → **not blockers**; collect for Step 8 output.
 - `- [x]` items are already done → skip.
 
-## Step 6: Merge the PR
+## Step 5.5: Verify the adversarial-review verdict
+
+The merge is where the review gate is enforced — publishing is ungated, so this
+is the only step that blocks on it. Never merge, and never enable
+`gh pr merge --auto`, without a `clear` verdict covering current HEAD.
+
+- No verdict recorded, or the recorded clearance predates current HEAD → invoke
+  [`wk-adversarial-review`](../adversarial-review/README.md) now and block on it.
+  A clearance against an earlier SHA does not carry forward.
+- `blocked` → fix each blocker via `wk-commit`, re-invoke until clear. Do not
+  merge past an open blocker.
+- Waived by an explicit current-session user instruction → note the waiver and
+  proceed; never infer a waiver from silence or from a denied permission prompt.
 
 - **HARD RULE — retarget stacked children BEFORE merging with `--delete-branch`.**
   A child PR based on this PR's head branch is closed/orphaned when the merge

@@ -4,7 +4,7 @@
 > and manage the full resolution cycle from branch sync through push, CI
 > polling, and session retro.
 
-**Version:** `2026.07.27-230305`
+**Version:** `2026.07.28-082712`
 
 ## Invocation
 
@@ -65,9 +65,10 @@ sequenceDiagram
 - **One commit per triage unit:** Step 4's final merge/split decision defines
   the commit unit, so reviewers can trace each resolved finding without
   bundling unrelated comments. All commits push together in Step 8.
-- **Adversarial-review gate before push:** Any commits produced in the session
-  must pass [`wk-adversarial-review`](../adversarial-review/README.md) before
-  Step 8's `git push`. Blocked means no push.
+- **Adversarial-review gate before merge, not push:** Step 8 pushes
+  unconditionally; any commits produced in the session must pass
+  [`wk-adversarial-review`](../adversarial-review/README.md) before the PR
+  merges. Blocked means no merge.
 - **Bot-native reply commands are preferred:** Before drafting a freeform reply
   to a bot finding, the skill checks the bot's documented command grammar and
   uses it. Generic replies leave findings open and add noise.

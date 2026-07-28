@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.07.28-001124`
+**Version:** `2026.07.28-082116`
 
 ## Invocation
 
@@ -20,12 +20,13 @@ flowchart TD
     B1 --> C[Phase 3: Test — happy + sad + edge]
     C --> C1[Phase 3.5: refactor/reuse scan]
     C1 --> C2[Phase 3.6: frontend live preview when UI changes]
-    C2 --> D[Phase 4: wk-adversarial-review]
+    C2 --> G[Phase 5: wk-pr — draft first, then mark ready]
+    G --> D[Phase 5.5: wk-adversarial-review]
+    G -.->|CI runs concurrently| H
     D --> E{Verdict}
     E -->|blocked| F[Fix blockers via wk-commit → re-invoke]
     F --> D
-    E -->|clear| G[Phase 5: wk-pr — always draft first]
-    G --> H[Phase 6: CI Fix Loop — max 3 attempts]
+    E -->|clear| H[Phase 6: CI Fix Loop — max 3 attempts]
     H --> I{CI green?}
     I -->|no — 3 attempts| J[Stop + ask user]
     I -->|yes| K[Phase 6.5: resolve review comments]
@@ -56,9 +57,11 @@ flowchart TD
 - **Artifact sync with code changes** — a commit changing logical structure must update spec,
   plan, inline comments, test names, and any ADR in the same commit (mechanics in
   [`references/doc-sync-mechanics.md`](references/doc-sync-mechanics.md)). No deferred rewrites.
-- **One review gate** — [`wk-adversarial-review`](../adversarial-review/README.md) runs once, at Phase 4. It is not
-  re-run per phase or per push; the gate is keyed to new commits since the last clear verdict, so later pushes
-  (CI fixes, rework) re-fire it only on the delta and otherwise reuse the prior clearance.
+- **One review gate, anchored to merge** — [`wk-adversarial-review`](../adversarial-review/README.md) runs once, at
+  Phase 5.5, *after* the PR is published and marked ready. Publishing is reversible and needs no verdict; merging
+  is not, so no merge (and no `--auto` enablement) happens without a clear verdict covering current HEAD. Reviewing
+  after publish lets CI run concurrently, so its comments fold into the same fix pass. The gate is keyed to new
+  commits since the last clear verdict, so later pushes re-fire it only on the delta.
 - **CI fix loop** has a 3-attempt limit with an axis-of-variation check: attempts 1 and 2 on
   the same axis require broadening to a different axis on attempt 3, not "the same thing harder."
 - **Phase 8 ([`wk-retro`](../retro/README.md)) is non-negotiable** — mandatory regardless of task outcome, even if
