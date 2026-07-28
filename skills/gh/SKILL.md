@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171046"
+  version: "2026.07.28-231141"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -355,6 +355,29 @@ a terminal-state guarantee. A single watch is not proof of green CI.
   <branch>`; on mismatch, re-query until it catches up, or fall back to the CI
   provider's build-by-branch query (ground truth for the current commit).
 - Re-issue the watch if any check is still pending.
+
+## A CI job proves nothing until a run exists for the ref
+
+- **Confirm the workflow's `on:` triggers fire for the current ref before treating a newly
+  added or edited job as working.** A trigger block naming only the default branch plus
+  `pull_request` runs on neither a pre-PR feature-branch push nor any ref without an open
+  PR, so jobs added there stay unexecuted while reading as done.
+- Empty output for the ref is the tell — a gate that has never executed is not a gate:
+
+  ```bash
+  gh run list --branch "$(git rev-parse --abbrev-ref HEAD)" --limit 10 \
+    --json workflowName,event,status,conclusion,headSha
+  ```
+
+- Never mark such a job complete, document it as green, or add it to required status checks
+  until a run for that ref exists — an unexecuted required check is unverified and can hold
+  a PR pending indefinitely.
+- Zero runs → read the trigger block itself, then push a ref the triggers accept (or open
+  the PR) and read that run's own log; the rollup cannot report a workflow that never
+  started.
+- Expect a first real run to surface what no local run can: a runtime dependency the runner
+  lacks, output the runner quotes differently than a local shell, runner-only startup noise
+  a parser reads as an error.
 
 ## Canonical download path
 
