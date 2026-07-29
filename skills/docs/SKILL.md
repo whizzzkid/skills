@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-182019"
+  version: "2026.07.28-233617"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -61,6 +61,11 @@ never examined, so a rate gets three caveats while "runs your input" passes unre
 - **Regeneration is a transform, not a rewrite.** Rebuilding an artifact from a source
   file adds no claim absent from that source — invented content bypasses every
   grounding check the source already passed.
+- **A failure claim is an observation, not a property — record where it was seen.** Write
+  "fails on `<env>` with `<symptom>`; unverified elsewhere", never the universal "is
+  broken". One environment is one data point: require a second to agree before the claim
+  earns declarative voice or drives config (excluding a check from required gates,
+  relaxing acceptance criteria).
 
 ## Step 1: Check for Affected Docs
 
@@ -143,10 +148,14 @@ writing or delivering such a doc, enforce every gate below:
   `TBD` explicitly — never leave a dead or speculative link unmarked.
 - **No fabricated sizing:** omit effort/timeline estimates, or mark them `TBD`,
   unless the user supplied them.
-- **Cross-section consistency:** after editing any concept, grep the whole doc
-  for its core terms and review every hit for consistent tense, qualifier, and
+- **Important — cross-section consistency:** after editing any concept, grep the whole
+  doc for its core terms and review every hit for consistent tense, qualifier, and
   implementation status. A diff-focused edit updates the narrative section but
   leaves a risk-table row or summary stating the old default — a top bot-review flag.
+  - **Reversing a verdict → sweep by the subject's identifier, not the retracted
+    wording.** Every phrase the old verdict justified is in scope — acceptance criteria,
+    summary tables, downstream config the doc drove — and the leaked phrasing usually
+    shares no term with the sentence you edited.
 
 ---
 
