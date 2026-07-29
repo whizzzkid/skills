@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.29-084107"
+  version: "2026.07.29-090054"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -272,10 +272,10 @@ Invoked without a specific incident → batch mode.
 
 ## Loop Mode: `/wk-sharpen loop <N>mins`
 
-Self-paced batch mode — one background subagent per cycle, respawned N minutes after the previous cycle *finishes*. Spawn / schedule / stop mechanics: [`references/loop-mode.md`](references/loop-mode.md).
+Self-paced batch mode — one background subagent per cycle, zero inherited context, drains the **entire** queue before stopping; next cycle N minutes after this one *finishes*. Spawn / drain / schedule / stop mechanics: [`references/loop-mode.md`](references/loop-mode.md).
 
-- **Exactly one agent in flight, machine-wide.** Concurrent folds contend over one queue and one `SKILL.md`: two runs claim one learning, and one run's byte budget is voided by the other's edits landing mid-flight.
-- **Time the delay from completion, never a fixed cadence** — an interval tick fires during an active run and stacks exactly the overlap this mode prevents; a slow cycle pushes the next one back.
+- **Exactly one agent in flight, machine-wide.** Concurrent folds contend over one queue and one `SKILL.md`: two runs claim one learning.
+- **A cycle drains to empty, never one item** — fold, commit, re-list, repeat; one item per cycle loses to the arrival rate.
 
 ## Improve Mode: Refactor and Optimize
 

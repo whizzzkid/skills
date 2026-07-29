@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.29-084107`
+**Version:** `2026.07.29-090054`
 
 ## Invocation
 
@@ -18,10 +18,10 @@ flowchart TD
     A{Invocation mode} -->|single| B[Read incident report]
     A -->|batch| G[Scan 4 sources]
     A -->|improve| K[Inventory all skills in scope]
-    A -->|"loop &lt;N&gt;mins"| N1["Spawn ONE background agent<br/>batch-mode cycle"]
-    N1 --> N2{"Cycle complete?"}
-    N2 -->|"queue drained"| N4["Report counts, stop scheduling"]
-    N2 -->|"work remains"| N3["Schedule next cycle N mins<br/>AFTER completion — never a cron"]
+    A -->|"loop &lt;N&gt;mins"| N1["Spawn ONE background agent<br/>drains the WHOLE queue"]
+    N1 --> N2{"Queue empty at wake?"}
+    N2 -->|"2nd consecutive empty wake"| N4["Report counts, stop scheduling"]
+    N2 -->|"items remain, or 1st empty"| N3["Schedule next cycle N mins<br/>AFTER completion — never a cron"]
     N3 --> N1
     B --> B2[Verify reported cause against the owning source]
     B2 --> C[Read full SKILL.md]
@@ -168,8 +168,11 @@ flowchart TD
   materialized as a version-controlled learning via [`wk-learn`](../learn/README.md) and distilled through the
   Source 2 path; the memory file itself is never renamed (only the materialized learning is).
 - **Loop mode** (`loop <N>mins`) self-paces the batch drain: exactly one background agent in
-  flight, and the next cycle is scheduled `N` minutes after the previous one *finishes* — never
-  on a wall-clock cron, which would fire mid-run and stack concurrent folds over one queue.
+  flight, spawned with zero inherited context and draining the **whole** queue — fold, commit,
+  push, re-list, repeat — before it stops. The next cycle is scheduled `N` minutes after the
+  previous one *finishes* — never on a wall-clock cron, which would fire mid-run and stack
+  concurrent folds over one queue. One item per cycle is not enough: [`wk-learn`](../learn/README.md) filings and peer
+  sessions refill the queue faster than a single fold drains it.
 - **Improve mode** requires explicit phased user approval even in auto mode — suite-scale
   refactoring is high blast-radius and can never be applied silently.
 - **De-bloat pass** is mandatory on every run (not only when a learning prompts it) and
