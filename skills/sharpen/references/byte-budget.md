@@ -131,12 +131,37 @@ env-tunable, so a deliberate exception needs no hook edit):
 - **Never buy the ratio back by moving a gate's checks or a verification checklist behind
   a pointer.** That trades a correctness property for a byte count.
 
+## Deriving the draft's ceiling before drafting
+
+- **Price the reclaim pool at the same measure as headroom, never after the draft.** Both
+  thresholds — the `~2×` headroom trigger and the `≥1.2×` ratio — are stated relative to
+  *the edit*, so evaluating either presumes a size that has not been decided yet. Priced
+  after the draft they can only return a verdict on a number already fixed, and the only
+  remaining lever is trimming what was just written. That ordering *guarantees* a trim
+  cycle rather than merely permitting one.
+- **Invert both into one ceiling on the draft, then draft to that number:**
+  `draft_max = max(headroom/2, pool_NET/1.2)`.
+  - `headroom/2` — the trigger stays silent, no reclaim is owed, a positive net lands.
+  - `pool_NET/1.2` — the trigger fires and the ratio is already met by the priced pool.
+  - The two branches are alternatives, not a sum: take whichever is larger and the fold is
+    compliant by construction on the first draft.
+- **Reject `(headroom + priced_pool) / 1.2`.** It folds the ceiling constraint into the
+  ratio and licenses a pool below `1.2×` the addition while reporting target compliance —
+  headroom is not part of the ratio. The blocking condition it approximates
+  (`addition − pool_NET ≤ headroom`) is always looser than `pool_NET/1.2` once the trigger
+  fires, so it never binds; only the ceiling and the ratio do.
+
 ## Measuring exactly once
 
 - Stage the addition **and** the reclaim cuts together, then measure **once**.
 - Multibyte characters inflate the count — a `→` is 3 bytes, not 1.
 - A second measure-and-trim cycle is the re-violation signal. Stop and re-plan with one
   decisive structural cut, not another prose nibble.
+  - **Scoped to the *staged* measure.** Iterating a draft against a pre-derived `draft_max`
+    before anything is staged is the discipline above working, not the cycle this forbids —
+    no measurement has been asserted yet, so nothing is being re-litigated. The forbidden
+    cycle starts once a staged measure exists. Read unscoped, this bullet contradicts
+    target 5 below, which sanctions tightening the addition outright.
 
 ## Choosing reclaim targets
 

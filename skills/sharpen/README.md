@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.28-171105`
+**Version:** `2026.07.29-080923`
 
 ## Invocation
 
@@ -174,7 +174,12 @@ flowchart TD
   non-positive net are a forbidden load-bearing cut or an abandoned fold.
   The byte budget for a near-ceiling fold is stated as explicit arithmetic —
   measured addition, each reclaim's measured net — before any edit is applied; estimating
-  either side makes the mandated single pass a coin flip. Reclaim is searched in a fixed
+  either side makes the mandated single pass a coin flip. The reclaim pool is priced at the
+  *same* measure as headroom, before drafting, and both thresholds are inverted into a single
+  ceiling on the draft (`draft_max = max(headroom/2, pool_NET/1.2)`) that the first draft is
+  written against. Priced after the draft, a pool can only judge a size already fixed, so the
+  only lever left is trimming what was just written — which guarantees the measure-and-trim
+  cycle rather than merely permitting it. Reclaim is searched in a fixed
   order — an inline rule whose own linked reference already states it in full is deleted
   outright first (full value, zero coverage risk), relocation is considered last, and a
   recorded stay-inline decision is honored rather than reopened under ceiling pressure.
