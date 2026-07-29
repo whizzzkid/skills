@@ -21,7 +21,8 @@ procedure.
 
    ```
    Agent(prompt="Invoke the wk-sharpen skill via the Skill tool and drain the
-   oldest unprocessed learning ... one item only", run_in_background=true)
+   highest-severity, oldest-mtime unprocessed learning ... one item only",
+   run_in_background=true)
    ```
 
 2. Wait for that agent's completion notification. Never poll for it by spawning

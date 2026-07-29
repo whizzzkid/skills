@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.29-080923"
+  version: "2026.07.29-084107"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -266,7 +266,7 @@ Invoked without a specific incident → batch mode.
 
 ### Source 2: Repo learnings directory
 
-- Scan `$WK_SKILLS_HOME/learnings/skills/`; process every unprocessed learning one-by-one, severity-ordered: read it, run the sharpen workflow, confirm the distilled principle landed, then `mv` (never `git mv` — it refuses an untracked path) to `.learned.md`, checking rc.
+- Scan `$WK_SKILLS_HOME/learnings/skills/`; process every unprocessed learning one-by-one, **severity-ordered, oldest mtime first within a band** (one wide band is the normal shape, so the tie-break decides most picks; an invented one collides with a peer's and lets a hard item be skipped forever): read it, run the sharpen workflow, confirm the distilled principle landed, then `mv` (never `git mv` — it refuses an untracked path) to `.learned.md`, checking rc.
 - Re-list before folding each item and after each fold-commit — peers write continuously; "drained" is a terminal check after the last commit, never set up-front.
 - **An arrival whose mtime postdates the run's start is unowned, not assigned.** Neither it nor commit recency sees a *claim* (the marker is a rename; `mv` keeps mtime) and no lock arbitrates, so re-list first: a vanished item, or either signal showing a peer → unclaimed backlog, do not fold. Terminal state is "processed N, M unclaimed, K distilled-not-landed" — never "drained". A fold applied under a blocked gate is distilled-not-landed: leave it unrenamed and name it in the report — never counted processed, never re-queued as backlog.
 
@@ -275,9 +275,7 @@ Invoked without a specific incident → batch mode.
 Self-paced batch mode — one background subagent per cycle, respawned N minutes after the previous cycle *finishes*. Spawn / schedule / stop mechanics: [`references/loop-mode.md`](references/loop-mode.md).
 
 - **Exactly one agent in flight, machine-wide.** Concurrent folds contend over one queue and one `SKILL.md`: two runs claim one learning, and one run's byte budget is voided by the other's edits landing mid-flight.
-- Wait for the running agent's completion signal before scheduling the next; never poll-spawn, never spawn while one is live, never state a pending agent's result.
 - **Time the delay from completion, never a fixed cadence** — an interval tick fires during an active run and stacks exactly the overlap this mode prevents; a slow cycle pushes the next one back.
-- Queue drained (rc 0 **and** empty output) → report counts and stop scheduling; never keep waking on an empty queue.
 
 ## Improve Mode: Refactor and Optimize
 

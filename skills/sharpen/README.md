@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.29-080923`
+**Version:** `2026.07.29-084107`
 
 ## Invocation
 
@@ -122,6 +122,14 @@ flowchart TD
   merely to hook-check it destroys that run's path-scoped commit separation.
 - **Batch mode** mirrors the global learnings inbox (`$HOME/.claude/skills/learnings/`) into the
   repo tree before distilling, then drains the inbox by deleting originals after copy.
+- **The queue is walked severity-ordered, oldest mtime first within a severity band.** The
+  tie-break is the load-bearing half, not a formality: `severity` is a three-value impact enum
+  whose middle band is the catch-all, so the normal queue state is one wide band that the severity
+  sort does not resolve at all. Left unstated, each concurrent cycle invents its own key and two
+  cycles are as likely to collide on one file as to spread across the queue — invisibly, until a
+  rename lands. Oldest mtime is the only key every cycle can read without coordination, and it
+  bounds how long a hard item can be walked past. It also composes with the arrival rule below:
+  oldest-first never reaches an item newer than the run's start while anything older remains.
 - **A re-scan arrival is not automatically this run's work.** An item whose mtime postdates
   the run's start is unowned, not assigned — peer sharpen agents share the tree and there is no
   lock, lease, or ownership marker to arbitrate a collision. Neither mtime nor commit recency
