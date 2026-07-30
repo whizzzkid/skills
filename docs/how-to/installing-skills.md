@@ -2,7 +2,8 @@
 
 ## Prerequisites
 
-- Node.js installed
+- Node.js with `npx` installed
+- Python 3 installed
 - An AI coding agent that supports the [Agent Skills spec](https://github.com/vercel-labs/skills)
 
 ## Full Install (skills + hooks) — recommended
@@ -20,6 +21,11 @@ pick up new skills and any newly-declared hooks without duplicating entries (a
 `.bak` of the settings file is written). Hooks are declared in
 `scripts/hooks-manifest.json`; add an entry there when a new skill ships a hook
 that must be wired into `settings.json` on every machine.
+
+The installer validates its executables before changing active skills. It
+completes the replacement install before removing deprecated `wk-*` copies, so
+a missing prerequisite or failed package run leaves the existing installation
+in place.
 
 The `npx skills add` commands below install skills **only** — they do not wire
 up hooks, so scope-guard and the env/concise hooks stay inactive. Use the full
@@ -76,4 +82,5 @@ Pulls the latest version of all installed skills from this repository.
 
 ## Uninstall
 
-Remove the skill directory from your agent's skills folder (e.g., `~/.claude/skills/` or `.claude/skills/` in your project).
+Remove the skill directory from your agent's skills folder (e.g.,
+`$HOME/.claude/skills/` or `.claude/skills/` in your project).

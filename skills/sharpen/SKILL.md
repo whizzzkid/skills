@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.29-090054"
+  version: "2026.07.30-212638"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -243,6 +243,8 @@ behavior, not just the specific instance.
 Do not return control until all five pass:
 
 1. **Install:**
+   - Preflight every replacement prerequisite before removing active copies; a miss must leave the current
+     installation intact.
    `cd "$WK_SKILLS_HOME" && npx skills add . -g -y --agent claude-code 2>&1 | tail -5`
    — success = `Done!` or `Installed <N> skills` (accept either marker). Always
    prefix the explicit `cd`

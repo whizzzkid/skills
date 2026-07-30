@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.29-090054`
+**Version:** `2026.07.30-212638`
 
 ## Invocation
 
@@ -106,10 +106,11 @@ flowchart TD
   that scan's own rc. A printed "clean" banner is a decoration, never a verdict: a
   multi-path grep returns a single status for the whole set and a read failure **dominates
   a genuine match**, so rc≥2 can mask a hit that still printed.
-- **Terminal gate** (Step 8) requires all five checks: install prints `Done!`, the owning
-  skill's test suite runs when the fold touched a shipped executable artifact, commits land,
-  single push, and no modified tracked path — untracked *unprocessed* learnings/retros are
-  expected state, not debris. Silence after edits is a violation.
+- **Terminal gate** (Step 8) requires all five checks: replacement prerequisites are
+  preflighted before active copies are removed, install prints `Done!`, the owning skill's
+  test suite runs when the fold touched a shipped executable artifact, commits land, single
+  push, and no modified tracked path — untracked *unprocessed* learnings/retros are expected
+  state, not debris. Silence after edits is a violation.
 - **A signer outage blocks the commit gate and the push gate together.** Over an SSH remote
   the same ssh-agent backs commit signing and push authentication, so one refusal fails both
   Step 8 gates. `Permission denied (publickey)` right after a signing failure is that same

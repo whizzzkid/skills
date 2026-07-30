@@ -16,7 +16,9 @@ scripts/install-skills.sh
 ```
 
 `scripts/install-skills.sh` is idempotent — safe to re-run after `git pull` to
-pick up new skills and any newly-declared hooks. Hook registration is driven by
+pick up new skills and any newly-declared hooks. It validates replacement
+prerequisites and completes the new install before removing deprecated active
+copies. Hook registration is driven by
 [`scripts/hooks-manifest.json`](scripts/hooks-manifest.json); re-running never
 duplicates entries and preserves existing settings (a `.bak` is written).
 
