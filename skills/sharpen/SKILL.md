@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.30-212638"
+  version: "2026.07.30-213841"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -245,10 +245,10 @@ Do not return control until all five pass:
 1. **Install:**
    - Preflight every replacement prerequisite before removing active copies; a miss must leave the current
      installation intact.
-   `cd "$WK_SKILLS_HOME" && npx skills add . -g -y --agent claude-code 2>&1 | tail -5`
-   — success = `Done!` or `Installed <N> skills` (accept either marker). Always
-   prefix the explicit `cd`
-   ([`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md)).
+   - Run `cd "$WK_SKILLS_HOME" && scripts/install-skills.sh`; its targets must include the active runtime
+     ([`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md)).
+   - Byte-compare the runtime’s installed `SKILL.md` and every changed reference with repository source;
+     generic success output or any mismatch fails the gate.
 2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing. Red result → apply the Step 1 harness-defect rule.
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Recovery for a blocked commit, signing failure included: [`references/commit-gate.md`](references/commit-gate.md).

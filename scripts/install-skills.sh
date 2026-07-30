@@ -19,7 +19,7 @@ command -v python3 >/dev/null 2>&1 || {
   exit 1
 }
 
-npx -y skills add . -g -y --agent claude-code
+npx -y skills add . -g -y --agent codex claude-code
 
 # Remove deprecated wk-* skills only after the replacement install succeeds.
 # Scoped to the wk-* glob to preserve siblings like learnings/ and non-wk skills.

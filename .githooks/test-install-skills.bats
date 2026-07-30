@@ -28,13 +28,15 @@ EOF
     "$TEST_BIN/npx"
 }
 
-@test "installs every skill for Claude Code" {
+@test "installs every skill for the universal and Claude runtimes" {
   run env \
     HOME="$TEST_HOME" \
     INSTALL_ARGS="$INSTALL_ARGS" \
     PATH="$TEST_BIN:$PATH" \
     "$TEST_REPO/scripts/install-skills.sh"
 
+  [[ "$status" -eq 0 ]] || return 1
+  run grep -Fx -- "codex" "$INSTALL_ARGS"
   [[ "$status" -eq 0 ]] || return 1
   run grep -Fx -- "claude-code" "$INSTALL_ARGS"
   [[ "$status" -eq 0 ]] || return 1
