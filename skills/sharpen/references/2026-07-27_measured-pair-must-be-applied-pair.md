@@ -31,6 +31,12 @@ very edit. The **post-edit** text is stricter, so it was applied: the addition w
 re-measured after each of the tightenings this run made, and the staged `measure()` was
 re-run rather than a transcript number reused.
 
+## Scope after the next re-violation
+
+Pair-level invalidation did not steer later edit groups in the same file. The
+current rule therefore keeps one running per-file ledger across the whole pass;
+re-price changed debits, then stage once for final reconciliation.
+
 ## Same-pass reclaim
 
 Headroom was 119 B. The full failure-mode text went to `byte-budget.md`, which costs zero

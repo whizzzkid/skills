@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.30-213841`
+**Version:** `2026.07.30-215223`
 
 ## Invocation
 
@@ -190,9 +190,12 @@ flowchart TD
   either side makes the mandated single pass a coin flip. The reclaim pool is priced at the
   *same* measure as headroom, before drafting, and both thresholds are inverted into a single
   ceiling on the draft (`draft_max = max(headroom/2, pool_NET/1.2)`) that the first draft is
-  written against. Priced after the draft, a pool can only judge a size already fixed, so the
-  only lever left is trimming what was just written — which guarantees the measure-and-trim
-  cycle rather than merely permitting it. Reclaim is searched in a fixed
+  written against. Budget is a running ledger per touched `SKILL.md`, not a one-time
+  statement for the largest edit: every edit group debits the file before another edit,
+  and an edited file without a ledger entry is unbudgeted. Priced after the draft, a pool
+  can only judge a size already fixed, so the only lever left is trimming what was just
+  written — which guarantees the measure-and-trim cycle rather than merely permitting it.
+  Reclaim is searched in a fixed
   order — an inline rule whose own linked reference already states it in full is deleted
   outright first (full value, zero coverage risk), relocation is considered last, and a
   recorded stay-inline decision is honored rather than reopened under ceiling pressure.

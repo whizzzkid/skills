@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.30-213841"
+  version: "2026.07.30-215223"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -235,8 +235,12 @@ behavior, not just the specific instance.
 - **Measure the staged body AND price the reclaim pool BEFORE drafting any content-adding fold** — a pool priced after the draft judges a fixed number → trim cycle guaranteed. Headroom under ~2× the edit → budget ≥2 reclaim targets whose *combined NET* exceeds the edit by ≥1.2×. Draft under both inverted: `draft_max = max(headroom/2, pool_NET/1.2)`.
   - **Budget the fold PLUS an audit-cleanup allowance** (~25%/floor ~300 B) and size reclaim against that total. Run the Step 5 audit first → **measured** cleanup replaces that estimate, often **0 B**.
   - **Never relocate a gate's enumerated pass/fail checks or a verification checklist behind a pointer, and never cut a rule's verified-configuration qualifier** — the ceiling never outranks a load-bearing rule. Per-hook recovery rows are catalog, not gate — those move freely.
-  - **CRITICAL — state the budget as arithmetic before any edit:** byte-measure each reclaim's NET and the addition as the *exact* old/new pair you will apply. **Revising either side after measuring voids it — re-measure.**
-  - **Very important — stage addition + reclaim cuts together, then measure exactly once**, running the hook's `measure()` verbatim.
+  - **CRITICAL — running byte ledger per touched `SKILL.md`:**
+    - Measure each file at entry; debit every edit group before the next edit.
+    - Record `baseline + additions - reclaims = projected body` and headroom.
+    - No entry → unbudgeted.
+    - Price each debit from exact applied old/new bytes; any change voids it → re-price.
+    - Stage all edits; run the hook's `measure()` exactly once.
 
 ## Step 8: Verify and Commit (terminal gate)
 

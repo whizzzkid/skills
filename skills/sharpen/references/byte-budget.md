@@ -131,6 +131,19 @@ env-tunable, so a deliberate exception needs no hook edit):
 - **Never buy the ratio back by moving a gate's checks or a verification checklist behind
   a pointer.** That trades a correctness property for a byte count.
 
+## Keep one running ledger per touched file
+
+- Open a ledger for every `SKILL.md` before its first edit:
+  `baseline + additions - reclaims = projected body`, plus remaining headroom.
+- Debit every edit group before the next edit to that file. Tail ordering, audit,
+  and cleanup edits are budget changes even when each looks small.
+- Price each debit from the exact old/new bytes applied. Changing either side
+  voids that debit → re-price it and update the running total.
+- Edited file without a ledger entry → unbudgeted. A multi-file pass needs one
+  entry per touched file, not only the file named in the report.
+- Stage all edits only after the ledger closes; run the hook's staged
+  `measure()` once per touched file as the final reconciliation.
+
 ## Deriving the draft's ceiling before drafting
 
 - **Price the reclaim pool at the same measure as headroom, never after the draft.** Both
