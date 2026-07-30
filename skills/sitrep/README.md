@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.07.28-171107`
+**Version:** `2026.07.30-205752`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -8,11 +8,12 @@ no per-day live directories, and dated snapshots at close.
 
 ## Sub-commands
 
-- `/wk-sitrep start` — workday start: gathers inbox via 5 parallel agents,
-  carries forward open items from the previous live page, compiles every
-  item into `$SITREP_REPO/$EMPLOYER/live.md`, verifies the 3-column layout
-  actually rendered (columns non-empty and every nested block still inside its
-  column), opens it in the browser, then auto-launches a
+- `/wk-sitrep start` — workday start: gathers the current inbox and
+  previous-workday contribution evidence via 5 parallel agents, carries
+  forward open items from the previous live page, compiles every item into
+  `$SITREP_REPO/$EMPLOYER/live.md`, verifies the 3-column layout actually
+  rendered (columns non-empty and every nested block still inside its column),
+  opens it in the browser, then auto-launches a
   `/wk-pr-review` subagent (via `git wta` worktree) for each PR awaiting your
   review in a locally-cloned `$GITC_ROOT/$EMPLOYER/<repo>`. Those reviews are
   left as unsubmitted drafts, so every run re-sweeps your own `PENDING` reviews
@@ -42,6 +43,9 @@ No interactive triage — the user resolves items directly in SilverBullet.
   `live.md` contains SilverBullet HTML blocks that the browser renders.
 - **SilverBullet server** — the skill verifies the server is running and
   starts it (`silverbullet $SITREP_REPO`) if not.
+- **Yesterday synthesis** — validates evidence inside the previous-workday
+  window across every available work source, then ranks outcomes, decisions,
+  progress, and unblockings without preferring terminal tracker events.
 
 ## Environment
 
