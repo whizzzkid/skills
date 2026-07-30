@@ -18,11 +18,10 @@ frequency limit. State which caller may dispatch and require every other caller 
 read the recorded verdict; a missing record means "not yet at the gate", never a
 licence to run.
 
-**Landed as** — Contract item 3 (one dispatch, owned by the completion gate) and
-item 4 (delta-scoped single re-review, waiver final), replacing four overlapping
-items. Callers were retargeted to read the record: resolve and takeover push
-ungated, review consumes an existing record and dispatches only when reviewing
-another author's PR, and merge returns missing clearance to the completion gate.
+**Landed as** — Contract item 3 assigns one dispatch to the completion gate.
+Contract item 4 now sends finding-response commits through targeted validation;
+only unmatched work receives a delta-scoped review. Other callers read records,
+and merge returns missing clearance to the completion gate.
 
 **Generalizes to** — Any cross-skill gate whose cost scales with dispatch count
 (full-suite runs, deep-research sweeps, paid API passes): assign the dispatch to

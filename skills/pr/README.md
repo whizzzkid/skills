@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.07.28-182019`
+**Version:** `2026.07.30-220753`
 
 ## Invocation
 
@@ -47,7 +47,9 @@ flowchart TD
   unless the user explicitly requests it.
 - **Adversarial review gates the merge, not the publish:** `gh pr create`, pushes, and `gh pr ready` are
   ungated — publishing is reversible. The review is dispatched exactly once, after the PR is marked ready, so CI runs alongside
-  it — later pushes and resolve cycles read the record rather than re-running, and a `clear` verdict is required before any merge or `--auto` enablement. No size exemption.
+  it. Finding-response commits and tree-identical rewrites preserve clearance;
+  only unmatched new work gets a delta-scoped review. Clear lineage is required
+  before merge or `--auto` enablement. No size exemption.
 - **Fresh CI per push before merge:** Every push that lands new commits starts a new CI run. The skill verifies
   the run for the *current* HEAD SHA has completed and is green before merging — a prior green run against
   older commits never satisfies the gate.

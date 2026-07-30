@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.30-214305"
+  version: "2026.07.30-220754"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -256,13 +256,19 @@ Before reworking a PR branch — force-push, restructure, content rewrite, big r
 
 ## Phase 5.5: Adversarial Review — the single review gate
 
-With the PR published and marked ready, invoke `wk-adversarial-review`. **This is the only place the workflow runs it**; other phases never re-declare it.
+With the PR published and ready, invoke `wk-adversarial-review`. **This is the
+workflow's only dispatch point.**
 
-**HARD RULE — the gate anchors to merge, not to leaving the machine.** Publishing is reversible and needs no prior verdict — push, `gh pr create`, and `gh pr ready` proceed without one. Merging is not → no merge, and no `gh pr merge --auto` enablement, without a clear verdict covering current HEAD. No size/docs-only exemption.
+**HARD RULE — review gates merge, not publish.** Push, PR creation, and readying
+need no verdict. Merge and `gh pr merge --auto` require clear review lineage;
+SHA equality is not required. No size or docs-only exemption.
 
-- **The only dispatch point in the workflow** — one run on the finalized change, never per commit, push, or resolve cycle. Every other skill (`wk-pr-resolve`, `wk-pr-review`, `wk-pr-takeover`, `wk-pr-merge`, `wk-refactor`) reads the clearance record; a missing record means the work has not reached this phase yet.
-- Publishing first lets CI run alongside → its comments and the review's findings fold into one pass.
-- Re-entry is idempotent: no commits since the last clearance → it prints that record; commits → ONE delta-scoped re-review. Fix residuals in ≤1 follow-up commit.
+- Every other skill reads the record; missing means Phase 5.5 never ran.
+- Publishing first lets CI and review run together.
+- Finding-response commits and tree-identical rewrites preserve lineage through
+  targeted validation. Unmatched scope, refactor, or logic gets one
+  delta-scoped re-review:
+  [`wk-adversarial-review`](../adversarial-review/README.md).
 
 `wk-adversarial-review` returns **clear**, **blocked**, or **suggestions-only**.
 
@@ -397,7 +403,7 @@ Use this as a final gate before claiming work is complete:
 - [ ] `wk-workstyle` pass completed on all touched files
 - [ ] Documentation updated alongside each code change
 - [ ] Tests cover happy path, sad path, and edge cases
-- [ ] `wk-adversarial-review` returned a clear verdict against current HEAD before merge
+- [ ] `wk-adversarial-review` returned clear review lineage before merge
 - [ ] CI fix loop exited green
 - [ ] PR description reflects current branch state
 - [ ] Self-review posted for critical changes only

@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.07.28-182019"
+  version: "2026.07.30-220753"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -61,15 +61,14 @@ ensures quality before marking ready.
 1. **Preserve PR body metadata across description rewrites.** Before
    overwriting the PR description, preserve metadata lines — see
    `skills/pr/references/pr-description-metadata.md`.
-2. **Adversarial review gates the merge, not the publish — once per change.**
-   Publishing is ungated: push, `gh pr create`, `gh pr ready` need no verdict.
-   Dispatch `wk-adversarial-review` exactly once, at the completion gate after
-   Step 5 marks ready, so CI runs alongside it. It must return `clear` before:
-   - Any merge, including `gh pr merge --auto` *enablement*.
-   - Re-clearance after a force-push or rebase that rewrites pushed history.
-
-   `blocked` verdict → no merge and no `--auto`. Fix blockers (each via
-   `wk-commit`), re-invoke until clear. No size or scope exemption.
+2. **Adversarial review gates merge, not publish — once per change.**
+   - Push, `gh pr create`, and `gh pr ready` need no verdict.
+   - Dispatch `wk-adversarial-review` once after Step 5 marks ready.
+   - Merge and `gh pr merge --auto` require clear review lineage.
+   - Finding-response commits and tree-identical rewrites preserve lineage;
+     unmatched scope, refactor, or logic gets one delta-scoped review.
+   - `blocked` → no merge. Fix via `wk-commit`, then re-invoke for targeted
+     validation. No size or scope exemption.
 
    **No-ask on review findings.** Findings from any mandatory pre-flight review
    (`wk-adversarial-review`, and `wk-arch-review` once per its own contract when
@@ -478,12 +477,14 @@ commitment — each push restarts the path to ready, not the licence to stop.
 
 ### Adversarial-review gate (after ready, before merge)
 
-Invoke `wk-adversarial-review` against PR HEAD once the PR is marked ready. **This
-is the completion gate — the one dispatch point for the whole change.** It must
-return `clear` before any merge or `--auto` enablement; CI runs concurrently so
-both sets of findings fold into one pass. A record already covering this HEAD is
-read, not re-run, and fix rounds batch into the single delta-scoped re-review.
-No other skill and no later push dispatches a second run.
+Invoke `wk-adversarial-review` after the PR is ready. **This is the completion
+gate and the only dispatch point for the change.** It must clear before merge or
+`--auto`; CI runs concurrently.
+
+Clearance follows the reviewed body of work, not SHA equality. Direct responses
+to recorded findings and tree-identical rewrites use targeted validation or the
+prior record; unmatched scope, refactor, or logic gets one delta-scoped review.
+No other skill or later push dispatches a run.
 
 **HARD RULE — verify CI for the *current* HEAD before merge, not before ready.**
 Marking ready never waits on CI. A green CI result against an earlier HEAD does

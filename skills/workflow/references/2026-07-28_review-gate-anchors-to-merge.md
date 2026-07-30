@@ -39,11 +39,11 @@ class: principle
 - Two field reports arrived mid-run corroborating the mechanism from the caller side: a fix
   loop paid one full review per push until the user waived the gate out of fatigue. They
   targeted paths this fold already held uncommitted, so they were extended into it rather than
-  left as a competing fold. Result: `wk-adversarial-review` contract item 11 — one batched
-  re-review per session scoped to the cleared SHA, visible invocation count, and a user
-  waiver or fatigue signal as an immediate, non-re-litigable hard waiver.
-- Relocating the gate removes the per-push trigger; the batching cap covers the residue, since
-  even a merge-anchored gate can be re-entered once per fix round.
+  left as a competing fold. Result: [`wk-adversarial-review`](../../adversarial-review/README.md)
+  owns one dispatch; recorded finding responses receive targeted validation,
+  while unmatched work receives one delta-scoped review.
+- Relocating the gate removes the per-push trigger; clearance lineage removes
+  the residual review-fix-review loop.
 
 **Rejected**
 

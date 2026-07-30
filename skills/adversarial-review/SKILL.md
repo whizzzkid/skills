@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.30-220001"
+  version: "2026.07.30-220752"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -54,10 +54,17 @@ Resolve base → surface map → mechanical sweeps → fresh adversarial subagen
 
 ## Non-Negotiable Contract
 
-1. **No merge without clear verdict.** Publishing is reversible and ungated — push, `gh pr create`, and `gh pr ready` need no prior verdict. Merging is not: no merge, and no `gh pr merge --auto` enablement, without a verdict covering current HEAD. No opt-out. A force-push or rebase rewriting pushed history invalidates the prior clearance → re-run before merge.
-2. **No docs-only exemption.** Docs, specs, skills, executable instructions can carry logic errors, stale counts, bad commands.
-3. **One dispatch per change — the completion gate owns it.** The only caller that may start a run is the one at the completion gate: plan fully executed, PR published and marked ready. Every other caller — review, resolve, takeover, merge, refactor, per-push hooks — **reads** the clearance record and never dispatches; a missing record means "not yet at the gate", never a licence to run. Record at `.review-playground/.cleared-{HEAD_SHA}.json`.
-4. **One re-review, delta-scoped; a waiver is final.** No new commits since the last clear verdict → print the prior record. New commits → ONE re-review at the gate over `git diff <cleared-sha>..HEAD`, batching every pending fix; N fix rounds never cost N runs. State the invocation number so the cost stays visible. A waiver or fatigue signal ("skip the review", "these reviews are driving me insane") is an immediate hard waiver → stop dispatching for the session, in this and every later step, never re-litigated.
+1. **No merge without clear lineage.** Publishing is ungated; merge and
+   `gh pr merge --auto` require clear review lineage. Apply
+   [`references/clearance-lineage.md`](references/clearance-lineage.md).
+2. **No docs-only exemption.** Docs, specs, skills, executable instructions can
+   carry logic errors, stale counts, or bad commands.
+3. **One dispatch per change — completion gate owns it.** Every other caller
+   reads `.review-playground/.{cleared,blocked}-{HEAD_SHA}.json`; missing means
+   "not yet at the gate", never permission to run.
+4. **One re-review only when lineage breaks; waiver is final.** Apply the
+   clearance-lineage rules above. A waiver or fatigue signal stops dispatch for
+   this session in every later step; never re-litigate it.
 5. **Mechanical first.** Run all sweeps before LLM reasoning.
 6. **Block before negotiate.** Blockers stop the caller. Downgrade severity only with explicit user confirmation.
 7. **Reproduce before claim.** Runtime-behavior findings reproduced in `.review-playground/` or downgraded to `question`.
@@ -198,9 +205,16 @@ file persistence), or every changed file is docs/prose/fixture data, apply the m
 
 Deduplicate by `(file, line, category)`, then return one verdict.
 
-- **Clear:** zero blockers and zero unverified high-confidence runtime claims. Print commit range, HEAD SHA, finding counts. Write `.review-playground/.cleared-{HEAD_SHA}.json` (SHA, base, timestamp, counts, verdict).
-- **Blocked:** print every blocker with file:line, category, fix sketch. Refuse to clear; caller fixes and re-invokes.
-- **Suggestions only:** print suggestions; offer A/B/C: fix all in-line, clear with TODO, or defer to tracked work. Auto mode defaults to A when every fix-sketch is <10 lines, else B.
+- **Clear:** zero blockers and zero unverified high-confidence runtime claims.
+  Print commit range, HEAD SHA, and counts. Write
+  `.review-playground/.cleared-{HEAD_SHA}.json` with SHA, base, timestamp,
+  verdict, counts, and finding fingerprints.
+- **Blocked:** print every blocker and write
+  `.review-playground/.blocked-{HEAD_SHA}.json` with the same metadata plus each
+  finding's fingerprint, reproducer, and fix sketch. Caller fixes and re-invokes.
+- **Suggestions only:** print suggestions; offer A/B/C: fix all in-line, clear
+  with TODO, or defer to tracked work. Auto mode defaults to A when every
+  fix-sketch is <10 lines, else B.
 
 ### Bot Reviewer Handling
 
@@ -216,15 +230,22 @@ On blocked verdict:
 
 - **Scope off-ramp first.** When a blocker's remedy is a nontrivial new mechanism/feature or design change (not a contained fix), offer *narrow/revert the triggering change + defer the deeper fix to a follow-up PR* alongside fix-inline — prefer it when the blocker sits in complexity this PR introduced (removing that code often beats adding more to make it correct).
 
-1. Caller fixes each blocker via `wk-commit` (one atomic conventional commit per fix).
-2. Fix every structurally-parallel sibling in the same round. For a value/message/constant-reporting defect, grep the **entire changed file** (not just the flagged line) for every site of the same shape (e.g. `grep "timed out after %v" <file>`) — a refactor that extracts a helper clones the defect onto a different line; treat each match as the same fix unless divergence is justified.
-3. Re-invoke this skill.
-4. Loop until clear, max 3 cycles.
-5. After 3 cycles, stop and surface to user; recurrence means diagnosis/design is off.
+1. Caller fixes each blocker via `wk-commit` (one atomic commit per fix).
+2. Fix every structurally-parallel sibling in the same round. For a
+   value/message/constant-reporting defect, grep the entire changed file for
+   every site of the same shape; fix each unless divergence is justified.
+3. Re-invoke:
+   - Delta maps only to recorded findings → validate those findings; skip full
+     sweeps and subagent. All fixed → write current-HEAD clear record.
+   - Unmatched new work → run one delta-scoped review per Contract 4.
+4. Loop targeted validation until clear, max 3 cycles.
+5. After 3 cycles, stop; recurrence means diagnosis or design is wrong.
 
 PR-body-only blocker (sweep 2.8/2.10 body drift, no code change) → fix via `gh pr edit`, no new commit; re-verify against the same HEAD SHA. The `.cleared-{HEAD_SHA}.json` stays valid (code unchanged); a no-op commit pollutes history.
 
-Do not autosquash post-rebase artifact fixes mid-chain — commit standalone, then re-review. Print the verdict line to the caller (Contract item 10: gate, not actor).
+Do not autosquash post-rebase artifact fixes mid-chain — commit standalone,
+then apply the lineage rule. Print the verdict line to the caller
+(Contract item 10: gate, not actor).
 
 ## Requirements
 
