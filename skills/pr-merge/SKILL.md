@@ -2,8 +2,8 @@
 name: wk-pr-merge
 description: >-
   Use when ready to merge a PR — verifies CI is green, all reviews approved,
-  all reviewer comments resolved, no open action items, a clear
-  adversarial-review verdict against current HEAD,
+  all reviewer comments resolved, no open action items, and an
+  adversarial-review clearance covering the body of work,
   then retargets any stacked child PRs onto its base, merges, transitions
   the linked ticket to its terminal state, lists
   any follow-ups or deferred action items, captures a session retro, and
@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171054"
+  version: "2026.07.30-220000"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -206,22 +206,22 @@ echo "{body}" | grep -nE '^\s*- \[ \]'
   containing those phrases → **not blockers**; collect for Step 8 output.
 - `- [x]` items are already done → skip.
 
-## Step 5.5: Verify the adversarial-review verdict
+## Step 5.5: Verify the adversarial-review clearance
 
-The merge is where the review gate is enforced — publishing is ungated, so this
-is the only step that blocks on it. Never merge, and never enable
-`gh pr merge --auto`, without a `clear` verdict covering current HEAD.
+Merge consumes the completion gate's clearance; it never dispatches review.
 
-- Read the clearance record first; a `clear` verdict covering current HEAD → merge,
-  never re-run it. This step adds no second review.
-- No record at all → the completion gate never ran: invoke
-  [`wk-adversarial-review`](../adversarial-review/README.md) once here and block on
-  it. Record present but predating HEAD → ONE delta-scoped re-review; a clearance
-  against an earlier SHA does not carry forward.
-- `blocked` → fix each blocker via `wk-commit`, re-invoke until clear. Do not
-  merge past an open blocker.
-- Waived by an explicit current-session user instruction → note the waiver and
-  proceed; never infer a waiver from silence or from a denied permission prompt.
+- Current HEAD has a `clear` record → proceed.
+- Latest `clear` predates HEAD → inspect `git log` and `git diff` from its SHA:
+  - Tree-identical history rewrite → note carry-forward and proceed.
+  - Every commit directly applies an already-surfaced finding, with no new scope,
+    refactor, or unrequested logic → match each to its finding, note carry-forward,
+    and proceed.
+  - Unmatched or new work → stop; return to [`wk-workflow`](../workflow/README.md)
+    Phase 5.5 for one delta-scoped re-review.
+- No `clear` record → stop; the completion gate never ran. Never invoke review
+  from merge.
+- `blocked` → stop; fix each blocker via `wk-commit` at the completion gate.
+- Explicit current-session waiver → note it and proceed; never infer one.
 
 - **HARD RULE — retarget stacked children BEFORE merging with `--delete-branch`.**
   A child PR based on this PR's head branch is closed/orphaned when the merge

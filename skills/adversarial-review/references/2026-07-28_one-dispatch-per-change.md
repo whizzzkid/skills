@@ -21,9 +21,8 @@ licence to run.
 **Landed as** — Contract item 3 (one dispatch, owned by the completion gate) and
 item 4 (delta-scoped single re-review, waiver final), replacing four overlapping
 items. Callers were retargeted to read the record: resolve and takeover push
-ungated, review consumes an existing record and dispatches only when none exists
-(reviewing another author's PR), merge reads first and dispatches only when no
-record exists at all.
+ungated, review consumes an existing record and dispatches only when reviewing
+another author's PR, and merge returns missing clearance to the completion gate.
 
 **Generalizes to** — Any cross-skill gate whose cost scales with dispatch count
 (full-suite runs, deep-research sweeps, paid API passes): assign the dispatch to

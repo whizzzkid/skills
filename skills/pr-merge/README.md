@@ -2,11 +2,10 @@
 
 > Gate the merge of a pull request behind a full pre-merge checklist, then
 > merge, transition the linked ticket to its terminal state, and surface
-> any follow-ups and deferred action items. The merge is where the
-> adversarial-review gate is enforced — publishing is ungated, so this skill is
-> the step that blocks on a stale or missing verdict.
+> any follow-ups and deferred action items. Merge consumes the completion
+> gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.07.28-171054`
+**Version:** `2026.07.30-220000`
 
 ## Invocation
 
@@ -28,8 +27,8 @@ flowchart TD
     D -->|unresolved threads| BLOCK3["🚫 Block — list open threads"]
     D -->|all resolved| E["Step 5: No open action items?"]
     E -->|unchecked non-deferred items| BLOCK4["🚫 Block — list items"]
-    E -->|clear| E2["Step 5.5: Clear adversarial-review<br/>verdict against current HEAD?"]
-    E2 -->|missing / stale / blocked| BLOCK5["🚫 Block — run wk-adversarial-review"]
+    E -->|clear| E2["Step 5.5: Review clearance<br/>covers this body of work?"]
+    E2 -->|missing / new work / blocked| BLOCK5["🚫 Block — return to completion gate"]
     E2 -->|clear| F["Step 6: Retarget stacked children onto base,<br/>then merge PR (squash)"]
     F --> G["Step 7: Transition linked ticket to Done"]
     G --> H["Step 8: Output follow-ups and action items"]
@@ -39,12 +38,14 @@ flowchart TD
 
 ## Checks Before Merge
 
-All four must pass; any failure blocks and reports what needs fixing:
+All five must pass; any failure blocks and reports what needs fixing:
 
 - CI: all required checks green on HEAD SHA (non-required checks are informational — never polled or blocked on)
 - Reviews: `reviewDecision = APPROVED` (or no required reviewers)
 - Threads: reviewer/bot threads resolved or triaged (author's own self-review threads may stay open)
 - Action items: no unchecked `- [ ]` outside designated deferred sections
+- Review: clear completion-gate record; finding-response commits and
+  tree-identical rewrites preserve its lineage
 
 ## Ticket Handling
 
@@ -58,6 +59,9 @@ All four must pass; any failure blocks and reports what needs fixing:
 
 - **[`wk-pr-resolve`](../pr-resolve/README.md) first if threads exist** —
   resolve outstanding review comments before invoking this skill.
+- **Merge never dispatches [`wk-adversarial-review`](../adversarial-review/README.md)** —
+  it reads completion-gate clearance. Missing clearance or genuinely new work
+  returns to [`wk-workflow`](../workflow/README.md) Phase 5.5.
 - **Never auto-resolve the author's own self-review threads** — they are
   informational and left open; the Step 6 merge attempt is the ground-truth
   probe of whether branch protection actually counts them.
@@ -66,9 +70,3 @@ All four must pass; any failure blocks and reports what needs fixing:
 - **Jira auto-close does not happen via `Closes #N`** — GitHub's
   auto-close only works for GitHub Issues. Jira always needs an
   explicit transition call.
-
-## ⚠️ Status
-
-Scaffold written — RED phase not yet run. Steps 1–8 contain `DESIGN NOTES`
-describing intended behaviour; implementation lands after RED documents
-baseline failures.
