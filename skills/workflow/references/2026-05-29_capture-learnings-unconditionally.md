@@ -10,4 +10,5 @@ date: 2026-05-29
   correction; never surface it as a question.
 - **Why:** Treating learning capture as an optional, user-confirmed step drops
   lessons. It is mandatory like committing after a code change.
-- **Where:** Phase 8 — HARD RULE beside the mandatory `wk-retro` rule.
+- **Where:** [`wk-workflow`](../README.md) Mandatory Activation §HARD RULE —
+  live learning capture.

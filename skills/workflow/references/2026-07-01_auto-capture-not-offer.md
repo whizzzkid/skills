@@ -11,5 +11,5 @@ concise-mode reflex to end a turn with a short offer collides with the standing
 rule, converting a required action into a permission request and forcing the
 user to re-prompt.
 
-**Where:** wk-workflow §Learning capture HARD RULE (re-violation escalation of
-the existing "never ask whether to capture learnings" rule).
+**Where:** [`wk-workflow`](../README.md) Mandatory Activation §HARD RULE — live
+learning capture (re-violation escalation of the existing no-offer rule).

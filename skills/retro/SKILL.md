@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171101"
+  version: "2026.07.30-214306"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash
@@ -45,25 +45,13 @@ Structured retrospective → captures session learnings + promotes them globally
 so ALL future sessions benefit, regardless of project. Run at end of a work
 session or after a significant task.
 
-## HARD RULE: capture in real time, not only at retro
+## HARD RULE: audit live capture before reconstruction
 
-Invoke `wk-learn <affected-skill>` in the same response that acknowledges a user
-correction or self-caught error — do not defer to retro.
-
+- Real-time capture is a [`wk-workflow`](../workflow/README.md) activation rule.
+- Verify each correction and self-caught error had a same-response
+  [`wk-learn`](../learn/README.md) invocation.
 - Retro refines and promotes; it must not be the first capture.
-- Reconstructing corrections at retro time drops precision → loses any correction
-  the agent forgets between events.
-- Multiple corrections in one session → multiple `wk-learn` calls, one per affected
-  skill, at the moment each correction lands.
-- **Self-caught errors count, not only user corrections.** Discovering a bug,
-  finding a missing check, or correcting your own code mid-task triggers an
-  immediate `wk-learn` in that same response — before, alongside, or after the
-  fix commit. Deferring a self-caught discovery to retro collapses a multi-step
-  diagnosis into one vague sentence and loses the exact error mode. (This is a
-  recurring miss: the generic "self-caught error" mention above did not steer, so
-  it is called out explicitly here.)
-- Rule applies to the agent during the session; the retro flow below still runs as
-  the consolidation pass.
+- Missing live capture → invoke `wk-learn` now, then record the control failure.
 
 ## Global Paths
 
@@ -111,6 +99,17 @@ evidence-based capture instead of memory-based recall.
 Scan emits learning files under `$WK_SKILLS_HOME/learnings/skills/`. Treat those as
 inputs to Step 2 — each is a candidate finding the retro should acknowledge and,
 where appropriate, promote globally in Step 4.
+
+## Step 1.6: Audit Capture Timing
+
+Classify every finding before reflection:
+
+- **Live:** same response as the correction, redirect, or self-caught error invoked
+  `wk-learn`.
+- **Reconstructed:** retro or transcript scan created the first actionable capture.
+
+Report `live: N, reconstructed: M`. An all-reconstructed result is an explicit
+real-time capture-control failure. Invoke every missing per-skill call now.
 
 ## Step 2: Reflect Across Lenses
 

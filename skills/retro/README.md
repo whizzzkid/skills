@@ -2,7 +2,7 @@
 
 > Run a session retrospective to capture learnings and improve future sessions.
 
-**Version:** `2026.07.28-171101`
+**Version:** `2026.07.30-214306`
 
 ## Invocation
 
@@ -17,7 +17,8 @@
 flowchart TD
     A[Start Retro] --> B[Review git log + session history]
     B --> C[wk-learn scan — mine transcript for interruptions]
-    C --> D[Reflect across 5 lenses]
+    C --> C2[Audit live vs reconstructed capture]
+    C2 --> D[Reflect across 5 lenses]
     D --> E["Write write-once per-session file to<br/>$WK_SKILLS_HOME/learnings/retrospect/&lt;YYYY-MM-DD&gt;_session-&lt;N&gt;.md"]
     E --> F{Promotable rules?}
     F -->|yes| G[Distill to actionable rules]
@@ -36,9 +37,10 @@ flowchart TD
   `.learned.md` — exactly like a learning. Appending sessions to a shared daily
   file orphaned later content (distilled, never re-read). The global memory tree
   is reserved for distilled rules and preferences.
-- **HARD RULE: capture in real time, not at retro** — [`wk-learn`](../learn/README.md) `<skill>`
-  must be invoked the moment a correction lands, not deferred. Retro is a consolidation pass,
-  not first capture.
+- **HARD RULE: audit capture timing before reconstruction** — classify every finding
+  as live or reconstructed and report both counts. Invoke missing
+  [`wk-learn`](../learn/README.md) calls now; all reconstructed is an explicit
+  capture-control failure.
 - **Step 1.5 (`wk-learn scan`) is mandatory** even in auto mode — it walks the transcript to
   extract every user interruption, converting retro from memory-based to evidence-based.
 - **Write/Edit tools are scoped to `$HOME/.claude/` and `$WK_SKILLS_HOME/learnings/retrospect/`** —

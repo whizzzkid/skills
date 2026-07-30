@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171114"
+  version: "2026.07.30-214305"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -35,6 +35,11 @@ Master orchestration for development tasks. Phases run in ascending order; follo
 - Fires on EVERY task producing code changes, a commit, a push, a PR, or a CI build from a code change. No opt-out, no "too small" exemption.
 - Session resumption is a fresh start → before any write action after context compaction, rollover, or "continue where we left off", invoke `wk-workflow` again.
 - A planning discussion in chat is NOT a substitute for this invocation — invoke the skill before the first Edit/Write/Bash; it may surface branch hygiene/guardrails/pre-flight the chat missed.
+
+### HARD RULE — live learning capture
+
+- Invoke [`wk-learn`](../learn/README.md) before ending the response that handles a correction or self-caught error.
+- Invoke it after every skill run; never ask or offer. Phase 8 retro only verifies live capture.
 
 ### Autonomy Rules
 
@@ -122,7 +127,8 @@ For normalization, renames, required fields, schema changes, or similar recurrin
 
 ### Artifact sync with code changes
 
-Keep every doc/spec/test artifact in sync with structural code changes in the same commit — design-pivot propagation, new-file/table/test-sync mechanics: [`references/doc-sync-mechanics.md`](references/doc-sync-mechanics.md).
+Structural code changes → sync every affected artifact in the same commit:
+[`references/doc-sync-mechanics.md`](references/doc-sync-mechanics.md).
 
 External-call reproduction before a fix: [`references/external-call-reproduction.md`](references/external-call-reproduction.md).
 
@@ -347,8 +353,6 @@ Final audit after all code is complete:
 ## Phase 8: Session Retro — NON-NEGOTIABLE
 
 **HARD RULE:** at the end of every session, invoke `wk-retro`. No exceptions.
-
-**HARD RULE:** never ask whether to capture learnings — offering to capture is still asking. Invoke `wk-learn` in the same turn a correction or mistake surfaces, and after every skill run.
 
 **HARD RULE:** `gh pr ready` is not a session terminus. After every successful `gh pr ready`, the next action is `Skill(wk-retro)`.
 

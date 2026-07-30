@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.07.28-171114`
+**Version:** `2026.07.30-214305`
 
 ## Invocation
 
@@ -42,6 +42,9 @@ flowchart TD
 
 ## Noteworthy
 
+- **Live learning capture is a Mandatory Activation rule** — invoke
+  [`wk-learn`](../learn/README.md) before ending a response that handles a correction or
+  self-caught error, and after every skill run. Phase 8 only audits that capture.
 - **No opt-out, no size exemption** — "this is small" and "just a quick fix" are explicitly
   named red flags. If a diff will be produced, the full workflow applies.
 - **Skill invocation is mandatory** via the `Skill` tool — approximating skill behavior with
