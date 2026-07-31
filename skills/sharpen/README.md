@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.30-215223`
+**Version:** `2026.07.31-021628`
 
 ## Invocation
 
@@ -132,6 +132,9 @@ flowchart TD
   rename lands. Oldest mtime is the only key every cycle can read without coordination, and it
   bounds how long a hard item can be walked past. It also composes with the arrival rule below:
   oldest-first never reaches an item newer than the run's start while anything older remains.
+- **Dispatch templates are semantic rule copies.** When an ordering, selection, or scope rule
+  changes, the drift check scans the skill's own references for dispatch/spawn prompts and quoted
+  self-instructions, then synchronizes each paraphrase. Link checks cannot detect prose drift.
 - **A re-scan arrival is not automatically this run's work.** An item whose mtime postdates
   the run's start is unowned, not assigned — peer sharpen agents share the tree and there is no
   lock, lease, or ownership marker to arbitrate a collision. Neither mtime nor commit recency

@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.30-215223"
+  version: "2026.07.31-021628"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -93,11 +93,16 @@ behavior, not just the specific instance.
 
 ### HARD RULE: the report is a hypothesis — verify against the owning source
 
-- The report's "Root cause"/"Suggested fix" are non-authoritative — the reporter saw a symptom, inferred a mechanism. A working workaround is not evidence — it can succeed by another mechanism. Confirm a claimed cause in the source before documenting it; delete one the source disproves. A reproduction that disproves or sharpens the mechanism voids the draft → re-derive from the source's semantics instead of patching wording, preferring the formulation the source can be driven to demonstrate. A dispatching agent's claim about tree state ("no peer is mid-fold") is a hypothesis under this rule and loses to contradicting tree evidence.
+- Treat a report's "Root cause"/"Suggested fix" as hypotheses. A successful workaround is not evidence; it may use
+  another mechanism. Verify claims in source; delete disproved causes. A reproduction that disproves or sharpens the
+  mechanism voids the draft → re-derive from source semantics, preferring a demonstrable formulation. A dispatcher's
+  claim about tree state is also a hypothesis and loses to contradicting tree evidence.
 - Learning names a deterministic artifact (hook, script, CI check) → read its source, reproduce the failure where cheap, before drafting. A red result from your own tooling indicts the tooling before the artifact; never swap the prescribed primitive over a red result. Triage rows — needle/control sourcing, length guards, canary rebuild, staging a payload past a guard: [`references/harness-defect-triage.md`](references/harness-defect-triage.md). Reproduction proves the mechanism only in the configuration it ran → enumerate what the fixtures held constant and vary them, or name it in the rule's trigger.
 - Reject any fold that would *relax* a guard or check → hunt the correctness bug instead. A guard honoring caller-supplied scope is weaker than one deriving scope from the environment, and forfeits the property that makes the guard un-rationalizable.
 - Record the rejected suggestion and its rationale in the reference file so it is not re-proposed.
-- A `Rejected` / `Deliberately not promoted` note covering a design you are now adopting is a coverage gap to **execute**, not prose to re-read. Drive the shape it names against the artifact before *and* after; verdicts must match. Suite green without that case → missing coverage, not safety; land it as a pinned test this pass. Adopted with a compensating rule → rewrite the note to what now holds (a stale blanket rejection gets wrongly obeyed or wrongly ignored).
+- Adopting a design covered by a "Rejected" / "Deliberately not promoted" note → execute its named shape before and
+  after; verdicts must match. Suite green without that case → land a pinned test. Rewrite the note to its current
+  grounds after a compensating rule.
 
 ## Step 2: Read the Full Skill
 
@@ -210,6 +215,8 @@ behavior, not just the specific instance.
 - Quick-reference table, Trigger table, and Step list match the body.
 - Recount any documented set from source, never increment; shape the probe to the source markup, prove it fires on a known member, and prove a range probe's anchor **unique** before trusting its count: [`references/recount-probe-bounds.md`](references/recount-probe-bounds.md).
 - Cross-references resolve both ways — links land, and no `references/` pointer HEAD carried was dropped while its file survives (`.githooks/check-reference-orphans.sh`).
+- Ordering, selection, or scope changes → grep the skill's own references for dispatch/spawn prompt templates and
+  quoted self-instructions; synchronize every semantic copy (link checks cannot detect paraphrase drift).
 - Examples reflect the post-edit behavior.
 - Fix every drift item in the same pass.
 
