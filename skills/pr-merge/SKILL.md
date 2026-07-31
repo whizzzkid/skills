@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.30-235901"
+  version: "2026.07.31-013814"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -137,6 +137,9 @@ gh pr checks {number} --json name,state,required \
   > "CI is still running ({name}). Re-run once all checks complete."
 - Always verify CI against `{head_sha}` — a stale run from a prior commit does
   not count. `gh pr checks` showing a different SHA → block until a new run starts.
+- `mergeStateStatus: BLOCKED` with listed required checks green → run
+  [`wk-gh`](../gh/README.md)'s ruleset-minus-HEAD diagnostic. A required context
+  with no run is absent from the list, not green.
 
 ## Step 3: Verify reviews are approved
 

@@ -15,7 +15,7 @@ env-vars:
   - GITHUB_ORG
 metadata:
   author: whizzzkid
-  version: "2026.07.28-231141"
+  version: "2026.07.31-013640"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -355,6 +355,23 @@ a terminal-state guarantee. A single watch is not proof of green CI.
   <branch>`; on mismatch, re-query until it catches up, or fall back to the CI
   provider's build-by-branch query (ground truth for the current commit).
 - Re-issue the watch if any check is still pending.
+
+## A required context can be absent without failing
+
+- `mergeStateStatus: BLOCKED` with every visible check green → compare the
+  active ruleset's `required_status_checks` contexts against HEAD's full
+  `statusCheckRollup` names (`.name // .context`). A missing context is the
+  blocker even though nothing is red.
+- Read ruleset requirements from `repos/{owner}/{repo}/rulesets/{id}`. Do not
+  substitute `branches/{branch}/protection`; ruleset-governed branches can
+  return 404 there while still enforcing required contexts.
+- Confirm rollup entries belong to `headRefOid`; use
+  `repos/{owner}/{repo}/commits/{head_sha}/check-runs` to inspect check-run
+  provenance. Compute `required - observed` explicitly.
+- Missing context owned by an external integration → use only its documented
+  rerun surface. `requested_reviewers` returns 422 for non-collaborator
+  integrations, and an imagined GraphQL mutation cannot trigger a run. No
+  supported API → name the missing context and hand the UI action to the user.
 
 ## A CI job proves nothing until a run exists for the ref
 

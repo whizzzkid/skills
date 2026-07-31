@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.07.30-235901`
+**Version:** `2026.07.31-013814`
 
 ## Invocation
 
@@ -69,6 +69,8 @@ All five must pass; any failure blocks and reports what needs fixing:
 - **Stack membership is detected before single-PR gates** — every member must
   clear the gates before one atomic `gh stack merge`; an outdated extension
   blocks instead of silently degrading to sequential merges.
+- **Blocked with required checks green still needs a ruleset diff** — a required
+  context with no HEAD run is absent from the visible check list, not passing.
 - **Never auto-resolve the author's own self-review threads** — they are
   informational and left open; the Step 6 merge attempt is the ground-truth
   probe of whether branch protection actually counts them.

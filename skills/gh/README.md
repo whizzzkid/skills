@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.07.28-231141`
+**Version:** `2026.07.31-013640`
 
 ## Invocation
 
@@ -38,4 +38,7 @@ flowchart TD
 - **Rollup union rules sit in their own section:** `Reading statusCheckRollup` is placed ahead of the `--watch` guidance and applies to every consumer — the watch subcommand, a hand-rolled `until` poll, or a one-shot readiness check. CheckRun nodes carry `.status`/`.conclusion`; commit Status nodes carry `.state` with `.status == null`, so a filter over one field alone reports green while a pending status context is still building.
 - **Rollup granularity:** `statusCheckRollup` has one entry per registered check, not per pipeline job — it answers "is the pipeline green", never "did that specific job pass"; a per-job claim must cite the CI provider's per-job view and exit status.
 - **A never-triggered workflow has no run to read:** a job whose `on:` triggers exclude the current ref never executes, so it must not be marked complete, documented as green, or added to required status checks until `gh run list --branch <ref>` shows a run for that ref — an unexecuted gate is not a gate.
+- **Green visible checks can still omit a required context:** when merge state is
+  blocked, compare ruleset requirements against the current HEAD rollup; an
+  absent context is a blocker without a failure.
 - **Model-invocable only:** This skill is a guard rail, not a user command — it fires silently alongside any other skill that uses `gh`.
