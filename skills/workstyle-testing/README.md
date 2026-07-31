@@ -3,7 +3,7 @@
 > Enforces the test quality bar — new-function/branch coverage, behavioral
 > assertions, and mandatory sad-path tests for every error branch.
 
-**Version:** `2026.07.28-171127`
+**Version:** `2026.07.31-015104`
 
 ## Invocation
 
@@ -18,6 +18,9 @@
 - Tests assert observable behavior, not internal state or private method calls.
 - Shape/structure assertions never prove a feature works — drive the real path end-to-end against real values instead.
 - Sad-path tests are mandatory for every error-handling branch.
+- Screenshot-exclusion tests compare decoded pixels with a manually excluded
+  baseline plus a visible negative control; encoded bytes and computed ancestor
+  visibility are not proof.
 
 ## Noteworthy
 
@@ -31,3 +34,6 @@
   function with no matching test is untested error handling.
 - Complements [`wk-testing-skeleton`](../testing-skeleton/README.md): skeleton plans the tests, this skill gates
   the written suite (behavior over implementation, new-path coverage).
+- Prefer `display: none` when screenshot capture must temporarily exclude an
+  entire UI subtree; descendants can override an ancestor's
+  `visibility: hidden`.

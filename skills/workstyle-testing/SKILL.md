@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171127"
+  version: "2026.07.31-015104"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -78,6 +78,13 @@ Manual: `/wk-workstyle-testing scan` (full working tree) · `/wk-workstyle-testi
 - **Sad-path tests are mandatory** for any error-handling branch.
   A function that throws/returns-error with no corresponding test
   is untested error handling.
+- **Prove screenshot exclusion with decoded pixels.** Compare decoded pixels
+  against a manually excluded baseline and include a negative control where the
+  UI remains visible. Never use encoded image bytes or computed ancestor
+  visibility as proof: encoders can emit different bytes for identical pixels,
+  and a descendant can override `visibility: hidden`. Prefer `display: none`
+  when temporary exclusion must suppress the whole subtree. See
+  [screenshot-exclusion evidence](references/screenshot-exclusion-evidence.md).
 
 ## Apply or Report
 
