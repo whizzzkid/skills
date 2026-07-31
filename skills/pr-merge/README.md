@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.07.31-184507`
+**Version:** `2026.07.31-185349`
 
 ## Invocation
 
@@ -76,9 +76,9 @@ All five must pass; any failure blocks and reports what needs fixing:
 - **Remote state is re-resolved before every post-fix push or merge.** A
   concurrent merge skips the mutation and resumes post-merge processing;
   interrupted commands require remote-state verification before retry.
-- **Already merged at entry still audits branch cleanup** — verify the remote head,
-  retain it for open child PRs, or apply the normal deletion preference before
-  removing the local worktree.
+- **Already merged at entry still audits branch cleanup** — verify the remote
+  head, retarget open children, then apply the normal deletion preference.
+  Retain and report the branch if a child cannot be retargeted.
 - **Never auto-resolve the author's own self-review threads** — they are
   informational and left open; the Step 6 merge attempt is the ground-truth
   probe of whether branch protection actually counts them.

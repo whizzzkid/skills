@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.31-184507"
+  version: "2026.07.31-185349"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -373,71 +373,11 @@ gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
 
 ## Step 7: Transition the linked ticket
 
-Detect ticket references from the PR title, body, and branch name:
-
-```bash
-# Jira: any [A-Z][A-Z0-9]+-\d+ token
-echo "{title} {branch} {body}" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+'
-
-# GitHub issues: closes/fixes/resolves #N annotations
-echo "{body}" | grep -ioE '(closes?|fixes?|resolves?)\s+#[0-9]+'
-
-# Asana: app.asana.com URLs
-echo "{body}" | grep -oE 'https://app\.asana\.com/[^[:space:]]+'
-```
-
-### Jira tickets
-
-For each detected Jira key:
-
-1. Fetch issue + available transitions:
-   ```
-   getJiraIssue(key)
-   getTransitionsForJiraIssue(key)
-   ```
-2. Find the terminal transition (first match among: `Done`, `Closed`,
-   `Resolved`, `Shipped`, `Complete`).
-3. Transition:
-   ```
-   transitionJiraIssue(key, transitionId)
-   ```
-4. Post a shipped comment:
-   ```
-   addCommentToJiraIssue(key,
-     body="Shipped in PR #{number} — {title}.\n{merge_sha}\n\nSee: {url}")
-   ```
-
-No terminal transition found → note in output, skip the transition, do not
-block the merge.
-
-**Jira MCP unavailable / unauthenticated** (connector tools error or absent) →
-do not block the merge. Surface the detected key and its terminal state in the
-Step 8 follow-ups for manual transition, mirroring the Asana fallback:
-
-> "⚠️ Jira MCP unavailable — transition `<KEY>` to Done manually: {url}"
-
-### GitHub issues
-
-For each `closes #N` / `fixes #N` reference:
-
-```bash
-gh issue close {N} --comment "Shipped in {url} (merge commit {merge_sha})."
-```
-
-GitHub auto-close via `Closes #N` only fires when the PR merges into the repo's
-default branch. For other base branches, close manually here.
-
-### Asana
-
-No MCP available for Asana. Note each detected URL in the follow-ups output so
-the user can transition manually:
-
-> "⚠️ Asana task detected — no MCP available. Transition manually: {url}"
-
-### No ticket found
-
-No ticket key or issue reference found anywhere → note it, continue, do not
-block.
+- Detect ticket references from the PR title, body, and branch name.
+- Transition Jira and GitHub tickets; surface manual fallbacks for unavailable
+  Jira connectors and Asana. No ticket found → note it and continue.
+- Follow [`references/ticket-transition.md`](references/ticket-transition.md)
+  for detection commands, transition calls, and failure handling.
 
 ## Step 8: Output follow-ups and action items
 
@@ -508,10 +448,13 @@ Follow-ups present → offer once:
   git ls-remote --heads origin "refs/heads/{head}"
   ```
   - Remote absent → continue.
-  - Remote present + open child based on `{head}` → retain it and report the child.
-  - Remote present + no child → apply Step 6's branch-deletion preference. If unresolved,
-    ask before cleanup. On delete, run `git push origin --delete "{head}"`, re-query,
-    and stop if the ref survives.
+  - Remote present + open child based on `{head}` → apply Step 6's child-retarget
+    procedure to each, then re-query.
+    - Any child still based on `{head}` → retain the remote, report each child,
+      and continue local cleanup; never delete a branch an open child needs.
+  - Remote present + no child, initially or after retargeting → apply Step 6's
+    branch-deletion preference. If unresolved, ask before cleanup. On delete,
+    run `git push origin --delete "{head}"`, re-query, and stop if the ref survives.
 - Remove the local worktree last using
   [`references/worktree-cleanup.md`](references/worktree-cleanup.md).
 
