@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.31-024537"
+  version: "2026.07.31-024920"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -263,7 +263,7 @@ Do not return control until all five pass:
      generic success output or any mismatch fails the gate.
 2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing. Red result → apply the Step 1 harness-defect rule.
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
-   - Recovery for a blocked commit, signing failure included: [`references/commit-gate.md`](references/commit-gate.md).
+   - Blocked after staging → undo the processed rename but preserve the fold index: [`references/commit-gate.md`](references/commit-gate.md).
    - Anti-thrash ≠ gate discharge: an inherited fold's gates are **unrun** until the tree records otherwise — run the shipped-code suite and the owning hooks (Step 5 throwaway index), and leave the index partitioned as the prior run left it.
 4. **Push once:** after all commits exist, push a single time. A signing failure at item 3 blocks this too — same agent, different error string.
 5. **Clean tree:** no modified tracked path in `git status --short` — untracked *unprocessed* learnings/retros are expected state, never debris to delete.

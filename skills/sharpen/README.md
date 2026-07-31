@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.31-024537`
+**Version:** `2026.07.31-024920`
 
 ## Invocation
 
@@ -145,9 +145,9 @@ flowchart TD
   writer whatever the timestamps say. Such items are reported as
   unclaimed backlog for the dispatcher, and the terminal state reads "processed N, M unclaimed,
   K distilled-not-landed" rather than "drained". That third bucket holds a fold applied to the
-  worktree but blocked from committing: the source learning stays unrenamed and is named in the
-  report, so it is neither counted as processed nor re-queued as backlog for a later run to fold
-  a second time. A dispatcher's own claim that no peer is mid-fold is treated
+  worktree but blocked from committing: unstage its `.learned.md` path, move it back to the plain
+  name, and keep the fold paths staged. Name it in the report so it is neither counted as processed
+  nor re-queued as backlog for a later run to fold a second time. A dispatcher's own claim is treated
   as a hypothesis that loses to contradicting evidence from the tree.
 - **Ownership resolves before thoroughness, and severity never grants it.** A `severity: high`
   MUST-FOLD sets how thoroughly an item this run *owns* gets folded — never whether it owns it,

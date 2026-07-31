@@ -30,6 +30,22 @@ these are per-hook catalog rows, not gate checks — a gate is never moved behin
   (`scrub-staged.sh`) may have rewritten staged blobs. Re-read `git diff --cached
   --name-only` before retrying; never assume the staged set survived unchanged.
 
+## Undo a processed-state rename after any blocked landing
+
+- The learning filename hook accepts a staged source only as `.learned.md`, so
+  the rename belongs inside the fold commit; it cannot wait until after success.
+- Commit refused after staging → unstage only the processed path, move it back
+  to the plain name, and keep the fold's skill paths staged:
+
+  ```bash
+  git restore --staged -- <learning>.learned.md
+  mv <learning>.learned.md <learning>.md
+  git diff --cached --name-only
+  ```
+
+- Do not stage the plain source; report it as distilled-not-landed for the
+  inheriting run.
+
 ## Untracked skill dir from another session blocks `check-readme-index`
 
 - The hook scans the whole `skills/` tree **on disk**, not the staged paths, so another
@@ -41,7 +57,8 @@ these are per-hook catalog rows, not gate checks — a gate is never moved behin
 
 - A freshly materialized learning is untracked, so `git mv` aborts with
   `fatal: not under version control`.
-- `mv` the file to `.learned.md`, then `git add` the new path.
+- `mv` the file to `.learned.md`, then `git add` the new path. A blocked landing
+  reverses both operations via the undo procedure above.
 
 ## Stage only the paths this run touched
 
