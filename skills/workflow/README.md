@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.07.31-014158`
+**Version:** `2026.07.31-014545`
 
 ## Invocation
 
@@ -57,6 +57,9 @@ flowchart TD
   spec pre-flight, new-capability probe, rule-set doc sync probe, tool-swap flag-parity probe,
   and producer-audit probe. A plan the user supplies — or one produced earlier this session —
   is never re-planned: it is validated for stale references, then executed from Phase 2.
+- **The current dedicated task branch is authoritative:** do not propose
+  another branch unless the checkout is default, detached, carries unrelated
+  dirty work, or the user asks for additional isolation.
 - **Artifact sync with code changes** — a commit changing logical structure must update spec,
   plan, inline comments, test names, and any ADR in the same commit (mechanics in
   [`references/doc-sync-mechanics.md`](references/doc-sync-mechanics.md)). No deferred rewrites.

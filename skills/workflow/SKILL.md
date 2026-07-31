@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.31-014158"
+  version: "2026.07.31-014545"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -237,6 +237,10 @@ Skip backend/config/docs-only diffs and record "frontend preview: N/A" in Phase 
 
 Branching is the default, not an absolute. Probe first:
 
+- Treat the user's current dedicated task branch as authoritative. Create
+  another only from the default branch, detached HEAD, unrelated dirty work, an
+  explicit isolation request, or other evidence that the current branch is not
+  the task branch.
 - Resolve default branch dynamically.
 - Gather PR-gated evidence: branch protection, `CODEOWNERS`, recent feature-branch merge commits.
 - Branch only when evidence points to PR-gated workflow; otherwise commit straight to default and skip auto-PR.
@@ -377,22 +381,8 @@ for cloud auth, containers, global configuration, and CI-provider routing.
 
 ## Skill Reference
 
-| Skill | When | Phase |
-|---|---|---|
-| `wk-plan` | Every non-trivial task before implementation | 1 |
-| `wk-commit` | After each implementation step; CI fix commits | 2, 6 |
-| `wk-workstyle` | Code-quality gate before every commit | 2 |
-| `wk-docs` | With each commit and final audit | 2, 7 |
-| `wk-pr` | Creating/updating a pull request | 5 |
-| `wk-self-review` | Invoked automatically by `wk-pr` before its CI poll | 5 |
-| `wk-buildkite` | Diagnosing Buildkite CI failures | 6 |
-| `wk-adversarial-review` | Single review gate; owned by Phase 5.5, post-publish and pre-merge | 5.5 |
-| `wk-pr-update` | Rebasing/syncing a PR branch with its base | 5, 6 |
-| `wk-learn` | Post-completion learning capture | any |
-| `wk-retro` | End of every session | 8 |
-| `wk-docker` | Docker/containers | any |
-| `wk-datadog` | Observability resources | any |
-| `wk-worktree-cleanup` | Cleaning up merged worktrees | any |
+Use [`references/skill-reference.md`](references/skill-reference.md) for phase
+ownership and invocation routing.
 
 ---
 
