@@ -3,7 +3,7 @@
 > Idiomatic, type-safe TypeScript/JavaScript on every file the agent writes or
 > edits. Project tsconfig/eslint/prettier config wins.
 
-**Version:** `2026.07.28-171128`
+**Version:** `2026.07.31-025254`
 
 ## Invocation
 
@@ -20,6 +20,7 @@
 - Arrow functions for callbacks; named functions for top-level declarations.
 - Nullish coalescing (`??`) over `||` for defaulting.
 - Optional chaining (`?.`) over guard chains.
+- Guard both `null` and `undefined` before dereferencing an optional-chain result.
 - Destructure at the call site when using ≥ 3 fields from an object.
 - `Promise.all` for independent async operations; never sequential `await`.
 
@@ -32,5 +33,5 @@
   based on the touched files / change type. This skill is also independently
   model-invocable on adjacent work.
 - `any` is banned — use `unknown` and narrow; `??`/`?.` replace `||` and guard
-  chains for null-safety.
+  chains, but a later dereference still requires a full nullish guard.
 - Independent async operations use `Promise.all`, not sequential awaits.

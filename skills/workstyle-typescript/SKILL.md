@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171128"
+  version: "2026.07.31-025254"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -64,6 +64,9 @@ Manual: `/wk-workstyle-typescript scan` (full working tree) · `/wk-workstyle-ty
 - **Nullish coalescing (`??`) over `||`** for defaulting — `||`
   treats `0`, `""`, `false` as missing.
 - **Optional chaining (`?.`) over guard chains** (`x && x.y && x.y.z`).
+- **Narrow optional-chain results before dereferencing.** Guard
+  `value === null || value === undefined` (or the project-equivalent nullish
+  check); a null-only guard leaves `undefined`.
 - **Destructure at the call site** when using ≥ 3 fields from an object.
 - **`Promise.all` for independent async operations;** never sequential
   `await` when operations don't depend on each other.
