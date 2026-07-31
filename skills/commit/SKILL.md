@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171035"
+  version: "2026.07.31-023847"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -159,25 +159,16 @@ All commits MUST be signed. Never use `--no-gpg-sign`, `-n`, or
    exact key to the agent; never a config change. Only an entirely empty agent
    means no signing key at all.
 
-2c. **Materialize `user.signingkey` before any file-taking probe flag.** Under
-   `gpg.format=ssh` it commonly holds the key *literal*, not a path (git writes
-   that literal to its own temp file internally).
-
-   ```bash
-   git config --get user.signingkey > "$tmp"   # accepts a literal or a path
-   ssh-keygen -Y sign -n git -f "$tmp" "$probe_file"
-   ```
-
-   - `-f "$(git config --get user.signingkey)"` fails `Couldn't load public key
-     …: No such file or directory` → a probe defect, not a missing key; it never
-     reaches the agent, so it masks the real fault.
-   - Treat a probe error naming the probe's own operand as probe-shaped — never
-     evidence about the key or the agent — until the value is confirmed a path.
-   - Only a completed signed commit proves signing works; a loaded agent key
-     (`ssh-add -l`) does not.
-
-3. Key loaded but env missing → run the commit through the user's shell (carries
-   the env) or ask the user to run it directly. Do not declare the env broken.
+2c. **Materialize `user.signingkey` before any file-taking probe flag.** A
+   literal passed as a filename produces a probe defect, not signing evidence.
+   Only a completed signed commit proves capability:
+   [literal-key probe](references/2026-07-24_signingkey-literal-not-path.md).
+3. **Match the execution context.** Before committing in a linked/temporary
+   worktree, probe `git -C <worktree> config --get user.signingkey` from the
+   exact shell that will commit. Missing there but present in the user's shell →
+   run `git -C` through that shell; launch cwd does not carry config. Verify the
+   resulting raw commit has a `gpgsig` header. Do not declare the env broken.
+   [Temporary-worktree signing](references/2026-07-30_temp-worktree-signing-context.md).
 4. Tell the user: "Commit signing failed. Please check your GPG/SSH agent
    configuration and try again."
 5. Do not attempt any workaround that disables signing.
