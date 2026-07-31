@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.07.31-022803`
+**Version:** `2026.07.31-081458`
 
 ## Invocation
 
@@ -59,4 +59,7 @@ flowchart TD
 - **Green visible checks can still omit a required context:** when merge state is
   blocked, compare ruleset requirements against the current HEAD rollup; an
   absent context is a blocker without a failure.
+- **Stack metadata is not a gate SHA:** use `gh stack view --json` for topology
+  and membership, then resolve each pull request's live `headRefOid` with
+  `gh pr view` before CI or merge gating.
 - **Model-invocable only:** This skill is a guard rail, not a user command — it fires silently alongside any other skill that uses `gh`.

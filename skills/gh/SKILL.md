@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.07.31-022803"
+  version: "2026.07.31-081458"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -116,6 +116,15 @@ The org scope is **not applied** when:
 - The command targets the current repo specifically (e.g., `gh pr view`)
 
 In all other cases, default to `$GITHUB_ORG`.
+
+## Stack topology vs live pull-request state
+
+- Treat `gh stack view --json` as topology and membership data; its
+  `branches[].head` comes from persisted local stack state and can lag the remote
+  pull-request head.
+- Resolve each pull request’s live `headRefOid` with
+  `gh pr view <number> --json headRefOid` immediately before CI or merge gates;
+  never substitute `branches[].head`.
 
 ## Step 3: Canonical surface for GitHub writes
 
@@ -441,6 +450,7 @@ stays org-scoped.
 | User says "all orgs" | Skip org filter |
 | Current-repo commands | No filter needed |
 | Saving any `gh` payload to disk | Use `/tmp/agent/gh/<owner>/<repo>/...` |
+| Stack topology vs gate SHA | Use stack JSON for membership; resolve live `headRefOid` with `gh pr view` |
 | Any outbound GitHub message | Append canonical footer (Step 4) — once, last |
 | Calling skill writes to GitHub | Route the write through this skill's Step 3/4 |
 
