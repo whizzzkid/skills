@@ -3,7 +3,7 @@ name: wk-self-review
 description: >-
   Post inline self-review comments on your own PR to document design decisions,
   non-obvious choices, and critical context for human reviewers. Use when a PR
-  is ready for self-review, after CI passes, or when wk-pr invokes this skill.
+  is ready for self-review or when wk-pr invokes this skill before its CI poll.
 allowed-tools:
   - "Bash(gh pr view:*)"
   - "Bash(gh pr diff:*)"
@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.28-182019"
+  version: "2026.07.31-000814"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -160,14 +160,25 @@ source behind it is fabrication — drop the number, keep the rationale.
 
 ### Markdown preview link for large diffs
 
-Changed file with `.md` extension AND diff adds >50 lines → stage an inline
-comment on the first in-hunk line of that file:
+**Important:** Changed file with `.md` extension AND diff adds >50 lines → stage
+an inline comment on the first in-hunk line with a clickable markdown link:
 
 > Rendered preview — easier to read than the diff for large markdown changes:
-> `https://github.com/{owner}/{repo}/blob/{branch}/{path}`
+> [`{path}`](https://github.com/{owner}/{repo}/blob/{branch}/{path})
 
 - Resolve `{branch}` from `gh pr view --json headRefName --jq .headRefName`.
 - Snap `line` to a hunk-valid position per Step 3.5 before POSTing.
+- Immediately before Step 4's POST, reject any final payload containing a
+  backtick-wrapped URL:
+
+  ```bash
+  if command grep -nE '`https?://|https?://[^`[:space:]]+`' "{payload-file}"; then
+    echo "BLOCKED: preview URL wrapped in backticks" >&2
+    exit 1
+  fi
+  ```
+
+  Any match blocks the POST; keep backticks in the link label only.
 
 ### Architecture-level change → invoke [`wk-arch-review`](../arch-review/README.md)
 
@@ -343,6 +354,10 @@ git diff "origin/$BASE...HEAD" -- "$PATH_TO_FILE" \
 Post the pending review immediately after Step 3's summary — no approval prompt.
 Create a PENDING review via GitHub API:
 
+- Finish every known commit-producing action in the current round first.
+- Re-fetch `headRefOid` immediately before writing the payload; a changed HEAD
+  voids all gathered anchors and requires rebuilding them.
+
 Write the payload with the **Write tool** (Step 0.5 HARD RULE — never a heredoc,
 since the body's prose becomes bash command text):
 
@@ -407,7 +422,7 @@ New commits pushed to a PR that already has self-review comments:
 
 | Trigger | Behavior |
 |---------|----------|
-| Invoked by `wk-pr` | Full self-review flow after CI passes |
+| Invoked by `wk-pr` | Full self-review flow before its CI poll |
 | "self-review this PR" | Manual invocation on current PR |
 | New commits pushed | Update existing comments, resolve stale ones |
 

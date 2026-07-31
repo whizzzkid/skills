@@ -2,14 +2,14 @@
 
 > Post inline self-review comments on your own PR to document design decisions for human reviewers.
 
-**Version:** `2026.07.28-182019`
+**Version:** `2026.07.31-000814`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
 | User-invocable | `/wk-self-review` or "self-review this PR" |
-| Model-invocable | automatic: invoked by [`wk-pr`](../pr/README.md) after CI passes |
+| Model-invocable | automatic: invoked by [`wk-pr`](../pr/README.md) before its CI poll |
 
 ## How It Works
 
@@ -26,7 +26,6 @@ sequenceDiagram
     A->>A: Parallel-path completeness audit
     A->>A: Verify code-comment claim accuracy
     A->>U: Present numbered proposed comments
-    U->>A: Approve / edit / skip
     A->>GH: POST /pulls/{n}/reviews (pending, no event field)
     GH-->>U: Draft review visible — user submits manually
 ```
@@ -47,6 +46,8 @@ sequenceDiagram
 - **Step 2.7 comment-accuracy check** verifies that inline code comments make claims that are
   still true after the PR's changes; stale comments are fixed in-branch, not noted as review
   comments.
+- **Markdown previews are clickable links** — code-format the path label, never
+  the URL; the final payload rejects backtick-wrapped URLs before POST.
 - Signal over noise: design decisions, security-sensitive paths, and behavioral gotchas merit
   comments; formatting fixes and obvious renames do not.
 - **Architecture changes escalate to [`wk-arch-review`](../arch-review/README.md):** Step 2 detects
