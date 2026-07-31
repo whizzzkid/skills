@@ -2,7 +2,7 @@
 
 > Enforces safe, idiomatic shell-script conventions on every shell file the agent writes or edits.
 
-**Version:** `2026.07.31-021019`
+**Version:** `2026.07.31-022300`
 
 ## Invocation
 
@@ -44,6 +44,8 @@
 - Never pair `|| echo <default>` with a command that prints on its non-zero path, and never let that fallback carry a *verdict* — `grep -c` writes `0` *and* returns rc=1 (so the default appends rather than substitutes), while `scan || echo NONE` maps rc=1 "matched nothing" and rc>=2 "never read the input" onto one clean branch. Only stderr separates the two, so a scan that redirects it keeps no signal; discriminate all three statuses and treat rc>=2 as an aborting scan failure.
 - Portability breaks in *both* directions — a zsh-only glob qualifier is reparsed, not ignored, when `bareglobqual` is off: `*.md(N)` silently means "files ending `.mdN`", so it reports `no matches found` on a directory full of `.md` files and matches the wrong files with status 0 once a `.mdN` exists; enumerate with `find … -print` into `while IFS= read -r`.
 - A guard's verdict that contradicts the output it summarizes indicts the guard — an unset `${PIPESTATUS[0]}` plus a `${rc:-0}` default reports a *pass* for a failed command, so re-derive the status dialect-independently before believing the green.
+- Keep non-assertive previews out of `pipefail` gates — an early-closing consumer can give the producer SIGPIPE
+  (often rc 141), aborting before the real assertions. Remove the preview or drain its full input.
 
 ## Noteworthy
 

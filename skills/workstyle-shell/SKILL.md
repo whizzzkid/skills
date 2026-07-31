@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.31-021019"
+  version: "2026.07.31-022300"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -359,6 +359,9 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   rc=0; command grep -nE "$pat" "$f" > "$out" || rc=$?   # verdict survives
   command grep -nE "$pat" "$f" | head; echo $?           # WRONG — always 0
   ```
+- **Keep non-assertive previews out of `pipefail` gates.** Early-closing consumers can give producers SIGPIPE
+  (often rc 141), aborting before assertions. Remove the preview or drain its full input; make each gate command
+  assert one property.
 
 ## Apply or Report
 
