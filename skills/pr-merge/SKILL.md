@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.31-052143"
+  version: "2026.07.31-182006"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -135,13 +135,15 @@ gh pr checks {number} --json name,state,required \
   drops non-required checks for a reason: informational checks (security scanners,
   dependency bots) often queue indefinitely. Never wait on, poll, or block the
   merge for a non-required check — report it as informational, not a blocker.
-- All required checks must be `state: SUCCESS` (or `NEUTRAL`/`SKIPPED` if the
-  repo treats them as passing).
-- Any required check `state: FAILURE` or `ERROR` → block:
-  > "CI is not green. Failing checks:\n- {name}: {url}\n\nFix the failures and
-  > re-run `/wk-pr-merge` when CI is green."
-- Any required check `IN_PROGRESS` or `PENDING` → block:
-  > "CI is still running ({name}). Re-run once all checks complete."
+- Gate required checks by result:
+  - `SUCCESS` passes; `NEUTRAL`/`SKIPPED` pass only when repository policy allows.
+  - `FAILURE`/`ERROR` → block:
+    > "CI is not green. Failing checks:\n- {name}: {url}\n\nFix the failures and
+    > re-run `/wk-pr-merge` when CI is green."
+  - `IN_PROGRESS`/`PENDING` → block:
+    > "CI is still running ({name}). Re-run once all checks complete."
+  - `CANCELLED` → apply [`wk-gh`](../gh/README.md)'s same-head replacement rule; a newer live replacement waits,
+    otherwise block.
 - Always verify CI against `{head_sha}` — a stale run from a prior commit does
   not count. `gh pr checks` showing a different SHA → block until a new run starts.
 - `mergeStateStatus: BLOCKED` with listed required checks green → run

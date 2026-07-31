@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.07.31-081458"
+  version: "2026.07.31-181902"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -352,7 +352,8 @@ rules are not `--watch`-specific.
   status context, so an external provider posting commit statuses never gates the
   poll and a still-building PR reads as green.
   - Non-terminal when `.status ∈ {QUEUED,IN_PROGRESS,PENDING}` **OR** `.state == "PENDING"`.
-  - Failing when `.conclusion ∈ {FAILURE,TIMED_OUT,CANCELLED}` **OR** `.state ∈ {FAILURE,ERROR}`.
+  - Failing when `.conclusion ∈ {FAILURE,TIMED_OUT}` **OR** `.state ∈ {FAILURE,ERROR}`; `CANCELLED` uses the
+    same-head replacement rule below.
   - Never gate on `.status` alone.
 
   ```bash
@@ -365,6 +366,22 @@ rules are not `--watch`-specific.
   An entry rendering all-null through check-run field names
   (`{name:null,status:null,conclusion:null}`) is a status context read through the
   wrong shape — re-read the raw rollup; it is never evidence of an empty gate.
+
+### Superseded same-head runs
+
+- **A cancelled current-HEAD GitHub Actions check is not terminal while a newer same-workflow run is live.**
+  Resolve the cancelled run ID from `detailsUrl`, read its `workflow_id`, list runs filtered by `head_sha`, then
+  poll the newest matching workflow:
+  ```bash
+  gh api repos/{owner}/{repo}/actions/runs/{cancelled_run_id} \
+    --jq '{id, workflow_id, head_sha}'
+  gh api --method GET repos/{owner}/{repo}/actions/runs \
+    -f head_sha="{head_sha}" \
+    --jq '.workflow_runs[] | {id, workflow_id, status, conclusion, created_at}'
+  ```
+- Newer match in `queued`, `requested`, `waiting`, `pending`, or `in_progress` → ignore the older
+  cancellation and wait for the replacement's terminal conclusion.
+- No newer match, or newest match ends non-passing → treat the cancellation as failure.
 
 ## `gh pr checks --watch` is not proof of green
 
