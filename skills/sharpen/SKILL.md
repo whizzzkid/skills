@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.31-024920"
+  version: "2026.07.31-055938"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -196,6 +196,8 @@ behavior, not just the specific instance.
 - Re-read the final file end-to-end.
 - Write one short reference file per learning (create the dir if missing); frontmatter `class:` and per-class body fields: [`references/reference-file-template.md`](references/reference-file-template.md).
 - Never link a per-learning reference from `SKILL.md` — they are the distillation record, not runtime pointers. Run the overfit scan on both.
+- Build processed learning names as `YYYY-MM-DD_<kebab>.learned.md`; never suffix legacy basenames.
+  Parse/collision failure → leave queued; report stuck.
 
 ### Sync skill README, diagrams, and repo-level docs
 
@@ -280,7 +282,9 @@ Invoked without a specific incident → batch mode.
 
 ### Source 2: Repo learnings directory
 
-- Scan `$WK_SKILLS_HOME/learnings/skills/`; process every unprocessed learning one-by-one, **severity-ordered, oldest mtime first within a band** (one wide band is the normal shape, so the tie-break decides most picks; an invented one collides with a peer's and lets a hard item be skipped forever): read it, run the sharpen workflow, confirm the distilled principle landed, then `mv` (never `git mv` — it refuses an untracked path) to `.learned.md`, checking rc.
+- Scan `$WK_SKILLS_HOME/learnings/skills/`; process severity-first, then oldest mtime first within each band
+  (stable FIFO prevents starvation).
+- After the fold lands, apply Step 7’s canonical processed-name rule; use plain `mv`, never `git mv`, and check rc.
 - Re-list before folding each item and after each fold-commit — peers write continuously; "drained" is a terminal check after the last commit, never set up-front.
 - **An arrival whose mtime postdates the run's start is unowned, not assigned.** Neither it nor commit recency sees a *claim* (the marker is a rename; `mv` keeps mtime) and no lock arbitrates, so re-list first: a vanished item, or either signal showing a peer → unclaimed backlog, do not fold. Terminal state is "processed N, M unclaimed, K distilled-not-landed" — never "drained". A fold applied under a blocked gate is distilled-not-landed: leave it unrenamed and name it in the report — never counted processed, never re-queued as backlog.
 

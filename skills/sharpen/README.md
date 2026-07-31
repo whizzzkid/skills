@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.31-024920`
+**Version:** `2026.07.31-055938`
 
 ## Invocation
 
@@ -132,6 +132,9 @@ flowchart TD
   rename lands. Oldest mtime is the only key every cycle can read without coordination, and it
   bounds how long a hard item can be walked past. It also composes with the arrival rule below:
   oldest-first never reaches an item newer than the run's start while anything older remains.
+- **Processed learning names are rebuilt, not blindly suffixed.** Every archive uses
+  `YYYY-MM-DD_<kebab>.learned.md`; a legacy basename, parse failure, or destination collision
+  leaves the item queued and reported stuck instead of reaching the commit hook.
 - **Dispatch templates are semantic rule copies.** When an ordering, selection, or scope rule
   changes, the drift check scans the skill's own references for dispatch/spawn prompts and quoted
   self-instructions, then synchronizes each paraphrase. Link checks cannot detect prose drift.
