@@ -2,7 +2,7 @@
 
 > Post-completion learning capture for any wk-* skill. Writes a structured learning file for later distillation via wk-sharpen.
 
-**Version:** `2026.07.28-171048`
+**Version:** `2026.07.31-020045`
 
 ## Invocation
 
@@ -18,7 +18,7 @@ flowchart TD
     A[Skill run completes] --> B{$WK_SKILLS_HOME set?}
     B -- No --> C[Tell user to set variable — stop]
     B -- Yes --> D{wk-learn scan?}
-    D -- Yes --> E[Locate last 7 days of session transcripts]
+    D -- Yes --> E[Resolve runtime transcript provider]
     E --> F[Extract interruption signals: stop-words, denials, corrections]
     F --> G[Classify each by affected skill]
     G --> H[Write one learning file per finding]
@@ -35,7 +35,10 @@ flowchart TD
 ## Noteworthy
 
 - **Not every run produces a learning:** If all four reflection lenses (wrong, missing, worked, surprised) are empty, no file is written — avoiding noise in the learnings directory.
-- **Scan mode mines session transcripts:** `wk-learn scan` parses `$HOME/.claude/projects/` `.jsonl` transcripts for `[Request interrupted by user]` markers and stop-word user messages, then classifies each by the skill involved.
+- **Scan mode is runtime-aware:** `wk-learn scan` uses the active runtime's
+  transcript provider when available. With no matching session transcript, it
+  scans current-conversation history and labels the result degraded rather than
+  falsely reporting zero interruptions.
 - **HARD RULE — root-cause provenance:** when a learning names a deterministic artifact (hook, script, CI check, linter, generator), the frontmatter carries `verified-against-source: <yes | no | n/a>` and an unconfirmed mechanism is marked `(unverified — inferred from symptom)`. A workaround that works is not evidence for the mechanism it avoided, so an unmarked guess would otherwise reach [`wk-sharpen`](../sharpen/README.md) with the authority of a finding.
 - **HARD RULE — strip incident-specific tokens:** Learning files must not contain session IDs, transcript paths, exact timestamps, or verbatim user prose naming third parties. The principle is distilled, not the incident.
 - **Deduplication before write:** Scan mode checks for existing `(skill, slug)` files including `.learned.md` archives. Duplicate findings append a `## Additional evidence` bullet rather than creating a parallel file.

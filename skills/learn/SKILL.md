@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171048"
+  version: "2026.07.31-020045"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -221,7 +221,25 @@ Invoke as `wk-learn scan` (or auto-invoked by `wk-retro`). Scans recent session
 transcripts for moments where the user interrupted the agent or told it to stop,
 classifies each by affected skill, writes one learning file per finding.
 
-### Step S1: Locate transcripts
+### Step S1: Resolve the transcript source
+
+Use the active runtime's native transcript provider or resource when one is
+available. Never infer that a missing directory in one runtime's filesystem
+means the current session has no transcript.
+
+1. Detect the active runtime from session/tool context, or accept an explicitly
+   supplied transcript provider.
+2. Select turns matching the current session before widening by project and
+   recency.
+3. No matching runtime transcript → scan the available current-conversation
+   history and emit an explicit degradation notice.
+4. Neither source available → report the evidence gap; never report zero
+   interruptions as a scan verdict.
+
+See [runtime-aware transcript
+selection](references/runtime-aware-transcript-selection.md).
+
+#### Claude Code filesystem adapter
 
 Claude Code stores per-session transcripts at:
 
@@ -287,8 +305,9 @@ jq -rc '
 - **Zero-result guard:** if the selection yields zero `user` messages across all
   transcripts → do NOT report "no interruptions"; the extraction path is likely
   wrong for this schema version. Warn that the transcript schema looks
-  unrecognised and fall back to reconstructing corrections from `git log` +
-  commit messages, which is schema-independent.
+  unrecognised and fall back to current-conversation history. If that is
+  unavailable, reconstruct corrections from `git log` + commit messages and
+  label the result degraded.
 
 Pair each interruption with the **immediately preceding assistant turn** — the
 tool call, file edit, or proposed action that triggered the redirect. That
