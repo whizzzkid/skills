@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.07.28-182019`
+**Version:** `2026.07.31-193315`
 
 ## Invocation
 
@@ -26,8 +26,9 @@ flowchart TD
     G --> H[Deduplicate against exclusion list]
     H --> I[Validate comment positions against diff]
     I --> J[Present numbered summary for approval]
-    J --> K[Phase 5: POST pending review unless user pauses]
-    K --> L[Open html_url in browser]
+    J --> K["Phase 5: Recheck reviewed head"]
+    K --> L[POST pending review unless user pauses]
+    L --> M[Open html_url in browser]
 ```
 
 ## Noteworthy
@@ -53,3 +54,6 @@ flowchart TD
   skill's mechanical detector (design docs, new services/datastores/IaC, trust-boundary or API/contract changes,
   ownership-reshaping migrations), consumes a recorded verdict when one covers this HEAD, and dispatches only
   when none exists — folding its SPOF / unhappy-path / assumption findings in as concerns.
+- **The reviewed head is pinned at POST time:** Phase 5 rechecks `headRefOid` immediately before every review
+  create/recreate. A mismatch stops the POST until the delta, findings, and anchors are revalidated; `commit_id`
+  then pins the payload to the investigated SHA.

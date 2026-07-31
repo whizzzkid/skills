@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.28-182019"
+  version: "2026.07.31-193315"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -436,12 +436,19 @@ submits, approves, or requests changes.
 - Print the review `html_url` and `Submit on GitHub when ready.`
 - Edits/skips after the summary happen in the GitHub draft UI.
 
+### Recheck the reviewed head
+
+- Immediately before each review create/recreate POST, fetch `headRefOid`; compare with Phase 1 `PR_HEAD`.
+- Mismatch → do not post; inspect delta, revalidate findings and anchors, refresh `PR_HEAD`, rebuild full payload.
+- Set payload `commit_id` to `PR_HEAD`; never rely on latest-commit default.
+
 ### Create the pending review
 
 Write the payload with the **Write tool**, never a heredoc (`wk-self-review` Step 0.5):
 
 ```json
 {
+  "commit_id": "<PR_HEAD>",
   "body": "<composed verdict ending with the canonical footer>",
   "comments": [
     { "path": "src/file.ts", "line": 42, "side": "RIGHT",
