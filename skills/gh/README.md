@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.07.31-181902`
+**Version:** `2026.07.31-183537`
 
 ## Invocation
 
@@ -49,6 +49,8 @@ flowchart TD
 - **Exceptions are explicit:** The org filter is bypassed only when the user names a different org, says "all orgs", or the command targets the current repo directly (e.g., `gh pr view`).
 - **Artifact download path:** Files saved from `gh` commands go to `/tmp/agent/gh/<owner>/<repo>/<resource_type>/<resource_id>/<filename>` — mirrors the Buildkite convention.
 - **Notification filtering uses `jq`:** Org-scoping for `gh api notifications` is applied via `.repository.owner.login == "$GITHUB_ORG"` in a jq filter, not a CLI flag.
+- **Variable-dependent projections use standalone `jq`:** `gh --jq` accepts one expression, so bind shell values by
+  piping raw `--json` output to `jq --arg` or `jq --argjson`.
 - **Environment tokens shadow stored credentials:** After explicit stored/keyring confirmation, every `gh` command
   removes `GH_TOKEN` and `GITHUB_TOKEN` at the command boundary and skips auth inspection. Without confirmation, an
   unexpected authorization failure is diagnosed by comparing normal and token-unset status before any refresh.

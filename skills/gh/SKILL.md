@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.07.31-181902"
+  version: "2026.07.31-183537"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -116,6 +116,23 @@ The org scope is **not applied** when:
 - The command targets the current repo specifically (e.g., `gh pr view`)
 
 In all other cases, default to `$GITHUB_ORG`.
+
+### Variable-dependent jq projections
+
+- `gh --jq` accepts exactly one jq expression; it does not expose standalone
+  `jq` flags such as `--arg` or `--argjson`.
+- Constant projection → keep `gh --jq`:
+
+  ```bash
+  gh pr view --json headRefOid --jq '.headRefOid'
+  ```
+
+- Projection needs shell values → emit raw `--json` and pipe to standalone `jq`:
+
+  ```bash
+  gh pr view --json headRefOid \
+    | jq --arg expected "$expected_sha" 'select(.headRefOid == $expected)'
+  ```
 
 ## Stack topology vs live pull-request state
 
@@ -466,6 +483,7 @@ stays org-scoped.
 | User names a different org | Use that org instead |
 | User says "all orgs" | Skip org filter |
 | Current-repo commands | No filter needed |
+| Projection needs variables | Pipe raw `gh --json` output to standalone `jq --arg`; never pass `--arg` after `gh --jq` |
 | Saving any `gh` payload to disk | Use `/tmp/agent/gh/<owner>/<repo>/...` |
 | Stack topology vs gate SHA | Use stack JSON for membership; resolve live `headRefOid` with `gh pr view` |
 | Any outbound GitHub message | Append canonical footer (Step 4) — once, last |
