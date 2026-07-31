@@ -13,9 +13,11 @@ license: MIT
 group: tools
 env-vars:
   - GITHUB_ORG
+  - GH_TOKEN
+  - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.07.31-013640"
+  version: "2026.07.31-022803"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -38,6 +40,27 @@ reply posts, thread resolutions. "It's just a comment" / "it's
 one-line" / "the user asked for it inline" are not bypass criteria.
 Read-only `gh` calls (`view`, `diff`, `search`, `api` GET) still
 honor Step 1–2 scoping but skip Step 4 (no body to footer).
+
+## Step 0: Select stored vs environment credentials
+
+- `GH_TOKEN`, then `GITHUB_TOKEN`, take precedence over stored credentials. Never print or inspect token values.
+- User explicitly confirms stored/keyring authentication → preserve the login-shell environment, but remove both
+  token variables at every final `gh` command boundary. Skip `gh auth status` and credential refresh:
+
+  ```bash
+  env -u GH_TOKEN -u GITHUB_TOKEN gh ...
+  ```
+
+- Authorization fails unexpectedly without explicit stored-auth confirmation → compare normal and token-unset status
+  before refreshing credentials:
+
+  ```bash
+  gh auth status
+  env -u GH_TOKEN -u GITHUB_TOKEN gh auth status
+  ```
+
+- Token-unset form reaches the expected account/host → rerun only the affected command with both variables removed.
+  Do not mutate login state or credential configuration.
 
 ## Step 1: Check for $GITHUB_ORG
 
@@ -410,6 +433,8 @@ stays org-scoped.
 
 | Scenario | Behavior |
 |----------|----------|
+| Stored/keyring auth explicitly confirmed | Run every `gh` command with `GH_TOKEN` and `GITHUB_TOKEN` unset; skip auth inspection |
+| Unexpected authorization failure | Compare normal and token-unset `gh auth status` before credential refresh |
 | `$GITHUB_ORG` set | Add `--owner=$GITHUB_ORG` to search commands |
 | `$GITHUB_ORG` missing | Stop and prompt user to set it |
 | User names a different org | Use that org instead |
