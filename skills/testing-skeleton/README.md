@@ -2,7 +2,7 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
-**Version:** `2026.07.31-015426`
+**Version:** `2026.07.31-015740`
 
 ## Invocation
 
@@ -51,5 +51,8 @@ flowchart TD
 - **`activeTab` requires a real browser gesture.** Trigger the extension's
   browser action or command before gated assertions; direct popup navigation
   does not grant the permission.
+- **Agent-facing export fixtures must be actionable.** Include a realistic
+  problem and desired outcome, then prove the downstream consumer can act—not
+  merely that the archive and fields persist.
 - Coverage % is explicitly treated as a lagging indicator — CI coverage gate failures must be
   solved by finding the missing behavioral path, never by adding structural tests to touch lines.
