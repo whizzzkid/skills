@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.31-014545"
+  version: "2026.07.31-023509"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -182,6 +182,7 @@ Verification:
 - Re-run every gate against final HEAD, not a mid-session snapshot.
 - Validate transformations with a formerly-failing input.
 - **A fast/narrow check is never the authoritative gate.** A pre-commit hook may lint a narrower file set than the full CI-mirroring check — run the full gate before claiming lint/format clean.
+- **Dependent verification fails fast.** Run an expected-red proof and its later green gate in separate tool calls. If they must share one shell command, begin it with `set -euo pipefail`; never launch the green gate after the expected-red proof exits non-zero.
 - **Important — never take a verdict from `$?` after a pipe.** After `a | b` it is `b`'s status, and a limiter (`head`/`tail`/`sort`/`wc`) always succeeds — so `check | tail` pins the verdict to 0 whatever the check found — a false clean or a false hit, set by the guard's polarity. Run the check bare, or redirect its output to a file and read `$?`. `${PIPESTATUS[0]}` is bash-only and expands empty under zsh (`wk-workstyle-shell` owns that trap) — never reach for it to keep the pipe.
 
 In a mise-managed repo, `GemNotFound` on `bundle exec` / `bin/rspec` is a setup gap. Run `bin/setup`, then invoke tests via `mise exec -- <cmd>`.

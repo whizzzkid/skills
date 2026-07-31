@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.07.31-014545`
+**Version:** `2026.07.31-023509`
 
 ## Invocation
 
@@ -72,5 +72,8 @@ flowchart TD
   the same axis require broadening to a different axis on attempt 3, not "the same thing harder."
 - **Post-push verification adds evidence:** poll CI for the pushed SHA; do not
   repeat a local gate that already passed for that exact commit.
+- **Dependent verification fails fast:** run expected-red proofs separately
+  from later green gates, or start a grouped shell command with
+  `set -euo pipefail`.
 - **Phase 8 ([`wk-retro`](../retro/README.md)) is non-negotiable** — mandatory regardless of task outcome, even if
   the session was short or nothing interesting happened.
