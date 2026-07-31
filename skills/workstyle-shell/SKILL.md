@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171125"
+  version: "2026.07.31-021019"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -109,7 +109,7 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   Portability is a property of the shell, never of the authoring context — an ad-hoc
   command passes no review, so the trap lands there unchallenged. Traps run **both**
   directions — a bash-ism zsh rejects, *and* a zsh-ism the shell declines to honor — so
-  clearing a command against the bash-only entries below proves nothing. Four traps:
+  clearing a command against the bash-only entries below proves nothing. Five traps:
   - **Very important:** unquoted **parameter** expansion does not word-split under zsh — in
     **any** position, not only a `for` list. `for x in $LIST` runs the body once over the
     whole newline-joined blob; `cmd $FILES` hands the tool a *single* argument containing
@@ -137,6 +137,11 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
     Never let a composed command depend on a glob qualifier or on `nullglob`/`failglob`
     state; enumerate with `find … -print` fed through `while IFS= read -r`, which cannot
     conflate "nothing matched" with "pattern unsupported".
+  - **Lowercase `path` is a zsh special array tied to `PATH`.** Never use
+    `path` as a loop or script variable: assigning one scalar replaces the
+    executable search path. Use role-specific names such as `doc_path`,
+    `source_path`, or `target_path`. See [zsh special
+    variables](references/zsh-special-path-variable.md).
   - **A verdict that contradicts the output it summarizes indicts the guard, not the
     output.** Re-derive the status with a dialect-independent construct before believing
     a green whose own captured output reports a failure.
@@ -192,14 +197,11 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   check report a *unanimous pass it never performed* — inverse polarity to the two `awk` traps
   above. Worked example:
   [`references/2026-07-27_environ-disjoint-from-v-assignment.md`](references/2026-07-27_environ-disjoint-from-v-assignment.md).
-- **`Illegal byte sequence` means an upstream stage cut a character in half**, never that the
-  input "contains UTF-8" — well-formed UTF-8 through the same consumer exits 0. The producer is
-  a byte-oriented slice: `LC_ALL=C awk … substr($0,1,N)` measures bytes, then cuts
-  mid-character. The diagnostic names the consumer; the defect is the slice width. Pin
-  `LC_ALL=C` on the consumer too when comparison is byte-wise anyway, else slice on character
-  boundaries. **A clean run is no proof** — on BSD/macOS only `sort` (rc 2) and `tr` (rc 1)
-  reject the stream; `grep`, `sed` and `uniq` pass the malformed bytes through silently.
-  ```
+- **`Illegal byte sequence` points to upstream byte truncation, not UTF-8
+  itself.** Fix the byte slice, or pin `LC_ALL=C` on the consumer when byte-wise
+  comparison is intended. A clean `grep`/`sed`/`uniq` run does not prove the
+  stream is valid. See [truncated multibyte
+  streams](references/2026-07-27_truncation-breaks-locale-consumer.md).
 
 - **Prefix `command` on any tool call whose clean/zero result is load-bearing.** A bare
   name resolves to a shell function or alias *before* the binary, and an agent shell may
@@ -295,16 +297,11 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   installing the next. General form of the trap: the matcher's unit must be at least as large
   as the needle, and a count is evidence only where its counting unit survives every transform
   applied upstream of it.
-- **`printf` silently re-runs its format string when arguments outnumber conversion
-  specifiers — make the argument count an exact multiple of the specifier count.**
-  `printf '%s=%s\n' a 1 b 2` emits *two* rows, not one; `printf '%s\n' x y z` emits three.
-  rc=0, empty stderr, identical across the `bash`/`zsh`/`sh` builtins and `/usr/bin/printf`,
-  so nothing marks the surplus rows as unintended. **Inverse polarity to every zero-trap
-  above:** the count comes out too high, not too low, so a row-counting probe reporting `2`
-  where the loop ran once reads as corroboration rather than corruption — the
-  plausible-wrong-number rule applies with its sign flipped, and a doubled count is the very
-  shape a positive control is hoping to see. Emit one record per call, or assemble the line
-  in a variable and print it with a single `%s\n`.
+- **`printf` reuses its format when arguments outnumber conversion
+  specifiers.** Match arity exactly; emit one record per call, or assemble it
+  and print with one `%s\n`. Surplus arguments create plausible extra rows with
+  rc 0. See [format
+  reuse](references/2026-07-26_printf-format-reuse-doubles-rows.md).
 - **Never pair `|| echo <default>` with a command that prints its result on the non-zero
   path.** The idiom assumes non-zero means *failed, emitted nothing* — true where exit
   status signals an **error**, false where it is a **predicate about the result**, whose

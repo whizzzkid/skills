@@ -2,7 +2,7 @@
 
 > Enforces safe, idiomatic shell-script conventions on every shell file the agent writes or edits.
 
-**Version:** `2026.07.28-171125`
+**Version:** `2026.07.31-021019`
 
 ## Invocation
 
@@ -38,6 +38,9 @@
 - `printf` silently re-runs its format string when arguments outnumber conversion specifiers — `printf '%s=%s\n' a 1 b 2` emits *two* rows, not one. rc=0, empty stderr, identical across the bash/zsh/sh builtins and `/usr/bin/printf`. This is the inverse polarity of every zero-trap above: the count comes out too *high*, so a row-counting probe reading `2` where the loop ran once looks like corroboration rather than corruption. Make the argument count an exact multiple of the specifier count.
 - Presence-check with a test builtin, never a value expansion — `${VAR:-NO}` emits the value on the set path, so a `${VAR:+yes}${VAR:-NO}` "boolean" leaks a live secret; fingerprint with length + hash prefix when a value must be compared.
 - Keep every shell command portable to zsh as well as bash — ad-hoc commands the agent composes mid-task, not just documented snippets — an unquoted *parameter* expansion never word-splits under zsh in *any* position (`cmd $FILES` hands the tool one argument naming a blob it was never given, so the run reads as a clean zero), `${!var}` aborts as `bad substitution`, and `${PIPESTATUS[…]}` is never populated (zsh spells it `pipestatus`); never materialize a file list in a variable at all — pipe the producer into a `while IFS= read -r` loop — and use `printenv` exit status plus a pipeline-free status probe.
+- Never use lowercase `path` as a zsh loop or script variable — it is a special
+  array tied to `PATH`, so scalar assignment replaces the executable search
+  path. Prefer role-specific names such as `doc_path`.
 - Never pair `|| echo <default>` with a command that prints on its non-zero path, and never let that fallback carry a *verdict* — `grep -c` writes `0` *and* returns rc=1 (so the default appends rather than substitutes), while `scan || echo NONE` maps rc=1 "matched nothing" and rc>=2 "never read the input" onto one clean branch. Only stderr separates the two, so a scan that redirects it keeps no signal; discriminate all three statuses and treat rc>=2 as an aborting scan failure.
 - Portability breaks in *both* directions — a zsh-only glob qualifier is reparsed, not ignored, when `bareglobqual` is off: `*.md(N)` silently means "files ending `.mdN`", so it reports `no matches found` on a directory full of `.md` files and matches the wrong files with status 0 once a `.mdN` exists; enumerate with `find … -print` into `while IFS= read -r`.
 - A guard's verdict that contradicts the output it summarizes indicts the guard — an unset `${PIPESTATUS[0]}` plus a `${rc:-0}` default reports a *pass* for a failed command, so re-derive the status dialect-independently before believing the green.
