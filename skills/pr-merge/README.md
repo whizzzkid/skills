@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.07.30-220000`
+**Version:** `2026.07.30-235901`
 
 ## Invocation
 
@@ -19,7 +19,11 @@
 ```mermaid
 flowchart TD
     A["Step 1: Resolve PR<br/>(current branch or argument)"] -->|state == MERGED| G
-    A -->|open| B["Step 2: CI green?"]
+    A -->|open| S{"Stack member?"}
+    S -->|yes| SG["Run Steps 2–5.5<br/>for every member"]
+    SG --> SM["Atomic stack merge"]
+    SM --> G
+    S -->|no| B["Step 2: CI green?"]
     B -->|failing/pending| BLOCK1["🚫 Block — list failing checks"]
     B -->|green| C["Step 3: Reviews approved?"]
     C -->|changes requested / no review| BLOCK2["🚫 Block — list reviewers"]
@@ -62,6 +66,9 @@ All five must pass; any failure blocks and reports what needs fixing:
 - **Merge never dispatches [`wk-adversarial-review`](../adversarial-review/README.md)** —
   it reads completion-gate clearance. Missing clearance or genuinely new work
   returns to [`wk-workflow`](../workflow/README.md) Phase 5.5.
+- **Stack membership is detected before single-PR gates** — every member must
+  clear the gates before one atomic `gh stack merge`; an outdated extension
+  blocks instead of silently degrading to sequential merges.
 - **Never auto-resolve the author's own self-review threads** — they are
   informational and left open; the Step 6 merge attempt is the ground-truth
   probe of whether branch protection actually counts them.

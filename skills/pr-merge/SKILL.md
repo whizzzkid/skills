@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.30-220000"
+  version: "2026.07.30-235901"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -86,6 +86,25 @@ Extract and record:
   `mergeCommit.oid`, skip Steps 2–6 (CI, review, thread, and action-item gates are
   moot on a merged PR), and resume at Step 7 (ticket transition, follow-ups, retro,
   worktree cleanup). Never attempt to re-merge.
+
+### Detect stack membership before single-PR gates
+
+- Run `gh stack view --json` after Step 1 and before Step 2.
+- Target belongs to a stack → enumerate every included PR from stack metadata;
+  apply Steps 2–5.5 to each member.
+- Read ruleset `allowed_merge_methods` and verify `gh stack merge --help`
+  supports `--yes` plus the selected method.
+- Merge the gated set atomically:
+
+  ```bash
+  gh stack merge {stack-or-pr-number} --yes --merge-method {allowed-method}
+  ```
+
+- Installed extension lacks `merge` or required flags → stop and request
+  approval to upgrade the official extension; never silently fall back to
+  sequential merges.
+- Verify every included PR is `MERGED`, reports the stack merge commit, and the
+  target branch points to that commit before Step 7.
 
 ## Step 2: Verify CI is green
 
@@ -222,6 +241,8 @@ Merge consumes the completion gate's clearance; it never dispatches review.
   from merge.
 - `blocked` → stop; fix each blocker via `wk-commit` at the completion gate.
 - Explicit current-session waiver → note it and proceed; never infer one.
+
+## Step 6: Merge
 
 - **HARD RULE — retarget stacked children BEFORE merging with `--delete-branch`.**
   A child PR based on this PR's head branch is closed/orphaned when the merge
@@ -485,18 +506,6 @@ Follow-ups present → offer once:
   `--delete-branch` already removed the remote one.
 
 ---
-
-## Common Mistakes
-
-- **Auto-resolving the author's own self-review threads** — never resolve them
-  as routine pre-merge cleanup; leave them open and let the Step 6 merge attempt
-  probe whether branch protection actually counts them.
-- **Skipping the CI re-check after a push** — CI runs are tied to a SHA;
-  always verify the run is against the current `{head_sha}`.
-- **Assuming `Closes #N` auto-transitions Jira** — `Closes` only closes
-  GitHub Issues; Jira always requires an explicit API transition.
-- **Blocking on Asana** — no MCP exists for Asana; surface the URL and move
-  on rather than stopping the merge.
 
 ## Quick Reference
 
