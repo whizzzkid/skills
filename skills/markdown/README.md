@@ -3,7 +3,7 @@
 > Enforce markdown standards — 120-column line width, heading hierarchy, mermaid diagrams, glyphs, and link
 > validation — whenever creating or editing any `.md` file.
 
-**Version:** `2026.07.28-171049`
+**Version:** `2026.07.31-025706`
 
 ## Invocation
 
@@ -42,8 +42,8 @@ flowchart TD
   structural relationships.
 - **Link validation is mandatory before write:** HTTP links must return 2xx/3xx; relative paths must resolve;
   anchors must match an existing heading. A broken link is a documentation bug — not a warning.
-- **Heading H1 is singular:** Exactly one `# Title` per file. H5/H6 are forbidden; restructure deep content
-  into sub-documents instead.
+- **Artifact templates take precedence:** Preserve the exact heading shape prescribed by another active skill,
+  including deliberate no-H1 forms. Otherwise, use exactly one `# Title` per file and avoid H5/H6.
 - **Emoji in headers, not in code:** Glyphs aid scanning when applied to section headers and callout
   blockquotes; they are never embedded inside inline code, filenames, CLI flags, or URLs.
 - **120-column rule has hard exceptions:** Never wrap URLs mid-link, fenced code blocks, or table cells where

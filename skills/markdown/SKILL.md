@@ -28,7 +28,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171049"
+  version: "2026.07.31-025706"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -68,6 +68,8 @@ Fix every line that appears in the output before writing.
 
 ## 🗂️ Heading Hierarchy
 
+- **Artifact templates override this hierarchy.** When another active skill prescribes an exact Markdown shape,
+  preserve it — including a deliberate absence of H1; apply these generic rules only where the template is silent.
 - **Never skip heading levels** — H3 must follow H2, H2 must follow H1.
 - **H1** — document title only; exactly one per file.
 - **H2** — major sections.
@@ -162,7 +164,8 @@ done
 Verify:
 - External links return 2xx/3xx — 4xx/5xx must be fixed or removed before writing.
 - Relative paths resolve to existing files — `MISSING` means fix the path or remove the link.
-- Anchor targets (`#foo`) match an existing heading in the same file (GFM rules: lowercase, spaces → `-`, punctuation stripped).
+- Anchor targets (`#foo`) match an existing heading in the same file
+  (GFM rules: lowercase, spaces → `-`, punctuation stripped).
 
 ---
 
