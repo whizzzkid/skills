@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.30-220754"
+  version: "2026.07.31-014158"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -286,6 +286,10 @@ Pre-flight findings are mandatory actions, not options → fold blockers/improve
 
 After PR creation or any push to a PR branch, monitor, diagnose, and fix CI until green. CI runs concurrently with the Phase 5.5 review — fold its failures and comments into the same fix pass.
 
+- **Do not repeat a green pre-push gate locally after pushing the same SHA.**
+  Poll CI; re-run locally only after a new commit or to reproduce a CI failure.
+  Before any command, name the new evidence it can produce; known output is not
+  verification.
 - Use `gh pr checks --watch --fail-fast` for generic checks; it can exit on partial resolution → re-confirm the rollup is terminal before calling CI green (`wk-gh`).
 - Use `wk-buildkite` for Buildkite.
 - Run long watches in the background; before any wait >~1 min (suite, CI poll, flake re-runs) state what runs and rough duration so silence isn't read as a hang.
@@ -366,11 +370,8 @@ Final audit after all code is complete:
 
 ## Environment Guardrails
 
-- **AWS / ECR:** on auth/credential errors, prompt for `aws sso login`; do not retry without valid creds.
-- **Docker:** on daemon/socket errors, prompt for Docker Desktop or Colima; use `wk-docker`.
-- **Devcontainer-first:** when a repo ships a runnable `.devcontainer/`, prefer it over host-native runners; probe for one before selecting a build/test toolchain, and when the host toolchain breaks, check the containerized alternative before repairing the host in place. Absence of a documented devcontainer workflow is not evidence one is absent.
-- **Configuration:** add permission rules, settings, and MCP servers to `$HOME/.claude/settings.json` (global), not `.claude/settings.local.json`, unless intentionally local. For MCP servers, use `--scope user`. Never add MCPs to `$HOME/.claude.json`.
-- **CI:** use `wk-buildkite` for Buildkite; read actual logs, do not guess.
+Apply [`references/environment-guardrails.md`](references/environment-guardrails.md)
+for cloud auth, containers, global configuration, and CI-provider routing.
 
 ---
 
@@ -383,7 +384,7 @@ Final audit after all code is complete:
 | `wk-workstyle` | Code-quality gate before every commit | 2 |
 | `wk-docs` | With each commit and final audit | 2, 7 |
 | `wk-pr` | Creating/updating a pull request | 5 |
-| `wk-self-review` | Invoked automatically by `wk-pr` after CI passes | 5 |
+| `wk-self-review` | Invoked automatically by `wk-pr` before its CI poll | 5 |
 | `wk-buildkite` | Diagnosing Buildkite CI failures | 6 |
 | `wk-adversarial-review` | Single review gate; owned by Phase 5.5, post-publish and pre-merge | 5.5 |
 | `wk-pr-update` | Rebasing/syncing a PR branch with its base | 5, 6 |

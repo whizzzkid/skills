@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.07.30-220754`
+**Version:** `2026.07.31-014158`
 
 ## Invocation
 
@@ -67,5 +67,7 @@ flowchart TD
   scope, refactor, or logic gets one delta-scoped review.
 - **CI fix loop** has a 3-attempt limit with an axis-of-variation check: attempts 1 and 2 on
   the same axis require broadening to a different axis on attempt 3, not "the same thing harder."
+- **Post-push verification adds evidence:** poll CI for the pushed SHA; do not
+  repeat a local gate that already passed for that exact commit.
 - **Phase 8 ([`wk-retro`](../retro/README.md)) is non-negotiable** — mandatory regardless of task outcome, even if
   the session was short or nothing interesting happened.
