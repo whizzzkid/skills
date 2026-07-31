@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.31-053004"
+  version: "2026.07.31-183144"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -154,7 +154,17 @@ Subagent must be adversarial, objective, naming-aware, and diff-sensitive, plus 
 
 ### Categories to Hunt
 
-`category:` (Step 4) is one of, sweep catalog holds the detail: **Logic / arithmetic** (off-by-one, pagination edges); **Type coercion** (`"0"` vs `0` vs `false`, `[]` vs `{}`); **State / ordering / concurrency** (use-before-init, use-after-close, async interleave, races, lock asymmetry); **Contract / cross-system** (signature widening, producer≠consumer layout, cleanup-before-verify); **Refactor-removed** (validation, recursion, error handling silently dropped); **Test quality** (tautology, missing assertions/failure path, asymmetric coverage); **Security / data loss** (injection, secret leakage, traversal, unprotected writes, missing rollback); **Error handling** (swallowed errors, generic catches, wrong error class); **Runtime / performance** (runtime-matrix gaps, quadratic scans, repeated I/O).
+`category:` (Step 4) is one of, sweep catalog holds the detail: **Logic / arithmetic**
+(off-by-one, pagination edges); **Type coercion** (`"0"` vs `0`, canonical text vs
+numeric equivalence, `[]` vs `{}`); **State / ordering / concurrency**
+(use-before-init, use-after-close, async interleave, races, lock asymmetry);
+**Contract / cross-system** (signature widening, producer≠consumer layout,
+cleanup-before-verify); **Refactor-removed** (validation, recursion, error handling
+silently dropped); **Test quality** (tautology, missing assertions/failure path,
+asymmetric coverage); **Security / data loss** (injection, secret leakage,
+traversal, unprotected writes, missing rollback); **Error handling** (swallowed
+errors, generic catches, wrong error class); **Runtime / performance**
+(runtime-matrix gaps, quadratic scans, repeated I/O).
 
 ## Step 4: Findings Format and Severity
 
