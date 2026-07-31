@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.07.31-013814`
+**Version:** `2026.07.31-020644`
 
 ## Invocation
 
@@ -71,6 +71,9 @@ All five must pass; any failure blocks and reports what needs fixing:
   blocks instead of silently degrading to sequential merges.
 - **Blocked with required checks green still needs a ruleset diff** — a required
   context with no HEAD run is absent from the visible check list, not passing.
+- **Remote state is re-resolved before every post-fix push or merge.** A
+  concurrent merge skips the mutation and resumes post-merge processing;
+  interrupted commands require remote-state verification before retry.
 - **Never auto-resolve the author's own self-review threads** — they are
   informational and left open; the Step 6 merge attempt is the ground-truth
   probe of whether branch protection actually counts them.

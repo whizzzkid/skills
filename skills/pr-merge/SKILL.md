@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.31-013814"
+  version: "2026.07.31-020644"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -247,6 +247,13 @@ Merge consumes the completion gate's clearance; it never dispatches review.
 
 ## Step 6: Merge
 
+- **HARD RULE — re-resolve remote state at every mutation boundary.** Immediately
+  before each post-fix push or merge command, fetch `state`, `headRefOid`, and
+  `mergeCommit` again. Already `MERGED` → skip the mutation and resume Step 7.
+  After an interrupted push or merge, query both PR state and the remote head
+  OID before retrying or reporting cancellation; interruption does not prove no
+  remote side effect. See [concurrent merge
+  reconciliation](references/concurrent-merge-reconciliation.md).
 - **HARD RULE — retarget stacked children BEFORE merging with `--delete-branch`.**
   A child PR based on this PR's head branch is closed/orphaned when the merge
   deletes the head: GitHub's automatic base-change on parent merge races with the
