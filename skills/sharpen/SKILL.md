@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.31-021628"
+  version: "2026.07.31-024537"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -239,6 +239,7 @@ behavior, not just the specific instance.
   - **Search duplicates first, relocate last, prose-tighten only for the final margin.**
   - **Grep `references/` for a recorded stay-inline / rejected-relocation note before relocating — a hit vetoes only while its stated grounds still hold.**
   - Grounds unstated, aggregate, or scored before a now-reachable shape → re-test, never obey.
+  - Clearing one ground is not clearance → re-check permanent protections; another ground upholds veto → amend note and supersede stale ground.
 - **Measure the staged body AND price the reclaim pool BEFORE drafting any content-adding fold** — a pool priced after the draft judges a fixed number → trim cycle guaranteed. Headroom under ~2× the edit → budget ≥2 reclaim targets whose *combined NET* exceeds the edit by ≥1.2×. Draft under both inverted: `draft_max = max(headroom/2, pool_NET/1.2)`.
   - **Budget the fold PLUS an audit-cleanup allowance** (~25%/floor ~300 B) and size reclaim against that total. Run the Step 5 audit first → **measured** cleanup replaces that estimate, often **0 B**.
   - **Never relocate a gate's enumerated pass/fail checks or a verification checklist behind a pointer, and never cut a rule's verified-configuration qualifier** — the ceiling never outranks a load-bearing rule. Per-hook recovery rows are catalog, not gate — those move freely.

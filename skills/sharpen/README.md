@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.31-021628`
+**Version:** `2026.07.31-024537`
 
 ## Invocation
 
@@ -201,7 +201,9 @@ flowchart TD
   Reclaim is searched in a fixed
   order — an inline rule whose own linked reference already states it in full is deleted
   outright first (full value, zero coverage risk), relocation is considered last, and a
-  recorded stay-inline decision is honored rather than reopened under ceiling pressure.
+  recorded stay-inline decision suppresses relocation only while its stated grounds hold.
+  Clearing one ground triggers a permanent-protection check; another ground upholding the
+  veto replaces the stale rationale in the note.
   Duplicates are scored by reading order: only the *later* occurrence is deletable, because
   removing a rule's earliest statement moves it later and recreates the reachability defect
   the reading-order fixes exist to prevent. Relocation is exempt from that objection — it

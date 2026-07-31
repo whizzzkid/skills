@@ -45,6 +45,6 @@ failure mode lost, no rule's earliest statement touched). Net **−14 B**, body 
 of 24576. Both readings of the budget gate are satisfied: net non-positive **and** under
 every ceiling.
 
-**Not relocated** — the collation-control sub-bullet was left inline. Its relocation is on
-record as rejected for reachability, and the margin this fold needed was reached without
-re-opening it.
+**Not relocated — amended 2026-07-28:** Re-testing with a cut-site pointer superseded the
+recorded reachability ground. The block remains inline because it is a control-construction
+verification checklist, which the ceiling rule permanently protects under every edit shape.

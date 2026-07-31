@@ -239,6 +239,9 @@ env-tunable, so a deliberate exception needs no hook edit):
 - Grounds that name a property the ceiling never outranks — a gate's enumerated pass/fail
   checks, a verification checklist, a rule's verified-configuration qualifier — hold under
   every shape. Those vetoes are permanent by design.
+- Clearing the recorded ground is not clearance: re-check those permanent protections. If
+  another ground still upholds the veto, amend the note to that durable ground and mark the
+  stale rationale superseded.
 - **Write every stay-inline, rejected-relocation, or pool-exhaustion note so it names the
   edit shape it was scored under**, and score candidates individually. A later pass can then
   separate durable protection from a shape-contingent verdict without re-deriving the whole
