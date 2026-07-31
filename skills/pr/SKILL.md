@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.07.30-220753"
+  version: "2026.07.31-000443"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -339,23 +339,20 @@ title without a suffix; do not invent one.
 
 ### Stacking multiple PRs
 
-Splitting work into a stack of dependent PRs → **prefer the `gh stack` extension**
-(`github/gh-stack`) when available: it is installed AND the repo is enabled for
-the stacks preview (gh v2.0+). Delegate the whole stack lifecycle (branch
-creation, base chaining, cascading rebase, linked submission) to it — never
-hand-chain `--base`.
+Use the official `gh stack` extension when available; it owns linked branch and
+PR lifecycle. Use the manual convention only when the extension is unavailable.
 
 - Probe once (`gh stack view`); non-zero / not-installed / repo-not-enabled →
   manual fallback.
-- Every PR in a merged stack gets `[<feature>-part-N/M]` as its final title
-  token (N = 1-based position, M = stack size; after any `[<KEY>]`), in both the
-  `gh stack` and manual paths.
+- **HARD RULE — recover an existing stack as one unit.** Never rebase or push
+  layers independently. Snapshot refs; use `gh stack rebase` with `--continue`
+  or `--abort`; verify ancestry and full tests before `gh stack push`, then
+  verify every remote head, current-head CI run, thread, and body-cited commit.
+  Apply the recovery sequence in the reference below.
 - **Read merge/dependency order from `baseRefName`, never `part-N` labels or
   memory** — query each PR's base (`gh pr view <n> --json baseRefName`); a
   trunk-based PR is independent, a PR merges only after the PR owning its base.
   Labels drift after any re-parent and fabricate nonexistent dependencies.
-- Manual fallback: `[<feature>-part-N/M]` title suffix + injected `## Stack`
-  body + `--base previous-branch`, each PR green in isolation.
 
 `gh stack` command sequence, availability probe, and the manual fallback recipe:
 [`references/gh-stack-stacking.md`](references/gh-stack-stacking.md).

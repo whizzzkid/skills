@@ -41,6 +41,34 @@ gh extension list | grep -q 'github/gh-stack' \
 - The extension does NOT set the title's stack label — still append the
   `[<feature>-part-N/M]` suffix (see below) to every PR title in the stack.
 
+## Existing-stack conflict recovery
+
+1. Import the remote stack and require a clean worktree:
+
+   ```bash
+   gh stack checkout <top-pr-url>
+   git status --short
+   ```
+
+2. Snapshot stack metadata plus every local branch head before rewriting:
+
+   ```bash
+   gh stack view --json
+   git for-each-ref --format='%(refname:short) %(objectname)' refs/heads
+   ```
+
+3. Run `gh stack rebase`. Resolve one layer at a time, stage only its resolved
+   paths, then run `gh stack rebase --continue`; repeat until complete.
+4. Unsafe or ambiguous resolution → run `gh stack rebase --abort`; confirm every
+   branch matches the snapshot before choosing another strategy.
+5. Verify each lower branch is an ancestor of the next and run the repository's
+   full test/pre-push gate for the rewritten stack.
+6. Run `gh stack push`. It uses per-branch force-with-lease and is non-atomic:
+   a rejected layer can follow successful ones. Re-run after fixing a rejection;
+   never report the stack published until every remote head matches its local head.
+7. For every PR, verify `headRefOid`, a terminal green CI run for that head,
+   review-thread state, and each commit identifier cited in the body.
+
 ## Manual fallback (extension absent or repo not in preview)
 
 - Append the stack label `[<feature>-part-N/M]` as the FINAL title token —
