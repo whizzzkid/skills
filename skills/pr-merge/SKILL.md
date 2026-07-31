@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.31-020644"
+  version: "2026.07.31-052143"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -90,8 +90,15 @@ Extract and record:
 ### Detect stack membership before single-PR gates
 
 - Run `gh stack view --json` after Step 1 and before Step 2.
-- Target belongs to a stack → enumerate every included PR from stack metadata;
-  apply Steps 2–5.5 to each member.
+- Target belongs to a stack → capture its PR-number set, then run
+  `gh stack checkout {url}` and re-run `gh stack view --json`. The PR-URL
+  checkout is the official remote import path; require exact membership parity
+  before gating. A remote-only or local-only member stops the subset path →
+  use the imported topology, re-resolve every member from GitHub, then restart
+  Steps 1–5.5 across the reconciled set. Import failure or remaining divergence
+  is a hard stop. See
+  [`references/2026-07-30_remote-stack-membership-parity.md`](references/2026-07-30_remote-stack-membership-parity.md).
+- Apply Steps 2–5.5 to every reconciled member.
 - Read ruleset `allowed_merge_methods` and verify `gh stack merge --help`
   supports `--yes` plus the selected method.
 - Merge the gated set atomically:

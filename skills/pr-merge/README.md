@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.07.31-020644`
+**Version:** `2026.07.31-052143`
 
 ## Invocation
 
@@ -66,9 +66,10 @@ All five must pass; any failure blocks and reports what needs fixing:
 - **Merge never dispatches [`wk-adversarial-review`](../adversarial-review/README.md)** —
   it reads completion-gate clearance. Missing clearance or genuinely new work
   returns to [`wk-workflow`](../workflow/README.md) Phase 5.5.
-- **Stack membership is detected before single-PR gates** — every member must
-  clear the gates before one atomic `gh stack merge`; an outdated extension
-  blocks instead of silently degrading to sequential merges.
+- **Stack membership is reconciled before single-PR gates** — the local set is
+  refreshed through the official PR-URL checkout path and must match submitted
+  membership; every reconciled member clears the gates before one atomic
+  `gh stack merge`.
 - **Blocked with required checks green still needs a ruleset diff** — a required
   context with no HEAD run is absent from the visible check list, not passing.
 - **Remote state is re-resolved before every post-fix push or merge.** A
