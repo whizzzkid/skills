@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.07.31-023509`
+**Version:** `2026.07.31-184500`
 
 ## Invocation
 
@@ -57,6 +57,8 @@ flowchart TD
   spec pre-flight, new-capability probe, rule-set doc sync probe, tool-swap flag-parity probe,
   and producer-audit probe. A plan the user supplies — or one produced earlier this session —
   is never re-planned: it is validated for stale references, then executed from Phase 2.
+- **Optional cross-repository scope is explicit:** confirm before inspecting or changing a sibling repository, and
+  prefer its runnable devcontainer before proposing task-specific host installs.
 - **The current dedicated task branch is authoritative:** do not propose
   another branch unless the checkout is default, detached, carries unrelated
   dirty work, or the user asks for additional isolation.

@@ -10,8 +10,10 @@ class: principle
   use [`wk-docker`](../../docker/README.md).
 - **Devcontainer-first:** Prefer a runnable `.devcontainer/` over host-native
   runners. Probe before selecting a toolchain; on host failure, check the
-  containerized alternative before repairing the host. Missing documentation
-  does not prove the workflow is absent.
+  containerized alternative before repairing the host. Never install
+  task-specific host packages until the container path is absent or unusable
+  and the user approves the host mutation. Missing documentation does not prove
+  the workflow is absent.
 - **Configuration:** Add permission rules, settings, and MCP servers to
   `$HOME/.claude/settings.json`, not `.claude/settings.local.json`, unless
   intentionally local. Use `--scope user` for MCP servers. Never add MCPs to

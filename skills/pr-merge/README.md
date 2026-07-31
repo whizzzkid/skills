@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.07.31-182006`
+**Version:** `2026.07.31-184507`
 
 ## Invocation
 
@@ -37,7 +37,7 @@ flowchart TD
     F --> G["Step 7: Transition linked ticket to Done"]
     G --> H["Step 8: Output follow-ups and action items"]
     H --> I["Step 9: Capture session retro"]
-    I --> J["Step 10: Clean up worktree<br/>(point of no return — only after<br/>every pending question is answered)"]
+    I --> J["Step 10: Audit remote head<br/>then clean up worktree"]
 ```
 
 ## Checks Before Merge
@@ -76,6 +76,9 @@ All five must pass; any failure blocks and reports what needs fixing:
 - **Remote state is re-resolved before every post-fix push or merge.** A
   concurrent merge skips the mutation and resumes post-merge processing;
   interrupted commands require remote-state verification before retry.
+- **Already merged at entry still audits branch cleanup** — verify the remote head,
+  retain it for open child PRs, or apply the normal deletion preference before
+  removing the local worktree.
 - **Never auto-resolve the author's own self-review threads** — they are
   informational and left open; the Step 6 merge attempt is the ground-truth
   probe of whether branch protection actually counts them.

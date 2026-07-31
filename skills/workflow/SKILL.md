@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.31-023509"
+  version: "2026.07.31-184500"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -86,6 +86,8 @@ Skill(wk-plan, args="<task from session context>")
 ```
 
 - **Plan supplied by the user, or `wk-plan`'s from this session → never re-plan it; supplying it is the approval.** Validate only — references resolve, order still valid, nothing already done — fix stale references in place, then start Phase 2.
+- **Optional sibling-repository work is opt-in.** Confirm before inspecting or changing another repository; adjacency,
+  a possible follow-up, or shared ownership does not expand current task scope.
 - If `wk-plan` surfaced unanswered questions, resolve them before proceeding.
 - **Complex task → advisor:** consult the `advisor` server tool during Phase 1: [`references/advisor-tool.md`](references/advisor-tool.md).
 

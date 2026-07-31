@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.31-182006"
+  version: "2026.07.31-184507"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -74,6 +74,7 @@ Extract and record:
 - `{url}` — PR URL
 - `{body}` — PR description (used in Steps 5 and 8)
 - `{state}` — PR state; `{merge_sha}` — `mergeCommit.oid` when merged
+- `{entered_merged}` — whether the PR was already merged at Step 1; default `false`
 
 - Command exits non-zero (not on a PR branch, no PR) → stop:
   > "No PR found for the current branch. Pass a PR number or URL as an
@@ -82,7 +83,7 @@ Extract and record:
   > "Checking PR #`{number}`: _{title}_ → `{base}`"
 
 - **Already merged → skip to Step 7.** Auto-merge / merge-queue commonly lands the
-  PR before this skill runs. `{state} == "MERGED"` → record `{merge_sha}` from
+  PR before this skill runs. `{state} == "MERGED"` → set `{entered_merged} = true`, record `{merge_sha}` from
   `mergeCommit.oid`, skip Steps 2–6 (CI, review, thread, and action-item gates are
   moot on a merged PR), and resume at Step 7 (ticket transition, follow-ups, retro,
   worktree cleanup). Never attempt to re-merge.
@@ -498,31 +499,21 @@ Follow-ups present → offer once:
 ## Step 10: Clean up the current worktree
 
 - **HARD RULE — worktree cleanup is the point of no return; run it dead last,
-  only after every pending question is answered.** Removing the worktree destroys
-  the branch / PR / local context that filing follow-ups (the Step 8 offer),
-  answering a user digression, or acting on any accepted item depends on — a
-  question raised after cleanup cannot be resolved. Before removing: confirm zero
-  questions are outstanding — the Step 8 follow-up-filing offer is answered and any
-  accepted filing is done. A pending reply blocks cleanup; wait for it, act on the
-  answer, then clean up. Never clean up early to "finish faster".
-- Remove the just-merged worktree with the `git wtr <name>` alias — a one-shot
-  `git worktree remove worktrees/<name>` + `git branch -D <name>`. `<name>` is
-  the PR head branch, which is also the worktree dir name under `worktrees/`:
+  after every question and accepted Step 8 follow-up is resolved.** Removal destroys
+  local context; a pending reply blocks cleanup. Never clean early.
+- `{entered_merged} == true` → audit the remote head; this run never executed
+  `--delete-branch`:
   ```bash
-  # git worktree remove refuses the CURRENT worktree → chdir to main first.
-  main=$(git worktree list --porcelain | awk 'NR==1{print $2}')
-  cd "$main" && git wtr "{head}"
+  gh pr list --repo "$GITHUB_ORG/{repo}" --base {head} --state open --json number,headRefName
+  git ls-remote --heads origin "refs/heads/{head}"
   ```
-- **`git wtr` fails on dirty files → triage before escalating.** Run `git status
-  --short`; if every entry is a recognizable throwaway artifact (test-runner state
-  like rspec last-failures, `tmp/`, coverage output), delete just those files and
-  retry `git wtr` once. Reserve `--force` (and any confirmation ask) for genuine
-  uncommitted work the user might want — never default to `--force`.
-- **Run only from inside a dedicated `worktrees/<name>` checkout.** Skip the
-  step entirely when the merge ran from the repo root — never remove it.
-- The merge is already confirmed (`state == "MERGED"`), so the branch-merged
-  safety check is moot; `git wtr` force-deletes the local branch and Step 6's
-  `--delete-branch` already removed the remote one.
+  - Remote absent → continue.
+  - Remote present + open child based on `{head}` → retain it and report the child.
+  - Remote present + no child → apply Step 6's branch-deletion preference. If unresolved,
+    ask before cleanup. On delete, run `git push origin --delete "{head}"`, re-query,
+    and stop if the ref survives.
+- Remove the local worktree last using
+  [`references/worktree-cleanup.md`](references/worktree-cleanup.md).
 
 ---
 
