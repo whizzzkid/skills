@@ -2,7 +2,7 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
-**Version:** `2026.07.28-171111`
+**Version:** `2026.07.31-015426`
 
 ## Invocation
 
@@ -48,5 +48,8 @@ flowchart TD
   by default, so a throwaway verification script leaves rows the suite never created — wrap the
   probe in an always-rollback transaction or re-prepare the database before the next run, and
   read an unexplained failure in an untouched spec as self-inflicted pollution first.
+- **`activeTab` requires a real browser gesture.** Trigger the extension's
+  browser action or command before gated assertions; direct popup navigation
+  does not grant the permission.
 - Coverage % is explicitly treated as a lagging indicator — CI coverage gate failures must be
   solved by finding the missing behavioral path, never by adding structural tests to touch lines.

@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171111"
+  version: "2026.07.31-015426"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -248,6 +248,20 @@ An interactive verification script run through the framework's runner against th
 - Wrap every probe in an explicit always-rollback transaction, or re-prepare the test database immediately after the probe and before the next suite run.
 - Treat an unexplained failure in a spec the current change does not touch as self-inflicted state pollution **first**, not a regression — leftover rows are indistinguishable from a fixture the suite never created, so the phantom failures read as real ones.
 - The rule covers any out-of-suite write path (console session, seed script, one-off migration), not only a runner invocation.
+
+### Trigger gesture-gated extension permissions through the browser
+
+Before an assertion depends on `activeTab`, trigger the extension's real browser
+action or command through the browser protocol. Direct navigation to an
+extension popup page does not grant `activeTab`; it tests only
+permission-independent popup behavior.
+
+- Assert the gated behavior after the gesture and include a negative case
+  without it.
+- Treat a timeout after direct popup navigation as a setup failure before
+  changing the extension implementation.
+- See [gesture-gated extension
+  tests](references/gesture-gated-extension-tests.md).
 
 ---
 
