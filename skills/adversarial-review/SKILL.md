@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.30-220752"
+  version: "2026.07.31-052514"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -132,7 +132,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.89 | Diff adds or edits a check that reads a field out of a spec/config format | Verify it honours the format's documented inheritance, merging, defaulting, and reference-resolution semantics. A check reading one level where the spec inherits from the enclosing level reports **false** drift on an idiomatic edit (lifting a shared declaration up), blocking a valid commit. In a blocking gate a false positive outranks a false negative — it teaches `--no-verify`. | Blocker | Read the format's spec, not its sample files; add a **positive** control asserting an idiomatic-but-unusual form reports nothing. Pair it with the under-firing control: a catalog that only asks "does the check fire?" never catches "does it fire wrongly?". |
 | 2.90 | Diff adds, or the reviewed code relies on, a conditional skip/exclude guard (`skip … unless <pred>`, tag filter, `skipif`, build-matrix exclude) | Resolve the predicate's operand against the value the **runtime** supplies, not the value its name implies; confirm the guard fires in ≥1 configuration and does *not* fire in ≥1 other. Constant either way is dead. Unlike 2.3 this covers a predicate the diff carries **unchanged**: a never-matching one skips every tagged example on every run while the suite reports green — the examples the tag was added to protect are exactly the ones it disables, and an unread pending count is the only trace. | Blocker | Fix the operand or delete the guard; re-run and assert the example count rises. Always Blocker when the dead direction is "always skip" — that is silent coverage deletion, not a style issue. |
 
-Lower-frequency sweeps (2.9.1, 2.9.2, 2.11, 2.12, 2.13, 2.16, 2.17, 2.18, 2.19, 2.20, 2.21, 2.22, 2.23, 2.25, 2.26, 2.27, 2.28, 2.29, 2.30, 2.31, 2.32, 2.33, 2.34, 2.35, 2.36, 2.37, 2.38, 2.39, 2.41, 2.42, 2.43, 2.44a, 2.44b, 2.44c, 2.45, 2.46, 2.47, 2.48, 2.49, 2.50, 2.51, 2.52, 2.53, 2.54, 2.55, 2.56, 2.57, 2.58, 2.59, 2.60, 2.61, 2.62, 2.63, 2.64, 2.65, 2.66, 2.67, 2.68, 2.69, 2.70, 2.71, 2.72, 2.73, 2.74, 2.75, 2.76, 2.77, 2.78, 2.79, 2.80, 2.81, 2.82, 2.83, 2.84, 2.85, 2.86, 2.87) live in
+Lower-frequency, non-inline sweeps live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
 apply each under the same unconditional rule when its trigger matches.
 

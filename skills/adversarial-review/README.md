@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.07.30-220752`
+**Version:** `2026.07.31-052514`
 
 ## Invocation
 
@@ -16,7 +16,7 @@
 ```mermaid
 flowchart TD
     A[Resolve base branch] --> B[Build diff surface map]
-    B --> C[Run 97 mechanical sweeps]
+    B --> C[Run 98 mechanical sweeps]
     C --> D[Spawn fresh adversarial subagent]
     D --> E[Playground validation]
     E --> F{Verdict}
@@ -37,7 +37,14 @@ flowchart TD
 - **Clearance follows reviewed work, not SHA equality** — tree-identical rewrites
   preserve the record. Finding-response commits get targeted validation; only
   unmatched scope, refactor, or logic triggers a delta-scoped review.
-- **97 mechanical sweeps run unconditionally** before any LLM reasoning (lower-frequency shape-specific sweeps live in `references/sweep-catalog-extended.md`, applied under the same rule), grouped into a compact sweep catalog that preserves security, sibling parity (incl. contract-transfer on copied directives), guard correctness, docs/spec sync (including routing claims vs authoritative reviewer statements and intra-doc struct-field-comment drift), contract widening, same-type-field sanitization symmetry, pipeline forwarding, cross-language stamped-binary contracts (`-ldflags -X`), LLM round-trip field-preservation, LLM-context-payload consumer-prompt sync, log-filter callsite parity, log/output parse and diagnostic-guard correctness (regex edge-case loss, proxy-discriminant branches), test quality (incl. bash-fake branch fall-through and conditional skip-guards whose predicate never matches, silently deleting coverage while the suite reports green), gate exit-status contracts (a verifier whose raise routes to its caller’s non-blocking status, and a check that over-fires because it ignores the format’s documented inheritance), and runtime-portability checks.
+- **98 mechanical sweeps run unconditionally** before LLM reasoning.
+  Lower-frequency shape-specific sweeps live in
+  `references/sweep-catalog-extended.md` under the same rule. The catalog covers
+  security, sibling parity, guard correctness, docs/spec sync, contract
+  widening, pipeline forwarding, cross-language stamped-binary contracts,
+  LLM field preservation, log parsing, gate exit-status contracts,
+  runtime portability, and test quality — including stable identities shared
+  across typed sources and static fixtures.
 - **One dispatch per change** — the completion gate owns the run;
   [`wk-pr-resolve`](../pr-resolve/README.md),
   [`wk-pr-review`](../pr-review/README.md),
