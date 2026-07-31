@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.31-055938"
+  version: "2026.07.31-190739"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -257,12 +257,11 @@ behavior, not just the specific instance.
 Do not return control until all five pass:
 
 1. **Install:**
-   - Preflight every replacement prerequisite before removing active copies; a miss must leave the current
-     installation intact.
-   - Run `cd "$WK_SKILLS_HOME" && scripts/install-skills.sh`; its targets must include the active runtime
-     ([`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md)).
-   - Byte-compare the runtime’s installed `SKILL.md` and every changed reference with repository source;
-     generic success output or any mismatch fails the gate.
+   - Preflight replacements; a missing prerequisite must leave active copies intact.
+   - From `$WK_SKILLS_HOME`, run `scripts/install-skills.sh`; require an active-runtime target.
+   - Byte-compare installed `SKILL.md` and changed references. Missing/mismatch →
+     apply the targeted-copy recovery, then re-compare; a success banner never passes:
+     [`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md).
 2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing. Red result → apply the Step 1 harness-defect rule.
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
    - Blocked after staging → undo the processed rename but preserve the fold index: [`references/commit-gate.md`](references/commit-gate.md).

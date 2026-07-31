@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.31-055938`
+**Version:** `2026.07.31-190739`
 
 ## Invocation
 
@@ -33,7 +33,7 @@ flowchart TD
     P --> Q[Apply edits + bump CalVer version]
     Q --> Q2[Sync skill README + diagram + repo index/docs]
     Q2 --> R[De-bloat pass + size-ceiling check]
-    R --> S["Install for Claude Code + suite + commit + push terminal gate"]
+    R --> S["Install active runtime + suite + commit + push terminal gate"]
     G --> G1[Global learnings inbox $HOME/.claude/skills/learnings/]
     G --> G2[Repo learnings/skills/]
     G --> G3[$HOME/.claude/memory/ feedback type only]
@@ -108,10 +108,11 @@ flowchart TD
   a genuine match**, so rc≥2 can mask a hit that still printed.
 - **Terminal gate** (Step 8) requires all five checks: replacement prerequisites are
   preflighted before active copies are removed, the installer targets the active runtime,
-  installed skill and changed-reference bytes match repository source, the owning skill's test
-  suite runs when the fold touched a shipped executable artifact, commits land, one push, and
-  no modified tracked path — untracked *unprocessed* learnings/retros are expected state, not
-  debris. Silence after edits is a violation.
+  installed skill and changed-reference bytes match repository source, and a missing reference
+  after normal install gets an owning-skill copy refresh before the comparison repeats. The owning
+  skill's test suite runs when the fold touched a shipped executable artifact; commits land, one
+  push, and no modified tracked path — untracked *unprocessed* learnings/retros are expected state,
+  not debris. Silence after edits is a violation.
 - **A signer outage blocks the commit gate and the push gate together.** Over an SSH remote
   the same ssh-agent backs commit signing and push authentication, so one refusal fails both
   Step 8 gates. `Permission denied (publickey)` right after a signing failure is that same
