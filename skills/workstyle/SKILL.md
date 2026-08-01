@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171129"
+  version: "2026.08.01-083042"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -61,15 +61,17 @@ the result. **Every `wk-workstyle-*` sub-skill defers to whatever this
 probe finds** — they reference this step rather than re-running it.
 
 ```bash
-# Style config priority order
-for f in .editorconfig .eslintrc* .eslintrc.{json,js,cjs,yaml,yml} \
-         prettier.config.* .prettierrc* pyproject.toml setup.cfg \
-         .rubocop.yml rubocop.yml .rubocop_todo.yml \
-         .golangci.yml golangci.yml rustfmt.toml .rustfmt.toml \
-         .clang-format .stylelintrc* .stylelintrc.json \
-         .flake8 tox.ini mypy.ini; do
-  [ -f "$f" ] && echo "found: $f"
-done
+# Detect style configs without shell glob expansion.
+find . ! -name . -prune -type f -print |
+  LC_ALL=C sort |
+  while IFS= read -r config_path; do
+    config_name=${config_path#./}
+    case "$config_name" in
+      .editorconfig|.eslintrc*|prettier.config.*|.prettierrc*|pyproject.toml|setup.cfg|.rubocop.yml|rubocop.yml|.rubocop_todo.yml|.golangci.yml|golangci.yml|rustfmt.toml|.rustfmt.toml|.clang-format|.stylelintrc*|.flake8|tox.ini|mypy.ini)
+        echo "found: $config_name"
+        ;;
+    esac
+  done
 ```
 
 - If a config governs a rule, **that config wins**. Do not emit a

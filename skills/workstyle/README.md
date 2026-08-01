@@ -2,7 +2,7 @@
 
 > Code-quality orchestrator for every file the agent writes or edits — runs the style-authority probe, then routes to the `wk-workstyle-*` sub-skills (naming, structure, async, docs, testing, error-handling, per-language). Project linter wins.
 
-**Version:** `2026.07.28-171129`
+**Version:** `2026.08.01-083042`
 
 ## Invocation
 
@@ -82,6 +82,8 @@ flowchart TD
 
 - **Project config is always authoritative.** `.editorconfig`, `.eslintrc`, `.rubocop.yml`, `pyproject.toml`, etc. win on any conflict. Workstyle defaults fill gaps — they never fight the linter.
 - **Step 0 is the single source of truth.** Sub-skills defer to the project-style-authority probe run here rather than re-running it.
+- **Config discovery is shell-neutral.** Step 0 enumerates root files as data, then matches their basenames; an absent
+  optional wildcard family cannot abort the probe before it checks other configs.
 - **Two classes of findings:** auto-fixable (rename, wrap line, add constant, sort imports, add doc stub) are applied silently; judgment-required (restructure logic, add test, extract function) are surfaced as suggestions before the commit lands.
 - **Coverage reminder is non-skippable** (enforced by [`wk-workstyle-testing`](../workstyle-testing/README.md)); **stale comment removal is mandatory** (enforced by [`wk-workstyle-docs`](../workstyle-docs/README.md)).
 - **Complements [`wk-format`](../format/README.md)** — [`wk-format`](../format/README.md) handles whitespace and lint-tool formatting; the [`wk-workstyle`](../workstyle/README.md) family handles naming, patterns, documentation, and structural quality. Both fire before commit.

@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.31-022300"
+  version: "2026.08.01-083049"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -134,7 +134,7 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
     becomes a pattern group matching a literal `N`, so `*.md(N)` silently means "files
     ending `.mdN`". It then reports `no matches found` on a directory full of `.md`
     files, and — worse — matches the *wrong* files with status 0 once a `.mdN` exists.
-    Never let a composed command depend on a glob qualifier or on `nullglob`/`failglob`
+    **Important:** Never let a composed command depend on a glob qualifier or on `nullglob`/`failglob`
     state; enumerate with `find … -print` fed through `while IFS= read -r`, which cannot
     conflate "nothing matched" with "pattern unsupported".
   - **Lowercase `path` is a zsh special array tied to `PATH`.** Never use
