@@ -1,17 +1,59 @@
 # Ticket transition mechanics
 
-Detect ticket references from the PR title, body, and branch name:
+Detect ticket references from the PR title, branch, and body. Before scanning
+the body, strip only the terminal canonical footer from
+[`wk-gh`](../../gh/README.md) Step 4:
 
 ```bash
-# Jira: any [A-Z][A-Z0-9]+-\d+ token
-echo "{title} {branch} {body}" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+'
+body_without_footer="$(
+  awk '
+    { line[NR] = $0 }
+    END {
+      end = NR
+      if (line[end] ~ /^<sup>Generated using \[wk-skills\]\([^)]+\) and multiple agents\/models\. DM me your feedback\.<\/sup>$/) {
+        end--
+        if (end > 0 && line[end] == "---") end--
+        if (end > 0 && line[end] == "") end--
+      }
+      for (i = 1; i <= end; i++) print line[i]
+    }
+  ' < <(printf '%s\n' "$body")
+)"
+```
+
+Do not truncate at the first `---`: PR prose may contain horizontal rules. Only
+the exact terminal footer line and its adjacent separator/blank line are
+metadata.
+
+```bash
+# Jira: boundary-delimited [A-Z][A-Z0-9]+-[0-9]+ tokens only
+awk '
+  {
+    rest = $0
+    while (match(rest, /[A-Z][A-Z0-9]+-[0-9]+/)) {
+      key = substr(rest, RSTART, RLENGTH)
+      before = RSTART > 1 ? substr(rest, RSTART - 1, 1) : ""
+      after = substr(rest, RSTART + RLENGTH, 1)
+      if ((before == "" || before !~ /[[:alnum:]_]/) &&
+          (after == "" || after !~ /[[:alnum:]_]/) &&
+          !seen[key]++) {
+        print key
+      }
+      rest = substr(rest, RSTART + RLENGTH)
+    }
+  }
+' < <(printf '%s\n' "$title" "$branch" "$body_without_footer")
 
 # GitHub issues: closes/fixes/resolves #N annotations
-echo "{body}" | grep -ioE '(closes?|fixes?|resolves?)\s+#[0-9]+'
+printf '%s\n' "$body_without_footer" | grep -ioE '(closes?|fixes?|resolves?)[[:space:]]+#[0-9]+'
 
 # Asana: app.asana.com URLs
-echo "{body}" | grep -oE 'https://app\.asana\.com/[^[:space:]]+'
+printf '%s\n' "$body_without_footer" | grep -oE 'https://app\.asana\.com/[^[:space:]]+'
 ```
+
+The Jira boundary check rejects matches embedded in timestamps, URLs,
+model/version strings, or larger identifiers while preserving keys surrounded
+by punctuation or branch-name separators.
 
 ## Jira tickets
 

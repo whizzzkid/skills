@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.07.31-185349`
+**Version:** `2026.08.01-005023`
 
 ## Invocation
 
@@ -56,7 +56,7 @@ All five must pass; any failure blocks and reports what needs fixing:
 
 | Source | How resolved |
 |--------|-------------|
-| Jira (`[A-Z]+-\d+` or `atlassian.net` URL) | Transition to terminal state via Jira MCP; post shipped comment |
+| Jira (boundary-delimited key; footer removed) | Jira MCP transition + shipped comment |
 | GitHub issue (`Closes #N` annotation) | `gh issue close` with merge-commit reference |
 | Asana / other | Noted as limitation — user must close manually |
 
@@ -87,3 +87,6 @@ All five must pass; any failure blocks and reports what needs fixing:
 - **Jira auto-close does not happen via `Closes #N`** — GitHub's
   auto-close only works for GitHub Issues. Jira always needs an
   explicit transition call.
+- **Ticket detection ignores outbound metadata** — strip only the terminal
+  canonical [`wk-gh`](../gh/README.md) footer, then require key boundaries so
+  timestamps, URLs, versions, and larger identifiers cannot become tickets.
