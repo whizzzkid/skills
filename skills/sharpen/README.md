@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.07.31-190739`
+**Version:** `2026.08.01-010612`
 
 ## Invocation
 
@@ -97,9 +97,10 @@ flowchart TD
   proposed text.
 - **Run the hooks, never reimplement their matcher** — a hook's pattern file carries `#`
   comments and PCRE inline flags that a hand-rolled `grep -iEf` turns into either false noise
-  or a false-clean, so the scan executes `.githooks/*.sh` against the staged index. Two
-  scans stay hand-rolled: staged **path strings** (every content hook greps the diff and
-  commit message but never filenames) and the **overfit category** scan over drafted text.
+  or a false-clean. Prove the non-empty staged set exactly matches intended paths, then run
+  every hook and aggregate failures into a non-zero status. Two scans stay hand-rolled:
+  staged **path strings** (content hooks never scan filenames) and the **overfit category**
+  scan over drafted text.
 - **The verdict protocol binds the construction, not the named scan.** A discipline written
   for one scan does not travel to a sibling of the same shape, even inside the same step —
   so *every* hand-rolled scan uses one quoted path per `grep` and branches its verdict on

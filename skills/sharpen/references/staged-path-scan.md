@@ -84,6 +84,15 @@ inherit everything below. Scope the discipline to the construction, never to the
 **Never reimplement an owning hook's matcher** — run the script itself against the staged
 index:
 
+- **Prove the staged input before invoking hooks.** Run index setup fail-fast,
+  then require a non-empty staged path list exactly equal to the intended set.
+  A staging error, empty set, or mismatch stops before the hook loop; every hook
+  passing against the wrong index is no verdict.
+- Aggregate hook failures into a non-zero final status. Printing `FAIL` while
+  continuing is diagnostics, not enforcement.
+- For a partitioned real index, use the exact-union throwaway procedure in
+  [`byte-budget.md`](byte-budget.md).
+
 - A hook's pattern file is the script's **private config** — often gitignored, so comment
   style and matcher constructs (PCRE `(?i)`) vary per checkout. A hand-rolled `grep -iEf`
   then returns a silent NONE — rc=1, no stderr — on a term the hook flags.

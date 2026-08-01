@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.07.31-190739"
+  version: "2026.08.01-010612"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -174,10 +174,18 @@ behavior, not just the specific instance.
 - Apply replacement maps longest-first.
 - Reject ticket-shaped example tokens: case-sensitive grep (never `-i`) for `[A-Z][A-Z0-9]+-\d+`, replace with `<KEY>` or the repo's `BOARD-NUM` form — [`references/ticket-shaped-example-tokens.md`](references/ticket-shaped-example-tokens.md).
 - When the user calls out an overfit, audit the whole cohort for the same pattern.
-- **HIGH-PRIORITY — run the owning hook scripts against the staged index; never reimplement their matcher.** A hand-rolled verdict binds in **neither** direction — reconcile it against the owning hook's: [`references/staged-path-scan.md`](references/staged-path-scan.md). Run every hook after staging → real gate semantics, no synthetic probe:
+- **HIGH-PRIORITY — prove the non-empty staged set exactly matches intended
+  paths before hooks.** Staging error, empty index, or mismatch → stop; hook
+  passes on wrong input are no verdict.
+- Run every owning hook; never reimplement its matcher. Aggregate any failure
+  into a non-zero status: [`references/staged-path-scan.md`](references/staged-path-scan.md).
 
   ```bash
-  for h in .githooks/check-*.sh .githooks/scrub-staged.sh; do "$h" || echo "FAIL: $h"; done
+  failed=0
+  for h in .githooks/check-*.sh .githooks/scrub-staged.sh; do
+    "$h" || { echo "FAIL: $h"; failed=1; }
+  done
+  [ "$failed" -eq 0 ]
   ```
 
   - **Index already holds another run's fold → never `git add` yours into it.** Throwaway-index procedure: [`references/byte-budget.md`](references/byte-budget.md).

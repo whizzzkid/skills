@@ -36,10 +36,34 @@ env-tunable, so a deliberate exception needs no hook edit):
   come first.
 
   ```bash
-  P="${TMPDIR:-/tmp}/probe-index"; cp .git/index "$P"; export GIT_INDEX_FILE="$P"
-  git add <paths>; for h in .githooks/check-*.sh; do "$h" || echo "FAIL: $h"; done
-  unset GIT_INDEX_FILE   # else every later git call silently uses the copy
+  set -euo pipefail
+  new_paths=("$skill_path" "$readme_path" "$reference_path" "$learning_path")
+  expected="$(
+    {
+      git diff --cached --name-only
+      printf '%s\n' "${new_paths[@]}"
+    } | sed '/^$/d' | LC_ALL=C sort -u
+  )"
+  P="$(mktemp "${TMPDIR:-/tmp}/probe-index.XXXXXX")"
+  cp .git/index "$P"
+  export GIT_INDEX_FILE="$P"
+  trap 'unset GIT_INDEX_FILE; rm -f "$P"' EXIT INT TERM
+  git add "${new_paths[@]}"
+  actual="$(git diff --cached --name-only | LC_ALL=C sort -u)"
+  [[ -n "$actual" && "$actual" == "$expected" ]] || {
+    echo "staged set mismatch" >&2
+    exit 1
+  }
+  failed=0
+  for h in .githooks/check-*.sh .githooks/scrub-staged.sh; do
+    "$h" || failed=1
+  done
+  [[ "$failed" -eq 0 ]]
   ```
+
+  `expected` is the exact union of the real index's pre-existing paths and the
+  current fold's paths. `set -e` makes copy/export/staging failure terminal;
+  the explicit comparison prevents a hook pass over an empty or partial index.
 
   The same copy serves the Step 5 hook run, so one index copy covers both gates.
 
