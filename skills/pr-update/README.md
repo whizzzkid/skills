@@ -1,9 +1,10 @@
 # wk-pr-update
 
-> Bring a PR branch up to date with its base using the right integration strategy — rebase for small branches,
-> patch-replay for large ones — with conflict resolution, re-validation, and force-with-lease push.
+> Bring a PR branch up to date with its base using merge by default,
+> patch-replay for a large draft, or rebase on explicit opt-in — with conflict
+> resolution, re-validation, and remote-history-safe publishing.
 
-**Version:** `2026.07.28-171058`
+**Version:** `2026.08.01-011134`
 
 ## Invocation
 
@@ -22,29 +23,38 @@ stateDiagram-v2
     DetectBase --> AlreadyUpToDate: BEHIND == 0
     AlreadyUpToDate --> [*]
     DetectBase --> ChooseStrategy: BEHIND > 0
-    ChooseStrategy --> Rebase: AHEAD < 5
-    ChooseStrategy --> PatchReplay: AHEAD >= 5
+    ChooseStrategy --> Merge: default or ready PR
+    ChooseStrategy --> Rebase: explicit linear history
+    ChooseStrategy --> PatchReplay: draft and AHEAD >= 5
+    Merge --> ConflictLoop: conflicts
     Rebase --> ConflictLoop: conflicts
     PatchReplay --> ConflictLoop: patch fails
+    Merge --> ReValidate: clean
     Rebase --> ReValidate: clean
     PatchReplay --> ReValidate: applied
     ConflictLoop --> ReValidate: resolved
     ConflictLoop --> Reset: unresolvable
     Reset --> [*]
-    ReValidate --> SyncPR: tests pass
+    ReValidate --> Push: tests pass
     ReValidate --> Reset: regression + user aborts
-    SyncPR --> Push: description synced
-    Push --> Report
+    Push --> MergeRemote: non-fast-forward after merge
+    MergeRemote --> ConflictLoop: conflicts
+    MergeRemote --> ReValidate: merged cleanly
+    Push --> SyncPR: success
+    SyncPR --> Report
     Report --> [*]
 ```
 
 ## Noteworthy
 
-- **Two strategies with a 5-commit threshold:** Rebase preserves per-commit history for small branches;
-  patch-replay produces one integration commit for large branches (original commits listed in the body for
-  traceability). The user can override the heuristic.
-- **HARD RULE — `--force-with-lease` only:** `--force` alone silently loses concurrent contributor work.
-  `--force-with-lease` aborts if the remote moved; never escalate to plain `--force`.
+- **Merge is the default:** It preserves commit SHAs and review anchors. A large
+  draft may use patch-replay; rebase requires explicit linear-history opt-in.
+- **Push mode follows strategy:** Merge uses normal `git push`. Rebase and
+  patch-replay rewrite history and therefore use `--force-with-lease`; plain
+  `--force` is forbidden.
+- **A remote advance after the local merge is integrated, not overwritten:**
+  Fetch and inspect the remote-only commits, merge the fetched SHA, rerun the
+  full validation stage, then retry a normal push.
 - **Behavior-preservation check supplements test passing:** After integration, every removed line is scanned
   for env lookups, fallback chains, rescue clauses, and guards. Tests passing proves new paths work; this
   scan proves old paths weren't silently dropped.
@@ -52,5 +62,6 @@ stateDiagram-v2
   rather than stashing changes on the user's behalf — that mutation is outside the autonomy budget.
 - **Invoked by [`wk-pr-resolve`](../pr-resolve/README.md) Step 2:** Rather than inline merge/rebase logic, [`wk-pr-resolve`](../pr-resolve/README.md) delegates
   base-branch integration here so the strategy heuristics and safety nets apply consistently everywhere.
-- **[`wk-refactor`](../refactor/README.md) fires after every successful rebase/replay:** Immediately after integration, the refactor
-  audit runs to catch behavior that was dropped by conflict resolution before the PR is pushed.
+- **[`wk-refactor`](../refactor/README.md) fires after every successful
+  integration:** Immediately after integration, the refactor audit runs to catch
+  behavior that was dropped by conflict resolution before the PR is pushed.

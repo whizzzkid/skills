@@ -3,7 +3,7 @@ name: wk-pr-update
 description: >-
   Update a PR branch with the latest from its base — merge by default (no
   force-push), patch-replay when ≥5 commits ahead, rebase only on explicit
-  opt-in; resolves conflicts, re-validates, syncs the description, pushes.
+  opt-in; resolves conflicts, re-validates, pushes, then syncs the description.
   Use for "update PR", "merge in main", "sync with base", or a CI
   base-branch conflict.
 argument-hint: '[<base-branch>]'
@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171058"
+  version: "2026.08.01-011134"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -44,11 +44,21 @@ Bring a PR branch up to date with its base → right integration strategy
 for the branch's size, conflicts resolved interactively, work re-validated
 after integration.
 
-```
-Pre-flight ──► Detect base ──► Choose strategy
-                                  ├─ <5 commits → rebase
-                                  └─ ≥5 commits → patch-replay
-              Resolve conflicts ──► Re-validate ──► Sync PR ──► Push
+```mermaid
+flowchart TD
+    A["Stage 0: Pre-flight"] --> B["Stage 1: Detect and fetch base"]
+    B --> C{"Stage 2: Choose strategy"}
+    C -->|"default or ready PR"| M["Stage 3a: Merge base"]
+    C -->|"explicit linear history"| R["Stage 3b: Rebase"]
+    C -->|"draft and at least 5 commits"| P["Stage 3c: Patch-replay"]
+    M --> D{"Conflicts?"}
+    R --> D
+    P --> D
+    D -->|yes| E["Stage 4: Resolve conflicts"]
+    D -->|no| V["Stage 5: Re-validate"]
+    E --> V
+    V --> U["Stage 6: Push, reconcile remote advance, sync PR"]
+    U --> O["Stage 7: Report"]
 ```
 
 ---
@@ -189,7 +199,19 @@ Auto mode picks the heuristic without prompting.
 
 ---
 
-## Stage 3a: Rebase strategy (`$AHEAD < 5`)
+## Stage 3a: Merge strategy (default)
+
+```bash
+git merge "$BASE_REF"
+```
+
+- Merge conflicts → enter Stage 4. Clean merge → enter Stage 5.
+- Record `strategy=merge`; Stage 6 uses a normal push and preserves both local
+  and remote history if the remote branch advances before that push.
+
+---
+
+## Stage 3b: Rebase strategy (explicit opt-in)
 
 ```bash
 git rebase "$BASE_REF"
@@ -237,7 +259,7 @@ git rebase --onto <newbase> <oldbase> <branch> --update-refs
 
 ---
 
-## Stage 3b: Patch-replay strategy (`$AHEAD ≥ 5`)
+## Stage 3c: Patch-replay strategy (`$AHEAD ≥ 5`)
 
 Goal: land the branch's **net diff** on the new base as a single integration commit,
 preserving traceability to the original commits.
@@ -294,8 +316,8 @@ picking "force rebase."
 
 ## Stage 4: Conflict resolution loop
 
-Rebasing or patch-applying, conflicts surface the same way — files with `<<<<<<<`
-markers, `git status` listing "both modified."
+Merging, rebasing, or patch-applying surfaces conflicts the same way — files
+with `<<<<<<<` markers, `git status` listing "both modified."
 
 ```bash
 git status --short | grep '^UU\|^AA\|^DD'
@@ -320,8 +342,10 @@ and `git diff --check` finds nothing because the file is already staged.
 
 For each conflicted file:
 
-1. **Read** both sides (`<<<<<<< HEAD` is base; `>>>>>>> <branch>` is the branch's
-   version during rebase, or the patch during patch-replay).
+1. **Read** both sides. Marker labels change meaning by operation: during a
+   merge, `HEAD` is the current branch; during a rebase, `HEAD` is the replay
+   target; during patch-replay, the other side is the patch. Inspect the named
+   refs or index stages instead of assuming one label always means "base."
 2. **Decide** the resolution. Prefer keeping the branch's intent (the work being
    integrated is why the PR exists) unless the base change supersedes it (e.g. file
    renamed on base → apply the branch's edits to the new filename).
@@ -347,13 +371,16 @@ meaningful pauses and asks:
 
 After all files are resolved:
 
+- **Merge:** `git merge --continue`. Proceed to Stage 5 after the integration
+  commit is created.
 - **Rebase:** `git rebase --continue`. Loop if more conflicts.
 - **Patch-replay:** working tree now has a clean diff → proceed to the integration
-  commit (Stage 3b step 4).
+  commit (Stage 3c step 4).
 
 Conflicts too tangled to resolve cleanly → **abort** and restore the starting state:
 
 ```bash
+git merge --abort 2>/dev/null
 git rebase --abort 2>/dev/null
 git reset --hard "$START_SHA"
 ```
@@ -458,11 +485,47 @@ suite.
 
 ---
 
-## Stage 6: Sync PR description and push
+## Stage 6: Push and sync PR description
 
-Branch is now correct; align the PR with reality.
+Branch is now correct; publish without dropping a concurrent remote advance,
+then align the PR with the pushed state.
 
-### Sync the PR
+### Push
+
+- **Merge strategy → normal push.** Never force-push a merge-style branch:
+
+  ```bash
+  git push
+  ```
+
+- **Non-fast-forward after a local integration commit → fetch, inspect, merge,
+  and re-validate.** The remote may have gained another contributor's commit or
+  an automated base merge after Stage 1. Preserve both histories:
+
+  ```bash
+  git fetch origin "$BRANCH"
+  REMOTE_SHA=$(git rev-parse FETCH_HEAD)
+  git log --left-right --oneline HEAD..."$REMOTE_SHA"
+  git merge "$REMOTE_SHA"
+  ```
+
+  Bind the comparison and merge to `FETCH_HEAD`'s resolved SHA; an explicit
+  single-branch fetch does not guarantee that `origin/$BRANCH` moved. Inspect
+  the left/right log before merging. Unexpected remote scope → stop and surface
+  it. Conflict → Stage 4. Clean merge or resolved conflict → rerun all of Stage
+  5, then retry a normal `git push`; pre-remote validation does not carry
+  forward. Never switch to `--force-with-lease` to bypass the remote commits.
+- **Rebase or patch-replay strategy → rewritten history.** Push with a lease:
+
+  ```bash
+  git push --force-with-lease
+  ```
+
+  Lease rejection means the remote advanced → fetch and restart from Stage 1.
+  Never escalate to `--force` or merge the pre-rewrite remote history back into
+  a deliberately rewritten branch.
+
+### Sync the PR after the push
 
 Invoke the PR Sync flow from `wk-commit` (HARD RULE: post-push, PR title and body must
 reflect the post-push branch state). For patch-replay specifically, also update:
@@ -473,18 +536,8 @@ reflect the post-push branch state). For patch-replay specifically, also update:
   ticked test-plan checkboxes) — **HARD RULE:** preserve verbatim per
   `skills/pr/references/pr-description-metadata.md`.
 
-### Push
-
-```bash
-git push --force-with-lease
-```
-
-`--force-with-lease` aborts if the remote has commits the local branch doesn't know
-about (someone else pushed concurrently). On abort, fetch and re-run the skill — never
-escalate to `--force`.
-
 No PR yet (skill ran on a local branch) → skip the sync step and stop after the
-validated rebase/replay — the user wanted "update", not "create".
+validated integration — the user wanted "update", not "create".
 
 ---
 
