@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.31-184500"
+  version: "2026.08.01-081834"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -183,6 +183,11 @@ Verification:
 - Full pre-push gate passes before any `git push`; inspect hook config to enumerate every gate.
 - Re-run every gate against final HEAD, not a mid-session snapshot.
 - Validate transformations with a formerly-failing input.
+- **Default-branch-only producers:** Run the pinned producer in an isolated repository or controlled live canary
+  before merge.
+- Feed exact generated files and mutable metadata through every downstream required check; a post-merge-only caveat
+  is a blocker, not a waiver.
+- Keep the deliverable incomplete until the first live generated artifact passes its required CI.
 - **A fast/narrow check is never the authoritative gate.** A pre-commit hook may lint a narrower file set than the full CI-mirroring check — run the full gate before claiming lint/format clean.
 - **Dependent verification fails fast.** Run an expected-red proof and its later green gate in separate tool calls. If they must share one shell command, begin it with `set -euo pipefail`; never launch the green gate after the expected-red proof exits non-zero.
 - **Important — never take a verdict from `$?` after a pipe.** After `a | b` it is `b`'s status, and a limiter (`head`/`tail`/`sort`/`wc`) always succeeds — so `check | tail` pins the verdict to 0 whatever the check found — a false clean or a false hit, set by the guard's polarity. Run the check bare, or redirect its output to a file and read `$?`. `${PIPESTATUS[0]}` is bash-only and expands empty under zsh (`wk-workstyle-shell` owns that trap) — never reach for it to keep the pipe.
