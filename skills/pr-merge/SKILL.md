@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.01-005023"
+  version: "2026.08.01-005952"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -376,8 +376,9 @@ gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
 - Detect ticket references from title, branch, and PR body after stripping only
   the terminal canonical footer from [`wk-gh`](../gh/README.md) Step 4; never
   truncate at an arbitrary `---`.
-- Require non-alphanumeric boundaries around ticket keys. A substring inside a
-  URL, timestamp, model/version, or larger identifier is metadata, not a ticket.
+- Require boundaries that are neither alphanumeric, underscores, nor percent
+  signs around ticket keys. A substring inside a URL, timestamp, encoded
+  fragment, model/version, or larger identifier is metadata, not a ticket.
 - Transition Jira and GitHub tickets; surface manual fallbacks for unavailable
   Jira connectors and Asana. No ticket found → note it and continue.
 - Follow [`references/ticket-transition.md`](references/ticket-transition.md)

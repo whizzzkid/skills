@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.08.01-005023`
+**Version:** `2026.08.01-005952`
 
 ## Invocation
 
@@ -88,5 +88,6 @@ All five must pass; any failure blocks and reports what needs fixing:
   auto-close only works for GitHub Issues. Jira always needs an
   explicit transition call.
 - **Ticket detection ignores outbound metadata** — strip only the terminal
-  canonical [`wk-gh`](../gh/README.md) footer, then require key boundaries so
-  timestamps, URLs, versions, and larger identifiers cannot become tickets.
+  canonical [`wk-gh`](../gh/README.md) footer, then reject alphanumeric,
+  underscore, and percent-sign adjacency so encoded fragments, timestamps,
+  URLs, versions, and larger identifiers cannot become tickets.

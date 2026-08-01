@@ -34,8 +34,8 @@ awk '
       key = substr(rest, RSTART, RLENGTH)
       before = RSTART > 1 ? substr(rest, RSTART - 1, 1) : ""
       after = substr(rest, RSTART + RLENGTH, 1)
-      if ((before == "" || before !~ /[[:alnum:]_]/) &&
-          (after == "" || after !~ /[[:alnum:]_]/) &&
+      if ((before == "" || before !~ /[[:alnum:]_%]/) &&
+          (after == "" || after !~ /[[:alnum:]_%]/) &&
           !seen[key]++) {
         print key
       }
@@ -51,9 +51,9 @@ printf '%s\n' "$body_without_footer" | grep -ioE '(closes?|fixes?|resolves?)[[:s
 printf '%s\n' "$body_without_footer" | grep -oE 'https://app\.asana\.com/[^[:space:]]+'
 ```
 
-The Jira boundary check rejects matches embedded in timestamps, URLs,
-model/version strings, or larger identifiers while preserving keys surrounded
-by punctuation or branch-name separators.
+The Jira boundary check rejects matches embedded in timestamps, URLs, encoded
+fragments, model/version strings, or larger identifiers while preserving keys
+surrounded by ordinary punctuation or branch-name separators.
 
 ## Jira tickets
 
