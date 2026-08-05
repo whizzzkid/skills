@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.31-000814"
+  version: "2026.08.05-214850"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
