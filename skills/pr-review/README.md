@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.07.31-193315`
+**Version:** `2026.08.05-213325`
 
 ## Invocation
 
@@ -39,6 +39,9 @@ flowchart TD
   validation (runtime matrix, mutation testing, standalone upstream-source harness, producer/consumer, cluster,
   interface-contract, allowlist, and doc/prose/compression checks). pr-review consumes its structured findings
   and verdict rather than re-deriving them — the verdict is advisory, never a block.
+- **Optional reviewer systems require current-task opt-in:** Existing
+  CI-triggered output is consumed as evidence; no fresh optional local or
+  external model review starts without an explicit user request.
 - **HARD RULE — never submit without explicit user confirmation:** The pending review is created after the
   Phase 4 summary unless the user explicitly pauses; the user still submits it from the GitHub UI.
 - **Bot findings are validated before reply:** Every active bot comment is routed through the adversarial engine

@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.31-193315"
+  version: "2026.08.05-213325"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -59,6 +59,14 @@ into encouraging but critical inline comments posted as a pending GitHub review.
   **not** skip the footer; omitting the footer is a rule violation, not a fallback.
 - Append the extracted canonical outbound footer to the review body and every
   inline comment.
+
+### HARD RULE — optional reviewers require current-task opt-in
+
+- Never launch an optional local/external model reviewer unless the user
+  requests it in this task. Existing CI output is evidence, not authorization
+  for a fresh run.
+- Phase-owned dispatches below remain mandatory: `wk-adversarial-review`,
+  `wk-arch-review`, and `wk-design-review`.
 
 ## Phase 1: Context
 
