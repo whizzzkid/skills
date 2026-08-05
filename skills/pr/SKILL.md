@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.07.31-000443"
+  version: "2026.08.05-211958"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -58,6 +58,9 @@ ensures quality before marking ready.
    **Unconditional — independent of every other gate.** A "skip the review"
    instruction waives only Rule 2's review; it never disables `wk-gh` routing or
    the footer.
+   **Markdown body safety:** use a single-quoted heredoc delimiter (`<<'EOF'`).
+   Before and after each write, require expected literal markers and reject an
+   empty, implausibly short, or shorter-than-submitted server body.
 1. **Preserve PR body metadata across description rewrites.** Before
    overwriting the PR description, preserve metadata lines — see
    `skills/pr/references/pr-description-metadata.md`.

@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.07.31-000443`
+**Version:** `2026.08.05-211958`
 
 ## Invocation
 
@@ -68,6 +68,8 @@ flowchart TD
   from and links it (anchored to the phase) under `## Meta` — a vision/spec link is not a substitute.
 - **PR template detection:** Repo `.github/pull_request_template.md` takes precedence over the hardcoded
   fallback template. Every section must be populated — no placeholders left behind.
+- **Markdown bodies use quoted heredocs:** preserve backticks literally, then verify expected markers and body length
+  both before the write and in the server-returned PR body.
 - **Jira key suffix is auto-injected:** The title gets `[BOARD-NUM]` appended from the branch name or latest
   commit if a key is found, preventing [`wk-jira`](../jira/README.md) from needing to patch a keyless title post-creation.
 - **PR description metadata is preserved:** Before any description rewrite, metadata lines (automation blocks,
