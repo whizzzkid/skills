@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-211742"
+  version: "2026.08.05-212927"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -38,7 +38,9 @@ Master orchestration for development tasks. Phases run in ascending order; follo
 
 ### HARD RULE — live learning capture
 
-- Invoke [`wk-learn`](../learn/README.md) before ending the response that handles a correction or self-caught error.
+- **Important:** Invoke [`wk-learn`](../learn/README.md) immediately when a
+  user correction, scope redirect, or self-caught error occurs — before
+  continuing the task or ending that response.
 - Invoke it after every skill run; never ask or offer. Phase 8 retro only verifies live capture.
 
 ### Autonomy Rules
