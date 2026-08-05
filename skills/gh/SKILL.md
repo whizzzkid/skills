@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.01-101512"
+  version: "2026.08.05-211540"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -344,6 +344,9 @@ Footer placement rules:
 - When editing an existing PR body that already contains this
   footer, do not duplicate it — re-emit the body with the footer
   appearing exactly once at the end.
+- **Post-write gate for PR bodies:** re-fetch the server-returned body and rerun
+  footer placement validation. Generated reference metadata after the footer →
+  preserve it before the footer, submit once more, then re-fetch; recurrence stops.
 
 Exceptions:
 

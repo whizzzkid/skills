@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.08.01-101512`
+**Version:** `2026.08.05-211540`
 
 ## Invocation
 
@@ -61,6 +61,8 @@ flowchart TD
 - **Point-in-time footer link:** The canonical outbound footer's
   [wk-skills](https://github.com/whizzzkid/skills) link pins to `tree/main@%7B<UTC>%7D` — a render-time UTC
   timestamp — so readers see the skills as they were when the message posted, not moving HEAD.
+- **PR-body footer placement is server-verified:** after create/edit, re-fetch the returned body and rerun the footer
+  gate; generated reference metadata is preserved before the final footer, with one bounded corrective resubmission.
 - **Rollup union rules sit in their own section:** `Reading statusCheckRollup` is placed ahead of the `--watch`
   guidance and applies to every consumer — the watch subcommand, a hand-rolled `until` poll, or a one-shot readiness
   check. CheckRun nodes carry `.status`/`.conclusion`; commit Status nodes carry `.state` with `.status == null`, so a
