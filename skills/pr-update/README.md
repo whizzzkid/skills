@@ -4,7 +4,7 @@
 > patch-replay for a large draft, or rebase on explicit opt-in — with conflict
 > resolution, re-validation, and remote-history-safe publishing.
 
-**Version:** `2026.08.01-011134`
+**Version:** `2026.08.05-213127`
 
 ## Invocation
 
@@ -55,6 +55,9 @@ stateDiagram-v2
 - **A remote advance after the local merge is integrated, not overwritten:**
   Fetch and inspect the remote-only commits, merge the fetched SHA, rerun the
   full validation stage, then retry a normal push.
+- **Sequential identifiers are reconciled before integration:** Compare new
+  allocations on both histories and move the branch-owned artifact to the next
+  free identifier before textual conflict resolution.
 - **Behavior-preservation check supplements test passing:** After integration, every removed line is scanned
   for env lookups, fallback chains, rescue clauses, and guards. Tests passing proves new paths work; this
   scan proves old paths weren't silently dropped.

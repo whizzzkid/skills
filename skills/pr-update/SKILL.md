@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.01-011134"
+  version: "2026.08.05-213127"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -77,6 +77,8 @@ flowchart TD
 6. **All GitHub reads/writes route through `wk-gh`.** Org scoping per `wk-gh` Step 1–2;
    PR-body sync emits the canonical outbound footer per `wk-gh` Step 4 once at the end
    of the body — never duplicated.
+7. **Detect sequential identifier collisions before integration.** Compare new
+   allocations on both histories; never leave a same-ID conflict for the merge.
 
 ---
 
@@ -134,6 +136,20 @@ echo "Branch $BRANCH is $AHEAD ahead, $BEHIND behind $BASE."
 
 If `$BEHIND` is 0, branch is already up to date — exit early with a one-line note.
 Otherwise continue to strategy selection.
+
+### Sequential identifier collision pre-flight
+
+Before Stage 2, compare artifacts introduced on each side since the merge base
+for every repository-wide sequential namespace: architecture decisions,
+migrations, schema identifiers, and the repository's equivalents.
+
+- Same identifier allocated to different artifacts → rename the branch-owned
+  artifact to the next free identifier across both histories.
+- Reconcile filenames, headings, links, indexes, and inline references before
+  integration; commit the atomic rename via `wk-commit`, then run merge,
+  rebase, or patch-replay from a clean tree.
+- Ownership ambiguous → stop and ask which artifact may move; do not resolve by
+  taking one side of the later textual conflict.
 
 ### Merge-aware `$AHEAD` recomputation
 
