@@ -57,7 +57,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.08.05-053602"
+  version: "2026.08.05-055312"
   model:
     openai: gpt-5.6-terra
 ---
@@ -152,8 +152,8 @@ recipes: [`references/bootstrap.md`](references/bootstrap.md).
 
 ### Stage 0.5: Close unfinished prior day
 
-- **HARD RULE — close before overwrite.** Prior `date:` + no completed-end
-  marker → run the full `end` flow for that date before Stage 1; failure stops
+- **HARD RULE — close before overwrite.** Prior `date:` + no valid completed-end
+  state → run the full `end` flow for that date before Stage 1; failure stops
   `start`.
 - Marker, legacy detection, date rebinding, retry, and restoration:
   [`references/missed-end-rollover.md`](references/missed-end-rollover.md).

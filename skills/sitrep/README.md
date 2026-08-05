@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.08.05-053602`
+**Version:** `2026.08.05-055312`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
