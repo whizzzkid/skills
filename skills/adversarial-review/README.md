@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.08.05-193323`
+**Version:** `2026.08.05-194132`
 
 ## Invocation
 
@@ -43,7 +43,8 @@ flowchart TD
   security, sibling parity, guard correctness, docs/spec sync, contract
   widening, pipeline forwarding, cross-language stamped-binary contracts,
   LLM field preservation, log parsing, gate exit-status contracts,
-  runtime portability, canonical numeric-text parsing, and test quality —
+  runtime portability, CI-first build-label derivation, canonical numeric-text
+  parsing, and test quality —
   including stable identities shared across typed sources and static fixtures,
   deterministic browser-profile parity across sibling harnesses, and bounded
   port-handoff recovery. Signature changes also trigger whole-repo stub and
