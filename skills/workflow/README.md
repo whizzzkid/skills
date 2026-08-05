@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.08.05-213855`
+**Version:** `2026.08.05-214100`
 
 ## Invocation
 
@@ -48,6 +48,10 @@ flowchart TD
   Phase 8 only audits that capture.
 - **No opt-out, no size exemption** — "this is small" and "just a quick fix" are explicitly
   named red flags. If a diff will be produced, the full workflow applies.
+- **Format skills run before their first matching edit:** Phase 2 enumerates
+  planned file types and invokes [`wk-markdown`](../markdown/README.md),
+  [`wk-mermaid`](../mermaid/README.md), or another applicable format owner before
+  patching that content.
 - **Skill invocation is mandatory** via the `Skill` tool — approximating skill behavior with
   raw commands skips guards and conventions that the skills contain.
 - **Progressive disclosure:** the skill is debloated under 500 lines. Phase 1 delegates to

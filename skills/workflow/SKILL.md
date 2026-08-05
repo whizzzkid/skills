@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-213855"
+  version: "2026.08.05-214100"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -105,6 +105,10 @@ Before the first Edit/Write, confirm cwd is the intended worktree:
 git rev-parse --abbrev-ref HEAD
 ```
 
+Before the first patch, invoke format owners for planned content (`.md` →
+[`wk-markdown`](../markdown/README.md); Mermaid →
+[`wk-mermaid`](../mermaid/README.md)). Post-edit invocation is too late.
+
 Execute the plan step by step. After each step:
 
 1. Run tests.
@@ -193,11 +197,9 @@ Verification:
 - **User-loadable artifact handoff:** run every gate that writes its directory first; build and validate the
   deliverable last.
 - Validate transformations with a formerly-failing input.
-- **Default-branch-only producers:** Run the pinned producer in an isolated repository or controlled live canary
-  before merge.
-- Feed exact generated files and mutable metadata through every downstream required check; a post-merge-only caveat
-  is a blocker, not a waiver.
-- Keep the deliverable incomplete until the first live generated artifact passes its required CI.
+- **Default-branch-only producers:** apply
+  [`generated-artifact acceptance`](references/2026-08-01_generated-artifact-acceptance.md);
+  a post-merge-only caveat is a blocker, not a waiver.
 - **A fast/narrow check is never the authoritative gate.** A pre-commit hook may lint a narrower file set than the full CI-mirroring check — run the full gate before claiming lint/format clean.
 - **Dependent verification fails fast.** Run an expected-red proof and its later green gate in separate tool calls. If they must share one shell command, begin it with `set -euo pipefail`; never launch the green gate after the expected-red proof exits non-zero.
 - **Important — never take a verdict from `$?` after a pipe.** After `a | b` it is `b`'s status, and a limiter (`head`/`tail`/`sort`/`wc`) always succeeds — so `check | tail` pins the verdict to 0 whatever the check found — a false clean or a false hit, set by the guard's polarity. Run the check bare, or redirect its output to a file and read `$?`. `${PIPESTATUS[0]}` is bash-only and expands empty under zsh (`wk-workstyle-shell` owns that trap) — never reach for it to keep the pipe.
