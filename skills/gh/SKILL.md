@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.07.31-183537"
+  version: "2026.08.01-101512"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -65,7 +65,8 @@ honor Step 1–2 scoping but skip Step 4 (no body to footer).
 ## Step 1: Check for $GITHUB_ORG
 
 Run `echo "${GITHUB_ORG:?}"` before any `gh` command.
-- **Missing/empty:** STOP — prompt the user to run `export GITHUB_ORG=your-org-name`; do not guess or infer from the current repo.
+- **Missing/empty:** STOP — prompt the user to run `export GITHUB_ORG=your-org-name`; do not guess or infer from the
+  current repo.
 - **Set:** proceed to Step 2.
 
 ## Step 2: Scope All Commands
@@ -439,28 +440,18 @@ a terminal-state guarantee. A single watch is not proof of green CI.
   integrations, and an imagined GraphQL mutation cannot trigger a run. No
   supported API → name the missing context and hand the UI action to the user.
 
-## A CI job proves nothing until a run exists for the ref
+## A run must prove the pull-request gate
 
-- **Confirm the workflow's `on:` triggers fire for the current ref before treating a newly
-  added or edited job as working.** A trigger block naming only the default branch plus
-  `pull_request` runs on neither a pre-PR feature-branch push nor any ref without an open
-  PR, so jobs added there stay unexecuted while reading as done.
-- Empty output for the ref is the tell — a gate that has never executed is not a gate:
-
-  ```bash
-  gh run list --branch "$(git rev-parse --abbrev-ref HEAD)" --limit 10 \
-    --json workflowName,event,status,conclusion,headSha
-  ```
-
-- Never mark such a job complete, document it as green, or add it to required status checks
-  until a run for that ref exists — an unexecuted required check is unverified and can hold
-  a PR pending indefinitely.
-- Zero runs → read the trigger block itself, then push a ref the triggers accept (or open
-  the PR) and read that run's own log; the rollup cannot report a workflow that never
-  started.
-- Expect a first real run to surface what no local run can: a runtime dependency the runner
-  lacks, output the runner quotes differently than a local shell, runner-only startup noise
-  a parser reads as an error.
+- Confirm the workflow's `on:` accepts the current ref and a run exists before marking an edited job complete or
+  required. Zero runs → inspect the trigger block, create an accepted ref or PR, then read that run's logs. See
+  [trigger verification details](references/2026-07-28_workflow-run-must-exist-for-ref.md).
+- Treat a successful `workflow_dispatch` run as execution evidence only. Gate merge readiness on the live PR's
+  `headRefOid`, `statusCheckRollup`, and `mergeStateStatus`; dispatched check-runs do not prove the PR-required
+  contexts were populated.
+- Expect `pull_request` runs from a PR created or updated with the repository `GITHUB_TOKEN` to await approval for
+  `opened`, `synchronize`, and `reopened`. Surface **Approve workflows to run**; never substitute dispatch success.
+- Need unattended PR-context CI → create or update the PR with a GitHub App installation token or personal access
+  token instead of the repository `GITHUB_TOKEN`.
 
 ## Canonical download path
 
