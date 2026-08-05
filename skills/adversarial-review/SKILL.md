@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.05-204841"
+  version: "2026.08.05-205936"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -207,7 +207,7 @@ Run every interpreter the diff exercises, not whatever is first on `PATH`. Per-l
 ### Specialized & doc-diff checks
 
 When the diff shape matches a specialized case (producer→consumer layout, cluster
-promotion/dedup, interface contract change, allowlist/privilege add, cross-step
+promotion/dedup, interface contract change, allowlist/privilege target contract, cross-step
 file persistence), or every changed file is docs/prose/fixture data, apply the matching block from
 [`references/playground-specialized-checks.md`](references/playground-specialized-checks.md).
 

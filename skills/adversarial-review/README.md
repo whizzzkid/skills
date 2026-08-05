@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.08.05-204841`
+**Version:** `2026.08.05-205936`
 
 ## Invocation
 
@@ -58,7 +58,13 @@ flowchart TD
 - **[`wk-pr-merge`](../pr-merge/README.md) is record-only** — missing clearance
   or genuinely new work returns to the completion gate; merge never dispatches.
 - **Fresh adversarial subagent** — the diff is piped directly, never hand-transcribed; the subagent stays coverage-aware, refactor-aware, relocation-aware, and introduction-claim-aware.
-- **Playground validation is mandatory** for any runtime-behavior claim — findings that cannot be reproduced in `.review-playground/` are downgraded from `blocker` to `question`. Every local run is scoped to the changed examples (never a suite or whole spec directory) — CI owns full-suite regressions, and mutation cycles inherit that scoping. The playground step owns the runtime matrix, mutation testing, the standalone upstream-source harness, specialized producer/consumer / cluster / interface-contract / allowlist checks, and read-based analysis for doc/prose/compression diffs (gate-survival-by-substance, count cross-checks, relocation portability).
+- **Playground validation is mandatory** for any runtime-behavior claim — findings that cannot be reproduced in
+  `.review-playground/` are downgraded from `blocker` to `question`. Every local run is scoped to the changed examples
+  (never a suite or whole spec directory) — CI owns full-suite regressions, and mutation cycles inherit that scoping.
+  The playground step owns the runtime matrix, mutation testing, the standalone upstream-source harness, specialized
+  producer/consumer / cluster / interface-contract / allowlist checks, and read-based analysis for
+  doc/prose/compression diffs (gate-survival-by-substance, count cross-checks, relocation portability). Privilege
+  checks trace the generated target artifact and assert unaffected sibling targets omit the grant.
 - **Consumed as the investigation engine by [`wk-pr-review`](../pr-review/README.md)** — it delegates Phase 3 here and maps the returned findings into PR comments.
 - **Targeted fix validation caps at 3 cycles.** After 3 blocked rounds, surface
   to the user; recurrence means diagnosis or design is wrong.

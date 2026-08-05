@@ -20,7 +20,9 @@ Run every interpreter the diff exercises, not whatever is first on `PATH`; flag 
 - **Producer→consumer layout:** populate staging dir with real producer layout; run consumer end-to-end. Verify path/key match, recursion depth, fixture placement, cleanup-after-consume ordering.
 - **Cluster promotion/dedup:** test guard checks the chosen representative, not just the iteration anchor; iterate in reverse and non-sequential order.
 - **Interface contract change:** run old shapes through new code and new shapes through old consumers.
-- **Allowlist/privilege add:** compare new entry against existing siblings, not an empty list; note when strictly less privileged than a present entry.
+- **Allowlist/privilege target contract:** trace the privileged call through its producer into the generated target
+  artifact; compare existing siblings; assert unaffected targets omit the grant; note when the added target is less
+  privileged than an existing sibling.
 - **Cross-step file persistence:** before flagging that a file written in one CI step won't reach a later step, grep the pipeline templates for `artifact_upload`/`artifact_download` (or `artifacts: upload`/`download`) matching that path. Confirmed upload+download resolves the concern → do not surface it. Script-level I/O crossing step boundaries always has a pipeline artifact contract; read the orchestration layer, not just the source.
 
 ## Documentation / prose / compression diffs — read-based analysis
