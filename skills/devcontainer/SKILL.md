@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171040"
+  version: "2026.08.05-194826"
   model:
     openai: gpt-5.6-terra
 ---
@@ -167,6 +167,22 @@ Key decisions:
   - `$HOME/.config/mise/config.toml:ro` — inherit developer's global mise settings (trusted plugins, overrides); `${XDG_CONFIG_HOME:-$HOME/.config}` falls back when unset
   - `$HOME/.claude` — mounts Claude Code settings, memory, skills read-write so transcripts/memory persist
 
+### Secret-safe startup output
+
+**HARD RULE: Never stream `devcontainer up` output when Compose interpolates a
+host credential.** Some CLI versions print the fully resolved Compose model;
+ordinary startup logs can therefore disclose forwarded secrets.
+
+- Enumerate every host variable referenced by Compose before startup.
+- Prefer file-backed Compose secrets when the application accepts a secret file
+  → `compose config` exposes only the mount path.
+- When environment forwarding is unavoidable, set `umask 077`, capture all
+  startup output to a temporary file, and show only an exact-value-redacted
+  copy. Delete the raw capture on exit.
+- Prove the wrapper with a unique canary value: raw value must be absent from
+  terminal output while surrounding diagnostics remain visible.
+- Treat direct startup after detecting a forwarded credential as a blocker.
+
 ## Step 4: Write devcontainer.json
 
 ```json
@@ -254,6 +270,7 @@ docker compose -p "$proj" -f .devcontainer/docker-compose.yml build   # rebuild
 | Tools silently absent | `auto_install = true` missing from `mise.toml` | Add `[settings] auto_install = true` |
 | Dependency install fails on registry `401` in a fresh container | Expired package-registry credential; the provisioning script treats the registry as the only source | Not a hard stop — seed the dependency volume from a sibling container's volume on the same daemon and install offline (`wk-docker` → *Seed a Dependency Volume from a Sibling*) |
 | `down` reports success but containers stay up | Teardown used bare `-f` with no `-p` → empty/wrong project | Pin `-p "$(basename "$PWD")_devcontainer"` to match `devcontainer up`/VS Code |
+| Startup output contains a host credential | CLI printed the interpolated Compose model | Use file-backed secrets, or capture under `umask 077` and print only an exact-value-redacted copy |
 
 ## Quick Reference
 
