@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.08.01-010612`
+**Version:** `2026.08.05-222104`
 
 ## Invocation
 
@@ -111,9 +111,10 @@ flowchart TD
   preflighted before active copies are removed, the installer targets the active runtime,
   installed skill and changed-reference bytes match repository source, and a missing reference
   after normal install gets an owning-skill copy refresh before the comparison repeats. The owning
-  skill's test suite runs when the fold touched a shipped executable artifact; commits land, one
-  push, and no modified tracked path — untracked *unprocessed* learnings/retros are expected state,
-  not debris. Silence after edits is a violation.
+  skill's test suite runs when the fold touched a shipped executable artifact; processed archives
+  pass their active format rules before staging; commits land, one push, and no modified tracked
+  path — untracked *unprocessed* learnings/retros are expected state, not debris. Silence after edits
+  is a violation.
 - **A signer outage blocks the commit gate and the push gate together.** Over an SSH remote
   the same ssh-agent backs commit signing and push authentication, so one refusal fails both
   Step 8 gates. `Permission denied (publickey)` right after a signing failure is that same

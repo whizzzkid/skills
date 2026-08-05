@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.08.01-010612"
+  version: "2026.08.05-222104"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -107,7 +107,9 @@ behavior, not just the specific instance.
 ## Step 2: Read the Full Skill
 
 - Determine which skill needs updating. Grep the learning's core subject across all of `skills/`; the defect's text may live in a skill other than the one filed — fold the principle into the API-mechanics home AND correct every over-general instance elsewhere in the same pass. If ambiguous, ask the user.
-- **Resolve the on-disk skill dir by listing, never by transforming the display name.** Glob once, reuse the result: `d=$(ls -d skills/*"${n#wk-}" | head -1)`. Rationale: [`references/skill-dir-resolution.md`](references/skill-dir-resolution.md).
+- **Resolve on-disk skill dirs by listing; never transform display names.** Glob once and reuse:
+  `d=$(ls -d skills/*"${n#wk-}" | head -1)`. Details:
+  [`references/skill-dir-resolution.md`](references/skill-dir-resolution.md).
 - Read the entire `SKILL.md`, not just the target section — map its hard rules, step coverage, recurring themes, and tool-usage patterns.
 - Partial reads do not satisfy the edit guard; a refused or content-less read → narrow ranged re-read. **Slice every exact-match anchor from the file's bytes, never a rendering** — silent word-drops stay grammatical, so the anchor misses or edits the wrong span.
 
@@ -155,7 +157,7 @@ behavior, not just the specific instance.
 - Locate the edit target: a new step, a missing check, a wrong instruction, or a new HARD RULE.
 - **Check the report's prescribed remedy against the target's installed HARD RULEs and tool-selection rules before drafting** — a remedy naming a command, endpoint, or path the target already constrains is incidental to the lesson. Installed rule wins → re-express in the sanctioned tooling, keep only what survives translation (post-draft, the conflict reads as a second valid option, not a defect).
 - **Edit target is a gate governing this fold's own landing → apply the stricter of its pre-edit and post-edit text**, and record which in the run report; a loosened rule takes effect next run, once installed.
-- Format the update as instructions, not narrative — heading, then what to do (imperative), why it matters, how (commands or checks).
+- Draft imperative instructions: heading, action, why, and concrete checks or commands.
 
 ## Step 5: Audit the Full Skill
 
@@ -194,7 +196,8 @@ behavior, not just the specific instance.
 ## Step 6: Present for Review
 
 - Show the user: distilled principle, edit location, proposed diff, cleanup found during audit.
-- A direct `/wk-sharpen` invocation (and auto mode) IS the approval — apply/commit/push without re-asking; the show-list is a report, not a gate. Ask explicitly only for ambiguous `wk-learn`-vs-`wk-sharpen` routing or a destructive/irreversible action.
+- Direct `/wk-sharpen` and auto mode approve apply/commit/push; report the diff. Ask only for ambiguous routing or
+  destructive/irreversible action.
 
 ## Step 7: Apply the Update
 
@@ -272,6 +275,8 @@ Do not return control until all five pass:
      [`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md).
 2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing. Red result → apply the Step 1 harness-defect rule.
 3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
+   - Validate each processed-state archive against active format rules before staging; fix failures in the archive
+     commit.
    - Blocked after staging → undo the processed rename but preserve the fold index: [`references/commit-gate.md`](references/commit-gate.md).
    - Anti-thrash ≠ gate discharge: an inherited fold's gates are **unrun** until the tree records otherwise — run the shipped-code suite and the owning hooks (Step 5 throwaway index), and leave the index partitioned as the prior run left it.
 4. **Push once:** after all commits exist, push a single time. A signing failure at item 3 blocks this too — same agent, different error string.
