@@ -57,7 +57,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.08.05-055312"
+  version: "2026.08.05-055741"
   model:
     openai: gpt-5.6-terra
 ---
@@ -143,10 +143,10 @@ can rediscover them. A week-scoped JSONL registry suppresses those keys.
 
 Resolve config → env → default for `$SITREP_REPO`, `$EMPLOYER`, `$SITREP_PORT`
 (`.sitrep.yml` at the working repo root wins), export `$TODAY`, `$LIVE_FILE`,
-`$SNAPSHOT_FILE`, `$WEEK_MEM_FILE`, `mkdir -p` their parents, then ensure
-SilverBullet is serving `$SITREP_REPO` (docker deployment counts as running;
-auto-start the CLI; hard-fail when neither exists). Canonical probe + start
-recipes: [`references/bootstrap.md`](references/bootstrap.md).
+`$SNAPSHOT_FILE`, `$SNAPSHOT_URL`, `$WEEK_MEM_FILE`, `mkdir -p` their parents,
+then ensure SilverBullet is serving `$SITREP_REPO` (docker deployment counts as
+running; auto-start the CLI; hard-fail when neither exists). Canonical probe +
+start recipes: [`references/bootstrap.md`](references/bootstrap.md).
 
 ## Sub-command: start
 
@@ -504,12 +504,12 @@ No separate state file; `date:` identifies the working day and
 ### Stage 6: Open snapshot in browser
 
 ```bash
-open "http://localhost:$SITREP_PORT/$EMPLOYER/$(date +%Y)/$(date +%m)/$(date +%d)/snapshot"
+open "$SNAPSHOT_URL"
 ```
 
 Announce:
 
-> "Snapshot written: http://localhost:$SITREP_PORT/$EMPLOYER/$(date +%Y)/$(date +%m)/$(date +%d)/snapshot
+> "Snapshot written: $SNAPSHOT_URL
 >
 > Today: {N} done ({U} you checked + {D} detected from
 > GitHub/Jira/Calendar/Slack), {M} carried forward, {P} meetings documented.
@@ -532,7 +532,10 @@ missing marker makes the next `start` retry the close. Commit and push without
 prompt:
 
 ```bash
-git -C "$SITREP_REPO" add "$LIVE_FILE" "$SNAPSHOT_FILE" "$WEEK_MEM_FILE"
+BRAG_LOG="$SITREP_REPO/$EMPLOYER/QPR/brag-log.md"
+git -C "$SITREP_REPO" add "$LIVE_FILE" "$SNAPSHOT_FILE"
+test ! -f "$WEEK_MEM_FILE" || git -C "$SITREP_REPO" add "$WEEK_MEM_FILE"
+test ! -f "$BRAG_LOG" || git -C "$SITREP_REPO" add "$BRAG_LOG"
 git -C "$SITREP_REPO" commit -m "chore(sitrep): 📸 end $TODAY — {N} done, {M} carried forward"
 git -C "$SITREP_REPO" push
 ```

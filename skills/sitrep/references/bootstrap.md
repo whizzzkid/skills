@@ -27,10 +27,11 @@ test -n "$EMPLOYER"    || { echo "EMPLOYER is not set"; exit 1; }
 SITREP_PORT="${SITREP_PORT:-3000}"
 
 TODAY=$(date +%Y-%m-%d)
-YEAR=$(date +%Y); WEEK=$(date +%V)
+YEAR=$(date +%Y); MONTH=$(date +%m); DAY=$(date +%d); WEEK=$(date +%V)
 LIVE_FILE="$SITREP_REPO/$EMPLOYER/live.md"
-SNAPSHOT_DIR="$SITREP_REPO/$EMPLOYER/$(date +%Y)/$(date +%m)/$(date +%d)"
+SNAPSHOT_DIR="$SITREP_REPO/$EMPLOYER/$YEAR/$MONTH/$DAY"
 SNAPSHOT_FILE="$SNAPSHOT_DIR/snapshot.md"
+SNAPSHOT_URL="http://localhost:$SITREP_PORT/$EMPLOYER/$YEAR/$MONTH/$DAY/snapshot"
 WEEK_MEM_FILE="$SITREP_REPO/$EMPLOYER/.dismissed/$YEAR-W$WEEK.jsonl"
 
 mkdir -p "$SITREP_REPO/$EMPLOYER" "$SNAPSHOT_DIR" "$(dirname "$WEEK_MEM_FILE")"
