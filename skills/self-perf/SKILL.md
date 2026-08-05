@@ -23,7 +23,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.08.05-220237"
+  version: "2026.08.05-220522"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -333,6 +333,12 @@ After all 7 agents complete → read every reference file → synthesize into `$
 - Distinguish similarly named execution units with stable identifiers before comparing their outcomes.
 - Treat a non-significant result as insufficient evidence of an effect, never evidence that no effect exists.
 - Preserve the measured effect, uncertainty, and significance threshold when translating statistics into prose.
+
+### Revision boundaries
+
+- Record sections the user marks final, approved, or keep-as-is before each polish pass.
+- Exclude protected sections from broad rewrites, condensation, tone changes, and formatting edits.
+- Reopen protected content only when the user explicitly names that section for revision.
 
 ### Synthesis structure
 

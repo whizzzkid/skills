@@ -2,7 +2,7 @@
 
 > Generate a self-performance review narrative by pulling data from all work systems.
 
-**Version:** `2026.08.05-220237`
+**Version:** `2026.08.05-220522`
 
 ## Invocation
 
@@ -43,6 +43,7 @@ flowchart TD
   surface-level language is automatically upgraded to strong-verb form.
 - Chronology and statistics claims pass evidence-integrity checks before synthesis: dated milestones support ordering,
   and non-significant results remain inconclusive rather than becoming no-effect claims.
+- User-approved sections become protected revision boundaries until the user explicitly reopens them.
 - **`{ROLE}` placeholder** in the synthesis template must be resolved from Workday/Lattice
   before writing; if unresolvable, left as placeholder with a flag.
 - Supplement mode (default in auto) is additive — only missing or stale reference files are
