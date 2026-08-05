@@ -4,6 +4,8 @@ Lower-frequency, mechanical code standards relocated from `SKILL.md` Phase 2 to
 keep the body under its size ceiling. Apply each with the same authority as the
 inline standards; relocation does not lower their priority.
 
+- **Bound recursive repository searches:** prefer `git grep` for tracked content.
+  Otherwise exclude dependency, distribution, coverage, cache, and generated-output directories before execution.
 - **Confirm example formats before encoding:** treat a version/naming/query
   string (esp. in a CLI snippet) as illustrative, not normative — confirm the
   production format before encoding it across >1 file.

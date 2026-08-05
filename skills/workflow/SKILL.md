@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-210457"
+  version: "2026.08.05-211742"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -159,7 +159,7 @@ Apply to ALL code:
 - **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
 - **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
-- **Niche standards** (existing-gate preservation, example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, structured-row insert, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling, full-boot config-dependency enumeration, sandboxed-step env forwarding, coercion same-class audit, schema-derived validation bounds, published enforced limits, portable home paths) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
+- **Niche standards** (existing-gate preservation, bounded searches, example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, structured-row insert, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling, full-boot config-dependency enumeration, sandboxed-step env forwarding, coercion same-class audit, schema-derived validation bounds, published enforced limits, portable home paths) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **HARD RULE — reuse the mechanism the codebase already provides for config/secret resolution; never invent a parallel override (dummy env exports, a new config path). Repeated user pushback naming an existing convention is a hard stop — adopt the named mechanism, never defend the invented one.** (See reuse-hygiene, code-standards-extended.)
 

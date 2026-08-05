@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.08.05-210457`
+**Version:** `2026.08.05-211742`
 
 ## Invocation
 
@@ -79,6 +79,8 @@ flowchart TD
   `set -euo pipefail`.
 - **Execution environment is selected before validation:** inspect tracked container and runner configuration, use a
   runnable documented project container, and surface its absence before falling back to the host.
+- **Recursive repository searches are bounded before execution:** prefer tracked-content search; otherwise exclude
+  dependency, distribution, coverage, cache, and generated-output directories.
 - **User-loadable artifacts are built last:** enumerate required gates that write the handoff directory, run those
   gates first, then build and validate the deliverable as the final artifact-producing command.
 - **Platform-pinned visual baselines come from CI:** inspect actual, expected, and diff images, then replace only the
