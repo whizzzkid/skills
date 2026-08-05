@@ -7,6 +7,15 @@ class: principle
 Canonical implementations for the cross-run de-dup registry described in
 `SKILL.md` § Dismissed registry. `$WEEK_MEM_FILE` is defined in Step 0.
 
+## Identity and path
+
+- File: `$SITREP_REPO/$EMPLOYER/.dismissed/$YEAR-W$WEEK.jsonl`, scoped to ISO
+  week (`date +%V`).
+- Key one logical action, not one resource. Prefer the most specific URL
+  (event, direct scorecard, sub-path anchor).
+- Stages sharing a URL append `{url}#action=<slug>` → dismissing prep never
+  suppresses follow-up.
+
 ## Write (both sub-commands)
 
 `jq`-constructed JSON only; never raw interpolation. Strip markdown escapes,

@@ -39,7 +39,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 
 | Skill | Description |
 |---|---|
-| [sitrep](skills/sitrep/) | Unified daily ops log on a SilverBullet workspace — `start`/`end` replace goodmorning + the former evening wrap-up flow, no HTML |
+| [sitrep](skills/sitrep/) | Daily ops; `start` runs a missed `end` |
 | [cal](skills/cal/) | Google Calendar — fetch events, find free slots, check availability, schedule interview prep + scorecard blocks |
 | [retro](skills/retro/) | Session retrospective that captures learnings and promotes them globally |
 | [self-perf](skills/self-perf/) | Self-performance review from GitHub, Slack, Gmail, Calendar, Jira, and Granola data |

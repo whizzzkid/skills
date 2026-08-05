@@ -24,7 +24,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 
 | Skill | Purpose | Invocation |
 |---|---|---|
-| [`wk-sitrep`](./sitrep/README.md) | Unified daily ops log — SilverBullet live.md replaces the former morning and evening standalone skills with no HTML generation | User: `/wk-sitrep [start\|end]` |
+| [`wk-sitrep`](./sitrep/README.md) | Daily ops; `start` runs a missed `end` | User: `/wk-sitrep [start\|end]` |
 | [`wk-cal`](./cal/README.md) | All Google Calendar operations — fetch, create in free slots, check availability, schedule prep blocks | User + Model |
 | [`wk-retro`](./retro/README.md) | Session retrospective — capture learnings and improve future sessions | User + Model |
 | [`wk-self-perf`](./self-perf/README.md) | Generate a self-performance review narrative from GitHub, Slack, Jira, Granola, and more | User: `/wk-self-perf <period>` |

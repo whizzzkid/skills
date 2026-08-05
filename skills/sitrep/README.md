@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.07.30-205752`
+**Version:** `2026.08.05-053602`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -9,19 +9,19 @@ no per-day live directories, and dated snapshots at close.
 ## Sub-commands
 
 - `/wk-sitrep start` — workday start: gathers the current inbox and
-  previous-workday contribution evidence via 5 parallel agents, carries
-  forward open items from the previous live page, compiles every item into
-  `$SITREP_REPO/$EMPLOYER/live.md`, verifies the 3-column layout actually
-  rendered (columns non-empty and every nested block still inside its column),
-  opens it in the browser, then auto-launches a
+  previous-workday contribution evidence via 5 parallel agents. If the prior
+  live page was never closed, `start` first runs the complete dated `end` flow;
+  a failed close blocks today's overwrite. It then carries open items forward,
+  compiles `$SITREP_REPO/$EMPLOYER/live.md`, verifies the 3-column layout,
+  opens it in the browser, and auto-launches a
   `/wk-pr-review` subagent (via `git wta` worktree) for each PR awaiting your
   review in a locally-cloned `$GITC_ROOT/$EMPLOYER/<repo>`. Those reviews are
   left as unsubmitted drafts, so every run re-sweeps your own `PENDING` reviews
   org-wide and re-surfaces them until you submit or discard them.
-- `/wk-sitrep end` — workday end: runs 7 parallel agents, writes a
+- `/wk-sitrep end` — optional workday close: runs 7 parallel agents, writes a
   historical snapshot to `$EMPLOYER/YYYY/MM/DD/snapshot.md` (completed
   items + notes only), then rewrites `live.md` to hold all pending work for
-  tomorrow.
+  tomorrow and includes `end_completed_at` in the final close commit.
 - `/wk-sitrep` (no arg) — defaults to `start`.
 
 No interactive triage — the user resolves items directly in SilverBullet.
@@ -31,7 +31,8 @@ No interactive triage — the user resolves items directly in SilverBullet.
 - **Live page** (`$EMPLOYER/live.md`) — persistent checkbox page you edit in
   the browser; owns **all pending work**. Open items carry forward
   automatically; done items are stripped to the snapshot at end-of-day. The
-  `date:` frontmatter is the sole working-day marker (no separate file).
+  `date:` frontmatter identifies the working day; `end_completed_at:` records a
+  completed close. No separate state file is used.
 - **Snapshot** (`$EMPLOYER/YYYY/MM/DD/snapshot.md`) — **historical record
   only**: completed items, achievements, meeting notes, feedback, DX
   metrics. Never holds pending `[ ]` items. Feeds

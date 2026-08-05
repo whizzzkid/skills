@@ -4,9 +4,10 @@ description: >-
   Unified daily ops log backed by a SilverBullet workspace — replaces the
   former morning and evening standalone skills. `start` gathers the day's inbox,
   carries forward open items, and writes a live 3-column dashboard you edit in
-  the browser. `end` snapshots the day, scrubs done items, and updates brag
-  docs. No standalone HTML files — SilverBullet renders everything.
-argument-hint: 'start|end'
+  the browser. Optional `end` closes the day; the next `start` closes any
+  unfinished prior day first. No standalone HTML files — SilverBullet renders
+  everything.
+argument-hint: '[start|end]'
 env-vars:
   - SITREP_REPO
   - EMPLOYER
@@ -20,7 +21,6 @@ allowed-tools:
   - "Bash(mkdir:*)"
   - "Bash(test:*)"
   - "Bash(ls:*)"
-  - "Bash(find:*)"
   - "Bash(command:*)"
   - "Bash(jq:*)"
   - "Bash(sed:*)"
@@ -32,6 +32,7 @@ allowed-tools:
   - "Bash(docker ps:*)"
   - "Bash(gh pr view:*)"
   - "Bash(git rev-parse:*)"
+  - "Bash(git status:*)"
   - "Bash(git add:*)"
   - "Bash(git commit:*)"
   - "Bash(git push:*)"
@@ -56,7 +57,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.07.30-205752"
+  version: "2026.08.05-053602"
   model:
     openai: gpt-5.6-terra
 ---
@@ -70,7 +71,7 @@ per-day live directories; dated snapshots at close.
 ## Sub-commands
 
 - `/wk-sitrep start` — workday start routine.
-- `/wk-sitrep end` — workday end routine.
+- `/wk-sitrep end` — optional workday close routine.
 - `/wk-sitrep` (no argument) — defaults to `start`; emits:
   > "Running wk-sitrep:start (default — no sub-command specified)"
 
@@ -85,7 +86,7 @@ per-day live directories; dated snapshots at close.
   unconditionally as `data-done="false"` checkbox spans; user edits the browser
   page directly.
 - **HARD RULE — never assert missing without checking.** Before saying "no
-  snapshot" or "X not found", run `Read`/`ls`/`find` on the path. If you did not
+  snapshot" or "X not found", run `Read`/`ls` on the path. If you did not
   check, say "I have not read X", not "X is missing."
 
 ## Rendering contract
@@ -133,16 +134,9 @@ Canonical span + concrete toggle-handler recipe:
 User-resolved items vanish from `live.md` at `end` but the next `start` sweep
 can rediscover them. A week-scoped JSONL registry suppresses those keys.
 
-- **File:** `$WEEK_MEM_FILE = $SITREP_REPO/$EMPLOYER/.dismissed/$YEAR-W$WEEK.jsonl`,
-  scoped to ISO week (`date +%V`). Defined in Step 0.
-- **Key:** one logical action, not one resource. Prefer the most specific URL
-  (event, direct scorecard, sub-path anchor). If stages share a URL, append
-  `{url}#action=<slug>` so dismissing prep does not suppress follow-up.
-- **Write:** `jq`-constructed JSON only; never raw interpolation. Strip
-  markdown escapes, validate the file still parses, remove the last line on failure.
-- **Filter (`start`):** drop any gathered or carry-over item whose key is in
-  this week's registry.
-- Canonical `jq` write + `is_dismissed` filter recipes:
+- Use one action-specific key per record; `start` drops gathered and carry-over
+  matches from the current ISO week.
+- Path, key, safe-write, validation, and `is_dismissed` recipes:
   [`references/dismissed-registry.md`](references/dismissed-registry.md).
 
 ## Step 0: Bootstrap (both sub-commands)
@@ -155,6 +149,14 @@ auto-start the CLI; hard-fail when neither exists). Canonical probe + start
 recipes: [`references/bootstrap.md`](references/bootstrap.md).
 
 ## Sub-command: start
+
+### Stage 0.5: Close unfinished prior day
+
+- **HARD RULE — close before overwrite.** Prior `date:` + no completed-end
+  marker → run the full `end` flow for that date before Stage 1; failure stops
+  `start`.
+- Marker, legacy detection, date rebinding, retry, and restoration:
+  [`references/missed-end-rollover.md`](references/missed-end-rollover.md).
 
 ### Stage 1: Load previous live.md
 
@@ -340,7 +342,8 @@ skill owns selection.
   per bullet; append bare PR URLs. If all domains return none, emit
   `No verified accomplishments found`.
 - **Today:** top 3–4 🔴 ASAP items, deadline-first.
-- **Blockers:** `BLOCKED` or dependency conflicts; always present — `None` when empty (per [`wk-slack`](../slack/README.md) §Standup Snippet).
+- **Blockers:** `BLOCKED` or dependency conflicts; always present — `None` when
+  empty (per [`wk-slack`](../slack/README.md) §Standup Snippet).
 - Apply [`wk-slack`](../slack/README.md) §Standup privacy filter — drop
   hiring/interview/candidate, personal HR/performance, or non-public items.
 - Use the plaintext fallback exactly: top-level `•` day markers with indented
@@ -495,7 +498,8 @@ Reuse the Stage 3 `sitrep-row`/`sitrep-col` skeleton; frontmatter `date: {TODAY}
   unanswered Slack/email/Jira, Lattice requests, DX actions.
 - **col3 — Notes:** preserved free-form notes.
 
-No `.last_working_day` file; `date:` frontmatter is the sole marker.
+No separate state file; `date:` identifies the working day and
+`end_completed_at:` records a completed close.
 
 ### Stage 6: Open snapshot in browser
 
@@ -507,28 +511,31 @@ Announce:
 
 > "Snapshot written: http://localhost:$SITREP_PORT/$EMPLOYER/$(date +%Y)/$(date +%m)/$(date +%d)/snapshot
 >
-> Today: {N} done ({U} you checked + {D} detected from GitHub/Jira/Calendar/Slack), {M} carried forward, {P} meetings documented.
+> Today: {N} done ({U} you checked + {D} detected from
+> GitHub/Jira/Calendar/Slack), {M} carried forward, {P} meetings documented.
 > {brag_highlight — single most impactful item}
 >
 > live.md scrubbed — {N} open items remain for tomorrow."
 
-### Stage 7: Commit and push
+### Stage 7: Distill accumulated learnings
 
-Commit and push without prompt:
+If `$WK_SKILLS_HOME` is set and unprocessed learning files exist: process
+highest severity first, cap at 5 per run, carry the rest. Invoke
+[`wk-sharpen`](../sharpen/README.md) with each file as input. Do not rename
+files here; [`wk-sharpen`](../sharpen/README.md) owns `.learned.md` renames.
+
+### Stage 8: Mark complete, commit, and push
+
+Invoke [`wk-learn sitrep`](../learn/README.md). After Stages 1–7 and learning
+capture succeed, add `end_completed_at: {ISO_8601_UTC}` to `$LIVE_FILE`; a
+missing marker makes the next `start` retry the close. Commit and push without
+prompt:
 
 ```bash
 git -C "$SITREP_REPO" add "$LIVE_FILE" "$SNAPSHOT_FILE" "$WEEK_MEM_FILE"
 git -C "$SITREP_REPO" commit -m "chore(sitrep): 📸 end $TODAY — {N} done, {M} carried forward"
 git -C "$SITREP_REPO" push
 ```
-
-### Stage 8: Distill accumulated learnings
-
-If `$WK_SKILLS_HOME` is set and unprocessed learning files exist: process
-highest severity first, cap at 5 per run, carry the rest. Invoke
-[`wk-sharpen`](../sharpen/README.md) with each file as input. Do not rename
-files here; [`wk-sharpen`](../sharpen/README.md) owns `.learned.md` renames.
-Then invoke [`wk-learn sitrep`](../learn/README.md).
 
 ## QPR season awareness
 
@@ -539,16 +546,11 @@ and brag-log accrual — [`references/qpr-nudge.md`](references/qpr-nudge.md).
 
 | Trigger | Behavior |
 |---------|----------|
-| `/wk-sitrep start` | Gather → auto-transition merged PR tickets → compile → write live.md + standup → open → commit/push → auto-launch PR reviews |
-| PR awaiting your review | Stage 7 spawns a review subagent per PR (allowlisted repos only); `git wta` worktree + `/wk-pr-review` pending draft; done auto-action. |
-| `/wk-sitrep end` | Gather → write snapshot → rewrite live.md with pending work → open → commit/push |
+| `/wk-sitrep start` | Gather → compile → verify live.md → commit/push → launch review drafts. |
+| Unfinished prior day | `start` runs its full dated `end` flow first; failure blocks today's overwrite. |
+| `/wk-sitrep end` | Optional: snapshot → scrub → learn → mark complete → commit/push. |
 | `/wk-sitrep` (no arg) | Defaults to `start`. |
 | Writes | Re-read target first; preserve `data-done`; prefer `Edit` over full overwrite. |
-| Jira | Full open-ticket sweep; collapse inactive/no-due backlog. |
-| Pending-on-me | Flag 🔁 status changes + ⏳ staleness; sort priority → age → due-date. Own `PENDING` reviews swept org-wide until submitted. |
-| Merged PR + open ticket | Auto-transition to Done; render as done auto-action. |
-| Interview w/o prep block | Orchestrator creates prep+scorecard via `wk-cal`; done auto-action. |
-| Resolved item re-discovered | Dismissed registry filters it; `jq`-write + validate; action-specific key. |
 | End of day | Invoke [`wk-sharpen`](../sharpen/README.md) on up to 5 highest-severity unprocessed learnings. |
 | QPR | `📋` banner on live.md (start) / snapshot (end); brag-log accrues 🌟. |
 | SilverBullet stopped | Auto-start via `silverbullet $SITREP_REPO &`. |

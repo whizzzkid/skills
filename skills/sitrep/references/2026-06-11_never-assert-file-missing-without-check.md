@@ -6,7 +6,7 @@ severity: high
 ---
 
 - **Rule:** Never assert "X does not exist / was not found" without a
-  filesystem check (`ls`/`Read`/`find`) first. If unchecked, say "I have not
+  filesystem check (`ls`/`Read`) first. If unchecked, say "I have not
   read X" — never "X is missing."
 - **Why:** The agent confused "I did not read the snapshot" with "the
   snapshot is absent" and falsely declared a present file missing.
