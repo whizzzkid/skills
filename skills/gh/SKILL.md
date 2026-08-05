@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.05-211540"
+  version: "2026.08.05-212153"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -212,6 +212,9 @@ later submitted. Guard every reply post:
 - Never treat a `state: "PENDING"` response from a reply mutation as success —
   read the returned `state` and treat any non-published state as a failure needing
   remediation.
+- **Pending-review creation responses need not embed comments.** Project only
+  review ID, state, and commit; then GET `/pulls/{n}/reviews/{id}/comments` and
+  verify staged comment anchors. Missing expansion is never a retry signal.
 - **A client-side JSON parse failure is not a write failure.** A successful
   `POST /pulls/{n}/reviews` can return a body a strict decoder rejects (`Invalid
   control character` — an unescaped control char inside a string field), so capture

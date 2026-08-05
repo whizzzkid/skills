@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.08.05-211540`
+**Version:** `2026.08.05-212153`
 
 ## Invocation
 
@@ -58,6 +58,8 @@ flowchart TD
 - **Environment tokens shadow stored credentials:** After explicit stored/keyring confirmation, every `gh` command
   removes `GH_TOKEN` and `GITHUB_TOKEN` at the command boundary and skips auth inspection. Without confirmation, an
   unexpected authorization failure is diagnosed by comparing normal and token-unset status before any refresh.
+- **Pending-review comments use a follow-up read:** create responses project only review identity/state/commit; the
+  review-specific comments endpoint proves staged anchors before any retry decision.
 - **Point-in-time footer link:** The canonical outbound footer's
   [wk-skills](https://github.com/whizzzkid/skills) link pins to `tree/main@%7B<UTC>%7D` — a render-time UTC
   timestamp — so readers see the skills as they were when the message posted, not moving HEAD.
