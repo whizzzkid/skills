@@ -1,14 +1,14 @@
 # wk-workstyle-shell
 
-> Enforces safe, idiomatic shell-script conventions on every shell file the agent writes or edits.
+> Enforces safe, idiomatic shell conventions in scripts and compound ad-hoc commands.
 
-**Version:** `2026.08.01-083049`
+**Version:** `2026.08.05-211241`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
-| Model-invocable | Automatic whenever the agent writes or edits a `.sh` file, a bash/sh script, or a bin script with a shell shebang |
+| Model-invocable | Automatic for shell-script edits and multi-step bash/sh/zsh command composition |
 | User-invocable | `/wk-workstyle-shell scan` — full tree; `/wk-workstyle-shell check <path>` — one file |
 
 ## Rules at a Glance
@@ -38,7 +38,7 @@
 - `printf` silently re-runs its format string when arguments outnumber conversion specifiers — `printf '%s=%s\n' a 1 b 2` emits *two* rows, not one. rc=0, empty stderr, identical across the bash/zsh/sh builtins and `/usr/bin/printf`. This is the inverse polarity of every zero-trap above: the count comes out too *high*, so a row-counting probe reading `2` where the loop ran once looks like corroboration rather than corruption. Make the argument count an exact multiple of the specifier count.
 - Presence-check with a test builtin, never a value expansion — `${VAR:-NO}` emits the value on the set path, so a `${VAR:+yes}${VAR:-NO}` "boolean" leaks a live secret; fingerprint with length + hash prefix when a value must be compared.
 - Keep every shell command portable to zsh as well as bash — ad-hoc commands the agent composes mid-task, not just documented snippets — an unquoted *parameter* expansion never word-splits under zsh in *any* position (`cmd $FILES` hands the tool one argument naming a blob it was never given, so the run reads as a clean zero), `${!var}` aborts as `bad substitution`, and `${PIPESTATUS[…]}` is never populated (zsh spells it `pipestatus`); never materialize a file list in a variable at all — pipe the producer into a `while IFS= read -r` loop — and use `printenv` exit status plus a pipeline-free status probe.
-- Never use lowercase `path` as a zsh loop or script variable — it is a special
+- Never use lowercase `path` as a zsh loop or script variable, including in compound ad-hoc commands — it is a special
   array tied to `PATH`, so scalar assignment replaces the executable search
   path. Prefer role-specific names such as `doc_path`.
 - Never pair `|| echo <default>` with a command that prints on its non-zero path, and never let that fallback carry a *verdict* — `grep -c` writes `0` *and* returns rc=1 (so the default appends rather than substitutes), while `scan || echo NONE` maps rc=1 "matched nothing" and rc>=2 "never read the input" onto one clean branch. Only stderr separates the two, so a scan that redirects it keeps no signal; discriminate all three statuses and treat rc>=2 as an aborting scan failure.

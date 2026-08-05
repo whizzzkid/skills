@@ -1,10 +1,10 @@
 ---
 name: wk-workstyle-shell
 description: >-
-  Shell scripts (bash/sh, `.sh`, bin scripts) — `set -euo pipefail`, quote
+  Shell scripts and compound ad-hoc commands (bash/sh/zsh) — `set -euo pipefail`, quote
   every variable, `local` in functions, `[[ ]]` over `[ ]`, heredocs over echo
   chains, named constants, capability-probing over parsing error text.
-  Auto-invoked on any shell edit; shellcheck config wins.
+  Auto-invoked on shell edits and multi-step command composition; shellcheck config wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.01-083049"
+  version: "2026.08.05-211241"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -31,17 +31,18 @@ metadata:
 
 # Workstyle — Shell (bash/sh)
 
-Enforces safe, idiomatic shell-script conventions on every shell file the agent
-writes or edits. Part of the `wk-workstyle` family. **Project settings are
+Enforces safe, idiomatic shell conventions on every shell file and compound
+ad-hoc command the agent writes. Part of the `wk-workstyle` family. **Project settings are
 authoritative — this skill fills gaps only, never overrides.** When a
 linter/formatter config governs a rule below, that config wins; see
 `wk-workstyle` Step 0 for the project-style-authority probe.
 
 ## When to Use
 
-Auto-invoked whenever the agent writes or edits a shell script. Trigger contexts:
+Auto-invoked for shell-script edits and multi-step command composition. Trigger contexts:
 
-- writes or edits a `.sh` file, a bash/sh script, or a bin script with a shell shebang.
+- Writes or edits a `.sh` file, bash/sh script, or bin script with a shell shebang.
+- Composes a compound or multi-step bash/sh/zsh command.
 
 Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell check <path>` (one file).
 
@@ -137,9 +138,9 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
     **Important:** Never let a composed command depend on a glob qualifier or on `nullglob`/`failglob`
     state; enumerate with `find … -print` fed through `while IFS= read -r`, which cannot
     conflate "nothing matched" with "pattern unsupported".
-  - **Lowercase `path` is a zsh special array tied to `PATH`.** Never use
-    `path` as a loop or script variable: assigning one scalar replaces the
-    executable search path. Use role-specific names such as `doc_path`,
+  - **Lowercase `path` is a zsh special array tied to `PATH`.** In scripts and
+    compound ad-hoc commands, never use it as a loop or script variable: one
+    scalar assignment replaces the executable search path. Use role-specific names such as `doc_path`,
     `source_path`, or `target_path`. See [zsh special
     variables](references/zsh-special-path-variable.md).
   - **A verdict that contradicts the output it summarizes indicts the guard, not the

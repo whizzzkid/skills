@@ -107,7 +107,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [workstyle-rails](skills/workstyle-rails/) | Rails env — run `bin/setup` before manual gem install when a gem/env command fails |
 | [workstyle-go](skills/workstyle-go/) | Go idioms — errors as values, `%w` wrapping, table-driven tests, no library panic, defer |
 | [workstyle-rust](skills/workstyle-rust/) | Rust idioms — no unwrap/expect in prod, `&str` params, derive Debug, clippy::all, `///` docs |
-| [workstyle-shell](skills/workstyle-shell/) | Shell idioms — `set -euo pipefail`, quoted vars, `local`, capability-probe not error-parse |
+| [workstyle-shell](skills/workstyle-shell/) | Shell scripts and compound commands — portable variables, status, and tool semantics |
 | [refactor](skills/refactor/) | Validate that a refactor preserved behavior — diffs merge-base vs post-refactor, audits removed lines |
 | [markdown](skills/markdown/) | Enforce 120-column width, heading hierarchy, Mermaid diagrams, and link validation |
 | [mermaid](skills/mermaid/) | Author Mermaid diagrams that render on GitHub — `<br/>` not `\n`, quoted labels, supported types |

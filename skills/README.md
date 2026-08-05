@@ -100,7 +100,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-workstyle-rails`](./workstyle-rails/README.md) | Rails env — run `bin/setup` before manual gem install on a gem/env command failure | Auto (on gem/env command failure) |
 | [`wk-workstyle-go`](./workstyle-go/README.md) | Go idioms — errors as values, `%w` wrapping, table-driven tests, no library panic, defer | Auto (on .go edits) |
 | [`wk-workstyle-rust`](./workstyle-rust/README.md) | Rust idioms — no unwrap/expect in prod, `&str` params, derive Debug, clippy::all, `///` docs | Auto (on .rs edits) |
-| [`wk-workstyle-shell`](./workstyle-shell/README.md) | Shell idioms — `set -euo pipefail`, quoted vars, `local`, capability-probe not error-parse | Auto (on .sh edits) |
+| [`wk-workstyle-shell`](./workstyle-shell/README.md) | Shell scripts and compound commands — portable variables, status, and tool semantics | Auto (shell edits + compound commands) |
 | [`wk-refactor`](./refactor/README.md) | Validate a refactor preserved behavior — removed-line audit, diff classification | User + Model |
 | [`wk-markdown`](./markdown/README.md) | Enforce 120-col line width, heading hierarchy, Mermaid diagrams, validated links | Auto (on .md edits) |
 | [`wk-mermaid`](./mermaid/README.md) | Author Mermaid diagrams that render on GitHub — `<br/>` not `\n`, quoted labels, supported types | Auto (on mermaid blocks) |
