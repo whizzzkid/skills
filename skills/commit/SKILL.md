@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.07.31-023847"
+  version: "2026.08.05-205509"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -314,18 +314,18 @@ not history — only settled docs (specs, ADRs) belong in committed history.
 
 ### Verify the staged set before a grouped commit
 
-`git commit` commits the **whole index**, not only the paths named in the
-preceding `git add`. Anything already staged — a prior `git mv`, an earlier
-`git add` — rides into the commit and merges two logical groups.
+**HARD RULE — dependent commit chains fail fast.** Begin every multi-command stage/verify/commit shell with
+`set -euo pipefail`; a failed stage or verification must stop the commit and any success-looking tail output.
 
-- Before each grouped commit, confirm the staged set is exactly the intended group:
+`git commit` records the whole index, so earlier staged paths ride along.
+
+- Before each grouped commit, require staged paths to equal the intended set:
 
   ```bash
   git diff --cached --name-only
   ```
 
-- Unstage strays with `git restore --staged <paths>` (or `git stash`) before
-  committing. Treat `git mv` as already-staged.
+- Unstage strays with `git restore --staged <paths>` (or `git stash`). Treat `git mv` as already staged.
 
 ### Stage generated artifacts individually — never blanket `git add` the output dir
 
