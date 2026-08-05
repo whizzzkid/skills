@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-214100"
+  version: "2026.08.05-214424"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -105,9 +105,10 @@ Before the first Edit/Write, confirm cwd is the intended worktree:
 git rev-parse --abbrev-ref HEAD
 ```
 
-Before the first patch, invoke format owners for planned content (`.md` →
-[`wk-markdown`](../markdown/README.md); Mermaid →
-[`wk-mermaid`](../mermaid/README.md)). Post-edit invocation is too late.
+Pre-patch routing: `.md` → [`wk-markdown`](../markdown/README.md); Mermaid →
+[`wk-mermaid`](../mermaid/README.md); arch-bearing →
+[`wk-arch-review`](../arch-review/README.md) detector, then draft-complete gate.
+Post-edit classification fails.
 
 Execute the plan step by step. After each step:
 
@@ -135,10 +136,8 @@ For normalization, renames, required fields, schema changes, or similar recurrin
 
 ### Artifact sync with code changes
 
-Structural code changes → sync every affected artifact in the same commit:
-[`references/doc-sync-mechanics.md`](references/doc-sync-mechanics.md).
-
-External-call reproduction before a fix: [`references/external-call-reproduction.md`](references/external-call-reproduction.md).
+Structural change → [sync artifacts](references/doc-sync-mechanics.md) in the
+same commit. External failure → [reproduce before fixing](references/external-call-reproduction.md).
 
 ### Edit-scope pre-flights
 
@@ -194,8 +193,8 @@ Verification:
 - Project linter/type checker passes.
 - Full pre-push gate passes before any `git push`; inspect hook config to enumerate every gate.
 - Re-run every gate against final HEAD, not a mid-session snapshot.
-- **User-loadable artifact handoff:** run every gate that writes its directory first; build and validate the
-  deliverable last.
+- **User-loadable artifact:**
+  [`build last after mutating gates`](references/2026-08-04_final-development-build.md).
 - Validate transformations with a formerly-failing input.
 - **Default-branch-only producers:** apply
   [`generated-artifact acceptance`](references/2026-08-01_generated-artifact-acceptance.md);
@@ -241,8 +240,8 @@ Run only when the diff changes browser-rendered UI: client components, templates
 
 - Launch the app via the `run` skill or documented dev-server command.
 - Drive every changed view in a real browser with Playwright tools; exercise happy paths.
-- Capture snapshots and console messages.
-- Platform-pinned baselines → review CI actual/expected/diff artifacts; replace only confirmed snapshots.
+- Capture snapshots/console; platform-pinned baseline →
+  [`review CI artifacts`](references/2026-08-04_linux-visual-artifacts.md).
 - Treat load failure, console error on the changed surface, or broken interaction as a blocker — fix before publishing.
 - Leave app/browser running and hand off the URL; continue Phase 5 onward while the user inspects.
 
