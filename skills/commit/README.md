@@ -2,7 +2,7 @@
 
 > Use when creating git commits or pushing code. Enforces conventional commits with emoji, commit signing, and safe push behavior.
 
-**Version:** `2026.08.05-205509`
+**Version:** `2026.08.05-210932`
 
 ## Invocation
 
@@ -39,7 +39,8 @@ flowchart TD
   so an early failure cannot be hidden by later read-only output.
 - **PR Sync runs after every successful push** to a branch with an open PR — title and body are diffed against the post-push state and updated if they have drifted, with human-authored sections (review checkboxes, hand-edited test plans) preserved.
 - **Signing is non-negotiable** — `--no-gpg-sign`, `-n`, and `git -c commit.gpgsign=false` are forbidden. For
-  linked/temporary worktrees, probe signing config from the exact shell that will run `git -C`; launch cwd does not
-  carry config. Only a completed signed commit with a raw `gpgsig` header proves success.
+  signed merges or rewrites, verify the configured key and SSH agent from the exact execution shell before starting.
+  If only the login shell exposes both, run there with the verified key through one-shot `git -c`; only a completed
+  signed commit with a raw `gpgsig` header proves success.
 - **`mise exec --` is required before push** in mise-managed repos — without it, git hooks (lefthook, husky) fail with exit 127 for tools like `lychee` and `shellcheck`. Never `eval "$(mise activate bash)"`; the supported single-command form is `mise exec --`.
 - **Post-CI squash offer** fires when ≥3 `fix(ci):` commits exist with a net diff under 50 lines — never auto-squashes, always asks, and requires explicit user approval for the mandatory force-push. A single trivial follow-up correcting the immediately prior commit gets an explicit `--amend` approval prompt at the fix site (auto mode blocks `--amend`), not silent accumulation.

@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.05-205509"
+  version: "2026.08.05-210932"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -135,6 +135,11 @@ This skill is model-invocable → any commit it produces is agent-created.
 All commits MUST be signed. Never use `--no-gpg-sign`, `-n`, or
 `git -c commit.gpgsign=false`.
 
+**Before a signed merge or rewrite**, verify `user.signingkey` and `ssh-add -L`
+from the exact execution shell. Direct shell missing either but login shell has
+both → run the operation there with the verified key via one-shot `git -c`;
+never start first or weaken signing.
+
 **On signing failure** (errors like `gpg failed to sign the data`,
 `Couldn't get agent socket`, `failed to write commit object`,
 `user.signingkey not set`):
@@ -163,11 +168,8 @@ All commits MUST be signed. Never use `--no-gpg-sign`, `-n`, or
    literal passed as a filename produces a probe defect, not signing evidence.
    Only a completed signed commit proves capability:
    [literal-key probe](references/2026-07-24_signingkey-literal-not-path.md).
-3. **Match the execution context.** Before committing in a linked/temporary
-   worktree, probe `git -C <worktree> config --get user.signingkey` from the
-   exact shell that will commit. Missing there but present in the user's shell →
-   run `git -C` through that shell; launch cwd does not carry config. Verify the
-   resulting raw commit has a `gpgsig` header. Do not declare the env broken.
+3. **Match the execution context.** In a linked/temporary worktree, repeat the
+   preflight with `git -C <worktree>`; only a raw `gpgsig` proves success.
    [Temporary-worktree signing](references/2026-07-30_temp-worktree-signing-context.md).
 4. Tell the user: "Commit signing failed. Please check your GPG/SSH agent
    configuration and try again."
