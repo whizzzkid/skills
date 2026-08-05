@@ -90,7 +90,8 @@ Step 8 follow-ups for manual transition, mirroring the Asana fallback:
 For each `closes #N` / `fixes #N` reference:
 
 ```bash
-gh issue close {N} --comment "Shipped in {url} (merge commit {merge_sha})."
+gh issue close {N} --repo "{repo_with_owner}" \
+  --comment "Shipped in {url} (merge commit {merge_sha})."
 ```
 
 GitHub auto-close via `Closes #N` only fires when the PR merges into the repo's

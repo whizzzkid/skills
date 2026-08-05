@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.01-005952"
+  version: "2026.08.05-193710"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -72,9 +72,16 @@ Extract and record:
 - `{head}` — head branch (this PR's own branch)
 - `{head_sha}` — current HEAD SHA of the PR branch
 - `{url}` — PR URL
+- `{owner}` / `{repo}` — repository identity parsed from `{url}`; never derive it
+  from `$GITHUB_ORG` or the current `origin`
+- `{repo_with_owner}` — `{owner}/{repo}`
 - `{body}` — PR description (used in Steps 5 and 8)
 - `{state}` — PR state; `{merge_sha}` — `mergeCommit.oid` when merged
 - `{entered_merged}` — whether the PR was already merged at Step 1; default `false`
+
+- **HARD RULE — explicit PR identity owns every scoped command.** Use
+  `{repo_with_owner}` for reads, child retargets, merges, branch deletion, and
+  verification. Reserve `$GITHUB_ORG` for discovery without an explicit repo.
 
 - Command exits non-zero (not on a PR branch, no PR) → stop:
   > "No PR found for the current branch. Pass a PR number or URL as an
@@ -117,7 +124,7 @@ Extract and record:
 ## Step 2: Verify CI is green
 
 ```bash
-gh pr checks {number} --json name,state,required \
+gh pr checks {number} --repo "{repo_with_owner}" --json name,state,required \
   | jq '.[] | select(.required == true) | {name, state}'
 ```
 
@@ -154,7 +161,7 @@ gh pr checks {number} --json name,state,required \
 ## Step 3: Verify reviews are approved
 
 ```bash
-gh pr view {number} --json reviewDecision,reviews \
+gh pr view {number} --repo "{repo_with_owner}" --json reviewDecision,reviews \
   | jq '{reviewDecision, changesRequested: [.reviews[] | select(.state=="CHANGES_REQUESTED") | .author.login]}'
 ```
 
@@ -269,12 +276,12 @@ Merge consumes the completion gate's clearance; it never dispatches review.
   deletes the head: GitHub's automatic base-change on parent merge races with the
   branch deletion and does not complete first. Detect children:
   ```bash
-  gh pr list --repo "$GITHUB_ORG/{repo}" --base {head} --state open --json number,headRefName
+  gh pr list --repo "{repo_with_owner}" --base {head} --state open --json number,headRefName
   ```
   - Empty result → proceed to merge.
   - Any result → retarget EACH child onto this PR's base first, then merge this PR:
     ```bash
-    gh pr edit {child} --base {base} --repo "$GITHUB_ORG/{repo}"
+    gh pr edit {child} --base {base} --repo "{repo_with_owner}"
     ```
   - **HARD RULE — an unconfirmed child retarget is a HARD STOP; never merge past it.**
     Re-query children after retargeting and verify EVERY child's
@@ -292,10 +299,10 @@ Merge consumes the completion gate's clearance; it never dispatches review.
     use the REST equivalent. Never treat it as a hard failure.
 
 ```bash
-gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
+gh pr merge {number} --squash --delete-branch --repo "{repo_with_owner}"
 ```
 
-- **Always pass `--repo "$GITHUB_ORG/{repo}"`** — forces GitHub API-only
+- **Always pass `--repo "{repo_with_owner}"`** — forces GitHub API-only
   behavior, skips local branch manipulation. Without it,
   `gh pr merge --delete-branch` runs a local checkout of the base branch and
   fails inside a git worktree where the base is already checked out elsewhere
@@ -355,16 +362,16 @@ gh pr merge {number} --squash --delete-branch --repo "$GITHUB_ORG/{repo}"
   ~60s timeout:
   ```bash
   for i in $(seq 1 12); do
-    state=$(gh pr view {number} --json state --jq .state)
+    state=$(gh pr view {number} --repo "{repo_with_owner}" --json state --jq .state)
     [ "$state" = "MERGED" ] && break
     sleep 5
   done
-  gh pr view {number} --json state,mergeCommit --jq '{state, mergeCommit: .mergeCommit.oid}'
+  gh pr view {number} --repo "{repo_with_owner}" --json state,mergeCommit --jq '{state, mergeCommit: .mergeCommit.oid}'
   ```
 - Timeout (`state != "MERGED"`) → re-fetch blockers, stop, do **not** proceed to
   Step 7 — never log a null SHA as success:
   ```bash
-  gh pr view {number} --json mergeStateStatus,reviewDecision
+  gh pr view {number} --repo "{repo_with_owner}" --json mergeStateStatus,reviewDecision
   # plus the Step 4 unresolved-threads query
   ```
   > "Auto-merge queued but PR has not merged after ~60s. Likely blockers:
@@ -450,8 +457,8 @@ Follow-ups present → offer once:
 - `{entered_merged} == true` → audit the remote head; this run never executed
   `--delete-branch`:
   ```bash
-  gh pr list --repo "$GITHUB_ORG/{repo}" --base {head} --state open --json number,headRefName
-  git ls-remote --heads origin "refs/heads/{head}"
+  gh pr list --repo "{repo_with_owner}" --base {head} --state open --json number,headRefName
+  gh api "repos/{owner}/{repo}/git/matching-refs/heads/{head}"
   ```
   - Remote absent → continue.
   - Remote present + open child based on `{head}` → apply Step 6's child-retarget
@@ -460,7 +467,8 @@ Follow-ups present → offer once:
       and continue local cleanup; never delete a branch an open child needs.
   - Remote present + no child, initially or after retargeting → apply Step 6's
     branch-deletion preference. If unresolved, ask before cleanup. On delete,
-    run `git push origin --delete "{head}"`, re-query, and stop if the ref survives.
+    run `gh api --method DELETE "repos/{owner}/{repo}/git/refs/heads/{head}"`,
+    re-query, and stop if the ref survives.
 - Remove the local worktree last using
   [`references/worktree-cleanup.md`](references/worktree-cleanup.md).
 
@@ -477,7 +485,7 @@ Follow-ups present → offer once:
 
 - `gh` CLI authenticated and in PATH.
 - Jira MCP connector authenticated (for Jira ticket transitions).
-- `$GITHUB_ORG` set if repos are org-scoped.
+- `$GITHUB_ORG` set when discovery searches are org-scoped.
 - `git wtr` alias defined (worktree cleanup in Step 10) — the bare `Bash` tool
   already permits it; the alias itself must exist in git config.
 

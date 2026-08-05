@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.08.01-005952`
+**Version:** `2026.08.05-193710`
 
 ## Invocation
 
@@ -71,6 +71,9 @@ All five must pass; any failure blocks and reports what needs fixing:
   refreshed through the official PR-URL checkout path and must match submitted
   membership; every reconciled member clears the gates before one atomic
   `gh stack merge`.
+- **Explicit repository identity is authoritative.** Resolve `{owner}/{repo}`
+  from the PR URL and use it for every scoped read, mutation, merge, branch
+  deletion, and verification; ambient organization scope is discovery-only.
 - **Blocked with required checks green still needs a ruleset diff** — a required
   context with no HEAD run is absent from the visible check list, not passing.
 - **Remote state is re-resolved before every post-fix push or merge.** A

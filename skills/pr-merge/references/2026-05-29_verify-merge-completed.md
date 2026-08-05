@@ -6,9 +6,9 @@ date: 2026-05-29
 
 # Verify the PR actually merged before declaring success
 
-- **Rule:** After the merge command, poll `gh pr view --json state` until
-  `MERGED` or a ~60s timeout; never declare "Merge complete" while state is
-  `OPEN`.
+- **Rule:** After the merge command, poll
+  `gh pr view --repo "{owner}/{repo}" --json state` until `MERGED` or a ~60s
+  timeout; never declare "Merge complete" while state is `OPEN`.
 - **Why:** `gh pr merge --auto` and merge-queue repos return success while the
   PR is only *queued*. An immediate check returns `OPEN`; declaring success then
   conflates "queued" with "merged" and logs a null SHA.

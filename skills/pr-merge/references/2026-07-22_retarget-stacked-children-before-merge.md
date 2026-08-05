@@ -12,5 +12,6 @@ deletion and does not complete first — deleting the head branch can close/orph
 the stacked child before its base is moved, losing the child PR.
 
 **Where:** wk-pr-merge Step 6 (Merge the PR), as a pre-merge HARD RULE ahead of
-the `gh pr merge` command. Detection: `gh pr list --base {head} --state open`;
-retarget: `gh pr edit {child} --base {base}`.
+the `gh pr merge` command. Detection:
+`gh pr list --repo "{owner}/{repo}" --base {head} --state open`; retarget:
+`gh pr edit {child} --repo "{owner}/{repo}" --base {base}`.
