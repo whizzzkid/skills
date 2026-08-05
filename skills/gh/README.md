@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.08.05-213606`
+**Version:** `2026.08.05-215131`
 
 ## Invocation
 
@@ -49,6 +49,8 @@ flowchart TD
   unset, all `gh` operations halt and the user is prompted to set it explicitly.
 - **Exceptions are explicit:** The org filter is bypassed only when the user names a different org, says "all orgs",
   or the command targets the current repo directly (e.g., `gh pr view`).
+- **Explicit repository selection needs a PR selector:** use `gh pr view <number-or-url> --repo <owner/repo> --web`;
+  omit `--repo` when relying on current-branch inference.
 - **Artifact download path:** Files saved from `gh` commands go to
   `/tmp/agent/gh/<owner>/<repo>/<resource_type>/<resource_id>/<filename>` — mirrors the Buildkite convention.
 - **Notification filtering uses `jq`:** Org-scoping for `gh api notifications` is applied via

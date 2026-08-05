@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.05-213606"
+  version: "2026.08.05-215131"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -111,10 +111,11 @@ fi
 
 The org scope is **not applied** when:
 
-- The user explicitly names a different org or repo (e.g., "check
-  PRs on `other-org/repo`")
+- The user explicitly names a different org or repo (e.g., "check PRs on `other-org/repo`")
 - The user says "all orgs", "everywhere", or "across all repos"
 - The command targets the current repo specifically (e.g., `gh pr view`)
+- `gh pr view --repo` requires a positional PR: pass `<number-or-url>` before `--repo` for `--web`; omit `--repo`
+  when relying on current-branch inference.
 
 In all other cases, default to `$GITHUB_ORG`.
 
