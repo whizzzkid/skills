@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.05-215131"
+  version: "2026.08.05-215316"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -29,9 +29,8 @@ metadata:
 
 # GitHub Organization Scope
 
-Ensures all `gh` CLI and GitHub interactions are scoped to the user's
-organization. Activates automatically when the agent is about to run any
-`gh` command or interact with GitHub PRs, issues, or notifications.
+Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization. Activates before any `gh`
+command or GitHub PR, issue, or notification interaction.
 
 **HARD RULE — no size or surface exemption.** Every `gh` write
 fires this skill: `gh pr create`, `gh pr edit`, `gh pr comment`,
@@ -65,8 +64,7 @@ honor Step 1–2 scoping but skip Step 4 (no body to footer).
 ## Step 1: Check for $GITHUB_ORG
 
 Run `echo "${GITHUB_ORG:?}"` before any `gh` command.
-- **Missing/empty:** STOP — prompt the user to run `export GITHUB_ORG=your-org-name`; do not guess or infer from the
-  current repo.
+- **Missing/empty:** STOP — prompt `export GITHUB_ORG=your-org-name`; never infer it from the current repo.
 - **Set:** proceed to Step 2.
 
 ## Step 2: Scope All Commands
@@ -121,20 +119,21 @@ In all other cases, default to `$GITHUB_ORG`.
 
 ### Variable-dependent jq projections
 
-- `gh --jq` accepts exactly one jq expression; it does not expose standalone
-  `jq` flags such as `--arg` or `--argjson`.
+- `gh --jq` accepts one expression and no standalone `jq` flags (`--arg`, `--argjson`).
 - Constant projection → keep `gh --jq`:
 
   ```bash
   gh pr view --json headRefOid --jq '.headRefOid'
   ```
 
-- Projection needs shell values → emit raw `--json` and pipe to standalone `jq`:
+- Projection needs shell values → pipe raw `--json` to standalone `jq`:
 
   ```bash
   gh pr view --json headRefOid \
     | jq --arg expected "$expected_sha" 'select(.headRefOid == $expected)'
   ```
+
+- Quote complete `gh api` endpoints containing shell metacharacters (`?`, `&`, `*`) → prevent zsh globbing.
 
 ## Stack topology vs live pull-request state
 
