@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-204449"
+  version: "2026.08.05-210250"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -188,6 +188,8 @@ Verification:
 - Project linter/type checker passes.
 - Full pre-push gate passes before any `git push`; inspect hook config to enumerate every gate.
 - Re-run every gate against final HEAD, not a mid-session snapshot.
+- **User-loadable artifact handoff:** run every gate that writes its directory first; build and validate the
+  deliverable last.
 - Validate transformations with a formerly-failing input.
 - **Default-branch-only producers:** Run the pinned producer in an isolated repository or controlled live canary
   before merge.

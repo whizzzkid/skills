@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.08.05-204449`
+**Version:** `2026.08.05-210250`
 
 ## Invocation
 
@@ -79,6 +79,8 @@ flowchart TD
   `set -euo pipefail`.
 - **Execution environment is selected before validation:** inspect tracked container and runner configuration, use a
   runnable documented project container, and surface its absence before falling back to the host.
+- **User-loadable artifacts are built last:** enumerate required gates that write the handoff directory, run those
+  gates first, then build and validate the deliverable as the final artifact-producing command.
 - **Default-branch-only producer acceptance:** reproduce the pinned producer in an isolated repository or controlled
   live canary before merge, feed exact artifacts and mutable metadata through every downstream required check, and
   keep completion blocked until the first live output passes its own required CI.
