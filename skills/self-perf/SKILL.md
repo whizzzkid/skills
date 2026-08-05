@@ -23,7 +23,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171103"
+  version: "2026.08.05-220237"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -326,6 +326,13 @@ Structure output as:
 ## Stage 2: Synthesize into Narrative
 
 After all 7 agents complete → read every reference file → synthesize into `$SYNTHESIS_FILE`.
+
+### Evidence-integrity checks
+
+- Enumerate dated milestones before claiming an event was first, earliest, latest, or final.
+- Distinguish similarly named execution units with stable identifiers before comparing their outcomes.
+- Treat a non-significant result as insufficient evidence of an effect, never evidence that no effect exists.
+- Preserve the measured effect, uncertainty, and significance threshold when translating statistics into prose.
 
 ### Synthesis structure
 
