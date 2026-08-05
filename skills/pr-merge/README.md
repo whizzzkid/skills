@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.08.05-205230`
+**Version:** `2026.08.05-210655`
 
 ## Invocation
 
@@ -33,7 +33,7 @@ flowchart TD
     E -->|unchecked non-deferred items| BLOCK4["🚫 Block — list items"]
     E -->|clear| E2["Step 5.5: Review clearance<br/>covers this body of work?"]
     E2 -->|missing / new work / blocked| BLOCK5["🚫 Block — return to completion gate"]
-    E2 -->|clear| F["Step 6: Retarget stacked children onto base,<br/>then merge PR (squash)"]
+    E2 -->|clear| F["Step 6: Retarget stacked children onto base,<br/>select allowed method, then merge PR"]
     F --> G["Step 7: Transition linked ticket to Done"]
     G --> H["Step 8: Output follow-ups and action items"]
     H --> I["Step 9: Capture session retro"]
@@ -85,8 +85,8 @@ All five must pass; any failure blocks and reports what needs fixing:
 - **Never auto-resolve the author's own self-review threads** — they are
   informational and left open; the Step 6 merge attempt is the ground-truth
   probe of whether branch protection actually counts them.
-- **Squash is the default** — the skill detects repo merge settings and
-  respects overrides, but squash is the safe default for clean history.
+- **Active rulesets choose the merge method** — select the first allowed method
+  in preference order: squash, rebase, then merge; never probe a forbidden method.
 - **Jira auto-close does not happen via `Closes #N`** — GitHub's
   auto-close only works for GitHub Issues. Jira always needs an
   explicit transition call.

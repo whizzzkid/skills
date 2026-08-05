@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.05-205230"
+  version: "2026.08.05-210655"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -299,7 +299,7 @@ Merge consumes the completion gate's clearance; it never dispatches review.
     use the REST equivalent. Never treat it as a hard failure.
 
 ```bash
-gh pr merge {number} --squash --delete-branch --repo "{repo_with_owner}"
+gh pr merge {number} {selected-method-flag} --delete-branch --repo "{repo_with_owner}"
 ```
 
 - **Always pass `--repo "{repo_with_owner}"`** — forces GitHub API-only
@@ -308,12 +308,10 @@ gh pr merge {number} --squash --delete-branch --repo "{repo_with_owner}"
   fails inside a git worktree where the base is already checked out elsewhere
   (`fatal: '<base>' is already used by worktree at ...`). The `--repo` form is
   idempotent in both worktree and regular checkouts.
-- **HARD RULE — always attempt squash first.** Run the `--squash` command above
-  on every merge. Fall back only on **failure** — non-zero exit (squash
-  disallowed by branch protection, or a merge error).
-- Squash failure → detect allowed methods, retry next best in order
-  **`--rebase` then `--merge`** (first allowed wins — rebase keeps linear
-  history; merge commit is the universal fallback). **Read the ruleset, not the
+- **HARD RULE — select from the active ruleset before merging.** Read
+  `allowed_merge_methods`, then choose the first allowed method in preference
+  order **`--squash`, `--rebase`, `--merge`**. Never probe a known-forbidden
+  method. **Read the ruleset, not the
   repo-level fields** — `repos/{owner}/{repo}`'s `allow_*_merge` describe repo
   *settings* and report every method allowed even where a ruleset forbids it
   (`wk-gh` Step 3):
@@ -321,7 +319,8 @@ gh pr merge {number} --squash --delete-branch --repo "{repo_with_owner}"
   gh api repos/{owner}/{repo}/rulesets/{id} \
     --jq '.rules[] | select(.type=="pull_request").parameters.allowed_merge_methods'
   ```
-- Never switch away from squash when the squash command succeeds.
+- Merge fails with a policy error → re-read active rulesets before retrying;
+  never infer that another method is allowed from the first failure.
 - **Squash collapses the branch into one new commit, so every per-branch SHA
   recorded elsewhere becomes unreachable from the base.** Before squashing a branch
   whose individual commits are cited outside git (plan doc, PR body, tracking
