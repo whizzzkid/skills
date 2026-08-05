@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.08.01-081834`
+**Version:** `2026.08.05-204449`
 
 ## Invocation
 
@@ -77,6 +77,8 @@ flowchart TD
 - **Dependent verification fails fast:** run expected-red proofs separately
   from later green gates, or start a grouped shell command with
   `set -euo pipefail`.
+- **Execution environment is selected before validation:** inspect tracked container and runner configuration, use a
+  runnable documented project container, and surface its absence before falling back to the host.
 - **Default-branch-only producer acceptance:** reproduce the pinned producer in an isolated repository or controlled
   live canary before merge, feed exact artifacts and mutable metadata through every downstream required check, and
   keep completion blocked until the first live output passes its own required CI.
