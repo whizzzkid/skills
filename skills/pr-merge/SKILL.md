@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.05-193710"
+  version: "2026.08.05-205230"
   internal: false
   model:
     claude: claude-sonnet-4-6
