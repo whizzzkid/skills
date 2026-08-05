@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.08.05-210250`
+**Version:** `2026.08.05-210457`
 
 ## Invocation
 
@@ -81,6 +81,8 @@ flowchart TD
   runnable documented project container, and surface its absence before falling back to the host.
 - **User-loadable artifacts are built last:** enumerate required gates that write the handoff directory, run those
   gates first, then build and validate the deliverable as the final artifact-producing command.
+- **Platform-pinned visual baselines come from CI:** inspect actual, expected, and diff images, then replace only the
+  snapshots whose artifact confirms the intended visible change.
 - **Default-branch-only producer acceptance:** reproduce the pinned producer in an isolated repository or controlled
   live canary before merge, feed exact artifacts and mutable metadata through every downstream required check, and
   keep completion blocked until the first live output passes its own required CI.

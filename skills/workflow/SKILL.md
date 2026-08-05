@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-210250"
+  version: "2026.08.05-210457"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -238,6 +238,7 @@ Run only when the diff changes browser-rendered UI: client components, templates
 - Launch the app via the `run` skill or documented dev-server command.
 - Drive every changed view in a real browser with Playwright tools; exercise happy paths.
 - Capture snapshots and console messages.
+- Platform-pinned baselines → review CI actual/expected/diff artifacts; replace only confirmed snapshots.
 - Treat load failure, console error on the changed surface, or broken interaction as a blocker — fix before publishing.
 - Leave app/browser running and hand off the URL; continue Phase 5 onward while the user inspects.
 
