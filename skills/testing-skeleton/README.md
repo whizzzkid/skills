@@ -2,7 +2,7 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
-**Version:** `2026.07.31-015740`
+**Version:** `2026.08.05-192717`
 
 ## Invocation
 
@@ -42,6 +42,9 @@ flowchart TD
   keeping its contract, would the test still pass?" — yes = behavioral, no = structural.
 - **Format validators** must be derived from real example values found in the codebase or
   upstream docs, not from intuition — intuition-based validators routinely reject legal inputs.
+- **Boundary fakes must enforce external API contracts.** Pair prerequisite configuration or
+  permission assertions with adapter tests that reject unsupported arguments and reproduce the
+  documented return and async-completion shape.
 - [`wk-testing-skeleton`](../testing-skeleton/README.md) produces the plan; [`wk-workflow`](../workflow/README.md) Phase 3 verifies the suite passes —
   they are complementary, not redundant.
 - **An ad-hoc probe against the test database is a state mutation.** Framework runners commit

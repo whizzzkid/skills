@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.31-015740"
+  version: "2026.08.05-192717"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -165,6 +165,16 @@ When the unit consumes a structured payload (JSON, API response, hash, dataclass
 - Read the schema from production code paths, an OpenAPI/JSON-Schema spec, or other passing tests in the suite. Use those as the minimum field set in every new fixture.
 - Minimal stubs (only the fields the current assertion touches) create hidden coupling: when another code path on the same struct branches on a previously-unused field, every test using the minimal fixture starts asserting on undefined behavior or crashing on `fetch`/key-access of the missing field.
 - Property-based / generated fixtures must constrain by the same schema; a randomized hash without required fields is no safer than a handwritten minimal one.
+
+### Enforce external API contracts in boundary fakes
+
+- Pair prerequisite configuration or permission assertions with an adapter test; prerequisites do not prove the call
+  contract.
+- Make boundary fakes reject unsupported argument counts and types, then reproduce the documented return and
+  async-completion shape.
+- Drive the adapter through its public interface and assert the observable result or error.
+- Mutation-verify the test by breaking an argument or return shape; a surviving test does not protect the integration
+  contract.
 
 ### Agent-consumed fixtures must be actionable
 
