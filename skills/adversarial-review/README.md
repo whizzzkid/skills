@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.08.05-194448`
+**Version:** `2026.08.05-204841`
 
 ## Invocation
 
@@ -47,8 +47,9 @@ flowchart TD
   parsing, semantic public-projection probes, and test quality —
   including stable identities shared across typed sources and static fixtures,
   deterministic browser-profile parity across sibling harnesses, and bounded
-  port-handoff recovery. Signature changes also trigger whole-repo stub and
-  harness sweeps, with one real consumer driven per distinct harness.
+  port-handoff recovery. Task-registry migrations sweep workflows, setup/help
+  text, and source comments until only the registry definition retains the raw command. Signature changes also trigger
+  whole-repo stub and harness sweeps, with one real consumer driven per distinct harness.
 - **One dispatch per change** — the completion gate owns the run;
   [`wk-pr-resolve`](../pr-resolve/README.md),
   [`wk-pr-review`](../pr-review/README.md),
