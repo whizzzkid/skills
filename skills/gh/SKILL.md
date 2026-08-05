@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.05-212153"
+  version: "2026.08.05-213606"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -215,6 +215,12 @@ later submitted. Guard every reply post:
 - **Pending-review creation responses need not embed comments.** Project only
   review ID, state, and commit; then GET `/pulls/{n}/reviews/{id}/comments` and
   verify staged comment anchors. Missing expansion is never a retry signal.
+- **Pending-review creation is compare-and-recover.** Immediately before POST,
+  re-query the acting user's pending review. A draft found then, or HTTP 422
+  from create, routes to the same recovery: fetch its body and review-specific
+  comments, preserve them, build a deduplicated union with the proposed draft,
+  then use the calling skill's delete-and-recreate path. Never retry create
+  against the stale empty-discovery result.
 - **A client-side JSON parse failure is not a write failure.** A successful
   `POST /pulls/{n}/reviews` can return a body a strict decoder rejects (`Invalid
   control character` — an unescaped control char inside a string field), so capture
