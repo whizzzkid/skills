@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-214424"
+  version: "2026.08.05-215610"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -176,9 +176,9 @@ Before code review, verify coverage and pass all checks.
 
 ### HARD RULE — select execution environment before validation
 
-- Before first build, lint, or test command, inspect tracked container, devcontainer, runner, and repo instructions.
-- Runnable project container exists → use its documented in-container command.
-- None exists → state that result before falling back to host execution.
+- Before first build/lint/test, inspect tracked container, devcontainer, runner, and repo instructions.
+- Use a documented runnable project container; if none exists, say so before host fallback.
+- Mixed toolchains: [announce subsystem ownership; retain primary repo gate](references/environment-guardrails.md).
 
 Required paths:
 

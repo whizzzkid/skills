@@ -14,6 +14,9 @@ class: principle
   task-specific host packages until the container path is absent or unusable
   and the user approves the host mutation. Missing documentation does not prove
   the workflow is absent.
+- **Mixed toolchains:** Before the first secondary package-manager/toolchain
+  command, state its owning subsystem and documented boundary. Run its native
+  check and the repository-wide primary gate; the exception replaces neither.
 - **Configuration:** Add permission rules, settings, and MCP servers to
   `$HOME/.claude/settings.json`, not `.claude/settings.local.json`, unless
   intentionally local. Use `--scope user` for MCP servers. Never add MCPs to
