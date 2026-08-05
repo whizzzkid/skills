@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.07.31-183144`
+**Version:** `2026.08.05-193323`
 
 ## Invocation
 
@@ -46,7 +46,8 @@ flowchart TD
   runtime portability, canonical numeric-text parsing, and test quality —
   including stable identities shared across typed sources and static fixtures,
   deterministic browser-profile parity across sibling harnesses, and bounded
-  port-handoff recovery.
+  port-handoff recovery. Signature changes also trigger whole-repo stub and
+  harness sweeps, with one real consumer driven per distinct harness.
 - **One dispatch per change** — the completion gate owns the run;
   [`wk-pr-resolve`](../pr-resolve/README.md),
   [`wk-pr-review`](../pr-review/README.md),
