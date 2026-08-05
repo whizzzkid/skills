@@ -3,7 +3,7 @@
 Ensures Colima is running before any container operation and provides a clean
 restart path when Colima or Docker misbehaves.
 
-**Version:** `2026.07.28-171034`
+**Version:** `2026.08.05-212450`
 
 ## Trigger
 
@@ -18,6 +18,8 @@ daemon`) and on explicit `/wk-colima [start|stop|restart|status]`.
   the host. Memory (16 GB) and disk (100 GB) are fixed constants.
 - **Restart = full shutdown first** — `colima stop --force` before any
   re-start; partial restarts leave the VM in an inconsistent state.
+- **Contradictory state = stale state** — when start says running but status or
+  Docker disagrees, use the forced-stop restart instead of retrying start.
 - **Docker health gate** — after start, confirms `docker info` responds before
   declaring success.
 

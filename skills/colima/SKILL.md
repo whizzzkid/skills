@@ -23,7 +23,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171034"
+  version: "2026.08.05-212450"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -89,8 +89,10 @@ successfully. Confirm Docker is reachable:
 docker info > /dev/null 2>&1 && echo "Docker OK" || echo "Docker not reachable"
 ```
 
-If `docker info` fails after a successful `colima start`, proceed to the
-restart sequence (Step 4).
+**Important:** If `colima start` claims the VM is already running while
+`colima status` or `docker info` disagrees, treat runtime state as stale and
+proceed to the forced-stop restart sequence (Step 4); do not retry start in
+place.
 
 ## Step 4: Restart sequence (Colima or Docker is broken)
 
