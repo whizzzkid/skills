@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-182019"
+  version: "2026.08.05-212658"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -200,6 +200,18 @@ Before drafting, list every approach the plan would introduce that the user did 
 - **Unrequested breadth** — touching files, modules, or systems outside the named target.
 
 Surviving item → add a one-line rationale to the plan. Otherwise → drop it. **When an unrequested approach seems necessary but you are not certain the user wants it → surface it as a `[HUMAN-IN-LOOP]` decision with the simplest alternative stated — do not silently bake it into the plan.**
+
+### Secret-ownership probe
+
+When a runtime secret is required, separate secret consumption from secret
+provisioning before defining workstreams:
+
+- Identify the owner and provisioning mode for every secret: repository
+  automation, external platform, or manual operator action.
+- Manual population selected → document it as an operational prerequisite;
+  do not invent infrastructure or cross-repository work.
+- Ownership or mode unknown → add a `[HUMAN-IN-LOOP]` decision before assigning
+  implementation work.
 
 ### Search-scope boundary
 
@@ -384,6 +396,8 @@ Before presenting, run a validation checklist against the draft plan.
 - Rule-set doc sync probe ran when rule files change.
 - Tool-swap flag-parity probe ran when tools are swapped.
 - Producer-audit probe ran when named-file lookup becomes directory scan.
+- Secret-ownership probe ran when runtime secrets are required; each secret has
+  an explicit owner and provisioning mode.
 
 Flag every validation failure inline in the draft (`⚠️ MISSING: …`). Resolve all flags before Step 5.
 
