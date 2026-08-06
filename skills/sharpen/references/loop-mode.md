@@ -22,7 +22,9 @@ procedure.
    ```
    Agent(prompt="Invoke the wk-sharpen skill via the Skill tool and drain EVERY
    unprocessed learning: highest-severity, oldest-mtime first; fold, commit, push,
-   re-list, repeat until the Source 2 listing is empty", run_in_background=true)
+   re-list, repeat until the Source 2 listing is empty. Do not invoke wk-learn or
+   wk-retro: return the cycle summary to this dispatcher without creating queue files",
+   run_in_background=true)
    ```
 
    - **Fresh `Agent` call every cycle — zero inherited context.** Never continue a
@@ -30,6 +32,8 @@ procedure.
      already folded, and a stale queue snapshot re-claims processed items.
    - The dispatcher never folds an item itself and never spawns a second agent to
      parallelize the drain — the exclusivity rule is machine-wide, not per-item.
+   - The worker never writes a learning or retrospect about its own cycle. Those
+     records re-enter Source 2/4 and turn an idle queue into permanent self-work.
 2. Wait for that agent's completion notification. Never poll for it by spawning
    another agent, never start a second cycle while one is live, and never report a
    pending agent's findings — the notification is the only completion signal.

@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.08.05-222104`
+**Version:** `2026.08.06-074832`
 
 ## Invocation
 
@@ -18,7 +18,7 @@ flowchart TD
     A{Invocation mode} -->|single| B[Read incident report]
     A -->|batch| G[Scan 4 sources]
     A -->|improve| K[Inventory all skills in scope]
-    A -->|"loop &lt;N&gt;mins"| N1["Spawn ONE background agent<br/>drains the WHOLE queue"]
+    A -->|"loop &lt;N&gt;mins"| N1["Spawn ONE background agent<br/>drains queue; writes no self-record"]
     N1 --> N2{"Queue empty at wake?"}
     N2 -->|"2nd consecutive empty wake"| N4["Report counts, stop scheduling"]
     N2 -->|"items remain, or 1st empty"| N3["Schedule next cycle N mins<br/>AFTER completion — never a cron"]
@@ -184,6 +184,9 @@ flowchart TD
   previous one *finishes* — never on a wall-clock cron, which would fire mid-run and stack
   concurrent folds over one queue. One item per cycle is not enough: [`wk-learn`](../learn/README.md) filings and peer
   sessions refill the queue faster than a single fold drains it.
+- **Loop workers never capture their own [`wk-learn`](../learn/README.md) or [`wk-retro`](../retro/README.md)
+  output.** The dispatcher receives the terminal summary directly; otherwise the next Source 2/4 scan consumes the
+  cycle's own record and the loop cannot drain.
 - **Improve mode** requires explicit phased user approval even in auto mode — suite-scale
   refactoring is high blast-radius and can never be applied silently.
 - **De-bloat pass** is mandatory on every run (not only when a learning prompts it) and

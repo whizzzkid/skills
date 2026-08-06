@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.08.05-222104"
+  version: "2026.08.06-074832"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -306,6 +306,7 @@ Self-paced batch mode — one background subagent per cycle, zero inherited cont
 
 - **Exactly one agent in flight, machine-wide.** Concurrent folds contend over one queue and one `SKILL.md`: two runs claim one learning.
 - **A cycle drains to empty, never one item** — fold, commit, re-list, repeat; one item per cycle loses to the arrival rate.
+- **Loop workers emit no queue records.** See [`references/loop-mode.md`](references/loop-mode.md).
 
 ## Improve Mode: Refactor and Optimize
 
@@ -313,4 +314,5 @@ Self-paced batch mode — one background subagent per cycle, zero inherited cont
 
 ## Post-Completion
 
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn sharpen`).
+Interactive run → invoke `wk-learn sharpen`. Loop worker → return its terminal summary to the dispatcher; do not
+invoke `wk-learn` or `wk-retro`.
