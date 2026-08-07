@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-192717"
+  version: "2026.08.07-230821"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -293,8 +293,10 @@ A new test is decorative until seen failing on a broken implementation. After ea
    - Remove a validation check.
    - Swap two arguments in a sub-call.
    - Replace `+` with `-`, `&&` with `||`.
-2. **Run the test.** It must fail.
-3. **Restore the implementation.**
+2. **Run the intended example by exact description, not source line.** Confirm
+   its name in runner output; a green nearby example is not mutation evidence.
+3. **Verify the test fails.**
+4. **Restore the implementation.**
 
 A contract-breaking mutation that breaks no test → the suite has a hole. Add the missing assertion before moving on.
 

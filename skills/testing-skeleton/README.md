@@ -2,7 +2,7 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
-**Version:** `2026.08.05-192717`
+**Version:** `2026.08.07-230821`
 
 ## Invocation
 
@@ -38,6 +38,8 @@ flowchart TD
   comment naming why behavioral observation was unavailable: `# structural: ...`.
 - **Mutation verification is required for every new behavioral test** — two exemptions only:
   property-based tests (fuzzer does it) and snapshot tests (diff is the verification).
+- **Select mutations by exact example description, not a line number.** Confirm
+  the runner reports that name; a green nearby example is not mutation evidence.
 - The **behavioral/structural dividing line** test: "if I rewrote this function from scratch
   keeping its contract, would the test still pass?" — yes = behavioral, no = structural.
 - **Format validators** must be derived from real example values found in the codebase or
