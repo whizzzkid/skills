@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.08.06-074832"
+  version: "2026.08.07-164303"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -262,23 +262,15 @@ behavior, not just the specific instance.
     - No entry → unbudgeted.
     - Price each debit from exact applied old/new bytes; any change voids it → re-price.
     - Stage all edits; run the hook's `measure()` exactly once.
+    - Count every draft/replacement fragment with `LC_ALL=C wc -c`; shell character length is never a byte ledger.
 
 ## Step 8: Verify and Commit (terminal gate)
 
 Do not return control until all five pass:
 
-1. **Install:**
-   - Preflight replacements; a missing prerequisite must leave active copies intact.
-   - From `$WK_SKILLS_HOME`, run `scripts/install-skills.sh`; require an active-runtime target.
-   - Byte-compare installed `SKILL.md` and changed references. Missing/mismatch →
-     apply the targeted-copy recovery, then re-compare; a success banner never passes:
-     [`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md).
-2. **Suite:** fold edited an executable artifact the skill ships (hook, script, binary — not `SKILL.md`/`README.md`/`references/`) → locate and run that skill's own test suite before committing. Red result → apply the Step 1 harness-defect rule.
-3. **Commit:** stage only the paths this run touched — edited `SKILL.md`/`README.md`/`references/`, version bumps, and the specific learning/retro files this run processed and renamed to `.learned.md`. Use `wk-commit` conventional format with classifier emojis.
-   - Validate each processed-state archive against active format rules before staging; fix failures in the archive
-     commit.
-   - Blocked after staging → undo the processed rename but preserve the fold index: [`references/commit-gate.md`](references/commit-gate.md).
-   - Anti-thrash ≠ gate discharge: an inherited fold's gates are **unrun** until the tree records otherwise — run the shipped-code suite and the owning hooks (Step 5 throwaway index), and leave the index partitioned as the prior run left it.
+1. **Install:** preflight replacements; install from `$WK_SKILLS_HOME`; byte-compare changed runtime copies. Missing/mismatch → targeted recovery, then re-compare: [`references/step8-install-cd-repo-root.md`](references/step8-install-cd-repo-root.md).
+2. **Suite:** executable-artifact fold → run its suite; red → Step 1 harness triage.
+3. **Commit:** stage only this fold's files and valid processed archives; use `wk-commit`. Blocked rename → undo it but preserve the fold index: [`references/commit-gate.md`](references/commit-gate.md). Inherited gates remain unrun until verified.
 4. **Push once:** after all commits exist, push a single time. A signing failure at item 3 blocks this too — same agent, different error string.
 5. **Clean tree:** no modified tracked path in `git status --short` — untracked *unprocessed* learnings/retros are expected state, never debris to delete.
 
@@ -289,8 +281,7 @@ Report: one line per skill updated, then confirm tree clean, installed, pushed.
 Invoked without a specific incident → batch mode.
 
 - **A "source drained" verdict needs a live control** — sourced per [`references/batch-mode-sources.md`](references/batch-mode-sources.md). Drained = rc 0 **and** empty output, never a banner.
-- **Source 1** (global inbox → repo tree) and **Source 4** (session retrospects) feed the Source 2 path; mirror / scan / rename / processed-state mechanics in the reference above — read before draining either.
-- **Source 3** (global memory files) — `$HOME/.claude/memory/`: `feedback`, plus `user` / `project` only when they instruct how a skill behaves; materialize each via `wk-learn` into the Source 2 path. Parse-as-memory gate before the marker diff, marker-records-distillation-not-suppression, per-shape controls, and uniform `LC_ALL=C` pinning: [`references/memory-marker-diff.md`](references/memory-marker-diff.md).
+- Sources 1/4 feed Source 2; mirror, scan, rename, and processed-state mechanics: [`references/batch-mode-sources.md`](references/batch-mode-sources.md). Source 3 memory rules: [`references/memory-marker-diff.md`](references/memory-marker-diff.md).
 
 ### Source 2: Repo learnings directory
 
@@ -302,11 +293,8 @@ Invoked without a specific incident → batch mode.
 
 ## Loop Mode: `/wk-sharpen loop <N>mins`
 
-Self-paced batch mode — one background subagent per cycle, zero inherited context, drains the **entire** queue before stopping; next cycle N minutes after this one *finishes*. Spawn / drain / schedule / stop mechanics: [`references/loop-mode.md`](references/loop-mode.md).
-
-- **Exactly one agent in flight, machine-wide.** Concurrent folds contend over one queue and one `SKILL.md`: two runs claim one learning.
-- **A cycle drains to empty, never one item** — fold, commit, re-list, repeat; one item per cycle loses to the arrival rate.
-- **Loop workers emit no queue records.** See [`references/loop-mode.md`](references/loop-mode.md).
+One machine-wide worker drains the full queue with no self-records; spawn, drain, schedule, and stop mechanics:
+[`references/loop-mode.md`](references/loop-mode.md).
 
 ## Improve Mode: Refactor and Optimize
 

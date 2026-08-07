@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.08.06-074832`
+**Version:** `2026.08.07-164303`
 
 ## Invocation
 
@@ -187,6 +187,8 @@ flowchart TD
 - **Loop workers never capture their own [`wk-learn`](../learn/README.md) or [`wk-retro`](../retro/README.md)
   output.** The dispatcher receives the terminal summary directly; otherwise the next Source 2/4 scan consumes the
   cycle's own record and the loop cannot drain.
+- **Byte ledgers count bytes, not characters.** Price every draft and replacement fragment with
+  `LC_ALL=C wc -c`; shell string length is locale-sensitive and cannot justify a body-size projection.
 - **Improve mode** requires explicit phased user approval even in auto mode — suite-scale
   refactoring is high blast-radius and can never be applied silently.
 - **De-bloat pass** is mandatory on every run (not only when a learning prompts it) and
