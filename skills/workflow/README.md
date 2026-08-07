@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.08.05-215610`
+**Version:** `2026.08.07-231155`
 
 ## Invocation
 
@@ -56,6 +56,11 @@ flowchart TD
   draft-complete authoring gate.
 - **Skill invocation is mandatory** via the `Skill` tool — approximating skill behavior with
   raw commands skips guards and conventions that the skills contain.
+- **Re-check command-level triggers before a CLI's first use.** Task-level
+  selection is not enough when a later command activates a subsystem skill.
+- **Mandatory PR lifecycle authorizes first publication.** Push the tracked task
+  branch and create its PR; ask only where the governing workflow leaves
+  publishing optional.
 - **Progressive disclosure:** the skill is debloated under 500 lines. Phase 1 delegates to
   [`wk-plan`](../plan/README.md), and later phases invoke focused skills instead of inlining their full
   rule sets.

@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-215610"
+  version: "2026.08.07-231155"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -35,6 +35,7 @@ Master orchestration for development tasks. Phases run in ascending order; follo
 - Fires on EVERY task producing code changes, a commit, a push, a PR, or a CI build from a code change. No opt-out, no "too small" exemption.
 - Session resumption is a fresh start → before any write action after context compaction, rollover, or "continue where we left off", invoke `wk-workflow` again.
 - A planning discussion in chat is NOT a substitute for this invocation — invoke the skill before the first Edit/Write/Bash; it may surface branch hygiene/guardrails/pre-flight the chat missed.
+- Before first CLI/subsystem use, re-check skill triggers; invoke matches first.
 
 ### HARD RULE — live learning capture
 
@@ -59,13 +60,19 @@ Execute the workflow without asking permission at each step.
 | Defect diagnosed, owning file identified | Edit that file now | Re-state the tradeoffs again |
 | Feedback lands mid-action | Finish the authorized action, then adjust | Acknowledge and stop, leaving it undone |
 
+- Mandatory PR workflow authorizes initial task-branch push and PR; ask only if
+  publishing is optional.
+
 Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a finding requires a user-owned design decision; user explicitly requested a pause/check-in; or a destructive/shared-state action is required.
 
 - **Volunteered feedback is not a stop signal** (unlike a question you asked, below): unless it revokes the action, finish the authorized step in the same turn as the acknowledgement.
 - **A turn producing no new facts must end in a write** — no new file read or command output means analysis is done, so edit the owning file instead of re-deliberating.
 - When soliciting feedback, block on it → end the turn after asking; do not implement past that point until answered. When the user asks for decisions gathered individually AND collected first, treat decision-collection as a barrier phase: gather and confirm the full set before executing any — never interleave asking with acting.
-- Skill invocation is mandatory → use the Skill tool for prescribed skills, do not approximate with raw commands. Run the invoked skill's full flow; user prose is additive context, not a license to skip parts.
-- **Announce-and-invoke in the same turn:** a skill counts as invoked only when its `Skill` call appears in the same response as the text announcing it. "Now running X" with no same-turn `Skill(X)` call is a protocol violation — narration is not action. On catching a self-announcement without its call, invoke the skill before any other action.
+- Skill invocation is mandatory → use Skill tool, not raw approximation. Run its
+  full flow; user prose adds context, never exceptions.
+- **Announce-and-invoke same turn.** A skill counts only when its `Skill` call is
+  in that response; narration alone is a violation. Catch it → invoke before any
+  other action.
 - **HARD RULE — never report a skill absent from the session available-skills list alone.** The list is not exhaustive; a skill can exist on disk yet be missing from it. Confirm via `ls "$WK_SKILLS_HOME/skills/" | grep <name>` before telling the user a skill is missing; report absent only when that returns nothing.
 - Batch independent tool calls in one response whenever possible.
 
