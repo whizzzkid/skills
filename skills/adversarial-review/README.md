@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.08.05-205936`
+**Version:** `2026.08.07-225409`
 
 ## Invocation
 
@@ -34,6 +34,9 @@ flowchart TD
 ## Noteworthy
 
 - **No opt-out exists.** "Small fix", "trivial", and "docs-only" are explicitly named red flags, not exemptions — even a docs commit can contradict test counts in a spec.
+- **Artifact over authority.** Containers executing branch-controlled code receive
+  only host-fetched least-privilege artifacts; do not forward an authentication
+  agent or broad credential merely to fetch one.
 - **Clearance follows reviewed work, not SHA equality** — tree-identical rewrites
   preserve the record. Finding-response commits get targeted validation; only
   unmatched scope, refactor, or logic triggers a delta-scoped review.

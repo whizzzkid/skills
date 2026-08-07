@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.05-205936"
+  version: "2026.08.07-225409"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -54,8 +54,8 @@ Resolve base → surface map → mechanical sweeps → fresh adversarial subagen
 
 ## Non-Negotiable Contract
 
-1. **No merge without clear lineage.** Publishing is ungated; merge and
-   `gh pr merge --auto` require clear review lineage. Apply
+1. **Clear lineage.** Publishing is ungated; merging requires clear review
+   lineage. Apply
    [`references/clearance-lineage.md`](references/clearance-lineage.md).
 2. **No docs-only exemption.** Docs, specs, skills, executable instructions can
    carry logic errors, stale counts, or bad commands.
@@ -71,6 +71,9 @@ Resolve base → surface map → mechanical sweeps → fresh adversarial subagen
 8. **Diff-anchored findings.** Commentable findings map to diff lines; outside-diff issues → file-level or verdict-body notes.
 9. **Gate, not actor.** Do not push, edit the PR, or post review comments from this skill.
 10. **Arch layer hands over, once.** Arch-bearing artifact or topology change in the diff (`wk-arch-review`'s trigger) → read its record, else dispatch it once and fold the findings; never re-derive topology critique here.
+11. **Artifact over authority.** A container executing branch-controlled code
+    receives a host-fetched least-privilege artifact, never an agent or
+    credential used only to fetch it.
 
 ## Step 1: Resolve Context and Build Surface Map
 
