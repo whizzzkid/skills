@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.07-163936"
+  version: "2026.08.07-230152"
   model:
     openai: gpt-5.6-terra
 ---
@@ -254,6 +254,9 @@ fix/commit/push.
 - **Reproduce an externally-sourced finding before fixing it** — a bot/scanner
   finding is a hypothesis; driving it settles real-defect vs. style-nit and yields
   the regression test.
+- **Shell/wrapper hypothesis → inspect the job log's exact rendered command and
+  downstream sentinel.** A matching passing sentinel outranks static quoting
+  speculation; aggregate green does not.
 
 **Org-specific policy questions.** Reviewer question touches org policy → search
 the configured KB first and cite an authoritative doc; fall back to general

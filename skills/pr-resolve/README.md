@@ -4,7 +4,7 @@
 > and manage the full resolution cycle from branch sync through push, CI
 > polling, and session retro.
 
-**Version:** `2026.08.07-163936`
+**Version:** `2026.08.07-230152`
 
 ## Invocation
 
@@ -72,6 +72,9 @@ sequenceDiagram
 - **Bot-native reply commands are preferred:** Before drafting a freeform reply
   to a bot finding, the skill checks the bot's documented command grammar and
   uses it. Generic replies leave findings open and add noise.
+- **Shell/wrapper findings require runtime evidence:** Inspect the job log's
+  exact rendered command and its downstream sentinel. A matching passing
+  sentinel outranks static quoting speculation; aggregate green alone does not.
 - **No plan-and-ask on a settled contradiction:** A new bot finding that
   contradicts an earlier-accepted fix pauses for the user only when genuinely
   unresolved; a dismissal backed by convention/schema is decided under Auto Mode
