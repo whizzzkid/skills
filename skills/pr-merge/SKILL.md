@@ -8,7 +8,7 @@ description: >-
   the linked ticket to its terminal state, lists
   any follow-ups or deferred action items, captures a session retro, and
   cleans up the merged worktree.
-argument-hint: '[<pr-number-or-url>]'
+argument-hint: '[<pr-number-or-url>] [--keep-branch]'
 allowed-tools:
   - Bash
   - Read
@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.05-210655"
+  version: "2026.08.07-230511"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -352,8 +352,9 @@ gh pr merge {number} {selected-method-flag} --delete-branch --repo "{repo_with_o
   gh api graphql -f query='mutation($id:ID!){resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}' -F id=<threadId>
   ```
   Never auto-resolve self-authored threads without the user's explicit yes.
-- `--delete-branch` deletes the head branch after merge. Repo has "delete branch
-  on merge" disabled and user has not expressed a preference → ask once:
+- `--delete-branch` deletes the head branch after merge. Direct `/wk-pr-merge`
+  authorizes that documented default; `--keep-branch` opts out. Natural-language
+  merge request with no cleanup preference and disabled repository default → ask:
   > "Delete the branch `{head}` after merge? (yes / no)"
 - **HARD RULE — never declare "Merge complete" until `state == "MERGED"`.**
   `gh pr merge --auto` and merge-queue repos return success while the PR is
@@ -477,8 +478,9 @@ Follow-ups present → offer once:
 
 | Invocation | Behavior |
 |------------|----------|
-| `/wk-pr-merge` | Merge PR for current branch |
-| `/wk-pr-merge 123` | Merge PR #NNN explicitly |
+| `/wk-pr-merge` | Merge PR for current branch; delete branch |
+| `/wk-pr-merge 123` | Merge PR #NNN; delete branch |
+| `/wk-pr-merge --keep-branch` | Merge current PR; retain branch |
 
 ## Requirements
 

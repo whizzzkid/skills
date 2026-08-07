@@ -5,13 +5,13 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.08.05-210655`
+**Version:** `2026.08.07-230511`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
-| User-invocable | `/wk-pr-merge` (current branch) or `/wk-pr-merge 123` (explicit PR) |
+| User-invocable | `/wk-pr-merge` (current branch) or `/wk-pr-merge 123` (explicit PR); add `--keep-branch` to retain it |
 | Model-invocable | `false` — user-initiated gate only |
 
 ## How It Works
@@ -90,6 +90,9 @@ All five must pass; any failure blocks and reports what needs fixing:
 - **Jira auto-close does not happen via `Closes #N`** — GitHub's
   auto-close only works for GitHub Issues. Jira always needs an
   explicit transition call.
+- **Direct invocation authorizes documented cleanup:** `/wk-pr-merge` deletes the
+  merged branch; use `--keep-branch` to opt out. A natural-language merge request
+  without a cleanup preference still prompts when the repository default is off.
 - **Ticket detection ignores outbound metadata** — strip only the terminal
   canonical [`wk-gh`](../gh/README.md) footer, then reject alphanumeric,
   underscore, and percent-sign adjacency so encoded fragments, timestamps,
