@@ -1,0 +1,16 @@
+---
+class: principle
+---
+
+# Post-push finalization
+
+- Sync the PR description before replies or resolutions; preserve metadata and verify commit links, test-plan
+  checkboxes, CI, remaining work, limitations, and file lists.
+- No description drift → log the verified fields; claim Testing/Results only from known evidence, otherwise use an
+  honest placeholder.
+- Re-check submitted self-review comments and docs drift after every push; correct/resolve stale comments and invoke
+  `wk-docs` for touched behavior, signatures, or configuration.
+- Re-run the pending-self-review check, then post replies sequentially by surface. Quote issue comments; split
+  suggestions from one issue comment share one combined reply.
+- Refresh bot threads against HEAD with full bodies; an addressed echo gets reply+resolve, a new finding returns to
+  Step 4. Use commands.md §8 for reaction, ID-refresh, and error recovery.

@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171055"
+  version: "2026.08.07-163936"
   model:
     openai: gpt-5.6-terra
 ---
@@ -236,16 +236,8 @@ login (or the current user in a co-author session) → Self-review; any other
 
 **HARD RULE — honor the user's named target.** User points to a specific artifact (comment, CI log, bot review) → name the exact finding before writing code; multiple findings in it → ask which, never infer; don't act on adjacent findings until the stated one is resolved.
 
-**Bot / non-convergence handling:**
-
-- Track bot thrash by `(path_prefix, concern_class)` and total active findings per round.
-- Stop and ask before another fix when: same pair re-fires 3×; totals stop falling 2 rounds running; or a new finding contradicts an accepted fix — unless dismissal is Auto-Mode-confident (act, no plan).
-- Re-fires on prose → grep code/CI/prompt reading its *content* (not just path) before rewording; none → delete/restructure.
-- Bot reply: documented command syntax, else a generic reply tagging the bot with the decision.
-- **Surface prior-round dismissals.** Before a judgment-required finding, check
-  the session `dismissed` list and prior-round notes for the same field/concern
-  class — a bot re-firing on a dismissed field from a new angle is the same
-  decision. Found → surface the prior reason inline, default to `(d)`, ask once.
+**Bot / non-convergence handling** — follow
+[`references/bot-convergence.md`](references/bot-convergence.md).
 
 **All-Minor bulk-dismiss gate.** Every active finding Minor and each has a
 plausible skip rationale → offer one bulk action before per-item triage:
@@ -418,31 +410,9 @@ Hard Rule 4 `--force-with-lease` exception live there).
 draft PR → run `gh pr ready {number}` without being asked; a fully-resolved draft
 is review-ready.
 
-**Sync PR description immediately after push — HARD RULE:** Update the PR body
-before posting replies or resolving threads, even when it looks current.
-
-- Preserve metadata lines.
-- Verify commit links, test-plan checkboxes, CI status, remaining work, known limitations, and file lists before declaring no drift.
-- No drift → log an explicit "no drift detected" line naming the compared fields.
-- **Never assert a result the agent cannot confirm.** Gate Testing/Results on known evidence (diff, CI, user statement); no evidence → honest placeholder (`Pending — <how to exercise>`), never a templated "build completed successfully".
-
-**Re-check self-review and docs drift (every push):**
-
-- Re-read agent-posted self-review comments; a fix changed the code a comment describes → correct or resolve it.
-- Invoke `wk-docs` against files touched this session; update docs/specs/README when behavior, signatures, or config changed.
-
-**Post replies, reactions, resolve threads.** Re-run the pending self-review
-check first (route per Hard Rule 13). Post
-replies sequentially, routed by surface — full routing, reaction map, ID-refresh,
-and `404`/`NOT_FOUND`/outdated-thread/in-place-bot handling in commands.md §8.
-Key rules:
-
-- Quote the original on issue-comment replies; suggestions split from one issue
-  comment (Step 4) → **one combined reply** (no sub-section replies).
-- Post-push, refresh bot threads against HEAD, fetch full comment BODIES, and
-  classify each `(path, line, concern)` as already-addressed echo (reply+resolve,
-  no re-commit) or genuinely-new finding (route to Step 4, never ID-refresh-only)
-  — mechanics in commands.md §8.
+**Finalize the pushed PR** — follow
+[`references/post-push-finalization.md`](references/post-push-finalization.md)
+before replying or resolving threads.
 
 ## Step 9: Check Merge Conflicts
 
@@ -470,6 +440,9 @@ logins, SHAs). Re-run per post-CI batch.
 - CI passes → re-run Step 3 against post-push HEAD (matches are already-addressed echoes, per Step 8).
 - Genuinely new unresolved comments → loop: Step 4 (new findings) → Step 5 (same partition/one-at-a-time) → Steps 6–9 → Step 9.5 after the second push.
 - Exit only when CI passes and the post-CI fetch surfaces no genuinely unresolved comments. Cap at 3 iterations; beyond that, surface the review-thrash loop to the user.
+- **Before terminal summary → re-fetch the PR.** Verify remote HEAD equals the pushed commit, every recorded
+  response/resolution matches its decision, and required CI is terminal and reported. Mismatch → resume the owning
+  step; local progress never completes a remote PR.
 
 ## Step 10: Final Summary
 
