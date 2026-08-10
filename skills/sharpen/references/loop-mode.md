@@ -68,11 +68,8 @@ procedure.
 ## Termination
 
 - Queue empty at wake — `rc 0` **and** empty output from the Source 2 listing —
-  → spawn nothing, report it, schedule one more interval. A drained queue is not a
-  finished one: each cycle's own `wk-learn` filings and peer sessions refill it.
-- **Second consecutive empty wake → stop scheduling** (`ScheduleWakeup` with
-  `stop: true`) and report counts. One idle re-check absorbs the refill; two prove
-  nothing is arriving, and waking forever on an empty queue burns the interval.
+  → spawn nothing, report it, schedule the next interval. The loop runs continuously;
+  peer sessions can refill an idle queue at any time.
 - A cycle that ends distilled-not-landed (blocked commit gate, signing failure)
   → stop the loop and report it. Re-waking cannot clear a gate the run could not,
   so repeated cycles would burn the interval without progress.

@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.08.07-164303"
+  version: "2026.08.10-184952"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro

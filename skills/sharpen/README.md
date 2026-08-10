@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.08.07-164303`
+**Version:** `2026.08.10-184952`
 
 ## Invocation
 
@@ -20,8 +20,7 @@ flowchart TD
     A -->|improve| K[Inventory all skills in scope]
     A -->|"loop &lt;N&gt;mins"| N1["Spawn ONE background agent<br/>drains queue; writes no self-record"]
     N1 --> N2{"Queue empty at wake?"}
-    N2 -->|"2nd consecutive empty wake"| N4["Report counts, stop scheduling"]
-    N2 -->|"items remain, or 1st empty"| N3["Schedule next cycle N mins<br/>AFTER completion — never a cron"]
+    N2 -->|"items or empty"| N3["Schedule next cycle N mins<br/>AFTER completion — never a cron"]
     N3 --> N1
     B --> B2[Verify reported cause against the owning source]
     B2 --> C[Read full SKILL.md]
@@ -183,7 +182,8 @@ flowchart TD
   push, re-list, repeat — before it stops. The next cycle is scheduled `N` minutes after the
   previous one *finishes* — never on a wall-clock cron, which would fire mid-run and stack
   concurrent folds over one queue. One item per cycle is not enough: [`wk-learn`](../learn/README.md) filings and peer
-  sessions refill the queue faster than a single fold drains it.
+  sessions refill the queue faster than a single fold drains it. Empty wakes schedule the next
+  interval continuously; only explicit stop, interruption, or a blocked terminal gate ends it.
 - **Loop workers never capture their own [`wk-learn`](../learn/README.md) or [`wk-retro`](../retro/README.md)
   output.** The dispatcher receives the terminal summary directly; otherwise the next Source 2/4 scan consumes the
   cycle's own record and the loop cannot drain.
