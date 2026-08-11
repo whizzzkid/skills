@@ -57,7 +57,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.08.05-055741"
+  version: "2026.08.11-191003"
   model:
     openai: gpt-5.6-terra
 ---
@@ -203,9 +203,10 @@ Agent roster:
 
 Soft/hard block handling per canonical subagent contract: OAuth soft blocks
 degrade with an authorization CTA; missing MCPs are hard blocks. A
-`tool_unavailable` return = capability-inheritance failure — re-run that
-domain in the main context, not as "nothing found". A stalled agent (idle only,
-no flag) → 3-nudge ceiling, then degrade + carry-forward (see contract).
+`tool_unavailable` return = capability-inheritance failure — replay that domain
+in the main context: every query window, output field, and downstream
+orchestrator action before compile. A stalled agent (idle only, no flag) →
+3-nudge ceiling, then degrade + carry-forward (see contract).
 
 #### Jira full open-ticket sweep
 
@@ -250,12 +251,12 @@ Orchestrator action after agents return, before writing `live.md`. A referenced
 sibling-skill flow is an action to run, not framing to describe — subagents
 gather read-only; the orchestrator owns every write.
 
-- For each interview the Calendar agent reports lacking a prep/scorecard block,
+- For each interview the Calendar domain reports lacking a prep/scorecard block,
   call [`wk-cal`](../cal/README.md)'s block-creation flow: a 15-min prep block
   before, a 30-min scorecard block after (scan forward in 30-min increments when
   the immediate slot is busy).
-- Fall back to a 🔴 ASAP span only when calendar write access is unavailable or
-  no slot exists.
+- Before Stage 3, record the five-day interview-scan result and either created
+  block links or the no-slot/write-access fallback.
 
 ### Stage 3: Compile open items
 

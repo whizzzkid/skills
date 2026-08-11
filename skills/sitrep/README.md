@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.08.05-055741`
+**Version:** `2026.08.11-191003`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -47,6 +47,10 @@ No interactive triage — the user resolves items directly in SilverBullet.
 - **Yesterday synthesis** — validates evidence inside the previous-workday
   window across every available work source, then ranks outcomes, decisions,
   progress, and unblockings without preferring terminal tracker events.
+- **Unavailable gathering domain** — replay its complete prompt in the main
+  context, including query windows, outputs, and dependent actions before
+  compiling. Calendar fallback records the five-day interview scan plus created
+  block links or a no-slot/write-access result.
 
 ## Environment
 
