@@ -69,6 +69,12 @@ inline standards; relocation does not lower their priority.
   schema. Prove the root cause by matching produced-artifact fingerprints
   against the exact failing artifacts.
 
+- **TOML-table-anchoring:** before patching a TOML file, identify the first
+  `[table]` header and insert global keys immediately above it. TOML table scope
+  extends until the next header — a context-free append after the last table
+  silently nests keys inside that table. Validate both parsing and the resolved
+  configuration after insertion.
+
 ## Existing-gate preservation
 
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
