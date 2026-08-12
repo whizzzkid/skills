@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-211241"
+  version: "2026.08.12-162522"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -54,6 +54,7 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
 - **`[[ … ]]`** over `[ … ]` in bash.
 - **Heredoc** for multi-line strings; avoid concatenated `echo` chains.
 - **Named constants** for magic values at the top of the script.
+- **`printf '%s'` over `echo` for JSON** — `echo` interprets `\r`/`\n`/`\t`, corrupting JSON passed to `jq`; prefer direct pipe or `printf`.
 - **One-line comment above each function** in scripts with ≥3 functions —
   describe what it does and any non-obvious output format (e.g.
   `# Returns the OS name lowercased for package lookup`). Function names lack
