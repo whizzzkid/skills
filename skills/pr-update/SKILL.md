@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.05-213127"
+  version: "2026.08.12-160814"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -179,6 +179,17 @@ Recomputed `$AHEAD` small (`≤ 5`) AND `$BEHIND` small → prefer `git merge "$
 over rebase or patch-replay; it's a merge-style branch, not rebase-style, and
 patch-replay would squash already-reviewed commits.
 
+### Independently-merged parent detection
+
+Stacked branches carry parent commits locally. When those parents merge into base
+via separate PRs, any integration strategy replays the duplicated prefix → massive
+add/add conflicts on files introduced by both histories.
+
+Detect before Stage 2: compare files added on the branch since the fork point
+against files added on base since the fork. Significant overlap → identify the
+boundary commit (last parent-originated commit before this branch's own work) and
+set `STACKED_PARENT_DETECTED=true`. Stage 2 routes to `rebase --onto` (Stage 3b).
+
 ---
 
 ## Stage 2: Choose integration strategy
@@ -194,6 +205,7 @@ loses review-thread anchoring; merge preserves all three.
 | **< 5** (no prior base-merge) | `git merge "$BASE_REF"` | Default. Preserves commit SHAs, avoids force-push, keeps review threads anchored. |
 | **≥ 5** (no prior base-merge) | Patch-replay | Large commit count → rebasing N commits is N conflict-resolutions; one patch is one. Commit messages are reconstructed from the squashed subject + a body listing the original SHAs for traceability. |
 | **≥ 5** but **PR is ready-for-review** (`isDraft = false`) | `git merge "$BASE_REF"` | Override the patch-replay heuristic — squashing already-reviewed commits reshapes the diff under reviewers mid-review. Atomic history is the explicit signal of a ready PR. |
+| **Independently-merged parent detected** | Rebase `--onto` (Stage 3b) | Stacked branch carries parent commits that merged separately into base → skip duplicated prefix to avoid add/add conflicts. |
 | **User asked for linear history** | Rebase | Explicit opt-in only — never the default. |
 
 Before selecting patch-replay on `$AHEAD ≥ 5`, check PR draft state:
