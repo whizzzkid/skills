@@ -20,7 +20,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171043"
+  version: "2026.08.12-161750"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash-8b
@@ -126,11 +126,26 @@ bash -c "source $HOME/.profile 2>/dev/null; printenv {VAR}" 2>/dev/null \
   || echo "<still missing after sourcing $HOME/.profile>"
 ```
 
+- **Interactive-shell fallback:** if still missing after sourcing `$HOME/.profile`,
+  try an interactive login shell:
+
+  ```bash
+  zsh -ilc "printenv {VAR}" 2>/dev/null \
+    || echo "<still missing after interactive-shell probe>"
+  ```
+
+  Variables set in interactive-only config (blocks gated on `[[ -o interactive ]]` or
+  loaded by plugin managers) are invisible to non-interactive sourcing. If this probe
+  finds the var, export it into the current session and report "resolved after
+  interactive-shell probe."
+
 Report the result as one of:
 - **Resolved after sourcing** — the var is in `$HOME/.profile` but the
   Claude Code process was not launched from a shell that sources it.
-- **Still missing** — the var is not defined anywhere in `$HOME/.profile`;
-  the user needs to add it.
+- **Resolved after interactive-shell probe** — the var is set in interactive-only
+  shell config (plugin manager, conditional block). Export it and note the source.
+- **Still missing** — the var is not defined anywhere in `$HOME/.profile` or
+  interactive config; the user needs to add it.
 
 ---
 
