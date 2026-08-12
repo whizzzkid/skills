@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171123"
+  version: "2026.08.12-162522"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -63,6 +63,7 @@ Manual: `/wk-workstyle-ruby scan` (full working tree) · `/wk-workstyle-ruby che
   or Unicode ellipsis. RuboCop's `Style/AsciiComments` enforces this in many Ruby shops; the cop default is
   ASCII-only. Applies to `.rb` files and bin scripts loaded as Ruby.
 - **Literal single space in a regex → `\x20`**, never a bare space (invisible) or `[ ]` (RuboCop `Style/RedundantRegexpCharacterClass` rejects the class).
+- **`MatchData` named captures use bracket access (`match[:name]`)**, not `fetch` — `MatchData` does not implement `fetch`; check for `nil` match before access.
 
 ## Sorbet strict-mode friction (typed Rails apps)
 
