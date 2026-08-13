@@ -23,7 +23,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171106"
+  version: "2026.08.13-191814"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -90,12 +90,14 @@ Read before writing any SilverBullet content.
 
 ### onclick attribute constraints
 
-Two characters break inline onclick attributes:
+Three characters break inline onclick attributes:
 
 1. **`>` (greater-than)** — parser closes the opening tag at the first `>` even inside an attribute value → arrow functions (`=>`) break the handler silently.
 2. **`"` (double-quote)** — terminates the attribute value → breaks the handler, corrupts surrounding markup.
+3. **`&` (ampersand)** — pre-escaping `&&` to `&amp;&amp;` in source → renderer double-encodes to literal entity text → handler discarded.
 
 Rules:
+- Write raw JavaScript operators (`&&`, `||`, `!`) in source — never pre-escape HTML entities in onclick values; the renderer handles escaping.
 - Replace `=>` arrow functions with `function(){}`.
 - Replace `"` string literals with `'` single quotes where possible.
 - For runtime-required double-quotes, use `var q=String.fromCharCode(34)` and build strings from it.
@@ -285,7 +287,7 @@ Run this loop (Playwright MCP, or browser console for steps 1/3/4):
 
    ```javascript
    window.getComputedStyle(el).display  // did the CSS apply?
-   el.getAttribute('onclick')           // did the handler survive sanitization?
+   typeof el.onclick === 'function'     // did the handler survive as executable JS?
    el.disabled                          // is the element unexpectedly disabled?
    ```
 
@@ -295,7 +297,8 @@ Run this loop (Playwright MCP, or browser console for steps 1/3/4):
    document.querySelectorAll('PARENT CHILD').length === document.querySelectorAll('CHILD').length
    ```
 
-5. **Test interactivity** — `.click()` a checkbox span, re-read the page (`window.client.space.readPage`) to confirm the toggle persisted to file.
+5. **Reload fresh** — after source changes, navigate to the page fresh (`browser_navigate`) before validating; cached DOM may mask a broken handler.
+6. **Test interactivity** — `.click()` a checkbox span, re-read the page (`window.client.space.readPage`) to confirm the toggle persisted to file. Exercise both success and failure paths of async operations in handlers.
 
 Key Playwright MCP tools: `browser_navigate`, `browser_take_screenshot`, `browser_evaluate`, `browser_click`.
 
@@ -315,6 +318,9 @@ All known failure modes:
 - **`location.reload()` after style change** → stale CSS; use write-back + hard reload.
 - **`.sitrep-col br { display: none }`** → collapses all text in column including meetings.
 - **Non-unique `data-t` values** → checkbox toggle replaces the wrong item in source.
+- **Pre-escaped `&&` in onclick** → renderer double-encodes → handler text is literal entities; browser discards it. Write raw operators.
+- **Validated handler as source string only** → `getAttribute('onclick')` returns text even when browser rejected the JS; assert `typeof el.onclick === 'function'`.
+- **Validated on stale tab** → cached DOM masks a broken handler after source edit; reload fresh first.
 - **Shipping a CSS/HTML change without a browser screenshot** → file looks right, render is wrong (single column, collapsed lines, disabled handlers).
 - **`SB_USER` unset on a `0.0.0.0` bind** → workspace exposed without auth.
 
@@ -328,6 +334,7 @@ All known failure modes:
 | Handler truncated | Remove `=>` (use `function(){}`); no `"` in attribute |
 | File read returns HTML | Use `window.client.space.readPage()` not `fetch()` |
 | CSS not applying | Write-back the style page + `location.reload(true)` |
+| Handler has entity text, not operators | Write raw `&&`/`||` in source; never pre-escape |
 | Widget shows raw props | Move widget expression outside table to standalone line |
 | Task items as text in table | Use `⬜`/`✅` glyphs or switch to HTML div columns |
 
