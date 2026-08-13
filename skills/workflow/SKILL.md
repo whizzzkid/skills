@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.12-161543"
+  version: "2026.08.13-071700"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -116,6 +116,8 @@ Pre-patch routing: `.md` → [`wk-markdown`](../markdown/README.md); Mermaid →
 [`wk-mermaid`](../mermaid/README.md); arch-bearing →
 [`wk-arch-review`](../arch-review/README.md) detector, then draft-complete gate.
 Post-edit classification fails.
+
+**Subtractive-first:** before adding code to handle a problem, evaluate if removal/exclusion/simplification eliminates it — zero new failure modes.
 
 Execute the plan step by step. After each step:
 
@@ -258,7 +260,7 @@ Skip backend/config/docs-only diffs and record "frontend preview: N/A" in Phase 
 
 ## Phase 5: PR
 
-**HARD RULE — "push succeeded" is NOT "work complete".** After every successful `git push`, run `gh pr view 2>/dev/null`; no open PR → invoke `wk-pr` immediately (no size exemption, no waiting to be asked). The push is this check's trigger, not the task's end.
+**HARD RULE — "push succeeded" is NOT "work complete".** After `git push`, run `gh pr view 2>/dev/null`; no open PR → invoke `wk-pr` immediately. Push triggers this gate, not ends the task.
 
 ### Repo convention before branching
 
@@ -272,6 +274,7 @@ Branching is the default, not an absolute. Probe first:
 - Gather PR-gated evidence: branch protection, `CODEOWNERS`, recent feature-branch merge commits.
 - Branch only when evidence points to PR-gated workflow; otherwise commit straight to default and skip auto-PR.
 - If signals conflict/are absent for a non-trivial change, branch and say why in one line.
+- **Follow-up branch:** after a merged PR, branch from `origin/<default>` (fetch first) — stale local ref inflates diff.
 
 After tests and the Phase 3.5/3.6 scans pass, invoke `wk-pr` (never raw `gh pr create`) — it handles draft creation, stacking, self-review, feedback triage, and marking ready. Publishing precedes the review gate; it does not wait on a verdict.
 
@@ -325,7 +328,7 @@ After PR creation or any push to a PR branch, monitor, diagnose, and fix CI unti
 - Use `wk-buildkite` for Buildkite.
 - Run long watches in the background; before any wait >~1 min (suite, CI poll, flake re-runs) state what runs and rough duration so silence isn't read as a hang.
 - **Never end a turn announcing a holding pattern or delegating its final action.** Watch CI to completion this turn and act on the result yourself — never hand "merge once CI passes" to the user.
-- **Don't idle on the CI barrier — interleave.** While a background poll runs, start the next plan task with no dependency on this PR's green state; the poll re-invokes you on completion. Hard-wait only when nothing else can progress (last PR in stack, or a step needing green like auto-merge).
+- **Don't idle on CI — interleave.** Start independent plan tasks while polling; hard-wait only when nothing else can progress.
 - Read actual logs first.
 
 Diagnosis rules — map failure type to action and error signal to first check: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md).
@@ -367,7 +370,7 @@ Exit when all checks pass, max attempts are reached, or infrastructure/flaky fai
 
 ## Phase 6.5: Review-Comment Resolution Loop
 
-After CI exits green and the PR is marked ready, drive every open review comment to resolution before merge.
+After CI green and PR ready, drive every open review comment to resolution before merge.
 
 - Poll unresolved review threads.
 - While any remain, invoke `wk-pr-resolve`.
