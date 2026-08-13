@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.13-071700"
+  version: "2026.08.13-095726"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -67,7 +67,7 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 
 - **Volunteered feedback is not a stop signal** (unlike a question you asked, below): unless it revokes the action, finish the authorized step in the same turn as the acknowledgement.
 - **A turn producing no new facts must end in a write** — no new file read or command output means analysis is done, so edit the owning file instead of re-deliberating.
-- When soliciting feedback, block on it → end the turn after asking; do not implement past that point until answered. When the user asks for decisions gathered individually AND collected first, treat decision-collection as a barrier phase: gather and confirm the full set before executing any — never interleave asking with acting.
+- When soliciting feedback, block on it → end the turn after asking; do not implement until answered. When decisions must be collected first, gather and confirm the full set before executing any — never interleave asking with acting.
 - Skill invocation is mandatory → use Skill tool, not raw approximation. Run its
   full flow; user prose adds context, never exceptions.
 - **Announce-and-invoke same turn.** A skill counts only when its `Skill` call is
@@ -173,7 +173,8 @@ Apply to ALL code:
 - **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
 - **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
-- **Niche standards** (existing-gate preservation, bounded searches, example-format confirmation, tool-output/error-string parsing, external-API field reuse, content-lint hook scoping, env-var documentation, structured-row insert, reuse hygiene, hardcoded-constant-vs-dynamic-sibling, boot/internal-symbol error handling, full-boot config-dependency enumeration, sandboxed-step env forwarding, coercion same-class audit, schema-derived validation bounds, published enforced limits, portable home paths, TOML-table-anchoring) live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
+- **Niche standards** live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
+- **Platform-API traps:** (a) before enabling a convenience API that automates a user-facing action, verify it does not suppress the event handler for that action — many take exclusive ownership silently. (b) Calls requiring user-gesture context must fire synchronously within the handler's call stack — `await` before the call breaks the chain; the API silently drops the request.
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **HARD RULE — reuse the mechanism the codebase already provides for config/secret resolution; never invent a parallel override (dummy env exports, a new config path). Repeated user pushback naming an existing convention is a hard stop — adopt the named mechanism, never defend the invented one.** (See reuse-hygiene, code-standards-extended.)
 
@@ -205,12 +206,13 @@ Verification:
 - **User-loadable artifact:**
   [`build last after mutating gates`](references/2026-08-04_final-development-build.md).
 - Validate transformations with a formerly-failing input.
+- **Fix-symptom match:** verify a fix targets the exact user-reported symptom — not a plausible-but-different failure mode. When in-agent testing is impossible, state what the user should observe differently.
 - **Default-branch-only producers:** apply
   [`generated-artifact acceptance`](references/2026-08-01_generated-artifact-acceptance.md);
   a post-merge-only caveat is a blocker, not a waiver.
 - **A fast/narrow check is never the authoritative gate.** A pre-commit hook may lint a narrower file set than the full CI-mirroring check — run the full gate before claiming lint/format clean.
 - **Dependent verification fails fast.** Run an expected-red proof and its later green gate in separate tool calls. If they must share one shell command, begin it with `set -euo pipefail`; never launch the green gate after the expected-red proof exits non-zero.
-- **Important — never take a verdict from `$?` after a pipe.** After `a | b` it is `b`'s status, and a limiter (`head`/`tail`/`sort`/`wc`) always succeeds — so `check | tail` pins the verdict to 0 whatever the check found — a false clean or a false hit, set by the guard's polarity. Run the check bare, or redirect its output to a file and read `$?`. `${PIPESTATUS[0]}` is bash-only and expands empty under zsh (`wk-workstyle-shell` owns that trap) — never reach for it to keep the pipe.
+- **Important — never take a verdict from `$?` after a pipe.** `a | b` reports `b`'s status; a limiter (`head`/`tail`/`sort`/`wc`) always exits 0 → `check | tail` pins verdict to 0 regardless. Run the check bare or redirect to a file. `${PIPESTATUS[0]}` is bash-only, empty under zsh — avoid.
 
 In a mise-managed repo, `GemNotFound` on `bundle exec` / `bin/rspec` is a setup gap. Run `bin/setup`, then invoke tests via `mise exec -- <cmd>`.
 
