@@ -17,7 +17,7 @@ date: 2026-07-09
   to advisor-solo quality at executor rates. It is a weak fit for trivial or
   single-turn work where there is nothing to plan.
 - **Setup (Anthropic API, beta):** add to the request `tools` array
-  `{"type": "advisor_20260301", "name": "advisor", "model": "claude-opus-4-8"}`
+  `{"type": "advisor_20260301", "name": "advisor", "model": "claude-opus-4-7"}`
   with beta header `advisor-tool-2026-03-01`. The executor decides when to call
   it; `tool_choice` can force a consult. The advisor model must be at least as
   capable as the executor. Docs:

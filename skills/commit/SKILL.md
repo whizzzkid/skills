@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.05-210932"
+  version: "2026.08.13-185720"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -103,7 +103,7 @@ This skill is model-invocable → any commit it produces is agent-created.
   ```
 
 - Fill both fields from the **running agent**: tool/CLI name + model or release
-  version (e.g., `Assisted-by: Claude Code (claude-opus-4-8)`).
+  version (e.g., `Assisted-by: Claude Code (claude-opus-4-7)`).
 - One `Assisted-by:` line per distinct agent that materially authored the commit;
   place alongside any co-author / `Generated with` trailer the rules below admit.
 - Omit only for a purely human-authored commit with no agent involvement.
