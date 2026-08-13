@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171041"
+  version: "2026.08.13-090314"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -271,6 +271,30 @@ Two guards:
 - **Verify both volume names before copying.** Names are project-prefixed
   (`<project>_<volume>`), so a mistyped destination silently creates a new empty
   volume and the copy "succeeds" into nothing.
+
+## Multi-Worktree Port Conflicts
+
+When `docker compose up` / `devcontainer up` fails with `port is already
+allocated` because a sibling worktree's container holds the default port:
+
+- Skip `docker compose up/run` — port-override compose layers are fragile and
+  may not merge as expected.
+- Use `docker run` with `--network=<project-network>` and named volume mounts,
+  publishing no host port (`-p` omitted). Find the project's network and volumes
+  via `docker network ls` / `docker volume ls` matching the project prefix.
+- This gives a working shell for local verification (test, lint) without
+  stopping or restarting the sibling worktree's stack.
+- Never stop a running sibling's devcontainer to resolve a port conflict.
+
+## Hand-Started Containers: Replicate Setup-Script Credentials
+
+When running a container manually (`docker run`, not via the project's setup
+script), private-registry auth failures often mean the wrong env var name —
+package managers use tool-specific credential naming, not a generic API key.
+
+- Grep the project's setup/provisioning script for how it exports registry
+  credentials — replicate the exact env var name and value format.
+- A generic `<REGISTRY>_API_KEY` is almost never what the package manager reads.
 
 ## Building Images
 
