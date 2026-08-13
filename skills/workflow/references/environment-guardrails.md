@@ -23,3 +23,5 @@ class: principle
   `$HOME/.claude.json`.
 - **CI:** Use [`wk-buildkite`](../../buildkite/README.md) for Buildkite; read
   actual logs, never guess.
+- **Mise-managed repos:** `GemNotFound` on `bundle exec` / `bin/rspec` is a
+  setup gap. Run `bin/setup`, then invoke tests via `mise exec -- <cmd>`.

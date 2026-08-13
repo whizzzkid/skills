@@ -75,6 +75,15 @@ inline standards; relocation does not lower their priority.
   silently nests keys inside that table. Validate both parsing and the resolved
   configuration after insertion.
 
+## Base resolution
+
+Resolve the PR base branch dynamically — never hardcode `main`:
+
+```bash
+BASE=$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null || git symbolic-ref refs/remotes/origin/HEAD --short | sed 's@^origin/@@')
+git diff "$(git merge-base HEAD "origin/$BASE")...HEAD"
+```
+
 ## Existing-gate preservation
 
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
