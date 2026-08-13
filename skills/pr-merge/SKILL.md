@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.07-230511"
+  version: "2026.08.13-092913"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -237,10 +237,17 @@ echo "{body}" | grep -nE '^\s*- \[ \]'
 ```
 
 - `- [ ]` items outside any "deferred" / "follow-up" / "future work" section
-  → **blockers**; list and stop:
-  > "Unresolved action items in the PR description:\n- {item}\n\n
-  > Check them off, move them to a deferred section, or link a tracking
-  > ticket before merging."
+  → triage by verifiability before blocking:
+  - **Verifiable** (UI rendering, test output, CLI behavior, dev server state)
+    → attempt verification; check off items that pass; report failures as
+    blockers with observed evidence.
+  - **Unverifiable** (requires production access, external system, manual user
+    judgment) → list as **blockers** and stop.
+  - All items verified or deferred → proceed; any unverified blocker remains →
+    stop:
+    > "Unresolved action items in the PR description:\n- {item}\n\n
+    > Check them off, move them to a deferred section, or link a tracking
+    > ticket before merging."
 - Items labelled "Deferred", "Follow-up PR", "Next sprint", or under a heading
   containing those phrases → **not blockers**; collect for Step 8 output.
 - `- [x]` items are already done → skip.
