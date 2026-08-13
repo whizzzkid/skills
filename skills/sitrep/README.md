@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.08.11-191003`
+**Version:** `2026.08.13-175839`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -42,6 +42,9 @@ No interactive triage — the user resolves items directly in SilverBullet.
   `**📅 date**` due-dates.
 - **SilverBullet rendering** — no standalone HTML files are generated;
   `live.md` contains SilverBullet HTML blocks that the browser renders.
+- **Standup copy** — copies rich HTML to preserve the three-level list
+  hierarchy, falls back to plain text, and reports `Copied ✓` or
+  `Copy failed` visibly.
 - **SilverBullet server** — the skill verifies the server is running and
   starts it (`silverbullet $SITREP_REPO`) if not.
 - **Yesterday synthesis** — validates evidence inside the previous-workday

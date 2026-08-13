@@ -57,7 +57,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.08.11-191003"
+  version: "2026.08.13-175839"
   model:
     openai: gpt-5.6-terra
 ---
@@ -324,9 +324,11 @@ rendering contract).
 
 Render standup in col3 as a copy block:
 
-```html
-<div class="st-copy-block"><button class="st-copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.innerText)">Copy</button><pre class="st-standup">{standup text}</pre></div>
-```
+Use the canonical rich-copy block verbatim from
+[`references/standup-copy-block.md`](references/standup-copy-block.md). It
+copies `text/html` to preserve list hierarchy, falls back to `text/plain`,
+converts synchronous Clipboard API failures into promise rejections, and shows
+`Copied ✓` or `Copy failed` instead of failing silently.
 
 **No blank line before or after this `<div>`** — it sits flush against the
 neighbouring col3 lines, or col3's HTML block ends there and the standup renders
@@ -350,6 +352,9 @@ skill owns selection.
 - Use the plaintext fallback exactly: top-level `•` day markers with indented
   `  •` item bullets, one item per line. The emoji leads each day marker —
   `• 👈🏽 Yesterday`, `• 👉🏽 Today`, `• ✋🏽 Blockers` — never trailing.
+- Render the rich body as one root `<ul>` with exactly three top-level `<li>`
+  branches in that same order. Each branch owns its nested item `<ul>`; never
+  serialize the three sections as sibling lists or flatten their children.
 - Verify `👈🏽` and `👉🏽` survive the write; re-emit via Write if either is
   missing.
 
@@ -370,6 +375,11 @@ skill owns selection.
   an ejected block sits full-width below the row. On `false`, fix the HTML per
   [`wk-silverbullet`](../silverbullet/README.md) Step 6 and re-verify — never
   announce a broken layout. A screenshot is not a substitute for the assertion.
+- Verify the standup hierarchy and copy interaction using
+  [`references/standup-copy-block.md`](references/standup-copy-block.md). A
+  mocked `navigator.clipboard` call alone is not proof: use a browser gesture,
+  wait for visible success/failure feedback, and confirm copied plain text when
+  clipboard readback is available.
 - `browser_close` the automation window after the assertion, before `open` — it and
   the user-facing tab have distinct lifecycles; a leftover window clutters the desktop.
 
