@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.14-195245"
+  version: "2026.08.14-232534"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -254,6 +254,7 @@ Run only when the diff changes browser-rendered UI: client components, templates
 - Drive every changed view in a real browser with Playwright tools; exercise happy paths.
 - Capture snapshots/console; platform-pinned baseline →
   [`review CI artifacts`](references/2026-08-04_linux-visual-artifacts.md).
+- Platform-pinned CI artifacts (visual baselines, store screenshots) → regenerate inside the documented CI container, never on the local host.
 - Treat load failure, console error on the changed surface, or broken interaction as a blocker — fix before publishing.
 - Leave app/browser running and hand off the URL; continue Phase 5 onward while the user inspects.
 
@@ -280,6 +281,10 @@ Branching is the default, not an absolute. Probe first:
 - **Follow-up branch:** after a merged PR, branch from `origin/<default>` (fetch first) — stale local ref inflates diff.
 
 After tests and the Phase 3.5/3.6 scans pass, invoke `wk-pr` (never raw `gh pr create`) — it handles draft creation, stacking, self-review, feedback triage, and marking ready. Publishing precedes the review gate; it does not wait on a verdict.
+
+### Stacked PRs — per-PR lifecycle
+
+- Each PR in a stack must independently complete Phases 5 → 6.5. Batch-pushing all PRs as drafts without running the lifecycle per PR is a violation.
 
 ### Post-push sync
 
@@ -345,18 +350,9 @@ Fix and re-push:
 5. Update PR description via `wk-commit`.
 6. Re-enter loop.
 
-Fix-candidate ordering — least invasive first, never skip ahead: **1** version
-downgrade · **2** repo-rule compliance · **3** same-tool config tweak · **4**
-same-tool backend/option change · **5** tool-stack change (needs explicit
-confirmation). Per-candidate notes:
-[`references/ci-fix-candidate-ordering.md`](references/ci-fix-candidate-ordering.md).
+Fix-candidate ordering — least invasive first, never skip ahead: [`references/ci-fix-candidate-ordering.md`](references/ci-fix-candidate-ordering.md).
 
-Rules:
-
-- Coupled config rule: when changing a tool version, audit every config file that tool reads in the same commit.
-- CI-only fix evidence: prove the concrete environment delta and keep the fix scoped to it.
-- If failure was caused by stale base, integrate latest base first.
-- If CI cannot be reproduced locally, inspect the full remote log before changing code.
+CI-fix rules: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md).
 
 Loop limits:
 
