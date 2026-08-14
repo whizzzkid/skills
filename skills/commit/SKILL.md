@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.13-185720"
+  version: "2026.08.14-053930"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -118,6 +118,8 @@ This skill is model-invocable → any commit it produces is agent-created.
   branch history, or the mere availability of an employee-email env var.
 - Never derive a trailer block from neighbouring commits: a human stamped one
   there by decision, and that decision does not transfer.
+- **Self-attribution is redundant:** even when directed, skip `Co-authored-by:`
+  for the current user when they match the PR author.
 
 ### HARD RULE — never fabricate a `Co-Authored-By:` email
 
