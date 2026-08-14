@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.14-194106"
+  version: "2026.08.14-195245"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash

@@ -21,6 +21,17 @@ class: principle
   `$HOME/.claude/settings.json`, not `.claude/settings.local.json`, unless
   intentionally local. Use `--scope user` for MCP servers. Never add MCPs to
   `$HOME/.claude.json`.
+- **1Password-backed credentials (SSH signing keys, env vars):**
+  - At session start, cache signing-critical values into shell env vars via
+    `op read` / `op run` substitution — subsequent ops use `$VAR`, never
+    re-query the vault.
+  - **Never write secrets to disk** (no tmp files, no dotfiles) — process-scoped
+    env vars only; 1Password's agent controls the key material.
+  - **Never log, echo, or print raw secret values** in session transcripts,
+    chat, or command output — access exclusively by variable substitution
+    (`$SSH_SIGNING_KEY`, `$GIT_CONFIG_PARAMETERS`).
+  - If 1Password is locked mid-session, prompt the user to unlock; never retry
+    in a loop or fall back to unsigned operations.
 - **CI:** Use [`wk-buildkite`](../../buildkite/README.md) for Buildkite; read
   actual logs, never guess.
 - **Mise-managed repos:** `GemNotFound` on `bundle exec` / `bin/rspec` is a
