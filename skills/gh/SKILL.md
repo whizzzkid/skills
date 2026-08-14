@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.05-215316"
+  version: "2026.08.14-234622"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -212,30 +212,8 @@ later submitted. Guard every reply post:
 - Never treat a `state: "PENDING"` response from a reply mutation as success —
   read the returned `state` and treat any non-published state as a failure needing
   remediation.
-- **Pending-review creation responses need not embed comments.** Project only
-  review ID, state, and commit; then GET `/pulls/{n}/reviews/{id}/comments` and
-  verify staged comment anchors. Missing expansion is never a retry signal.
-- **Pending-review creation is compare-and-recover.** Immediately before POST,
-  re-query the acting user's pending review. A draft found then, or HTTP 422
-  from create, routes to the same recovery: fetch its body and review-specific
-  comments, preserve them, build a deduplicated union with the proposed draft,
-  then use the calling skill's delete-and-recreate path. Never retry create
-  against the stale empty-discovery result.
-- **A client-side JSON parse failure is not a write failure.** A successful
-  `POST /pulls/{n}/reviews` can return a body a strict decoder rejects (`Invalid
-  control character` — an unescaped control char inside a string field), so capture
-  the HTTP status separately from the body and never infer failure from the parse.
-  On any parse error re-query `GET /pulls/{n}/reviews`, filtering `state` and
-  `user.login`, to establish ground truth before retrying — a blind retry 422s
-  (`one pending review`) and reads as a second, unrelated bug. Re-parse leniently
-  (`json.loads(..., strict=False)`) rather than treating the response as garbage.
-- While the author's own review stays PENDING, its inline comments are not
-  addressable via standard REST: `POST /pulls/{n}/comments` (inline reply) returns
-  422 (`one pending review`), and `PATCH` on a comment belonging to that pending
-  review returns 404. Resolve the thread via GraphQL `resolveReviewThread`, post
-  the substantive reply as a top-level `POST /issues/{n}/comments`, and defer any
-  edit to the author's own annotation until the pending review is submitted or
-  dismissed — never submit it to unblock.
+- **Pending-review creation, parse failures, and REST block details:**
+  [`references/pending-review-mechanics.md`](references/pending-review-mechanics.md).
 
 **Effective merge methods come from repository *rulesets* — neither `gh repo view`
 nor the branch-protection endpoint reports them.** The three surfaces are disjoint:
@@ -265,6 +243,17 @@ name verbatim — a slug-derived name (from a URL or `$GITHUB_ORG` search) retur
 ```bash
 gh repo view --json owner,name --jq '{owner: .owner.login, name: .name}'
 ```
+
+**Use the reactions API, not emoji text.** When a workflow or user asks to
+"react" to a comment (thumbs-up/down, etc.), always use the native reactions
+endpoint — never embed emoji Unicode characters in reply text as a substitute:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/comments/{id}/reactions -f content="+1"
+```
+
+Valid `content` values: `+1`, `-1`, `laugh`, `confused`, `heart`, `hooray`,
+`rocket`, `eyes`.
 
 Every write surface above must:
 
