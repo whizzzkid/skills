@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.14-232534"
+  version: "2026.08.14-233842"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -85,7 +85,7 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 
 The Phase 1 plan is the session contract.
 
-- **Important:** Read the prompt to the end and enumerate every deliverable before acting. A message opening with a noun task ("create a ticket") and closing with an imperative ("fix this") is two work items — commit to the full list first; never stop after the first deliverable. Order left implicit → state the intended sequence in one line before the first write-action so a redirect stays cheap.
+- **Important:** Enumerate every deliverable before acting — a prompt with a noun task and a closing imperative is two items; commit to the full list first. Mid-session explicit requests ("create a follow-up PR for X") are deliverables too — act immediately or surface as a tracked follow-up at session end. Never silently drop an explicit ask.
 - On interruption mid-plan: stop, update the active plan/TodoWrite list, re-state the new top item in one line, resume from the earliest incomplete item.
 - Final completeness gate: before claiming completion, re-read the plan and ensure every numbered step is finished or explicitly deferred/removed.
 
@@ -123,6 +123,8 @@ Pre-patch routing: `.md` → [`wk-markdown`](../markdown/README.md); Mermaid →
 Post-edit classification fails.
 
 **Subtractive-first:** before adding code to handle a problem, evaluate if removal/exclusion/simplification eliminates it — zero new failure modes.
+
+- **Important — fleet-first for shared integrations.** Before fixing code that uses a shared gem/library/service, grep 2-3 sibling repos for the same integration pattern. Fleet consensus outranks spec correctness.
 
 Execute the plan step by step. After each step:
 
@@ -166,17 +168,17 @@ Enumerate every affected site and fix all in one pass before tests:
 
 Apply to ALL code:
 
-- **Version pins:** exact versions everywhere. No `latest`, `stable`, `nightly`, unpinned tags, `^`, or `~`. Dockerfile `FROM`, `mise.toml` / `.tool-versions`, GitHub Actions, git clones in Dockerfiles, and package managers must pin exact versions or official-action semver majors.
+- **Version pins:** exact versions only — no `latest`/`stable`/`nightly`/`^`/`~` in `FROM`, `mise.toml`, Actions, or package managers. Official-action semver majors permitted.
 - **Regexes:** named capture groups: `(?<year>\d{4})`.
 - **Bash:** no `cd` per command; use absolute paths or `git -C <repo>`. Base resolution recipe: [`references/code-standards-extended.md`](references/code-standards-extended.md).
 
-- **CLI flags:** verify any flag against the tool's `--help` (or `--help`-equivalent) before embedding it in a doc, skill, or committed script. An unverified flag name fails with `flag provided but not defined` (exit 2) on first run.
+- **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md).
 - **File permissions:** executable scripts `chmod +x`; source-only scripts 644.
 - **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
 - **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
 - **Niche standards** live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
-- **Platform-API traps:** (a) before enabling a convenience API that automates a user-facing action, verify it does not suppress the event handler for that action — many take exclusive ownership silently. (b) Calls requiring user-gesture context must fire synchronously within the handler's call stack — `await` before the call breaks the chain; the API silently drops the request.
+- **Platform-API traps:** [`references/platform-api-traps.md`](references/platform-api-traps.md).
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
 - **HARD RULE — reuse the mechanism the codebase already provides for config/secret resolution; never invent a parallel override (dummy env exports, a new config path). Repeated user pushback naming an existing convention is a hard stop — adopt the named mechanism, never defend the invented one.** (See reuse-hygiene, code-standards-extended.)
 
@@ -202,8 +204,7 @@ Verification:
 
 - All tests pass before code review.
 - Each commit passes tests independently.
-- Project linter/type checker passes.
-- Full pre-push gate passes before any `git push`; inspect hook config to enumerate every gate.
+- **Important — local lint before every push.** Run the project linter/type checker on changed files before any `git push`; never rely on CI for lint errors. Inspect hook config to enumerate every pre-push gate.
 - Re-run every gate against final HEAD, not a mid-session snapshot.
 - **User-loadable artifact:**
   [`build last after mutating gates`](references/2026-08-04_final-development-build.md).
@@ -270,10 +271,7 @@ Skip backend/config/docs-only diffs and record "frontend preview: N/A" in Phase 
 
 Branching is the default, not an absolute. Probe first:
 
-- Treat the user's current dedicated task branch as authoritative. Create
-  another only from the default branch, detached HEAD, unrelated dirty work, an
-  explicit isolation request, or other evidence that the current branch is not
-  the task branch.
+- Treat the user's current task branch as authoritative. Branch only from default, detached HEAD, unrelated dirty work, or explicit isolation request.
 - Resolve default branch dynamically.
 - Gather PR-gated evidence: branch protection, `CODEOWNERS`, recent feature-branch merge commits.
 - Branch only when evidence points to PR-gated workflow; otherwise commit straight to default and skip auto-PR.
@@ -326,7 +324,7 @@ Pre-flight findings are mandatory actions, not options → fold blockers/improve
 
 ## Phase 6: CI Fix Loop
 
-After PR creation or any push to a PR branch, monitor, diagnose, and fix CI until green. CI runs concurrently with the Phase 5.5 review — fold its failures and comments into the same fix pass.
+After PR creation or any push, monitor and fix CI until green. CI runs concurrently with Phase 5.5 — fold failures into the same fix pass.
 
 - **Do not repeat a green pre-push gate locally after pushing the same SHA.**
   Poll CI; re-run locally only after a new commit or to reproduce a CI failure.
@@ -334,7 +332,7 @@ After PR creation or any push to a PR branch, monitor, diagnose, and fix CI unti
   verification.
 - Use `gh pr checks --watch --fail-fast` for generic checks; it can exit on partial resolution → re-confirm the rollup is terminal before calling CI green (`wk-gh`).
 - Use `wk-buildkite` for Buildkite.
-- Run long watches in the background; before any wait >~1 min (suite, CI poll, flake re-runs) state what runs and rough duration so silence isn't read as a hang.
+- Run long watches in background; before any wait >~1 min, state what runs and rough duration.
 - **Never end a turn announcing a holding pattern or delegating its final action.** Watch CI to completion this turn and act on the result yourself — never hand "merge once CI passes" to the user.
 - **Don't idle on CI — interleave.** Start independent plan tasks while polling; hard-wait only when nothing else can progress.
 - Read actual logs first.
@@ -352,8 +350,6 @@ Fix and re-push:
 
 Fix-candidate ordering — least invasive first, never skip ahead: [`references/ci-fix-candidate-ordering.md`](references/ci-fix-candidate-ordering.md).
 
-CI-fix rules: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md).
-
 Loop limits:
 
 - Maximum 3 fix attempts per CI run.
@@ -361,7 +357,7 @@ Loop limits:
 - Before attempt 3, state the axis being varied; if prior attempts varied the same axis, broaden.
 - After 3 failures, stop and hand off with what was tried and the current failure.
 
-Exit when all checks pass, max attempts are reached, or infrastructure/flaky failure is confirmed. After green, resume `wk-pr` post-creation: self-review and automated feedback triage.
+Exit on all-green, max attempts, or confirmed infra/flaky failure. After green, resume `wk-pr` post-creation.
 
 **HARD RULE:** verify every test-plan checkbox before updating the PR description. Run every runnable verification command; leave a box unchecked only when genuinely impossible and note why.
 
