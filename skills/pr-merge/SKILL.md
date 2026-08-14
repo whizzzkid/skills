@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.13-092913"
+  version: "2026.08.14-080136"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -328,6 +328,12 @@ gh pr merge {number} {selected-method-flag} --delete-branch --repo "{repo_with_o
   ```
 - Merge fails with a policy error → re-read active rulesets before retrying;
   never infer that another method is allowed from the first failure.
+- **Server-side stack flag → async merge fallback.** `gh pr merge` may fail when
+  GitHub's org-level stacked-PRs flags the PR server-side, independent of local
+  `gh stack view`. Fallback: (1) `gh pr merge --auto`; (2) `gh stack merge
+  {number} --yes --merge-method {method}`; (3) both classifier-blocked → surface
+  `gh api repos/{owner}/{repo}/pulls/{number}/merge --method PUT -f
+  merge_method={method}` for user to run. On user merge, re-run Step 1.
 - **Squash collapses the branch into one new commit, so every per-branch SHA
   recorded elsewhere becomes unreachable from the base.** Before squashing a branch
   whose individual commits are cited outside git (plan doc, PR body, tracking
