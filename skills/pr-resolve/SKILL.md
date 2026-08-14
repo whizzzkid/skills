@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.14-075706"
+  version: "2026.08.14-234220"
   model:
     openai: gpt-5.6-terra
 ---
@@ -96,9 +96,12 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
      unconditionally — pre-emit lint the first sentence against `^(good
      catch|great|thanks|nice|well spotted|good point)`, reject before POST. Route
      through `Skill(wk-tone)` before render.
-3. **Only resolve threads you actually worked on** — after a fix, explicit
-   dismissal, or tracked deferral. Never resolve follow-up questions, skipped,
-   rethink-pending, or ordinary self-review threads.
+3. **Important — only resolve threads you actually worked on.** Resolution
+   requires a landed code fix, explicit dismissal, or tracked deferral — in that
+   order: implement fix → commit → push → resolve. Never resolve a thread to
+   dismiss a finding; resolution means the finding is addressed in code. Never
+   resolve follow-up questions, skipped, rethink-pending, or ordinary self-review
+   threads.
    - **Resolution gates on the fix landing, never on CI.** Pushed commit
      addressed the finding → resolve in Step 8 now, never defer to the Step 9.5
      CI wait (later CI failures are a later commit's context).
