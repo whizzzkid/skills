@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.13-192227"
+  version: "2026.08.14-194106"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -132,6 +132,8 @@ Execute the plan step by step. After each step:
 4. Invoke `wk-commit`.
 
 Never batch multiple plan steps into one commit, defer docs, or skip tests between commits.
+
+- **Narrate branch-rewriting ops.** After `git pull --rebase`, `git rebase`, or a merge moving HEAD, print before/after SHAs and a one-line summary — silence during a rewrite reads as lost work.
 
 ### Cross-cutting changes
 
