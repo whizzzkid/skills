@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.17-210248"
+  version: "2026.08.17-211056"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -259,6 +259,11 @@ git rebase --onto "$BASE_REF" <merged-parent-tip-sha>
   parent branch merged.
 - Find the parent tip via `git log --oneline` (last commit before this branch's own
   work); re-run with `--onto`.
+- **Retargeting a child is not rebasing it.** When a parent PR merges, retargeting
+  each child's base only changes what the child is compared against — the parent's
+  commits remain in the child, so its diff claims that work as its own. Replay each
+  retargeted child with `--onto` and force-push; do it when the parent merges, not
+  when a reviewer notices.
 - **Resolving in place instead of restarting** — merge strategy, parent already
   squash-landed: take `--theirs` for files the squashed parent fully supersedes,
   hand-merge files both histories added to, then gate on the full suite. In a merge

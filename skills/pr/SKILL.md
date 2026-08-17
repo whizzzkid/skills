@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.05-211958"
+  version: "2026.08.17-211056"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -464,7 +464,7 @@ After the draft PR is created (or after pushing new commits to an existing PR):
 
 ## Step 5: Mark Ready
 
-**HARD RULE — never end a turn with a draft PR whose work is done.** Any push to
+**HARD RULE — never end a turn with ANY draft PR whose work is done.** Any push to
 an open draft PR carries an implicit commitment to `gh pr ready`, which waits on
 neither CI nor a verdict. The only valid exits before `gh pr ready`:
 
@@ -473,7 +473,8 @@ neither CI nor a verdict. The only valid exits before `gh pr ready`:
 
 Iteration rounds (refactor, dedup, follow-up commits) do not reset this
 commitment — each push restarts the path to ready, not the licence to stop.
-"Pushed the fix" is not "work complete"; "marked ready" is.
+"Pushed the fix" is not "work complete"; "marked ready" is — for every draft the
+session opened, not only the last.
 
 ### Adversarial-review gate (after ready, before merge)
 
