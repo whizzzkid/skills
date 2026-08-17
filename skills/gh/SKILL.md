@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.14-234622"
+  version: "2026.08.17-202223"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -423,6 +423,17 @@ a terminal-state guarantee. A single watch is not proof of green CI.
   <branch>`; on mismatch, re-query until it catches up, or fall back to the CI
   provider's build-by-branch query (ground truth for the current commit).
 - Re-issue the watch if any check is still pending.
+
+## `gh pr checks --json` is not the rollup schema
+
+- Fields: `bucket, completedAt, description, event, link, name, startedAt, state,
+  workflow` — no `.status`/`.conclusion`, so the union predicate above does not
+  transfer. Probe the set (`gh pr checks --help`) first; an unsupported name is a
+  usage error, not an empty gate.
+- Prefer `bucket` over hand-classifying `state` — it collapses to
+  `pass|fail|pending|skipping|cancel`. Exit code `8` means checks pending.
+- `--required` filters to policy-required checks that **posted**; one that never
+  ran is absent here too, so it never replaces `required - observed` below.
 
 ## A required context can be absent without failing
 
