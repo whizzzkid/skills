@@ -57,7 +57,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.08.13-180622"
+  version: "2026.08.17-200158"
   model:
     openai: gpt-5.6-terra
 ---
@@ -88,6 +88,12 @@ per-day live directories; dated snapshots at close.
 - **HARD RULE — never assert missing without checking.** Before saying "no
   snapshot" or "X not found", run `Read`/`ls` on the path. If you did not
   check, say "I have not read X", not "X is missing."
+- **HARD RULE — evidence gaps degrade, never truncate the run.** Gathering
+  fallbacks exhausted, domain toolless → still write the page, label each
+  unavailable source, never render partial output as complete. Preserve
+  `data-done` and carry-over, drop stale dated meeting lines, keep the standup
+  hierarchy, emit no unverified outcome claim. Withhold accrual artifacts
+  (rollover marker, brag log) until full-evidence reconciliation.
 
 ## Rendering contract
 
@@ -202,11 +208,10 @@ Agent roster:
   Confluence mentions. ToolSearch: `"jira"`, `"confluence"`.
 
 Soft/hard block handling per canonical subagent contract: OAuth soft blocks
-degrade with an authorization CTA; missing MCPs are hard blocks. A
-`tool_unavailable` return = capability-inheritance failure — replay that domain
-in the main context: every query window, output field, and downstream
-orchestrator action before compile. A stalled agent (idle only, no flag) →
-3-nudge ceiling, then degrade + carry-forward (see contract).
+degrade with an authorization CTA; missing MCPs are hard blocks — degrade per
+Core hard rules, never abort. A `tool_unavailable` return =
+capability-inheritance failure — replay that domain in the main context: every
+query window, output field, and downstream orchestrator action before compile.
 
 #### Jira full open-ticket sweep
 
@@ -317,22 +322,12 @@ generated_at: {ISO_8601_UTC}
   copy block, this-week goal spans, notes placeholder, backlog from the
   previous working day.
 
-Escape `#` in link text and lead each item with an urgency marker (per the
-rendering contract).
-
 ### Stage 4b: Standup snippet
 
 Render standup in col3 as a copy block:
 
 Use the canonical rich-copy block verbatim from
-[`references/standup-copy-block.md`](references/standup-copy-block.md). It
-copies `text/html` to preserve list hierarchy, falls back to `text/plain`,
-converts synchronous Clipboard API failures into promise rejections, and shows
-`Copied ✓` or `Copy failed` instead of failing silently.
-
-**No blank line before or after this `<div>`** — it sits flush against the
-neighbouring col3 lines, or col3's HTML block ends there and the standup renders
-full-width below the row.
+[`references/standup-copy-block.md`](references/standup-copy-block.md).
 
 Delegate formatting to [`wk-slack`](../slack/README.md) §Standup Snippet; this
 skill owns selection.
@@ -568,7 +563,7 @@ and brag-log accrual — [`references/qpr-nudge.md`](references/qpr-nudge.md).
 | End of day | Invoke [`wk-sharpen`](../sharpen/README.md) on up to 5 highest-severity unprocessed learnings. |
 | QPR | `📋` banner on live.md (start) / snapshot (end); brag-log accrues 🌟. |
 | SilverBullet stopped | Auto-start via `silverbullet $SITREP_REPO &`. |
-| Service auth fails | OAuth soft block degrades with CTA; missing MCP hard-blocks. |
+| Service auth fails | OAuth soft block degrades with CTA; missing MCP hard-blocks → degraded page. |
 | No previous live.md | Skip carry-over; start fresh. |
 | `docker-compose.yml` changed | Restart after push: `docker compose down && docker compose up -d`. |
 

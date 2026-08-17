@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.08.13-180622`
+**Version:** `2026.08.17-200158`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -54,6 +54,12 @@ No interactive triage — the user resolves items directly in SilverBullet.
   context, including query windows, outputs, and dependent actions before
   compiling. Calendar fallback records the five-day interview scan plus created
   block links or a no-slot/write-access result.
+- **Degraded run** — when the main-context replay is also toolless, the page is
+  still written with every unavailable source labelled, rather than the run
+  stopping or partial output being presented as complete. Checkbox state and
+  carry-over survive, stale dated meeting lines are dropped, no unverified
+  outcome is claimed, and accrual artifacts (`end_completed_at`, the brag log)
+  are withheld until full evidence can be reconciled.
 
 ## Environment
 
