@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.17-201133"
+  version: "2026.08.17-201722"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -193,6 +193,9 @@ Before code review, verify coverage and pass all checks.
 
 - Before first build/lint/test, inspect tracked container, devcontainer, runner, and repo instructions.
 - Use a documented runnable project container; if none exists, say so before host fallback.
+- **An explicit waiver of local validation short-circuits provisioning** — never
+  build an environment to satisfy a gate the user removed; name what stays
+  unverified instead.
 - Mixed toolchains: [announce subsystem ownership; retain primary repo gate](references/environment-guardrails.md).
 
 Required paths:
@@ -210,6 +213,8 @@ Verification:
 - **User-loadable artifact:**
   [`build last after mutating gates`](references/2026-08-04_final-development-build.md).
 - Validate transformations with a formerly-failing input.
+- **Data-only change → compare the published set's membership and count
+  before/after**, never a diff read alone.
 - **Fix-symptom match:** verify a fix targets the exact user-reported symptom — not a plausible-but-different failure mode. When in-agent testing is impossible, state what the user should observe differently.
 - **Default-branch-only producers:** apply
   [`generated-artifact acceptance`](references/2026-08-01_generated-artifact-acceptance.md);
