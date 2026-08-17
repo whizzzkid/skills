@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-233617"
+  version: "2026.08.17-204213"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -91,6 +91,18 @@ not wait for the user to ask.
 
 - For a new config-schema section, also add a `docs/specs/` entry (context,
   decision, data flow, config reference) per Step 4's quality gate.
+
+**Record an invariant at its point of enforcement, not only in an ADR.** When a
+decision constrains a specific list, config key, or build input, state it as a
+short note beside that thing — in the file an agent edits to violate it, or the
+repo's agent-instructions file — and let the ADR carry the reasoning.
+
+- An ADR explains *why* but is not on the path of the next edit; a note at the
+  constrained site is read by whoever is about to break the invariant.
+- Keep it to the invariant plus a pointer to the ADR. Duplicating the rationale
+  gives two copies to drift apart.
+- This adds to the ADR, never replaces it — a note without the reasoning becomes
+  an unexplained prohibition nobody can safely retire.
 
 ## Step 2: Bootstrap if Missing
 
