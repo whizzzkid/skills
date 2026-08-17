@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.17-202223"
+  version: "2026.08.17-203636"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -174,10 +174,14 @@ automatically after ONE GraphQL failure rather than retrying the mutation.
 /pulls/{n}/comments/{id}/replies --field body="…"` is simpler and sidesteps
 `in_reply_to` formatting entirely. If using the base endpoint, pass the ID with
 `--field in_reply_to=<int>`, never `-f` — `-f` sends a string and returns 422
-("is not a number"). A `GET` 404 on a review-comment ID is not evidence writes
-fail: after a bot replaces its review, `GET /pulls/{n}/comments/{id}` 404s the
-stale `databaseId` while `POST .../comments/{id}/replies` on that same ID still
-returns 201 — try the REST `/replies` POST before falling back to GraphQL.
+("is not a number"). **The single-comment GET is asymmetric with the reply POST:**
+`GET /pulls/comments/{id}` carries **no PR number**; the reply is `POST
+/pulls/{n}/comments/{id}/replies`. `/pulls/{n}/comments/{id}` matches no route, so
+it 404s even for a live comment. Tell them apart by the error body: generic
+`documentation_url` (`docs.github.com/rest`) = no route matched;
+operation-specific = route matched, resource gone. A `GET` 404 is never evidence
+writes fail: a bot replacing its review 404s the stale `databaseId` while `POST
+.../comments/{id}/replies` on it still returns 201 — try that POST before GraphQL.
 
 **Build any non-trivial `gh api` POST/PATCH JSON body with `jq -n`, never a heredoc.**
 Hand-escaping quotes/backticks in a heredoc-interpolated JSON literal corrupts the
