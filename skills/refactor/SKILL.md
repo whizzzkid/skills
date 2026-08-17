@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171100"
+  version: "2026.08.17-205622"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -80,6 +80,7 @@ Detect kind ──► Two-axis diff ──► Removed-line audit
 2. **Conflict resolution by `--theirs` / `--ours` is a red flag.** Picking one of two valid functional paths wholesale → internally-consistent but externally-regressed code. Audit every `--theirs`/`--ours` resolution for behavior loss before this skill is satisfied.
 3. **A pure refactor changes which file behavior lives in, not which behavior exists.** Disappeared tests must be either (a) explicitly out-of-scope (PR description says so), or (b) renamed/moved to a new test file asserting the same behavior. "Removed for refactor" with no replacement = regression.
 4. **Removal-direction silence is a red flag.** Net diff large-negative (lots removed, few added) → almost always dropped behavior. Per-kind expected shape below is the baseline; deviations need explicit justification.
+5. **A shared symbol's verification scope is its callers' suites, not the files you edited.** Refactoring a guard, helper, mixin, or base class that many callers depend on → run the full suite for every directory exercising those callers, at each refactor commit boundary. Targeted specs for the edited paths pass while a semantic inversion breaks siblings; the narrower run is what lets the regression reach CI. Enumerate callers first (grep the symbol), then map them to suite directories — never infer scope from the diff's file list.
 
 ---
 
