@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.17-204939"
+  version: "2026.08.17-210248"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -81,10 +81,11 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 - **HARD RULE — never report a skill absent from the session available-skills list alone.** The list is not exhaustive; a skill can exist on disk yet be missing from it. Confirm via `ls "$WK_SKILLS_HOME/skills/" | grep <name>` before telling the user a skill is missing; report absent only when that returns nothing.
 - Batch independent tool calls in one response whenever possible.
 
-### HARD RULE — worktree-isolated agents cannot run Bash
+### HARD RULE — needs shell? then no worktree isolation
 
-- `isolation: "worktree"` blocks Bash, Grep, and Glob — agents can only Read/Edit/Write.
-- When agents need shell (tests, lint, commit): skip worktree isolation, or have the coordinator run shell ops on worktree paths after agents complete edits.
+- **Decide at dispatch from tool needs:** tests, lint, build, commit, push, PR creation → never `isolation: "worktree"`.
+- `isolation: "worktree"` blocks Bash, Grep, and Glob — Read/Edit/Write only. No runtime error; agents already dispatched need manual recovery.
+- Shell unavoidable → skip isolation, or the coordinator runs shell ops on worktree paths after agents finish editing.
 
 ### Continuity Rules
 
@@ -225,7 +226,7 @@ Verification:
   a post-merge-only caveat is a blocker, not a waiver.
 - **A fast/narrow check is never the authoritative gate.** A pre-commit hook may lint a narrower file set than the full CI-mirroring check — run the full gate before claiming lint/format clean.
 - **Dependent verification fails fast.** Run an expected-red proof and its later green gate in separate tool calls. If they must share one shell command, begin it with `set -euo pipefail`; never launch the green gate after the expected-red proof exits non-zero.
-- **Important — never take a verdict from `$?` after a pipe.** `a | b` reports `b`'s status; a limiter (`head`/`tail`/`sort`/`wc`) always exits 0 → `check | tail` pins verdict to 0 regardless. Run the check bare or redirect to a file. `${PIPESTATUS[0]}` is bash-only, empty under zsh — avoid.
+- **Important — never take a verdict from `$?` after a pipe.** See `wk-workstyle-shell` for limiters and the `PIPESTATUS` split.
 
 
 Shell-script structure & symlink-guard tests: [`references/shell-script-test-checks.md`](references/shell-script-test-checks.md).

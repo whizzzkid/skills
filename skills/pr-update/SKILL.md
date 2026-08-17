@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.17-203204"
+  version: "2026.08.17-210248"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -579,12 +579,18 @@ validated integration — the user wanted "update", not "create".
 One line per stage actually run:
 
 > "Updated `feat/foo` onto `origin/main`:
+> - heads: `<before>` → `<after>`; base `origin/main` @ `<base>`
 > - strategy: patch-replay (7 commits → 1 integration commit)
 > - conflicts: 2 resolved (auto: 1, asked: 1)
 > - validation: 142/142 tests passing, typecheck clean
 > - PR #NNN synced and pushed"
 
 Stage skipped (no PR, no test command, etc.) → say so on its line; don't omit the line.
+
+**Always name the branch head before and after, plus the base it landed on.** A
+rebase, patch-replay, or force-push rewrites history the user cannot inspect from
+the message alone; both SHAs let them verify nothing was lost and pre-empt
+false-alarm "did you drop my commits?" corrections.
 
 ---
 
