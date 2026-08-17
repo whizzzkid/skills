@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.05-194826"
+  version: "2026.08.17-204640"
   model:
     openai: gpt-5.6-terra
 ---
@@ -257,6 +257,32 @@ docker compose -p "$proj" -f .devcontainer/docker-compose.yml down    # stop (ad
 docker compose -p "$proj" -f .devcontainer/docker-compose.yml build   # rebuild
 ```
 
+### Host port already bound by a sibling worktree
+
+Two worktrees of one project publish the same host port, so the second stack
+cannot start. A published port exists only for **host** access —
+container-to-container traffic uses the Compose network — so a task that merely
+needs to run inside the project environment does not need one.
+
+Attach a throwaway container to the running stack's network and named volumes,
+publishing nothing:
+
+```bash
+proj="$(basename "$PWD")_devcontainer"
+docker network ls; docker volume ls          # resolve real names before running
+docker run --rm -it \
+  --network "${proj}_default" \
+  -v "${proj}_bundle:/usr/local/bundle" \
+  -v "$PWD:/workspace" -w /workspace \
+  <app-image> bash
+```
+
+- Read the network and volume names off the running stack; the `_default` suffix
+  and volume prefixes follow the **pinned project name**, not the compose file's
+  directory.
+- Never resolve this by editing the committed port mapping — that breaks the other
+  worktree and lands an unrelated diff.
+
 ## Common Mistakes
 
 | Symptom | Root cause | Fix |
@@ -271,6 +297,8 @@ docker compose -p "$proj" -f .devcontainer/docker-compose.yml build   # rebuild
 | Dependency install fails on registry `401` in a fresh container | Expired package-registry credential; the provisioning script treats the registry as the only source | Not a hard stop — seed the dependency volume from a sibling container's volume on the same daemon and install offline (`wk-docker` → *Seed a Dependency Volume from a Sibling*) |
 | `down` reports success but containers stay up | Teardown used bare `-f` with no `-p` → empty/wrong project | Pin `-p "$(basename "$PWD")_devcontainer"` to match `devcontainer up`/VS Code |
 | Startup output contains a host credential | CLI printed the interpolated Compose model | Use file-backed secrets, or capture under `umask 077` and print only an exact-value-redacted copy |
+| `port is already allocated` bringing the stack up | A sibling worktree's stack of the same project already publishes that host port | Attach a throwaway container to the running stack's network and volumes with nothing published — *Host port already bound by a sibling worktree* |
+| `bundle install` 401s in a manually-started container | Bundler credentials come from a hostname-derived `BUNDLE_<HOST>` var the provisioning script exports; a manual `docker run` does not inherit it | Export it explicitly (`wk-cloudsmith` → *Bundler credentials for a Cloudsmith gem source*) |
 
 ## Quick Reference
 

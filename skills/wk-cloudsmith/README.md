@@ -2,7 +2,7 @@
 
 Working with the Cloudsmith package registry — upload, query, and auth patterns for raw packages.
 
-**Version:** `2026.07.28-171113`
+**Version:** `2026.08.17-204640`
 
 ## Invocation
 

@@ -8,7 +8,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171113"
+  version: "2026.08.17-204640"
   model:
     openai: gpt-5.6-terra
 ---
@@ -83,6 +83,27 @@ plugin :docker_compose, run: context[:runner], env: ["CLOUDSMITH_ACCOUNT", "CLOU
 ```
 
 **CLOUDSMITH_REPO forwarding:** the plugin injects `CLOUDSMITH_REPO` into the agent environment, but docker_compose only forwards env vars listed in its `env:` array. If `CLOUDSMITH_REPO` is absent from that array, the container will not receive it and the script falls back to the default.
+
+## Bundler credentials for a Cloudsmith gem source
+
+A vendor-named variable like `CLOUDSMITH_API_KEY` is invisible to Bundler. Bundler
+reads credentials per gem-source **hostname**, so the variable name is derived, not
+chosen.
+
+- Config key = the source hostname; periods become two underscores, uppercased and
+  `BUNDLE_`-prefixed. Host `dl.cloudsmith.io` → `BUNDLE_DL__CLOUDSMITH__IO`.
+- Value is `USERNAME:PASSWORD`; Cloudsmith's username is the literal `token`:
+
+  ```bash
+  export BUNDLE_DL__CLOUDSMITH__IO="token:$CLOUDSMITH_API_KEY"
+  ```
+
+- Derive the name from the `source` host in the Gemfile, never from memory — a
+  vanity or org-specific host yields a different variable.
+- A project's own provisioning script exports this; a **manually started**
+  container does not inherit it, so `bundle install` 401s there while the
+  project's tooling works. Read that script for the exact name rather than
+  reconstructing it.
 
 ## Org and repo naming
 
