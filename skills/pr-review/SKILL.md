@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.05-213325"
+  version: "2026.08.17-212559"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -98,8 +98,8 @@ note the desync in the review summary.
 ### Collect context
 
 Collect PR title, body, linked issues, full diff, changed files, commit history,
-base branch, change size. Recommend a PR stack in the body when PR is large or
-mixes unrelated concerns.
+base branch, change size. Recommend a PR stack in the body, sketching split lines,
+when PR is large or mixes unrelated concerns.
 
 ### Extract author review focus
 
@@ -299,16 +299,23 @@ implementation or a minimal faithful harness with adversarial/edge inputs and
 record PASS/FAIL before Phase 4. Never compose comments from un-run reasoning; a
 finding you could have executed but only argued is unverified.
 
+**HARD RULE — check a figure's derivation before contradicting it.** The pass above
+covers executable logic only; prose arithmetic and timing constants are where
+delegated hits misread most.
+
+- Number asserted wrong → grep the artifact for its derivation rule, usually
+  sections away.
+- Replacing a timing constant → read its whole comment block; authors often
+  pre-refute the obvious retry there.
+- Refuted but derivation unstated → reframe as a clarity suggestion, never a drop.
+
 ### Discriminate environmental failures from PR findings
 
 Before treating a local test/command failure as a PR finding:
 
-- Check whether the failing line is in the diff. A failure far from changed lines
-  is a strong tell it is environmental, not PR-introduced.
-- Confirm the interpreter/runtime matches the project's pinned version
-  (`mise`/`.tool-versions`/CI config), not whatever is first on `PATH`; re-run under
-  the pinned version before reporting (mirrors the `wk-adversarial-review` runtime
-  matrix).
+- Failing line not in the diff → strong tell it is environmental, not PR-introduced.
+- Re-run under the project's pinned interpreter, never whatever is first on `PATH`
+  — version sources per the `wk-adversarial-review` runtime matrix.
 
 ### Validate bot findings
 
@@ -397,8 +404,8 @@ evidence beyond confirming the bot's exact claim. Pure Confirmed outcomes get
 silent skip; never narrate bot validation. Justified replies use one mechanism:
 fold into the body as `Re: {bot} thread on {file}:{line} — …` (no extra call), or
 a live `/comments/{id}/replies` post (requires explicit user opt-in — it bypasses
-the pending-review checkpoint). `in_reply_to` is invalid on draft-review comments
-(422); never embed bot replies in the pending `comments[]` payload.
+the pending-review checkpoint). Never embed bot replies in the pending
+`comments[]` payload (`in_reply_to` 422, above).
 
 ### Validate comment positions against the diff
 
@@ -426,8 +433,6 @@ Show a numbered summary of all proposed comments:
 ```
 1. [concern] src/auth.ts:42 — Session token not invalidated on logout
 2. [suggestion] src/utils.ts:18 — Rename `processData` to something specific
-3. [praise] src/cache.ts:91 — Nice use of LRU eviction here
-4. [question] src/api.ts:33 — Is this timeout intentional?
 ```
 
 Wait for the user to review. They may approve all, edit some, or skip individual
@@ -469,7 +474,6 @@ Write the payload with the **Write tool**, never a heredoc (`wk-self-review` Ste
 gh api repos/{owner}/{repo}/pulls/{n}/reviews --method POST --input <file>
 ```
 Every `comments[]` entry must be top-level with `path`, `line`, `side`.
-Bot-thread replies cannot ride in `comments[]` — see Bot reply handling above.
 
 ### Add comments to an existing pending review
 
@@ -507,14 +511,12 @@ The body is the verdict on the change as a whole, not an investigation log.
   in a later line, not the opener.
 - **HARD RULE — LGTM is one line.** No concerns → body is one line max (`LGTM 🚀`
   or equivalent) plus the footer.
-- Recommend a PR stack and sketch split lines if PR is too large or mixes concerns.
 - **Body must not restate an inline finding.** Diff each body paragraph against the
   inline `comments[]`; cut any that duplicates one. The body carries the verdict,
   change-spanning concerns with no single inline anchor, and at most a one-line
   pointer to the key thread ("see the L178 thread") — never a paragraph re-explaining
   an inline comment.
-- Always end with the canonical outbound footer from `wk-gh` Step 4; apply the same
-  footer to every inline comment at payload-render time.
+- Apply the footer from GitHub interaction routing at payload-render time.
 - Fold bot counter-evidence before the footer; only refuted/new-evidence cases earn
   a per-thread anchor.
 
