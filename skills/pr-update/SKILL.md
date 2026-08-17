@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.12-160814"
+  version: "2026.08.17-203204"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -259,6 +259,11 @@ git rebase --onto "$BASE_REF" <merged-parent-tip-sha>
   parent branch merged.
 - Find the parent tip via `git log --oneline` (last commit before this branch's own
   work); re-run with `--onto`.
+- **Resolving in place instead of restarting** — merge strategy, parent already
+  squash-landed: take `--theirs` for files the squashed parent fully supersedes,
+  hand-merge files both histories added to, then gate on the full suite. In a merge
+  `--theirs` is the incoming base and `--ours` the PR branch; inverted, this discards
+  the branch's own work. Prefer `--onto` whenever the replay has not started yet.
 
 **Base moved / stacked parent merged mid-flight → rebase the WHOLE stack.** Treat a moved
 base as a first-class event. When a stacked PR's parent merges externally, or GitHub's
