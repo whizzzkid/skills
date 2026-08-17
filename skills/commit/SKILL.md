@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.14-053930"
+  version: "2026.08.17-201133"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -234,8 +234,8 @@ commits and drop the original signature unless re-signed.
   branch (no upstream tracking), pause and confirm before pushing — an orphaned
   remote branch is visible to teammates with no PR context and harder to reason
   about. **Exception — auto mode + authorizing directive:** when auto mode is on
-  *and* the session's originating prompt already authorizes a published/tracked
-  PR (e.g. *create a ticket to track this*, *open a PR*, *ship X*), the new-branch
+  *and* an originating prompt or repo mandate authorizes a published/tracked PR
+  (e.g. *create a ticket to track this*, *open a PR*), the new-branch
   state is expected, not a surprise — skip the confirm and push. Confirm only on
   genuinely ambiguous intent; the no-upstream signal alone does not mean unclear
   intent. Detect the new-branch case:
@@ -533,7 +533,7 @@ ready, offer to squash a long tail of small `fix(ci):` commits into one.
 | Hook failure | Stop, ask user to run manually |
 | Push succeeded + open PR exists | Run PR Sync — diff title/body vs branch, `gh pr edit` if drifted |
 | Push succeeded + no PR | Skip PR Sync silently |
-| First push of new branch + no PR | Confirm push intent — unless auto mode + originating directive authorizes a tracked PR (then push) |
+| First push of new branch + no PR | Confirm push intent — unless auto mode + an originating directive or repo mandate authorizes a tracked PR (then push) |
 | Message names a prohibited token | Stop — rewrite using category description only |
 
 ---

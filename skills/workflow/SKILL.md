@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.14-233842"
+  version: "2026.08.17-201133"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -60,8 +60,9 @@ Execute the workflow without asking permission at each step.
 | Defect diagnosed, owning file identified | Edit that file now | Re-state the tradeoffs again |
 | Feedback lands mid-action | Finish the authorized action, then adjust | Acknowledge and stop, leaving it undone |
 
-- Mandatory PR workflow authorizes initial task-branch push and PR; ask only if
-  publishing is optional.
+- **Important:** a mandated PR lifecycle — a standing repo mandate as much as the
+  originating prompt — authorizes the initial task-branch push and PR creation.
+  Ask only where publishing is genuinely optional.
 
 Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a finding requires a user-owned design decision; user explicitly requested a pause/check-in; or a destructive/shared-state action is required.
 
@@ -420,7 +421,8 @@ Use this as a final gate before claiming work is complete:
 - [ ] Documentation updated alongside each code change
 - [ ] Tests cover happy path, sad path, and edge cases
 - [ ] `wk-adversarial-review` returned clear review lineage before merge
-- [ ] CI fix loop exited green
+- [ ] CI fix loop exited green on the current head — local HEAD, remote head, and
+      the SHA the checks ran against are one commit
 - [ ] PR description reflects current branch state
 - [ ] Self-review posted for critical changes only
 - [ ] All PR review threads resolved
