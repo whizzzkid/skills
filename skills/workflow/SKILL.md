@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.17-201722"
+  version: "2026.08.17-202639"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -69,8 +69,10 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 - **Volunteered feedback is not a stop signal** (unlike a question you asked, below): unless it revokes the action, finish the authorized step in the same turn as the acknowledgement.
 - **A turn producing no new facts must end in a write** — no new file read or command output means analysis is done, so edit the owning file instead of re-deliberating.
 - When soliciting feedback, block on it → end the turn after asking; do not implement until answered. When decisions must be collected first, gather and confirm the full set before executing any — never interleave asking with acting.
-- Skill invocation is mandatory → use Skill tool, not raw approximation. Run its
-  full flow; user prose adds context, never exceptions.
+- **Important:** skill invocation is mandatory → use Skill tool, not raw
+  approximation. Run its full flow; user prose adds context, never exceptions.
+  Hand-running its mechanics (raw `git commit`, ad-hoc planning) IS that
+  approximation, and a session's first write-action is where it gets skipped.
 - **Announce-and-invoke same turn.** A skill counts only when its `Skill` call is
   in that response; narration alone is a violation. Catch it → invoke before any
   other action.
@@ -296,7 +298,7 @@ After tests and the Phase 3.5/3.6 scans pass, invoke `wk-pr` (never raw `gh pr c
 
 **HARD RULE:** auto-sync drifted artifacts — never ask permission to fix obvious drift. After any push, significant code change, or approach pivot, audit PR title/body, self-review comments, ticket description, and related docs; update in the same turn. On an approach pivot, also resolve stale self-review threads and post fresh comments via `wk-self-review`. Confirm only when sync content is genuinely ambiguous.
 
-Before reworking a PR branch — force-push, restructure, content rewrite, big rebase, scope change — fetch and reconcile against the PR's actual base and default branch. Resolve PR base before proposing a rebase target; never assume default. Recipe: [`references/pre-rework-base-reconcile.md`](references/pre-rework-base-reconcile.md).
+Before reworking a PR branch, [reconcile against its actual base](references/pre-rework-base-reconcile.md) — resolve the PR's base first; never assume default as the rebase target.
 
 ---
 
