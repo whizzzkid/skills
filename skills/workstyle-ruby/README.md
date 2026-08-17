@@ -5,7 +5,7 @@
 > returns, enumerable methods, specific exception subclasses, and ASCII-only
 > comments. Project RuboCop config wins.
 
-**Version:** `2026.08.12-162522`
+**Version:** `2026.08.17-205256`
 
 ## Invocation
 

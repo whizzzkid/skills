@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.12-162522"
+  version: "2026.08.17-205256"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -72,7 +72,12 @@ Manual: `/wk-workstyle-ruby scan` (full working tree) · `/wk-workstyle-ruby che
 
 ## Verify with RuboCop
 
-- **Run `bundle exec rubocop --no-color <changed-files>` on every changed `.rb` file before staging** — layout and style cops (argument line breaks, non-ASCII comment characters) are not reliably caught by inspection alone; only the linter sees them. Skipping the local run defers the catch to CI and forces a follow-up fix commit.
+- **Important — run `bundle exec rubocop --no-color <changed-files>` on every changed `.rb` file before staging.** Layout and style cops (argument line breaks, non-ASCII comment characters) are not reliably caught by inspection alone; only the linter sees them. Skipping the local run defers the catch to CI and forces a follow-up fix commit.
+  - **Delegating the edit never delegates the lint.** Whoever stages runs it,
+    however the code was produced — an agent that cannot run shell, a coordinator
+    applying another agent's edits, or a patch taken from elsewhere. Unowned lint is
+    unrun lint, and non-ASCII comment characters are exactly what slips through when
+    the author and the stager are different actors.
 - Fix every offense before `wk-commit`.
 - Skip only when the repo has no RuboCop config or `bundle exec rubocop` is unavailable.
 
