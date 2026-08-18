@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.17-203636"
+  version: "2026.08.18-205433"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -439,7 +439,7 @@ a terminal-state guarantee. A single watch is not proof of green CI.
 - `--required` filters to policy-required checks that **posted**; one that never
   ran is absent here too, so it never replaces `required - observed` below.
 
-## A required context can be absent without failing
+## A green-checks `BLOCKED` merge — what to check
 
 - `mergeStateStatus: BLOCKED` with every visible check green → compare the
   active ruleset's `required_status_checks` contexts against HEAD's full
@@ -451,10 +451,18 @@ a terminal-state guarantee. A single watch is not proof of green CI.
 - Confirm rollup entries belong to `headRefOid`; use
   `repos/{owner}/{repo}/commits/{head_sha}/check-runs` to inspect check-run
   provenance. Compute `required - observed` explicitly.
-- Missing context owned by an external integration → use only its documented
-  rerun surface. `requested_reviewers` returns 422 for non-collaborator
-  integrations, and an imagined GraphQL mutation cannot trigger a run. No
-  supported API → name the missing context and hand the UI action to the user.
+- **`required_signatures` covers the whole commit range, not the head.** Head
+  `verified: true` while one mid-range commit is unsigned still blocks. Check every
+  commit before ruling the signing policy out:
+
+  ```bash
+  gh api "repos/{owner}/{repo}/pulls/{n}/commits" \
+    --jq '.[] | select(.commit.verification.verified == false)
+          | {sha, reason: .commit.verification.reason}'
+  ```
+
+- Remediation for a blocker you cannot satisfy directly:
+  [`references/merge-blocker-diagnosis.md`](references/merge-blocker-diagnosis.md).
 
 ## A run must prove the pull-request gate
 
