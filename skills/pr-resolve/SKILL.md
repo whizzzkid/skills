@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.14-234220"
+  version: "2026.08.18-184219"
   model:
     openai: gpt-5.6-terra
 ---
@@ -74,8 +74,14 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
 ## Hard Rules
 
 0. **Scope GitHub payloads through `wk-gh`.** Satisfy its org-scope gates before
-   any GitHub read/write; `gh api` is the only transport. Append the canonical
-   outbound footer to every reply, PR-body edit, and thread message at render time.
+   any GitHub read/write; `gh api` is the only transport. **Every outbound body
+   (PR-body edit, reply, issue comment, dismissal body) carries the canonical
+   `wk-gh` footer — append it at render time AND run the wk-gh Step 4
+   pre-emit gate on the final body string immediately before EACH mutation.** A
+   footer on a different surface never satisfies the current mutation; lint each
+   body independently — never treat a prior footer on another surface as an
+   exemption. The commit-message trailer (`🦾 Generated
+   with …`) is a DIFFERENT string and is never shipped on an outbound body.
 1. **Never push without explicit user confirmation.**
    - **Holds under Auto Mode.** A user question/redirect ("why did you not
      push?") is a reconsider prompt, not a go-ahead — require explicit
