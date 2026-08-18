@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.18-210858"
+  version: "2026.08.18-212444"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -368,10 +368,9 @@ Commit subject MUST follow `wk-commit`'s conventional format with a single emoji
 classifier. Clear branch theme → use it; mixed → use 🤖 (the "no single emoji fits"
 fallback).
 
-Patch-replay rewrites the branch to a single commit. **The original commits are lost
-from the branch's git log** — they live only in the integration commit's body. This is
-the deliberate cost of the strategy; the user accepted it by having ≥5 commits and not
-picking "force rebase."
+Patch-replay rewrites the branch to one commit — **the original commits are lost from
+its git log**, living only in the integration commit's body (the accepted cost at ≥5
+commits of not picking "force rebase").
 
 ---
 
@@ -398,8 +397,11 @@ and `git diff --check` finds nothing because the file is already staged.
   ```
 
 - Hand-verify **both sides are represented** in the final result before staging.
-- For auto-generated files (schema dumps like `schema.rb`, `*.lock`), regenerate from
-  source and verify the merged output rather than accepting any textual resolution.
+- **Important:** regenerate any build/generate output (schema dumps, digest manifests,
+  screenshots, lockfiles) from source and verify; never side-pick or textually resolve.
+  Regenerate **once, last** — any later source commit re-invalidates it, so resolve
+  either way, mark the path, and generate after all other fixes land, as the final
+  pre-push commit.
 
 For each conflicted file:
 
@@ -413,9 +415,8 @@ For each conflicted file:
    - **Lockfile conflict** (`Gemfile.lock`, `package-lock.json`, `Cargo.lock`, …):
      keep the branch's structural changes (remotes, added/removed deps, source
      migration) and re-apply only the base's dependency version bumps onto it —
-     never take one whole side. Re-generating from the resolved manifest and
-     verifying a real install (Stage 5 pre-check) is authoritative over a
-     clean-looking textual merge.
+     never take one whole side. A real install from the resolved manifest
+     (Stage 5 pre-check) outranks a clean-looking textual merge.
 3. **Verify** the resolved file — open it, scan for stray markers, run a quick syntax
    check (`node --check`, `python -m py_compile`, `cargo check`, etc. — whatever is cheap
    for the language).
@@ -482,8 +483,7 @@ Validation surfaces a regression and user says "abort":
 git reset --hard "$START_SHA"
 ```
 
-Branch returns to its pre-integration state. User can retry after fixing whatever made
-integration produce broken output.
+Branch returns to its pre-integration state; retry after fixing what broke it.
 
 ### Behavior-preservation check
 
@@ -589,11 +589,9 @@ One line per stage actually run:
 
 Stage skipped (no PR, no test command, etc.) → say so on its line; don't omit the line.
 
-**Always name the branch head before and after, plus the base it landed on.** A
-rebase, patch-replay, or force-push rewrites history the user cannot inspect from
-the message alone; both SHAs let them verify nothing was lost and pre-empt
+**Always name the branch head before and after, plus the base it landed on** —
+rewritten history is not inspectable from the message alone, and both SHAs pre-empt
 false-alarm "did you drop my commits?" corrections.
-
 ---
 
 ## Coordination with other skills
