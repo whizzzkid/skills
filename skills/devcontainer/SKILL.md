@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.17-204640"
+  version: "2026.08.18-203656"
   model:
     openai: gpt-5.6-terra
 ---
@@ -166,6 +166,12 @@ Key decisions:
 - Host config mounts:
   - `$HOME/.config/mise/config.toml:ro` — inherit developer's global mise settings (trusted plugins, overrides); `${XDG_CONFIG_HOME:-$HOME/.config}` falls back when unset
   - `$HOME/.claude` — mounts Claude Code settings, memory, skills read-write so transcripts/memory persist
+
+### HARD RULE — never set an env var the app's own bootstrap conditionally defaults
+
+- An unconditional `environment:` entry beats every conditional default (`||=`, `:-`, `setdefault`) in app or test bootstrap: the default never fires, and the container silently runs the wrong mode.
+- Before adding a name to `environment:`, grep the app's bootstrap and test-harness files for it; a conditional assignment there means omit the name from compose entirely.
+- Recognize the symptom: the suite errors inside the container on infrastructure missing from the mode it was forced into, while passing on the host. Fix the compose entry — never paste a per-invocation override into the run command, which leaves the trap armed for the next caller.
 
 ### Secret-safe startup output
 
