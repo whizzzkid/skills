@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.17-211056"
+  version: "2026.08.18-204140"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -479,13 +479,10 @@ session opened, not only the last.
 ### Adversarial-review gate (after ready, before merge)
 
 Invoke `wk-adversarial-review` after the PR is ready. **This is the completion
-gate and the only dispatch point for the change.** It must clear before merge or
-`--auto`; CI runs concurrently.
+gate and the only dispatch point for the change.** CI runs concurrently.
 
-Clearance follows the reviewed body of work, not SHA equality. Direct responses
-to recorded findings and tree-identical rewrites use targeted validation or the
-prior record; unmatched scope, refactor, or logic gets one delta-scoped review.
-No other skill or later push dispatches a run.
+Clearance follows the reviewed body of work, not SHA equality; lineage rules per
+Hard Rule 2. No other skill or later push dispatches a run.
 
 **HARD RULE — verify CI for the *current* HEAD before merge, not before ready.**
 Marking ready never waits on CI. A green CI result against an earlier HEAD does
@@ -525,9 +522,10 @@ Confirm to the user:
 **Trivial-PR auto-merge fast path.** When the net diff is under 25 lines
 (`git diff $BASE...HEAD --shortstat`) **and** the adversarial review has already
 returned `clear` with zero findings, skip the poll-and-wait CI loop:
-`gh pr merge --auto --squash` so it lands the moment required checks pass. The
-verdict is a precondition, not a formality — enabling `--auto` is a merge
-decision, so never enable it before the review clears. Note the line count and
+`gh pr merge --auto --squash` so it lands the moment required checks pass. **Quote the
+verdict in the same response that enables `--auto`** — nothing to quote means it
+was never dispatched, so dispatch it first. The size half is checkable and the
+review half is not, so a size-only match is the expected failure. Note the line count and
 auto-merge intent in the PR body so reviewers see why. Any logic-bearing change,
 or a diff at/over the threshold, takes the full CI poll above — the fast path is
 for mechanical, low-risk deltas only.
