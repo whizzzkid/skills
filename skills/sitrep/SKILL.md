@@ -57,7 +57,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.08.18-201645"
+  version: "2026.08.18-204836"
   model:
     openai: gpt-5.6-terra
 ---
@@ -419,9 +419,10 @@ your review, rendered as a done ⚙️ Auto-Action.
 
 - **Pending draft only.** Subagent follows wk-pr-review Phase 5; never submit,
   approve, or request changes — live reviews are irreversible (only PENDING is
-  deletable). A launched draft is not terminal — the Stage 2 PENDING sweep
-  re-surfaces it until submitted or discarded.
-- Mechanics (source bucket, allowlist, local clone, concurrency cap, per-PR
+  deletable).
+- **Reserve slots for mandatory nested workers** — a parent holding the last slot
+  deadlocks on the child it must spawn; serialize rather than saturate.
+- Mechanics (source bucket, allowlist, local clone, nested-slot budget, per-PR
   worktree flow): [`references/auto-review.md`](references/auto-review.md).
 
 Then invoke [`wk-learn sitrep`](../learn/README.md).
