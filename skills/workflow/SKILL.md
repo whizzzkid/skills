@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.18-204533"
+  version: "2026.08.18-233811"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -323,7 +323,8 @@ SHA equality is not required. No size or docs-only exemption.
 
 `wk-adversarial-review` returns **clear**, **blocked**, or **suggestions-only**.
 
-- **Clear** — proceed to Phase 6.
+- **Clear** — if fix commits landed since self-review was staged, re-stage via
+  `wk-self-review`; proceed to Phase 6.
 - **Blocked** — fix each blocker via `wk-commit`, re-invoke until clear. Never merge or enable auto-merge on a blocked verdict.
 - **Suggestions only** — follow the skill's A/B/C prompt.
 
