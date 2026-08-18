@@ -22,3 +22,9 @@ directly.
   nor authored locally.
 - Recreating the commit objects is the fix, not re-pushing: a rebase whose target
   already equals the merge-base no-ops silently. See `wk-pr-update` Stage 3b.
+- **Trust the API's per-commit verification, not local signature output.** Local
+  verification errors outright when no allowed-signers file is configured, so it
+  cannot distinguish unsigned from unverifiable. The per-commit `commit.verification`
+  field answers the question the policy actually asks.
+- `commits/{sha}/check-runs` does not carry verification state — use `commits/{sha}`
+  or `pulls/{n}/commits`.
