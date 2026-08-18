@@ -20,3 +20,7 @@ class: principle
 | [`wk-docker`](../../docker/README.md) | Docker and containers | any |
 | [`wk-datadog`](../../datadog/README.md) | Observability resources | any |
 | [`wk-worktree-cleanup`](../../worktree-cleanup/README.md) | Cleaning merged worktrees | any |
+
+## Skill presence
+
+- **HARD RULE — never report a skill absent from the session available-skills list alone.** The list is not exhaustive; a skill can exist on disk yet be missing from it. Confirm via `ls "$WK_SKILLS_HOME/skills/" | grep <name>` before telling the user a skill is missing; report absent only when that returns nothing.

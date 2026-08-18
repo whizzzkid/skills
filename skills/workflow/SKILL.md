@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.18-203344"
+  version: "2026.08.18-204533"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -55,6 +55,7 @@ Execute the workflow without asking permission at each step.
 | CI fails | Enter fix loop automatically | Ask “should I investigate?” |
 | Review blocks | Fix blockers, re-invoke `wk-adversarial-review` | Ask “should I fix these?” |
 | Docs need updating | Invoke `wk-docs` | Ask “should I update docs?” |
+| Merge approved | Invoke `wk-pr-merge` | Run raw `gh pr merge` |
 | Session ending | Invoke `wk-retro` | Ask “should I do a retro?” |
 | Terminal directive as a question (“mark ready?”, “merge?”, “push?”) | Query current state and act now | Wait/poll on CI or approvals as if conditional |
 | Defect diagnosed, owning file identified | Edit that file now | Re-state the tradeoffs again |
@@ -73,12 +74,14 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 - When soliciting feedback, block on it → end the turn after asking; do not implement until answered. When decisions must be collected first, gather and confirm the full set before executing any — never interleave asking with acting.
 - **Important:** skill invocation is mandatory → use Skill tool, not raw
   approximation. Run its full flow; user prose adds context, never exceptions.
-  Hand-running its mechanics (raw `git commit`, ad-hoc planning) IS that
-  approximation, and a session's first write-action is where it gets skipped.
+  Hand-running its mechanics (raw `git commit`/`gh pr merge`, ad-hoc planning) IS
+  that approximation, and a session's first write-action is where it gets skipped.
+  The table above is illustrative, not the closed set of skill-owned events — the
+  wrapper's post-action checklist is what a raw CLI call silently skips.
 - **Announce-and-invoke same turn.** A skill counts only when its `Skill` call is
   in that response; narration alone is a violation. Catch it → invoke before any
   other action.
-- **HARD RULE — never report a skill absent from the session available-skills list alone.** The list is not exhaustive; a skill can exist on disk yet be missing from it. Confirm via `ls "$WK_SKILLS_HOME/skills/" | grep <name>` before telling the user a skill is missing; report absent only when that returns nothing.
+- **Skill presence and phase routing:** [`references/skill-reference.md`](references/skill-reference.md).
 - Batch independent tool calls in one response whenever possible.
 
 ### HARD RULE — needs shell? then no worktree isolation
