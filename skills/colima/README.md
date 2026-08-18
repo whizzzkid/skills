@@ -3,7 +3,7 @@
 Ensures Colima is running before any container operation and provides a clean
 restart path when Colima or Docker misbehaves.
 
-**Version:** `2026.08.05-212450`
+**Version:** `2026.08.18-184219`
 
 ## Trigger
 
@@ -14,8 +14,14 @@ daemon`) and on explicit `/wk-colima [start|stop|restart|status]`.
 ## Key Behavior
 
 - **Status check first** — if Colima is already running, exits silently.
-- **Dynamic CPU** — computes `floor(nproc / 2)` so Colima never monopolizes
-  the host. Memory (16 GB) and disk (100 GB) are fixed constants.
+- **Mise-managed** — colima installs via `mise use -g colima@latest`; every
+  `colima`/`docker` command runs through `mise exec --` so mise-pinned tools and
+  their dependencies are on PATH.
+- **Dynamic CPU & memory** — computes `floor(nproc / 2)` and derives memory from
+  the host (`sysctl -n hw.memsize`, halved, floored at 1 GB) so Colima never
+  exceeds the host's `maximumAllowedMemorySize`. Disk (100 GB) is fixed.
+- **Socket from context** — resolves the Docker socket via `docker context ls`;
+  a mise-managed colima serves under `$HOME/.config/colima/`, not `$HOME/.colima/`.
 - **Restart = full shutdown first** — `colima stop --force` before any
   re-start; partial restarts leave the VM in an inconsistent state.
 - **Contradictory state = stale state** — when start says running but status or

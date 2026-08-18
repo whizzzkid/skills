@@ -13,8 +13,12 @@ allowed-tools:
   - "Bash(colima delete:*)"
   - "Bash(docker info:*)"
   - "Bash(docker ps:*)"
+  - "Bash(docker context ls:*)"
   - "Bash(nproc:*)"
   - "Bash(sysctl -n hw.logicalcpu:*)"
+  - "Bash(sysctl -n hw.memsize:*)"
+  - "Bash(mise exec:*)"
+  - "Bash(mise use:*)"
 model: haiku
 effort: low
 model-invocable: true
@@ -23,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.05-212450"
+  version: "2026.08.18-184219"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -54,38 +58,45 @@ triggered by:
 ## Step 1: Check status
 
 ```bash
-colima status 2>&1
+mise exec -- colima status 2>&1
 ```
 
 - If output contains `Running` — Colima is healthy. Proceed; skip Steps 2–3.
 - If output contains `Stopped`, `not found`, or any error — go to Step 2.
 - If Colima itself is not installed, stop and report: `colima` must be
-  installed (`brew install colima`).
+  installed (`mise use -g colima@latest`).
 
-## Step 2: Compute the CPU limit
+## Step 2: Compute CPU and memory limits
 
-Determine the available logical CPU count and halve it (floor):
+Derive CPU and memory from the host and halve both (floor):
 
 ```bash
 PROC=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo 8)
 CPU=$(( PROC / 2 ))
 [ "$CPU" -lt 1 ] && CPU=1
-echo "Starting colima with CPU=$CPU / 16 GB / 100 GB"
+MEM_BYTES=$(sysctl -n hw.memsize 2>/dev/null || echo 17179869184)
+MEM_GB=$(( MEM_BYTES / 1073741824 / 2 ))
+[ "$MEM_GB" -lt 1 ] && MEM_GB=1
+echo "Starting colima with CPU=$CPU / ${MEM_GB} GB / 100 GB"
 ```
 
-The halved value prevents Colima from monopolizing the host. The fixed memory
-(16 GB) and disk (100 GB) values are constants; do not recalculate them.
+Halving prevents Colima from monopolizing the host. Derive memory from the host
+— the VZ driver rejects requests above the host's `maximumAllowedMemorySize`, so
+never hardcode it. Disk (100 GB) stays constant.
 
 ## Step 3: Start Colima
 
 ```bash
-colima start --cpu "$CPU" --memory 16 --disk 100 --mount-inotify --very-verbose
+mise exec -- colima start --cpu "$CPU" --memory "$MEM_GB" --disk 100 --mount-inotify --very-verbose
 ```
 
 Wait for the command to exit. A zero exit code means Colima started
-successfully. Confirm Docker is reachable:
+successfully. Confirm Docker is reachable — resolve the socket from
+`docker context ls`, never assume `$HOME/.colima/` (a mise-managed colima serves
+under `$HOME/.config/colima/`):
 
 ```bash
+docker context ls
 docker info > /dev/null 2>&1 && echo "Docker OK" || echo "Docker not reachable"
 ```
 
@@ -111,7 +122,7 @@ Use this path when:
 docker ps -q 2>/dev/null | xargs -r docker stop 2>/dev/null || true
 
 # 2. Hard-stop Colima
-colima stop --force 2>/dev/null || true
+mise exec -- colima stop --force 2>/dev/null || true
 
 # 3. Wait for shutdown (socket may linger)
 sleep 3
@@ -120,7 +131,10 @@ sleep 3
 PROC=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo 8)
 CPU=$(( PROC / 2 ))
 [ "$CPU" -lt 1 ] && CPU=1
-colima start --cpu "$CPU" --memory 16 --disk 100 --mount-inotify --very-verbose
+MEM_BYTES=$(sysctl -n hw.memsize 2>/dev/null || echo 17179869184)
+MEM_GB=$(( MEM_BYTES / 1073741824 / 2 ))
+[ "$MEM_GB" -lt 1 ] && MEM_GB=1
+mise exec -- colima start --cpu "$CPU" --memory "$MEM_GB" --disk 100 --mount-inotify --very-verbose
 ```
 
 After restart, re-run `docker info` to confirm the daemon is reachable. If the
@@ -132,7 +146,7 @@ output to the user — there may be a VM-level issue requiring manual interventi
 
 After any start or restart, emit a one-line status:
 
-> "Colima running: CPU={n}, memory=16 GB, disk=100 GB. Docker reachable."
+> "Colima running: CPU={n}, memory={m} GB, disk=100 GB. Docker reachable."
 
 If Colima was already running (Step 1 found it healthy), emit nothing — silent
 is correct when there is nothing to do.
@@ -141,7 +155,7 @@ is correct when there is nothing to do.
 
 | Trigger | Action |
 |---------|--------|
-| `colima status` is Stopped / error | Steps 2–3: start with dynamic CPU |
+| `colima status` is Stopped / error | Steps 2–3: start with dynamic CPU/memory |
 | Docker daemon unreachable | Step 4: full shutdown → start |
 | Explicit `/wk-colima restart` | Step 4 unconditionally |
 | Explicit `/wk-colima start` | Steps 1–3 (starts only if not running) |
@@ -150,9 +164,10 @@ is correct when there is nothing to do.
 
 ## Requirements
 
-- `colima` installed (`brew install colima`)
-- `docker` CLI installed (`brew install docker`)
-- `nproc` or `sysctl` available to detect CPU count (macOS: `sysctl` is the fallback)
+- `colima` installed via mise (`mise use -g colima@latest`) — Lima is a colima
+  dependency installed alongside it, not a separate package
+- `docker` CLI installed
+- `nproc` or `sysctl` available to detect CPU/memory (macOS: `sysctl` is the fallback)
 
 ## Post-Completion
 
