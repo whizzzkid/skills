@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **62 skills** organized into five groups. This file is an owned artifact — see
+> **63 skills** organized into five groups. This file is an owned artifact — see
 > [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root
 > [README.md](../README.md) carries a mirror table; the `check-readme-index`
 > pre-commit hook keeps both in sync with the `skills/` tree.
@@ -54,6 +54,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | Skill | Purpose | Invocation |
 |---|---|---|
 | [`wk-slack`](./slack/README.md) | Compose and send Slack messages — announcements, review requests, status updates — in mrkdwn | User + Model |
+| [`wk-preso`](./preso/README.md) | Generate interactive HTML slide decks — dark/light mode, auto-transition, deep linking, keyboard nav | User + Model |
 
 ---
 

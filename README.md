@@ -65,6 +65,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | Skill | Description |
 |---|---|
 | [slack](skills/slack/) | Compose and send Slack messages — announcements, review requests, status updates — in mrkdwn |
+| [preso](skills/preso/) | Generate interactive HTML slide decks — dark/light mode, auto-transition, deep linking, keyboard nav |
 
 ### Tools
 
