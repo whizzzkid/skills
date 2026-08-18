@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.05-214850"
+  version: "2026.08.18-233811"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -354,9 +354,14 @@ git diff "origin/$BASE...HEAD" -- "$PATH_TO_FILE" \
 Post the pending review immediately after Step 3's summary — no approval prompt.
 Create a PENDING review via GitHub API:
 
-- Finish every known commit-producing action in the current round first.
+- **Important:** Finish every known commit-producing action in the current round
+  before staging — the adversarial-review gate fix loop is one; its fixes
+  rewrite files the pending review anchors to.
 - Re-fetch `headRefOid` immediately before writing the payload; a changed HEAD
   voids all gathered anchors and requires rebuilding them.
+- After posting, verify each comment's `position` matches `original_position`;
+  mismatch → delete the pending review and re-stage against current HEAD per
+  "Updating an Existing Self-Review."
 
 Write the payload with the **Write tool** (Step 0.5 HARD RULE — never a heredoc,
 since the body's prose becomes bash command text):
