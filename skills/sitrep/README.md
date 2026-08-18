@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.08.17-200158`
+**Version:** `2026.08.18-201645`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -24,7 +24,9 @@ no per-day live directories, and dated snapshots at close.
   tomorrow and includes `end_completed_at` in the final close commit.
 - `/wk-sitrep` (no arg) — defaults to `start`.
 
-No interactive triage — the user resolves items directly in SilverBullet.
+No interactive triage — the user resolves items directly in SilverBullet. The one
+break in the compile-only flow is the missing-required-connector abort below, which
+stops before writing and reports rather than prompting through a tool.
 
 ## Key Design
 
@@ -54,12 +56,16 @@ No interactive triage — the user resolves items directly in SilverBullet.
   context, including query windows, outputs, and dependent actions before
   compiling. Calendar fallback records the five-day interview scan plus created
   block links or a no-slot/write-access result.
-- **Degraded run** — when the main-context replay is also toolless, the page is
-  still written with every unavailable source labelled, rather than the run
-  stopping or partial output being presented as complete. Checkbox state and
-  carry-over survive, stale dated meeting lines are dropped, no unverified
-  outcome is claimed, and accrual artifacts (`end_completed_at`, the brag log)
-  are withheld until full evidence can be reconciled.
+- **Missing required connector** — when the main-context replay leaves a
+  company-data evidence domain (messaging, mail, calendar/meeting notes, tracker)
+  toolless, publication aborts. The live page is left byte-unchanged, nothing is
+  committed or pushed, no accrual artifact (`end_completed_at`, the brag log)
+  accrues, and the user is prompted with the missing connectors. Source control
+  alone is never sufficient evidence for a sitrep.
+- **Degraded run** — gaps *inside* an available domain still render: every
+  unavailable source is labelled, checkbox state and carry-over survive, stale
+  dated meeting lines are dropped, no unverified outcome is claimed, and accrual
+  artifacts are withheld until full evidence can be reconciled.
 
 ## Environment
 

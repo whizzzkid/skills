@@ -57,7 +57,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.08.17-200158"
+  version: "2026.08.18-201645"
   model:
     openai: gpt-5.6-terra
 ---
@@ -82,18 +82,26 @@ per-day live directories; dated snapshots at close.
   or any sitrep file into cwd or `$WK_SKILLS_HOME`.
 - **HARD RULE — no interactive triage.** User resolves items in SilverBullet,
   not chat. Never call `AskUserQuestion` to keep/skip/resolve. Both sub-commands
-  are compile-only: gather → render → write → open. Write surfaced items
-  unconditionally as `data-done="false"` checkbox spans; user edits the browser
-  page directly.
+  are compile-only — gather → render → write → open — with one exception: the
+  required-connector abort below stops before the write and reports instead.
+  Write surfaced items unconditionally as `data-done="false"` checkbox spans; user
+  edits the browser page directly.
 - **HARD RULE — never assert missing without checking.** Before saying "no
   snapshot" or "X not found", run `Read`/`ls` on the path. If you did not
   check, say "I have not read X", not "X is missing."
-- **HARD RULE — evidence gaps degrade, never truncate the run.** Gathering
-  fallbacks exhausted, domain toolless → still write the page, label each
-  unavailable source, never render partial output as complete. Preserve
-  `data-done` and carry-over, drop stale dated meeting lines, keep the standup
-  hierarchy, emit no unverified outcome claim. Withhold accrual artifacts
-  (rollover marker, brag log) until full-evidence reconciliation.
+- **HARD RULE — a missing required evidence connector aborts publication.**
+  Required = the company-data evidence domains (messaging, mail, calendar/meeting
+  notes, tracker); source control alone is never sufficient evidence. Any one
+  unavailable → stop before writing: leave the live page byte-unchanged, accrue no
+  rollover marker or brag entry, make no commit or push, then name every missing
+  connector in the response and await instruction — report in-response, never via
+  `AskUserQuestion`. Never publish a partial page in place of a complete one — this
+  case aborts, it does not degrade.
+- **Gaps inside an available domain** (fallbacks exhausted, one stalled agent)
+  still render: label each unavailable source, preserve `data-done` and carry-over,
+  drop stale dated meeting lines, keep the standup hierarchy, emit no unverified
+  outcome claim, and withhold accrual artifacts (rollover marker, brag log) until
+  full-evidence reconciliation.
 
 ## Rendering contract
 
@@ -208,10 +216,12 @@ Agent roster:
   Confluence mentions. ToolSearch: `"jira"`, `"confluence"`.
 
 Soft/hard block handling per canonical subagent contract: OAuth soft blocks
-degrade with an authorization CTA; missing MCPs are hard blocks — degrade per
-Core hard rules, never abort. A `tool_unavailable` return =
+degrade with an authorization CTA. A `tool_unavailable` return =
 capability-inheritance failure — replay that domain in the main context: every
 query window, output field, and downstream orchestrator action before compile.
+Only a domain still toolless *after* that replay counts as a missing connector:
+on a required evidence domain it aborts publication per Core hard rules, on any
+other domain it degrades.
 
 #### Jira full open-ticket sweep
 
@@ -563,7 +573,7 @@ and brag-log accrual — [`references/qpr-nudge.md`](references/qpr-nudge.md).
 | End of day | Invoke [`wk-sharpen`](../sharpen/README.md) on up to 5 highest-severity unprocessed learnings. |
 | QPR | `📋` banner on live.md (start) / snapshot (end); brag-log accrues 🌟. |
 | SilverBullet stopped | Auto-start via `silverbullet $SITREP_REPO &`. |
-| Service auth fails | OAuth soft block degrades with CTA; missing MCP hard-blocks → degraded page. |
+| Service auth fails | OAuth soft block degrades with CTA; missing required connector aborts + prompts. |
 | No previous live.md | Skip carry-over; start fresh. |
 | `docker-compose.yml` changed | Restart after push: `docker compose down && docker compose up -d`. |
 

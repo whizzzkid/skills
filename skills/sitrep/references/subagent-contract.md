@@ -41,4 +41,7 @@ orchestrator does not poll, so a silent-failure loop is indistinguishable from
   domain as `tool_unavailable` by default.
 - Degrade gracefully: carry forward the prior day's items for that domain with an
   explicit "not reverified — agent unresponsive" note.
-- Move on — never block the whole run on one stalled agent.
+- Move on to the remaining agents — never hang the *gather* on one stalled agent.
+- Gathering never aborts; publication may. A domain left toolless after the
+  main-context replay is a missing connector, and on a required evidence domain the
+  skill's Core hard rules abort publication rather than publish a partial page.
