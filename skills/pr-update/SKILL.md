@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.17-211056"
+  version: "2026.08.18-205145"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -288,7 +288,10 @@ git rebase --onto <newbase> <oldbase> <branch> --update-refs
   checked out for the rebase — not the topmost branch. Run `git branch --show-current` /
   `git status` and explicitly `git checkout` the intended branch, or the next commit lands on
   the wrong branch of the stack.
-
+- **A rebase reporting success may have done nothing.** `git rebase <base>` no-ops
+  when `<base>` already equals the merge-base, keeping every SHA; `--rebase-merges`
+  does not defeat it. Recreating commits for a side effect (re-sign, re-author) needs
+  `--force-rebase`, and the proof is `HEAD != $START_SHA` — never a clean exit.
 - Rebase reports conflicts → **conflict resolution loop** (Stage 4). Clean rebase → jump
   to Stage 5.
 - Rebase introduces test failures or behavioral regressions (detected in Stage 5) →
