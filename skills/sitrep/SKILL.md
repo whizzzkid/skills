@@ -57,7 +57,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.08.18-204836"
+  version: "2026.08.18-210326"
   model:
     openai: gpt-5.6-terra
 ---
@@ -90,13 +90,13 @@ per-day live directories; dated snapshots at close.
   snapshot" or "X not found", run `Read`/`ls` on the path. If you did not
   check, say "I have not read X", not "X is missing."
 - **HARD RULE — a missing required evidence connector aborts publication.**
-  Required = the company-data evidence domains (messaging, mail, calendar/meeting
-  notes, tracker); source control alone is never sufficient evidence. Any one
+  Required = every company-data evidence domain in the invoked sub-command's own
+  agent roster, source control excluded — derive it from that roster, never from a
+  list restated here, which drifts as the two rosters diverge. Any one
   unavailable → stop before writing: leave the live page byte-unchanged, accrue no
   rollover marker or brag entry, make no commit or push, then name every missing
-  connector in the response and await instruction — report in-response, never via
-  `AskUserQuestion`. Never publish a partial page in place of a complete one — this
-  case aborts, it does not degrade.
+  connector in the response and await instruction. Never publish a partial page in
+  place of a complete one — this case aborts, it does not degrade.
 - **Gaps inside an available domain** (fallbacks exhausted, one stalled agent)
   still render: label each unavailable source, preserve `data-done` and carry-over,
   drop stale dated meeting lines, keep the standup hierarchy, emit no unverified
@@ -574,7 +574,7 @@ and brag-log accrual — [`references/qpr-nudge.md`](references/qpr-nudge.md).
 | End of day | Invoke [`wk-sharpen`](../sharpen/README.md) on up to 5 highest-severity unprocessed learnings. |
 | QPR | `📋` banner on live.md (start) / snapshot (end); brag-log accrues 🌟. |
 | SilverBullet stopped | Auto-start via `silverbullet $SITREP_REPO &`. |
-| Service auth fails | OAuth soft block degrades with CTA; missing required connector aborts + prompts. |
+| Service auth fails | OAuth soft block degrades with CTA; missing required connector aborts (no publish). |
 | No previous live.md | Skip carry-over; start fresh. |
 | `docker-compose.yml` changed | Restart after push: `docker compose down && docker compose up -d`. |
 
