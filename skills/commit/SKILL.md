@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.17-201133"
+  version: "2026.08.18-211308"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -48,22 +48,8 @@ commits, and safe push behavior.
 
 ### Primary action emojis
 
-Pick the emoji matching the conventional-commit action:
-
-| Action | Emoji |
-|--------|-------|
-| `fix` | 🐛 |
-| `feat` | ✨ |
-| `chore` | 🔧 |
-| `refactor` | ♻️ |
-| `docs` | 📝 |
-| `test` | 🧪 |
-| `ci` | 👷 |
-| `perf` | ⚡ |
-| `build` | 🏗️ |
-| `revert` | ⏪ |
-
-Full list: `skills/commit/references/emoji-cheatsheet.md`
+Pick the emoji matching the conventional-commit action — every action's mapping with a
+worked example: `skills/commit/references/emoji-cheatsheet.md`
 
 **Exactly one emoji per commit subject. No stacking.**
 
@@ -191,10 +177,13 @@ commits and drop the original signature unless re-signed.
 - Re-sign every commit a rewrite touches — never let a rewrite emit unsigned commits.
 - Confirm `commit.gpgsign=true` is active, or pass `-S` explicitly
   (`git rebase -S`, `git commit --amend -S`). Never `--no-gpg-sign`.
-- Verify after any rewrite that every rewritten commit is still signed:
+- Verify after any rewrite that every rewritten commit is still signed — raw `gpgsig`
+  per commit, never `--show-signature`, which reports unsigned when
+  `gpg.ssh.allowedSignersFile` is unset:
 
   ```bash
-  git log --show-signature <base>..HEAD
+  for c in $(git rev-list <base>..HEAD); do
+    git cat-file commit "$c" | grep -q '^gpgsig' || echo "UNSIGNED $c"; done
   ```
 
 - A rewritten commit that loses its signature drops verified status and can fail
@@ -212,15 +201,12 @@ commits and drop the original signature unless re-signed.
   *unverifiable*, not unsigned — `gpg.ssh.allowedSignersFile` arrives via
   `GIT_CONFIG_PARAMETERS` in the interactive shell and is not inherited here, so
   git has no public key to check against.
-- Confirm from the raw object before reacting; `gpgsig` header present → signed:
-
-  ```bash
-  git cat-file commit HEAD   # signed if: gpgsig -----BEGIN SSH SIGNATURE-----
-  ```
+- Confirm from the raw object before reacting; a `gpgsig` header means signed (command
+  above, or `git cat-file commit HEAD` for a single commit).
 
 - Never re-commit, re-sign, or delay a push on a "No signature" report alone.
 - The hosting service verifies server-side, so a locally-unverifiable-but-signed
-  commit still lands verified after push. Local-verify command:
+  commit still lands verified after push. Detail:
   [no-signature false alarm](references/2026-06-01_ssh-sig-no-signature-false-alarm.md).
 
 ## Pushing
