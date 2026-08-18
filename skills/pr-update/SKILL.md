@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.18-205145"
+  version: "2026.08.18-210858"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -191,6 +191,26 @@ boundary commit (last parent-originated commit before this branch's own work) an
 set `STACKED_PARENT_DETECTED=true`. Stage 2 routes to `rebase --onto` (Stage 3b).
 
 ---
+
+### Stacked chains — work bottom-up
+
+A stacked branch is both a review unit and another's base, so moving a parent changes
+every descendant's diff, conflict context, and CI basis.
+
+- Rediscover the live stack after each parent update — cached topology is stale the
+  moment a parent moves.
+- Resolve and verify the parent, integrate that exact tip into its direct child, audit
+  every auto-merged overlapping file for intent from both sides, then run the child's
+  full gate before moving up. Post replies and resolve threads only after confirming
+  the current remote head.
+- **A stack-tool rewrite is not proof of new content** — tooling relinearizes
+  descendant history after a push, giving new commit IDs over an identical tree. Compare
+  trees before redoing work; rc 0 means history-only and nothing to redo, non-zero means
+  a real content change to re-integrate and re-validate:
+
+  ```bash
+  git diff --quiet <verified-tip> <live-tip>
+  ```
 
 ## Stage 2: Choose integration strategy
 
@@ -444,36 +464,10 @@ diff the project's dependency lockfile between pre- and post-integration base. I
 changed, install dependencies first — otherwise a "missing dependency" error
 masquerades as a test regression.
 
-```bash
-# Example signals — extend per project package manager
-for lockfile in Gemfile.lock package-lock.json yarn.lock pnpm-lock.yaml \
-                Cargo.lock poetry.lock uv.lock go.sum; do
-  [ -f "$lockfile" ] || continue
-  if ! git diff --quiet "$START_SHA"..HEAD -- "$lockfile"; then
-    echo "Lockfile changed: $lockfile — install before validating."
-    # Run the project's install command (bundle install, npm ci, cargo fetch, etc.)
-    break
-  fi
-done
-```
-
-Detect the project's test command from these signals (first hit wins):
-
-- `package.json` `scripts.test` → `npm test`
-- `pyproject.toml` `[tool.pytest]` / `pytest.ini` → `pytest`
-- `Cargo.toml` → `cargo test`
-- `Gemfile` + `spec/` → `bundle exec rspec`
-- `go.mod` → `go test ./...`
-- `.buildkite/` or CI config naming a test step → run that step locally
-  via the project's task runner if available
-
-Run the test suite and the type/lint checks if cheap:
-
-```bash
-# Example for a Node project
-npm test 2>&1 | tail -20
-npm run typecheck 2>&1 | tail -10  # if defined
-```
+Lockfile names, test-command detection signals (first hit wins), and example
+invocations: [`references/ecosystem-detection.md`](references/ecosystem-detection.md).
+Detect the test command from those signals, then run the suite plus type/lint checks if
+cheap.
 
 | Outcome | Action |
 |---------|--------|
@@ -604,14 +598,8 @@ false-alarm "did you drop my commits?" corrections.
 
 ## Coordination with other skills
 
-- **`wk-workflow`** — this skill is a *tool* used inside Phase 5/6. When Phase 6's CI fix
-  loop diagnoses a "branch is behind base" failure, invoke `wk-pr-update` rather than
-  reinventing the rebase logic.
-- **`wk-pr`** — updating an existing PR (not creating one) with a branch behind base →
-  invoke `wk-pr-update` first, then resume the rest of its post-creation workflow.
-- **`wk-commit`** — the integration commit (patch-replay) and any conflict-resolution
-  commits MUST follow `wk-commit`'s rules: signed, conventional format, single emoji, PR
-  Sync after push.
+Routing between this skill and `wk-workflow`, `wk-pr`, and `wk-commit`:
+[`references/skill-coordination.md`](references/skill-coordination.md).
 
 ---
 
