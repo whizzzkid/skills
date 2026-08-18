@@ -87,3 +87,7 @@ git diff "$(git merge-base HEAD "origin/$BASE")...HEAD"
 ## Existing-gate preservation
 
 - **Existing-gate preservation:** never add a `skip_*`/`bypass_*`/`force_*` parameter that disables an existing feature gate, guardrail, or rate limit without explicit user confirmation. A new code path is not a license to bypass — when a gate genuinely cannot be honored (e.g., its input is unavailable at call time), document it as a known limitation, never silently remove the protection.
+
+- **File permissions:** executable scripts `chmod +x`; source-only scripts 644.
+- **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
+- **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).

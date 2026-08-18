@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.17-210248"
+  version: "2026.08.18-203344"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -169,6 +169,7 @@ Enumerate every affected site and fix all in one pass before tests:
 
 - **Signature widening** — non-optional public param/required field → grep every caller/initializer, fix each in the same commit.
 - **`replace_all: true`** — grep the target string first; reject if any occurrence needs a different value/context or must stay unchanged.
+- **Agent-brief identifiers** — grep the declaring source; quote exact names/values into the prompt, never recalled ones. One wrong identifier multiplies across every agent trusting the brief.
 
 ### Code Standards
 
@@ -177,12 +178,8 @@ Apply to ALL code:
 - **Version pins:** exact versions only — no `latest`/`stable`/`nightly`/`^`/`~` in `FROM`, `mise.toml`, Actions, or package managers. Official-action semver majors permitted.
 - **Regexes:** named capture groups: `(?<year>\d{4})`.
 - **Bash:** no `cd` per command; use absolute paths or `git -C <repo>`. Base resolution recipe: [`references/code-standards-extended.md`](references/code-standards-extended.md).
-
 - **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md).
-- **File permissions:** executable scripts `chmod +x`; source-only scripts 644.
-- **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
-- **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
 - **Niche standards** live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Platform-API traps:** [`references/platform-api-traps.md`](references/platform-api-traps.md).
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
