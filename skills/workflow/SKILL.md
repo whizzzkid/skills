@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.18-233811"
+  version: "2026.08.19-042734"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -70,6 +70,7 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 - **Never ask for what your own inputs answer** — search the plan, merged PRs, and tracked config first (a question they already answer proves they went unread).
 
 - **Volunteered feedback is not a stop signal** (unlike a question you asked, below): unless it revokes the action, finish the authorized step in the same turn as the acknowledgement.
+- **Curiosity ≠ commission.** A clarifying question ("why is X slow?") after the primary goal is met seeks understanding, not more work → answer and stop; do not pair with a new proposal unless the user explicitly asks.
 - **A turn producing no new facts must end in a write** — no new file read or command output means analysis is done, so edit the owning file instead of re-deliberating.
 - When soliciting feedback, block on it → end the turn after asking; do not implement until answered. When decisions must be collected first, gather and confirm the full set before executing any — never interleave asking with acting.
 - **Important:** skill invocation is mandatory → use Skill tool, not raw
@@ -82,7 +83,6 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
   in that response; narration alone is a violation. Catch it → invoke before any
   other action.
 - **Skill presence and phase routing:** [`references/skill-reference.md`](references/skill-reference.md).
-- Batch independent tool calls in one response whenever possible.
 
 ### HARD RULE — needs shell? then no worktree isolation
 
@@ -144,7 +144,7 @@ Execute the plan step by step. After each step:
 
 Never batch multiple plan steps into one commit, defer docs, or skip tests between commits.
 
-- **Narrate branch-rewriting ops.** After `git pull --rebase`, `git rebase`, or a merge moving HEAD, print before/after SHAs and a one-line summary — silence during a rewrite reads as lost work.
+- **Narrate branch-rewriting ops.** After rebase/merge moving HEAD, print before/after SHAs — silence reads as lost work.
 
 ### Cross-cutting changes
 
@@ -264,9 +264,7 @@ Run only when the diff changes browser-rendered UI: client components, templates
 
 - Launch the app via the `run` skill or documented dev-server command.
 - Drive every changed view in a real browser with Playwright tools; exercise happy paths.
-- Capture snapshots/console; platform-pinned baseline →
-  [`review CI artifacts`](references/2026-08-04_linux-visual-artifacts.md).
-- Platform-pinned CI artifacts (visual baselines, store screenshots) → regenerate inside the documented CI container, never on the local host.
+- Capture snapshots/console; platform-pinned baselines → regenerate inside documented CI container, never local host ([artifacts](references/2026-08-04_linux-visual-artifacts.md)).
 - Treat load failure, console error on the changed surface, or broken interaction as a blocker — fix before publishing.
 - Leave app/browser running and hand off the URL; continue Phase 5 onward while the user inspects.
 
@@ -394,9 +392,7 @@ Final audit after all code is complete:
 
 1. Invoke `wk-docs`.
 2. Verify README reflects user-facing changes.
-3. Create/update ADRs for significant architectural decisions.
-4. Update specs if behavior changed.
-5. Ensure `docs/README.md` is current.
+3. ADRs for architectural decisions; specs if behavior changed; `docs/README.md` current.
 6. If no `docs/` folder exists, `wk-docs` bootstraps `plans/`, `specs/`, `adr/`, `tutorials/`, `examples/`.
 
 ---

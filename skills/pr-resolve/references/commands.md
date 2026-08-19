@@ -288,6 +288,8 @@ to run it manually.
 
 Post replies, routed by surface:
 
+**Important:** `{number}` (PR number) is mandatory in the inline-reply path — omitting it yields a generic 404 with no diagnostic hint.
+
 ```bash
 # Inline review comment
 gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
