@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.18-233811"
+  version: "2026.08.19-052649"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -395,6 +395,29 @@ gh api repos/{owner}/{repo}/pulls/{number}/reviews \
 - Set `commit_id` to the PR's HEAD SHA to anchor the review.
 - Review stays **pending** (draft) until the user submits it on GitHub.
 
+## Step 4.5: Merge-gate submission
+
+**When the PR is about to merge** (wk-pr-merge invocation, explicit merge
+intent, or the session proceeding past CI toward merge), any still-pending
+self-authored review must be submitted — invisible draft notes that land after
+merge never helped any reviewer.
+
+- Query pending self-authored reviews:
+  ```bash
+  gh api repos/{owner}/{repo}/pulls/{n}/reviews \
+    --jq '[.[] | select(.state == "PENDING")] | {count: length, ids: [.[].id]}'
+  ```
+- Count > 0 → submit each with `event: "COMMENT"`:
+  ```bash
+  gh api repos/{owner}/{repo}/pulls/{n}/reviews/{id}/events \
+    -f event=COMMENT
+  ```
+- Surface "N self-review comments still in draft — submitting before merge"
+  rather than merging silently over invisible drafts.
+- This does not change the pending-review-only HARD RULE — self-review is still
+  *created* as pending. This step *submits* it at the merge boundary so design
+  notes are visible.
+
 ## Updating an Existing Self-Review
 
 New commits pushed to a PR that already has self-review comments:
@@ -430,6 +453,7 @@ New commits pushed to a PR that already has self-review comments:
 | Invoked by `wk-pr` | Full self-review flow before its CI poll |
 | "self-review this PR" | Manual invocation on current PR |
 | New commits pushed | Update existing comments, resolve stale ones |
+| PR about to merge | Submit any still-pending self-review (Step 4.5) |
 
 ---
 
