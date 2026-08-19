@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.18-184219"
+  version: "2026.08.19-175232"
   model:
     openai: gpt-5.6-terra
 ---
@@ -260,9 +260,13 @@ fix/commit/push.
 
 - Process bot reviews first, then human comments.
 - For each: read full file context, the comment, and reply chain before a fix.
-- **Reproduce an externally-sourced finding before fixing it** — a bot/scanner
-  finding is a hypothesis; driving it settles real-defect vs. style-nit and yields
-  the regression test.
+- **Important — reproduce an externally-sourced finding before fixing it** — a
+  bot/scanner finding is a hypothesis; driving it settles real-defect vs.
+  style-nit and yields the regression test.
+  - **Framework-processed files: verify the compilation pipeline.** A bot
+    flagging syntax as invalid in a framework-managed file (Astro `<script>`,
+    Svelte `<script lang="ts">`, Vue SFC, etc.) may not account for the
+    bundler — build succeeds with the flagged syntax → finding is false.
 - **Shell/wrapper hypothesis → inspect the job log's exact rendered command and
   downstream sentinel.** A matching passing sentinel outranks static quoting
   speculation; aggregate green does not.
