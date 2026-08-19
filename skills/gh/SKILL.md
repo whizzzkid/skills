@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.18-205433"
+  version: "2026.08.19-052443"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -448,6 +448,10 @@ a terminal-state guarantee. A single watch is not proof of green CI.
 - Read ruleset requirements from `repos/{owner}/{repo}/rulesets/{id}`. Do not
   substitute `branches/{branch}/protection`; ruleset-governed branches can
   return 404 there while still enforcing required contexts.
+- **`BLOCKED` ≠ branch-behind.** Branch-freshness requires
+  `strict_required_status_checks_policy: true` in the ruleset; absent it,
+  passing checks + resolved conversations = mergeable regardless of distance
+  from base. Check the flag before attributing BLOCKED to staleness.
 - Confirm rollup entries belong to `headRefOid`; use
   `repos/{owner}/{repo}/commits/{head_sha}/check-runs` to inspect check-run
   provenance. Compute `required - observed` explicitly.
@@ -479,13 +483,7 @@ a terminal-state guarantee. A single watch is not proof of green CI.
 
 ## Canonical download path
 
-For artifact download paths, see `skills/buildkite/SKILL.md` — the pattern is
-identical (`/tmp/agent/<tool>/<resource>/...`). The `gh`-specific root is
-`/tmp/agent/gh/<owner>/<repo>/<resource_type>/<resource_id>/<filename>`.
-
-Apply `--owner=$GITHUB_ORG` filtering to all `gh search` and `gh api
-notifications` calls when writing artifacts to ensure the path namespace
-stays org-scoped.
+[`references/canonical-download-path.md`](references/canonical-download-path.md).
 
 ## Quick Reference
 
