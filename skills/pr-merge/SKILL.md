@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.14-080136"
+  version: "2026.08.19-175541"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -230,6 +230,11 @@ gh pr view {number} --repo "{repo_with_owner}" --json reviewDecision,reviews \
 
 ## Step 5: Verify no open action items
 
+- **Sync verified test-plan items before scanning.** For each `- [ ]` item,
+  check whether the current session already verified it (Playwright, CI, manual
+  test). Update the PR body to `- [x]` via `gh pr edit --body` before the
+  unchecked-item gate runs.
+
 Scan the PR body for unchecked task-list items:
 
 ```bash
@@ -309,12 +314,9 @@ Merge consumes the completion gate's clearance; it never dispatches review.
 gh pr merge {number} {selected-method-flag} --delete-branch --repo "{repo_with_owner}"
 ```
 
-- **Always pass `--repo "{repo_with_owner}"`** — forces GitHub API-only
-  behavior, skips local branch manipulation. Without it,
-  `gh pr merge --delete-branch` runs a local checkout of the base branch and
-  fails inside a git worktree where the base is already checked out elsewhere
-  (`fatal: '<base>' is already used by worktree at ...`). The `--repo` form is
-  idempotent in both worktree and regular checkouts.
+- **Always pass `--repo "{repo_with_owner}"`** — forces API-only merge;
+  without it, `--delete-branch` runs a local base checkout that fails inside
+  worktrees (`fatal: '<base>' is already used by worktree`).
 - **HARD RULE — select from the active ruleset before merging.** Read
   `allowed_merge_methods`, then choose the first allowed method in preference
   order **`--squash`, `--rebase`, `--merge`**. Never probe a known-forbidden

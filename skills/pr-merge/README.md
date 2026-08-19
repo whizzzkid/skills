@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.08.14-080136`
+**Version:** `2026.08.19-175541`
 
 ## Invocation
 
