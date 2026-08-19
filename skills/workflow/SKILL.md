@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.19-042734"
+  version: "2026.08.19-223403"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -125,6 +125,8 @@ Before the first Edit/Write, confirm cwd is the intended worktree:
 ```bash
 git rev-parse --abbrev-ref HEAD
 ```
+
+- **Linked worktree:** resolve edit targets under `git rev-parse --show-toplevel` — absolute paths anchored to the primary checkout silently edit the wrong tree.
 
 Pre-patch routing: `.md` → [`wk-markdown`](../markdown/README.md); Mermaid →
 [`wk-mermaid`](../mermaid/README.md); arch-bearing →
