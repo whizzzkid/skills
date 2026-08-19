@@ -102,6 +102,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [workstyle-docstrings](skills/workstyle-docstrings/) | Docstrings — terse WHY-only, full column width, input/output types, stale removal |
 | [workstyle-testing](skills/workstyle-testing/) | Testing intent — new-path coverage, behavior over implementation, mandatory sad paths |
 | [workstyle-error-handling](skills/workstyle-error-handling/) | Error handling — no silent swallow, operational vs programmer errors |
+| [workstyle-astro](skills/workstyle-astro/) | Astro idioms — ClientRouter, transition:persist, island client directives, content collections |
 | [workstyle-typescript](skills/workstyle-typescript/) | TS/JS idioms — const/no-var, no any, explicit return types, `??`/`?.`, `Promise.all` |
 | [workstyle-python](skills/workstyle-python/) | Python idioms — type hints, f-strings, dataclass/TypedDict, pathlib, no mutable defaults |
 | [workstyle-ruby](skills/workstyle-ruby/) | Ruby idioms — `?`/`!` naming, frozen_string_literal, guard returns, ASCII-only comments |

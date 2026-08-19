@@ -1,6 +1,6 @@
 # wk-skills Index
 
-> **63 skills** organized into five groups. This file is an owned artifact — see
+> **64 skills** organized into five groups. This file is an owned artifact — see
 > [AGENTS.md](../AGENTS.md#readme-maintenance) for maintenance rules. The root
 > [README.md](../README.md) carries a mirror table; the `check-readme-index`
 > pre-commit hook keeps both in sync with the `skills/` tree.
@@ -95,6 +95,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-workstyle-docstrings`](./workstyle-docstrings/README.md) | Docstrings — terse WHY-only, full column width, input/output types, stale removal | Auto (on docstring/public-API edits) |
 | [`wk-workstyle-testing`](./workstyle-testing/README.md) | Testing intent — new-path coverage, behavior over implementation, mandatory sad paths | Auto (on test edits) |
 | [`wk-workstyle-error-handling`](./workstyle-error-handling/README.md) | Error handling — no silent swallow, operational vs programmer errors | Auto (on error-path edits) |
+| [`wk-workstyle-astro`](./workstyle-astro/README.md) | Astro idioms — ClientRouter, transition:persist, island client directives, content collections | Auto (on .astro edits) |
 | [`wk-workstyle-typescript`](./workstyle-typescript/README.md) | TS/JS idioms — const/no-var, no any, explicit return types, `??`/`?.`, `Promise.all` | Auto (on .ts/.js edits) |
 | [`wk-workstyle-python`](./workstyle-python/README.md) | Python idioms — type hints, f-strings, dataclass/TypedDict, pathlib, no mutable defaults | Auto (on .py edits) |
 | [`wk-workstyle-ruby`](./workstyle-ruby/README.md) | Ruby idioms — `?`/`!` naming, frozen_string_literal, guard returns, ASCII-only comments | Auto (on .rb edits) |
