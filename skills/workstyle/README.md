@@ -2,7 +2,7 @@
 
 > Code-quality orchestrator for every file the agent writes or edits — runs the style-authority probe, then routes to the `wk-workstyle-*` sub-skills (naming, structure, async, docs, testing, error-handling, per-language). Project linter wins.
 
-**Version:** `2026.08.01-083042`
+**Version:** `2026.08.19-025803`
 
 ## Invocation
 
@@ -37,6 +37,7 @@ flowchart TD
     U --> U4b[wk-workstyle-docstrings]
     U --> U5[wk-workstyle-testing]
     U --> U6[wk-workstyle-error-handling]
+    U --> U7[wk-design-review]
 
     L --> L1[wk-workstyle-typescript]
     L --> L2[wk-workstyle-python]
@@ -46,7 +47,7 @@ flowchart TD
     L --> L5[wk-workstyle-rust]
     L --> L6[wk-workstyle-shell]
 
-    U1 & U2 & U3 & U4 & U4b & U5 & U6 & L1 & L2 & L3 & L4 & L5 & L6 --> G[Step 2: Apply or report]
+    U1 & U2 & U3 & U4 & U4b & U5 & U6 & U7 & L1 & L2 & L3 & L4 & L5 & L6 --> G[Step 2: Apply or report]
     G --> H{Finding type}
     H -->|auto-fixable| I[Apply silently, note in commit]
     H -->|judgment needed| J[Surface as suggestion before commit]
@@ -70,6 +71,7 @@ flowchart TD
 | [`wk-workstyle-docstrings`](../workstyle-docstrings/README.md) | adds/edits structured docstrings or public callable signatures |
 | [`wk-workstyle-testing`](../workstyle-testing/README.md) | writes or modifies tests |
 | [`wk-workstyle-error-handling`](../workstyle-error-handling/README.md) | touches an error path |
+| [`wk-design-review`](../design-review/README.md) | adds/edits CSS, design tokens, colors, borders, or visual styles |
 | [`wk-workstyle-typescript`](../workstyle-typescript/README.md) | edits `.ts/.tsx/.js/.jsx/.mjs/.cjs` |
 | [`wk-workstyle-python`](../workstyle-python/README.md) | edits `.py` |
 | [`wk-workstyle-ruby`](../workstyle-ruby/README.md) | edits `.rb` or a Ruby bin script |
