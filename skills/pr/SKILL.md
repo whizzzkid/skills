@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.18-204140"
+  version: "2026.08.19-225802"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -102,6 +102,10 @@ ensures quality before marking ready.
    dropping a scope qualifier like "project-wide") misleads reviewers from the
    first draft, before any drift.
 
+   **External-capability claims cite their upstream source.** A claim that a
+   dependency/plugin supports a feature → link the upstream source file/line
+   or docs proving it at composition time; after-the-fact citation is a defect.
+
    **Identifiers obey the same rule, with a command as their source.** Every run
    id, SHA, count, and artifact URL in the body is pasted from a command run this
    turn — never reconstructed from context. The surrounding sentence can be wholly
@@ -161,13 +165,10 @@ done <<< "$CANDIDATES"
 ```
 
 - **`$BEST_DIST` unchanged (`999999`) after the loop = detection FAILURE, not
-  "base = default"** — no candidate yielded a merge-base. Suspect the iteration form
-  before the refs: an unquoted `for CAND in $CANDIDATES` does not word-split under
-  zsh, so the body runs once over the whole blob and every candidate drops out,
-  leaving the sentinel intact (wk-workstyle-shell owns the rule). With the read-loop
-  form confirmed, retry the merge-base directly against `origin/$DEFAULT_BRANCH`
-  (fetch first); a stale local ref is the usual cause, so trust a succeeding remote
-  result rather than defaulting.
+  "base = default"** — no merge-base resolved. Check iteration form first
+  (unquoted `for` in zsh does not word-split → read-loop required;
+  `wk-workstyle-shell` owns the rule); then retry against
+  `origin/$DEFAULT_BRANCH` after a fresh fetch.
 
 If `$BEST_BASE` differs from `$DEFAULT_BRANCH`, surface to the user before doing
 anything else — silent mis-basing is costly to undo:
@@ -209,8 +210,8 @@ git diff "origin/$BEST_BASE...HEAD" --stat
 git diff "origin/$BEST_BASE...HEAD" --shortstat
 ```
 
-- Diff exceeds ~30 lines → ask the user about splitting further via
-  `wk-pr-break` (in addition to any stacking implied by `$BEST_BASE`).
+- Diff exceeds ~30 lines → ask about splitting via `wk-pr-break`
+  (in addition to stacking implied by `$BEST_BASE`).
 - Borderline or unclear → ask the user's preference.
 - Pass `$BEST_BASE` through to Step 2 — never re-detect or default back to
   `main`.

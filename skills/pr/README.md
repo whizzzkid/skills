@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.08.18-204140`
+**Version:** `2026.08.19-225802`
 
 ## Invocation
 
