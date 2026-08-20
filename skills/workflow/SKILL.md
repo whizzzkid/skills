@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.19-223403"
+  version: "2026.08.20-204907"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -61,9 +61,7 @@ Execute the workflow without asking permission at each step.
 | Defect diagnosed, owning file identified | Edit that file now | Re-state the tradeoffs again |
 | Feedback lands mid-action | Finish the authorized action, then adjust | Acknowledge and stop, leaving it undone |
 
-- **Important:** a mandated PR lifecycle — a standing repo mandate as much as the
-  originating prompt — authorizes the initial task-branch push and PR creation.
-  Ask only where publishing is genuinely optional.
+- **Important:** a mandated PR lifecycle authorizes the initial push and PR creation. Ask only where publishing is genuinely optional.
 
 Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a finding requires a user-owned design decision; user explicitly requested a pause/check-in; or a destructive/shared-state action is required.
 
@@ -133,9 +131,9 @@ Pre-patch routing: `.md` → [`wk-markdown`](../markdown/README.md); Mermaid →
 [`wk-arch-review`](../arch-review/README.md) detector, then draft-complete gate.
 Post-edit classification fails.
 
-**Subtractive-first:** before adding code to handle a problem, evaluate if removal/exclusion/simplification eliminates it — zero new failure modes.
+**Subtractive-first:** before adding code, evaluate if removal/simplification eliminates the problem — zero new failure modes.
 
-- **Important — fleet-first for shared integrations.** Before fixing code that uses a shared gem/library/service, grep 2-3 sibling repos for the same integration pattern. Fleet consensus outranks spec correctness.
+- **Important — fleet-first for shared integrations.** Before fixing shared gem/library/service code, grep 2-3 sibling repos for the same pattern. Fleet consensus outranks spec correctness.
 
 Execute the plan step by step. After each step:
 
@@ -175,6 +173,7 @@ Enumerate every affected site and fix all in one pass before tests:
 - **Signature widening** — non-optional public param/required field → grep every caller/initializer, fix each in the same commit.
 - **`replace_all: true`** — grep the target string first; reject if any occurrence needs a different value/context or must stay unchanged.
 - **Agent-brief identifiers** — grep the declaring source; quote exact names/values into the prompt, never recalled ones. One wrong identifier multiplies across every agent trusting the brief.
+- **Guard modification** — before editing an existing guard/filter/null-check, verify whether the upstream change already makes it correct for new inputs; a callee now returning valid data means existing checks already pass.
 
 ### Code Standards
 
@@ -188,7 +187,7 @@ Apply to ALL code:
 - **Niche standards** live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Platform-API traps:** [`references/platform-api-traps.md`](references/platform-api-traps.md).
 - **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
-- **HARD RULE — reuse the mechanism the codebase already provides for config/secret resolution; never invent a parallel override (dummy env exports, a new config path). Repeated user pushback naming an existing convention is a hard stop — adopt the named mechanism, never defend the invented one.** (See reuse-hygiene, code-standards-extended.)
+- **HARD RULE — reuse existing config/secret resolution mechanisms; never invent a parallel override (dummy env exports, new config path). Repeated user pushback naming an existing convention → adopt it, never defend the invented one.** (See reuse-hygiene, code-standards-extended.)
 
 ---
 
@@ -299,7 +298,7 @@ After tests and the Phase 3.5/3.6 scans pass, invoke `wk-pr` (never raw `gh pr c
 
 `wk-commit` handles PR description sync and stale comment resolution after every push.
 
-**HARD RULE:** auto-sync drifted artifacts — never ask permission to fix obvious drift. After any push, significant code change, or approach pivot, audit PR title/body, self-review comments, ticket description, and related docs; update in the same turn. On an approach pivot, also resolve stale self-review threads and post fresh comments via `wk-self-review`. Confirm only when sync content is genuinely ambiguous.
+**HARD RULE:** auto-sync drifted artifacts — never ask to fix obvious drift. After any push, code change, or approach pivot, audit PR title/body, self-review comments, ticket description, and docs; update same turn. On pivot, also resolve stale self-review threads and re-post via `wk-self-review`. Confirm only when sync content is genuinely ambiguous.
 
 Before reworking a PR branch, [reconcile against its actual base](references/pre-rework-base-reconcile.md) — resolve the PR's base first; never assume default as the rebase target.
 
