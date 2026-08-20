@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.17-212559"
+  version: "2026.08.20-190631"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -217,13 +217,10 @@ Build two structures from active comments:
 - **Exclusion list:** active comments keyed by `(file, line_range, topic)` so
   Phase 3/4 do not duplicate existing concerns.
 
-**Re-scope a bot's severity in both directions.** A mechanically correct finding
-on an unwired path is not a live concern: grep for the trigger that activates the
-affected path (env var, live caller, production config, compose/CI wiring); trigger
-absent → downgrade to "Confirmed but narrower than stated." Conversely, trace one
-hop downstream for amplified impact — a referenced file/URL/symbol that does not
-resolve, a value that reaches a user-facing surface — since the bot's own test gap
-can hide it; impact beyond the bot's framing → upgrade to "Confirmed but broader."
+**Re-scope a bot's severity in both directions.**
+
+- Grep for the trigger activating the path (env var, caller, config, CI wiring); absent → "Confirmed but narrower."
+- Trace one hop downstream for amplified impact (404 target, user-facing surface); beyond bot's framing → "Confirmed but broader."
 
 ### Re-review follow-up
 
@@ -288,6 +285,7 @@ On the returned findings:
   Phase 4 does not duplicate them.
 - Map adversarial-review `blocker` findings to Phase 4 `concern` candidates;
   `suggestion` / `question` pass through unchanged.
+- Reconcile bidirectionally: drop or revise own pre-assembled candidates the agent's results refute — agent verdicts override static reasoning.
 
 Verdict is advisory here: pr-review always proceeds to compose comments — never
 blocks the author or posts from the gate.
@@ -452,7 +450,7 @@ submits, approves, or requests changes.
 ### Recheck the reviewed head
 
 - Immediately before each review create/recreate POST, fetch `headRefOid`; compare with Phase 1 `PR_HEAD`.
-- Mismatch → do not post; inspect delta, revalidate findings and anchors, refresh `PR_HEAD`, rebuild full payload.
+- Mismatch → do not post; resolve anchors from PR-HEAD blob (`git show <PR_HEAD>:file`), never the working tree; revalidate findings, refresh `PR_HEAD`, rebuild full payload.
 - Set payload `commit_id` to `PR_HEAD`; never rely on latest-commit default.
 
 ### Create the pending review
