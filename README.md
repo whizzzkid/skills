@@ -55,6 +55,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [pr-update](skills/pr-update/) | Merge, patch-replay, or rebase a PR branch onto the latest base branch |
 | [pr-break](skills/pr-break/) | Break an oversized PR into a stack of smaller, individually-shippable PRs |
 | [pr-takeover](skills/pr-takeover/) | Take over another author's PR — overwrite or stack mode, full workflow, co-authorship |
+| [renovate](skills/renovate/) | Batch open Dependabot PRs into a single combined dependency-update PR |
 | [pr-merge](skills/pr-merge/) | Merge after CI and review clearance; transition ticket, retro, cleanup |
 | [adversarial-review](skills/adversarial-review/) | The single review gate — one run per change at the completion gate, before merge (never per push) |
 | [self-review](skills/self-review/) | Post design-decision comments on your own PR for human reviewers |
