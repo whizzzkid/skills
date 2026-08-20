@@ -29,7 +29,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.08.20-224826"
+  version: "2026.08.20-231910"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -57,6 +57,10 @@ gh pr list --author "app/dependabot" --state open --json number,title,headRefNam
 - Zero results → report "no open Dependabot PRs" and stop.
 - Display a numbered summary table: PR number, title, package, version bump.
 - Extract the dependency name and version range from each PR title/body.
+- **Pause for confirmation** before proceeding to Step 2.
+  - Ask the user to confirm or exclude packages (e.g., "exclude 3, 7" or "proceed").
+  - Major-version bumps → call out explicitly in the table; these are most likely to break.
+  - Excluded PRs are skipped in Steps 2–5 and omitted from the combined PR.
 
 ## Step 2: Create a Combined Branch
 
@@ -134,22 +138,19 @@ Batches the following Dependabot PRs into a single update:
 ...
 
 ### Superseded PRs
-<!-- GitHub Closes keyword does NOT auto-close PRs, only issues.
-     These annotations document intent; originals are closed via
-     gh pr close after this PR merges. -->
-Supersedes #<N1>, #<N2>, #<N3>, ...
+Closes #<N1>, #<N2>, #<N3>, ...
 
 ### Post-merge cleanup
-After merging, run: `gh pr close <N1> <N2> ... --delete-branch --comment "Superseded by #<this_PR>"`
-Or invoke `/wk-renovate cleanup` to do it automatically.
+GitHub auto-closes PRs referenced by `Closes #N` on merge.
+Verify closed state; if any remain open: `gh pr close <N> --delete-branch --comment "Superseded by #<this_PR>"`
+Or invoke `/wk-renovate cleanup` to handle stragglers.
 ```
 
-### HARD RULE: `Closes #N` does not close PRs
+### `Closes #N` auto-closes PRs too
 
-GitHub's `Closes` keyword only auto-closes **issues**, not pull requests.
-Never use `Closes #N` to reference a Dependabot PR expecting auto-close.
-Use `Supersedes #N` as documentation and close originals explicitly after
-merge via `gh pr close`.
+GitHub's `Closes` keyword auto-closes both issues **and** pull requests on
+merge (field-verified). Use `Closes #N` in the PR body for each superseded
+Dependabot PR. Step 7 handles any that remain open as stragglers.
 
 ## Step 6: Skip Optional Gates
 
@@ -167,18 +168,18 @@ Empty → skip with a note: "dependency-only update, adversarial review skipped.
 
 ## Step 7: Post-Merge Cleanup (`/wk-renovate cleanup`)
 
-After the combined PR merges, close the original Dependabot PRs:
+After the combined PR merges, `Closes #N` keywords auto-close the referenced
+PRs. This step handles stragglers:
 
 ```bash
 for pr in <superseded_pr_numbers>; do
   gh pr close "$pr" --delete-branch \
-    --comment "Superseded by #<combined_pr> — dependencies updated in the combined PR."
+    --comment "Superseded by #<combined_pr> — dependencies updated in the combined PR." 2>/dev/null
 done
 ```
 
-- Parse superseded PR numbers from the merged PR body (`Supersedes #...`).
-- If Dependabot's own rebase/close cycle has already closed some, skip those
-  gracefully (`already closed` is not an error).
+- Parse superseded PR numbers from the merged PR body (`Closes #...`).
+- Already-closed PRs are expected (auto-closed by `Closes`) — skip gracefully.
 
 ## Quick Reference
 
@@ -189,8 +190,8 @@ done
 
 ## Common Mistakes
 
-- **Using `Closes #N` for PRs** — it only closes issues; use `Supersedes`
-  annotation + explicit `gh pr close`.
+- **Assuming `Closes #N` only works for issues** — it auto-closes PRs too;
+  use it in the combined PR body for each superseded Dependabot PR.
 - **Cherry-picking lockfile conflicts without regenerating** — always re-run
   the package manager to produce a consistent lockfile.
 - **Running adversarial review on pure dependency bumps** — wastes time on

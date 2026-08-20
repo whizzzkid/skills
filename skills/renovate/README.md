@@ -1,6 +1,6 @@
 # wk-renovate
 
-> **Version:** 2026.08.20-224826 · **Group:** pull-request · **Model:** sonnet
+> **Version:** 2026.08.20-231910 · **Group:** pull-request · **Model:** sonnet
 
 Batch all open Dependabot PRs in the current repo into a single combined
 dependency-update PR — one branch, one review, one merge.
@@ -25,7 +25,8 @@ everything at once.
 flowchart TD
     A[Discover open Dependabot PRs] --> B{Any found?}
     B -- No --> Z[Report: nothing to do]
-    B -- Yes --> C[Create combined branch from main]
+    B -- Yes --> B2[Pause for user confirmation / exclusions]
+    B2 --> C[Create combined branch from main]
     C --> D[Cherry-pick each Dependabot commit]
     D --> E{Lockfile conflict?}
     E -- Yes --> F[Regenerate lockfile via package manager]
@@ -41,9 +42,8 @@ flowchart TD
 
 ## Key Rules
 
-- **`Closes #N` does not close PRs** — GitHub only auto-closes issues with
-  that keyword. Use `Supersedes #N` as documentation and `gh pr close` after
-  merge.
+- **`Closes #N` auto-closes PRs too** — use it in the combined PR body for
+  each superseded Dependabot PR; Step 7 handles any stragglers.
 - **Adversarial review** runs only when the diff touches application code
   beyond manifests and lockfiles.
 - **Automated external review** is always skipped for dependency-only updates.
