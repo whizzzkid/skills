@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.20-204907"
+  version: "2026.08.22-025401"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -370,7 +370,7 @@ Loop limits:
 
 Exit on all-green, max attempts, or confirmed infra/flaky failure. After green, resume `wk-pr` post-creation.
 
-**HARD RULE:** verify every test-plan checkbox before updating the PR description. Run every runnable verification command; leave a box unchecked only when genuinely impossible and note why.
+**HARD RULE:** verify every test-plan checkbox before updating the PR description and before merge or auto-merge enablement. Run every runnable verification command; leave a box unchecked only when genuinely impossible and note why.
 
 ---
 
