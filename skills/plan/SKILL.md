@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.05-212658"
+  version: "2026.08.22-004614"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -117,29 +117,13 @@ Dispatch parallel `Agent` calls to build the context map after the gates above c
 
 ```
 // Agent roles — dispatch the subset that applies:
-
-Agent A — Codebase topology
-  Find files, modules, and entry points relevant to the task.
-  Grep for the key symbols, APIs, or config keys mentioned in the task.
-  Identify the blast radius: what else imports / depends on what will change?
-
-Agent B — Spec and ticket context
-  Read linked Jira tickets (via wk-jira Stage 0) for acceptance criteria.
-  Read linked spec files, ADRs, or design docs.
-  Surface any open PRs touching the same files.
-
-Agent C — Test coverage and recent history
-  Find existing tests for the affected code.
-  Read the last 10 git commits touching relevant files.
-  Note: which behaviors are already tested? which are not?
-
-Agent D — Prior art and patterns
-  Find the closest existing implementation of a similar pattern.
-  Check for shared helpers, lib modules, or utilities already in scope.
-  (Informs the prefactor probe in Step 3.)
+Agent A — Codebase topology: files, modules, entry points, key symbols, blast radius.
+Agent B — Spec and ticket context: Jira ACs (wk-jira Stage 0), specs/ADRs, open PRs on same files.
+Agent C — Test coverage and history: existing tests, last 10 commits, tested vs untested behaviors.
+Agent D — Prior art and patterns: closest existing implementation, shared helpers/lib modules.
 ```
 
-Collect all agent results before Step 2. Treat contradictions between agents as a signal to probe further, not a reason to guess.
+Collect all agent results before Step 2. Contradictions between agents → probe further, not guess.
 
 ### File-role sanity check
 
@@ -176,6 +160,7 @@ For each persona, answer: **"What does this plan need to include from my perspec
 - Does this require a migration, schema change, or deploy ordering?
 - What breaks on rollback? Is the change forward-compatible?
 - Are observability / logging / alerting covered in the plan?
+- Does any proposed query or operation on a request path violate a documented performance constraint (no live aggregates, no N+1, read-replica-only, query-budget cap)? If such a constraint exists, the plan must use the same mitigation pattern the existing code uses (cache, background job, materialized view) — never acknowledge the constraint as a risk while proposing a step that violates it.
 
 **Product / User**
 - Does the plan deliver the stated requirement, or a technically-correct implementation of a different thing?
@@ -283,34 +268,21 @@ without the user noticing.
 
 ### Commit granularity
 
-Prefer the smallest possible commits. Each commit must:
-
-- Do exactly one logical thing
-- Pass all tests and CI in isolation
-- Include documentation updates for any behavior it introduces or changes
-- Be immediately committable via `wk-commit`
-
-If a step is too large for a single commit, split it into sub-steps with their own commit boundaries.
+Smallest possible commits — each does one logical thing, passes CI in isolation, includes doc updates for changed behavior, and is committable via `wk-commit`. Too large → split into sub-steps.
 
 ### Prefactor probe — lift before extending
 
-Before writing a new caller of an existing pattern → lift the shared logic and migrate the existing caller first. Order: **lift → migrate → extend**.
+Before writing a new caller of an existing pattern → **lift → migrate → extend**.
 
-Trigger signals:
+Triggers: "another/similar to/like the <X>", new feature duplicates an existing verb, new caller in a different file.
 
-- "another <X>", "similar to <X>", "like the <X> version"
-- The new feature is a verb the codebase already implements
-- The new caller will live in a different file from the existing one
+1. Grep the operation across codebase; read both call sites.
+2. Identify duplicated prologue/epilogue (validation, error handling, logging, retries).
+3. Lift into a helper in the `lib/`-equivalent location.
+4. Migrate existing caller onto helper (separate commit).
+5. Extend — new caller as thin wrapper delegating to helper.
 
-When the probe fires:
-
-1. **Grep** for the operation across the codebase. Read both call sites end-to-end.
-2. **Identify the duplicated prologue/epilogue** — validation, error handling, logging, retries, formatting.
-3. **Lift** the duplicated portion into a helper module/function in the same `lib/`-equivalent location.
-4. **Migrate** the existing caller onto the helper as a separate commit.
-5. **Then extend** — implement the new caller as a thin wrapper that delegates to the helper plus its new behavior.
-
-The plan must list these as numbered steps before the new-feature step. If grep returns no existing caller, the probe is a no-op.
+List these as numbered steps before the new-feature step. No existing caller → no-op.
 
 ### Intra-file duplication probe
 
@@ -324,40 +296,23 @@ If a match exists → decide in the same commit whether to remove the prior vers
 
 ### Spec pre-flight — extend an in-flight spec before creating a new one
 
-Before producing a new spec/design doc → check for a related spec already in flight on an open PR and extend it rather than landing a parallel file.
-
-- Grep open PRs for specs in the same feature area before planning a new one.
-- Related spec in an open PR → stack on that branch and extend the existing doc.
-- Create a standalone spec only when no related in-flight spec exists.
+Before producing a new spec/design doc → grep open PRs for related specs. Related spec in an open PR → stack and extend it. Create standalone only when none exists.
 
 ### New-capability probe — extend an existing skill before scaffolding a new one
 
-Before scaffolding a new skill, command, or entry point → ask whether the capability is a new verb on a noun an existing skill already owns.
-
-- Subcommand / mode of an existing skill (`/foo bar`, not `/foo-bar`) → add a routing mode to that skill.
-- Scaffold a standalone skill only for a genuinely distinct workflow — different argument shape, tool set, or user mental model.
+Before scaffolding a new skill → ask whether it is a new verb on a noun an existing skill owns. Subcommand/mode of existing → add routing mode. Standalone only for genuinely distinct workflows (different argument shape, tool set, or mental model).
 
 ### Rule-set doc sync probe
 
-When the diff modifies a check / validator / rule file → find authoring guides that enumerate the rule set by count and add them as explicit sync targets in the plan, before implementation starts.
-
-- Grep guides (README, `docs/how-to`, repository-check docs) for count-enumerations of the rules: `"N things"`, `"three items"`, numbered "you must include" lists.
-- Add each matching guide as a numbered sync step so the count and the body stay aligned.
+Diff modifies a check/validator/rule file → grep guides (README, `docs/how-to`) for count-enumerations (`"N things"`, numbered lists). Add each as a sync step so count and body stay aligned.
 
 ### Tool-swap flag-parity probe
 
-When the plan swaps one tool for another in the same role (formatter, linter, bundler, compiler, transpiler) → add a planning step that probes whether the replacement's defaults match the replaced tool's behavior.
-
-- Ask: does the replacement need flags to reproduce the prior tool's output?
-- Identify each gap-closing flag in the plan, not at review time.
-- Pay special attention to tools with CWD-sensitive or module-aware behavior.
+Plan swaps one tool for another in same role → probe whether replacement's defaults match the prior tool's behavior. Identify gap-closing flags in the plan, not at review time. Pay attention to CWD-sensitive/module-aware tools.
 
 ### Producer-audit probe
 
-When the plan switches a consumer from a named-file lookup (`statSync(file)`) to a directory scan (`readdirSync(dir)` / glob) → audit the upstream producer first.
-
-- Grep the build/compile script that populates the directory and list every file it writes.
-- Add a filter step that explicitly includes or excludes each file type.
+Plan switches from named-file lookup to directory scan/glob → audit the upstream producer. Grep the build/compile script; add a filter step that includes/excludes each file type.
 
 ---
 
@@ -459,6 +414,7 @@ If wk-plan was already run this session and an approved plan exists → wk-workf
 - **Executing before approval.** The plan is a contract. Starting before approval means executing the wrong contract.
 - **Ignoring the Jira ticket.** Acceptance criteria in the ticket override the verbal task description.
 - **Not re-running wk-plan after scope change.** If the user interrupts mid-execution to add scope, re-invoke wk-plan on the new scope.
+- **Acknowledging a constraint but violating it.** Noting a performance or architectural constraint in the risk section, then proposing a step that contradicts it. A documented constraint is a design input to satisfy, not a risk to note — the plan must use the same mitigation pattern the existing code uses.
 
 ---
 
