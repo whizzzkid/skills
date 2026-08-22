@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.22-004614"
+  version: "2026.08.22-005233"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -335,11 +335,15 @@ Before presenting, run a validation checklist against the draft plan.
 **Commit map**
 - Every phase or step boundary has a commit. No phase ends without one.
 
+**Self-generated review findings**
+- When `wk-arch-review` (or any self-dispatched validation step) produces findings → fold them into the plan immediately as mandatory corrections; do not ask the user whether to apply the plan's own review output.
+- Re-present the updated plan only when findings alter scope, phasing, or PR count; otherwise apply silently and proceed to Step 5.
+
 **Mandatory elements**
 - All 8 mandatory elements from Step 3 are present and numbered.
 - Arch-bearing artifact in scope → element 9 (`wk-arch-review` at draft-complete) is
   present; its absence on a spec/estimate plan is a validation failure, not a choice.
-- Ticket in scope → Jira lifecycle steps (element 9) are present, named, and carry the auto-mode caveat.
+- Ticket in scope → Jira lifecycle steps (element 10) are present, named, and carry the auto-mode caveat.
 
 **Probe coverage**
 - Jira ticket pre-flight cleared or asked once.
@@ -415,6 +419,7 @@ If wk-plan was already run this session and an approved plan exists → wk-workf
 - **Ignoring the Jira ticket.** Acceptance criteria in the ticket override the verbal task description.
 - **Not re-running wk-plan after scope change.** If the user interrupts mid-execution to add scope, re-invoke wk-plan on the new scope.
 - **Acknowledging a constraint but violating it.** Noting a performance or architectural constraint in the risk section, then proposing a step that contradicts it. A documented constraint is a design input to satisfy, not a risk to note — the plan must use the same mitigation pattern the existing code uses.
+- **Asking permission to apply own findings.** When `wk-arch-review` or another self-dispatched validation produces technical corrections, fold them immediately — they are mandatory, not proposals requiring user consent.
 
 ---
 
