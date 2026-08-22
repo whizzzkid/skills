@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171031"
+  version: "2026.08.22-005738"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -197,6 +197,7 @@ Progressive disclosure pattern:
 3. **Classify infra vs. code** (below) *before* attributing the failure to the diff.
 4. **Common CI exit codes** (below).
 5. **Check if pre-existing:** canonical build query against `-b main`, selecting the specific failing step by name.
+6. **Report trigger and cause separately:** when the build was triggered by the user's merge/push but the failure is unrelated to their diff, state both facts explicitly — "Build #N was triggered by your merge; the failure in step X is [pre-existing / infra / flaky], not caused by your diff." Never collapse into a single "unrelated" verdict — omitting the trigger acknowledgment contradicts the user's correct observation that their action started the build.
 
 ### HARD RULE: classify infra vs. code before attributing a red build to the diff
 
@@ -378,6 +379,7 @@ When saving any Buildkite artifact to disk — build JSON, job logs, artifact fi
 | Claim rests on one specific job | Per-job view; cite build number + that job's `exit_status`, never the rollup |
 | "Did check X pass?" | Confirm a matching job exists first — no match = unwired gate, a finding, not a pass |
 | Log shows `job_executor_error` / env-hook failure | Infra, not the diff — `bk job retry <job-uuid>`, leave the code alone |
+| Post-merge build fails, failure unrelated to diff | State trigger ("your merge started this build") AND cause ("failure is pre-existing/infra") separately |
 | Saving any `bk` payload to disk | Use `/tmp/agent/buildkite/<build>/...` |
 
 ---
