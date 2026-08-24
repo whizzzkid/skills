@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.22-025401"
+  version: "2026.08.24-210723"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -92,7 +92,7 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 
 The Phase 1 plan is the session contract.
 
-- **Important:** Enumerate every deliverable before acting — a prompt with a noun task and a closing imperative is two items; commit to the full list first. Mid-session explicit requests ("create a follow-up PR for X") are deliverables too — act immediately or surface as a tracked follow-up at session end. Never silently drop an explicit ask.
+- **Important:** Enumerate every deliverable before acting — a prompt with a noun task and a closing imperative is two items. Mid-session explicit requests are deliverables — act immediately or track as follow-up. Never silently drop an explicit ask.
 - On interruption mid-plan: stop, update the active plan/TodoWrite list, re-state the new top item in one line, resume from the earliest incomplete item.
 - Final completeness gate: before claiming completion, re-read the plan and ensure every numbered step is finished or explicitly deferred/removed.
 
@@ -112,19 +112,17 @@ Skill(wk-plan, args="<task from session context>")
 - If `wk-plan` surfaced unanswered questions, resolve them before proceeding.
 - **Complex task → advisor:** consult the `advisor` server tool during Phase 1: [`references/advisor-tool.md`](references/advisor-tool.md).
 
-**HARD RULE — wait for plan approval before the first Edit/Write/Bash write-action (incl. fetching/reading *for* the build once it commits to a direction), any size.** Size-independent in BOTH directions: neither "small/2-line/obvious" nor "large/exciting/obviously-right — let me build" (momentum) waives it. Present-plan → wait-for-approval → execute; a plan the user supplied arrives approved.
+**HARD RULE — wait for plan approval before the first Edit/Write/Bash write-action (incl. fetching/reading *for* the build once committed to a direction).** No size exemption in either direction — "too small" and "obviously right" both violate. Present → approve → execute; a user-supplied plan arrives approved.
 
 ---
 
 ## Phase 2: Implement
 
-Before the first Edit/Write, confirm cwd is the intended worktree:
+### HARD RULE — branch pre-flight before first edit
 
-```bash
-git rev-parse --abbrev-ref HEAD
-```
-
+- Run `git rev-parse --abbrev-ref HEAD` and verify the branch matches the task's intended base before any Edit/Write.
 - **Linked worktree:** resolve edit targets under `git rev-parse --show-toplevel` — absolute paths anchored to the primary checkout silently edit the wrong tree.
+- **Rebase/cherry-pick conflicts are a diagnostic signal.** Before any workaround (new branch, manual rewrite, abort-and-redo), run `git log --oneline -5` and verify the target base matches the worktree's actual parent. Conflicts against an unexpected base mean you are targeting the wrong branch — stop and re-examine, never force through.
 
 Pre-patch routing: `.md` → [`wk-markdown`](../markdown/README.md); Mermaid →
 [`wk-mermaid`](../mermaid/README.md); arch-bearing →
@@ -229,7 +227,6 @@ Verification:
 - **Dependent verification fails fast.** Run an expected-red proof and its later green gate in separate tool calls. If they must share one shell command, begin it with `set -euo pipefail`; never launch the green gate after the expected-red proof exits non-zero.
 - **Important — never take a verdict from `$?` after a pipe.** See `wk-workstyle-shell` for limiters and the `PIPESTATUS` split.
 
-
 Shell-script structure & symlink-guard tests: [`references/shell-script-test-checks.md`](references/shell-script-test-checks.md).
 
 ---
@@ -238,7 +235,7 @@ Shell-script structure & symlink-guard tests: [`references/shell-script-test-che
 
 After tests pass and before publishing, scan the diff and neighboring code for refactor/reuse opportunities.
 
-For every new/modified function, helper, constant, or block, scan same file, sibling files, and imported modules for: existing helpers/constants/types, repeated literals, near-duplicate blocks (≥3 similar lines), long conditional chains, nested blocks, re-implemented language/framework patterns.
+For every new/modified function/helper/constant/block, scan same file, siblings, and imports for: existing helpers/constants/types, repeated literals, near-duplicate blocks (≥3 lines), long conditional chains, nested blocks, re-implemented framework patterns.
 
 Classify each opportunity:
 
@@ -261,12 +258,12 @@ For every removed line/symbol/file in the diff, classify the deletion intentiona
 
 ## Phase 3.6: Frontend Live Preview
 
-Run only when the diff changes browser-rendered UI: client components, templates/views, styles, or client-side routes (`.tsx/.jsx/.vue/.svelte/.html/.css/.scss` and view/component/template dirs).
+Run only when the diff changes browser-rendered UI (`.tsx/.jsx/.vue/.svelte/.html/.css/.scss`, view/component/template dirs).
 
 - Launch the app via the `run` skill or documented dev-server command.
 - Drive every changed view in a real browser with Playwright tools; exercise happy paths.
-- Capture snapshots/console; platform-pinned baselines → regenerate inside documented CI container, never local host ([artifacts](references/2026-08-04_linux-visual-artifacts.md)).
-- Treat load failure, console error on the changed surface, or broken interaction as a blocker — fix before publishing.
+- Capture snapshots/console; platform-pinned baselines → regenerate in CI container, never local host ([artifacts](references/2026-08-04_linux-visual-artifacts.md)).
+- Load failure, console error on changed surface, or broken interaction → blocker; fix before publishing.
 - Leave app/browser running and hand off the URL; continue Phase 5 onward while the user inspects.
 
 Skip backend/config/docs-only diffs and record "frontend preview: N/A" in Phase 8.
@@ -288,7 +285,7 @@ Branching is the default, not an absolute. Probe first:
 - If signals conflict/are absent for a non-trivial change, branch and say why in one line.
 - **Follow-up branch:** after a merged PR, branch from `origin/<default>` (fetch first) — stale local ref inflates diff.
 
-After tests and the Phase 3.5/3.6 scans pass, invoke `wk-pr` (never raw `gh pr create`) — it handles draft creation, stacking, self-review, feedback triage, and marking ready. Publishing precedes the review gate; it does not wait on a verdict.
+After tests and Phase 3.5/3.6 scans pass, invoke `wk-pr` (never raw `gh pr create`) — it handles draft creation, stacking, self-review, feedback triage, and marking ready. Publishing precedes review; it does not wait on a verdict.
 
 ### Stacked PRs — per-PR lifecycle
 
@@ -298,7 +295,7 @@ After tests and the Phase 3.5/3.6 scans pass, invoke `wk-pr` (never raw `gh pr c
 
 `wk-commit` handles PR description sync and stale comment resolution after every push.
 
-**HARD RULE:** auto-sync drifted artifacts — never ask to fix obvious drift. After any push, code change, or approach pivot, audit PR title/body, self-review comments, ticket description, and docs; update same turn. On pivot, also resolve stale self-review threads and re-post via `wk-self-review`. Confirm only when sync content is genuinely ambiguous.
+**HARD RULE:** auto-sync drifted artifacts — never ask. After push, code change, or pivot, audit PR title/body, self-review, ticket, docs; update same turn. On pivot, resolve stale self-review threads and re-post via `wk-self-review`. Confirm only when genuinely ambiguous.
 
 Before reworking a PR branch, [reconcile against its actual base](references/pre-rework-base-reconcile.md) — resolve the PR's base first; never assume default as the rebase target.
 
@@ -327,9 +324,9 @@ SHA equality is not required. No size or docs-only exemption.
 - **Blocked** — fix each blocker via `wk-commit`, re-invoke until clear. Never merge or enable auto-merge on a blocked verdict.
 - **Suggestions only** — follow the skill's A/B/C prompt.
 
-Pre-flight findings are mandatory actions, not options → fold blockers/improvements into the relevant artifact and commit. Pause only for a genuine user-owned design decision.
+Pre-flight findings are mandatory → fold blockers/improvements into the artifact and commit. Pause only for a genuine user-owned design decision.
 
-**HARD RULE — never defer a security guard.** A missing guard or input validation (SSRF, injection, path traversal, scheme check) is blocker-class regardless of scope — apply it now; never propose deferring it without explicit user instruction. Split a larger tooling swap into a follow-up, never the guard itself.
+**HARD RULE — never defer a security guard.** Missing guard/input validation (SSRF, injection, path traversal, scheme check) is blocker-class — apply now; never propose deferring without explicit user instruction. Split a larger tooling swap into a follow-up, never the guard itself.
 
 ---
 
@@ -408,8 +405,7 @@ Final audit after all code is complete:
 
 ## Environment Guardrails
 
-Apply [`references/environment-guardrails.md`](references/environment-guardrails.md)
-for cloud auth, containers, global configuration, and CI-provider routing.
+Apply [`references/environment-guardrails.md`](references/environment-guardrails.md) for cloud auth, containers, global config, and CI-provider routing.
 
 ---
 
