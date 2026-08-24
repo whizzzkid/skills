@@ -27,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171047"
+  version: "2026.08.24-192013"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -529,6 +529,8 @@ exempt — Jira items are visible to the whole team.
 | Transition to terminal state | Yes — run Child-completion gate, then confirm target state | Block on open children; confirm explicitly |
 | Assign to user (auto lifecycle) | No — auto-assign as part of Stage 2 | `editJiraIssue` with assignee |
 | Post lifecycle comment (auto) | No — additive factual status note, part of the claim/PR/merge events | `addCommentToJiraIssue` |
+
+- After creating issue(s), run **Active-sprint assignment** subroutine on each new issue — an issue created without a sprint lands in the backlog, invisible on the sprint board.
 
 ---
 
