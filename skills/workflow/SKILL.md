@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.24-210723"
+  version: "2026.08.24-214535"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -131,7 +131,7 @@ Post-edit classification fails.
 
 **Subtractive-first:** before adding code, evaluate if removal/simplification eliminates the problem — zero new failure modes.
 
-- **Important — fleet-first for shared integrations.** Before fixing shared gem/library/service code, grep 2-3 sibling repos for the same pattern. Fleet consensus outranks spec correctness.
+- **Fleet-first for shared integrations:** grep 2-3 sibling repos for the same pattern before fixing shared code; fleet consensus outranks spec.
 
 Execute the plan step by step. After each step:
 
@@ -142,7 +142,7 @@ Execute the plan step by step. After each step:
 
 Never batch multiple plan steps into one commit, defer docs, or skip tests between commits.
 
-- **Narrate branch-rewriting ops.** After rebase/merge moving HEAD, print before/after SHAs — silence reads as lost work.
+- **Narrate branch-rewriting ops.** Print before/after SHAs after rebase/merge — silence reads as lost work.
 
 ### Cross-cutting changes
 
@@ -180,11 +180,12 @@ Apply to ALL code:
 - **Version pins:** exact versions only — no `latest`/`stable`/`nightly`/`^`/`~` in `FROM`, `mise.toml`, Actions, or package managers. Official-action semver majors permitted.
 - **Regexes:** named capture groups: `(?<year>\d{4})`.
 - **Bash:** no `cd` per command; use absolute paths or `git -C <repo>`. Base resolution recipe: [`references/code-standards-extended.md`](references/code-standards-extended.md).
+- **Shell simplicity:** sequential single-purpose commands, not compound chains — classifiers block what they cannot decompose. Surface denials; never silently restructure.
 - **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md).
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
 - **Niche standards** live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
 - **Platform-API traps:** [`references/platform-api-traps.md`](references/platform-api-traps.md).
-- **Two-sided flow survey:** before designing a gate/filter/guardrail, survey codebase/docs for caller-side conditions and callee enforcement.
+- **Two-sided flow survey:** survey caller-side conditions and callee enforcement before designing a gate/filter/guardrail.
 - **HARD RULE — reuse existing config/secret resolution mechanisms; never invent a parallel override (dummy env exports, new config path). Repeated user pushback naming an existing convention → adopt it, never defend the invented one.** (See reuse-hygiene, code-standards-extended.)
 
 ---
