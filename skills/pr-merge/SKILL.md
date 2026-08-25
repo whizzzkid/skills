@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.24-220416"
+  version: "2026.08.25-065945"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -432,9 +432,13 @@ PR #{number} merged as {merge_sha} into `{base}`.
 (No follow-ups.) ← emit only when the list is empty
 ```
 
-Follow-ups present → offer once:
-
-> "Want me to file these as GitHub issues or Jira tickets?"
+Follow-ups present → route each before cleanup via `AskUserQuestion`:
+  - **Start now** — work on it in this session (worktree stays).
+  - **Handoff prompt** — self-contained prompt for a new agent; include PR link,
+    merge SHA, follow-up description, and relevant file paths.
+  - **File ticket** — create a Jira/GitHub issue per the existing offer flow.
+- Collect routing BEFORE Step 10 — options 1 and 2 need local context that
+  cleanup destroys.
 
 ## Step 9: Capture session learnings
 
