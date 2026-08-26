@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.19-175232"
+  version: "2026.08.26-174737"
   model:
     openai: gpt-5.6-terra
 ---
@@ -91,6 +91,10 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
      re-pushes included), replies, AND resolving worked-on threads; confirm once,
      then proceed each round. A bare "resolve comments" does not; a redundant
      per-action re-ask reads as unpredictable.
+   - **Hard Rule 1 gates the push, not the tail steps.** After push + reply
+     (Step 8), continue immediately through Steps 9–11 without pausing; the
+     only valid post-push stops are CI failure after 3 fix-loop attempts, a
+     blocked adversarial-review verdict, or explicit user interjection.
 2. **Never post reply comments without explicit user confirmation** — a
    land-intent invocation (Hard Rule 1) is that authorization; do not re-ask.
    - **A "don't post"/"no replies" directive bans publishing content (replies,
