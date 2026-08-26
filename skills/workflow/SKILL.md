@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.26-180913"
+  version: "2026.08.26-190949"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -63,7 +63,7 @@ Execute the workflow without asking permission at each step.
 
 - **Important:** a mandated PR lifecycle authorizes the initial push and PR creation. Ask only where publishing is genuinely optional.
 
-Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a finding requires a user-owned design decision; user explicitly requested a pause/check-in; or a destructive/shared-state action is required.
+Stop and ask only when: plan ambiguous; CI persists after 3 attempts; user-owned design decision needed; explicit pause requested; or destructive/shared-state action required.
 
 - **Never ask for what your own inputs answer** — search the plan, merged PRs, and tracked config first (a question they already answer proves they went unread).
 
@@ -71,12 +71,8 @@ Stop and ask only when: plan is ambiguous; CI persists after 3 attempts; a findi
 - **Curiosity ≠ commission.** A clarifying question ("why is X slow?") after the primary goal is met seeks understanding, not more work → answer and stop; do not pair with a new proposal unless the user explicitly asks.
 - **A turn producing no new facts must end in a write** — no new file read or command output means analysis is done, so edit the owning file instead of re-deliberating.
 - When soliciting feedback, block on it → end the turn after asking; do not implement until answered. When decisions must be collected first, gather and confirm the full set before executing any — never interleave asking with acting.
-- **Important:** skill invocation is mandatory → use Skill tool, not raw
-  approximation. Run its full flow; user prose adds context, never exceptions.
-  Hand-running its mechanics (raw `git commit`/`gh pr merge`, ad-hoc planning) IS
-  that approximation, and a session's first write-action is where it gets skipped.
-  The table above is illustrative, not the closed set of skill-owned events — the
-  wrapper's post-action checklist is what a raw CLI call silently skips.
+- **Verify mechanism before offering options.** An option or proposed approach claiming "accomplish X via tool/capability Y" is a behavioral claim → read Y's interface from upstream source before presenting. Unverified → research first or label mechanism unconfirmed; choosing an unverified path transfers a false premise into the plan.
+- **Important:** use Skill tool for every skill-owned event — raw `git commit`/`gh pr merge`/ad-hoc planning IS the approximation this forbids. First write-action of a session is the highest-risk skip point. The table is illustrative; the wrapper's post-action checklist is what raw CLI silently drops.
 - **Announce-and-invoke same turn.** A skill counts only when its `Skill` call is
   in that response; narration alone is a violation. Catch it → invoke before any
   other action.
@@ -247,16 +243,16 @@ Classify each opportunity:
 - **Defer with note** — real but out-of-scope; add TODO to PR "Follow-ups".
 - **Skip** — no real win or premature abstraction.
 
-Re-run tests after every Apply-now change. A clean diff is valid → record "refactor scan: no opportunities" in Phase 8.
+Re-run tests after every Apply-now change. Clean diff → record "refactor scan: no opportunities" in Phase 8.
 
 ### Deletion-safety scan
 
-For every removed line/symbol/file in the diff, classify the deletion intentional or accidental — an unexplained removal is a blocker, not a style nit.
+For every removed line/symbol/file, classify intentional or accidental — unexplained removal is a blocker, not a style nit.
 
-- Removed symbol (function, const, field, export) → grep the repo for surviving references; any live caller is an accidental drop → restore or migrate it.
-- Removed validation, guard, error-handling, cleanup, or test → confirm a replacement covers the same case; no replacement = regression → restore it.
-- Removed file → confirm nothing still imports it and its responsibility moved elsewhere.
-- Deletion collateral to the change's stated goal (unrelated cleanup) → split into its own commit, never bundle it silently.
+- Removed symbol (function, const, field, export) → grep for surviving references; live caller = accidental drop → restore or migrate.
+- Removed guard/validation/error-handling/cleanup/test → confirm replacement covers the case; none = regression → restore.
+- Removed file → confirm no surviving imports and responsibility moved elsewhere.
+- Deletion collateral to the stated goal (unrelated cleanup) → split into own commit, never bundle silently.
 
 ---
 
@@ -345,7 +341,7 @@ After PR creation or any push, monitor and fix CI until green. CI runs concurren
 - Use `gh pr checks --watch --fail-fast` for generic checks; it can exit on partial resolution → re-confirm the rollup is terminal before calling CI green (`wk-gh`).
 - Use `wk-buildkite` for Buildkite.
 - Run long watches in background; before any wait >~1 min, state what runs and rough duration.
-- **Never end a turn announcing a holding pattern or delegating its final action.** Watch CI to completion this turn and act on the result yourself — never hand "merge once CI passes" to the user.
+- **Complete CI watches same turn** — never hand "merge once CI passes" to the user or end a turn announcing a holding pattern.
 - **Don't idle on CI — interleave.** Start independent plan tasks while polling; hard-wait only when nothing else can progress.
 - Read actual logs first.
 
