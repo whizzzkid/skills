@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.07-225409"
+  version: "2026.08.26-175251"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -134,6 +134,7 @@ Run every sweep unconditionally. Use first matching severity; escalate when a su
 | 2.88 | Diff adds or edits code whose caller maps exit status to severity (verifier/rake task, linter, hook wrapper, CI gate, `--check`/`--verify` mode) | Read the caller and record its status→severity mapping — which codes block, which downgrade to a warning, which are ignored. Then grep the gate's own body for raising lookups (`\.fetch\(`, `T\.must\(`, `unwrap\(`, `panic`, `\[\]!`, `!\.`) on an absent/renamed key: the raise exits on a *non-blocking* status, so the very drift the gate exists to catch ships fail-open. Reading the gate body in isolation clears it — only the status contract exposes it. | Blocker | Route every failure through the blocking status, or extend the wrapper's mapping to block it. A raise→report conversion adds a branch no existing control drives → add one and mutation-verify it (restore the raising form, confirm exactly that control fails, restore). Then sweep every sibling of the same shape before clearing — one instance implies others, and a fix made earlier in the branch does not cover a later sibling. |
 | 2.89 | Diff adds or edits a check that reads a field out of a spec/config format | Verify it honours the format's documented inheritance, merging, defaulting, and reference-resolution semantics. For a public projection, enumerate every consumed field and recursive root; semantically mutate each field, contaminate every URL component, seed one level below each root, and sort filesystem inputs. A check reading one level where the spec inherits from the enclosing level reports **false** drift on an idiomatic edit (lifting a shared declaration up), blocking a valid commit. In a blocking gate a false positive outranks a false negative — it teaches `--no-verify`. | Blocker | Read the format's spec, not its sample files; add a **positive** control asserting an idiomatic-but-unusual form reports nothing. Pair it with the under-firing control: a catalog that only asks "does the check fire?" never catches "does it fire wrongly?". Name the expected validation path for every probe. |
 | 2.90 | Diff adds, or the reviewed code relies on, a conditional skip/exclude guard (`skip … unless <pred>`, tag filter, `skipif`, build-matrix exclude) | Resolve the predicate's operand against the value the **runtime** supplies, not the value its name implies; confirm the guard fires in ≥1 configuration and does *not* fire in ≥1 other. Constant either way is dead. Unlike 2.3 this covers a predicate the diff carries **unchanged**: a never-matching one skips every tagged example on every run while the suite reports green — the examples the tag was added to protect are exactly the ones it disables, and an unread pending count is the only trace. | Blocker | Fix the operand or delete the guard; re-run and assert the example count rises. Always Blocker when the dead direction is "always skip" — that is silent coverage deletion, not a style issue. |
+| 2.91 | Diff adds/narrows nil/empty sentinel branch | Locate every consumer and its render predicate; confirm sentinel unreachable when consumer is live — a non-emptiness gate lets nil through. | Blocker | Align render predicate with sentinel; pin invariant (non-nil when consumer active). |
 
 Lower-frequency, non-inline sweeps live in
 [`references/sweep-catalog-extended.md`](references/sweep-catalog-extended.md);
@@ -157,17 +158,7 @@ Subagent must be adversarial, objective, naming-aware, and diff-sensitive, plus 
 
 ### Categories to Hunt
 
-`category:` (Step 4) is one of, sweep catalog holds the detail: **Logic / arithmetic**
-(off-by-one, pagination edges); **Type coercion** (`"0"` vs `0`, canonical text vs
-numeric equivalence, `[]` vs `{}`); **State / ordering / concurrency**
-(use-before-init, use-after-close, async interleave, races, lock asymmetry);
-**Contract / cross-system** (signature widening, producer≠consumer layout,
-cleanup-before-verify); **Refactor-removed** (validation, recursion, error handling
-silently dropped); **Test quality** (tautology, missing assertions/failure path,
-asymmetric coverage); **Security / data loss** (injection, secret leakage,
-traversal, unprotected writes, missing rollback); **Error handling** (swallowed
-errors, generic catches, wrong error class); **Runtime / performance**
-(runtime-matrix gaps, quadratic scans, repeated I/O).
+`category:` (Step 4) values: [`references/hunt-categories.md`](references/hunt-categories.md).
 
 ## Step 4: Findings Format and Severity
 
