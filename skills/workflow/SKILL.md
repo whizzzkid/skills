@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.26-180504"
+  version: "2026.08.26-180913"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -235,9 +235,11 @@ Shell-script structure & symlink-guard tests: [`references/shell-script-test-che
 
 ## Phase 3.5: Refactor & Deletion-Safety Scan
 
-After tests pass and before publishing, scan the diff and neighboring code for refactor/reuse opportunities.
+After tests pass, scan diff and neighbors for refactor/reuse.
 
-For every new/modified function/helper/constant/block, scan same file, siblings, and imports for: existing helpers/constants/types, repeated literals, near-duplicate blocks (≥3 lines), long conditional chains, nested blocks, re-implemented framework patterns.
+For every new/modified function/block, scan file + siblings for: existing helpers, repeated literals, near-duplicates (≥3 lines), nested conditionals, re-implemented patterns.
+
+- **Post-correction re-audit:** after any mid-session correction, re-diff the full change set; revert/simplify hunks whose justification no longer holds.
 
 Classify each opportunity:
 
