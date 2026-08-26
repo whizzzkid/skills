@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.13-090314"
+  version: "2026.08.26-174501"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -271,6 +271,19 @@ Two guards:
 - **Verify both volume names before copying.** Names are project-prefixed
   (`<project>_<volume>`), so a mistyped destination silently creates a new empty
   volume and the copy "succeeds" into nothing.
+
+## Devcontainer Startup — Suppress Secret Exposure
+
+**HARD RULE:** Devcontainer and Compose startup commands log the resolved
+configuration as plain text, including forwarded secret env vars. Suppress
+verbose startup output (`--log-level error`, stdout redirect) when Compose
+forwards credentials — ordinary startup verbosity is unsafe for agent-visible
+logs.
+
+- Never run `docker compose config` or equivalent in agent-visible output when
+  the config forwards secrets.
+- Treat any startup log that resolves env vars as potentially containing
+  credentials.
 
 ## Multi-Worktree Port Conflicts
 
