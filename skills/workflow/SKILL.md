@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.24-214535"
+  version: "2026.08.26-173538"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -122,7 +122,7 @@ Skill(wk-plan, args="<task from session context>")
 
 - Run `git rev-parse --abbrev-ref HEAD` and verify the branch matches the task's intended base before any Edit/Write.
 - **Linked worktree:** resolve edit targets under `git rev-parse --show-toplevel` — absolute paths anchored to the primary checkout silently edit the wrong tree.
-- **Rebase/cherry-pick conflicts are a diagnostic signal.** Before any workaround (new branch, manual rewrite, abort-and-redo), run `git log --oneline -5` and verify the target base matches the worktree's actual parent. Conflicts against an unexpected base mean you are targeting the wrong branch — stop and re-examine, never force through.
+- **Rebase/cherry-pick conflicts → verify target base.** Run `git log --oneline -5`; if base mismatches worktree parent, stop and re-examine — never force through a wrong-base conflict.
 
 Pre-patch routing: `.md` → [`wk-markdown`](../markdown/README.md); Mermaid →
 [`wk-mermaid`](../mermaid/README.md); arch-bearing →
@@ -183,10 +183,11 @@ Apply to ALL code:
 - **Shell simplicity:** sequential single-purpose commands, not compound chains — classifiers block what they cannot decompose. Surface denials; never silently restructure.
 - **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md).
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
-- **Niche standards** live in [`references/code-standards-extended.md`](references/code-standards-extended.md); apply each under the same authority when its case matches.
+- **Niche standards:** [`references/code-standards-extended.md`](references/code-standards-extended.md).
 - **Platform-API traps:** [`references/platform-api-traps.md`](references/platform-api-traps.md).
 - **Two-sided flow survey:** survey caller-side conditions and callee enforcement before designing a gate/filter/guardrail.
-- **HARD RULE — reuse existing config/secret resolution mechanisms; never invent a parallel override (dummy env exports, new config path). Repeated user pushback naming an existing convention → adopt it, never defend the invented one.** (See reuse-hygiene, code-standards-extended.)
+- **Identifier composition:** before combining sources (env vars, config, API fields) into a key, classify each by semantic domain (target vs. self, external vs. internal); a cross-domain fallback is a presence check, not identity.
+- **HARD RULE — reuse existing config/secret resolution; never invent parallel overrides.** User pushback naming existing convention → adopt it. ([`reuse-existing-mechanism.md`](references/reuse-existing-mechanism.md))
 
 ---
 
