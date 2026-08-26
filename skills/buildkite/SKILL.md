@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.22-005738"
+  version: "2026.08.26-181717"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -188,6 +188,21 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | \
 
   Auth/scope error → [Auth Error Handling](#auth-error-handling).
 
+## HARD RULE: never predict build outcomes
+
+Never state or imply a build will pass ("should pass," "this should fix it")
+without fetching the actual result. After every CI-directed push, explicitly
+fetch and report the build/job state — treat an unfetched build as unknown.
+A pushed fix does not mean the build will pass; CI has multiple independent
+gates.
+
+## HARD RULE: check branch currency before diagnosing failures
+
+Before attributing a CI failure to infra or the diff, check
+`git rev-list --count origin/main..HEAD` (or `gh pr view --json behindBy`).
+A branch behind main is more likely to cause build failures than a transient
+infra issue — sync first, rebuild second.
+
 ## Investigating Failures
 
 Progressive disclosure pattern:
@@ -307,7 +322,23 @@ curl -s -X PUT \
   bk build rebuild <build-number> -p <pipeline> -y
   ```
 
+- `bk job retry` takes only `<job-uuid>` — no pipeline flag:
+  ```bash
+  bk job retry <job-uuid> --yes --no-pager
+  ```
+- Mutation token unavailable + logs confirm infrastructure-only failure (pre-command) → signed empty CI-retry commit:
+  ```bash
+  git commit --allow-empty -m "ci: retry infra failure"
+  ```
+  Use only when the failure occurred before repo commands ran and the PR will squash-merge.
 - Escalate to `bk auth login` only if `bk build rebuild` also fails.
+
+### Artifact download auth conflict
+
+`bk artifacts download` forwards its bearer token to presigned S3 redirect
+URLs, causing S3 to reject with dual-auth. Workaround: request the redirect
+without following it, then follow the returned URL without an Authorization
+header — or download from the Buildkite web UI.
 
 ## Adding env vars to a CI pipeline
 

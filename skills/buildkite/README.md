@@ -2,7 +2,7 @@
 
 > Use when working with Buildkite CI — checking build status, investigating failures, viewing job logs, or monitoring builds after push.
 
-**Version:** `2026.08.22-005738`
+**Version:** `2026.08.26-181717`
 
 ## Invocation
 
