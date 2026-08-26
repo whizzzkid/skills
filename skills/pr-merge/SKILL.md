@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.25-065945"
+  version: "2026.08.26-182049"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -401,6 +401,11 @@ gh pr merge {number} {selected-method-flag} --delete-branch --repo "{repo_with_o
 - Follow [`references/ticket-transition.md`](references/ticket-transition.md)
   for footer stripping, boundary-aware detection, transition calls, and failure
   handling.
+
+## Step 7.5: Post-merge release (when requested)
+
+Release request bundled with merge → ask draft vs. publish; warn that
+`--draft` defers tag creation. Create via `gh release create`.
 
 ## Step 8: Output follow-ups and action items
 
