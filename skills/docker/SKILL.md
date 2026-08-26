@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.26-174501"
+  version: "2026.08.26-175806"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -117,6 +117,17 @@ docker run --rm --entrypoint cat <image>:<tag> /etc/os-release 2>&1
 - Debian/Ubuntu → `apt-get`
 - Alpine → `apk`
 - If the image has a custom ENTRYPOINT, use `--entrypoint cat` to bypass it.
+
+## `docker compose run` Env Inheritance
+
+`docker compose run` does NOT inherit service-level `environment:` from
+`docker-compose.yml` — it uses the container's own defaults. Always pass
+`-e RAILS_ENV=test` (or equivalent) when running specs via `run` instead
+of `exec` on a running service.
+
+```bash
+docker compose run --rm -T -e RAILS_ENV=test app bundle exec rspec ...
+```
 
 ## ENTRYPOINT Awareness
 
