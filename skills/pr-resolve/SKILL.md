@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.26-174737"
+  version: "2026.08.26-175607"
   model:
     openai: gpt-5.6-terra
 ---
@@ -253,10 +253,16 @@ login (or the current user in a co-author session) → Self-review; any other
 [`references/bot-convergence.md`](references/bot-convergence.md).
 
 **All-Minor bulk-dismiss gate.** Every active finding Minor and each has a
-plausible skip rationale → offer one bulk action before per-item triage:
+plausible skip rationale → render each finding's one-line summary (what it
+flagged, `file:line`) before offering the bulk action:
 
-> "All {N} findings are Minor. Bulk dismiss all, or triage individually?
+> "{N} Minor findings:
+>  1. [summary] — `file:line`
+>  …
 > (a) dismiss all  (b) triage individually"
+
+Never present a bare count with no substance — the decision is bulk, the
+visibility is per-finding.
 
 **Order — HARD RULE: triage every comment before applying any fix.** Apply
 accepted fixes as one batched pass; never loop comment-by-comment through
