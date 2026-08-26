@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.26-175607"
+  version: "2026.08.26-180018"
   model:
     openai: gpt-5.6-terra
 ---
@@ -137,9 +137,12 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
      session changed the finding or a new item needs callout. Still requires
      Hard Rule 2.
 9. **Co-author attribution.** Current user not the PR author → add a
-   `Co-authored-by:` trailer for the PR author on every commit. Real emails per
-   wk-commit's HARD RULE (current user = `$WK_SKILLS_EMPLOYEE_EMAIL`, never a
-   `<login>@<domain>` guess); never invent.
+   `Co-authored-by:` trailer only when the commit incorporates the PR author's
+   work (applying their suggested change, pairing, using their patch). Purely
+   agent-authored fixes (lint, merge conflicts, CI fixes) on someone else's
+   branch get `Assisted-by: Claude` only — `Co-authored-by` claims content
+   contribution. Real emails per wk-commit's HARD RULE (current user =
+   `$WK_SKILLS_EMPLOYEE_EMAIL`, never a `<login>@<domain>` guess); never invent.
 10. **Include bot reviews** as first-class feedback. Evaluate each for
     correctness before accepting or dismissing.
 11. **Adversarial-review gates merge, not push — never dispatched here.** New
@@ -233,6 +236,10 @@ staleness/missing-section/metadata/docs drift
 as `surface: agent_observation` (`bot_badge` flag); triage like any finding.
 - **Before replacing the PR description, capture the original** (`gh pr view
   --json body`) — drop-detection needs the pre-edit text, not a reconstruction.
+- **Version-tag drift:** when the PR body references version tags or release
+  links, query `gh api repos/{owner}/{repo}/tags` and `/releases` and flag any
+  mismatch. This sub-step is non-skippable even when Step 2 consumed significant
+  effort.
 
 **Classify authors:** `Bot` login → Bot review; `User` matching the PR-author
 login (or the current user in a co-author session) → Self-review; any other
