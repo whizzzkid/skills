@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.26-173538"
+  version: "2026.08.26-180504"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -106,7 +106,7 @@ The Phase 1 plan is the session contract.
 Skill(wk-plan, args="<task from session context>")
 ```
 
-- **Plan supplied by the user, or `wk-plan`'s from this session → never re-plan it; supplying it is the approval.** Validate only — references resolve, order still valid, nothing already done — fix stale references in place, then start Phase 2.
+- **Plan supplied by user or `wk-plan` → supplying is approval.** Structural minimum: implementation sequence, scope decisions, verification — raw feedback without these is planning input, not a plan. Validate only: references resolve, order valid, nothing done — then Phase 2.
 - **Optional sibling-repository work is opt-in.** Confirm before inspecting or changing another repository; adjacency,
   a possible follow-up, or shared ownership does not expand current task scope.
 - If `wk-plan` surfaced unanswered questions, resolve them before proceeding.
