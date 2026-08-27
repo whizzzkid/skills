@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.27-183421"
+  version: "2026.08.27-211037"
   model:
     openai: gpt-5.6-terra
 ---
@@ -393,6 +393,11 @@ When it fires:
 > "Does this look correct? I will push {N} commits, post {M} threaded replies to
 > individual review comments, resolve {R} threads, and leave {L} threads open for
 > follow-up. Proceed? (yes / edit / abort)"
+
+**Auto-mode sequential consent.** The classifier scopes consent per external-write
+class (push ≠ reply ≠ resolve); a single "yes" to the combined plan may not clear
+all three. When a downstream action is denied, re-confirm only the narrow blocked
+action — never re-pitch the full plan or treat the re-ask as an error.
 
 **Disambiguate "review" objections.** "don't post the self-review" / "skip the
 review" → ask: formal PR Review submission, or threaded replies? Default to the
