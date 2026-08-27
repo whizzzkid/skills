@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.26-175806"
+  version: "2026.08.27-092415"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -319,6 +319,21 @@ package managers use tool-specific credential naming, not a generic API key.
 - Grep the project's setup/provisioning script for how it exports registry
   credentials — replicate the exact env var name and value format.
 - A generic `<REGISTRY>_API_KEY` is almost never what the package manager reads.
+
+## Bind-Mount Permission Fixes — Scoped, Never Recursive
+
+**HARD RULE:** Never `chmod -R` a git tree or any path inside a persistent/shared
+host checkout to fix a container EACCES.
+
+- Recursive world-writable chmod (`chmod -R a+rwX`) on a bind-mounted workspace
+  sets the other-write bit across the entire `.git` tree (objects, refs, config),
+  leaving the host's git tree dirty and tripping git's `safe.directory` /
+  dubious-ownership guard.
+- Grant write **only** on the exact files/dirs the container uid needs —
+  e.g. a single git-exclude file + an output directory.
+- Prefer `chown <container-uid>` on the target path, or mount a dedicated scratch
+  dir **outside** any real checkout, over loosening permissions.
+- Treat any recursive perm change touching `.git/` as a red flag.
 
 ## Building Images
 

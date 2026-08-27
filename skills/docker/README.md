@@ -2,7 +2,7 @@
 
 > Use when working with Docker — building images, inspecting containers, debugging Dockerfile issues, verifying image tags exist, or troubleshooting Docker daemon connectivity.
 
-**Version:** `2026.08.26-175806`
+**Version:** `2026.08.27-092415`
 
 ## Invocation
 
@@ -44,4 +44,5 @@ flowchart TD
 - **Bind-mount overlay:** A CI step running under `-v checkout:/workdir --workdir=/workdir` shadows the image at the mount point — `COPY` to that path is invisible. Generated artifacts must come from the step command (e.g. `go generate`), not a Dockerfile `COPY`.
 - **Multi-worktree port conflicts:** When a sibling worktree's devcontainer holds the default port, skip `docker compose up` and use `docker run --network=<project-network>` with named volumes (no `-p`) to get a working shell without stopping the sibling's stack.
 - **Hand-started container credentials:** Before debugging private-registry auth in a manually started container, grep the project's setup script for credential env var export format — package managers use tool-specific naming, not generic API key vars.
+- **HARD RULE — no recursive chmod on git trees or shared bind mounts:** Never `chmod -R` a git tree or any path inside a persistent/shared host checkout to fix a container EACCES. Scope grants to the exact files/dirs needed; prefer `chown` to the container uid or a dedicated scratch dir outside the checkout. Recursive world-writable chmod sets the other-write bit across `.git/`, dirtying the host tree and tripping dubious-ownership guards.
 - **dind network failures → check floating tags first:** A `RUN` failing on a network/fetch error inside docker-in-docker usually means a floating `FROM` tag updated and invalidated the layer cache, forcing a cold run with no bridge network. Pin the tag to the project's tool-version file before reaching for `--network=host`.
