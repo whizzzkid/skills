@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.26-181146"
+  version: "2026.08.27-073755"
   model:
     openai: gpt-5.6-terra
 ---
@@ -87,14 +87,12 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
      push?") is a reconsider prompt, not a go-ahead — require explicit
      yes/approve/proceed (same for Hard Rule 4 force-push).
    - **Standing authorization:** "make it merge-ready"/"mergeable"/"land
-     this"/"resolve to merge" authorizes the whole lifecycle — pushes (CI
-     re-pushes included), replies, AND resolving worked-on threads; confirm once,
-     then proceed each round. A bare "resolve comments" does not; a redundant
-     per-action re-ask reads as unpredictable.
+     this"/"resolve to merge" authorizes the full lifecycle (pushes, CI
+     re-pushes, replies, resolving); confirm once. "Resolve comments" alone
+     does not.
    - **Hard Rule 1 gates the push, not the tail steps.** After push + reply
-     (Step 8), continue immediately through Steps 9–11 without pausing; the
-     only valid post-push stops are CI failure after 3 fix-loop attempts, a
-     blocked adversarial-review verdict, or explicit user interjection.
+     (Step 8) → Steps 9–11 without pause; valid stops: 3 CI fix-loop
+     failures, blocked adversarial-review, or explicit user interjection.
 2. **Never post reply comments without explicit user confirmation** — a
    land-intent invocation (Hard Rule 1) is that authorization; do not re-ask.
    - **A "don't post"/"no replies" directive bans publishing content (replies,
@@ -132,17 +130,12 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
      protection can count every unresolved thread regardless of authorship.
    - **Surface external replies inside self-review threads** in the summary; do
      not triage or resolve them.
-   - **User-touched reviewer threads: one narrow follow-up** — on a reviewer/bot
-     thread the user already replied to, post a single follow-up only when the
-     session changed the finding or a new item needs callout. Still requires
-     Hard Rule 2.
-9. **Co-author attribution.** Current user not the PR author → add a
-   `Co-authored-by:` trailer only when the commit incorporates the PR author's
-   work (applying their suggested change, pairing, using their patch). Purely
-   agent-authored fixes (lint, merge conflicts, CI fixes) on someone else's
-   branch get `Assisted-by: Claude` only — `Co-authored-by` claims content
-   contribution. Real emails per wk-commit's HARD RULE (current user =
-   `$WK_SKILLS_EMPLOYEE_EMAIL`, never a `<login>@<domain>` guess); never invent.
+   - **User-touched reviewer threads:** post one narrow follow-up only when the
+     session changed the finding. Still requires Hard Rule 2.
+9. **Co-author attribution.** Add `Co-authored-by:` only when the commit
+   incorporates the PR author's work (suggested change, pairing, patch). Purely
+   agent-authored fixes → `Assisted-by: Claude` only. Real emails per
+   wk-commit HARD RULE (`$WK_SKILLS_EMPLOYEE_EMAIL`); never invent.
 10. **Include bot reviews** as first-class feedback. Evaluate each for
     correctness before accepting or dismissing.
 11. **Adversarial-review gates merge, not push — never dispatched here.** New
@@ -151,18 +144,15 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
     name signals remaining work → read it fully, implement its items, delete it in
     the same commit as the last change. Plan first if the work is large or spans
     repos.
-13. **Never submit the author's own pending self-review, and never re-prompt for
-    it.** Submitting is destructive/irreversible — it publishes work the human is
-    holding for manual release (`wk-self-review` checkpoint). "Do not bother me
-    with it" means leave it alone, not submit it. Note it once, route around via
-    the GraphQL resolve path (Step 3); submit only on an explicit "submit my
-    review" instruction. Re-prompting >1×/session is a violation.
+13. **Never submit the author's pending self-review; never re-prompt.**
+    Submitting is destructive — publishes work held for manual release. Note
+    once, route around via GraphQL resolve (Step 3); submit only on explicit
+    "submit my review." Re-prompting >1×/session is a violation.
 14. **Never triage a comment on an unclean base.** Conflict markers present
     (`git diff --check`) OR `$BEHIND > 0` against base → integrate base first
     (Step 2); reporting the count/markers and continuing is a violation.
-15. **User brevity scopes volume, not the step sequence.** "Just fix and push" =
-    fewer comments / faster lifecycle, never skip a later binding step (esp. Step
-    9.5 CI watch). Steps bind unless explicitly exempted ("skip CI wait").
+15. **User brevity scopes volume, not the step sequence.** "Just fix and push" →
+    fewer comments, never skip binding steps (esp. 9.5 CI watch).
 
 ## Step 1: Identify the PR
 
@@ -199,10 +189,7 @@ Sync with both base and remote PR branch before triaging. Commands: commands.md 
 - **Base-advance conflict (upstream PR merged)** → rebase onto the new base; a clean
   local merge may not clear `mergeable: CONFLICTING`, so pivot to rebase (commands.md §2).
 - **HARD RULE — stacked PR CLOSED with its base branch deleted → recover before
-  triaging** (recovery sequence: commands.md §2). A child on a parent's head
-  branch auto-CLOSES (not retargets) on the parent's squash-merge under
-  `delete_branch_on_merge`, and cannot be reopened/retargeted while closed.
-  Prevent: base stacked PRs on trunk, or retarget the child before it merges.
+  triaging** (recovery sequence and prevention: commands.md §2).
 - **HARD RULE — after each conflict resolution, audit for dropped base-side
   safety guards**; restore any present on the canonical base but absent from the
   result. Detail: conflict-preflight.md.
@@ -230,16 +217,11 @@ for details. Surfaces, map fields, and pending-review handling are specified the
   comments (404). Route per Hard Rule 13 + wk-gh.
 
 
-**Important — agent-observed drift is first-class feedback.** Diff the current PR description
-against branch state (commits, files, test plan, CI) before triaging. Inject
-staleness/missing-section/metadata/docs drift
-as `surface: agent_observation` (`bot_badge` flag); triage like any finding.
-- **Before replacing the PR description, capture the original** (`gh pr view
-  --json body`) — drop-detection needs the pre-edit text, not a reconstruction.
-- **Version-tag drift:** when the PR body references version tags or release
-  links, query `gh api repos/{owner}/{repo}/tags` and `/releases` and flag any
-  mismatch. This sub-step is non-skippable even when Step 2 consumed significant
-  effort.
+**Important — agent-observed drift is first-class feedback.** Diff PR description
+against branch state before triaging; inject drift as `surface: agent_observation`
+(`bot_badge` flag).
+- **Capture the original** (`gh pr view --json body`) before replacing.
+- **Version-tag drift:** query tags/releases and flag mismatches (non-skippable).
 
 **Classify authors:** `Bot` login → Bot review; `User` matching the PR-author
 login (or the current user in a co-author session) → Self-review; any other
@@ -259,20 +241,10 @@ login (or the current user in a co-author session) → Self-review; any other
 **Bot / non-convergence handling** — follow
 [`references/bot-convergence.md`](references/bot-convergence.md).
 
-**All-Minor bulk-dismiss gate.** Every active finding Minor and each has a
-plausible skip rationale → render each finding's one-line summary (what it
-flagged, `file:line`) before offering the bulk action:
-
-> "{N} Minor findings:
->  1. [summary] — `file:line`
->  …
-> (a) dismiss all  (b) triage individually"
-
-Never present a bare count with no substance — the decision is bulk, the
-visibility is per-finding. **Cheap-fix override:** a Minor finding naming a
-concrete, small fix (e.g., "add a unit test asserting X") during an explicit
-resolve run → classify `obvious-fix`, not deferred — severity alone does not
-justify deferral when the fix is trivial.
+**All-Minor bulk-dismiss gate.** Every active finding Minor with plausible skip
+rationale → render per-finding summary (commands.md §4) before offering bulk
+dismiss/triage. Never present a bare count with no substance. **Cheap-fix
+override:** Minor naming a concrete small fix → `obvious-fix`, not deferred.
 
 **Order — HARD RULE: triage every comment before applying any fix.** Apply
 accepted fixes as one batched pass; never loop comment-by-comment through
@@ -280,9 +252,15 @@ fix/commit/push.
 
 - Process bot reviews first, then human comments.
 - For each: read full file context, the comment, and reply chain before a fix.
-- **Important — reproduce an externally-sourced finding before fixing it** — a
-  bot/scanner finding is a hypothesis; driving it settles real-defect vs.
-  style-nit and yields the regression test.
+- **Important — reproduce an externally-sourced finding before acting on it
+  (fix OR dismiss)** — a bot/scanner finding is a hypothesis; reproduction
+  settles real-defect vs. false-positive and yields the regression test.
+  - **Code-path agreement findings** (env-var fallbacks, constructors,
+    idempotency keys): grep both paths → verify semantics match before calling
+    "false positive."
+  - **Env-var divergence:** check forwarding contracts (docker_compose, CI
+    templates) that produce `""` for declared-but-unset vars; one path already
+    handling the degenerate case is evidence it IS real.
   - **Framework-processed files: verify the compilation pipeline.** A bot
     flagging syntax as invalid in a framework-managed file (Astro `<script>`,
     Svelte `<script lang="ts">`, Vue SFC, etc.) may not account for the
@@ -302,17 +280,13 @@ check stack section for owning sibling PR. Owned → future tense. Unowned → c
 / `Why skip` reasoning; `{bot_badge}` = `🤖 (bot)` for bots, else omitted. Be
 honest in the skip rationale; none exists → say so.
 
-**Detect design flaws.** Triggers: "this might not trigger", "depends on X",
-"what happens if {edge}", "why do we need this", "duplicated with", "contract
-unclear" → present design change first, clarifying reply second; in Step 5 `(a)`
-applies the design option unless edited.
+**Detect design flaws.** Triggers: "might not trigger", "depends on X", "what if
+{edge}", "why do we need this" → present design change first, clarifying reply
+second; `(a)` applies design option.
 
-**Gate fix footprint, not just severity.** Fix beyond a localized patch (new
-mechanism, design change, cross-cutting) → dismiss + follow-up PR, not inline
-build-out; build inline only for a confirmed blocker of this PR's scope.
-Self-re-review adjacent finding → defer, not expand. Reopened deferral → re-derive
-footprint from scratch. Cross-cutting = shared interface or ≥2 call sites, named
-in rationale; else localized → fix inline.
+**Gate fix footprint.** Beyond localized patch (new mechanism, cross-cutting) →
+dismiss + follow-up PR. Inline only for confirmed PR-scope blocker. Cross-cutting
+= shared interface or ≥2 call sites, named in rationale.
 
 **Classify suggestions** — tag each `obvious-fix` or `judgment-required`:
 
@@ -344,24 +318,20 @@ finding with a confident, evidence-backed disposition (apply *or* dismiss) is
 likewise decided → `obvious_fixes[]`, act and report; never confirm per-item.
 Consult is for genuine tradeoffs only.
 
-**Bulk-queue preview for obvious fixes.** Obvious-fix items exist → present the
-bulk-queue preview (commands.md §5) once before queueing. Default
-(silence/affirmative/unrelated): queue all into `fixes_to_apply` and proceed. Only
-explicit `stop` or `consult <indices>` diverts.
+**Bulk-queue preview for obvious fixes.** Present commands.md §5 preview once;
+default: queue all into `fixes_to_apply`. Only `stop` or `consult <indices>`
+diverts.
 
 **Present one judgment-required comment at a time.** For each, present the full §4
 suggestion format then the per-comment prompt (commands.md §5). `a`, `e`, `d`,
 `t`, `s`, `r` are reserved; extra options use other letters and must not redefine
 them. Wait for the response before the next comment.
 
-**HARD RULE — pre-emit gate (mechanical).** Before sending a Step 5 message,
-hard-stop unless both hold:
+**HARD RULE — pre-emit gate (mechanical).** Before each Step 5 message:
 
-- **Count:** exactly one `Comment {n}` header — > 1 → split, one per message (a
-  batched prompt lets the user reply `a a d` — forbidden).
-- **Completeness:** the item restates its full §4 block — comment body/quote,
-  fix, skip rationale; reconstruct any missing piece first. A bare letter/code
-  ref (`A+C, D, B`) is unreadable even when the count passes.
+- **Count:** exactly one `Comment {n}` header per message.
+- **Completeness:** restates full §4 block (comment body/quote, fix, skip
+  rationale); bare letter/code refs are unreadable.
 
 **Decision handling** — record exactly one outcome per decision; `a`/`e`/`d`/`t`
 all mark `resolve_after_push`. Per-letter record shapes, reply drafts, and
@@ -381,10 +351,9 @@ order. Commands: commands.md §6.
 re-confirm a decided action.** The only in-flow stop is a verification failure
 (sub-step 2).
 
-**Issue-class scan before each fix.** Identify the issue class; grep the full PR
-diff for sibling paths sharing it — per-class grep targets in commands.md §6 (a
-refactor clones the defect onto sibling lines). Include siblings in the same
-commit only when they share the triage unit or were merged by Step 4.
+**Issue-class scan before each fix.** Grep the full PR diff for sibling paths
+sharing the issue class (targets: commands.md §6). Include siblings only when
+they share the triage unit or were merged by Step 4.
 
 **Probe the real config path before editing a file named by user shorthand.**
 Shorthand names the concept, not the path — CI/pipeline step config often lives
@@ -454,15 +423,11 @@ them now.
 ## Step 9.4: Capture Adversarial-Review Learnings
 
 **HARD RULE:** Emit `wk-learn adversarial-review` for every issue class surfaced
-before the CI wait — never skip for short/routine sessions. Zero findings → one
-baseline-holding learning.
+before the CI wait — never skip. Zero findings → one baseline learning.
 
-Classify processed comments into generic issue classes (security, validation,
-exception handling, race/TOCTOU, retry/timeout, defensive/dead guard,
-API/external-call shape, docs/comment-accuracy drift, or new). For each non-empty
-class invoke `Skill(wk-learn, args="adversarial-review")` encoding class,
-mechanism, detection sketch, confidence — generic patterns only (no paths, lines,
-logins, SHAs). Re-run per post-CI batch.
+Classify into generic issue classes; invoke `Skill(wk-learn,
+args="adversarial-review")` per non-empty class encoding class, mechanism,
+detection sketch, confidence — no paths/lines/logins/SHAs. Re-run per post-CI batch.
 
 ## Step 9.5: Wait for CI, Then Loop on New Comments
 
