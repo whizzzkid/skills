@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.26-190949"
+  version: "2026.08.27-182138"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -66,6 +66,7 @@ Execute the workflow without asking permission at each step.
 Stop and ask only when: plan ambiguous; CI persists after 3 attempts; user-owned design decision needed; explicit pause requested; or destructive/shared-state action required.
 
 - **Never ask for what your own inputs answer** — search the plan, merged PRs, and tracked config first (a question they already answer proves they went unread).
+- **Linked artifact first.** Prompt references a URL/comment/PR → fetch before parallel research.
 
 - **Volunteered feedback is not a stop signal** (unlike a question you asked, below): unless it revokes the action, finish the authorized step in the same turn as the acknowledgement.
 - **Curiosity ≠ commission.** A clarifying question ("why is X slow?") after the primary goal is met seeks understanding, not more work → answer and stop; do not pair with a new proposal unless the user explicitly asks.
@@ -175,11 +176,10 @@ Apply to ALL code:
 
 - **Version pins:** exact versions only — no `latest`/`stable`/`nightly`/`^`/`~` in `FROM`, `mise.toml`, Actions, or package managers. Official-action semver majors permitted.
 - **Regexes:** named capture groups: `(?<year>\d{4})`.
-- **Bash:** no `cd` per command; use absolute paths or `git -C <repo>`. Base resolution recipe: [`references/code-standards-extended.md`](references/code-standards-extended.md).
+- **Bash:** no `cd` per command; use absolute paths or `git -C <repo>`. [`references/code-standards-extended.md`](references/code-standards-extended.md) (base resolution + niche).
 - **Shell simplicity:** sequential single-purpose commands, not compound chains — classifiers block what they cannot decompose. Surface denials; never silently restructure.
 - **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md).
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
-- **Niche standards:** [`references/code-standards-extended.md`](references/code-standards-extended.md).
 - **Platform-API traps:** [`references/platform-api-traps.md`](references/platform-api-traps.md).
 - **Two-sided flow survey:** survey caller-side conditions and callee enforcement before designing a gate/filter/guardrail.
 - **Identifier composition:** before combining sources (env vars, config, API fields) into a key, classify each by semantic domain (target vs. self, external vs. internal); a cross-domain fallback is a presence check, not identity.
@@ -231,8 +231,6 @@ Shell-script structure & symlink-guard tests: [`references/shell-script-test-che
 
 ## Phase 3.5: Refactor & Deletion-Safety Scan
 
-After tests pass, scan diff and neighbors for refactor/reuse.
-
 For every new/modified function/block, scan file + siblings for: existing helpers, repeated literals, near-duplicates (≥3 lines), nested conditionals, re-implemented patterns.
 
 - **Post-correction re-audit:** after any mid-session correction, re-diff the full change set; revert/simplify hunks whose justification no longer holds.
@@ -243,7 +241,7 @@ Classify each opportunity:
 - **Defer with note** — real but out-of-scope; add TODO to PR "Follow-ups".
 - **Skip** — no real win or premature abstraction.
 
-Re-run tests after every Apply-now change. Clean diff → record "refactor scan: no opportunities" in Phase 8.
+Re-run tests after every Apply-now change. Clean diff → record "refactor scan: none" in Phase 8.
 
 ### Deletion-safety scan
 
@@ -266,7 +264,7 @@ Run only when the diff changes browser-rendered UI (`.tsx/.jsx/.vue/.svelte/.htm
 - Load failure, console error on changed surface, or broken interaction → blocker; fix before publishing.
 - Leave app/browser running and hand off the URL; continue Phase 5 onward while the user inspects.
 
-Skip backend/config/docs-only diffs and record "frontend preview: N/A" in Phase 8.
+Backend/config/docs-only diffs → record "frontend preview: N/A" in Phase 8.
 
 ---
 
@@ -405,7 +403,7 @@ Final audit after all code is complete:
 
 ## Environment Guardrails
 
-Apply [`references/environment-guardrails.md`](references/environment-guardrails.md) for cloud auth, containers, global config, and CI-provider routing.
+[`references/environment-guardrails.md`](references/environment-guardrails.md) (cloud auth, containers, global config, CI-provider routing).
 
 ---
 
