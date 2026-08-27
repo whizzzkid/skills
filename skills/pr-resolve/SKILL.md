@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.27-073755"
+  version: "2026.08.27-183421"
   model:
     openai: gpt-5.6-terra
 ---
@@ -138,6 +138,12 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
    wk-commit HARD RULE (`$WK_SKILLS_EMPLOYEE_EMAIL`); never invent.
 10. **Include bot reviews** as first-class feedback. Evaluate each for
     correctness before accepting or dismissing.
+    - **A bot review at COMMENTED / REVIEW_REQUIRED signals an unaddressed
+      finding — the state IS the finding, not an independent gate.** Read every
+      finding body (issue/summary comments included, not just inline threads)
+      before considering dismiss/override/wait. A blocking finding with a
+      concrete fix → `obvious-fix`, not a gate decision to escalate. Escalate
+      the gate only after confirming no addressable finding exists.
 11. **Adversarial-review gates merge, not push — never dispatched here.** New
     commits need a `clear` verdict before merge; the gate runs it once (Step 8).
 12. **Implement handoff documents before deleting them.** A branch file whose
