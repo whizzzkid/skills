@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.28-194701"
+  version: "2026.08.28-201131"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -95,8 +95,7 @@ gh api notifications --jq ".[] | select(.repository.owner.login == \"$GITHUB_ORG
 
 ### Issue/PR creation
 
-No special filtering needed — these operate on the current repo. But
-if the current repo is not in `$GITHUB_ORG`, warn the user:
+No special filtering needed — warn if current repo not in `$GITHUB_ORG`:
 
 ```bash
 CURRENT_ORG=$(gh repo view --json owner --jq '.owner.login')
@@ -114,8 +113,6 @@ The org scope is **not applied** when:
 - The command targets the current repo specifically (e.g., `gh pr view`)
 - `gh pr view --repo` requires a positional PR: pass `<number-or-url>` before `--repo` for `--web`; omit `--repo`
   when relying on current-branch inference.
-
-In all other cases, default to `$GITHUB_ORG`.
 
 ### Variable-dependent jq projections
 
@@ -163,6 +160,7 @@ PATCH), silently overwriting the body (rc 200, existing id → `|| fallback` nev
 fires).** Conversation comments have no reply subresource; a new comment is always
 `POST /issues/{n}/comments`. Before any write adjacent to another author's
 comment, capture its body for recovery.
+After any conversation write, re-list the surface → new comment ID must appear, prior comments body lengths unchanged.
 
 **Inline-reply IDs are numeric REST IDs.** `in_reply_to` (and
 `/pulls/{n}/comments/{id}/replies`) require the integer REST `id` from
@@ -257,11 +255,10 @@ text as a substitute:
 `gh api repos/{owner}/{repo}/pulls/comments/{id}/reactions -f content="+1"`.
 Values: `+1 -1 laugh confused heart hooray rocket eyes`.
 
-Every write surface above must:
+Every write surface must:
 
 - Honor `$GITHUB_ORG` scoping per Step 1–2.
-- Append the outbound footer per Step 4 — no exceptions for short
-  comments, draft reviews, or PR descriptions.
+- Append outbound footer per Step 4 — no exceptions.
 - Stay pending / drafted when the calling skill's contract is
   human-in-the-loop (self-review, pr-review). Never auto-submit on
   the user's behalf without explicit per-invocation consent.
