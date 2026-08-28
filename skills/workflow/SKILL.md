@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.28-013858"
+  version: "2026.08.28-192037"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -26,7 +26,7 @@ metadata:
 
 # Workflow
 
-Master orchestration for development tasks. Phases run in ascending order; follow the sequence exactly. The review gate is Phase 5.5 — it follows publishing, so no Phase 4 exists.
+Master orchestration. Phases run ascending; review gate is Phase 5.5 (follows publishing; no Phase 4).
 
 ---
 
@@ -39,7 +39,7 @@ Master orchestration for development tasks. Phases run in ascending order; follo
 
 ### HARD RULE — live learning capture
 
-- **Very important:** Invoke [`wk-learn`](../learn/README.md) immediately when a
+- **CRITICAL:** Invoke [`wk-learn`](../learn/README.md) immediately when a
   user correction, scope redirect, or self-caught error occurs — before
   continuing the task or ending that response.
 - Invoke it after every skill run; never ask or offer. Phase 8 retro only verifies live capture.
@@ -90,9 +90,9 @@ Stop and ask only when: plan ambiguous; CI persists after 3 attempts; user-owned
 
 The Phase 1 plan is the session contract.
 
-- **Important:** Enumerate every deliverable before acting — a prompt with a noun task and a closing imperative is two items. Mid-session explicit requests are deliverables — act immediately or track as follow-up. Never silently drop an explicit ask.
-- On interruption mid-plan: stop, update the active plan/TodoWrite list, re-state the new top item in one line, resume from the earliest incomplete item.
-- Final completeness gate: before claiming completion, re-read the plan and ensure every numbered step is finished or explicitly deferred/removed.
+- **Important:** Enumerate every deliverable before acting — a noun task + closing imperative is two items. Mid-session explicit requests are deliverables; act or track. Never drop an ask.
+- On interruption: stop, update plan, re-state top item, resume from earliest incomplete.
+- Final gate: re-read plan before completion claim; every step finished or explicitly deferred.
 
 ---
 
@@ -166,6 +166,7 @@ Enumerate every affected site and fix all in one pass before tests:
 - **Guard modification** — before editing a guard/filter/null-check, verify whether the upstream change already makes it correct; a callee now returning valid data means existing checks pass.
 - **Test-harness reachability** — when adding branch logic, assess which branches the existing test harness can exercise; unreachable branches (client-only state in a server-rendered spec, in-memory collisions) → extract into a pure module with unit tests in the same task.
 - **Shared-contract ownership** — before writing a helper that parses/serializes a shared format, grep for the existing owner of that grammar and import from it; extract only genuinely helper-specific logic into a new module.
+- **False-positive scoping** — fix targets the offending class, not the severity ladder; unverifiable claims are noise at any severity → suppress the class.
 
 ### Code Standards
 

@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.28-021258"
+  version: "2026.08.28-192046"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -228,6 +228,8 @@ PR unless the user explicitly asks.
 
   **Early-ready override.** User directs immediate ready → `gh pr ready`
   after creation; self-review/CI/feedback continue post-ready.
+
+  **Bot-ready gate.** Repo review bot approves only non-draft PRs → `gh pr ready` after creation; draft-until-CI default yields to the bot gate.
 
 ### Link the source plan and spec (pre-flight)
 
