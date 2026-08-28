@@ -15,3 +15,4 @@ class: principle
 - **Security / data loss** — injection, secret leakage, traversal, unprotected writes, missing rollback.
 - **Error handling** — swallowed errors, generic catches, wrong error class.
 - **Runtime / performance** — runtime-matrix gaps, quadratic scans, repeated I/O.
+- **Artifact provenance** — state inferred from a produced artifact without gating on its production fidelity (degraded/partial/fallback modes void the inference).

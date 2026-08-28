@@ -18,3 +18,6 @@ class: principle
   with …`). Lint each body independently — a footer carried on another surface never satisfies the current mutation.
 - Refresh bot threads against HEAD with full bodies; an addressed echo gets reply+resolve, a new finding returns to
   Step 4. Use commands.md §8 for reaction, ID-refresh, and error recovery.
+- **Post-resolve verification (mandatory).** After posting replies and resolving threads, re-run the unresolved-threads
+  GraphQL query (commands.md §3). Assert every thread whose finding was fixed in this round is now resolved. A
+  non-empty result for an addressed finding is a failure — resume resolve, do not declare the round complete.

@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.27-211037"
+  version: "2026.08.28-053317"
   model:
     openai: gpt-5.6-terra
 ---
@@ -423,7 +423,8 @@ is review-ready.
 
 **Finalize the pushed PR** — follow
 [`references/post-push-finalization.md`](references/post-push-finalization.md)
-before replying or resolving threads.
+before replying or resolving threads. After all resolutions, re-query
+unresolved threads; any addressed finding still open → resume resolve.
 
 ## Step 9: Check Merge Conflicts
 

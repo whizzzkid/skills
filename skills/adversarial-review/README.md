@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.08.26-175251`
+**Version:** `2026.08.28-053208`
 
 ## Invocation
 
@@ -16,7 +16,7 @@
 ```mermaid
 flowchart TD
     A[Resolve base branch] --> B[Build diff surface map]
-    B --> C[Run 101 mechanical sweeps]
+    B --> C[Run 103 mechanical sweeps]
     C --> D[Spawn fresh adversarial subagent]
     D --> E[Playground validation]
     E --> F{Verdict}
@@ -40,7 +40,7 @@ flowchart TD
 - **Clearance follows reviewed work, not SHA equality** — tree-identical rewrites
   preserve the record. Finding-response commits get targeted validation; only
   unmatched scope, refactor, or logic triggers a delta-scoped review.
-- **101 mechanical sweeps run unconditionally** before LLM reasoning.
+- **103 mechanical sweeps run unconditionally** before LLM reasoning.
   Lower-frequency shape-specific sweeps live in
   `references/sweep-catalog-extended.md` under the same rule. The catalog covers
   security, sibling parity, guard correctness, docs/spec sync, contract
