@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.27-182138"
+  version: "2026.08.28-001553"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -71,9 +71,9 @@ Stop and ask only when: plan ambiguous; CI persists after 3 attempts; user-owned
 - **Volunteered feedback is not a stop signal** (unlike a question you asked, below): unless it revokes the action, finish the authorized step in the same turn as the acknowledgement.
 - **Curiosity ≠ commission.** A clarifying question ("why is X slow?") after the primary goal is met seeks understanding, not more work → answer and stop; do not pair with a new proposal unless the user explicitly asks.
 - **A turn producing no new facts must end in a write** — no new file read or command output means analysis is done, so edit the owning file instead of re-deliberating.
-- When soliciting feedback, block on it → end the turn after asking; do not implement until answered. When decisions must be collected first, gather and confirm the full set before executing any — never interleave asking with acting.
-- **Verify mechanism before offering options.** An option or proposed approach claiming "accomplish X via tool/capability Y" is a behavioral claim → read Y's interface from upstream source before presenting. Unverified → research first or label mechanism unconfirmed; choosing an unverified path transfers a false premise into the plan.
-- **Important:** use Skill tool for every skill-owned event — raw `git commit`/`gh pr merge`/ad-hoc planning IS the approximation this forbids. First write-action of a session is the highest-risk skip point. The table is illustrative; the wrapper's post-action checklist is what raw CLI silently drops.
+- When soliciting feedback, block on it → end the turn after asking; do not implement until answered. Gather and confirm the full decision set before executing any.
+- **Verify mechanism before offering options.** A claim "accomplish X via Y" → read Y's interface from source before presenting; unverified → research first or label unconfirmed.
+- **Important:** use Skill tool for every skill-owned event — raw `git commit`/`gh pr merge`/ad-hoc planning is the approximation this forbids. First write-action is the highest-risk skip point.
 - **Announce-and-invoke same turn.** A skill counts only when its `Skill` call is
   in that response; narration alone is a violation. Catch it → invoke before any
   other action.
@@ -109,7 +109,7 @@ Skill(wk-plan, args="<task from session context>")
 - If `wk-plan` surfaced unanswered questions, resolve them before proceeding.
 - **Complex task → advisor:** consult the `advisor` server tool during Phase 1: [`references/advisor-tool.md`](references/advisor-tool.md).
 
-**HARD RULE — wait for plan approval before the first Edit/Write/Bash write-action (incl. fetching/reading *for* the build once committed to a direction).** No size exemption in either direction — "too small" and "obviously right" both violate. Present → approve → execute; a user-supplied plan arrives approved.
+**HARD RULE — wait for plan approval before first Edit/Write/Bash write-action (incl. fetching/reading *for* a build).** No size exemption — "too small" and "obviously right" both violate. Present → approve → execute; user-supplied plan arrives approved.
 
 ---
 
@@ -143,18 +143,12 @@ Never batch multiple plan steps into one commit, defer docs, or skip tests betwe
 
 ### Cross-cutting changes
 
-For normalization, renames, required fields, schema changes, or similar recurring patterns:
+For normalization, renames, required fields, schema changes:
 
-1. Enumerate every affected site before writing:
-
-   ```bash
-   grep -rn '<pattern>' <src-dirs>
-   ```
-
-2. Implement all sites.
-3. Commit.
-4. Publish, then run adversarial review once.
-5. Fix residuals in ≤1 follow-up commit.
+1. `grep -rn '<pattern>' <src-dirs>` — enumerate every affected site.
+2. Implement all sites; commit.
+3. Publish, then run adversarial review once.
+4. Fix residuals in ≤1 follow-up commit.
 
 ### Artifact sync with code changes
 
@@ -168,7 +162,9 @@ Enumerate every affected site and fix all in one pass before tests:
 - **Signature widening** — non-optional public param/required field → grep every caller/initializer, fix each in the same commit.
 - **`replace_all: true`** — grep the target string first; reject if any occurrence needs a different value/context or must stay unchanged.
 - **Agent-brief identifiers** — grep the declaring source; quote exact names/values into the prompt, never recalled ones. One wrong identifier multiplies across every agent trusting the brief.
-- **Guard modification** — before editing an existing guard/filter/null-check, verify whether the upstream change already makes it correct for new inputs; a callee now returning valid data means existing checks already pass.
+- **Guard modification** — before editing a guard/filter/null-check, verify whether the upstream change already makes it correct; a callee now returning valid data means existing checks pass.
+- **Test-harness reachability** — when adding branch logic, assess which branches the existing test harness can exercise; unreachable branches (client-only state in a server-rendered spec, in-memory collisions) → extract into a pure module with unit tests in the same task.
+- **Shared-contract ownership** — before writing a helper that parses/serializes a shared format, grep for the existing owner of that grammar and import from it; extract only genuinely helper-specific logic into a new module.
 
 ### Code Standards
 
@@ -182,7 +178,7 @@ Apply to ALL code:
 - **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
 - **Platform-API traps:** [`references/platform-api-traps.md`](references/platform-api-traps.md).
 - **Two-sided flow survey:** survey caller-side conditions and callee enforcement before designing a gate/filter/guardrail.
-- **Identifier composition:** before combining sources (env vars, config, API fields) into a key, classify each by semantic domain (target vs. self, external vs. internal); a cross-domain fallback is a presence check, not identity.
+- **Identifier composition:** before combining sources into a key, classify each by semantic domain (target vs. self, external vs. internal); cross-domain fallback is a presence check, not identity.
 - **HARD RULE — reuse existing config/secret resolution; never invent parallel overrides.** User pushback naming existing convention → adopt it. ([`reuse-existing-mechanism.md`](references/reuse-existing-mechanism.md))
 
 ---
@@ -222,7 +218,7 @@ Verification:
   [`generated-artifact acceptance`](references/2026-08-01_generated-artifact-acceptance.md);
   a post-merge-only caveat is a blocker, not a waiver.
 - **A fast/narrow check is never the authoritative gate.** A pre-commit hook may lint a narrower file set than the full CI-mirroring check — run the full gate before claiming lint/format clean.
-- **Dependent verification fails fast.** Run an expected-red proof and its later green gate in separate tool calls. If they must share one shell command, begin it with `set -euo pipefail`; never launch the green gate after the expected-red proof exits non-zero.
+- **Dependent verification fails fast.** Run expected-red proof and its green gate in separate tool calls; if sharing one shell, `set -euo pipefail` — never launch green after a non-zero exit.
 - **Important — never take a verdict from `$?` after a pipe.** See `wk-workstyle-shell` for limiters and the `PIPESTATUS` split.
 
 Shell-script structure & symlink-guard tests: [`references/shell-script-test-checks.md`](references/shell-script-test-checks.md).
