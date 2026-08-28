@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.19-052443"
+  version: "2026.08.28-194701"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -158,6 +158,12 @@ Surfaces covered (non-exhaustive):
 - Issue and PR conversation comments (`gh issue comment`, `gh pr comment`)
 - Review-thread state changes (resolve/unresolve via GraphQL)
 
+**Never POST to `/issues/comments/{id}` — GitHub routes it as update (same as
+PATCH), silently overwriting the body (rc 200, existing id → `|| fallback` never
+fires).** Conversation comments have no reply subresource; a new comment is always
+`POST /issues/{n}/comments`. Before any write adjacent to another author's
+comment, capture its body for recovery.
+
 **Inline-reply IDs are numeric REST IDs.** `in_reply_to` (and
 `/pulls/{n}/comments/{id}/replies`) require the integer REST `id` from
 `GET /pulls/{n}/comments` (or `databaseId` from a GraphQL reviewThreads query),
@@ -220,12 +226,10 @@ later submitted. Guard every reply post:
   [`references/pending-review-mechanics.md`](references/pending-review-mechanics.md).
 
 **Effective merge methods come from repository *rulesets* — neither `gh repo view`
-nor the branch-protection endpoint reports them.** The three surfaces are disjoint:
-`gh repo view --json squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed`
-returns repo *settings*, `branches/{branch}/protection` 404s (`Branch not
-protected`) unless classic protection is configured, and neither reflects a
-ruleset. "All three allowed" from `gh repo view` is **not** evidence a method will
-be accepted. Read the ruleset before any merge:
+nor branch-protection reports them.** `gh repo view --json
+squashMergeAllowed,...` returns repo *settings*; `branches/{branch}/protection`
+404s without classic protection; neither reflects a ruleset. "All three allowed"
+is not evidence a method will be accepted. Read the ruleset before any merge:
 
 ```bash
 gh api repos/{owner}/{repo}/rulesets --jq '.[] | {id, name, target}'
@@ -248,16 +252,10 @@ name verbatim — a slug-derived name (from a URL or `$GITHUB_ORG` search) retur
 gh repo view --json owner,name --jq '{owner: .owner.login, name: .name}'
 ```
 
-**Use the reactions API, not emoji text.** When a workflow or user asks to
-"react" to a comment (thumbs-up/down, etc.), always use the native reactions
-endpoint — never embed emoji Unicode characters in reply text as a substitute:
-
-```bash
-gh api repos/{owner}/{repo}/pulls/comments/{id}/reactions -f content="+1"
-```
-
-Valid `content` values: `+1`, `-1`, `laugh`, `confused`, `heart`, `hooray`,
-`rocket`, `eyes`.
+**Use the reactions API, not emoji text** — never embed emoji Unicode in reply
+text as a substitute:
+`gh api repos/{owner}/{repo}/pulls/comments/{id}/reactions -f content="+1"`.
+Values: `+1 -1 laugh confused heart hooray rocket eyes`.
 
 Every write surface above must:
 
