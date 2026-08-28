@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.19-052649"
+  version: "2026.08.28-023637"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -359,6 +359,12 @@ Create a PENDING review via GitHub API:
   rewrite files the pending review anchors to.
 - Re-fetch `headRefOid` immediately before writing the payload; a changed HEAD
   voids all gathered anchors and requires rebuilding them.
+- **Pre-POST pending-review check** — GitHub allows one pending review per user
+  per PR; a second POST returns HTTP 422. Before creating a new review, query
+  for a self-authored pending review (same query shape as Step 4.5). If found:
+  preserve its comment bodies to a temp file via Write tool, DELETE it, fold
+  still-valid comments into the new payload, then POST. Treat the 422 as a
+  recovery trigger (query → delete → re-POST), not a retry candidate.
 - After posting, verify each comment's `position` matches `original_position`;
   mismatch → delete the pending review and re-stage against current HEAD per
   "Updating an Existing Self-Review."
