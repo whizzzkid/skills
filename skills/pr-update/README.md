@@ -4,7 +4,7 @@
 > patch-replay for a large draft, or rebase on explicit opt-in — with conflict
 > resolution, re-validation, and remote-history-safe publishing.
 
-**Version:** 2026.08.18-212444
+**Version:** 2026.08.28-135458
 
 ## Invocation
 

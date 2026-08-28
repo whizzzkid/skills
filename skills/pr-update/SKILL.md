@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.18-212444"
+  version: "2026.08.28-135458"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -105,12 +105,20 @@ If the tree is dirty, ask:
 > "Working tree has uncommitted changes. (a) stash → run → unstash,
 > (b) commit them first via `wk-commit`, (c) abort."
 
-Auto mode defaults to **(c) abort** — picking (a) or (b) on the user's behalf is a
-mutation auto mode should not make silently.
+Auto mode defaults to **(c) abort** (stash/commit silently mutates).
 
 ---
 
 ## Stage 1: Detect base, fetch, compute commit count
+
+### PR-state validation
+
+`gh pr view --json state --jq .state` → `OPEN` proceeds; `CLOSED`/`MERGED`/absent →
+checked-out branch is stale (worktree may hold an abandoned child). Scan open DIRTY PRs
+(`gh pr list --state open --json headRefName,mergeStateStatus`); single match → switch
+and restart Stage 1; otherwise ask.
+
+### Base detection
 
 Base branch given as argument or inferred:
 
@@ -237,13 +245,7 @@ IS_DRAFT=$(gh pr view --json isDraft --jq .isDraft)
 If `isDraft = false`, use merge instead and emit a one-line note: "Overriding
 patch-replay heuristic — PR is ready-for-review, preserving atomic commit history."
 
-Threshold is a heuristic, not a contract. User can override once at run time:
-
-> "Branch has {AHEAD} commits ahead — picking {strategy}. Override?
-> (a) keep {strategy}, (b) force rebase, (c) force patch-replay,
-> (d) abort."
-
-Auto mode picks the heuristic without prompting.
+Threshold is heuristic; user can override at run time. Auto mode picks without prompting.
 
 ---
 
@@ -284,6 +286,9 @@ git rebase --onto "$BASE_REF" <merged-parent-tip-sha>
   commits remain in the child, so its diff claims that work as its own. Replay each
   retargeted child with `--onto` and force-push; do it when the parent merges, not
   when a reviewer notices.
+- **Squash-merged parent → cherry-pick over rebase.** Rebase through a squash delta
+  conflicts on every commit touching squashed lines. Cherry-pick the child's commits
+  onto the post-squash base to skip the delta entirely.
 - **Resolving in place instead of restarting** — merge strategy, parent already
   squash-landed: take `--theirs` for files the squashed parent fully supersedes,
   hand-merge files both histories added to, then gate on the full suite. In a merge
@@ -422,19 +427,13 @@ For each conflicted file:
    for the language).
 4. **Stage**: `git add <file>`.
 
-Auto mode resolves only **trivial** conflicts (one side adds an import the other doesn't
-touch; whitespace-only divergence; non-overlapping additions). Anything semantically
-meaningful pauses and asks:
-
-> "Conflict in `{path}`:
->   {3-line excerpt of the conflict region}
-> (a) keep branch's version  (b) keep base's version
-> (c) describe a manual merge  (d) abort"
+Auto mode resolves only **trivial** conflicts (non-overlapping additions, whitespace).
+Semantic conflicts pause and prompt: path + excerpt, options (a) branch (b) base (c) manual (d) abort.
 
 After all files are resolved:
 
-- **Merge:** `git merge --continue`. Proceed to Stage 5 after the integration
-  commit is created.
+- **Merge:** `GIT_EDITOR=true git merge --continue` (`--no-edit` is invalid on
+  `--continue`). Proceed to Stage 5 after the integration commit is created.
 - **Rebase:** `git rebase --continue`. Loop if more conflicts.
 - **Patch-replay:** working tree now has a clean diff → proceed to the integration
   commit (Stage 3c step 4).
@@ -447,9 +446,7 @@ git rebase --abort 2>/dev/null
 git reset --hard "$START_SHA"
 ```
 
-Tell the user: "Conflicts could not be resolved automatically. The
-branch is back to its starting state. Resolve manually via `git
-rebase $BASE_REF` and re-run."
+Report: conflicts unresolvable, branch at `$START_SHA`. Resolve manually and re-run.
 
 ---
 
