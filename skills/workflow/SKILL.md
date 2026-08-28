@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.28-001553"
+  version: "2026.08.28-013858"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -65,10 +65,11 @@ Execute the workflow without asking permission at each step.
 
 Stop and ask only when: plan ambiguous; CI persists after 3 attempts; user-owned design decision needed; explicit pause requested; or destructive/shared-state action required.
 
+- **Interpret user execution bans broadly:** "don't run {tool} locally" covers all heavy local ops against that repo (full suites, servers, builds), not just the product action — prefer changed-file-only validation; confirm before any full local run.
 - **Never ask for what your own inputs answer** — search the plan, merged PRs, and tracked config first (a question they already answer proves they went unread).
 - **Linked artifact first.** Prompt references a URL/comment/PR → fetch before parallel research.
 
-- **Volunteered feedback is not a stop signal** (unlike a question you asked, below): unless it revokes the action, finish the authorized step in the same turn as the acknowledgement.
+- **Volunteered feedback is not a stop signal:** unless it revokes the action, finish the authorized step same turn.
 - **Curiosity ≠ commission.** A clarifying question ("why is X slow?") after the primary goal is met seeks understanding, not more work → answer and stop; do not pair with a new proposal unless the user explicitly asks.
 - **A turn producing no new facts must end in a write** — no new file read or command output means analysis is done, so edit the owning file instead of re-deliberating.
 - When soliciting feedback, block on it → end the turn after asking; do not implement until answered. Gather and confirm the full decision set before executing any.
