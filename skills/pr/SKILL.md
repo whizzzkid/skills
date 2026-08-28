@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.19-225802"
+  version: "2026.08.28-021258"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -188,15 +188,8 @@ anything else — silent mis-basing is costly to undo:
   the stacked-PR convention covers the metadata.
 - **B** invokes `wk-pr-update` to rebase before proceeding.
 
-- **Draft-base override.** `$BEST_BASE` is the head of a still-**draft** PR → stacking
-  is usually a false split; surface it and default auto mode to **B**, not A. Stacking
-  on a draft base needs explicit opt-in. Query:
-  [`references/draft-base-override.md`](references/draft-base-override.md).
-- **Merged-base check.** Targeting an explicitly-named base (base argument, follow-up
-  branch) → verify it is not already merged; auto-detection filters merged branches
-  implicitly, the explicit path does not. `MERGED` → retarget to `$DEFAULT_BRANCH`,
-  notify, never push to it. Query:
-  [`references/merged-base-check.md`](references/merged-base-check.md).
+- **Draft-base override:** [`references/draft-base-override.md`](references/draft-base-override.md).
+- **Merged-base check:** [`references/merged-base-check.md`](references/merged-base-check.md).
 
 ### Measure scope against the resolved base
 
@@ -216,12 +209,8 @@ git diff "origin/$BEST_BASE...HEAD" --shortstat
 - Pass `$BEST_BASE` through to Step 2 — never re-detect or default back to
   `main`.
 
-### Check open PRs for a related spec before adding a new one
+### Check open PRs for a related spec
 
-Branch adds a doc under `docs/specs/` (or equivalent) → search open PRs for a
-same-domain spec before treating it as standalone; prefer stacking onto an
-existing spec over a parallel doc (a parallel in-flight spec forces a later
-consolidation). Query + routing:
 [`references/check-open-prs-for-spec.md`](references/check-open-prs-for-spec.md).
 
 ## Step 2: Create Draft PR
@@ -236,6 +225,9 @@ footer still apply.)
 
 **Always create PRs in draft mode** (`--draft` flag). Never create a non-draft
 PR unless the user explicitly asks.
+
+  **Early-ready override.** User directs immediate ready → `gh pr ready`
+  after creation; self-review/CI/feedback continue post-ready.
 
 ### Link the source plan and spec (pre-flight)
 
@@ -306,9 +298,6 @@ When using a repo template:
 
 ### Superseded & closed PRs
 
-`Closes`/`Fixes`/`Resolves #N` close **issues** only, never a PR; a
-squash-merged + deleted-base PR cannot be reopened or retargeted. Full close
-semantics and the fresh-superseding-PR recipe:
 [`references/superseded-closed-prs.md`](references/superseded-closed-prs.md).
 
 ### Simple PR (fallback — no repo template found)
@@ -361,12 +350,9 @@ PR lifecycle. Use the manual convention only when the extension is unavailable.
 `gh stack` command sequence, availability probe, and the manual fallback recipe:
 [`references/gh-stack-stacking.md`](references/gh-stack-stacking.md).
 
-### Body extras — cross-links, previews, incident & rollout sections
+### Body extras
 
-Four body-composition sub-steps (Stack cross-links, markdown-preview links,
-incident bugfix body, Rollout section) live in
-[`references/pr-body-extras.md`](references/pr-body-extras.md). Apply each that
-matches when composing the body.
+[`references/pr-body-extras.md`](references/pr-body-extras.md) — apply each matching sub-step.
 
 ## Step 3: Post-Creation Workflow
 
