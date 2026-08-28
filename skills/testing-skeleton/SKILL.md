@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.07-230821"
+  version: "2026.08.28-061352"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -242,6 +242,20 @@ tilde-prefixed home path (a yarnrc dotfile, say) — instead matches the expande
 - Assert a literal-tilde string with a quoted glob so no expansion happens:
   `[[ "$output" == *'~'* ]]`; quote any tilde-prefixed path segment the same way.
 - When the substring can match a superset, add a negative assertion excluding it.
+
+### Propagate failure from non-final Bats assertions
+
+A `[[ ... ]]` that fails mid-test does not abort the test function — subsequent
+commands succeed and Bats reports green, so the broken assertion is invisible.
+Append `|| return 1` to every `[[ ... ]]` when more commands follow in the same
+test:
+
+```bash
+[[ "$output" == *"expected"* ]] || return 1
+[[ "$status" -eq 0 ]]
+```
+
+Mutation-verify by breaking the early assertion and confirming the test fails.
 
 ### Nil-out consumed env vars in stubbed-ENV tests
 
