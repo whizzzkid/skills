@@ -44,25 +44,6 @@ Bring a PR branch up to date with its base → right integration strategy
 for the branch's size, conflicts resolved interactively, work re-validated
 after integration.
 
-```mermaid
-flowchart TD
-    A["Stage 0: Pre-flight"] --> B["Stage 1: Detect and fetch base"]
-    B --> C{"Stage 2: Choose strategy"}
-    C -->|"default or ready PR"| M["Stage 3a: Merge base"]
-    C -->|"explicit linear history"| R["Stage 3b: Rebase"]
-    C -->|"draft and at least 5 commits"| P["Stage 3c: Patch-replay"]
-    M --> D{"Conflicts?"}
-    R --> D
-    P --> D
-    D -->|yes| E["Stage 4: Resolve conflicts"]
-    D -->|no| V["Stage 5: Re-validate"]
-    E --> V
-    V --> U["Stage 6: Push, reconcile remote advance, sync PR"]
-    U --> O["Stage 7: Report"]
-```
-
----
-
 ## Hard Rules
 
 1. **Never run on a dirty tree.** Stash or commit first; pre-flight refuses otherwise.
@@ -161,31 +142,10 @@ migrations, schema identifiers, and the repository's equivalents.
 
 ### Merge-aware `$AHEAD` recomputation
 
-HEAD already contains a base-branch merge commit → raw `$AHEAD` overstates the
-integration work (most commits already merged earlier). Recompute against the most
-recent base-merge before applying the strategy heuristic:
-
-```bash
-LAST_BASE_MERGE=$(git log --merges --first-parent --grep="Merge .*$BASE" \
-  --pretty=format:%H -1 2>/dev/null)
-if [ -z "$LAST_BASE_MERGE" ]; then
-  # Fallback: any merge whose second parent is on the base branch
-  LAST_BASE_MERGE=$(git log --merges --first-parent --pretty=format:%H \
-    | while read sha; do
-        if git merge-base --is-ancestor "$sha^2" "$BASE_REF" 2>/dev/null; then
-          echo "$sha"; break
-        fi
-      done)
-fi
-if [ -n "$LAST_BASE_MERGE" ]; then
-  AHEAD=$(git rev-list --count "$LAST_BASE_MERGE..HEAD" --not "$BASE_REF")
-  echo "Branch has prior merge from $BASE; $AHEAD new commits since."
-fi
-```
-
-Recomputed `$AHEAD` small (`≤ 5`) AND `$BEHIND` small → prefer `git merge "$BASE_REF"`
-over rebase or patch-replay; it's a merge-style branch, not rebase-style, and
-patch-replay would squash already-reviewed commits.
+If HEAD already contains a base-branch merge, raw `$AHEAD` overstates integration
+work. Recompute against the most recent base-merge; if recomputed `$AHEAD ≤ 5`,
+prefer merge over patch-replay. Details:
+[`references/merge-aware-recompute.md`](references/merge-aware-recompute.md).
 
 ### Independently-merged parent detection
 
@@ -202,50 +162,18 @@ set `STACKED_PARENT_DETECTED=true`. Stage 2 routes to `rebase --onto` (Stage 3b)
 
 ### Stacked chains — work bottom-up
 
-A stacked branch is both a review unit and another's base, so moving a parent changes
-every descendant's diff, conflict context, and CI basis.
-
-- Rediscover the live stack after each parent update — cached topology is stale the
-  moment a parent moves.
-- Resolve and verify the parent, integrate that exact tip into its direct child, audit
-  every auto-merged overlapping file for intent from both sides, then run the child's
-  full gate before moving up. Post replies and resolve threads only after confirming
-  the current remote head.
-- **A stack-tool rewrite is not proof of new content** — tooling relinearizes
-  descendant history after a push, giving new commit IDs over an identical tree. Compare
-  trees before redoing work; rc 0 means history-only and nothing to redo, non-zero means
-  a real content change to re-integrate and re-validate:
-
-  ```bash
-  git diff --quiet <verified-tip> <live-tip>
-  ```
+Update parent first, verify, then integrate into child. Rediscover the live stack
+after each parent update. Compare trees (`git diff --quiet <verified-tip> <live-tip>`)
+before redoing work — a stack-tool rewrite gives new SHAs over an identical tree.
 
 ## Stage 2: Choose integration strategy
 
-**HARD RULE — merge is the default integration strategy.** Use `git merge "$BASE_REF"`
-unless the commit count makes per-commit conflict resolution painful or the user
-explicitly asks for clean linear history. Rebase rewrites SHAs, requires force-push, and
-loses review-thread anchoring; merge preserves all three.
+**HARD RULE — merge is the default.** `< 5` ahead or ready-for-review PR → merge.
+`≥ 5` ahead + draft → patch-replay. Independently-merged parent → rebase `--onto`.
+User asks for linear history → rebase (explicit opt-in only).
 
-| `$AHEAD` | Strategy | Why |
-|----------|----------|-----|
-| **HEAD already has a base-merge, recomputed `$AHEAD ≤ 5`** | `git merge "$BASE_REF"` | Merge-style branch — preserve the merge topology; do not squash already-reviewed commits. |
-| **< 5** (no prior base-merge) | `git merge "$BASE_REF"` | Default. Preserves commit SHAs, avoids force-push, keeps review threads anchored. |
-| **≥ 5** (no prior base-merge) | Patch-replay | Large commit count → rebasing N commits is N conflict-resolutions; one patch is one. Commit messages are reconstructed from the squashed subject + a body listing the original SHAs for traceability. |
-| **≥ 5** but **PR is ready-for-review** (`isDraft = false`) | `git merge "$BASE_REF"` | Override the patch-replay heuristic — squashing already-reviewed commits reshapes the diff under reviewers mid-review. Atomic history is the explicit signal of a ready PR. |
-| **Independently-merged parent detected** | Rebase `--onto` (Stage 3b) | Stacked branch carries parent commits that merged separately into base → skip duplicated prefix to avoid add/add conflicts. |
-| **User asked for linear history** | Rebase | Explicit opt-in only — never the default. |
-
-Before selecting patch-replay on `$AHEAD ≥ 5`, check PR draft state:
-
-```bash
-IS_DRAFT=$(gh pr view --json isDraft --jq .isDraft)
-```
-
-If `isDraft = false`, use merge instead and emit a one-line note: "Overriding
-patch-replay heuristic — PR is ready-for-review, preserving atomic commit history."
-
-Threshold is heuristic; user can override at run time. Auto mode picks without prompting.
+Full strategy table with rationale:
+[`references/strategy-table.md`](references/strategy-table.md).
 
 ---
 

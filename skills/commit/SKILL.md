@@ -121,93 +121,13 @@ This skill is model-invocable → any commit it produces is agent-created.
 ## Commit Signing
 
 All commits MUST be signed. Never use `--no-gpg-sign`, `-n`, or
-`git -c commit.gpgsign=false`.
+`git -c commit.gpgsign=false`. On failure, diagnose env inheritance before
+touching config. Never write `git config --global` to fix signing. Re-sign
+every commit a rewrite touches. "No signature" is usually a local-verification
+false alarm — check the raw `gpgsig` header.
 
-**Before a signed merge or rewrite**, verify `user.signingkey` and `ssh-add -L`
-from the exact execution shell. Direct shell missing either but login shell has
-both → run the operation there with the verified key via one-shot `git -c`;
-never start first or weaken signing.
-
-**On signing failure** (errors like `gpg failed to sign the data`,
-`Couldn't get agent socket`, `failed to write commit object`,
-`user.signingkey not set`):
-
-1. **Stop immediately.** Do not retry without signing.
-2. **Diagnose env inheritance before touching any git config.** Signing config
-   is often delivered via `GIT_CONFIG_PARAMETERS` (git-native injection set in
-   the user's interactive shell) that a subprocess does not inherit — config is
-   present, just not visible in this process.
-
-   ```bash
-   echo "$GIT_CONFIG_PARAMETERS"   # signing config present but not inherited?
-   ssh-add -l                       # agent holds the signing key?
-   git config user.signingkey; ssh-add -L   # SSH signing: is the CONFIGURED key among the LOADED ones?
-   ```
-
-2b. **SSH signing (`gpg.format=ssh`), error `Couldn't find key in agent?`:**
-   compare the configured key against the loaded set before proposing anything. A
-   configured key present but ABSENT from `ssh-add -L` means the agent rotated /
-   re-provisioned it mid-session (common with hardware-backed / auto-provisioning
-   agents) — the key is not loaded, not misconfigured. Ask the user to re-add that
-   exact key to the agent; never a config change. Only an entirely empty agent
-   means no signing key at all.
-
-2c. **Materialize `user.signingkey` before any file-taking probe flag.** A
-   literal passed as a filename produces a probe defect, not signing evidence.
-   Only a completed signed commit proves capability:
-   [literal-key probe](references/2026-07-24_signingkey-literal-not-path.md).
-3. **Match the execution context.** In a linked/temporary worktree, repeat the
-   preflight with `git -C <worktree>`; only a raw `gpgsig` proves success.
-   [Temporary-worktree signing](references/2026-07-30_temp-worktree-signing-context.md).
-4. Tell the user: "Commit signing failed. Please check your GPG/SSH agent
-   configuration and try again."
-5. Do not attempt any workaround that disables signing.
-
-**HARD RULE — never write git config to fix a signing failure.**
-`git config --global user.signingkey` and `git config --global gpg.*` writes are
-permanently destructive to env-based config management: they shadow the user's
-`GIT_CONFIG_PARAMETERS`-delivered config and persist as global state. Never run
-them without explicit user instruction — diagnose env inheritance (step 2) instead.
-
-### Preserve signatures when rewriting history
-
-History rewrites (rebase, amend, cherry-pick, squash, `filter-branch`) re-create
-commits and drop the original signature unless re-signed.
-
-- Re-sign every commit a rewrite touches — never let a rewrite emit unsigned commits.
-- Confirm `commit.gpgsign=true` is active, or pass `-S` explicitly
-  (`git rebase -S`, `git commit --amend -S`). Never `--no-gpg-sign`.
-- Verify after any rewrite that every rewritten commit is still signed — raw `gpgsig`
-  per commit, never `--show-signature`, which reports unsigned when
-  `gpg.ssh.allowedSignersFile` is unset:
-
-  ```bash
-  for c in $(git rev-list <base>..HEAD); do
-    git cat-file commit "$c" | grep -q '^gpgsig' || echo "UNSIGNED $c"; done
-  ```
-
-- A rewritten commit that loses its signature drops verified status and can fail
-  branch protection requiring signed commits.
-- **A trailer edit on already-pushed commits is a history rewrite — its real cost
-  is the fan-out of SHAs recorded outside git.** Before rewriting, enumerate every
-  place a rewritten SHA was recorded (plan docs, PR body, tracking issues, review
-  comments); after, remap old→new and re-verify each with an ancestry check.
-  The sweep belongs to the same task, never a follow-up; confirm zero stale
-  references before returning control.
-
-#### "No signature" can be a local-verification false alarm
-
-- An SSH-signed commit reported "No signature" (or `%G?` = `N`) is usually
-  *unverifiable*, not unsigned — `gpg.ssh.allowedSignersFile` arrives via
-  `GIT_CONFIG_PARAMETERS` in the interactive shell and is not inherited here, so
-  git has no public key to check against.
-- Confirm from the raw object before reacting; a `gpgsig` header means signed (command
-  above, or `git cat-file commit HEAD` for a single commit).
-
-- Never re-commit, re-sign, or delay a push on a "No signature" report alone.
-- The hosting service verifies server-side, so a locally-unverifiable-but-signed
-  commit still lands verified after push. Detail:
-  [no-signature false alarm](references/2026-06-01_ssh-sig-no-signature-false-alarm.md).
+Full signing diagnosis, rewrite preservation, and false-alarm rules:
+[`references/commit-signing.md`](references/commit-signing.md).
 
 ## Pushing
 
@@ -271,78 +191,14 @@ it hooks exit 127 (`command not found`) for mise-managed tools. Rationale:
   the rewritten commits under a **new branch name** (a plain new-ref push lands
   cleanly) and repoint the PR. Never `--no-verify` or otherwise bypass the block.
 
-### Stage handoff-doc removal with the work it describes
+### Staging Discipline
 
-Applying an agent-written handoff document (e.g. `NEXT_PHASE.md`, `HANDOFF.md`, a
-planning markdown left by a prior session) → delete the handoff file in the
-**same commit** that applies the work — not a separate cleanup commit.
+Delete handoff docs in the same commit as the work they describe. Exclude
+ephemeral working docs (`docs/plans/`). Verify staged set matches intent before
+grouped commits (`git diff --cached --name-only`). Stage generated artifacts
+individually — never blanket `git add` a generation dir.
 
-- The deletion is logically part of completing the handoff; a follow-up commit
-  produces a diff that only removes a markdown file.
-- A markdown-only commit triggers a full CI run on no real change, wastes CI time,
-  and can surface flaky failures unrelated to the work.
-
-```bash
-git add <implementation files> <handoff doc>
-git commit -m "feat: ✨ apply X (removes NEXT_PHASE.md handoff)"
-```
-
-### Exclude ephemeral working docs from commits
-
-Planning/working artifacts (plan docs, scratch notes, agent handoff files) are
-not history — only settled docs (specs, ADRs) belong in committed history.
-
-- Before `git add` on any docs path, confirm the repo's convention commits it.
-  Many repos track `docs/specs/` and `docs/adr/` but treat `docs/plans/` (and
-  equivalents) as ephemeral — never stage those.
-- Staging everything under `docs/` blindly leaks plan docs into the PR. Add
-  spec/ADR paths explicitly; exclude the working-artifact dirs.
-- **Exception — user-directed in-repo artifacts are deliverables, not scratch.**
-  When the user explicitly directs artifacts to a specific in-repo path (not a
-  known-ephemeral dir), stage them with the work by default — never silently
-  withhold them as scratch (else the user must ask again to include them).
-
-### Verify the staged set before a grouped commit
-
-**HARD RULE — dependent commit chains fail fast.** Begin every multi-command stage/verify/commit shell with
-`set -euo pipefail`; a failed stage or verification must stop the commit and any success-looking tail output.
-
-`git commit` records the whole index, so earlier staged paths ride along.
-
-- Before each grouped commit, require staged paths to equal the intended set:
-
-  ```bash
-  git diff --cached --name-only
-  ```
-
-- Unstage strays with `git restore --staged <paths>` (or `git stash`). Treat `git mv` as already staged.
-
-### Stage generated artifacts individually — never blanket `git add` the output dir
-
-Generated artifacts derived from mutable local state (ORM/type stubs, RBI/schema
-dumps, snapshot fixtures) are not deterministic from the branch's own source. On a
-shared machine a sibling branch's migration pollutes the local DB/cache, so
-regeneration emits accessors/columns absent from this branch's schema; CI
-regenerates against clean state and the verify gate fails on the diff. The
-staged-set check above catches strays, not a legitimately-touched-yet-polluted
-generated file.
-
-- Stage generated artifacts one path at a time — never `git add <generation-dir>`.
-- On a branch that changes none of an artifact's source, restore it to base
-  instead of trusting local regeneration:
-
-  ```bash
-  git checkout <base> -- <generated-path>
-  ```
-
-- Only artifacts genuinely changed by this branch's source (e.g. route-helper
-  stubs on a routes-only PR) should differ from base.
-- **Required regeneration with host-varying output → declare it, never restore.** A
-  platform-stamped artifact (`IS_MAC` predicates, libc constants) regenerated on the
-  mandated host is legitimate, so the base-restore above does not apply. Name in the
-  body: generator, platform it ran on, platform the committed version came from, and
-  which hunks are platform churn, not change-driven. No verify gate for that
-  class → flag it as a follow-up.
+Full rules: [`references/staging-discipline.md`](references/staging-discipline.md).
 
 ### Re-stage a file edited after it was staged
 
@@ -397,117 +253,21 @@ message. Verify that matching is wired in when installing or updating commit hoo
 
 ## Post-Push: PR Sync
 
-**HARD RULE:** After every successful push to a branch with an open PR, the PR
-title and description MUST be re-checked against the post-push branch state and
-updated if drifted. No exceptions.
+**HARD RULE:** After every push to a branch with an open PR, re-check the PR title
+and body against post-push state and update if drifted. Push first, then sync —
+never the reverse. Preserve human-authored sections; route through `wk-gh` Step 4
+for the footer gate.
 
-Drift signals to a reviewer that the agent shipped without re-reading its own
-work. The PR is the source of truth for everyone except the author — leaving it
-stale silently changes what reviewers approve.
-
-**HARD RULE — push first, then sync the body. Never the reverse.** The PR body's
-commit SHAs, ref links, and "current behavior" narrative are only correct *after*
-the push lands. Editing the body before pushing bakes in stale refs you then
-re-edit — two round-trips for one sync. Fixed order: full pre-push gate →
-`git push` → detect drift → edit the body. Any branch-ref-dependent step (body
-sync, "Closes #N" verification, self-review SHA links) waits for the push.
-
-### Step 1: Detect whether a PR exists
-
-After `git push` returns success:
-
-```bash
-gh pr view --json number,title,body,headRefName,state 2>/dev/null
-```
-
-- Exit code non-zero or `state != OPEN` → no open PR; skip the rest of this section.
-- Otherwise capture `number`, `title`, `body` for comparison.
-
-### Step 2: Check for drift
-
-Compare the PR's current title and body against the branch's post-push state:
-
-| Drift signal | Example |
-|---|---|
-| Title no longer matches primary intent | scope flipped feat→fix; version pin landed but title still says "upgrade" |
-| Body lists commits/behaviors that no longer exist | removed commits, reverted decisions still described as live |
-| Test plan / Closes section is now wrong | steps reference removed code; linked issue closed by a different PR |
-| Body cites a version or config value the push changed | dep version in body doesn't match lockfile |
-
-A clean push that only adds tests/docs aligned with the existing description is
-**not** drift.
-
-### Step 3: Update on drift
-
-Drift detected → update the PR before returning control:
-
-```bash
-gh pr edit <number> --title "<new-title>" \
-  --body "$(cat <<'EOF'
-<refreshed body>
-EOF
-)"
-```
-
-Rules for the refresh:
-
-- Preserve any `Closes #N` / `Fixes #N` / `Refs #N` annotations unless now wrong.
-- Preserve human-authored sections (reviewer notes, test plan checks the user
-  added). Do not overwrite review checkboxes a human ticked.
-- Reflect the **current** set of commits and the **current** behavior — not the
-  historical narrative of how the branch evolved.
-- Keep the title under ~70 chars; details belong in the body.
-- **Route through `wk-gh`.** Any `gh pr edit --body` issued by this skill ends
-  with the canonical outbound footer per `wk-gh` Step 4 — emitted exactly once at
-  the end of the body.
-- **Important:** a body sync is not complete until the footer gate runs on the
-  NEW body string — never the one it replaced. An inherited body is the usual
-  carrier of the wrong block: the commit-message trailer and the canonical
-  outbound footer open alike, so a carried-over trailer passes an "already has a
-  footer" glance. Match the exact canonical string; replace a trailer variant,
-  never preserve it.
-- Unsure whether a section is human- vs agent-authored → ask the user before
-  overwriting. Better to ask once than clobber a hand-edited test plan.
-
-### Step 4: Report
-
-State the outcome explicitly — `Pushed to <branch>. PR #<N> title/body updated`,
-or `… already in sync — no edit needed`. Silence after a push that touched an open
-PR is itself a violation of this rule.
+Full drift detection, refresh rules, and report format:
+[`references/pr-sync.md`](references/pr-sync.md).
 
 ## Post-CI-Fix Squash Offer
 
-### Single trivial follow-up → offer `--amend` at the fix site
+Surface `--amend` for single trivial follow-ups; offer batch squash when ≥3
+`fix(ci):` commits with <50 lines net diff. Never auto-squash — user must approve.
 
-When a CI fix produces one trivial follow-up that is clearly a correction to the
-*immediately prior* commit, surface an explicit `--amend` suggestion for the user
-to approve in the same response — do not silently create a separate commit and
-defer cleanup to retro.
-
-- Auto mode blocks `git commit --amend` as history-rewriting → it needs explicit
-  user confirmation. Ask once, at the fix site, rather than accumulating commits
-  the user must later squash by hand (`git rebase -i HEAD~N`).
-- **The amend prohibition holds regardless of push state.** An unpushed commit is
-  not a license to self-initiate `--amend` — unpushed status changes the blast
-  radius, not the rule. Fold a follow-up by creating a NEW commit; surface the
-  amend/squash as an explicit suggestion for the user to approve.
-- Prior commit already pushed → the amend forces a force-push; flag that in the
-  same ask (force-push rules below apply).
-
-After the CI fix loop (`wk-workflow` Phase 6) exits green, before marking the PR
-ready, offer to squash a long tail of small `fix(ci):` commits into one.
-
-- Threshold: ≥3 commits matching `^fix(\(ci\))?:` ahead of base **and** their net
-  diff <50 lines (single config file or a handful of related ones). Detection
-  commands and ask template:
-  [`references/ci-fix-squash-detection.md`](references/ci-fix-squash-detection.md).
-- **Do not auto-squash** — destructive; the user must approve.
-- **Never squash across user-authored commits.** A user commit mid-chain → leave
-  the chain intact.
-- **Confirm the force-push** a squash forces on an already-pushed branch.
-- **Name the actual fix in the new subject, not the journey** —
-  `fix(ci): ⬇️ downgrade and pin {dep} {version}` beats "squashed CI fix attempts".
-- Thresholds unmet or user declines → leave history alone.
+Full detection thresholds and rules:
+[`references/ci-fix-squash.md`](references/ci-fix-squash.md).
 
 ## Quick Reference
 
