@@ -180,60 +180,35 @@ mutation in [`references/graphql-unresolved-threads.md`](references/graphql-unre
 
 ### Summarize and build queues
 
-Announce the intake state:
+Announce intake state (active/stale counts, human/bot breakdown). Build:
+- **`bot_findings_to_validate`:** active bot comments → Phase 3 classifies each.
+- **Exclusion list:** `(file, line_range, topic)` → prevents Phase 3/4 dupes.
 
-> "Found X existing review comments (Y active, Z resolved as stale). Active breakdown: A human, B bot ({bot_logins}). Carrying N active comments forward; B bot findings queued for validation."
-
-Build two structures from active comments:
-
-- **`bot_findings_to_validate`:** every active bot comment (`user.type == "Bot"`
-  or login ending in `[bot]`). Phase 3 classifies each `Confirmed` / `Refuted` /
-  `Inconclusive`; Phase 4 drives replies from that outcome.
-- **Exclusion list:** active comments keyed by `(file, line_range, topic)` so
-  Phase 3/4 do not duplicate existing concerns.
-
-**Re-scope a bot's severity in both directions.**
-
-- Grep for the trigger activating the path (env var, caller, config, CI wiring); absent → "Confirmed but narrower."
-- Trace one hop downstream for amplified impact (404 target, user-facing surface); beyond bot's framing → "Confirmed but broader."
+Re-scope bot severity: grep for trigger (absent → narrower); trace one hop
+downstream for amplified impact (→ broader).
 
 ### Re-review follow-up
 
 Detect prior comments by the current user (`gh api user --jq '.login'`). If
 present, close the loop on those threads before investigating new issues.
 
-| Status | Detect | Action |
-|---|---|---|
-| **Fix applied** | File changed, concern gone | Validate, then draft acknowledgment + queue a plus-one reaction. |
-| **Fix attempted, still wrong** | File changed, concern persists | Draft follow-up grounded in current code. |
-| **Deferred to ticket** | Author links ticket / says follow-up | Queue plus-one for low severity; nudge in-PR for concern-severity risks. |
-| **Author asked a question** | Last reply is author's question | Draft an answer stating the concrete action required. |
-| **Author pushed back** | Author disagrees / proposes alternative | Acknowledge, agree if warranted, or restate with evidence. |
-| **No response** | No reply, no code change | Leave as-is. |
-| **Already resolved** | `isResolved: true` | Skip. |
+- **Fix applied** (file changed, concern gone) → validate against current code,
+  draft acknowledgment + queue plus-one reaction.
+- **Fix attempted but wrong** (concern persists) → draft follow-up grounded in
+  current code.
+- **Deferred to ticket** → plus-one for low severity; nudge in-PR for concerns.
+- **Author question/pushback** → answer with concrete action or restate with
+  evidence.
+- **No response / Already resolved** → leave as-is / skip.
 
-**Validate claimed fixes before acknowledging.** A modified file proves an
-attempt, not a fix. Reproduce the original concern against current code until the
-named failure mode is gone. Verify any asserted system behavior in source, not PR
-prose.
+**Validate before acknowledging** — a modified file proves an attempt, not a fix.
+Reproduce the concern against current code. Present follow-ups for approval, then
+post via `POST /pulls/{n}/comments/{id}/replies`. Add plus-one reactions
+(fire-and-forget). Resolve fix threads only with user consent.
 
-Present follow-ups for approval, then post approved replies sequentially:
-
-```bash
-gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
-  --method POST -f body="{follow_up_text}"
-```
-
-After each reply, add the queued plus-one reaction to the root comment; log and
-skip reaction failures (fire-and-forget). Resolve acknowledged-fix threads only
-with user consent.
-
-**Thread actions are live.** Replies, reactions, resolutions post immediately and
-cannot ride in a pending review; `in_reply_to` on draft-review comments returns
-422. Honor "let me post it myself" by drafting the full set and posting only after
-approval. New holistic findings still enter the pending review in Phase 5. Dedup
-new findings against your own prior threads: overlapping findings become follow-up
-replies, not new top-level comments.
+**Thread actions are live** — replies/reactions/resolutions post immediately, not
+in a pending review (`in_reply_to` on draft comments → 422). Honor "let me post
+it myself". Dedup new findings against prior threads.
 
 ## Phase 3: Adversarial Investigation — delegate to [`wk-adversarial-review`](../adversarial-review/README.md)
 
@@ -272,23 +247,12 @@ implementation or a minimal faithful harness with adversarial/edge inputs and
 record PASS/FAIL before Phase 4. Never compose comments from un-run reasoning; a
 finding you could have executed but only argued is unverified.
 
-**HARD RULE — check a figure's derivation before contradicting it.** The pass above
-covers executable logic only; prose arithmetic and timing constants are where
-delegated hits misread most.
+**HARD RULE — check a figure's derivation before contradicting it.** Grep the
+artifact for derivation rules; read timing constants' full comment blocks. Refuted
+but derivation unstated → clarity suggestion, not a drop.
 
-- Number asserted wrong → grep the artifact for its derivation rule, usually
-  sections away.
-- Replacing a timing constant → read its whole comment block; authors often
-  pre-refute the obvious retry there.
-- Refuted but derivation unstated → reframe as a clarity suggestion, never a drop.
-
-### Discriminate environmental failures from PR findings
-
-Before treating a local test/command failure as a PR finding:
-
-- Failing line not in the diff → strong tell it is environmental, not PR-introduced.
-- Re-run under the project's pinned interpreter, never whatever is first on `PATH`
-  — version sources per the `wk-adversarial-review` runtime matrix.
+**Environmental vs PR failures:** failing line not in the diff → environmental.
+Re-run under the project's pinned interpreter.
 
 ### Validate bot findings
 
@@ -324,12 +288,9 @@ one to two sentences. Tag each with a severity prefix:
 
 Body shape: `**{severity}:** {observation}` then optional context/evidence/fix.
 
-**HARD RULE — attribute agent evidence explicitly.** Render every evidence-backed
-claim with an agent stem — "My agent verified/simulated/ran `<X>` and found `<Y>`" —
-never a bare "I verified". Reserve bare first-person for the human's own posture
-("Approving with concerns"). Applies to inline comments and the review body — the
-reviewer posts on the user's identity, so a bare "I verified" misattributes a
-machine check to the human.
+**HARD RULE — attribute agent evidence explicitly.** Use "My agent verified/ran
+`<X>` and found `<Y>`", never bare "I verified" — the reviewer posts on the
+user's identity.
 
 When proposing a concrete replacement, prefer a GitHub ` ```suggestion ` fence
 over a language fence, only for target lines inside the PR diff:
@@ -453,60 +414,26 @@ finding's thread (adding evidence to it).
 
 The body is the verdict on the change as a whole, not an investigation log.
 
-- **HARD RULE — first clause is the verdict state, never a praise adjective.** Open
-  with `LGTM 🚀` (clean), `LGTM, one minor nit` (small items), or `Approving with
-  concerns — <biggest risk>` (concerns). Ban praise-adjective openers ("Solid",
-  "well-scoped", "great") — no information, reads as AI filler; genuine praise goes
-  in a later line, not the opener.
-- **HARD RULE — LGTM is one line.** No concerns → body is one line max (`LGTM 🚀`
-  or equivalent) plus the footer.
-- **Body must not restate an inline finding.** Diff each body paragraph against the
-  inline `comments[]`; cut any that duplicates one. The body carries the verdict,
-  change-spanning concerns with no single inline anchor, and at most a one-line
-  pointer to the key thread ("see the L178 thread") — never a paragraph re-explaining
-  an inline comment.
-- Apply the footer from GitHub interaction routing at payload-render time.
-- Fold bot counter-evidence before the footer; only refuted/new-evidence cases earn
-  a per-thread anchor.
-
-Use emojis only where they aid scanning; outside LGTM, keep to one to three short
-paragraphs. Never emit: blast-radius pre-judgment before `wk-arch-review` runs;
-process meta-commentary about skills/tools; structurally-obvious findings ("no code
-concerns" for doc-only diffs); diff narration; bot re-narration.
+- **HARD RULE — verdict-first opener.** `LGTM 🚀` (clean, one line + footer),
+  `LGTM, one minor nit`, or `Approving with concerns — <risk>`. Ban
+  praise-adjective openers ("Solid", "great") — reads as AI filler.
+- **Body must not restate inline findings.** Carry verdict + change-spanning
+  concerns only; at most a one-line pointer to a key thread.
+- Apply `wk-gh` footer at render time. Fold bot counter-evidence before footer.
+- Never emit: blast-radius pre-judgment, process meta-commentary, diff narration,
+  bot re-narration, structurally-obvious findings for doc-only diffs.
 
 ### After posting
 
-**HARD RULE — fire the `open` on every review create AND recreate**, independent of whether the POST response parsed. If the create response fails to parse (e.g. a jq error), re-query the review to recover `html_url` — verify separately, but never drop the open.
+**HARD RULE — `open` on every create/recreate**, even if the POST response fails
+to parse (re-query `html_url`). Print the URL; browser failures are non-fatal.
 
-Capture `html_url` from the POST response and open it:
-
-```bash
-case "$(uname -s)" in
-  Darwin)  open "$HTML_URL" ;;
-  Linux)   xdg-open "$HTML_URL" >/dev/null 2>&1 || true ;;
-  MINGW*|MSYS*|CYGWIN*) start "" "$HTML_URL" ;;
-esac
-```
-
-Always print the URL alongside the open call; browser-launch failures are
-non-fatal.
-
-**Pending-review verification: trust `path` + `body`, not `line`.** GitHub returns
-`line: null` / `start_line: null` for pending-review inline comments until
-submission — normal API behavior, not a payload error. Verify via `path` and a body
-prefix match. After submission the same endpoint returns resolved lines.
+**Pending-review verification:** trust `path` + `body`, not `line` — GitHub
+returns `line: null` for pending comments until submission.
 
 Confirm success:
 
 > "Pending review created with N comments — opened at {html_url}. Submit on GitHub when ready."
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| "review this PR" | Full review; delegates investigation to wk-adversarial-review; creates a pending draft after the summary unless the user pauses. |
-| "re-review this PR" | Detects prior comments, follows up with consent, then reviews new issues. |
-| "just investigate this PR" | Phases 1-3 only; no review comments created. |
 
 ## Requirements
 

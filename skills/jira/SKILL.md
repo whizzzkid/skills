@@ -54,43 +54,21 @@ PR merged  ──► Done + comment
 
 ---
 
-## Trigger conditions
+## Trigger rules
 
-Fires automatically on artifact mentions **and** at lifecycle points.
-Run only the matching subset of stages each time → never re-do work
-already done.
+Each stage describes its own trigger. Run only matching stages per invocation.
+If undeterminable → default to Stage 1 (detect), report findings, never
+guess and transition.
 
-| Trigger | Stages to run |
-|---------|---------------|
-| Jira URL appears in a user prompt, file, or agent context (`https?://[^/]+\.atlassian\.net/...` or `/browse/<KEY>`) | 0, 1, 6 (surface) |
-| Jira key token (`[A-Z][A-Z0-9]+-\d+`) appears in a prompt, branch name, commit, PR body, or recent agent message | 0, 1, 6 (surface) |
-| Agent does any development work on a detected ticket and Stage 2 has not completed this branch (first edit/commit on a fresh branch, **or** a mid-branch join) | 0 (MCP), 1 (detect), 2 (start) |
-| About to create a PR (called from `wk-pr`) | 0, 1, 3 (title + description) |
-| PR transitioning from draft → ready | 0, 1, 4 (In Review) |
-| PR merged (detected during `wk-pr` post-merge or via `gh pr view --json state`) | 0, 1, 5 (Done) |
+**HARD RULE — auto-invoke on context.** If a Jira URL or key is in the
+agent's context → Stage 0 + 1 + 6 run before any response depending on
+ticket context. A Jira key/URL in the session-opening prompt is a
+development claim — run Stage 0 + 1 + 2 **before** `wk-workflow` Phase 1
+planning.
 
-If trigger undeterminable → default to detect (Stage 1), report what was
-found, never guess and transition.
-
-**HARD RULE:** never assume "wasn't told to look up Jira." If a Jira URL
-or key is in the agent's context → Stage 0 + 1 + 6 run before any other
-response that depends on ticket context. Skip only when MCP unavailable
-(silent-skip rule).
-
-**HARD RULE — wk-jira claim precedes wk-workflow Phase 1.** A Jira key/URL
-in the session-opening prompt is a development claim, not a side-effect of
-the work. Run Stage 0 + 1 + 2 (surface + assign + In Progress + sprint +
-comment) **before** `wk-workflow` Phase 1 planning begins — `wk-workflow`'s
-"any development task" trigger must not fire first and skip the claim. The
-ticket lands In Progress at session start, not retroactively after the PR
-exists.
-
-**HARD RULE — footer on every agent-authored Jira body.** Every Jira body this
-skill composes ends with the canonical `wk-gh` Step 4 footer, injected at write
-time — lifecycle comments (`addCommentToJiraIssue`), description enrichments
-(`editJiraIssue`), and any `gh pr edit --body`. A terse factual lifecycle
-comment is not an exemption; the rule is every agent-authored outbound body
-across all external systems, not GitHub-only.
+**HARD RULE — footer on every agent-authored Jira body.** Every body this
+skill composes ends with the canonical `wk-gh` Step 4 footer — lifecycle
+comments, description enrichments, and `gh pr edit --body`.
 
 ---
 
@@ -100,27 +78,14 @@ across all external systems, not GitHub-only.
 ToolSearch select:mcp__claude_ai_Jira_Confluence__getJiraIssue,mcp__claude_ai_Jira_Confluence__transitionJiraIssue,mcp__claude_ai_Jira_Confluence__editJiraIssue,mcp__claude_ai_Jira_Confluence__searchJiraIssuesUsingJql,mcp__claude_ai_Jira_Confluence__getTransitionsForJiraIssue,mcp__claude_ai_Jira_Confluence__lookupJiraAccountId,mcp__claude_ai_Jira_Confluence__addCommentToJiraIssue
 ```
 
-- Connector unavailable (tool search returns no matches) → **skip
-  silently**: log one-line note ("Jira MCP not connected; ticket sync
-  skipped"), let development workflow proceed.
-- Direct user to https://claude.ai/customize/connectors only when they
-  explicitly ask why a ticket didn't move.
-- Available → cache resolved tool names for the session.
-- **HARD RULE — resolve the Cloud tenant FIRST, as the mandatory first API
-  call.** Call `getAccessibleAtlassianResources` (no params) before any other
-  Jira/Confluence API call; use the returned UUID `cloudId` for every subsequent
-  call and cache the cloudId/hostname for the session. **Never guess an
-  `<org>.atlassian.net` slug or derive the cloudId/hostname from the org name** —
-  tenant subdomains do not reliably match the org name, so a guessed slug returns
-  404 ("Failed to fetch tenant info for cloud ID"). This is a gate, not guidance:
-  the same 404 recurs whenever the resolve step is skipped.
-
-**HARD RULE:** never read or write Jira via browser, WebFetch, or a
-web-search agent. All Jira reads/writes go through the MCP connector.
-Rationale: browser path is slower, escapes the agent's context, can spawn
-an extra agent, produces unstructured output the agent must re-parse. MCP
-unavailable → do not fall back to browser; surface the connector gap per
-silent-skip rule, let the user decide.
+**HARD RULE — MCP-only, cloudId-first.** All Jira reads/writes go through
+the MCP connector — never browser, WebFetch, or web-search. On availability:
+- Unavailable → skip silently, log one line, let dev workflow proceed. Point
+  to https://claude.ai/customize/connectors only when user asks.
+- Available → call `getAccessibleAtlassianResources` (no params) as the
+  mandatory first API call; cache the returned `cloudId`/hostname. Never
+  guess an `<org>.atlassian.net` slug — it 404s when the subdomain diverges
+  from the org name.
 
 ---
 
@@ -230,29 +195,8 @@ Then run **Active-sprint assignment** and **Progress comment** subroutines
 
 ### Active-sprint assignment (subroutine)
 
-Invoked after status transition in Stage 2 (→ In Progress) and Stage 4
-(→ In Review). Failure mode: a ticket with no sprint lands in the
-backlog — invisible on the sprint board, absent from velocity tracking.
-
-- Find the active sprint on the ticket's project board:
-
-  ```
-  mcp__claude_ai_Jira_Confluence__searchJiraIssuesUsingJql(
-    jql="project = <PROJECT> AND sprint in openSprints()")
-  ```
-
-  Read the sprint field from any returned issue → active sprint id.
-- Set it on the ticket via `editJiraIssue`. Sprint field id is custom per
-  instance (commonly `customfield_10020`) → resolve from issue/field
-  metadata rather than assuming the number, then write the value in the
-  shape the field expects (often `[{ id: <sprintId> }]`).
-- Skip silently when no active sprint exists or field unavailable — not
-  every board runs sprints.
-- **Verify the write landed.** After `editJiraIssue`, re-read the sprint field.
-  An active sprint was found but the field is still null → do not report
-  "sprint <name>"; surface the unset field so the ticket is not silently left
-  in the backlog. Silent-skip covers only the no-active-sprint case, never a
-  failed write masquerading as one.
+Assigns the ticket to the active sprint so it appears on the board. Full
+procedure: [`references/active-sprint.md`](references/active-sprint.md).
 
 ### Progress comment (subroutine)
 
@@ -289,45 +233,17 @@ enforce two things.
 
 ### Title suffix
 
-Every PR title carries the key in **square brackets** at the end of the
-subject:
-
-```
-feat(auth): ✨ OAuth login [<KEY>]
-fix(ci): 💚 pin dependency [<KEY>]
-```
-
-- One key per title. Work spanning multiple tickets → choose the primary
-  one, reference others in the body.
-- Square brackets, no parens, no colon prefix. Format `[<KEY>]`.
-- Bracket suffix sits **after** the conventional-commit subject and any
-  classifier emoji → last token in the title.
-- Title already has a key suffix → do not duplicate. Existing key wrong →
-  ask before replacing.
+Append `[<KEY>]` as the last token in the title (after emoji):
+`feat(auth): ✨ OAuth login [<KEY>]`. One key per title; multiple tickets →
+primary in title, others in body. Do not duplicate; wrong key → ask before
+replacing.
 
 ### Description reference
 
-PR body must include a section linking back to the ticket so reviewers can
-navigate to context:
-
-```markdown
-## Ticket
-
-[<KEY>](https://<your-domain>.atlassian.net/browse/<KEY>) — <ticket summary>
-```
-
-- Place `## Ticket` near the top, just under the auto-generated
-  `## Summary`.
-- Pull `<ticket summary>` from the Jira issue (`fields.summary`) so the
-  link carries human context. Use the canonical Atlassian URL the MCP
-  returns.
-- `wk-pr` already built a description → **insert** the `## Ticket` section
-  rather than overwriting the rest. Section already exists → refresh its
-  content if the ticket summary changed.
-- **Important — link only the ticket being worked on.** Emit exactly one ticket link
-  (derived from the branch/commit). Never add `Related:`, `Epic:`, or
-  parent-ticket lines — the PR body is scoped to the work item, not the epic
-  hierarchy — unless the user explicitly requests them.
+Insert `## Ticket` section (near top, under `## Summary`) with
+`[<KEY>](<atlassian-url>) — <summary>`. Pull summary from `fields.summary`.
+Insert into existing body; refresh if changed. Link only the current ticket —
+no `Related:`/`Epic:` unless explicitly requested.
 
 **HARD RULE — footer placement in a PR body.** Per the top-level footer rule,
 keep the `wk-gh` Step 4 footer at the very end of the body, after the
@@ -381,45 +297,9 @@ reviewers without the "why".
 
 ## Description quality gate (subroutine)
 
-Invoked from any writable stage. Idempotent — safe to call repeatedly per
-branch; skips silently after the first successful append.
-
-- Evaluate `fields.description`. Treat as **thin** when any hold:
-  - Empty, null, or whitespace-only.
-  - Body text (after stripping markup) fewer than 40 characters.
-  - Body repeats only the ticket summary or a placeholder (`TBD`, `n/a`,
-    `see slack`, etc.).
-- Thin → propose appending a structured context block. Never overwrite
-  existing content — wrap it as `<existing details>`.
-- Pre-fill `Date` with today's date (UTC, `YYYY-MM-DD`). Pre-fill
-  `Problem` / `Decision` / `Trade-offs` / `Context` from the
-  highest-signal source available at this stage (branch name, recent
-  prompts, PR title/body, linked commits); leave empty otherwise.
-- Append template:
-
-  ```
-  <existing details>
-
-  ---
-
-  Date: <YYYY-MM-DD>
-  Problem:
-  Decision:
-  Trade-offs:
-  Context:
-
-  ---
-  ```
-
-- Confirm before writing — Manual ticket operations HARD RULE applies.
-  Present the proposed merged description, wait for explicit approval,
-  then call `editJiraIssue`.
-- Skip silently when description already exceeds the thinness threshold OR
-  this branch already had a successful enrichment append this session.
-
-Report once on append:
-
-> "Jira: {KEY} description enriched with context block."
+Enriches thin ticket descriptions with a structured context block. Full
+criteria, template, and flow:
+[`references/description-gate.md`](references/description-gate.md).
 
 ---
 
@@ -518,49 +398,23 @@ there is no delete API.
 without explicit approval of the proposed change set. Auto mode does not
 exempt — Jira items are visible to the whole team.
 
-- Default `issueTypeName` to `"Story"` when creating an issue. Pick a
-  different type only when the context names one (`Bug`, `Task`, `Epic`).
-  Never fall back to `"Task"` as a generic default.
-
-| Operation | Confirmation required | Command pattern |
-|-----------|----------------------|-----------------|
-| Create issue(s) | Yes — show numbered list of titles before writing | Present draft set, wait for "yes" / "go ahead" |
-| Edit issue fields | Yes — if ambiguous source or batch | Show diff of proposed changes |
-| Transition to terminal state | Yes — run Child-completion gate, then confirm target state | Block on open children; confirm explicitly |
-| Assign to user (auto lifecycle) | No — auto-assign as part of Stage 2 | `editJiraIssue` with assignee |
-| Post lifecycle comment (auto) | No — additive factual status note, part of the claim/PR/merge events | `addCommentToJiraIssue` |
-
-- After creating issue(s), run **Active-sprint assignment** subroutine on each new issue — an issue created without a sprint lands in the backlog, invisible on the sprint board.
+- Default `issueTypeName` to `"Story"`. Different type only when context names
+  one. Never fall back to `"Task"`.
+- **Confirm-required:** create, edit (ambiguous/batch), terminal transition
+  (child-completion gate first). **Auto (no confirm):** assign (Stage 2),
+  lifecycle comments.
+- After creating, run Active-sprint assignment on each new issue.
 
 ---
 
 ## Conflict and missing-state handling
 
-| Situation | Behavior |
-|-----------|----------|
-| Ticket already in target state | No-op, no report |
-| Target state has no transition from current | Skip, report gap once: "Jira: {KEY} cannot transition from {current} to {target}; check board workflow." |
-| Multiple matching transitions | Prefer the one whose name is a closer match; tie-break: alphabetic |
-| Ticket assignee already set, but to someone else | Do **not** reassign; the work may genuinely be reassigned. Report once: "Jira: {KEY} is assigned to @<them>; not changing." |
-| Branch name has a key but the ticket was deleted / inaccessible | Report gap, skip transitions for this branch |
-| MCP returns auth error | Report once with the connector URL; do not block development |
-| Auto mode / permission classifier blocks a lifecycle write | Surface the block once, ask the user to confirm intent or add a Jira-write permission rule; do not silently retry or spin on denials (see Stage 2 HARD RULE) |
-
-Never block a commit, push, or PR action on a Jira sync failure — ticket
-state is a side-effect of the work, not a precondition for it.
-
----
-
-## Quick Reference
-
-| Trigger | Stages |
-|---------|--------|
-| Jira URL or key in prompt / file / context (no dev intent) | 0, 1, 6 |
-| Any dev work on a detected ticket, Stage 2 not yet done this branch | 0, 1, 2 |
-| `wk-pr` creating/updating PR | 0, 1, 3 |
-| `gh pr ready` succeeds | 0, 1, 4 |
-| `gh pr view` shows MERGED | 0, 1, 5 |
-| Ambiguous: multiple keys found | 1 only — ask |
-| MCP unavailable | 0 only — silent skip |
+- **Already in target state** → no-op. **No valid transition** → skip, report
+  gap once. **Multiple matches** → prefer closest name match, tie-break
+  alphabetic.
+- **Assignee set to someone else** → do not reassign; report once.
+- **Any Jira failure** (auth error, deleted ticket, permission denial) → report
+  once, never block a commit/push/PR. Ticket state is a side-effect, not a
+  precondition.
 
 ---

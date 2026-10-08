@@ -128,35 +128,13 @@ gh pr checks {number} --repo "{repo_with_owner}" --json name,state,required \
   | jq '.[] | select(.required == true) | {name, state}'
 ```
 
-- **HARD RULE — a `--json` field error must degrade, never block; the `required`
-  field is version-dependent.** `gh pr checks --json …,required` errors
-  `Unknown JSON field: "required"` on `gh` builds that omit it. On that error,
-  fall back to per-check conclusions from the check-runs API against
-  `{head_sha}`, and cross-verify with the CI provider's own CLI when available:
-  ```bash
-  gh api repos/{owner}/{repo}/commits/{head_sha}/check-runs \
-    --jq '.check_runs[] | {name, status, conclusion}'
-  ```
-  Treat `conclusion` `success`/`neutral`/`skipped` as passing. Never let a
-  `--json` field error stall the gate — degrade to an alternate source.
-- **Important — poll and gate on `required == true` only.** The `jq` filter above
-  drops non-required checks for a reason: informational checks (security scanners,
-  dependency bots) often queue indefinitely. Never wait on, poll, or block the
-  merge for a non-required check — report it as informational, not a blocker.
-- Gate required checks by result:
-  - `SUCCESS` passes; `NEUTRAL`/`SKIPPED` pass only when repository policy allows.
-  - `FAILURE`/`ERROR` → block:
-    > "CI is not green. Failing checks:\n- {name}: {url}\n\nFix the failures and
-    > re-run `/wk-pr-merge` when CI is green."
-  - `IN_PROGRESS`/`PENDING` → block:
-    > "CI is still running ({name}). Re-run once all checks complete."
-  - `CANCELLED` → apply [`wk-gh`](../gh/README.md)'s same-head replacement rule; a newer live replacement waits,
-    otherwise block.
-- Always verify CI against `{head_sha}` — a stale run from a prior commit does
-  not count. `gh pr checks` showing a different SHA → block until a new run starts.
-- `mergeStateStatus: BLOCKED` with listed required checks green → run
-  [`wk-gh`](../gh/README.md)'s ruleset-minus-HEAD diagnostic. A required context
-  with no run is absent from the list, not green.
+- `--json required` field error → degrade to check-runs API
+  (`repos/{owner}/{repo}/commits/{head_sha}/check-runs`), never block.
+- Gate on **required checks only**; non-required are informational.
+- `SUCCESS` passes; `FAILURE`/`ERROR` → block; `IN_PROGRESS`/`PENDING` → block;
+  `CANCELLED` → apply `wk-gh`'s same-head replacement rule.
+- Always verify against `{head_sha}` — stale runs don't count.
+- `mergeStateStatus: BLOCKED` with green checks → `wk-gh` ruleset diagnostic.
 
 ## Step 3: Verify reviews are approved
 
@@ -180,24 +158,8 @@ gh pr view {number} --repo "{repo_with_owner}" --json reviewDecision,reviews \
 
 **HARD RULE — route unresolved comments to [`wk-pr-resolve`](../pr-resolve/README.md) first.**
 
-- Fetch unresolved threads via GraphQL before any merge action:
-
-  ```bash
-  gh api graphql -f query='
-    query($owner:String!, $repo:String!, $number:Int!) {
-      repository(owner:$owner, name:$repo) {
-        pullRequest(number:$number) {
-          reviewThreads(first:100) {
-            nodes { id isResolved isOutdated path line
-              comments(first:1) { nodes { author { login } body } }
-            }
-          }
-        }
-      }
-    }' -F owner="{owner}" -F repo="{repo}" -F number={number} \
-    --jq '.data.repository.pullRequest.reviewThreads.nodes
-          | map(select(.isResolved == false and .isOutdated == false))'
-  ```
+- Fetch unresolved threads via the shared GraphQL query in
+  [`../pr-review/references/graphql-unresolved-threads.md`](../pr-review/references/graphql-unresolved-threads.md).
 
 - **HARD RULE — never preemptively resolve OR block on the author's own
   self-review threads.** They are informational design-rationale notes, not the
@@ -298,103 +260,24 @@ Merge consumes the completion gate's clearance; it never dispatches review.
     ```bash
     gh pr edit {child} --base {base} --repo "{repo_with_owner}"
     ```
-  - **HARD RULE — an unconfirmed child retarget is a HARD STOP; never merge past it.**
-    Re-query children after retargeting and verify EVERY child's
-    `baseRefName == {base}`. Any child still based on `{head}` — after the
-    transient-error retries below are exhausted — means the retarget did not land →
-    **stop, do NOT run the merge command.** Merging with `--delete-branch` deletes
-    `{head}` and closes/orphans that child; a failed retarget followed by a merge is
-    exactly how children get silently closed. Report the un-retargeted child numbers
-    and the failure to the user; let them retarget manually or fix permissions, then
-    re-run. Never continue on a partial or failed retarget.
-  - **Transient 500-class errors here are benign — do not pause the merge.** The
-    `gh pr edit --base` (REST) path above is the robust one; if any GraphQL
-    mutation in this flow returns a 500-class error ("Something went wrong while
-    executing your query"), it is a retryable transient — retry up to 2×, then
-    use the REST equivalent. Never treat it as a hard failure.
+  - **HARD RULE — unconfirmed retarget = HARD STOP.** Re-query after retarget;
+    any child still on `{head}` → stop, do NOT merge. Transient 500s → retry
+    2x, then use REST `gh pr edit --base`.
 
 ```bash
 gh pr merge {number} {selected-method-flag} --delete-branch --repo "{repo_with_owner}"
 ```
 
-- **Always pass `--repo "{repo_with_owner}"`** — forces API-only merge;
-  without it, `--delete-branch` runs a local base checkout that fails inside
-  worktrees (`fatal: '<base>' is already used by worktree`).
+- **Always pass `--repo "{repo_with_owner}"`** — forces API-only merge; without
+  it, `--delete-branch` runs a local base checkout that fails inside worktrees.
 - **HARD RULE — select from the active ruleset before merging.** Read
-  `allowed_merge_methods`, then choose the first allowed method in preference
-  order **`--squash`, `--rebase`, `--merge`**. Never probe a known-forbidden
-  method. **Read the ruleset, not the
-  repo-level fields** — `repos/{owner}/{repo}`'s `allow_*_merge` describe repo
-  *settings* and report every method allowed even where a ruleset forbids it
-  (`wk-gh` Step 3):
-  ```bash
-  gh api repos/{owner}/{repo}/rulesets/{id} \
-    --jq '.rules[] | select(.type=="pull_request").parameters.allowed_merge_methods'
-  ```
-- Merge fails with a policy error → re-read active rulesets before retrying;
-  never infer that another method is allowed from the first failure.
-- **Server-side stack flag → async merge fallback.** `gh pr merge` may fail when
-  GitHub's org-level stacked-PRs flags the PR server-side, independent of local
-  `gh stack view`. Fallback: (1) `gh pr merge --auto`; (2) `gh stack merge
-  {number} --yes --merge-method {method}`; (3) both classifier-blocked → surface
-  `gh api repos/{owner}/{repo}/pulls/{number}/merge --method PUT -f
-  merge_method={method}` for user to run. On user merge, re-run Step 1.
-- **Squash collapses the branch into one new commit, so every per-branch SHA
-  recorded elsewhere becomes unreachable from the base.** Before squashing a branch
-  whose individual commits are cited outside git (plan doc, PR body, tracking
-  issue), tell the user the citations will break and agree the remap first — a
-  squash-only repo makes this a hard constraint, not a preference.
-- **HARD RULE — host permission-classifier denial is a failure mode distinct from
-  branch protection.** A "Blocked by classifier" / permission-layer denial of `gh
-  pr merge` is NOT a non-zero merge error → do **not** retry verbatim and do
-  **not** fall back to another merge method (the host layer blocks irreversible
-  actions independent of the skill's own tool allowlist; a different method is
-  denied identically). Explain the two-layer model (skill allowlist vs. host
-  classifier) and that an explicit `Bash(gh pr merge:*)` **settings.json** rule —
-  or a manual user merge — is required to proceed.
-  - A manual or past-tense merge by the user after denial IS the already-`MERGED`
-    path — re-run Step 1; on `state == "MERGED"`, resume Step 7. Never re-attempt.
-- **Post-merge read-only verification needs standing allow rules.** Step 6's
-  `gh pr view` / `gh pr checks` state polls are blocked by the auto-mode
-  classifier unless `Bash(gh pr view:*)` and `Bash(gh pr checks:*)` are in the
-  allowed tools — recommend adding both as a prerequisite. Run each read-only call
-  as a standalone invocation: an allow rule matches only when the allowed command
-  is the whole invocation, so a pipe to `grep`/`jq` or a compound (`&&`, e.g.
-  `rm … && gh pr view`) re-triggers the classifier. Do any grep/jq filtering in a
-  separate step (`--jq` is a `gh` flag, not a pipe → still matches).
-- **Squash rejected with `base branch policy prohibits the merge` and the only
-  unresolved threads left are the author's own self-review** → this is the sole
-  case that resolves them (not a method fallback — merge-commit won't help). Ask
-  the user first; on yes, mark each resolved by `id`, then retry the squash:
-  ```bash
-  gh api graphql -f query='mutation($id:ID!){resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}' -F id=<threadId>
-  ```
-  Never auto-resolve self-authored threads without the user's explicit yes.
-- `--delete-branch` deletes the head branch after merge. Direct `/wk-pr-merge`
-  authorizes that documented default; `--keep-branch` opts out. Natural-language
-  merge request with no cleanup preference and disabled repository default → ask:
-  > "Delete the branch `{head}` after merge? (yes / no)"
-- **HARD RULE — never declare "Merge complete" until `state == "MERGED"`.**
-  `gh pr merge --auto` and merge-queue repos return success while the PR is
-  only *queued*; an immediate state check returns `OPEN`. Poll until merged or
-  ~60s timeout:
-  ```bash
-  for i in $(seq 1 12); do
-    state=$(gh pr view {number} --repo "{repo_with_owner}" --json state --jq .state)
-    [ "$state" = "MERGED" ] && break
-    sleep 5
-  done
-  gh pr view {number} --repo "{repo_with_owner}" --json state,mergeCommit --jq '{state, mergeCommit: .mergeCommit.oid}'
-  ```
-- Timeout (`state != "MERGED"`) → re-fetch blockers, stop, do **not** proceed to
-  Step 7 — never log a null SHA as success:
-  ```bash
-  gh pr view {number} --repo "{repo_with_owner}" --json mergeStateStatus,reviewDecision
-  # plus the Step 4 unresolved-threads query
-  ```
-  > "Auto-merge queued but PR has not merged after ~60s. Likely blockers:
-  > {unresolved threads / failed checks / changes requested}."
-- Record `{merge_sha}` (the merge commit OID) only once `state == "MERGED"`.
+  `allowed_merge_methods` via `wk-gh` Step 3; choose first allowed in preference
+  order `--squash`, `--rebase`, `--merge`. Policy error → re-read rulesets.
+- Edge cases (server-side stack flag, squash SHA citations, classifier denial,
+  post-merge verification, self-review thread resolution, branch deletion,
+  merge verification poll):
+  [`references/merge-edge-cases.md`](references/merge-edge-cases.md).
+- Record `{merge_sha}` only once `state == "MERGED"`.
 
 ## Step 7: Transition the linked ticket
 
@@ -418,88 +301,30 @@ Collect deferred items from three sources:
    ticket reference.
 3. **Asana tasks** from Step 7 that require manual transition.
 
-Format the output:
+Output: `## Merge complete` with ticket transitions and follow-up items.
 
-```
-## Merge complete ✓
-
-PR #{number} merged as {merge_sha} into `{base}`.
-
-### Ticket transitions
-- ✅ {JIRA-KEY} → Done
-- ✅ GitHub issue #{N} → closed
-- ⚠️ Asana {url} — transition manually
-
-### Follow-ups and action items
-- {item} — {why deferred} → suggested tracking: {jira/github issue}
-- ...
-
-(No follow-ups.) ← emit only when the list is empty
-```
-
-Follow-ups present → route each before cleanup via `AskUserQuestion`:
-  - **Start now** — work on it in this session (worktree stays).
-  - **Handoff prompt** — self-contained prompt for a new agent; include PR link,
-    merge SHA, follow-up description, and relevant file paths.
-  - **File ticket** — create a Jira/GitHub issue per the existing offer flow.
-- Collect routing BEFORE Step 10 — options 1 and 2 need local context that
-  cleanup destroys.
+Follow-ups present → route each via `AskUserQuestion` BEFORE Step 10 (cleanup
+destroys local context): **Start now** | **Handoff prompt** (self-contained for
+new agent) | **File ticket**.
 
 ## Step 9: Capture session learnings
 
-- **HARD RULE — Steps 7-10 are one unit; a user question mid-flow is not a stop
-  signal.** After answering any digression during Steps 7-10, note the pending
-  step and resume it immediately. Treating a question as session termination
-  leaves the ticket un-transitioned, the retro uncaptured, or the worktree
-  uncleaned. Never wait for an explicit "did you finish?" re-prompt.
-- **HARD RULE — context compaction does not reset the Steps 7-10 unit.** A
-  mid-turn compaction is indistinguishable from a clean start to a resuming
-  session. When resuming from a compaction summary that shows `wk-pr-merge` was
-  active with any of Steps 7-10 listed pending, execute those steps before any
-  other work — the compaction summary is the authoritative source for which
-  steps remain.
-- Invoke [`wk-retro`](../retro/README.md) to reflect on the full PR session —
-  implementation, review back-and-forth, and merge:
-  ```
-  Skill(wk-retro)
-  ```
-- Run after the merge succeeds — session is complete and its decisions are
-  freshest now.
-- Failure mode: merging ends the session; ad-hoc context (design choices,
-  reviewer trade-offs) is lost if not distilled before the worktree is cleaned.
+- **HARD RULE — Steps 7-10 are one atomic unit.** A user question mid-flow is
+  not a stop signal; answer and resume. Context compaction does not reset the
+  unit — resume pending steps from the compaction summary.
+- Invoke `Skill(wk-retro)` immediately after merge — ad-hoc context is lost
+  once the worktree is cleaned.
 
 ## Step 10: Clean up the current worktree
 
-- **HARD RULE — worktree cleanup is the point of no return; run it dead last,
-  after every question and accepted Step 8 follow-up is resolved.** Removal destroys
-  local context; a pending reply blocks cleanup. Never clean early.
-- `{entered_merged} == true` → audit the remote head; this run never executed
-  `--delete-branch`:
-  ```bash
-  gh pr list --repo "{repo_with_owner}" --base {head} --state open --json number,headRefName
-  gh api "repos/{owner}/{repo}/git/matching-refs/heads/{head}"
-  ```
-  - Remote absent → continue.
-  - Remote present + open child based on `{head}` → apply Step 6's child-retarget
-    procedure to each, then re-query.
-    - Any child still based on `{head}` → retain the remote, report each child,
-      and continue local cleanup; never delete a branch an open child needs.
-  - Remote present + no child, initially or after retargeting → apply Step 6's
-    branch-deletion preference. If unresolved, ask before cleanup. On delete,
-    run `gh api --method DELETE "repos/{owner}/{repo}/git/refs/heads/{head}"`,
-    re-query, and stop if the ref survives.
-- Remove the local worktree last using
+- **HARD RULE — run dead last, after every Step 8 follow-up is resolved.**
+  Removal destroys local context; a pending reply blocks cleanup.
+- `{entered_merged} == true` → audit remote head for open children; retarget
+  per Step 6 before deleting the remote branch.
+- Local worktree removal:
   [`references/worktree-cleanup.md`](references/worktree-cleanup.md).
 
 ---
-
-## Quick Reference
-
-| Invocation | Behavior |
-|------------|----------|
-| `/wk-pr-merge` | Merge PR for current branch; delete branch |
-| `/wk-pr-merge 123` | Merge PR #NNN; delete branch |
-| `/wk-pr-merge --keep-branch` | Merge current PR; retain branch |
 
 ## Requirements
 

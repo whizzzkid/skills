@@ -168,13 +168,9 @@ Agent roster:
 - **Jira + Confluence:** assigned tickets needing action; ticket mentions;
   Confluence mentions. ToolSearch: `"jira"`, `"confluence"`.
 
-Soft/hard block handling per canonical subagent contract: OAuth soft blocks
-degrade with an authorization CTA. A `tool_unavailable` return =
-capability-inheritance failure — replay that domain in the main context: every
-query window, output field, and downstream orchestrator action before compile.
-Only a domain still toolless *after* that replay counts as a missing connector:
-on a required evidence domain it aborts publication per Core hard rules, on any
-other domain it degrades.
+Block handling per subagent contract: OAuth soft blocks degrade with CTA.
+`tool_unavailable` → replay domain in main context; still toolless after replay
+= missing connector (required → abort, optional → degrade).
 
 #### Jira full open-ticket sweep
 
@@ -247,43 +243,14 @@ Sort and mark urgency per the rendering contract.
 
 ### Stage 4: Write live.md
 
-- Re-read `$LIVE_FILE` immediately before writing. Preserve every
-  `data-done="true"` span; never overwrite a done item with pending. Prefer
-  `Edit` over full `Write` when structure allows.
-- Write today's live page as one `<div class="sitrep-row">` of three
-  `<div class="sitrep-col">`; no blank lines inside any `<div>`. Assign unique
-  sequential `data-t` IDs.
+Re-read `$LIVE_FILE` before writing. Preserve `data-done="true"` spans. Prefer
+`Edit` over full `Write`. Write as `sitrep-row` / three `sitrep-col` divs (no
+blank lines inside); frontmatter: `date`, `employer`, `generated_with`,
+`generated_at`. Assign unique sequential `data-t` IDs.
 
-```markdown
----
-date: {TODAY}
-employer: {EMPLOYER}
-generated_with: {SKILL_VERSION}
-generated_at: {ISO_8601_UTC}
----
-
-# Live — {TODAY}
-
-<div class="sitrep-row">
-<div class="sitrep-col">
-{col1}
-</div>
-<div class="sitrep-col">
-{col2}
-</div>
-<div class="sitrep-col">
-{col3}
-</div>
-</div>
-```
-
-- **col1 — Calendar + Slack + Email:** calendar meeting lines, prep spans,
-  Slack needs-response/follow-ups, announcements, email needs-response.
-- **col2 — ASAP + Auto-Actions + GitHub + Jira:** ASAP spans, auto-actions as
-  `data-done="true"`, PRs-to-review/your-PRs, tickets/mentions.
-- **col3 — Meta + Standup + This Week + Notes + Backlog:** meta line, standup
-  copy block, this-week goal spans, notes placeholder, backlog from the
-  previous working day.
+- **col1:** Calendar + Slack + Email (meeting lines, prep, needs-response).
+- **col2:** ASAP + Auto-Actions + GitHub + Jira.
+- **col3:** Meta + Standup + This Week + Notes + Backlog.
 
 ### Stage 4b: Standup snippet
 
@@ -296,61 +263,30 @@ Delegate formatting to [`wk-slack`](../slack/README.md) §Standup Snippet; this
 skill owns selection.
 
 - **HARD RULE — Yesterday is date-bounded multi-source synthesis.** Apply
-  [`references/yesterday-synthesis.md`](references/yesterday-synthesis.md) to
-  verify candidates within the previous-workday window; reject prior
-  standup/session memory as evidence and terminal-state bias.
-- Emit 3–4 highest-impact outcomes, decisions, progress, or unblockings, one
-  per bullet; append bare PR URLs. If all domains return none, emit
-  `No verified accomplishments found`.
-- **Today:** top 3–4 🔴 ASAP items, deadline-first.
-- **Blockers:** `BLOCKED` or dependency conflicts; always present — `None` when
-  empty (per [`wk-slack`](../slack/README.md) §Standup Snippet).
-- Apply [`wk-slack`](../slack/README.md) §Standup privacy filter — drop
-  hiring/interview/candidate, personal HR/performance, or non-public items.
-- Use the plaintext fallback exactly: top-level `•` day markers with indented
-  `  •` item bullets, one item per line. The emoji leads each day marker —
-  `• 👈🏽 Yesterday`, `• 👉🏽 Today`, `• ✋🏽 Blockers` — never trailing.
-- Render the rich body as one root `<ul>` with exactly three top-level `<li>`
-  branches in that same order. Each branch owns its nested item `<ul>`; never
-  serialize the three sections as sibling lists or flatten their children.
-- Verify `👈🏽` and `👉🏽` survive the write; re-emit via Write if either is
-  missing.
+  [`references/yesterday-synthesis.md`](references/yesterday-synthesis.md);
+  reject prior standup/session memory as evidence.
+- **Yesterday:** 3-4 highest-impact outcomes with PR URLs. **Today:** top 3-4
+  ASAP items. **Blockers:** always present, `None` when empty.
+- Apply [`wk-slack`](../slack/README.md) §Standup privacy filter and §Standup
+  Snippet formatting. Rich body = one `<ul>` with three `<li>` branches.
+- Verify skin-tone emoji (`👈🏽`/`👉🏽`) survive the write.
 
 ### Stage 5: Verify render, then open
 
-- **HARD RULE — gate the "Live page ready" announcement on a verified render.**
-  `open` launches a tab; it does not confirm the DOM. Before announcing,
-  `browser_navigate` to the live URL and `browser_evaluate`:
-
-  ```javascript
-  document.querySelectorAll('.sitrep-col').length===3 &&
-    [...document.querySelectorAll('.sitrep-col')].every(c=>c.textContent.trim()) &&
-    ['.st-copy-block','.st-item'].every(s=>document.querySelectorAll('.sitrep-col '+s).length===document.querySelectorAll(s).length)
-  ```
-
-  Must return `true` — 3 non-empty columns AND every nested marker still inside a
-  column. **Assert containment, not presence:** a count/non-empty check passes while
-  an ejected block sits full-width below the row. On `false`, fix the HTML per
-  [`wk-silverbullet`](../silverbullet/README.md) Step 6 and re-verify — never
-  announce a broken layout. A screenshot is not a substitute for the assertion.
-- Verify the standup hierarchy and copy interaction using
-  [`references/standup-copy-block.md`](references/standup-copy-block.md). A
-  mocked `navigator.clipboard` call alone is not proof: use a browser gesture,
-  wait for visible success/failure feedback, and confirm copied plain text when
-  clipboard readback is available.
-- `browser_close` the automation window after the assertion, before `open` — it and
-  the user-facing tab have distinct lifecycles; a leftover window clutters the desktop.
+- **HARD RULE — gate announcement on a verified render.** `browser_navigate` to
+  the live URL, then `browser_evaluate` the containment assertion (3 non-empty
+  `.sitrep-col`, every `.st-copy-block`/`.st-item` inside a column). Assert
+  containment, not just presence — an ejected block passes a count check. On
+  `false`, fix per [`wk-silverbullet`](../silverbullet/README.md) Step 6.
+- Verify standup copy interaction per
+  [`references/standup-copy-block.md`](references/standup-copy-block.md).
+- `browser_close` the automation window before `open`.
 
 ```bash
 open "http://localhost:$SITREP_PORT/$EMPLOYER/live.md"
 ```
 
-Announce only after the assertion passes:
-
-> "Live page ready: http://localhost:$SITREP_PORT/$EMPLOYER/live.md
->
-> {X} items to action, {Y} meetings today, {Z} carry-overs from yesterday.
-> Check off items in the browser as you go — they sync to `$LIVE_FILE`."
+> "Live page ready — {X} items, {Y} meetings, {Z} carry-overs."
 
 ### Stage 6: Commit and push
 
@@ -419,15 +355,9 @@ Merge into two buckets:
   Slack/email/Jira/Confluence, Lattice requests, peer feedback opportunities,
   DX improvements, every externally-confirmed pending span.
 
-Detect state by `data-done`, not glyphs. Cross-validate pending spans before
-carry-over:
-
-- GitHub: PR/issue merged or closed.
-- Jira: linked ticket moved to Done.
-- Calendar: prep item's meeting already occurred.
-- Slack: referenced thread replied to.
-
-Report detected-done vs user-checked-done separately. Ambiguous evidence stays
+Detect state by `data-done`, not glyphs. Cross-validate pending spans against
+external state (GitHub merged/closed, Jira Done, Calendar occurred, Slack
+replied). Report detected-done vs user-checked-done separately. Ambiguous →
 pending. Drop items with no link.
 
 ### Stage 4: Write snapshot.md
@@ -450,42 +380,18 @@ Append QPR-worthy items to `$SITREP_REPO/$EMPLOYER/QPR/brag-log.md` with `🌟`.
 
 ### Stage 5: Rewrite live.md
 
-- Re-read `$LIVE_FILE` before rewriting; merge completed spans into the snapshot
-  done set, don't re-surface them.
-- Before scrubbing, write each completed span's action-specific key to
-  `$WEEK_MEM_FILE` via the Dismissed registry pattern.
-- Rewrite `$LIVE_FILE` with every pending item; drop completed spans and
-  date-specific FYI (Calendar, Announcements, standup). Fold pending spans +
-  tomorrow's prep, unresolved follow-ups, Lattice/peer feedback, DX improvements.
-  Re-number `data-t` from `t1`; sort and mark urgency per the rendering contract.
+Re-read `$LIVE_FILE` before rewriting. Write completed keys to `$WEEK_MEM_FILE`
+(Dismissed registry). Rewrite with pending items only — drop completed spans and
+date-specific FYI. Re-number `data-t` from `t1`; sort per rendering contract.
 
-Reuse the Stage 3 `sitrep-row`/`sitrep-col` skeleton; frontmatter `date: {TODAY}` +
-`note: "Scrubbed {N} completed items — full record in snapshot"`, heading
-`# Live — carry-forward from {TODAY}`.
-
-- **col1 — Tomorrow's Meeting Prep:** meeting lines and prep spans.
-- **col2 — Carry-forward + Follow-ups & Feedback + DX:** carry-forward,
-  unanswered Slack/email/Jira, Lattice requests, DX actions.
-- **col3 — Notes:** preserved free-form notes.
-
-No separate state file; `date:` identifies the working day and
-`end_completed_at:` records a completed close.
+Three-column layout: **col1** tomorrow's meeting prep, **col2** carry-forward +
+follow-ups + DX, **col3** notes. Frontmatter `date: {TODAY}` +
+`note: "Scrubbed {N} completed items"`; `end_completed_at:` records close.
 
 ### Stage 6: Open snapshot in browser
 
-```bash
-open "$SNAPSHOT_URL"
-```
-
-Announce:
-
-> "Snapshot written: $SNAPSHOT_URL
->
-> Today: {N} done ({U} you checked + {D} detected from
-> GitHub/Jira/Calendar/Slack), {M} carried forward, {P} meetings documented.
-> {brag_highlight — single most impactful item}
->
-> live.md scrubbed — {N} open items remain for tomorrow."
+`open "$SNAPSHOT_URL"` — announce done/carried/documented counts and brag
+highlight.
 
 ### Stage 7: Distill accumulated learnings
 

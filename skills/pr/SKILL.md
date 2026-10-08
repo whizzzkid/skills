@@ -122,74 +122,10 @@ ensures quality before marking ready.
 
 ### Detect the true base branch (run unconditionally)
 
-Detect the branch's actual fork point before measuring scope. Assuming the
-default branch is the base → PR with unrelated commits in the diff (from a
-parent in-flight branch), CI failures against the wrong target, and a silent
-stacked-PR lacking the `[<feature>-part-N/M]` annotation.
-
-Compute merge-base distance between the current branch and every candidate base
-— the default branch plus every open PR's `headRefName` (yours and others'). The
-candidate with the **closest** merge-base (smallest commit distance) is the real
-base; ties prefer the default branch.
-
-```bash
-DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null \
-                 | sed 's@^refs/remotes/origin/@@')
-DEFAULT_BRANCH=${DEFAULT_BRANCH:-main}
-
-# Candidate set: default + every open PR's head ref
-CANDIDATES=$(
-  { echo "$DEFAULT_BRANCH"
-    gh pr list --state open --json headRefName --jq '.[].headRefName'
-  } | sort -u
-)
-
-BEST_BASE="$DEFAULT_BRANCH"
-BEST_DIST=999999
-HEAD_SHA=$(git rev-parse HEAD)
-while IFS= read -r CAND; do
-  # Resolve to origin/<cand>, else the local ref; a fetch failure must not drop a local-only candidate.
-  REF="origin/$CAND"
-  git rev-parse --verify --quiet "$REF" >/dev/null 2>&1 \
-    || git fetch origin "$CAND" --quiet 2>/dev/null \
-    || REF="$CAND"
-  MB=$(git merge-base "$HEAD_SHA" "$REF" 2>/dev/null) || continue
-  [ "$MB" = "$HEAD_SHA" ] && continue   # candidate is downstream of HEAD; not a base
-  DIST=$(git rev-list --count "$MB..$HEAD_SHA")
-  if [ "$DIST" -lt "$BEST_DIST" ] || \
-     { [ "$DIST" -eq "$BEST_DIST" ] && [ "$CAND" = "$DEFAULT_BRANCH" ]; }; then
-    BEST_DIST=$DIST
-    BEST_BASE=$CAND
-  fi
-done <<< "$CANDIDATES"
-```
-
-- **`$BEST_DIST` unchanged (`999999`) after the loop = detection FAILURE, not
-  "base = default"** — no merge-base resolved. Check iteration form first
-  (unquoted `for` in zsh does not word-split → read-loop required;
-  `wk-workstyle-shell` owns the rule); then retry against
-  `origin/$DEFAULT_BRANCH` after a fresh fetch.
-
-If `$BEST_BASE` differs from `$DEFAULT_BRANCH`, surface to the user before doing
-anything else — silent mis-basing is costly to undo:
-
-> "This branch was forked from `{BEST_BASE}` (open PR #{N}), not
-> `{DEFAULT_BRANCH}`. Choose:
->
-> **A)** Create this PR with `--base {BEST_BASE}` and treat it as stacked (adds
-> `[<feature>-part-N/M]` and `## Stack` to the body).
-> **B)** Rebase onto `{DEFAULT_BRANCH}` first, then create against the default
-> base.
-> **C)** Cancel.
->
-> Reply `A` / `B` / `C`."
-
-- Auto mode picks **A** — preserving the existing fork point is non-destructive;
-  the stacked-PR convention covers the metadata.
-- **B** invokes `wk-pr-update` to rebase before proceeding.
-
-- **Draft-base override:** [`references/draft-base-override.md`](references/draft-base-override.md).
-- **Merged-base check:** [`references/merged-base-check.md`](references/merged-base-check.md).
+Compute merge-base distance to every candidate (default branch + open PR heads);
+closest wins. Full algorithm, failure handling, and non-default-base prompt:
+[`references/base-detection.md`](references/base-detection.md). `$BEST_BASE` is
+the only value passed to `--base`.
 
 ### Measure scope against the resolved base
 
@@ -251,52 +187,9 @@ grep -rliE '<branch-phase-or-feature-keyword>' docs/plans docs/specs 2>/dev/null
 
 ### Resolve PR Body Template
 
-Before composing the PR body, check the target repo for a GitHub PR template.
-Search these paths in order, use the first match:
-
-```bash
-TEMPLATE_FILE=""
-for tpl in \
-  .github/pull_request_template.md \
-  .github/PULL_REQUEST_TEMPLATE.md \
-  pull_request_template.md \
-  PULL_REQUEST_TEMPLATE.md; do
-  [ -f "$tpl" ] && TEMPLATE_FILE="$tpl" && break
-done
-
-# If no single file matched, check the multi-template directory
-if [ -z "$TEMPLATE_FILE" ]; then
-  for d in .github/PULL_REQUEST_TEMPLATE .github/pull_request_template; do
-    [ -d "$d" ] && ls "$d"/*.md && break
-  done
-fi
-```
-
-| Scenario | Action |
-|----------|--------|
-| Single template file found | Read it and use as the PR body structure |
-| Template directory found | List the `.md` files, ask the user which to use, then read it |
-| No template found | Fall back to the hardcoded templates below |
-
-When using a repo template:
-
-- **Populate every section** with real content derived from the diff and commit
-  history. No placeholder text or unfilled sections.
-- **Preserve the template's structure** — keep its headings, order, and any
-  boilerplate (checkboxes, legal text, etc.) intact.
-- **Stacked PRs** → append a `## Stack` section after the summary (or first
-  heading) if the template does not already include one.
-- Template sections irrelevant to the current changes → fill with "N/A" or a
-  brief note explaining why they don't apply.
-- **Guarantee a verification section.** After populating, confirm a Testing /
-  Test plan / verification section exists. If none, append `## Testing` listing
-  concrete checks run (commands + outcomes: linters/formatters clean, hooks run
-  locally, CI/pipeline template render, manual steps). Treat a missing
-  verification section as drift to fix before `gh pr create` — a
-  description-check bot otherwise flags "Testing section missing" and forces a
-  second cycle.
-- **Prod-facing diff & incident-triggered bugfix bodies** have extra required
-  sections — see the Body extras reference below; apply at composition time.
+Search the repo for a GitHub PR template; populate every section from the diff.
+Full search order, population rules, and verification-section guarantee:
+[`references/pr-template.md`](references/pr-template.md).
 
 ### Superseded & closed PRs
 
@@ -324,13 +217,8 @@ PR titles use the same conventional commit + emoji scheme as commit messages.
 
 ### Jira key suffix
 
-Before composing the title, detect a Jira key via `wk-jira`'s resolution order
-(branch name, then most recent commit message) — never re-implement it here.
-
-Key found and title does not already end with `[<KEY>]` → append it as the last
-token: `feat(scope): ✨ description [<KEY>]`. Prevents wk-jira Stage 3 from
-patching a keyless title after the PR already exists. No key found → compose the
-title without a suffix; do not invent one.
+Detect via `wk-jira`'s resolution order. Key found → append `[<KEY>]` as the
+last title token. No key → no suffix.
 
 ### Stacking multiple PRs
 
@@ -508,30 +396,15 @@ gh pr ready
 Confirm to the user:
 > "PR #{number} is marked ready for review: {url}"
 
-**Trivial-PR auto-merge fast path.** When the net diff is under 25 lines
-(`git diff $BASE...HEAD --shortstat`) **and** the adversarial review has already
-returned `clear` with zero findings, skip the poll-and-wait CI loop:
-`gh pr merge --auto --squash` so it lands the moment required checks pass. **Quote the
-verdict in the same response that enables `--auto`** — nothing to quote means it
-was never dispatched, so dispatch it first. The size half is checkable and the
-review half is not, so a size-only match is the expected failure. Note the line count and
-auto-merge intent in the PR body so reviewers see why. Any logic-bearing change,
-or a diff at/over the threshold, takes the full CI poll above — the fast path is
-for mechanical, low-risk deltas only.
+**Trivial-PR auto-merge fast path.** Net diff <25 lines + adversarial review
+`clear` with zero findings → `gh pr merge --auto --squash`. Quote the verdict;
+note line count in the body. Logic-bearing or ≥25-line diffs take the full CI
+poll.
 
 ## Step 6: Session Retro
 
 After the PR is marked ready, invoke `wk-retro` to capture session learnings —
 reviews what went well, what was corrected, and promotes actionable lessons to
 the appropriate project files.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| "create a PR" | Full workflow: draft → CI → self-review → ready → retro |
-| "stack this PR" | Delegate to `gh stack` when available; else manual `[<feature>-part-N/M]` + `--base` |
-| "mark PR ready" | Skip to step 5 |
-| New commits pushed | Re-run from step 3 (update description, re-poll CI) |
 
 ---
