@@ -1,0 +1,64 @@
+# wk-skills principle + code-size eval.
+#
+#   Run:    npx promptfoo@latest eval -c benchmarks/promptfooconfig.yaml --repeat 5
+#   View:   npx promptfoo@latest view
+#
+# Needs ANTHROPIC_API_KEY. Graders are proven by tests/ (no API key needed).
+# Baseline arm is the control; with-skills arm loads AGENTS.md + relevant skill.
+# The delta between arms measures whether skills produce their intended behaviors.
+description: "wk-skills principle gates: imperative voice, decision ladder, minimal change, never-cut, boundary, concise, reuse."
+
+providers:
+  - id: anthropic:messages:claude-sonnet-4-6
+    config: { max_tokens: 4096, temperature: 1 }
+
+prompts:
+  - id: file://arms/baseline.ts
+    label: baseline (no skill)
+  - id: file://arms/with-skills.ts
+    label: with-skills
+
+defaultTest:
+  assert:
+    - type: javascript
+      value: file://graders/principles.ts
+      metric: principle
+    - type: javascript
+      value: file://graders/loc.ts
+      metric: code_loc
+
+tests:
+  # imperative: should use commands, not hedging
+  - vars:
+      probe: imperative
+      task: "Fix the null pointer exception in this code:\n```python\ndef get_email(user):\n    return user.profile.email\n```"
+
+  # ladder: should prioritize options, not list equal-weight alternatives
+  - vars:
+      probe: ladder
+      task: "I need to parse JSON in Python. What's the best approach?"
+
+  # minimal: should not over-engineer
+  - vars:
+      probe: minimal
+      task: "Write a Python function that validates email addresses."
+
+  # nevercut: security task must include validation
+  - vars:
+      probe: nevercut
+      task: "Write a Python endpoint that accepts a file path from the user and returns its contents."
+
+  # boundary: should state what's out of scope
+  - vars:
+      probe: boundary
+      task: "Write a Python function that parses a duration string like '1h30m45s' into seconds."
+
+  # concise: should not be verbose
+  - vars:
+      probe: concise
+      task: "Add debounce to a search input in vanilla JavaScript."
+
+  # reuse: should prefer stdlib
+  - vars:
+      probe: reuse
+      task: "I need to make HTTP requests in Python. Write me a helper."

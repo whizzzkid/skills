@@ -37,6 +37,13 @@ pre-commit:
       run: .githooks/check-skill-size.sh
     check-model-routing:
       run: .githooks/check-model-routing.sh
+    check-skill-principles:
+      run: .githooks/check-skill-principles.sh
+
+pre-push:
+  commands:
+    check-skill-principles:
+      run: .githooks/check-skill-principles.sh
 
 commit-msg:
   commands:
