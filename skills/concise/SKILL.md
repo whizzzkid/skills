@@ -142,96 +142,9 @@ Regardless of mode, always write these at full verbosity:
 
 ---
 
-## First-Run Setup (self-installing)
+## First-Run Setup & Default Activation
 
-Hooks live in `$HOME/.claude/settings.json` (harness config, not a skill file).
-`npx skills add` writes skill files but cannot touch `settings.json` → this
-skill **self-installs on first invocation**.
-
-### Detect
-
-On every `/concise`, `/concise brief`, `/concise dense`, or natural-language
-activation, before confirming the mode, run:
-
-```bash
-SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
-grep -Fq "concise-reminder.sh" "$SETTINGS" 2>/dev/null && HOOK_INSTALLED=1 || HOOK_INSTALLED=0
-grep -Fq "Concise by default" "$HOME/.claude/CLAUDE.md" 2>/dev/null && SNIPPET_INSTALLED=1 || SNIPPET_INSTALLED=0
-```
-
-### Offer
-
-If `HOOK_INSTALLED=0` **or** `SNIPPET_INSTALLED=0`, emit a one-time offer
-(mark `$HOME/.claude/.concise-setup-offered` after so it doesn't re-ask):
-
-> `wk-concise — first-run setup`
->
-> To make brief mode the default for every session, I can wire up:
-> - [{snippet_state}] `$HOME/.claude/CLAUDE.md` — opt-in-by-default across all agents
-> - [{hook_state}] `$HOME/.claude/settings.json` — per-turn reinforcement hook (Claude Code)
->
-> Apply both? `(y)es / (n)o / (s)nippet only / (h)ook only`
-
-`{snippet_state}` / `{hook_state}` = `✓ already installed` or ` ` (pending).
-
-### Apply
-
-On the user's answer: invoke `wk-update-config` (for the `settings.json` edit)
-and append `templates/claude-md-snippet.md` to `$HOME/.claude/CLAUDE.md`.
-`wk-update-config` handles merge, validates JSON, reports result. Write
-`$HOME/.claude/.concise-setup-offered` after applying (one-time guard). Re-trigger
-via `/concise:setup`.
-
----
-
-## Default Activation
-
-Enable concise globally so every session starts in `brief` mode. Three
-stackable mechanisms — first-run setup offers to install them automatically;
-`/concise:setup` re-runs if needed.
-
-### Mechanism 1: CLAUDE.md / AGENTS.md snippet (works everywhere)
-
-Paste `templates/claude-md-snippet.md` into one of:
-
-- `$HOME/.claude/CLAUDE.md` — global, all Claude Code sessions
-- `$HOME/.agents/AGENTS.md` — cross-agent global
-- `<repo>/CLAUDE.md` or `<repo>/AGENTS.md` — per-project
-- `$HOME/.gemini/GEMINI.md`, `.cursor/rules/concise.md`, etc. — agent-specific
-
-No hook, no code — just prose the model reads at session start.
-
-### Mechanism 2: UserPromptSubmit hook (Claude Code, per-turn reinforcement)
-
-Add to `$HOME/.claude/settings.json`:
-
-```json
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.agents/skills/wk-concise/hooks/concise-reminder.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-Reads mode from `$HOME/.claude/.concise-mode` (default: `brief`), emits a 1-line
-reminder into agent context. Silent-fail on I/O error — never blocks a session.
-
-### Mechanism 3: Mode file (single source of truth)
-
-```bash
-echo "dense" > $HOME/.claude/.concise-mode   # Start in dense mode globally
-echo "brief" > $HOME/.claude/.concise-mode   # Revert to brief (default)
-```
+Self-installs on first invocation: detects missing hook/snippet, offers to install both. Three stackable mechanisms for global activation (CLAUDE.md snippet, UserPromptSubmit hook, mode file). Full setup flow, detection commands, and mechanism details in [references/setup-flow.md](references/setup-flow.md). Re-trigger via `/concise:setup`.
 
 ## Opt-Out
 
@@ -262,60 +175,9 @@ Confirm deactivation: `Normal mode restored. Opt back in with /concise (or remov
 
 ## `/concise:compress` — Context Compression
 
-Rewrites a verbose text block or file using the active mode's rules. No binary,
-no Python — LLM applies the rules and returns a diff for review.
+LLM-based rewrite of verbose text/files using active mode rules. Full process (read → apply → diff → confirm), good/bad target lists, and preservation rules in [references/compress-process.md](references/compress-process.md).
 
-### Usage
-
-```
-/concise:compress                    # paste text after invocation
-/concise:compress path/to/file.md    # reads file, rewrites in-place after approval
-```
-
-### Default mode for compress
-
-If no mode is active when `/concise:compress` is invoked, default to `brief`
-and state it: `No mode active — using brief for compression.`
-
-### Process
-
-1. Read the target (pasted block or file path).
-2. Apply the active mode's rules. Preserve **exactly**:
-   - All fenced code blocks (content unchanged byte-for-byte)
-   - All inline code
-   - All URLs, file paths, commands, env vars, version numbers
-   - Markdown heading structure and hierarchy
-   - Table structure (rows/columns intact; cell prose may compress)
-   - Bullet hierarchy
-3. Show a side-by-side summary:
-   ```
-   Original: ~{N} tokens (estimated)
-   Compressed: ~{M} tokens (estimated)
-   Reduction: ~{X}%
-
-   [compressed text]
-   ```
-4. Ask: **Apply?** `(y)es / (n)o / (e)dit first`
-5. On `y` — write the file (if path given) or print final text.
-6. On `n` — discard.
-7. On `e` — open in-line edit loop.
-
-### What to compress
-
-Good targets for `/concise:compress`:
-- `$HOME/.claude/CLAUDE.md` — global agent instructions
-- Memory files in `$HOME/.claude/memory/*.md`
-- Skill `SKILL.md` files (non-procedural sections only)
-- Meeting notes, spec docs with heavy prose
-
-Bad targets — **refuse with error, do not compress**:
-- Files with >50% code content (`.py`, `.ts`, `.rb`, `.go`, `.rs`, etc.)
-- Files matching: `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.env`, `.env*`
-- Files whose name matches: `credentials*`, `secrets*`, `*password*`, `*apikey*`, `*token*`
-- Files under any of these path components: `.ssh/`, `.aws/`, `.gnupg/`,
-  `.kube/`, `.config/gcloud/`, `.docker/`
-- Symlinks (resolve and check before reading; refuse if target is outside
-  the working directory or home directory prose files)
+Defaults to `brief` if no mode active. Refuses code files (>50%), secrets/credentials, and files under `.ssh/`/`.aws/`/`.gnupg/`/`.kube/`/`.docker/`.
 
 ---
 

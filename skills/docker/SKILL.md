@@ -220,68 +220,15 @@ they are different values and fail downstream comparisons.
 
 ## Bind-Mount Overlay Shadows Image COPY
 
-A CI step that runs under a volume mount (`-v <checkout>:/workdir --workdir=/workdir`,
-common on Buildkite agents) replaces the image filesystem at the mount point with
-the live checkout. Any Dockerfile `COPY` to a path under that mount is invisible
-at runtime.
-
-**HARD RULE:** Generated artifacts a mounted step needs (Go embeds, codegen,
-build output) must be produced by the step's own command, not pre-baked via
-`COPY` into the overlaid path.
-
-- Symptom: a `COPY --from=...` lands in the image, yet the step still reports the
-  file missing.
-- Fix: add the generator to the step command before the consumer — e.g.
-  `go generate ./... && go test`.
-- Never rely on `COPY /workdir/...` (or any mount-point path) reaching a step that
-  overlays that path with a bind mount.
+Volume mounts replace the image filesystem at the mount point — any `COPY` to that path is invisible at runtime. Details and fix pattern in [references/bind-mount-overlay.md](references/bind-mount-overlay.md).
 
 ## Git Worktree `.git` File Breaks Git Inside Containers
 
-**HARD RULE:** A git worktree's `.git` is a *file* (not a directory) containing
-`gitdir: /absolute/host/path/.git/worktrees/...`. Inside a container the host
-path is a dangling reference → `git rev-parse --git-dir` fails with
-`fatal: not a git repository`, aborting any git-aware tooling (pre-commit hooks,
-`common.bash` git guards, `bin/check`).
-
-Before mounting a worktree into a container, materialize a standalone repo and
-mount that instead:
-
-```bash
-TMP="$HOME/.cache/docker-worktree-$$"
-cp -a "$PWD" "$TMP" && rm -f "$TMP/.git"
-git -C "$TMP" init -q && git -C "$TMP" add -A && git -C "$TMP" commit -qm test
-# mount $TMP as the Docker source; clean up after the run
-```
-
-- Never mount the live worktree directory directly when the container runs git.
-- Clean up the temp repo after the run.
+Worktree `.git` file contains a host-absolute `gitdir:` path that dangles inside a container. Materialize a standalone repo before mounting. Details and script in [references/git-worktree-gitfile.md](references/git-worktree-gitfile.md).
 
 ## Seed a Dependency Volume from a Sibling
 
-An expired package-registry credential is not a hard stop for a fresh container.
-A provisioning script typically treats the registry as the *only* source of
-dependencies, so a 401 on index fetch blocks setup entirely — even when every needed
-artifact already sits in a sibling container's volume on the same daemon.
-
-Copy the volume with a throwaway container mounting both, then install offline:
-
-```bash
-docker volume ls          # confirm BOTH endpoints exist before copying
-docker run --rm -v "$SRC_VOL":/from -v "$DST_VOL":/to alpine:3.21 \
-  sh -c 'cp -a /from/. /to/ && du -sh /to'
-```
-
-Then, inside the target container, resolve entirely from the seeded cache —
-`bundle install --local`, or the ecosystem's offline / frozen-cache equivalent.
-
-Two guards:
-
-- **Seed only from the same lockfile generation.** The offline install then fails
-  loudly on a missing version instead of silently resolving a stale one.
-- **Verify both volume names before copying.** Names are project-prefixed
-  (`<project>_<volume>`), so a mistyped destination silently creates a new empty
-  volume and the copy "succeeds" into nothing.
+Copy a sibling container's volume to bypass expired registry credentials, then install offline. Volume copy command, guards (lockfile match, volume name verification), and full process in [references/seed-dependency-volume.md](references/seed-dependency-volume.md).
 
 ## Devcontainer Startup — Suppress Secret Exposure
 
@@ -298,17 +245,7 @@ logs.
 
 ## Multi-Worktree Port Conflicts
 
-When `docker compose up` / `devcontainer up` fails with `port is already
-allocated` because a sibling worktree's container holds the default port:
-
-- Skip `docker compose up/run` — port-override compose layers are fragile and
-  may not merge as expected.
-- Use `docker run` with `--network=<project-network>` and named volume mounts,
-  publishing no host port (`-p` omitted). Find the project's network and volumes
-  via `docker network ls` / `docker volume ls` matching the project prefix.
-- This gives a working shell for local verification (test, lint) without
-  stopping or restarting the sibling worktree's stack.
-- Never stop a running sibling's devcontainer to resolve a port conflict.
+Use `docker run` with `--network=<project-network>` and no `-p` instead of compose when a sibling holds the port. Never stop a sibling's devcontainer. Details in [references/port-conflicts.md](references/port-conflicts.md).
 
 ## Hand-Started Containers: Replicate Setup-Script Credentials
 

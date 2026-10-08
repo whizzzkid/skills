@@ -71,57 +71,12 @@ services:
 
 ## Critical Constraints Reference
 
-Read before writing any SilverBullet content.
-
-### HTML blocks — no blank lines inside
-
-- **HARD RULE:** Never put a blank line anywhere inside an open `<div>` block — nesting depth is irrelevant.
-- CommonMark type-6 HTML blocks end at the first blank line → a blank line inside a `<div>` terminates the block, ejects subsequent content as separate blocks, `<div>` renders empty.
-- **CRITICAL — a blank line before or after a NESTED element ends the OUTER block too.** Markdown-style padding around an inner `<div>`/`<pre>` ejects that child out of its parent: it renders full-width below the layout while the parent still holds its other content, so a parent-level "is it non-empty" check passes.
-- Treat a container's entire body as one contiguous run of lines; replace blank-line separators with `<br>`.
-- Applies to ALL type-6 elements — `<div>`, `<span>`, `<section>`, etc.
-
-### Input elements are disabled
-
-- **HARD RULE:** Never use `<input>` (incl. `type="checkbox"`), `<button>`, or `<select>` inside an HTML widget.
-- HTML widget renderer adds `disabled="disabled"` to all form elements → prevents hijacking editor cursor events. `onclick` on disabled `<input>` also silently stripped.
-- Use `<span onclick="...">` + CSS `::before` for interactive checkboxes.
-- Pattern: `<span class="st-cb" data-t="{id}" data-done="false" onclick="HANDLER"></span>`.
-
-### onclick attribute constraints
-
-Three characters break inline onclick attributes:
-
-1. **`>` (greater-than)** — parser closes the opening tag at the first `>` even inside an attribute value → arrow functions (`=>`) break the handler silently.
-2. **`"` (double-quote)** — terminates the attribute value → breaks the handler, corrupts surrounding markup.
-3. **`&` (ampersand)** — pre-escaping `&&` to `&amp;&amp;` in source → renderer double-encodes to literal entity text → handler discarded.
-
-Rules:
-- Write raw JavaScript operators (`&&`, `||`, `!`) in source — never pre-escape HTML entities in onclick values; the renderer handles escaping.
-- Replace `=>` arrow functions with `function(){}`.
-- Replace `"` string literals with `'` single quotes where possible.
-- For runtime-required double-quotes, use `var q=String.fromCharCode(34)` and build strings from it.
-- Prefer `.then()` chains over `async/await` → avoids `>`, keeps handlers short.
-
-### No HTTP file API — use window.client
-
-- **HARD RULE:** Never call `fetch()` to read/write SilverBullet page files.
-- Service worker intercepts ALL fetch requests → returns the SPA HTML shell. `/_/page.md`, `/fs/page.md`, `/.fs/page.md`, `/api/page/name` all return 200 with `content-type: text/html`.
-- Files live in IndexedDB; only safe programmatic access is `window.client` (Step 3).
-
-### Markdown table cells — no interactive tasks
-
-- Native `- [ ]` checkboxes do not render inside table cells — task widget decoration requires block-level context; inside a cell text renders literally as `- [ ]`.
-- Use `⬜`/`✅` emoji glyphs for read-only status indicators in table cells.
-- For interactive checkboxes in a multi-column layout, use HTML `<div>` columns (Step 2).
-- Never embed `widget.html()` or `widget.new{}` inside a table cell → Lua table object serializes as a nested markdown data table instead of rendering. Widgets are standalone-line expressions only.
-
-### Inline markdown inside HTML blocks
-
-Rendered (inline): `**bold**` → `<strong>` ✅; `[text](url)` → link ✅; emojis ✅
-NOT rendered (block-level): `- [ ]` → literal ✗; ATX headings `## H` → literal ✗; fenced code blocks → literal ✗
-
-Write column content with inline markdown freely; substitute `<strong>`, `<a>`, etc. for any block construct.
+Read [references/rendering-rules.md](references/rendering-rules.md) before writing any SilverBullet content. Key HARD RULES:
+- No blank lines inside `<div>` blocks (CommonMark type-6 terminates at blank line)
+- No `<input>`/`<button>`/`<select>` (widget renderer disables all form elements)
+- No `>`, `"`, or pre-escaped `&` in onclick attributes
+- No `fetch()` for file I/O — use `window.client.space` only
+- No `- [ ]` or `widget.html()` inside table cells
 
 ## Step 1: Determine Content Type
 
@@ -136,171 +91,17 @@ Classify what you're building:
 | Page navigation from onclick | `window.client.navigate('page-name')` |
 | Persistent state toggle | `data-done` attribute + window.client writePage |
 
-## Step 2: HTML Column Layout
+## Step 2: HTML Column Layout & window.client API
 
-For interactive checkboxes or rich per-column formatting, use the HTML div
-column layout instead of a markdown table.
+CSS patterns (space-style block, column layout, checkbox spans, onclick handler) and the full `window.client.space` API reference are in [references/client-api.md](references/client-api.md).
 
-### space-style block (in `#meta` page)
+Key rules: scope layout classes under `.cm-content`; use `.st-item + br { display: none }` (never `.sitrep-col br`); each `data-t` value must be unique; use `.then()` chains (no async/await).
 
-Add to the `space-style` block — scope layout classes under `.cm-content` to
-avoid global conflicts; dark-mode rules under `html[data-theme="dark"]`:
+## Step 3: Verify Changes Visually
 
-```css
-/* Full-width editor */
-:root { --editor-width: 100%; }
-.cm-content { max-width: 100% !important; }
-.cm-scroller { padding: 0 !important; }
+**HARD RULE:** After any CSS or HTML change, verify in a browser — a file diff does not prove the running instance renders correctly.
 
-/* 3-column row */
-.sitrep-row { display: flex; flex-direction: row; gap: 0.8rem; width: 100%; align-items: flex-start; }
-.sitrep-col { flex: 1; min-width: 0; padding: 0.7rem 0.9rem; border-radius: 8px; }
-
-/* Custom checkbox span */
-.st-cb { cursor: pointer; user-select: none; display: inline; }
-.st-cb[data-done="false"]:before { content: '☐'; font-size: 1.25em; margin-right: 4px; }
-.st-cb[data-done="true"]:before { content: '☑'; font-size: 1.25em; margin-right: 4px; color: #39ff14; }
-
-/* Checklist items */
-.st-item { display: block; padding-left: 1.1em; line-height: 1.75; }
-.st-item:has(.st-cb[data-done="true"]) { text-decoration: line-through; opacity: 0.55; }
-
-/* Suppress extra <br> between checklist items only */
-.st-item + br { display: none; }
-
-/* Hide frontmatter */
-.sb-frontmatter { display: none !important; }
-```
-
-**HARD RULE — `<br>` suppression scope:** Use `.st-item + br { display: none }`
-not `.sitrep-col br { display: none }`. The column-scoped rule collapses meeting
-lines and `<pre>` content; the adjacent-sibling rule targets only inter-item gaps.
-
-**After editing `space-style`:** force a reload to apply changes — `location.reload()`
-alone is insufficient (see Step 4).
-
-### Page structure
-
-Write column content with NO blank lines inside any `<div>`:
-
-```markdown
-<div class="sitrep-row">
-<div class="sitrep-col">
-**Section Header**
-<span class="st-item"><span class="st-cb" data-t="t1" data-done="false" onclick="HANDLER"></span> Item text [link](url)</span>
-<span class="st-item"><span class="st-cb" data-t="t2" data-done="false" onclick="HANDLER"></span> Another item</span>
-</div>
-<div class="sitrep-col">
-**Section 2**
-<span class="st-item"><span class="st-cb" data-t="t3" data-done="false" onclick="HANDLER"></span> Item</span>
-</div>
-<div class="sitrep-col">
-**Section 3**
-<span class="st-item">Plain text item</span>
-</div>
-</div>
-```
-
-Each `data-t` value must be unique across the page — it is the key used to
-locate and update the item in the page source.
-
-### onclick handler
-
-Replace `PAGE_NAME` with the page name (no `.md`); replace `HANDLER` inline in each `<span>` attribute:
-
-```
-var d=this.dataset.done==='true',t=this.dataset.t,q=String.fromCharCode(34);this.dataset.done=String(!d);window.client.space.readPage('PAGE_NAME').then(function(pg){var c=pg.text,s='data-t='+q+t+q+' data-done='+q+(d?'true':'false')+q,n='data-t='+q+t+q+' data-done='+q+String(!d)+q;return window.client.space.writePage('PAGE_NAME',c.replace(s,n))})
-```
-
-Handler steps:
-1. Reads `data-done` from the clicked span.
-2. Flips visual state immediately (`this.dataset.done = String(!d)`).
-3. Reads full page text via `window.client.space.readPage`.
-4. Replaces the exact `data-t="X" data-done="Y"` pair in source.
-5. Writes text back via `window.client.space.writePage`.
-
-No `>` (arrow functions) or `"` inside attribute values — all substituted.
-
-## Step 3: window.client API
-
-All in-browser file operations must go through `window.client.space`:
-
-| Operation | Call |
-|-----------|------|
-| Read a page | `window.client.space.readPage('page/name')` → `Promise<{text: string}>` |
-| Write a page | `window.client.space.writePage('page/name', text)` → `Promise<void>` |
-| Delete a page | `window.client.space.deletePage('page/name')` |
-| Navigate | `window.client.navigate('page/name')` |
-| Save current | `window.client.save()` |
-| Fire event | `window.client.dispatchAppEvent(name, data)` |
-
-- Page names never carry the `.md` extension.
-- `writePage` handles IndexedDB persistence + server sync automatically.
-- Always use `.then()` chains from onclick attributes — no `async/await` (avoids `>`).
-
-## Step 4: CSS Changes Require Force Reload
-
-**HARD RULE:** After any `space-style` edit, force a reload using the write-back
-pattern — `location.reload()` alone uses a cached snapshot.
-
-From browser console or Playwright:
-
-```javascript
-const pg = await window.client.space.readPage('EMPLOYER/sitrep-style');
-await window.client.space.writePage('EMPLOYER/sitrep-style', pg.text);
-location.reload(true);
-```
-
-Replace `EMPLOYER/sitrep-style` with the actual `#meta` page path. The
-write-back invalidates cached CSS → SilverBullet re-processes the `space-style`
-block on reload.
-
-## Step 5: CSS Selector Reference
-
-Key selectors for `space-style` rules:
-
-| Target | Selector |
-|--------|----------|
-| Full-width page | `:root { --editor-width: 100% }` + `.cm-content { max-width: 100% !important }` |
-| HTML widget content | `.sitrep-col { ... }` (or `.cm-content .sitrep-col` for scoped) |
-| Table cells | `.cm-content table td { ... }` |
-| Dark theme | `html[data-theme="dark"] .cm-content .sitrep-col { ... }` |
-| Frontmatter | `.sb-frontmatter { display: none !important }` |
-| Done-state items | `.st-item:has(.st-cb[data-done="true"]) { text-decoration: line-through; opacity: 0.55; }` |
-| Inter-item br only | `.st-item + br { display: none; }` |
-
-CSS `:has()` is fully supported — use it for parent-based state styling without
-JavaScript.
-
-## Step 6: Verify Changes Visually
-
-**HARD RULE:** After any CSS or HTML change, verify in a browser — a file diff
-does not prove the running instance renders correctly. Service worker, IndexedDB
-cache, CodeMirror live preview, and HTML widget scoping all sit between file and
-rendered output.
-
-Run this loop (Playwright MCP, or browser console for steps 1/3/4):
-
-1. **Force style sync** if `space-style` changed — Step 4 write-back.
-2. **Screenshot** full page (`browser_take_screenshot`) — confirms layout (e.g., 3 columns render, not 1).
-3. **Inspect the DOM** (`browser_evaluate`) — screenshot misses hidden state:
-
-   ```javascript
-   window.getComputedStyle(el).display  // did the CSS apply?
-   typeof el.onclick === 'function'     // did the handler survive as executable JS?
-   el.disabled                          // is the element unexpectedly disabled?
-   ```
-
-4. **Assert containment, not presence** (`browser_evaluate`) — a count/non-empty assertion on the parents passes while a nested block has escaped its parent. For every nested marker class, its scoped count must equal its global count:
-
-   ```javascript
-   document.querySelectorAll('PARENT CHILD').length === document.querySelectorAll('CHILD').length
-   ```
-
-5. **Reload fresh** — after source changes, navigate to the page fresh (`browser_navigate`) before validating; cached DOM may mask a broken handler.
-6. **Test interactivity** — `.click()` a checkbox span, re-read the page (`window.client.space.readPage`) to confirm the toggle persisted to file. Exercise both success and failure paths of async operations in handlers.
-
-Key Playwright MCP tools: `browser_navigate`, `browser_take_screenshot`, `browser_evaluate`, `browser_click`.
+Force-reload pattern, CSS selector reference, and the full 6-step verification loop (screenshot → DOM inspect → containment assert → interactivity test) are in [references/rendering-rules.md](references/rendering-rules.md).
 
 ## Common Mistakes
 

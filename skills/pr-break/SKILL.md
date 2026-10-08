@@ -193,74 +193,13 @@ Seam needs a temporary scaffold to satisfy invariant 2 (e.g., a stub returning a
 
 Cap the stack at **≤5 children**. More than 5 → seam analysis is over-fragmenting; merge the smallest pieces back together. Fewer is fine — sometimes 2 children is the right answer.
 
-Produce a structured plan, one block per child:
-
-```
-### Child PR {n}/{N}: <conventional-subject> (~<size hint>)
-
-**Stack position:** Built on top of {parent} (#parent or "main").
-**Scope:** <one-paragraph user-visible description>.
-**Files touched:** <list of paths or globs>; net diff ~<lines>.
-**Builds / tests in isolation:** <yes — what verifies it>.
-**Depends on:** <prior children in the stack, or "none">.
-**Blocks:** <subsequent children, or "none">.
-**Follow-up:** <deferred work this PR explicitly does not include>.
-**Reviewer note:** <one sentence on why this is the natural seam>.
-```
-
-Also produce a **stack overview** table:
-
-```
-1. <subject>            (~80 LOC)   — refactor, no behavior change
-2. <subject>            (~120 LOC)  — primitive on top of (1)
-3. <subject>            (~200 LOC)  — feature wired through primitive
-4. <subject>            (~40 LOC)   — cleanup of legacy code path
-```
-
-Every child PR's draft description must mention:
-
-- **Stack** — links to the parent (and ultimately the original PR).
-- **Blockers** — what merges before this can merge (the `Depends on` line).
-- **Follow-up** — what this PR explicitly defers, with links to the child PR(s) that pick it up, or a TODO with a tracking ticket if the follow-up is post-stack.
-
-This matches `wk-pr`'s description template (Step 2 there); the `wk-pr-break` plan **populates** that template for each child.
-
-### Propagate parent annotations into the right child
-
-Extract annotations from Stage 1 (title, body, comments, commit trailers) and route each to the appropriate child. When in doubt, include rather than drop.
-
-| Annotation | Routing |
-|------------|---------|
-| `Closes #N` / `Fixes #N` | **Final child only** — earlier children carry `Refs #N`. |
-| `Refs #N` / `Related to #N` | Every child touching code in the issue's scope. |
-| `[BOARD-NUM]` Jira key | Every child's title (umbrella ticket; `wk-jira` transitions on final child). |
-| Design doc / RFC / spec URL | Every child — reviewers of any slice need the design context. |
-| Deploy / migration callout | The child that introduces the dependency, and the final child. |
-| Linked demo / screenshot / Loom | The user-visible feature child (usually last). |
-| `Co-Authored-By:` trailers | Commits that ship the corresponding work, per original mapping. |
-
-For each child block, add an **Annotations** subsection so the user can audit routing:
-
-```
-**Annotations propagated:**
-- Refs #NNN (Closes moves to final child)
-- Spec: docs/specs/feature-x.md
-- [BOARD-NUM] Jira suffix on title
-```
+Produce a structured plan using the child block template and annotation routing table in [references/child-block-template.md](references/child-block-template.md). One block per child, plus a stack overview table. Populate `wk-pr`'s description template for each child.
 
 ---
 
 ## Stage 5: Validate the plan against the five invariants
 
-Before presenting, walk every invariant against every child:
-
-| Invariant | Check |
-|-----------|-------|
-| 1. Functional equivalence | Concatenate the child diffs; confirm equality with the original PR's diff (modulo whitespace/conflict markers). `git diff` between the original tip and the projected tip after the last child merges should be empty. |
-| 2. Isolation | For each child, mentally simulate landing only that child onto its parent — does the test command pass? Does the linter? If a child requires a forward-reference, redesign the seam. |
-| 3. Stack-order coherence | Read each child's description in order with no knowledge of later children. Does each one read as a sensible change on its own? |
-| 4. Description completeness | Each draft has Stack, Blockers, Follow-up populated. None is "TBD". |
-| 5. Reviewer digestibility | Each child reviews as one coherent claim. No mega-child; no nano-child that's just a one-liner separated for the count. |
+Walk every invariant against every child: (1) functional equivalence — child diffs concatenated = parent diff, (2) isolation — each child builds/tests on its parent alone, (3) stack-order coherence — each reads as self-contained, (4) description completeness — Stack/Blockers/Follow-up populated, (5) reviewer digestibility — coherent claims, no mega/nano splits.
 
 Any check fails → return to Stage 3 and re-cut the seams. Never ship a violating plan.
 
@@ -285,50 +224,7 @@ Auto mode default: `(c) save plan to file and stop` — building a PR stack is a
 
 ## Stage 7: Execute (only on explicit approval)
 
-### Child branch naming
-
-Every child branch reuses the original PR's branch name with a `-part-N` suffix, where `N` is the child's stack position starting at **1**:
-
-```
-<original-branch>          # parent / source
-<original-branch>-part-1   # first child (cut from $BASE_BRANCH)
-<original-branch>-part-2   # second child (cut from -part-1)
-<original-branch>-part-3   # third child (cut from -part-2)
-...
-```
-
-Original branch already ends in `-part-N` (re-splitting an already-split PR) → append onto the **leaf** name; do not double-suffix. `feat/foo-part-2` becoming a 2-child split produces `feat/foo-part-2-part-1` and `feat/foo-part-2-part-2`, not `feat/foo-part-1` (which would collide with a sibling).
-
-Validate the names before cutting branches:
-
-```bash
-ORIG_BRANCH=$(gh pr view "$PR_NUM" --json headRefName --jq .headRefName)
-for n in $(seq 1 "$N"); do
-  CHILD="$ORIG_BRANCH-part-$n"
-  if git show-ref --verify --quiet "refs/heads/$CHILD" \
-     || git ls-remote --exit-code --heads origin "$CHILD" >/dev/null 2>&1; then
-    echo "Branch $CHILD already exists locally or on origin; aborting."
-    exit 1
-  fi
-done
-```
-
-Name collisions abort the run rather than silently overwriting — re-running `wk-pr-break` after a partial failure must not clobber the prior attempt's branches.
-
-### Per-child execution
-
-For each child, in stack order:
-
-1. Cut the child branch from its parent (the previous child's branch, or `$BASE_BRANCH` for the first child).
-2. Apply the child's diff. Source it from the original PR's branch via `git checkout <orig> -- <paths>` for whole files, or `git apply` of a pre-prepared patch for partial files. The original PR's branch stays unchanged until all children are opened.
-3. Run the project's test command (Phase 3 of `wk-workflow`); fails → stop. Invariant 2 was violated by the seam, not by execution.
-4. Invoke `wk-commit` for the child's commit (signed, conventional, single emoji).
-5. Invoke `wk-pr` to open the child as a draft PR with the description populated from Stage 4.
-6. Wait for CI to go green via the standard `wk-workflow` Phase 6 loop.
-
-After all children are open, update the original PR's description to reference the stack ("This PR is being shipped as a stack: #child1, #child2, ..."). Do **not** close the original PR until the stack lands — it remains the source of truth for the full diff during review.
-
-Child fails CI in a way suggesting the seam is wrong (not a flaky test, not an infra blip) → pause and ask the user before patching the child. The failure may indicate the plan needs re-cutting.
+Branch naming (`-part-N` suffix), collision validation, and per-child execution loop (cut → apply → test → commit → PR → CI) are in [references/execution-loop.md](references/execution-loop.md). Child CI failure suggesting a bad seam → pause and ask before patching.
 
 ---
 
