@@ -290,7 +290,3 @@ Fires after `wk-pr-update` or `wk-pr-resolve` resolved conflicts → run an addi
 | Any regression remains | Non-pass; user override possible but logged |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn refactor`).

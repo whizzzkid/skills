@@ -304,8 +304,3 @@ or non-obvious failure cascades.
   optional for automated render verification.
 
 ---
-
-## Post-Completion
-
-Invoke [`wk-learn`](../learn/README.md) with this skill's short name as the argument
-(e.g., `wk-learn arch-review`).

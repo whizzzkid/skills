@@ -435,7 +435,3 @@ Use this as a final gate before claiming work is complete:
 - [ ] Every numbered plan step is finished or explicitly deferred
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn workflow`.

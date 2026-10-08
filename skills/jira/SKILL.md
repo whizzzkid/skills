@@ -564,7 +564,3 @@ state is a side-effect of the work, not a precondition for it.
 | MCP unavailable | 0 only — silent skip |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn jira`).

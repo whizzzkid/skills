@@ -256,7 +256,3 @@ then apply the lineage rule. Print the verdict line to the caller
 - Repo with base branch resolvable via `gh pr view` or `git symbolic-ref refs/remotes/origin/HEAD`.
 - Write access to `.review-playground/` (gitignored).
 - Runtime matrix installed via `mise` or equivalent when matrix checks run.
-
-## Post-Completion
-
-Invoke `wk-learn adversarial-review`.

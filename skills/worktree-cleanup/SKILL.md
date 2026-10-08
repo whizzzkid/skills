@@ -282,7 +282,3 @@ For unmerged worktrees, tell the user:
 - Shell access
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn worktree-cleanup`).

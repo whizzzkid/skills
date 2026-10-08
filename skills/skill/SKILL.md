@@ -293,8 +293,3 @@ Invoke `wk-commit` with `SKILL.md` and `README.md` staged together:
 - `superpowers:writing-skills` (only for an explicitly-requested RED-GREEN-REFACTOR pass)
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn skill`).

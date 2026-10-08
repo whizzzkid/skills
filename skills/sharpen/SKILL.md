@@ -299,8 +299,3 @@ One machine-wide worker drains the full queue with no self-records; spawn, drain
 ## Improve Mode: Refactor and Optimize
 
 `/wk-sharpen improve [scope]` → suite-level cleanup, not incident-specific fixes. Scope is omitted / `all`, `<skill-name>`, or a glob. Procedure and hard rules: [`references/improve-mode.md`](references/improve-mode.md). **Phased approval is required per phase; auto mode never short-circuits it.**
-
-## Post-Completion
-
-Interactive run → invoke `wk-learn sharpen`. Loop worker → return its terminal summary to the dispatcher; do not
-invoke `wk-learn` or `wk-retro`.

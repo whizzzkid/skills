@@ -335,7 +335,3 @@ stays with the user.
 - Shell access (for running git commands and discovering targets)
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn retro`).

@@ -323,8 +323,3 @@ format, or privacy filter inline — invoke this section instead.
 - User handle (from `slack_read_user_profile` if only a name is given)
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn slack`).

@@ -434,7 +434,3 @@ If wk-plan was already run this session and an approved plan exists → wk-workf
 - Read/Grep/Glob/Bash for codebase research
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn plan`).

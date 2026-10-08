@@ -425,7 +425,3 @@ tag before reaching for `--network=host`.
 | ENTRYPOINT issues | Check with `docker run --rm <image> sh -c 'echo test'` |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn docker`).

@@ -171,8 +171,3 @@ grep -n "old_param_name" <file>
 - Column limit known before writing any comment line.
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn workstyle-docstrings`).

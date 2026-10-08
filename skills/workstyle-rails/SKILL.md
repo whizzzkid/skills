@@ -118,8 +118,3 @@ done
 
 - Read access to the repo root (`bin/`, `script/`, `Makefile`)
 - Bash access to run the bootstrap script (when authorized)
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn workstyle-rails`).

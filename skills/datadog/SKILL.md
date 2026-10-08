@@ -210,7 +210,3 @@ Ask before build: name, cells (markdown, timeseries, log stream, etc.), time ran
 - Network access to `api.${DD_SITE}`.
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn datadog`).

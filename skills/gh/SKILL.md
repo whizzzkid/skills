@@ -498,7 +498,3 @@ a terminal-state guarantee. A single watch is not proof of green CI.
 | Calling skill writes to GitHub | Route the write through this skill's Step 3/4 |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn gh`).

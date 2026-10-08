@@ -244,7 +244,3 @@ defaults.
 | No repo config | Apply hard preferences as defaults |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn format`).

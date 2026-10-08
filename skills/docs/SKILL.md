@@ -170,7 +170,3 @@ writing or delivering such a doc, enforce every gate below:
     shares no term with the sentence you edited.
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn docs`).

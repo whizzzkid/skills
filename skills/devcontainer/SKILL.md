@@ -321,8 +321,3 @@ Investigation order for a new project:
 3. `.ruby-version` — exact Ruby version for mise.toml
 4. `Gemfile` — extra services (Sidekiq, Elasticsearch, etc.)
 5. DB adapter in `Gemfile` — `trilogy` (no `libmysqlclient-dev` needed) vs `mysql2` (needs it)
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn devcontainer`).

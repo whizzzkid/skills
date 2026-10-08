@@ -245,7 +245,3 @@ Surface results as part of the morning brief or evening preview:
 | MCP unavailable | Stop and ask user to check Gcal MCP settings |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn cal`).

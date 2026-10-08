@@ -152,8 +152,3 @@ done.
 - **Forgetting the `mermaid` fence tag** — renders as a code block, not a diagram.
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn mermaid`).

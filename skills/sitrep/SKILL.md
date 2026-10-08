@@ -28,17 +28,9 @@ allowed-tools:
   - "Bash(open:*)"
   - "Bash(pgrep:*)"
   - "Bash(silverbullet:*)"
-  - "Bash(docker compose:*)"
-  - "Bash(docker ps:*)"
-  - "Bash(gh pr view:*)"
-  - "Bash(git rev-parse:*)"
-  - "Bash(git status:*)"
-  - "Bash(git add:*)"
-  - "Bash(git commit:*)"
-  - "Bash(git push:*)"
-  - "Bash(git log:*)"
-  - "Bash(gh search prs:*)"
-  - "Bash(gh search issues:*)"
+  - "Bash(docker *:*)"
+  - "Bash(gh *:*)"
+  - "Bash(git *:*)"
   - "mcp__*playwright*__browser_*"
   - "mcp__claude_ai_Slack_*__*"
   - "mcp__claude_ai_Gmail_*__*"
@@ -77,66 +69,27 @@ per-day live directories; dated snapshots at close.
 
 ## Core hard rules
 
-- **HARD RULE — never write outside `$SITREP_REPO/$EMPLOYER/`.** All output is
-  scoped to the SilverBullet workspace. Never write `morning.md`, `evening.md`,
-  or any sitrep file into cwd or `$WK_SKILLS_HOME`.
-- **HARD RULE — no interactive triage.** User resolves items in SilverBullet,
-  not chat. Never call `AskUserQuestion` to keep/skip/resolve. Both sub-commands
-  are compile-only — gather → render → write → open — with one exception: the
-  required-connector abort below stops before the write and reports instead.
-  Write surfaced items unconditionally as `data-done="false"` checkbox spans; user
-  edits the browser page directly.
-- **HARD RULE — never assert missing without checking.** Before saying "no
-  snapshot" or "X not found", run `Read`/`ls` on the path. If you did not
-  check, say "I have not read X", not "X is missing."
-- **HARD RULE — a missing required evidence connector aborts publication.**
-  Required = every company-data evidence domain in the invoked sub-command's own
-  agent roster, source control excluded — derive it from that roster, never from a
-  list restated here, which drifts as the two rosters diverge. Any one
-  unavailable → stop before writing: leave the live page byte-unchanged, accrue no
-  rollover marker or brag entry, make no commit or push, then name every missing
-  connector in the response and await instruction. Never publish a partial page in
-  place of a complete one — this case aborts, it does not degrade.
-- **Gaps inside an available domain** (fallbacks exhausted, one stalled agent)
-  still render: label each unavailable source, preserve `data-done` and carry-over,
-  drop stale dated meeting lines, keep the standup hierarchy, emit no unverified
-  outcome claim, and withhold accrual artifacts (rollover marker, brag log) until
-  full-evidence reconciliation.
+- **HARD RULE — workspace-scoped output only.** All output stays in
+  `$SITREP_REPO/$EMPLOYER/`. Never write sitrep files into cwd or
+  `$WK_SKILLS_HOME`. Never assert a file missing without `Read`/`ls` — say
+  "I have not read X", not "X is missing."
+- **HARD RULE — no interactive triage.** Both sub-commands are compile-only
+  (gather → render → write → open). Never call `AskUserQuestion` to
+  keep/skip/resolve; user edits items in the browser directly.
+- **HARD RULE — evidence connector gates.** Required connectors = every
+  company-data domain in the sub-command's agent roster (source control
+  excluded). Any required connector unavailable → abort publication (no write,
+  no rollover, no brag). Gaps *inside* an available domain still render: label
+  unavailable sources, preserve `data-done`/carry-over, withhold accrual
+  artifacts until full-evidence reconciliation.
 
 ## Rendering contract
 
-- Invoke [`wk-silverbullet`](../silverbullet/README.md) for layout mechanics. It
-  owns HTML-block blank-line rules, span-checkbox pattern, onclick handler,
-  `window.client` API, `space-style` CSS, force-reload. This skill owns content
-  selection.
-- SilverBullet parses inline hashtags in link text → escape every `#` as `\#`,
-  use full PR/issue titles (`repo\#N: commit-style title`), omit items with no
-  canonical URL.
-- `live.md` is an HTML flexbox 3-column layout, not a Markdown table. Both
-  `start` and `end` write frontmatter + `# Live — {DATE}` + one
-  `<div class="sitrep-row">` containing three `<div class="sitrep-col">`.
-- Actionable items use `<span class="st-item">` with a nested
-  `<span class="st-cb" data-t="tN" data-done="false" onclick="HANDLER">`.
-- `data-t` is unique and sequential per page (`t1`…`tN`).
-- Auto-action items already done at generation start `data-done="true"`; nested
-  sub-items use `class="st-item st-nested"`.
-- **Mark done only what is terminal.** An auto-action leaving an artifact the
-  user must still act on (unsubmitted draft, unsent reply) renders its launch
-  done but stays open work — re-query and re-surface it every run until the
-  artifact is terminal.
-- Group items only via the flat `st-item`/`st-nested` span pattern already in the
-  file. **Important — never freelance a new tag or nesting shape**; only a
-  documented classed `<div>` (the standup copy block) may nest inside
-  `.sitrep-col`, and never with a blank line before or after it — a blank line
-  anywhere in a column body ends that column's HTML block and ejects the rest
-  full-width below the row, at any nesting depth.
-- Non-actionable content (meeting lines, headers, standup block) is plain text
-  or inline markdown.
-- Sort by priority/severity, staleness, due date, then undated. Lead with 🔴
-  overdue/ASAP, 🟡 due ≤3 days, or 🟢 later/no hard date; append `⏳ {N}d`
-  after 7 days pending. Format due dates as `**📅 YYYY-MM-DD**`.
-- Keep CSS/Lua in `$EMPLOYER/sitrep-style.md`; never regenerate it daily. After
-  style edits, force reload and verify before finishing.
+Layout, span patterns, urgency sorting, nesting constraints, and style rules:
+[`references/rendering-contract.md`](references/rendering-contract.md).
+Delegates HTML-block mechanics to
+[`wk-silverbullet`](../silverbullet/README.md); this skill owns content
+selection.
 
 ### Checkbox-span format
 
@@ -561,22 +514,6 @@ git -C "$SITREP_REPO" push
 
 Once-per-day quarterly-review nudge, never blocking: banner windows, placement,
 and brag-log accrual — [`references/qpr-nudge.md`](references/qpr-nudge.md).
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| `/wk-sitrep start` | Gather → compile → verify live.md → commit/push → launch review drafts. |
-| Unfinished prior day | `start` runs its full dated `end` flow first; failure blocks today's overwrite. |
-| `/wk-sitrep end` | Optional: snapshot → scrub → learn → mark complete → commit/push. |
-| `/wk-sitrep` (no arg) | Defaults to `start`. |
-| Writes | Re-read target first; preserve `data-done`; prefer `Edit` over full overwrite. |
-| End of day | Invoke [`wk-sharpen`](../sharpen/README.md) on up to 5 highest-severity unprocessed learnings. |
-| QPR | `📋` banner on live.md (start) / snapshot (end); brag-log accrues 🌟. |
-| SilverBullet stopped | Auto-start via `silverbullet $SITREP_REPO &`. |
-| Service auth fails | OAuth soft block degrades with CTA; missing required connector aborts (no publish). |
-| No previous live.md | Skip carry-over; start fresh. |
-| `docker-compose.yml` changed | Restart after push: `docker compose down && docker compose up -d`. |
 
 ## Requirements
 

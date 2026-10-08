@@ -153,29 +153,11 @@ on your own prior comments, build the Phase 3/4 exclusion list.
 
 ### Fetch comments and resolution state
 
-Retrieve root inline comments only (skip entries with `in_reply_to_id` — replies,
-not thread anchors):
-
-```bash
-gh api repos/{owner}/{repo}/pulls/{number}/comments \
-  --jq '.[] | {id, node_id, path, line, original_line, position, body, user: .user.login, updated_at, in_reply_to_id}'
-```
-
-REST comments endpoint carries no resolution state. On re-review, query each
-thread's `isResolved` / `isOutdated` before planning loop-closure work:
-
-```bash
-gh api graphql -f query='
-{ repository(owner:"{owner}", name:"{repo}") {
-    pullRequest(number:{number}) {
-      reviewThreads(first:100) {
-        nodes { id isResolved isOutdated comments(first:1){ nodes{ path body } } }
-} } } }'
-```
-
-Skip loop-closure for threads already `isResolved: true`. Reserve follow-up for
-open threads, or resolved threads whose fix does not hold after verifying current
-code.
+Use the shared queries from
+[`references/graphql-unresolved-threads.md`](references/graphql-unresolved-threads.md)
+— REST for comment bodies, GraphQL for `isResolved`/`isOutdated`. Skip
+loop-closure for `isResolved: true` threads; reserve follow-up for open threads
+or resolved threads whose fix does not hold after verifying current code.
 
 ### Identify stale comments and review bodies
 
@@ -193,15 +175,8 @@ carry that framing into the verdict.
 **HARD RULE:** Never resolve review threads without explicit user consent.
 
 Present the categorized list and ask which stale-fixed threads to resolve. After
-confirmation, match each by `path` + `line` + `body`, then resolve:
-
-```bash
-gh api graphql -f query='
-  mutation($threadId: ID!) {
-    resolveReviewThread(input: {threadId: $threadId}) { thread { isResolved } }
-  }
-' -f threadId="THREAD_NODE_ID"
-```
+confirmation, match each by `path` + `line` + `body`, then resolve using the
+mutation in [`references/graphql-unresolved-threads.md`](references/graphql-unresolved-threads.md).
 
 ### Summarize and build queues
 
@@ -374,36 +349,12 @@ over a language fence, only for target lines inside the PR diff:
 review comment (same file/line range + same concern). Check the Phase 2 exclusion
 list before drafting each comment.
 
-- **Human duplicate:** validate against current code; skip a parallel comment when
-  it holds (optionally annotate `Also fix concerns from @{reviewer}`); reply to
-  the thread only with new information or evidenced disagreement.
-- **Bot duplicate:** drive from the Phase 3 outcome:
-
-| Phase 3 outcome | Phase 4 action |
-|---|---|
-| **Confirmed** | Silent skip at thread and body level. |
-| **Confirmed but narrower** | Reply only if the scope note cites a *new fact* (see gate below); else treat as Confirmed → silent skip. |
-| **Confirmed but broader** | Reply with the amplified impact as new evidence (e.g. a referenced target that 404s). |
-| **Refuted** | Reply `**Could not reproduce** — <counter-evidence>` and what was tested. |
-| **Inconclusive** + agent found it | Reply with the agent's evidence and fix. |
-| **Inconclusive** + agent did not | Leave the thread; surface in the summary for override. |
-
-**Narrower/broader requires a new fact, not an opinion.** The reply must cite
-something the bot's comment lacked — a grep result, test run, reachability/trigger
-check, or amplified downstream target. A standalone judgment about priority, blast
-radius, or whether it's "worth fixing now" is not narrower; it's Confirmed → silent
-skip.
-
-- Narrower: "✓ only fires when `FOO` is set; grep shows no caller sets it" (new fact).
-- Not narrower: "✗ lower priority, same-repo producer" (opinion, no new fact) → Confirmed, silent skip.
-
-**HARD RULE:** A per-thread bot reply or body anchor is justified only with new
-evidence beyond confirming the bot's exact claim. Pure Confirmed outcomes get
-silent skip; never narrate bot validation. Justified replies use one mechanism:
-fold into the body as `Re: {bot} thread on {file}:{line} — …` (no extra call), or
-a live `/comments/{id}/replies` post (requires explicit user opt-in — it bypasses
-the pending-review checkpoint). Never embed bot replies in the pending
-`comments[]` payload (`in_reply_to` 422, above).
+- **Human duplicate:** validate against current code; skip when it holds; reply
+  only with new information or evidenced disagreement.
+- **Bot duplicate:** drive from Phase 3 outcome per
+  [`references/bot-finding-validation.md`](references/bot-finding-validation.md).
+  Key rule: only reply with *new evidence* beyond confirming the bot's claim;
+  pure Confirmed → silent skip.
 
 ### Validate comment positions against the diff
 
@@ -564,7 +515,3 @@ Confirm success:
 - `wk-adversarial-review` available (owns investigation + playground)
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn pr-review`).

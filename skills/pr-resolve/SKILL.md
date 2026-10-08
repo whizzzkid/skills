@@ -472,7 +472,3 @@ why — never silently skip.
 | "fix the comment" / "description issue" with an open PR | Auto-activate on the open PR |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn pr-resolve`.

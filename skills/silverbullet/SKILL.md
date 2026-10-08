@@ -345,8 +345,3 @@ All known failure modes:
 - Browser access for force-reload verification after CSS changes
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn silverbullet`).

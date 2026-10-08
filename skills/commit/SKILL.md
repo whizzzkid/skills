@@ -523,7 +523,3 @@ ready, offer to squash a long tail of small `fix(ci):` commits into one.
 | Message names a prohibited token | Stop — rewrite using category description only |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn commit`).

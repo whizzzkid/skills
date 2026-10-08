@@ -353,7 +353,3 @@ Child fails CI in a way suggesting the seam is wrong (not a flaky test, not an i
 | Plan violates an invariant | Return to Stage 3; never ship a violating plan |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn pr-break`).

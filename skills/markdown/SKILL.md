@@ -168,7 +168,3 @@ Verify:
   (GFM rules: lowercase, spaces → `-`, punctuation stripped).
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn markdown`).

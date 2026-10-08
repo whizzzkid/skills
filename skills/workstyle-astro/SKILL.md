@@ -124,8 +124,3 @@ Manual: `/wk-workstyle-astro scan` (full working tree) · `/wk-workstyle-astro c
   stale on persisted elements after navigation.
 - Using `client:load` everywhere — defeats Astro's zero-JS default; most
   components need `client:visible` or `client:idle` at most.
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn workstyle-astro`).

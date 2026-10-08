@@ -496,7 +496,3 @@ This log accumulates across quarters so the next QPR has a richer corpus.
 | `/wk-self-perf 2026-02-01:2026-04-30` | Custom range |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name: `wk-learn self-perf`.

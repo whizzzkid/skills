@@ -331,7 +331,3 @@ Bad targets — **refuse with error, do not compress**:
 | "clarify" / repeat question | any | Full prose; resume on next unrelated task |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn concise`).

@@ -462,7 +462,3 @@ New commits pushed to a PR that already has self-review comments:
 | PR about to merge | Submit any still-pending self-review (Step 4.5) |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn self-review`).

@@ -184,8 +184,3 @@ Invoked by another skill/agent (e.g. `wk-pr-review`) with `consult <pr|path>`:
 
 - `gh` for PR diffs; Playwright MCP for rendered-UI review.
 - Read access to the repo's token/design-system files for the baseline.
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn design-review`).

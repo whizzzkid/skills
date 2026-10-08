@@ -202,8 +202,3 @@ done
 - `gh` CLI authenticated with repo access
 - `$GITHUB_ORG` set (via [wk-gh](../gh/README.md))
 - Package manager available for lockfile regeneration
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn renovate`).

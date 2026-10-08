@@ -436,11 +436,3 @@ their `<id>+<login>@users.noreply.github.com` form. Never guess `<login>@<domain
 - Write access to the repository (push to the existing branch in overwrite mode)
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument:
-
-```
-Skill("wk-learn", "pr-takeover")
-```

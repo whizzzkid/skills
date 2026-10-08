@@ -168,8 +168,3 @@ is correct when there is nothing to do.
   dependency installed alongside it, not a separate package
 - `docker` CLI installed
 - `nproc` or `sysctl` available to detect CPU/memory (macOS: `sysctl` is the fallback)
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn colima`).

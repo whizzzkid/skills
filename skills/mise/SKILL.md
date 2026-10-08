@@ -266,7 +266,3 @@ is in `mise ls`, this is the cause. Activate mise and retry.
 | Trust project config | `mise trust` |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn mise`).

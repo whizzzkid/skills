@@ -189,8 +189,3 @@ Embed the result as `data:image/png;base64,...` in the HTML.
 | `/wk-preso <topic>` | Generate and publish a slide deck on the topic |
 | "make a presentation about X" | Auto-invoked, same flow |
 | "create slides for Y" | Auto-invoked, same flow |
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn preso`).

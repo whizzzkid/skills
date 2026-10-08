@@ -188,8 +188,3 @@ The hook reads the tool payload from stdin, emits any message to stderr
   `$HOME/.agents/skills/wk-scope-guard/hooks/`); registered in
   `$HOME/.claude/settings.json` → `hooks.PreToolUse`.
 - Tests: `skills/scope-guard/tests/scope-guard.bats`.
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g.,
-`wk-learn scope-guard`).

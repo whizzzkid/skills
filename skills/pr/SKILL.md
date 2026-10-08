@@ -535,7 +535,3 @@ the appropriate project files.
 | New commits pushed | Re-run from step 3 (update description, re-poll CI) |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn pr`).

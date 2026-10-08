@@ -510,8 +510,3 @@ Follow-ups present → route each before cleanup via `AskUserQuestion`:
   already permits it; the alias itself must exist in git config.
 
 ---
-
-## Post-Completion
-
-Invoke [`wk-learn`](../learn/README.md) with this skill's short name as the argument
-(e.g., `wk-learn pr-merge`).

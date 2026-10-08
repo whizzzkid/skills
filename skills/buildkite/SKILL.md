@@ -414,7 +414,3 @@ When saving any Buildkite artifact to disk — build JSON, job logs, artifact fi
 | Saving any `bk` payload to disk | Use `/tmp/agent/buildkite/<build>/...` |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn buildkite`).

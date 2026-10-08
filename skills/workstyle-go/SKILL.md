@@ -101,8 +101,3 @@ gofmt -l .
 - **Requires judgment** → surface as a suggestion before committing: what the
   finding is, where, and a concrete fix sketch.
 - **Conflicts with project config** → suppress; never fight the linter.
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn workstyle-go`).

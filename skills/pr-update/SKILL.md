@@ -610,7 +610,3 @@ Routing between this skill and `wk-workflow`, `wk-pr`, and `wk-commit`:
 | Conflicts unresolvable | Reset to `$START_SHA`, hand back to user |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn pr-update`).

@@ -164,8 +164,3 @@ Before returning / sending, verify:
 - Knowledge of the target channel (Slack vs GitHub vs email) to pick emoji style
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn tone`).

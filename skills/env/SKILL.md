@@ -263,8 +263,3 @@ it never blocks skill execution, only warns.
   env-based config and persists as destructive global state.
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn env`).

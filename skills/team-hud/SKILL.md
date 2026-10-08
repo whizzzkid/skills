@@ -231,8 +231,3 @@ Produce a Markdown block for embedding in a calling brief:
 - Write access to `$WK_SKILLS_HOME/config/team-hud.yaml` (handle→channel cache).
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn team-hud`).

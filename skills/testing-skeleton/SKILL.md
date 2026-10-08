@@ -354,7 +354,3 @@ Coverage tools count line execution, not assertion quality. A 100%-covered file 
 | CI coverage gate failed | Stage 5 — find the missing path; never paper over with structural tests |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn testing-skeleton`).

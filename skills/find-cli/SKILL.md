@@ -112,8 +112,3 @@ After the call completes:
 - Write access to `$WK_SKILLS_HOME/learnings/skills/find-cli/` for learning capture.
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument
-(e.g., `wk-learn find-cli`).

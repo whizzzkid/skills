@@ -84,7 +84,3 @@ hardcode a literal token in the command.
 | `-w` for status code | `curl -sS -o body.txt -w '%{http_code}'` to separate body from status |
 
 ---
-
-## Post-Completion
-
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn curl`).
