@@ -80,45 +80,11 @@ Skill(wk-gh)
 
 ## Step 0.5: Pre-flight the pending-review POST permission
 
-Pending review created via `POST repos/{owner}/{repo}/pulls/{n}/reviews` under
-the user's identity. In auto mode the permission classifier blocks GitHub writes
-lacking an explicit allow rule — and blocks at Step 4, after the payload is
-built → wastes the work.
-
-- Check the write permission before building the payload:
-
-  ```bash
-  grep -rE 'gh api repos/.*/pulls/.*/reviews' $HOME/.claude/settings.json .claude/settings*.json 2>/dev/null
-  ```
-
-- No match → surface a one-line prompt, then proceed (classifier still gates the
-  actual POST — this only warns early):
-
-  > Self-review posts a pending review via
-  > `gh api repos/*/pulls/*/reviews` (POST). Add that to allowed Bash
-  > commands to avoid a mid-flow block.
-
-- Never downgrade to a published `.../comments` call to dodge the prompt →
-  violates the pending-review HARD RULE.
-- **HARD RULE: author the payload with the Write tool by default — never inline
-  review prose in a bash command.** Write it to
-  `/tmp/agent/gh/<owner>/<repo>/pulls/{n}/self-review.json`, then use bash only
-  for the POST (`--input <file>`, never `--input -` with a heredoc).
-  - A review body is arbitrary prose — slashes, regex literals, code snippets,
-    URLs. Any PreToolUse gate that scans **command text** can read one of those
-    tokens as a path or a denied endpoint and block before the command runs, so
-    the composition is wasted for a reason the prose never intended.
-  - The Write path removes the exposure rather than dodging one matcher: the
-    command carries a filename and no prose, so there is nothing left to scan.
-    Never re-word a comment body to satisfy a gate's pattern — that tunes to one
-    matcher and leaves every other body a coin flip.
-  - This is the default, not a recovery step. A rule that fires only *after* a
-    block cannot prevent the block.
-- Blocked POST → the payload file already exists; hand the user the one-line
-  `gh api … --input <file>`. Never rebuild the payload in a bash command that
-  mentions the blocked endpoint (`gh api repos/*/pulls/*/reviews`) — the
-  classifier matches command text, not execution, so even a `jq … > file.json`
-  write re-trips the same denial.
+Check `gh api repos/.*/pulls/.*/reviews` in settings before building the payload.
+No match → warn early. **HARD RULE: author the payload with the Write tool** to
+`/tmp/agent/gh/{owner}/{repo}/pulls/{n}/self-review.json`, never inline review
+prose in a bash command. Blocked POST → hand the user the one-line `gh api …
+--input <file>`. See [permission-preflight](references/permission-preflight.md).
 
 ## Step 1: Gather Context
 
@@ -196,120 +162,19 @@ front.
   unhappy paths, risky assumptions) so reviewers see them in context.
 - Skip silently when no trigger matches.
 
-## Step 2.5: Reconcile against existing self-review
+## Steps 2.5–2.7: Pre-post audits
 
-Before presenting proposed comments, fetch every review thread on the PR
-authored by the PR author (prior self-review). On a multi-round PR, the
-"what's new since last push" framing makes it easy to restate rationale already
-on the PR — each design decision should appear **exactly once**.
+Three audits run between identifying comment-worthy changes and presenting them.
+See [pre-post-audit](references/pre-post-audit.md) for full details.
 
-```bash
-PR_NUM=$(gh pr view --json number --jq .number)
-OWNER=$(gh repo view --json owner --jq .owner.login)
-REPO=$(gh repo view --json name --jq .name)
-AUTHOR=$(gh pr view --json author --jq .author.login)
-```
-
-Use the canonical query from `skills/pr-resolve/references/graphql-review-threads.md`
-with `-F o="$OWNER" -F r="$REPO" -F n="$PR_NUM"`, then filter by author + extract
-fields:
-
-```bash
-# pipe the GraphQL result through jq
-jq --arg a "$AUTHOR" '
-  .data.repository.pullRequest.reviewThreads.nodes[]
-  | select(.comments.nodes[0].author.login == $a)
-  | {resolved: .isResolved, c: .comments.nodes[0]}
-  | {path: .c.path, line: .c.line, resolved, body: .c.body}'
-```
-
-For each proposed new comment, check existing self-review threads for **topical
-overlap** (same rationale, even on a different file/line). On overlap:
-
-- **Drop** the new comment if the prior note already says everything it would, OR
-- **Rewrite as a cross-reference** ("See related design note on
-  `docs/specs/...:N`.") if the new location needs a pointer.
-
-Resolve the prior thread only if its rationale is now **stale** — never just
-because the new comment restates it.
-
-**Approach-pivot thread audit.** New commits change a feature's logical approach
-(the wk-workflow design-pivot trigger) → audit existing self-review threads
-independently of any new proposed comment. A pivot leaves a thread that silently
-contradicts the new code even when nothing new is being said about that path.
-
-- Fetch unresolved self-review threads on the changed files.
-- Flag any whose rationale describes the **old** approach (e.g., explaining
-  serialization after a switch to parallel execution).
-- Resolve each stale thread, repost updated rationale anchored to the new commit.
-  Treat "approach changed, self-review not updated" exactly as a stale code
-  comment.
-
-Spec files are usually the canonical home for design rationale; implementation-
-file notes should either add NEW context (tradeoff specific to this site) or
-point at the spec.
-
-## Step 2.6: Parallel-path completeness audit
-
-Before posting, scan for sibling/parallel code paths that carry the same flaw as
-anything this PR fixed or flagged. A bug class rarely lives in a single line —
-credential redaction, input validation, error handling, retry logic, guards, and
-cleanup-on-error recur across sibling paths.
-
-For every recurring-class fix, run two scans:
-
-1. **Same-file parallel branches:**
-   ```bash
-   grep -n 'stderr\|2>&1\|>&2\|err\|error' <file>
-   grep -nE 'git (clone|fetch|push|remote)|curl|wget|http' <file>
-   ```
-
-2. **Sibling files in the same pipeline:**
-   ```bash
-   ls "$(dirname <fixed_file>)"/*.{sh,rb,py,ts,js} 2>/dev/null
-   ```
-   For each sibling, grep for the same pattern.
-
-- Sibling path needs the same fix → fold into **the same commit** (single-round
-  review is the goal). List every path covered in the self-review comment.
-- Path genuinely unaffected → note the audit was performed. Silence reads as "the
-  agent didn't look."
-
-## Step 2.7: Verify code-comment claims against current implementation
-
-Before posting, scan the diff for **inline code comments and doc strings that
-make behavioral claims** about the surrounding code; mentally execute each claim
-against the implementation shipping in this PR. A comment is correct only if its
-claim is true given what the code does today, not what it did when the comment
-was written.
-
-Behavioral claims to flag:
-
-- "This makes X available" / "this enables Y"
-- "Always works" / "is guaranteed to" / "never fails"
-- "Required because" / "needed for" — the dependency must still hold
-- Claims about subprocess, network, OS, or filesystem behavior depending on
-  flags, depths, modes, or environment the implementation may have since narrowed
-- Claims about what other code paths do (names a function/behavior elsewhere that
-  may have changed)
-
-For each flagged comment:
-
-1. Read the surrounding implementation in current PR state.
-2. Decide whether the claim is still true. Implementation narrowed (deeper fetch
-   → shallower, recursive scan → flat, guarded path → unguarded) → comment is
-   likely stale.
-3. Stale → **fix the comment in this PR**, do not leave a review note about it.
-   Stale comments are documentation bugs, not design notes. Fold the fix into the
-   same commit that invalidated it if still possible, else add a comment-only fix
-   commit on the same branch.
-4. Claim still true but non-obvious → leave a self-review note pointing at the
-   load-bearing detail so future readers know what holds the comment up.
-
-Runs independently of Step 2.6's parallel-path scan: parallel-path looks for
-sibling instances of a fix; comment-accuracy looks for stale narration of a
-behavior. Both fire on the same trigger (implementation changed) but cover
-different surfaces.
+- **2.5 Reconcile against existing self-review** — dedupe against prior self-review
+  threads; drop or cross-reference overlapping rationale. Audit stale threads after
+  approach pivots.
+- **2.6 Parallel-path completeness** — scan sibling code paths for the same flaw
+  class; fold fixes into the same commit or note the audit was performed.
+- **2.7 Verify code-comment claims** — check inline comments/docstrings making
+  behavioral claims against the current implementation; fix stale comments in this
+  PR rather than leaving review notes.
 
 ## Step 3: Present Comments
 

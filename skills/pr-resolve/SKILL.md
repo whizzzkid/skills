@@ -73,92 +73,36 @@ from the summary (9.4 learnings, 9.5 CI wait+loop, 11 retro).
 
 ## Hard Rules
 
-0. **Scope GitHub payloads through `wk-gh`.** Satisfy its org-scope gates before
-   any GitHub read/write; `gh api` is the only transport. **Every outbound body
-   (PR-body edit, reply, issue comment, dismissal body) carries the canonical
-   `wk-gh` footer — append it at render time AND run the wk-gh Step 4
-   pre-emit gate on the final body string immediately before EACH mutation.** A
-   footer on a different surface never satisfies the current mutation; lint each
-   body independently — never treat a prior footer on another surface as an
-   exemption. The commit-message trailer (`🦾 Generated
-   with …`) is a DIFFERENT string and is never shipped on an outbound body.
-1. **Never push without explicit user confirmation.**
-   - **Holds under Auto Mode.** A user question/redirect ("why did you not
-     push?") is a reconsider prompt, not a go-ahead — require explicit
-     yes/approve/proceed (same for Hard Rule 4 force-push).
-   - **Standing authorization:** "make it merge-ready"/"mergeable"/"land
-     this"/"resolve to merge" authorizes the full lifecycle (pushes, CI
-     re-pushes, replies, resolving); confirm once. "Resolve comments" alone
-     does not.
-   - **Hard Rule 1 gates the push, not the tail steps.** After push + reply
-     (Step 8) → Steps 9–11 without pause; valid stops: 3 CI fix-loop
-     failures, blocked adversarial-review, or explicit user interjection.
-2. **Never post reply comments without explicit user confirmation** — a
-   land-intent invocation (Hard Rule 1) is that authorization; do not re-ask.
-   - **A "don't post"/"no replies" directive bans publishing content (replies,
-     new comments, dismissal bodies) — never thread resolution**, an internal
-     state change that unblocks merge (resolve per Hard Rule 3).
-   - **HARD RULE — every reply/dismissal body leads with substance (what changed,
-     the decision, the commit SHA), never a pleasantry** (the ban slips exactly
-     when the finding impresses). Praise/thanks openers ("Good catch!") banned
-     unconditionally — pre-emit lint the first sentence against `^(good
-     catch|great|thanks|nice|well spotted|good point)`, reject before POST. Route
-     through `Skill(wk-tone)` before render.
-3. **Important — only resolve threads you actually worked on.** Resolution
-   requires a landed code fix, explicit dismissal, or tracked deferral — in that
-   order: implement fix → commit → push → resolve. Never resolve a thread to
-   dismiss a finding; resolution means the finding is addressed in code. Never
-   resolve follow-up questions, skipped, rethink-pending, or ordinary self-review
-   threads.
-   - **Resolution gates on the fix landing, never on CI.** Pushed commit
-     addressed the finding → resolve in Step 8 now, never defer to the Step 9.5
-     CI wait (later CI failures are a later commit's context).
-   - **A reply answering/fixing a finding auto-resolves its thread** — no
-     separate confirmation ask; hold open only a genuine follow-up question.
-4. **Never force-push** — regular `git push` only. *Exception:* a base-advance
-   rebase (Step 2) may `git push --force-with-lease`; never bare `git push -f`.
-5. **Never commit without attempting verification.** Verification unavailable or
-   failing → inform the user before proceeding.
-6. **Commits follow `wk-commit` conventions** — conventional format with emoji,
-   signed commits, HEREDOC messages. Never `--no-gpg-sign`.
-7. **One commit per triage unit** (final Step 4 suggestion after merge/split).
-   Do not bundle separate reviewer comments unless Step 4 merged them. Push once
-   after all commits exist.
-8. **Exclude self-review comments.** Do not triage, reply to, fix, or resolve
-   threads whose root comment was authored by the PR author or current user.
-   - **Resolve submitted self-review threads only at merge readiness** — branch
-     protection can count every unresolved thread regardless of authorship.
-   - **Surface external replies inside self-review threads** in the summary; do
-     not triage or resolve them.
-   - **User-touched reviewer threads:** post one narrow follow-up only when the
-     session changed the finding. Still requires Hard Rule 2.
-9. **Co-author attribution.** Add `Co-authored-by:` only when the commit
-   incorporates the PR author's work (suggested change, pairing, patch). Purely
-   agent-authored fixes → `Assisted-by: Claude` only. Real emails per
-   wk-commit HARD RULE (`$WK_SKILLS_EMPLOYEE_EMAIL`); never invent.
-10. **Include bot reviews** as first-class feedback. Evaluate each for
-    correctness before accepting or dismissing.
-    - **A bot review at COMMENTED / REVIEW_REQUIRED signals an unaddressed
-      finding — the state IS the finding, not an independent gate.** Read every
-      finding body (issue/summary comments included, not just inline threads)
-      before considering dismiss/override/wait. A blocking finding with a
-      concrete fix → `obvious-fix`, not a gate decision to escalate. Escalate
-      the gate only after confirming no addressable finding exists.
-11. **Adversarial-review gates merge, not push — never dispatched here.** New
-    commits need a `clear` verdict before merge; the gate runs it once (Step 8).
-12. **Implement handoff documents before deleting them.** A branch file whose
-    name signals remaining work → read it fully, implement its items, delete it in
-    the same commit as the last change. Plan first if the work is large or spans
-    repos.
-13. **Never submit the author's pending self-review; never re-prompt.**
-    Submitting is destructive — publishes work held for manual release. Note
-    once, route around via GraphQL resolve (Step 3); submit only on explicit
-    "submit my review." Re-prompting >1×/session is a violation.
-14. **Never triage a comment on an unclean base.** Conflict markers present
-    (`git diff --check`) OR `$BEHIND > 0` against base → integrate base first
-    (Step 2); reporting the count/markers and continuing is a violation.
-15. **User brevity scopes volume, not the step sequence.** "Just fix and push" →
-    fewer comments, never skip binding steps (esp. 9.5 CI watch).
+1. **GitHub routing through `wk-gh`.** Org-scope gates before any read/write;
+   `gh api` is the only transport. Every outbound body carries the canonical
+   `wk-gh` footer — lint each body independently before each mutation. The
+   commit-message trailer is a DIFFERENT string, never shipped on an outbound body.
+2. **Push and reply safety.** Never push or post replies without explicit user
+   confirmation. "make it merge-ready"/"land this" authorizes the full lifecycle;
+   "resolve comments" alone does not. Never force-push — exception: base-advance
+   rebase may `--force-with-lease`. After push + reply → tail steps (9–11) run
+   without pause.
+3. **Reply substance.** Every reply/dismissal body leads with substance (what
+   changed, the decision, the commit SHA). Banned openers: `^(good catch|great|
+   thanks|nice|well spotted|good point)` — pre-emit lint rejects. Route through
+   `wk-tone`.
+4. **Only resolve threads you actually worked on.** Resolution requires a landed
+   code fix, explicit dismissal, or tracked deferral. Resolution gates on the fix
+   landing, never on CI. A reply fixing a finding auto-resolves its thread.
+5. **Commit discipline.** Never commit without verification. Follow `wk-commit`
+   conventions (conventional + emoji, signed, HEREDOC). One commit per triage unit;
+   push once after all commits. Co-author attribution only when incorporating
+   the PR author's work; agent-only fixes → `Assisted-by: Claude` only.
+6. **Exclude self-review comments.** Do not triage, reply to, or resolve threads
+   authored by the PR author/current user. Resolve submitted self-review threads
+   only at merge readiness. Surface external replies inside self-review threads.
+7. **Base cleanliness and review gates.** Never triage on an unclean base —
+   conflict markers or `$BEHIND > 0` → integrate first (Step 2). Include bot
+   reviews as first-class feedback; a blocking finding with a concrete fix →
+   `obvious-fix`. Adversarial-review gates merge, not push — never dispatched
+   here. Implement handoff documents before deleting them. Never submit the
+   author's pending self-review; note once, route via GraphQL resolve. User
+   brevity scopes volume, not the step sequence.
 
 ## Step 1: Identify the PR
 
@@ -247,69 +191,23 @@ login (or the current user in a co-author session) → Self-review; any other
 **Bot / non-convergence handling** — follow
 [`references/bot-convergence.md`](references/bot-convergence.md).
 
-**All-Minor bulk-dismiss gate.** Every active finding Minor with plausible skip
-rationale → render per-finding summary (commands.md §4) before offering bulk
-dismiss/triage. Never present a bare count with no substance. **Cheap-fix
-override:** Minor naming a concrete small fix → `obvious-fix`, not deferred.
-
 **Order — HARD RULE: triage every comment before applying any fix.** Apply
 accepted fixes as one batched pass; never loop comment-by-comment through
-fix/commit/push.
+fix/commit/push. Process bot reviews first, then human comments.
 
-- Process bot reviews first, then human comments.
 - For each: read full file context, the comment, and reply chain before a fix.
-- **Important — reproduce an externally-sourced finding before acting on it
-  (fix OR dismiss)** — a bot/scanner finding is a hypothesis; reproduction
-  settles real-defect vs. false-positive and yields the regression test.
-  - **Code-path agreement findings** (env-var fallbacks, constructors,
-    idempotency keys): grep both paths → verify semantics match before calling
-    "false positive."
-  - **Env-var divergence:** check forwarding contracts (docker_compose, CI
-    templates) that produce `""` for declared-but-unset vars; one path already
-    handling the degenerate case is evidence it IS real.
-  - **Framework-processed files: verify the compilation pipeline.** A bot
-    flagging syntax as invalid in a framework-managed file (Astro `<script>`,
-    Svelte `<script lang="ts">`, Vue SFC, etc.) may not account for the
-    bundler — build succeeds with the flagged syntax → finding is false.
+- **Reproduce externally-sourced findings before acting** — bot/scanner findings
+  are hypotheses; reproduction settles real-defect vs. false-positive. Verify
+  code-path agreement, env-var forwarding contracts, and framework compilation
+  pipelines before calling "false positive."
 - **Shell/wrapper hypothesis → inspect the job log's exact rendered command and
-  downstream sentinel.** A matching passing sentinel outranks static quoting
-  speculation; aggregate green does not.
+  downstream sentinel.** A matching passing sentinel outranks static speculation.
 
-**Org-specific policy questions.** Reviewer question touches org policy → search
-KB first, cite authoritative doc; general knowledge only if KB empty, flagged.
-Skip for code-level/design/test-coverage questions.
-
-**Docs-ahead-of-code, stacked PR.** Docs describe behavior the diff lacks →
-check stack section for owning sibling PR. Owned → future tense. Unowned → code gap.
-
-**Suggestion format** — see commands.md §4. Every suggestion gives `Why this fix`
-/ `Why skip` reasoning; `{bot_badge}` = `🤖 (bot)` for bots, else omitted. Be
-honest in the skip rationale; none exists → say so.
-
-**Detect design flaws.** Triggers: "might not trigger", "depends on X", "what if
-{edge}", "why do we need this" → present design change first, clarifying reply
-second; `(a)` applies design option.
-
-**Gate fix footprint.** Beyond localized patch (new mechanism, cross-cutting) →
-dismiss + follow-up PR. Inline only for confirmed PR-scope blocker. Cross-cutting
-= shared interface or ≥2 call sites, named in rationale.
-
-**Classify suggestions** — tag each `obvious-fix` or `judgment-required`:
-
-| Tag | Condition |
-|---|---|
-| `obvious-fix` | Skip rationale empty, concedes the comment is right, or fail-open defect in artifact-producing code. |
-| `judgment-required` | A real tradeoff, false-positive possibility, scope question, multiple valid approaches, or security/performance judgment exists. |
-
-Default to `judgment-required` when uncertain.
-
-**Merge, split, convergence:**
-
-- Merge duplicate comments on the same `path:line` with the same concern.
-- Split one comment with multiple distinct sub-items into one suggestion each.
-- Multi-reviewer convergence on the same concern class = incomplete prior fix:
-  merge the class, fix it via the Step 6 issue-class scan, reply from each
-  flagging thread.
+**Suggestion format, classification, and special cases** — see
+[suggestion-format](references/suggestion-format.md) for: `obvious-fix` vs
+`judgment-required` tags, merge/split/convergence rules, all-minor bulk-dismiss
+gate, design-flaw detection, fix-footprint gate, org-policy KB lookup, and
+docs-ahead-of-code stacked PR handling.
 
 ## Step 5: Consult — Collect All Decisions First
 

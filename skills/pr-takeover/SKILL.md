@@ -77,55 +77,15 @@ Accept: `wk-pr-takeover <pr-number-or-url> [--stack]`
   - PR found → confirm: "Taking over PR #N (<title>) on the current branch —
     continue?"
   - No PR resolves → ask "Which PR are you taking over? Provide a number or URL."
-
-```bash
-# Resolve PR number from an explicit URL/number argument
-PR_URL="$1"
-PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
-```
+- Extract `PR_NUMBER` from URL/argument: `echo "$PR_URL" | grep -oE '[0-9]+$'`
 
 ---
 
 ## Step 2: Fetch PR Context
 
-Pull full metadata for the target PR.
+Pull full metadata: `gh pr view "$PR_NUMBER" --json number,title,body,headRefName,baseRefName,author,state,isDraft,reviews,comments`. Fetch review + timeline comments via `gh api` (pulls comments + issues comments). Read `gh pr diff "$PR_NUMBER" | head -500`.
 
-```bash
-gh pr view "$PR_NUMBER" \
-  --json number,title,body,headRefName,baseRefName,author,state,isDraft,reviews,comments \
-  --jq '{
-    number: .number,
-    title: .title,
-    body: .body,
-    head: .headRefName,
-    base: .baseRefName,
-    author: (.author.login + " <" + .author.email + ">"),
-    state: .state,
-    isDraft: .isDraft
-  }'
-```
-
-Fetch review + timeline comments → understand prior discussion:
-
-```bash
-gh api "repos/{owner}/{repo}/pulls/$PR_NUMBER/comments" \
-  --jq '[.[] | {author: .user.login, body: .body, path: .path, line: .line}]'
-
-gh api "repos/{owner}/{repo}/issues/$PR_NUMBER/comments" \
-  --jq '[.[] | {author: .user.login, body: .body}]'
-```
-
-Read the diff → understand scope of work completed:
-
-```bash
-gh pr diff "$PR_NUMBER" | head -500
-```
-
-Summarize internally:
-- Original author's goal (title + body)
-- Code written (diff)
-- Review feedback (comments)
-- Unresolved threads
+Summarize: original author's goal, code written, review feedback, unresolved threads.
 
 ---
 
@@ -209,57 +169,19 @@ Read each changed file. Understand:
 - Incomplete sections (TODO, FIXME, `raise NotImplementedError`)
 - Tests exist? pass?
 
-Run the test suite → establish a baseline:
+Run the test suite to establish a baseline. See [test-runner examples](references/test-runner-examples.md). Record passing/failing/skipped; pre-existing failures are documented, not owned.
 
-```bash
-# Adjust for the project's test command
-bundle exec rspec --format progress 2>&1 | tail -20   # Ruby
-pytest -x -q 2>&1 | tail -20                          # Python
-go test ./... 2>&1 | tail -20                         # Go
-npm test -- --passWithNoTests 2>&1 | tail -20         # JS/TS
-```
-
-Record passing / failing / skipped. Failure from original author's work = a
-**pre-existing failure** → document it, do not treat it as yours.
-
-**Diff dominated by documentation / prose / config rather than code** → "does it
-still pass" is the wrong baseline; often no runnable suite. Substitute a
-**gate-preservation audit**:
-
-- Run the repo's pre-commit/pre-push hooks as the executable baseline.
-- Diff each touched file against base → enumerate rules, links, counts the change
-  claims to preserve, verify each survived the compression (parallel subagents
-  scale well across many files).
-- Real takeover risk: a silently dropped load-bearing rule inside compressed
-  prose, which no test catches.
+**Prose/config-dominated diff** → substitute a gate-preservation audit: run
+pre-commit hooks as baseline, diff touched files against base, verify all
+load-bearing rules survived compression.
 
 ---
 
 ## Step 5: Establish Co-Authorship
 
-Identify the original author's Git identity:
+Extract original author from existing commits: `git log --format="%an <%ae>" $(git merge-base HEAD origin/$BASE)..HEAD | sort -u`. Sole author is the user → skip co-authorship entirely.
 
-```bash
-# From the existing commits
-git log --format="%an <%ae>" "$(git merge-base HEAD "origin/$(gh pr view $PR_NUMBER --json baseRefName -q .baseRefName)")..HEAD" | sort -u
-```
-
-Sole author across those commits is the user (taking over one's own PR) →
-co-authorship machinery is a no-op; skip Step 5 and the `$WK_CO_AUTHOR` trailer
-entirely.
-
-Store as `$ORIGINAL_AUTHOR`. Every commit during takeover must carry:
-
-```
-Co-Authored-By: $ORIGINAL_AUTHOR
-```
-
-When invoking `wk-commit`, pass the co-author trailer explicitly:
-
-```bash
-# wk-commit will append co-author via its commit template
-export WK_CO_AUTHOR="$ORIGINAL_AUTHOR"
-```
+Otherwise store as `$ORIGINAL_AUTHOR` and `export WK_CO_AUTHOR="$ORIGINAL_AUTHOR"` — every commit carries `Co-Authored-By: $ORIGINAL_AUTHOR` via `wk-commit`.
 
 ---
 
@@ -273,16 +195,8 @@ From Step 4's orientation, produce a task list:
 4. Pre-existing failures → flag as pre-existing; include remediation if in scope
 
 Estimated work > 30% of original diff line-count AND in **overwrite mode** →
-auto-switch to **stack mode**:
-
-```bash
-ORIGINAL_LINES=$(gh pr diff "$PR_NUMBER" | grep -c '^[+-]')
-ESTIMATED_NEW_LINES=<your estimate>
-if [ "$ESTIMATED_NEW_LINES" -gt $(( ORIGINAL_LINES * 30 / 100 )) ]; then
-  echo "Scope exceeds 30% — switching to stack mode"
-  # Re-run Step 3 in stack mode
-fi
-```
+auto-switch to **stack mode** (compare `gh pr diff | grep -c '^[+-]'` against
+estimate; re-run Step 3 in stack mode).
 
 ---
 
@@ -403,21 +317,6 @@ their `<id>+<login>@users.noreply.github.com` form. Never guess `<login>@<domain
 
 ---
 
-## Common Mistakes
-
-- **Assuming the branch is mergeable** — always run tests at Step 4 before adding
-  code. Document pre-existing failures separately.
-- **Stacking on a draft base** — follow the three-option check in Step 3 Stack
-  Mode. Auto-mode retargets to the default branch.
-- **Approving your own work** — you are now a co-author; the approval constraint
-  applies even though you didn't write the original code.
-- **Losing co-author trailers** — set `$WK_CO_AUTHOR` before any `wk-commit`
-  invocation. Commits without the trailer lose attribution history.
-- **Expanding scope silently** — 30% threshold triggers mid-session → switch
-  modes and surface the decision to the user before proceeding.
-
----
-
 ## Quick Reference
 
 | Command | Behavior |
@@ -425,14 +324,5 @@ their `<id>+<login>@users.noreply.github.com` form. Never guess `<login>@<domain
 | `/wk-pr-takeover 123` | Overwrite mode — check out PR #NNN, continue on existing branch |
 | `/wk-pr-takeover 123 --stack` | Stack mode — create new branch on top of PR #NNN |
 | `/wk-pr-takeover <url>` | Accept full PR URL, extract number automatically |
-
----
-
-## Requirements
-
-- `gh` CLI authenticated
-- `$GITHUB_ORG` set (or `wk-gh` will prompt)
-- `$WK_SKILLS_HOME` set
-- Write access to the repository (push to the existing branch in overwrite mode)
 
 ---
