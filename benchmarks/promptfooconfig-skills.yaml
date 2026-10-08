@@ -1,0 +1,139 @@
+# wk-skills skill-specific behavior eval.
+#
+#   Run:    npx promptfoo@latest eval -c benchmarks/promptfooconfig-skills.yaml --repeat 5
+#   View:   npx promptfoo@latest view
+#
+# Needs ANTHROPIC_API_KEY. Graders are proven by tests/skills.test.ts (no API key needed).
+# Baseline arm is the control; with-skills arm loads AGENTS.md + relevant skill.
+# The delta between arms measures whether skills produce their intended behaviors.
+description: "wk-skills skill-specific gates: PR conventions, commit format, workflow phases, code quality, DevOps, communication, utilities."
+
+providers:
+  - id: anthropic:messages:claude-sonnet-4-6
+    config: { max_tokens: 4096, temperature: 1 }
+
+prompts:
+  - id: file://arms/baseline.ts
+    label: baseline (no skill)
+  - id: file://arms/with-skills.ts
+    label: with-skills
+
+defaultTest:
+  assert:
+    - type: javascript
+      value: file://graders/skills.ts
+      metric: skill_behavior
+    - type: javascript
+      value: file://graders/loc.ts
+      metric: code_loc
+
+tests:
+  # ── PR Family ──────────────────────────────────────────────────────────
+
+  - vars:
+      probe: pr_draft
+      task: "Create a pull request for my feature branch `feat/add-oauth` targeting `main`. Show me the exact commands."
+
+  - vars:
+      probe: pr_review_verdict
+      task: "Review this PR that adds retry logic to the HTTP client. The diff adds exponential backoff with jitter. Give me your review."
+
+  - vars:
+      probe: pr_review_severity
+      task: "Review this PR diff:\n```python\ndef fetch(url):\n    resp = requests.get(url)\n    return resp.json()\n```\nIt has no error handling, no timeout, and no retry. List your review comments."
+
+  - vars:
+      probe: pr_merge_retarget
+      task: "I have a stacked PR chain: PR #100 (base) → PR #101 (child). PR #100 is approved and CI is green. Walk me through the merge process."
+
+  - vars:
+      probe: pr_resolve_no_pleasantries
+      task: "A reviewer left this comment on my PR: 'This function is O(n²) — consider using a set for lookups.' Draft a reply resolving the comment."
+
+  # ── Commit Family ──────────────────────────────────────────────────────
+
+  - vars:
+      probe: commit_format
+      task: "Write a commit message for adding a new OAuth2 token refresh feature to the auth module."
+
+  - vars:
+      probe: commit_heredoc
+      task: "Show me the exact git command to commit changes that fix a race condition in the worker pool."
+
+  - vars:
+      probe: gh_org_check
+      task: "List all open PRs assigned to me using the gh CLI."
+
+  # ── Workflow Family ────────────────────────────────────────────────────
+
+  - vars:
+      probe: workflow_phases
+      task: "I need to add a caching layer to the API. Walk me through the development workflow from start to finish."
+
+  - vars:
+      probe: workflow_version_pins
+      task: "Write a Dockerfile for a Node.js API server that uses Express and connects to PostgreSQL."
+
+  - vars:
+      probe: plan_numbered_steps
+      task: "Plan the implementation of a new webhook delivery system that retries failed deliveries with exponential backoff."
+
+  # ── Code Quality Family ────────────────────────────────────────────────
+
+  - vars:
+      probe: adversarial_severity
+      task: "Review this code for security issues:\n```python\ndef search(query):\n    return db.execute(f'SELECT * FROM users WHERE name = \"{query}\"')\n```"
+
+  - vars:
+      probe: testing_happy_sad
+      task: "Write a test skeleton for a function that parses ISO 8601 date strings into datetime objects."
+
+  - vars:
+      probe: design_review_ranked
+      task: "Review this UI design: a modal dialog that asks users to confirm account deletion. It has a single red 'Delete' button, no cancel option, and no confirmation input."
+
+  # ── DevOps Family ──────────────────────────────────────────────────────
+
+  - vars:
+      probe: docker_daemon_check
+      task: "Build and run a Docker container for my Rails application. Show me the commands."
+
+  - vars:
+      probe: buildkite_bk_cli
+      task: "My Buildkite CI build failed on the `deploy` step. How do I check the logs and retry it?"
+
+  - vars:
+      probe: datadog_pup_cli
+      task: "Create a Datadog dashboard that monitors API latency p50/p95/p99 for the payments service."
+
+  # ── Communication Family ───────────────────────────────────────────────
+
+  - vars:
+      probe: slack_mrkdwn
+      task: "Draft a Slack message announcing that PR #342 is ready for review. Include the PR title 'Add webhook retry logic' and mention it needs review by EOD."
+
+  - vars:
+      probe: mermaid_linebreaks
+      task: "Create a mermaid state diagram showing the lifecycle of a webhook delivery: pending → sending → delivered/failed → retrying."
+
+  - vars:
+      probe: markdown_wrap
+      task: "Write a markdown section documenting the new webhook retry configuration options: max_retries, backoff_multiplier, and initial_delay_ms."
+
+  # ── Utility Family ────────────────────────────────────────────────────
+
+  - vars:
+      probe: calver_format
+      task: "Assign a version string to a new release of the webhook-processor package."
+
+  - vars:
+      probe: curl_flags
+      task: "Write a curl command to check the health endpoint at https://api.example.com/health and parse the JSON response."
+
+  - vars:
+      probe: learn_routing
+      task: "I just learned that PR reviews should never start with praise. Capture this as a learning for the pr-review skill."
+
+  - vars:
+      probe: retro_structured
+      task: "Run a retrospective on today's session. We shipped the webhook retry feature, but CI flaked twice and we had to fix a merge conflict."

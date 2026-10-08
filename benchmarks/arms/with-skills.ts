@@ -12,6 +12,7 @@ const AGENTS_MD = join(import.meta.dirname, '..', '..', 'AGENTS.md');
 
 /** Map probe → skill whose principles it tests. */
 const PROBE_SKILL: Record<string, string> = {
+  // Cross-cutting principles (promptfooconfig.yaml)
   imperative: 'concise',
   ladder: 'workflow',
   minimal: 'plan',
@@ -19,6 +20,37 @@ const PROBE_SKILL: Record<string, string> = {
   boundary: 'pr-review',
   concise: 'concise',
   reuse: 'workstyle',
+  // PR family (promptfooconfig-skills.yaml)
+  pr_draft: 'pr',
+  pr_review_verdict: 'pr-review',
+  pr_review_severity: 'pr-review',
+  pr_merge_retarget: 'pr-merge',
+  pr_resolve_no_pleasantries: 'pr-resolve',
+  // Commit family
+  commit_format: 'commit',
+  commit_heredoc: 'commit',
+  gh_org_check: 'gh',
+  // Workflow family
+  workflow_phases: 'workflow',
+  workflow_version_pins: 'workflow',
+  plan_numbered_steps: 'plan',
+  // Code quality family
+  adversarial_severity: 'adversarial-review',
+  testing_happy_sad: 'testing-skeleton',
+  design_review_ranked: 'design-review',
+  // DevOps family
+  docker_daemon_check: 'docker',
+  buildkite_bk_cli: 'buildkite',
+  datadog_pup_cli: 'datadog',
+  // Communication family
+  slack_mrkdwn: 'slack',
+  mermaid_linebreaks: 'mermaid',
+  markdown_wrap: 'markdown',
+  // Utility family
+  calver_format: 'calver',
+  curl_flags: 'curl',
+  learn_routing: 'learn',
+  retro_structured: 'retro',
 };
 
 function loadSkill(name: string): string {
