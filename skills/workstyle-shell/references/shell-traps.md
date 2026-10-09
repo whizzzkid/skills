@@ -1,4 +1,4 @@
-# Shell Traps — sed, awk, grep, printf
+# Shell Traps — sed, awk, perl, grep, printf
 
 Catalog of silent-failure traps in common shell tools. Each trap produces valid
 output, empty stderr, and exit status 0 — making broken matchers indistinguishable
@@ -131,6 +131,16 @@ a real finding. Feed one input known to qualify and confirm the count changes.
   miss its counterpart downstream, inverting the verdict for an entire source. Check
   which of the two you face before reaching for a diagnostic: gate any load-bearing
   normalization on a positive control proving the transform actually fired.
+
+## perl Line-Mode Traps
+
+- **Never end a `perl -p`/`-pi` substitution with `\s*$` — use `[ \t]*$`.** Under `-p`, `$_` still carries the
+  line's trailing `\n`, and `\s` matches it, so `s/^(key:\s*)"old"\s*$/$1"new"/` deletes the newline and joins the
+  edited line to the next one. rc=0, no warning; in YAML frontmatter the next key lands on the same line and the
+  file silently stops parsing. Match horizontal whitespace only (`[ \t]*$`), or add `-l` to chomp and restore
+  newlines.
+- **Diff any structured file (frontmatter, YAML, JSON) after a bulk regex edit** — `git diff` the touched set, or
+  re-parse it; a line-join is invisible in the success output.
 
 ## ERE Escaped Pipe
 

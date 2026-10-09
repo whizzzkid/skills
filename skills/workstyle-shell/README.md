@@ -2,7 +2,7 @@
 
 > Enforces safe, idiomatic shell conventions in scripts and compound ad-hoc commands.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-214000`
 
 ## Invocation
 
@@ -52,6 +52,8 @@
 
 ## Noteworthy
 
+- **perl line-mode `\s*$` eats the newline** — under `-p` the trailing `\n` is in `$_`; end patterns with `[ \t]*$`
+  (or use `-l`) and diff structured files after any bulk regex edit.
 - **Project config is always authoritative.** Defers to any active linter /
   formatter config; fills gaps only.
 - **Part of the [`wk-workstyle`](../workstyle/README.md) family** — the [`wk-workstyle`](../workstyle/README.md) orchestrator runs
