@@ -155,83 +155,14 @@ gcal.create_event(
 
 ## § Interview Prep Scan
 
-Run this during `wk-sitrep start` to ensure every upcoming interview has the
-right calendar scaffolding. The scan covers the **next 5 calendar days**.
+Run during `wk-sitrep start` to ensure every upcoming interview has prep and
+scorecard blocks. See
+[references/interview-prep-scan.md](references/interview-prep-scan.md) for the
+full scan protocol (detection keywords, debrief skip rule, prep/scorecard
+creation, and reporting format).
 
-### Step 1: Detect interviews
-
-Fetch events for the next 5 days using `§ Fetch Day Events` per day. Flag
-any event whose title contains interview-signal keywords:
-
-```
-interview | phone screen | technical screen | coding interview |
-behavioral | hiring panel | debrief | onsite | system design | loop
-```
-
-Case-insensitive match. If the event description mentions "candidate" or
-"hiring", also flag it.
-
-### Step 2: For each detected interview
-
-**Skip rule:** If the interview title contains `debrief` (case-insensitive),
-create **only** the Prep block — skip the Scorecard block entirely. Debrief
-sessions are already the scorecard discussion; a separate scorecard block is
-redundant.
-
-Check the same day's calendar for scaffolding blocks:
-
-**A. 15-min Interview Prep block** immediately before the interview.
-
-Check if the 15 minutes before the interview start are free:
-```
-gcal.get_free_busy(
-  time_min: "<interview_start - 15min>",
-  time_max: "<interview_start>",
-  items: [{ id: "primary" }]
-)
-```
-- If free → create it:
-  ```
-  summary:     "🎯 Interview Prep — {interview_title}"
-  start:       interview_start - 15min
-  end:         interview_start
-  description: "Review candidate profile, questions, and role context."
-  ```
-- If busy → note the conflict; do not create.
-
-**B. 30–45-min Interview Scorecard block** as soon as possible after the interview.
-
-**HARD RULE:** The scorecard is always a **booked calendar event**, never a
-checkbox or to-do item in any caller's dashboard. Create the event here via
-the calendar MCP before the caller renders its summary. A scorecard surfaced
-as a checkbox is a defect — the user must not have to schedule it themselves.
-
-Allow 30–45 minutes; under 30 is not enough time to complete a scorecard.
-First try immediately after (`interview_end` → `interview_end + 30min`).
-If busy, scan forward in 30-min increments through the rest of the working day.
-Pick the first free slot of at least 30 minutes:
-```
-summary:     "📋 Interview Scorecard — {interview_title}"
-description: "Complete the interview scorecard while it's fresh."
-```
-If no 30-min slot exists on the same day → flag to the user:
-
-> "⚠️ No scorecard slot found for {interview_title} on {date}. Please
-> manually block time or I can check the next morning."
-
-### Step 3: Report
-
-Surface results as part of the morning brief or evening preview:
-
-```
-📅 Interview scaffolding:
-  ✅ {interview_title} ({date} {time})
-     Prep: {time} — created
-     Scorecard: {time} — created
-  ⚠️ {interview_title} ({date} {time})
-     Prep: could not create — {conflict reason}
-     Scorecard: no same-day slot found — manual action needed
-```
+**HARD RULE:** The scorecard is always a booked calendar event, never a
+checkbox or to-do item. Create via calendar MCP before any caller renders.
 
 ## Quick Reference
 

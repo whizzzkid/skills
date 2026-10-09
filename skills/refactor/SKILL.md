@@ -133,42 +133,13 @@ git diff -M --summary "origin/$BASE..HEAD" > /tmp/refactor-renames.txt
 
 ## Stage 2: Removed-line audit (per file)
 
-For each modified file, walk every removed line and ask: **did this line encode behavior not present elsewhere?** Checklist below captures recurring shapes of dropped behavior. Classify each removed line as one of:
+For each modified file, walk every removed line and classify as relocated,
+subsumed, intentionally removed, or suspicious. See
+[references/removed-line-audit.md](references/removed-line-audit.md) for the
+full checklist (env vars, fallback chains, rescue clauses, guards, tests,
+diagnostics, behavior narrowing) and the stale-literal check.
 
-- **Relocated** — the same logic appears under a new name / file /
-  function. Note where.
-- **Subsumed** — a generic helper now handles this case alongside
-  others. Confirm the helper actually covers it.
-- **Intentionally removed** — PR description, commit message, or
-  an explicit user instruction documents the removal.
-- **Suspicious** — none of the above. Flag for Stage 4 surfacing.
-
-Mandatory checks per kind of removed line:
-
-| Removed line shape | Question |
-|--------------------|----------|
-| `ENV.fetch(...)` / `os.environ[...]` / `process.env.X` | Is the env var still read somewhere on this branch, with the same default / missing-key behavior? |
-| Fallback chain (`x \|\| y`, `if a.nil? then b`, optional-chaining defaults) | Is the fallback still invoked when the primary is unset? Is the default value preserved? |
-| `rescue` / `catch` / `except` clause | Is the exception still caught somewhere up-stack? Or is it now intentionally allowed to propagate? |
-| Guard (`return early`, `unless`, `if not allowed`, validation) | Is the guarded condition now structurally impossible, or just unguarded? |
-| Comment documenting *why* a branch existed | If the branch was removed, was the *reason* still relevant? Comments often outlive their code. |
-| Conditional that selects between two valid paths | Was the unselected path documented elsewhere? Is selecting one path always correct? |
-| A call site of an external API / CLI / DB query | Is that call now made elsewhere, with the same arguments and error handling? |
-| A test (deleted or renamed) | Does an equivalent assertion exist on the new shape? |
-| `warn` / `logger.*` / `puts` / `console.*` / `log.*` call inside a removed block | Is the diagnostic still emitted on the same code path? Collapsing a multi-line `unless`/`if` block into a guard clause routinely drops the warning, producing a silent debuggability regression even when behavior is otherwise preserved. |
-| Behavior narrowed to a specific arm / mode / branch (an unconditional read moved inside a conditional) | Do all existing tests still drive the unit through the arm that now owns the behavior? Tests pinned to the pre-narrowing invocation may pass coincidentally (default value matches) while no longer exercising the relocated code. Grep the test tree for the old invocation form and verify each test reaches the new code path. |
-
-A removed line the refactor's kind does NOT predict (e.g. an `ENV.fetch` removal during a rename) = **suspicious by default** — renames don't drop env reads.
-
-### Stale-literal check (constant → resolver / value-bearing rename)
-
-Removed-line audit misses this class — the stale copy is an **unchanged** line, not a removed one.
-
-- Run when a refactor replaces a named constant (or symbol) with a resolver/function whose return value differs from a former literal.
-- Grep the **old literal value** across all files in scope — not just the constant's identifier.
-  - Identifier-grep finds symbol references; misses hardcoded copies of the value in string-literal contexts (format strings, error messages, logs).
-- Require every hit that is not a comment or test fixture to use the resolver's return value, not the stale literal.
-- Failure mode: a stale literal in an error message shows users a wrong/outdated value while every symbol reference looks correctly updated.
+A removed line the refactor's kind does NOT predict = **suspicious by default**.
 
 ---
 

@@ -220,74 +220,10 @@ After sending, confirm:
 
 ## Standup Snippet
 
-Canonical spec for the daily standup snippet rendered by wk-sitrep start
-(and any other caller). Public team artifact — every rule below is a HARD RULE.
-
-**Structure (Context C — HTML for clipboard, bullets shown for
-illustration):**
-
-```
-- 👈🏽 Yesterday:
-  - {achievement} <a href="…">repo#NNN</a>
-  - {group label}:
-    - <a href="…">repo#NNN</a> — {short description}
-    - <a href="…">repo#NNN</a> — {short description}
-- 👉🏽 Today:
-  - {priority} <a href="…">repo#NNN</a>
-  - {group label}:
-    - <a href="…">repo#NNN</a> — {short description}
-- ✋🏽 Blockers:
-  - {blocker} <a href="…">{link label}</a>
-```
-
-- Yesterday, Today, Blockers are top-level `<li>` of a single `<ul>`;
-  sub-points are nested `<ul><li>` children. Never emit them as `<p>`,
-  `<b>`, or `<h*>` — flat headings collapse Slack's paste indentation.
-- Each leaf bullet carries **at most one** external link. Multiple
-  artifacts → parent bullet (group label, no link) + one child bullet
-  per artifact, each carrying its single link.
-- GitHub PR/issue link labels are always `repo#number` (e.g.,
-  `somerepo#NNN`). Bare `#NNN` forbidden — repo context is lost on
-  paste outside the original surface.
-- **Emoji LEADS every heading — `👈🏽`/`👉🏽`/`✋🏽` is the first character of the
-  Yesterday/Today/Blockers bullet respectively. Never trail the emoji at the end
-  of a heading line (`Yesterday 👈🏽` is wrong; `👈🏽 Yesterday` is right).**
-- Blockers always present: emit `- ✋🏽 Blockers:` with a single `- None` child
-  when there are none. Never drop the heading or its emoji.
-- Build the copy button with `ClipboardItem` writing `text/html` with
-  real `<a>` tags and `<ul><li>` nesting. Never copy `textContent` only
-  — it strips every link.
-
-### Standup privacy filter (HARD RULE)
-
-Apply to every candidate item **before** it lands in the snippet. The
-morning/evening dashboard may keep filtered items privately; the standup may not.
-
-- Drop interview, hiring, or candidate-pipeline items in specific form.
-  If an interview must appear, render generically (e.g., "L4 SE
-  candidate interview 12pm") — never include candidate names,
-  CodeSignal URLs, Greenhouse/scorecard links, or any other
-  hiring-pipeline PII.
-- Drop personal HR, performance, QPR, or compensation actions (e.g.,
-  "QPR self-review window closes", "1:1 with manager").
-- Drop personal communications (farewell replies, DMs, condolences,
-  social-channel pings).
-- Drop anything the caller flagged as private or has not yet decided to
-  share publicly.
-- When uncertain, omit. Standup is public; dashboard is private.
-
-### Caller contract
-
-When invoked as `wk-slack §Standup Snippet`, return:
-
-- HTML payload (`<ul>…</ul>`) ready to embed in a dashboard card and
-  copy to clipboard via `ClipboardItem`.
-- Plaintext fallback (Context B) for the markdown brief: `-` bullets,
-  2-space indent for nesting, bare URLs.
-- Filtered-out items (so the caller keeps them in the private dashboard).
-
-Callers (wk-sitrep) must **not** re-implement the structure, link
-format, or privacy filter inline — invoke this section instead.
+See [references/standup-snippet-spec.md](references/standup-snippet-spec.md)
+for the full standup structure (Context C HTML), privacy filter, and caller
+contract. Every rule there is a HARD RULE. Callers must not re-implement the
+structure, link format, or privacy filter inline — invoke the spec instead.
 
 ---
 

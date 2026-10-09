@@ -114,9 +114,11 @@ Tell the user:
 
 - Auth error → [Auth Error Handling](#auth-error-handling).
 
-## Canonical Build Query
+## HARD RULE: strip warning prefix on every `--json | jq` pipe
 
-Pattern for inspecting a build's jobs:
+Under env-var auth, `bk ... --json` prepends `Warning: using BUILDKITE_API_TOKEN ...` to stdout, breaking jq. Always pipe through `grep -v '^Warning:'` (safe whether present or not; prefer over `tail -n +2`).
+
+## Canonical Build Query
 
 ```bash
 bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | \
@@ -125,11 +127,9 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | \
               {name: .name, state: .state, exit_status: .exit_status}]}'
 ```
 
-- **Always strip the auth warning before `jq`.** Under env-var auth (`BUILDKITE_API_TOKEN`), `bk ... --json` prepends `Warning: using BUILDKITE_API_TOKEN ...` to **stdout**, breaking the parse with "Invalid numeric literal". Pipe through `grep -v '^Warning:'` (safe whether the line is present or not; prefer over `tail -n +2`, which corrupts interactive-auth output that has no warning). Apply to every `--json | jq` pipe.
 - Adjust the `select` predicate to filter by different states.
-- Target a specific build → pass the build number as a **positional** arg: `bk build view -p <pipeline> <build-number> --json`. Never pass it to `-b`.
-- On `bk build view`, `-b` is `--branch`; passing a build number to it resolves to `null` → breaks the `jq` pipe with "Invalid numeric literal".
-- Overload: on `bk job log`, `-b` / `--build-number` *is* the build number.
+- Target a specific build → positional arg: `bk build view -p <pipeline> <build-number> --json`. Never pass it to `-b`.
+- On `bk build view`, `-b` is `--branch`. On `bk job log`, `-b` is `--build-number`.
 
 ## Checking Build Status
 
@@ -155,25 +155,8 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | \
 
 ## Understanding Build States
 
-### Build States
-
-| State | Meaning |
-|-------|---------|
-| `passed` | All jobs completed successfully |
-| `failed` | One or more jobs failed |
-| `failing` | Build still running but has failures |
-| `running` | Build is in progress |
-| `blocked` | Waiting for manual approval |
-| `canceled` | Build was canceled |
-
-### Job States
-
-| State | Meaning |
-|-------|---------|
-| `passed` | Job succeeded |
-| `failed` | Job failed with non-zero exit |
-| `broken` | **Usually means skipped** — upstream dependency failed or conditional logic excluded it. NOT necessarily a failure. |
-| `running` | Job in progress |
+See [references/build-job-states.md](references/build-job-states.md) for build
+states, job states, and common CI exit codes.
 
 **Key insight:** `broken` jobs are almost never the root cause. Always investigate `failed` jobs first.
 
@@ -239,18 +222,6 @@ body separates them. Read it before bisecting anything.
 - Reading a raw REST log payload instead (only under [Tool Selection](#tool-selection)) →
   strip ANSI escapes **and** inline `_bk;t=<epoch-ms>` timestamp markers first;
   the tail is unreadable with either left in.
-
-### Common CI Exit Codes
-
-| Exit Code | Meaning |
-|-----------|---------|
-| 1 | General error (test failure, lint error) |
-| 2 | Misuse of shell command / bats test failure |
-| 17 | Docker build failed |
-| 127 | Command not found |
-| 137 | OOM killed |
-| 143 | SIGTERM — job killed (spot-instance reclaim / agent shutdown). If the step's real work already printed success, treat as infra noise, not a code failure: rebuild once, do not diagnose the diff. |
-| 255 / -1 | Synthetic, not the command's own status — an agent-side setup failure is stamped with it under the step's name. Classify from the log (above) before reading it as a code failure. |
 
 ## Reading upstream step status from a downstream step
 
