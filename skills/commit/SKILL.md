@@ -25,7 +25,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.09-211241"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -128,8 +128,11 @@ preservation, false alarms: [`references/commit-signing.md`](references/commit-s
 
 ### Hook and verify rules
 
-- Never use `--no-verify` when committing or pushing. Hook failing → stop and ask the user to run the command manually,
-  unless it is a self-healing class below.
+- **HARD RULE — never bypass hooks, by any mechanism.** `--no-verify` and every env/config disable (`LEFTHOOK=0`,
+  `HUSKY=0`, `SKIP=<hook>`, a `core.hooksPath` override) are the same bypass — all forbidden, when committing or pushing.
+  One failing gate is a requirement, not an obstacle: satisfy it (e.g. co-stage the file it demands); never disable the
+  suite (every other gate's defects then ship unchecked). Hook failing → stop and ask the user to run the command
+  manually, unless it is a self-healing class below.
 - **Never truncate `git commit` output so a hook abort is hidden:** `| tail -N` drops both the hook's `✗`/error block
   and the `[branch sha]` success line. Show full output or append `&& echo OK`, and confirm HEAD advanced
   (`git rev-parse HEAD`); treat an absent `[branch sha]` confirmation as a failed commit, not a display artifact.
@@ -150,6 +153,8 @@ staged set matches intent before grouped commits (`git diff --cached --name-only
 individually — never blanket `git add` a generation dir. Full rules:
 [`references/staging-discipline.md`](references/staging-discipline.md).
 
+- **Tree holds untracked files this commit does not own → stage explicit file paths, never a directory or `-A`**
+  (directory staging sweeps pre-existing untracked files into the commit).
 - **Re-stage a file edited after it was staged:** hooks inspect the **staged** snapshot, not the working tree. After any
   Edit/Write to a file already in the index, re-run `git add <file>` before committing. Detect the gap (overlap =
   re-stage needed):

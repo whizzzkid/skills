@@ -2,7 +2,7 @@
 
 > Use when creating git commits or pushing code. Enforces conventional commits with emoji, commit signing, and safe push behavior.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.09-211241`
 
 ## Invocation
 
@@ -38,6 +38,9 @@ flowchart TD
 - **Dependent commit chains fail fast** — every grouped stage/verify/commit shell starts with `set -euo pipefail`,
   so an early failure cannot be hidden by later read-only output.
 - **PR Sync runs after every successful push** to a branch with an open PR — title and body are diffed against the post-push state and updated if they have drifted, with human-authored sections (review checkboxes, hand-edited test plans) preserved.
+- **Hooks are never bypassed** — `--no-verify` and every env/config disable (`LEFTHOOK=0`, `HUSKY=0`, `SKIP=`)
+  are the same forbidden bypass; satisfy the failing gate instead. With unowned untracked files in the tree, stage
+  explicit paths, never a directory.
 - **Signing is non-negotiable** — `--no-gpg-sign`, `-n`, and `git -c commit.gpgsign=false` are forbidden. For
   signed merges or rewrites, verify the configured key and SSH agent from the exact execution shell before starting.
   If only the login shell exposes both, run there with the verified key through one-shot `git -c`; only a completed
