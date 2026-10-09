@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.09-213235"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -68,8 +68,13 @@ Read/Edit/Write only, with no runtime error. Decide at dispatch: tests, lint, bu
 agents finish.
 
 **Continuity:** treat the Phase 1 plan as the session contract: enumerate every deliverable before acting. On
-interruption: update plan, re-state top item, resume earliest incomplete. Final gate: re-read plan; every step finished
-or explicitly deferred.
+interruption: update plan, re-state top item, resume earliest incomplete.
+
+- **Important — diff the plan at every batch boundary, not only at the end.** List done vs remaining against the
+  original plan, then start the next item without asking when the originating directive ("fix all") covers it. A
+  sub-agent's "targets met" is not plan completion.
+- Item not being done → defer it explicitly, with a reason, in the same message; never drop it silently.
+- Final gate: re-read plan; every step finished or explicitly deferred.
 
 ## Phase 1: Plan
 

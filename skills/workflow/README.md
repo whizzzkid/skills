@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.09-213235`
 
 ## Invocation
 
@@ -42,6 +42,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **Plan diff at every batch boundary** — done vs remaining is checked after each batch, the next covered item starts
+  without asking, and anything not done is deferred explicitly with a reason, never silently dropped.
 - **Live learning capture is a Mandatory Activation rule** — invoke
   [`wk-learn`](../learn/README.md) immediately on a correction, scope redirect,
   or self-caught error, before continuing; also invoke it after every skill run.
