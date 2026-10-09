@@ -63,6 +63,14 @@ with-skills arm ≥80% (`scripts/report.ts calibrate`). Compare skill versions w
 `scripts/report.ts compare old.json new.json`; drops within the baseline arm's run-to-run spread
 (min 20pp) are noise, not regressions.
 
+### Weekly atrophy check
+
+`scripts/weekly-eval.sh` runs both suites at `--repeat 10`, saves results under
+`benchmarks/results/<UTC date>/` (gitignored), calibrates each, and compares
+against the previous run with `report.ts compare`; exit 1 on regression. It
+spends Claude Code usage (~400 calls per run), so scheduling it (launchd/cron)
+is an explicit opt-in, not installed by default.
+
 ### Language
 
 TypeScript with Node's `--experimental-strip-types`. No build step, no bundler,
