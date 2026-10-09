@@ -36,10 +36,10 @@ Adopt a two-tier eval framework for wk-skills:
 
 ### Tier 2: Full promptfoo eval (manual / CI)
 
-- **What:** `npx promptfoo@latest eval -c benchmarks/promptfooconfig.yaml`
+- **What:** `npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig.yaml`
   runs each probe task through baseline and with-skills arms on a live model.
 - **When:** Before debloat passes, after major skill rewrites, weekly cron.
-- **How:** Requires `ANTHROPIC_API_KEY`. Reports principle pass rates and LOC
+- **How:** Shells out to `claude -p` (isolated: no settings, tools, skills, MCP) via `benchmarks/providers/claude-cli.ts`, reusing the Claude Code login — no API key. Reports principle pass rates and LOC
   metrics per arm.
 - **Cost:** ~7 API calls × 2 arms × N repeats. At `--repeat 5`: ~70 calls.
 - **Catches:** Behavioral atrophy (skill still loads but model ignores it).

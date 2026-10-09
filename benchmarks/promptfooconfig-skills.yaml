@@ -1,16 +1,17 @@
 # wk-skills skill-specific behavior eval.
 #
-#   Run:    npx promptfoo@latest eval -c benchmarks/promptfooconfig-skills.yaml --repeat 5
-#   View:   npx promptfoo@latest view
+#   Run:    npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig-skills.yaml --repeat 5
+#   View:   npx promptfoo@0.124.1 view
 #
-# Needs ANTHROPIC_API_KEY. Graders are proven by tests/skills.test.ts (no API key needed).
+# Runs via the local `claude` binary (existing login, no API key). Graders are proven by tests/skills.test.ts (no API key needed).
 # Baseline arm is the control; with-skills arm loads AGENTS.md + relevant skill.
 # The delta between arms measures whether skills produce their intended behaviors.
 description: "wk-skills skill-specific gates: PR conventions, commit format, workflow phases, code quality, DevOps, communication, utilities."
 
 providers:
-  - id: anthropic:messages:claude-sonnet-4-6
-    config: { max_tokens: 4096, temperature: 1 }
+  # Local claude binary + existing Claude Code login; no API key. Model via EVAL_MODEL.
+  - id: "exec: node --experimental-strip-types providers/claude-cli.ts"
+    label: claude-cli
 
 prompts:
   - id: file://arms/baseline.ts

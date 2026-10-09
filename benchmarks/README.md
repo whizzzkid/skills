@@ -41,9 +41,10 @@ Compares baseline (no skill) vs with-skills arms on a live model.
 The delta measures whether skills produce their intended behaviors.
 
 ```bash
-export ANTHROPIC_API_KEY=sk-...
-npx promptfoo@latest eval -c benchmarks/promptfooconfig.yaml --repeat 5
-npx promptfoo@latest view
+# Uses the local `claude` binary and your Claude Code login — no API key.
+# EVAL_MODEL=claude-opus-5-5 to override the default model (claude-sonnet-4-6).
+npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig.yaml --repeat 5
+npx promptfoo@0.124.1 view
 ```
 
 ## Probes

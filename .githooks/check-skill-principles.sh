@@ -6,7 +6,7 @@
 # exercises the deterministic grader logic (tests/principles.test.ts, tests/loc.test.ts).
 #
 # The full promptfoo eval (which calls the LLM) runs separately via:
-#   npx promptfoo@latest eval -c benchmarks/promptfooconfig.yaml
+#   npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig.yaml
 #
 # Requires Node ≥22.6.0 for --experimental-strip-types.
 
