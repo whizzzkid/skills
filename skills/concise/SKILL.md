@@ -23,7 +23,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-014345"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -92,6 +92,9 @@ per-turn hook reminder carries a THINK-BRIEFLY / THINK-MINIMALLY clause.
 - **No tables for ≤3 items** — write a sentence ("X (foo), Y (bar), Z (baz)"). Tables are for ≥4 row × ≥2 column comparisons.
 - **No section headers for single-section answers.** Headers are for navigation; drop them if nothing to navigate to.
 - **No trailing summary, no recap, no "let me know if".** End on the result.
+- **Close with what you skipped.** After code or a change, end with one line: what you skipped or did
+  not check, and any risk the user must know. Not a recap — omit when nothing was skipped.
+- **Recommend, don't survey.** Weighing options → recommend one; name an alternative only with why not.
 
 Caps surfaced per-turn by `concise-reminder.sh` hook so they stay top of mind despite chatty defaults.
 

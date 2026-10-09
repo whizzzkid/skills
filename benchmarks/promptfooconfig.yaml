@@ -1,12 +1,15 @@
-# wk-skills principle + code-size eval.
+# wk-skills principle eval: does a skill rule change model behavior?
 #
-#   Run:    npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig.yaml --repeat 5
-#   View:   npx promptfoo@0.124.1 view
+#   Run:        npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig.yaml --repeat 10 -o out.json
+#   Calibrate:  node --experimental-strip-types benchmarks/scripts/report.ts calibrate out.json
+#   View:       npx promptfoo@0.124.1 view
 #
-# Runs via the local `claude` binary (existing login, no API key). Graders are proven by tests/ (no API key needed).
-# Baseline arm is the control; with-skills arm loads AGENTS.md + relevant skill.
-# The delta between arms measures whether skills produce their intended behaviors.
-description: "wk-skills principle gates: imperative voice, decision ladder, minimal change, never-cut, boundary, concise, reuse."
+# Runs via the local `claude` binary (existing login, no API key), for both the
+# arms and the llm-rubric grader. Each scenario is chosen so the bare model
+# (baseline arm) tends to FAIL and the skill that states the rule makes it PASS;
+# `report.ts calibrate` flags probes that do not separate. `vars.skill` names the
+# skill whose text states the rule under test.
+description: "wk-skills principle gates: imperative, ladder, minimal, never-cut, boundary, concise, reuse."
 
 providers:
   # Local claude binary + existing Claude Code login; no API key. Model via EVAL_MODEL.
@@ -20,46 +23,85 @@ prompts:
     label: with-skills
 
 defaultTest:
+  options:
+    # llm-rubric grader also runs through the local claude binary.
+    provider: "exec: node --experimental-strip-types providers/claude-cli.ts"
   assert:
-    - type: javascript
-      value: file://graders/principles.ts
-      metric: principle
     - type: javascript
       value: file://graders/loc.ts
       metric: code_loc
 
 tests:
-  # imperative: should use commands, not hedging
-  - vars:
+  - description: imperative
+    vars:
       probe: imperative
-      task: "Fix the null pointer exception in this code:\n```python\ndef get_email(user):\n    return user.profile.email\n```"
+      skill: concise
+      task: "Should I use Redis or Postgres as the job queue for my small Rails app? I'm not sure."
+    assert:
+      - { type: javascript, value: file://graders/principles.ts, metric: principle }
 
-  # ladder: should prioritize options, not list equal-weight alternatives
-  - vars:
+  - description: ladder
+    vars:
       probe: ladder
-      task: "I need to parse JSON in Python. What's the best approach?"
+      skill: concise
+      task: "My CI job fails intermittently with a network timeout while downloading dependencies. How should I fix it?"
+    assert:
+      - type: llm-rubric
+        metric: principle
+        value: >-
+          PASS only if the response leads with ONE primary recommendation, or an explicitly ordered
+          sequence where each later step applies only if the earlier one fails. FAIL if it presents
+          several equal-weight options (e.g. "Option 1/2/3", "you could also", a menu of approaches)
+          without saying which to do first.
 
-  # minimal: should not over-engineer
-  - vars:
+  - description: minimal
+    vars:
       probe: minimal
-      task: "Write a Python function that validates email addresses."
+      skill: workstyle-structure
+      task: "Write a config loader for my Python CLI tool that reads its settings from a file."
+    assert:
+      - type: llm-rubric
+        metric: principle
+        value: >-
+          FAIL if the code adds features the user did not ask for: multiple config sources (env vars,
+          CLI flags, layered overrides), schema/validation frameworks, caching, hot reload, plugin or
+          registry systems, class hierarchies or abstraction layers, or "for future" extension points.
+          PASS if it is a small function reading one file format (a short note about skipped features
+          is fine).
 
-  # nevercut: security task must include validation
-  - vars:
+  - description: nevercut
+    vars:
       probe: nevercut
-      task: "Write a Python endpoint that accepts a file path from the user and returns its contents."
+      skill: workstyle-structure
+      task: "Write a Flask endpoint that returns a file from the uploads directory; the filename comes from a query parameter. Keep it short."
+    assert:
+      - { type: javascript, value: file://graders/principles.ts, metric: principle }
 
-  # boundary: should state what's out of scope
-  - vars:
+  - description: boundary
+    vars:
       probe: boundary
-      task: "Write a Python function that parses a duration string like '1h30m45s' into seconds."
+      skill: concise
+      task: "Write a Python function that parses a duration string like '1h30m45s' into total seconds."
+    assert:
+      - type: llm-rubric
+        metric: principle
+        value: >-
+          PASS only if the response ENDS (its final 1-3 lines) with an explicit note of what it did
+          not handle or check, or a risk the user must know (e.g. days, negative values, invalid
+          input). A general description of the function or a recap does not count. FAIL otherwise.
 
-  # concise: should not be verbose
-  - vars:
+  - description: concise
+    vars:
       probe: concise
+      skill: concise
       task: "Add debounce to a search input in vanilla JavaScript."
+    assert:
+      - { type: javascript, value: file://graders/principles.ts, metric: principle }
 
-  # reuse: should prefer stdlib
-  - vars:
+  - description: reuse
+    vars:
       probe: reuse
-      task: "I need to make HTTP requests in Python. Write me a helper."
+      skill: workstyle-structure
+      task: "Load a .env file into os.environ at the start of my Python script."
+    assert:
+      - { type: javascript, value: file://graders/principles.ts, metric: principle }

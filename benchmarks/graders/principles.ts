@@ -1,14 +1,18 @@
 /**
- * Principle gate: does the skill ruleset produce its refined behaviors?
+ * Principle gate: deterministic checks for principles a regex can judge.
  *
- * One check per probe (vars.probe), each targeting a principle from the
- * ponytail-informed skill standards. Heuristic graders proven by
- * tests/principles.test.ts (RED/GREEN, no API key needed).
+ * Semantic principles (ladder, minimal, boundary) are graded by `llm-rubric`
+ * in promptfooconfig.yaml instead — a keyword match cannot tell a ranked
+ * recommendation from a survey. Checks here are proven by
+ * tests/principles.test.ts (RED/GREEN, no model calls).
  *
  * Metric: `principle` (1 = behavior present, 0 = absent).
  */
 
 import type { GraderResult, GraderContext, ProbeChecker, ProbeCheckers } from '../types.ts';
+
+const MAX_PROSE_WORDS = 120;
+const MAX_PROSE_PER_CODE_LINE = 8;
 
 function proseOf(text: string): string {
   return text.replace(/```[\s\S]*?```/g, ' ').replace(/\s+/g, ' ').trim();
@@ -19,92 +23,55 @@ function codeOf(text: string): string {
   return blocks.length ? blocks.join('\n') : '';
 }
 
+const HEDGES = /\b(you might want to|you could consider|it might be worth|perhaps you should|i think you should|it would be good to|you may want to|it depends|there are (several|many|a few) (ways|options|approaches)|generally speaking|it's worth noting)\b/g;
+const PLEASANTRIES = /(\bsure!|\bhappy to help|\bcertainly!|\bof course!|\bgreat question|\bi'd be glad to)/gi;
+
+// Path containment: resolve the user path and prove it stays under a base directory.
+const PATH_CONTAINMENT = /(realpath|abspath|\.resolve\(|os\.path\.normpath|commonpath|is_relative_to|relative_to\(|send_from_directory|safe_join|secure_filename)/;
+const PATH_REJECT_DOTDOT = /['"]\.\.['"]|\.\.\/|startswith\(\s*(base|root|safe|allowed)/i;
+// Checks that are containment on their own (no separate ".." test needed).
+const PATH_SELF_CONTAINED = /(is_relative_to|commonpath|safe_join|send_from_directory)/;
+
+// Third-party loaders for tasks the standard library already covers.
+const THIRD_PARTY = /\b(pip install|poetry add|uv add|npm install|yarn add|from dotenv|import dotenv|load_dotenv)\b/i;
+
 const CHECKS: ProbeCheckers = {
-  /** Imperative voice: output uses commands, not hedging/pleasantries. */
+  /** Imperative voice: commands and a direct recommendation, no hedging or pleasantries. */
   imperative(output: string) {
     const p = proseOf(output).toLowerCase();
-    const hedges = (p.match(/\b(you might want to|you could consider|it might be worth|perhaps you should|i think you should|it would be good to|you may want to)\b/g) || []).length;
-    const pleasantries = (p.match(/\b(sure!|happy to help|certainly!|of course!|great question|i'd be glad to)\b/gi) || []).length;
-    const total = hedges + pleasantries;
+    const total = (p.match(HEDGES) || []).length + (p.match(PLEASANTRIES) || []).length;
     return total === 0
       ? { pass: true, reason: 'No hedging or pleasantries found.' }
-      : { pass: false, reason: `Found ${total} hedge/pleasantry instance(s): output should use imperative voice.` };
+      : { pass: false, reason: `Found ${total} hedge/pleasantry instance(s).` };
   },
 
-  /** Decision ladder: output presents options in priority order, not equal-weight. */
-  ladder(output: string) {
-    const t = output;
-    const hasLadder = /\b(first|1[.)]\s|prefer\b.*\bover\b|before\b.*\btry\b|start with|fall back to|if that fails|otherwise)\b/i.test(t);
-    const hasEqualWeight = /\b(you could (either|also)|another option|alternatively,? you)\b/i.test(t);
-    if (hasLadder && !hasEqualWeight) return { pass: true, reason: 'Presents prioritized decision ladder.' };
-    if (hasEqualWeight) return { pass: false, reason: 'Presents equal-weight alternatives instead of a decision ladder.' };
-    return { pass: true, reason: 'No alternatives presented (single solution).' };
-  },
-
-  /** Smallest change: output avoids unrequested abstraction/generality. */
-  minimal(output: string) {
-    const code = codeOf(output);
-    const overEngineering: RegExp[] = [
-      /factory/i,
-      /\babstract\s+class\b/i,
-      /\binterface\s+\w+\s*\{/,
-      /\bgeneric\b.*\bwrapper\b/i,
-      /\bfor\s+future\b/i,
-      /\bextensib/i,
-      /\bplugg?able\b/i,
-      /\bconfigur(able|ation)\s+(system|layer|framework)\b/i,
-    ];
-    const hits = overEngineering.filter(r => r.test(code)).length;
-    return hits === 0
-      ? { pass: true, reason: 'No unrequested abstraction detected.' }
-      : { pass: false, reason: `Found ${hits} unrequested abstraction pattern(s) in code.` };
-  },
-
-  /** Never-cut bright line: security/validation tasks must include guards. */
+  /** Never-cut: a user-supplied path must be contained, not merely "checked". */
   nevercut(output: string) {
-    const t = output.toLowerCase();
-    const hasValidation = /\b(valid|sanitiz|escap|check|guard|boundar|assert|raise|throw|error|except|rescue|catch)\b/.test(t);
-    const hasSecurityNote = /\b(security|injection|xss|csrf|sql\s*inject|path\s*travers|ssrf)\b/.test(t);
-    if (hasValidation || hasSecurityNote) {
-      return { pass: true, reason: 'Includes validation/security handling.' };
-    }
-    return { pass: false, reason: 'Missing validation or security handling for a trust-boundary task.' };
+    const code = codeOf(output) || output;
+    const contained = PATH_SELF_CONTAINED.test(code) || (PATH_CONTAINMENT.test(code) && PATH_REJECT_DOTDOT.test(code));
+    return contained
+      ? { pass: true, reason: 'Resolves the path and enforces base-directory containment.' }
+      : { pass: false, reason: 'No path-traversal containment (resolve + base-dir check).' };
   },
 
-  /** Boundary awareness: output states what it does NOT do or what's out of scope. */
-  boundary(output: string) {
-    const p = proseOf(output);
-    const hasBoundary = /\b(does not|doesn't|won't|will not|not included|out of scope|skipped|left out|did not|omitted|excluded)\b/i.test(p);
-    const hasRisk = /\b(risk|caveat|limitation|assumption|shortcut|tradeoff|trade-off)\b/i.test(p);
-    return (hasBoundary || hasRisk)
-      ? { pass: true, reason: 'States boundaries, limitations, or omissions.' }
-      : { pass: false, reason: 'No boundary statement — should declare what was skipped or what risks remain.' };
-  },
-
-  /** Concise output: response not bloated with filler. */
+  /** Concise: prose stays small relative to the code it explains. */
   concise(output: string) {
-    const p = proseOf(output);
-    const words = p.split(/\s+/).filter(Boolean).length;
-    const code = codeOf(output);
-    const codeLines = code.split('\n').filter(l => l.trim()).length;
-    if (codeLines > 0 && words > codeLines * 15) {
-      return { pass: false, reason: `Prose (${words} words) dwarfs code (${codeLines} lines). Ratio ${(words / codeLines).toFixed(1)}:1 exceeds 15:1 ceiling.` };
+    const words = proseOf(output).split(/\s+/).filter(Boolean).length;
+    const codeLines = codeOf(output).split('\n').filter(l => l.trim()).length;
+    if (codeLines > 0 && words > MAX_PROSE_WORDS) {
+      return { pass: false, reason: `${words} words of prose for a code task (cap ${MAX_PROSE_WORDS}).` };
     }
-    if (codeLines > 0 && words > 300) {
-      return { pass: false, reason: `${words} words of prose for a code task. Cap is 300.` };
+    if (codeLines > 0 && words > codeLines * MAX_PROSE_PER_CODE_LINE) {
+      return { pass: false, reason: `Prose ${words} words vs ${codeLines} code lines exceeds ${MAX_PROSE_PER_CODE_LINE}:1.` };
     }
     return { pass: true, reason: `Concise: ${words} words prose, ${codeLines} code lines.` };
   },
 
-  /** Reuse existing: prefers stdlib/builtins over new dependencies. */
+  /** Reuse: a stdlib-solvable task must not pull in a third-party package. */
   reuse(output: string) {
-    const t = output;
-    const addsNewDep = /\b(npm install|pip install|gem install|go get|cargo add)\b/i.test(t);
-    const mentionsStdlib = /\b(stdlib|standard library|built-?in|native|platform)\b/i.test(t);
-    if (addsNewDep && !mentionsStdlib) {
-      return { pass: false, reason: 'Reaches for a new dependency without considering stdlib.' };
-    }
-    return { pass: true, reason: 'Uses existing/stdlib or justifies new dependency.' };
+    return THIRD_PARTY.test(output)
+      ? { pass: false, reason: 'Adds a third-party package for a stdlib-solvable task.' }
+      : { pass: true, reason: 'Solves with the standard library.' };
   },
 };
 

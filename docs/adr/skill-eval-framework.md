@@ -41,22 +41,27 @@ Adopt a two-tier eval framework for wk-skills:
 - **When:** Before debloat passes, after major skill rewrites, weekly cron.
 - **How:** Shells out to `claude -p` (isolated: no settings, tools, skills, MCP) via `benchmarks/providers/claude-cli.ts`, reusing the Claude Code login — no API key. Reports principle pass rates and LOC
   metrics per arm.
-- **Cost:** ~7 API calls × 2 arms × N repeats. At `--repeat 5`: ~70 calls.
+- **Cost:** ~7 API calls × 2 arms × N repeats. At `--repeat 10`: ~70 calls.
 - **Catches:** Behavioral atrophy (skill still loads but model ignores it).
 
 ### Probes
 
 Each probe tests one cross-cutting principle:
 
-| Probe | Principle | Signal |
-|-------|-----------|--------|
-| `imperative` | Imperative voice, no hedging | Zero hedge/pleasantry instances |
-| `ladder` | Prioritized decision ladder | "First try X, fall back to Y" |
-| `minimal` | Smallest change, no over-engineering | No factory/abstract/extensible patterns |
-| `nevercut` | Never cut validation/security | Validation keywords present |
-| `boundary` | Boundary statements | States what's out of scope |
-| `concise` | Prose doesn't dwarf code | ≤15:1 prose-to-code ratio, ≤300 words |
-| `reuse` | Stdlib before new deps | No `pip install` without stdlib mention |
+| Probe | Skill (`vars.skill`) | Grader | Pass signal |
+|-------|----------------------|--------|-------------|
+| `imperative` | `concise` | regex | No hedges ("it depends", "you might want to") or pleasantries |
+| `ladder` | `concise` | llm-rubric | One primary recommendation or an explicitly ordered fallback chain |
+| `minimal` | `workstyle-structure` | llm-rubric | No unrequested sources, frameworks, abstraction, or extension points |
+| `nevercut` | `workstyle-structure` | regex | User path resolved and contained under the base directory |
+| `boundary` | `concise` | llm-rubric | Ends with what was skipped/unchecked or a risk |
+| `concise` | `concise` | regex | ≤120 prose words and ≤8 words per code line |
+| `reuse` | `workstyle-structure` | regex | Stdlib solution; no third-party package for a stdlib task |
+
+Calibrate after any probe change: a probe is valid only when the baseline arm passes ≤50% and the
+with-skills arm ≥80% (`scripts/report.ts calibrate`). Compare skill versions with
+`scripts/report.ts compare old.json new.json`; drops within the baseline arm's run-to-run spread
+(min 20pp) are noise, not regressions.
 
 ### Language
 
@@ -68,8 +73,11 @@ no `tsx`/`ts-node` dependency. Types checked via `tsc --noEmit` against
 
 - Every skill change runs grader tests — catches grader regressions immediately.
 - Full evals catch behavioral drift before debloat passes (run before → after).
-- Adding a new principle = add a probe to `graders/principles.ts` + test cases +
-  a promptfoo test row. ~30 lines per probe.
+- A probe is trusted only after calibration shows separation (baseline ≤50%,
+  with-skills ≥80%); the first suite failed this for all 7 probes — scenarios the
+  bare model already passes measure nothing.
+- Semantic principles use `llm-rubric` graded through the same local `claude`
+  binary; regex graders are kept only where a mechanical signal exists.
 - Node ≥22.6.0 requirement for the pre-commit hook (graceful skip on older).
 
 ## Alternatives Considered

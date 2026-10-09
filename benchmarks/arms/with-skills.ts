@@ -15,14 +15,7 @@ const AGENTS_MD = join(ROOT, 'AGENTS.md');
 
 /** Map probe → skill whose principles it tests. */
 const PROBE_SKILL: Record<string, string> = {
-  // Cross-cutting principles (promptfooconfig.yaml)
-  imperative: 'concise',
-  ladder: 'workflow',
-  minimal: 'plan',
-  nevercut: 'adversarial-review',
-  boundary: 'pr-review',
-  concise: 'concise',
-  reuse: 'workstyle',
+  // Principle probes (promptfooconfig.yaml) name their skill via `vars.skill`.
   // PR family (promptfooconfig-skills.yaml)
   pr_draft: 'pr',
   pr_review_verdict: 'pr-review',
@@ -66,7 +59,7 @@ function loadAgents(): string {
 }
 
 export default function withSkills({ vars }: PromptVars): PromptMessage[] {
-  const skillName = PROBE_SKILL[vars.probe] || 'workflow';
+  const skillName = vars.skill || PROBE_SKILL[vars.probe] || 'workflow';
   const system = [loadAgents(), loadSkill(skillName)].filter(Boolean).join('\n\n---\n\n');
   return [
     { role: 'system', content: system },

@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-014345"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -57,6 +57,20 @@ Manual: `/wk-workstyle-structure scan` (full working tree) · `/wk-workstyle-str
 - **Imports / requires / uses at the top.** Group and sort:
   standard library first, then third-party, then local. A blank
   line between each group. Never scatter imports mid-file.
+
+### Smallest complete change
+
+Take the first option that fully works:
+
+1. Not needed → skip it; name skipped features/options in one line.
+2. Existing helper, component, or pattern in this codebase → use it the way callers do.
+3. Standard library or platform feature → use it.
+4. Already-installed dependency → use it. Never add a dependency for a few lines.
+5. Otherwise → the minimum code that works.
+
+- No unrequested abstraction, wrapper, option, config, or "for later" code.
+- **HARD RULE — never cut:** validation at trust boundaries, error handling that prevents data loss,
+  security, accessibility, anything the user asked for.
 
 ### Structure
 
