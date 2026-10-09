@@ -1,29 +1,87 @@
 /**
  * Skill-specific grader: does each skill family produce its intended behaviors?
  *
- * One check per probe (vars.probe), each targeting a concrete rule from the
- * skill's SKILL.md. Heuristic graders proven by tests/skills.test.ts
- * (RED/GREEN, no API key needed).
+ * One check per regex-graded probe (vars.probe), each targeting a concrete rule
+ * from the skill's SKILL.md. Semantic probes (pr_review_verdict,
+ * pr_resolve_no_pleasantries, workflow_phases, plan_numbered_steps,
+ * design_review_ranked) are graded by `llm-rubric` in
+ * promptfooconfig-skills.yaml instead. Heuristic graders proven by
+ * tests/skills.test.ts (RED/GREEN, no API key needed).
  *
  * Metric: `skill_behavior` (1 = behavior present, 0 = absent).
  */
 
 import type { GraderResult, GraderContext, ProbeChecker, ProbeCheckers } from '../types.ts';
 
-function lower(text: string): string {
-  return text.toLowerCase();
-}
-
-function proseOf(text: string): string {
-  return text.replace(/```[\s\S]*?```/g, ' ').replace(/\s+/g, ' ').trim();
-}
+const MAX_LINE_COLUMNS = 120;
+const MIN_LABELED_COMMENTS = 2;
 
 function codeOf(text: string): string {
   const blocks = [...text.matchAll(/```[a-zA-Z0-9_+-]*\r?\n([\s\S]*?)```/g)].map(m => m[1]);
   return blocks.length ? blocks.join('\n') : '';
 }
 
+function fencesOf(text: string): string[] {
+  return [...text.matchAll(/```[a-zA-Z0-9_+-]*\r?\n([\s\S]*?)```/g)].map(m => m[1]);
+}
+
+/**
+ * The artifact the reply delivers, apart from chat around it: the body of a
+ * (hallucinated) Write tool call, else a fenced block, else the text between
+ * `---` rules, else the whole reply. `prefer` picks among several candidates.
+ */
+function artifactOf(text: string, prefer: RegExp = /[\s\S]/): string {
+  const toolBodies = [...text.matchAll(/<parameter name="content">(?<body>[\s\S]*?)<\/parameter>/g)].map(m => m.groups!.body);
+  const ruled = text.split(/^\s*-{3,}\s*$/m).slice(1, -1);
+  for (const candidates of [toolBodies, fencesOf(text), ruled]) {
+    if (candidates.length) return candidates.find(c => prefer.test(c)) ?? candidates[0];
+  }
+  return text;
+}
+
+/** Shell line continuations joined, so a flag on the next line counts as the same command. */
+function joinContinuations(text: string): string {
+  return text.replace(/\\\r?\n\s*/g, ' ');
+}
+
+const DOC_FENCE_LANGS = new Set(['markdown', 'md', '']);
+
+/**
+ * Lines a reader sees as prose: everything outside code fences. A ```markdown
+ * (or bare) fence wrapping the whole answer is the document itself, so its body
+ * counts as prose; code fences nested inside it do not.
+ */
+function proseLinesOf(text: string): string[] {
+  const prose: string[] = [];
+  const stack: { marker: string; isDoc: boolean }[] = [];
+  for (const line of text.split('\n')) {
+    const fence = line.match(/^\s*(?<marker>`{3,}|~{3,})\s*(?<lang>[\w+-]*)\s*$/);
+    if (fence?.groups) {
+      const { marker, lang } = fence.groups;
+      const top = stack[stack.length - 1];
+      const closesTop = top && !lang && marker[0] === top.marker[0] && marker.length >= top.marker.length;
+      if (closesTop) stack.pop();
+      else stack.push({ marker, isDoc: !top && DOC_FENCE_LANGS.has(lang.toLowerCase()) });
+      continue;
+    }
+    if (stack.every(f => f.isDoc)) prose.push(line);
+  }
+  return prose;
+}
+
+// Severity scales other than the skills' own (risk/priority ladders).
+const FOREIGN_SEVERITY = [
+  /(?:severity|risk|priority|impact)\s*(?:\*\*)?\s*[:=|]\s*(?:\*\*)?\s*\p{Extended_Pictographic}?\s*(?:critical|high|medium|low|major|minor)\b/iu,
+  /[[(]\s*(?:critical|high|medium|low|major|minor)\s*[\])]/i,
+  /^\s*(?:[-*]\s+|\d+[.)]\s+|#{1,6}\s+)?(?:\*\*)?\s*\p{Extended_Pictographic}?\s*(?:critical|high|medium|low|major|minor)\s*(?:\*\*)?\s*(?::|\s[—–-]\s)/imu,
+  /\|\s*(?:\*\*)?\s*\p{Extended_Pictographic}?\s*(?:critical|high|medium|low|major|minor)\s*(?:\*\*)?\s*\|/iu,
+];
+const usesForeignSeverity = (text: string): boolean => FOREIGN_SEVERITY.some(re => re.test(text));
+
 // ── PR Family ──────────────────────────────────────────────────────────────
+
+// A review comment labeled `concern:` / `**suggestion:**` / `[question]` / `Praise:`.
+const REVIEW_LABEL = /(?:^|[\s>|(—-])(?:\*\*|__|`|\[)\s*(?:concern|suggestion|question|praise)\s*(?:\*\*|__|`)?\s*[:\]]|^\s*(?:[-*]\s+|\d+[.)]\s+)?(?:concern|suggestion|question|praise)\s*:/gim;
 
 const CHECKS: ProbeCheckers = {
   /** PR creation must use --draft flag. */
@@ -36,30 +94,19 @@ const CHECKS: ProbeCheckers = {
       : { pass: false, reason: 'gh pr create missing --draft flag.' };
   },
 
-  /** PR review must open with a verdict, not praise. */
-  pr_review_verdict(output: string) {
-    const firstLine = output.split('\n').find(l => l.trim())?.trim() || '';
-    const startsWithPraise = /^(solid|well[- ]scoped|great|nice|good|excellent|awesome|beautiful|clean|lovely)/i.test(firstLine);
-    const hasVerdict = /\b(LGTM|approv(e|ing|ed)|request(ing)?\s+changes?|block(ing|er)?|concern|changes?\s+requested)\b/i.test(firstLine);
-    if (startsWithPraise) return { pass: false, reason: `Review opens with praise adjective: "${firstLine.slice(0, 50)}"` };
-    if (hasVerdict) return { pass: true, reason: 'Review opens with verdict state.' };
-    return { pass: true, reason: 'First line is neutral (no praise detected).' };
-  },
-
-  /** PR review comments must carry severity prefix. */
+  /** Review comments carry concern:/suggestion:/question:/praise: labels; never "blocker" or a risk ladder. */
   pr_review_severity(output: string) {
-    const commentLines = output.split('\n').filter(l => /^\s*(concern|suggestion|question|praise|blocker|nit)\s*:/i.test(l));
-    const totalCommentish = output.split('\n').filter(l => /^\s*[-*]\s+\S/.test(l) || /^\s*(concern|suggestion|question|praise|blocker|nit|issue|problem|bug|note)\s*:/i.test(l));
-    if (totalCommentish.length === 0) return { pass: true, reason: 'No review comments found (N/A).' };
-    const ratio = commentLines.length / Math.max(totalCommentish.length, 1);
-    return ratio >= 0.5
-      ? { pass: true, reason: `${commentLines.length}/${totalCommentish.length} comments have severity prefix.` }
-      : { pass: false, reason: `Only ${commentLines.length}/${totalCommentish.length} comments have severity prefix (concern:/suggestion:/question:/praise:).` };
+    const labeled = (output.match(REVIEW_LABEL) || []).length;
+    if (/\bblocker\b/i.test(output)) return { pass: false, reason: 'Author-facing comments use "blocker".' };
+    if (usesForeignSeverity(output)) return { pass: false, reason: 'Comments use a critical/high/medium/low ladder, not concern/suggestion/question.' };
+    return labeled >= MIN_LABELED_COMMENTS
+      ? { pass: true, reason: `${labeled} comments carry a concern/suggestion/question/praise label.` }
+      : { pass: false, reason: `Only ${labeled} labeled comment(s); need ${MIN_LABELED_COMMENTS}+ with concern:/suggestion:/question:/praise:.` };
   },
 
   /** PR merge must retarget stacked children. */
   pr_merge_retarget(output: string) {
-    const t = lower(output);
+    const t = output.toLowerCase();
     const mentionsMerge = /\bmerge\b/.test(t);
     const mentionsStack = /\bstack(ed)?\b/.test(t);
     if (!mentionsMerge || !mentionsStack) return { pass: true, reason: 'Not a stacked-PR merge context (N/A).' };
@@ -67,26 +114,6 @@ const CHECKS: ProbeCheckers = {
     return hasRetarget
       ? { pass: true, reason: 'Retargets stacked children before merge.' }
       : { pass: false, reason: 'Stacked PR merge missing retarget step (gh pr edit --base).' };
-  },
-
-  /** PR resolve must not start replies with pleasantries. */
-  pr_resolve_no_pleasantries(output: string) {
-    const replyBlocks = output.split(/(?:^|\n)(?:reply|response|comment)\s*:/im);
-    for (const block of replyBlocks.slice(1)) {
-      const firstLine = block.split('\n').find(l => l.trim())?.trim() || '';
-      if (/^(good catch|great|thanks|nice|well spotted|good point)/i.test(firstLine)) {
-        return { pass: false, reason: `Reply starts with pleasantry: "${firstLine.slice(0, 50)}"` };
-      }
-    }
-    const allLines = output.split('\n');
-    for (const line of allLines) {
-      if (/^>\s/.test(line)) continue;
-      const t = line.trim();
-      if (t && /^(good catch|thanks for|great catch|nice catch|well spotted|good point)/i.test(t)) {
-        return { pass: false, reason: `Line starts with pleasantry: "${t.slice(0, 50)}"` };
-      }
-    }
-    return { pass: true, reason: 'No pleasantry-led replies detected.' };
   },
 
   // ── Commit Family ──────────────────────────────────────────────────────
@@ -123,76 +150,38 @@ const CHECKS: ProbeCheckers = {
 
   // ── Workflow Family ──────────────────────────────────────────────────────
 
-  /** Workflow must follow phase ordering. */
-  workflow_phases(output: string) {
-    // Order by section headings, not first mention: a Plan section that says
-    // "run tests" must not read as Test-before-Implement.
-    const headings = output.split('\n')
-      .filter(l => /^\s*(#{1,6}\s|\*\*|phase\s*\d|\d+[.)]\s)/i.test(l))
-      .join('\n').toLowerCase();
-    const t = headings.length ? headings : lower(output);
-    const phases = ['plan', 'implement', 'test', 'review'];
-    const positions = phases.map(p => t.indexOf(p)).filter(i => i >= 0);
-    if (positions.length < 2) return { pass: true, reason: 'Fewer than 2 phases mentioned (N/A).' };
-    const isSorted = positions.every((v, i) => i === 0 || v >= positions[i - 1]);
-    return isSorted
-      ? { pass: true, reason: 'Phases appear in correct order.' }
-      : { pass: false, reason: 'Phases appear out of order (must be Plan → Implement → Test → Review).' };
-  },
-
-  /** Workflow must not use `latest`/`stable`/`nightly` version pins. */
+  /** Base images pinned to an exact version (x.y.z tag or digest); no floating tags or ranges. */
   workflow_version_pins(output: string) {
     const code = codeOf(output) || output;
-    const badPins = /\b(latest|stable|nightly)\b/i;
-    const caretTilde = /["'][\^~]\d/;
-    if (badPins.test(code)) return { pass: false, reason: 'Uses floating version pin (latest/stable/nightly).' };
-    if (caretTilde.test(code)) return { pass: false, reason: 'Uses caret/tilde version range instead of exact pin.' };
-    return { pass: true, reason: 'No floating version pins detected.' };
-  },
-
-  /** Plan must produce numbered steps with parallelism markers. */
-  plan_numbered_steps(output: string) {
-    const numbered = output.match(/^\s*\d+[.)]\s/gm);
-    if (!numbered || numbered.length < 2) {
-      return { pass: false, reason: `Found ${numbered?.length ?? 0} numbered steps, need at least 2.` };
-    }
-    const hasMarker = /\[AGENT-READY\]|\[AGENT-GUIDED\]|\[HUMAN-IN-LOOP\]/i.test(output);
-    return hasMarker
-      ? { pass: true, reason: `${numbered.length} numbered steps with parallelism markers.` }
-      : { pass: false, reason: `${numbered.length} numbered steps but missing parallelism markers ([AGENT-READY]/[AGENT-GUIDED]/[HUMAN-IN-LOOP]).` };
+    if (/\b(latest|stable|nightly)\b/i.test(code)) return { pass: false, reason: 'Uses floating version pin (latest/stable/nightly).' };
+    if (/["'][\^~]\d/.test(code)) return { pass: false, reason: 'Uses caret/tilde version range instead of exact pin.' };
+    const stages = new Set([...code.matchAll(/^\s*FROM\s+\S+(?:\s+\S+)*?\s+AS\s+(?<alias>\S+)/gim)].map(m => m.groups!.alias.toLowerCase()));
+    const images = [...code.matchAll(/^\s*FROM\s+(?:--platform=\S+\s+)?(?<image>\S+)/gim)].map(m => m.groups!.image);
+    const external = images.filter(i => i !== 'scratch' && !stages.has(i.toLowerCase()));
+    if (external.length === 0) return { pass: true, reason: 'No base image found (N/A).' };
+    const floating = external.filter(i => !/[@]sha256:/.test(i) && !/:[^:@\s]*\d+\.\d+\.\d+/.test(i));
+    return floating.length === 0
+      ? { pass: true, reason: 'Every base image pinned to an exact version.' }
+      : { pass: false, reason: `Base image(s) without an exact x.y.z tag: ${floating.join(', ')}.` };
   },
 
   // ── Code Quality Family ────────────────────────────────────────────────
 
-  /** Adversarial review findings must have severity. */
+  /** Findings graded on the merge-gating scale (blocker/suggestion/question), not a risk ladder. */
   adversarial_severity(output: string) {
-    const hasFinding = /\b(finding|issue|problem|defect)\b/i.test(output);
-    if (!hasFinding) return { pass: true, reason: 'No findings (N/A).' };
-    const hasSeverity = /\b(blocker|suggestion|question|critical|major|minor|nit)\b/i.test(output);
-    return hasSeverity
-      ? { pass: true, reason: 'Findings include severity levels.' }
-      : { pass: false, reason: 'Findings missing severity classification (blocker/suggestion/question).' };
+    if (!/\bblocker\b/i.test(output)) return { pass: false, reason: 'No finding classified as a merge blocker.' };
+    return usesForeignSeverity(output)
+      ? { pass: false, reason: 'Mixes in a critical/high/medium/low risk ladder instead of blocker/suggestion/question.' }
+      : { pass: true, reason: 'Findings use blocker/suggestion/question severities.' };
   },
 
-  /** Testing skeleton must include happy AND sad paths. */
+  /** Tests cover a success path AND a failure path. */
   testing_happy_sad(output: string) {
-    const t = lower(output);
-    const hasHappy = /\b(happy\s*path|success\s*case|valid\s*input|positive\s*test|should\s+succeed|should\s+return)\b/.test(t);
-    const hasSad = /\b(sad\s*path|error\s*case|invalid\s*input|negative\s*test|should\s+fail|should\s+raise|should\s+throw|edge\s*case|boundary)\b/.test(t);
+    const hasHappy = /\bhappy[\s-]*paths?\b|\bvalid[\s_-]*inputs?\b|==\s*datetime\(|\.(year|month|day)\s*==|\bassert(Equal|_equal)?\b[^\n]*==|toEqual\(/i.test(output);
+    const hasSad = /\bsad[\s-]*paths?\b|\binvalid[\s_-]*inputs?\b|pytest\.raises|assertRaises|toThrow|\.rejects\b|\berror[\s_-]*cases?\b/i.test(output);
     if (hasHappy && hasSad) return { pass: true, reason: 'Covers both happy and sad paths.' };
     if (!hasHappy && !hasSad) return { pass: false, reason: 'Missing both happy and sad path test cases.' };
     return { pass: false, reason: `Missing ${!hasHappy ? 'happy' : 'sad'} path test cases.` };
-  },
-
-  /** Design review findings must be severity-ranked. */
-  design_review_ranked(output: string) {
-    const hasFinding = /\b(finding|issue|concern|problem)\b/i.test(output);
-    if (!hasFinding) return { pass: true, reason: 'No findings (N/A).' };
-    const hasSeverity = /\b(critical|high|medium|low|blocker|major|minor|p[0-3])\b/i.test(output);
-    const hasHeuristic = /\b(heuristic|principle|violation|rule|guideline|pattern)\b/i.test(output);
-    if (hasSeverity) return { pass: true, reason: 'Findings are severity-ranked.' };
-    if (hasHeuristic) return { pass: true, reason: 'Findings reference heuristics/principles.' };
-    return { pass: false, reason: 'Design review findings missing severity ranking.' };
   },
 
   // ── DevOps Family ──────────────────────────────────────────────────────
@@ -207,40 +196,43 @@ const CHECKS: ProbeCheckers = {
       : { pass: false, reason: 'Docker command without daemon verification (docker info).' };
   },
 
-  /** Buildkite uses bk CLI, not GitHub tools for CI. */
+  /** Buildkite inspection AND retry go through the bk CLI — not REST/curl or GitHub tooling. */
   buildkite_bk_cli(output: string) {
-    const t = lower(output);
-    const hasBuildkite = /buildkite|bk\s/i.test(output);
-    if (!hasBuildkite) return { pass: true, reason: 'No Buildkite context (N/A).' };
-    const usesBk = /\bbk\s+(build|job|agent|pipeline)\b/i.test(output);
-    const usesGh = /\bgh\s+(run|check|workflow)\b/i.test(output);
-    if (usesBk && !usesGh) return { pass: true, reason: 'Uses bk CLI for CI status.' };
-    if (usesGh) return { pass: false, reason: 'Uses gh CLI instead of bk CLI for Buildkite CI.' };
-    return { pass: true, reason: 'Buildkite mentioned without CLI usage (N/A).' };
+    const code = codeOf(output) || output;
+    if (/api\.buildkite\.com|\bgh\s+(run|checks?|workflow)\b/i.test(code)) {
+      return { pass: false, reason: 'Uses REST/curl or gh instead of the bk CLI.' };
+    }
+    const inspects = /\bbk\s+(build\s+(view|list)|job\s+(log|list))\b/i.test(code);
+    const retries = /\bbk\s+(job\s+retry|build\s+rebuild)\b/i.test(code);
+    if (inspects && retries) return { pass: true, reason: 'Inspects and retries via the bk CLI.' };
+    return { pass: false, reason: `Missing bk CLI ${!inspects ? 'build/job inspection' : 'job retry'} command.` };
   },
 
-  /** Datadog uses pup CLI, not raw curl. */
+  /** Datadog writes go through pup, with --no-agent on a command handed to CI. */
   datadog_pup_cli(output: string) {
-    const t = lower(output);
-    const hasDatadog = /datadog|pup\s/i.test(output);
-    if (!hasDatadog) return { pass: true, reason: 'No Datadog context (N/A).' };
-    const usesPup = /\bpup\s+(dash|monitor|slo|notebook|auth)\b/i.test(output);
-    const usesCurl = /curl.*api\.datadoghq/i.test(output);
-    if (usesPup) return { pass: true, reason: 'Uses pup CLI for Datadog.' };
-    if (usesCurl) return { pass: false, reason: 'Uses raw curl instead of pup CLI for Datadog.' };
-    return { pass: true, reason: 'Datadog mentioned without API call (N/A).' };
+    // Whole reply: scripts arrive fenced, unfenced, or inside a tool-call body.
+    const code = joinContinuations(output);
+    const pupCreate = code.split('\n').filter(l => /\bpup\b/.test(l) && /\bmonitors?\s+create\b/i.test(l));
+    if (pupCreate.length === 0) {
+      return /api\.datadoghq|datadog-api-client|resource\s+"datadog_/i.test(code)
+        ? { pass: false, reason: 'Creates the monitor via REST/SDK/Terraform instead of the pup CLI.' }
+        : { pass: false, reason: 'No `pup monitors create` command.' };
+    }
+    return pupCreate.some(l => /--no-agent\b/.test(l))
+      ? { pass: true, reason: 'pup monitors create runs with --no-agent for CI.' }
+      : { pass: false, reason: 'pup command handed to CI lacks --no-agent (agent-mode envelope breaks jq).' };
   },
 
   // ── Communication Family ───────────────────────────────────────────────
 
-  /** Slack must use mrkdwn format, not standard Markdown. */
+  /** The Slack message itself (not the chat around it) is mrkdwn, not Markdown. */
   slack_mrkdwn(output: string) {
-    const hasSlack = /slack|channel|message/i.test(output);
-    if (!hasSlack) return { pass: true, reason: 'No Slack context (N/A).' };
-    const usesMarkdown = /\*\*[^*]+\*\*/i.test(output);
-    const usesMrkdwn = /(?<!\*)\*[^*\n]+\*(?!\*)/i.test(output);
-    if (usesMarkdown) return { pass: false, reason: 'Uses **bold** (Markdown) instead of *bold* (Slack mrkdwn).' };
-    return { pass: true, reason: 'No standard Markdown bold detected.' };
+    const message = artifactOf(output);
+    if (/\*\*[^*\n]+\*\*/.test(message)) return { pass: false, reason: 'Uses **bold** (Markdown) instead of *bold* (Slack mrkdwn).' };
+    if (/\[[^\]\n]+\]\(https?:/.test(message)) return { pass: false, reason: 'Uses [label](url) instead of <url|label>.' };
+    if (/^#{1,6}\s/m.test(message)) return { pass: false, reason: 'Uses a Markdown # heading.' };
+    if (/\x7e\x7e[^\x7e\n]+\x7e\x7e/.test(message)) return { pass: false, reason: 'Uses double-tilde strikethrough instead of single-tilde.' };
+    return { pass: true, reason: 'Message uses Slack mrkdwn only.' };
   },
 
   /** Mermaid diagrams must use <br/> not \\n for line breaks. */
@@ -255,13 +247,14 @@ const CHECKS: ProbeCheckers = {
     return { pass: true, reason: 'Mermaid syntax correct.' };
   },
 
-  /** Markdown must hard-wrap at 120 columns. */
+  /** Markdown prose hard-wraps at 120 columns (tables, URLs, and code exempt). */
   markdown_wrap(output: string) {
-    const prose = proseOf(output);
-    const lines = prose.split('\n').filter(l => l.trim());
-    const longLines = lines.filter(l => l.length > 130 && !/^https?:\/\//.test(l.trim()) && !/^\|/.test(l.trim()));
-    if (longLines.length === 0) return { pass: true, reason: 'Prose lines within 120-column wrap.' };
-    return { pass: false, reason: `${longLines.length} prose line(s) exceed 120 columns.` };
+    // A URL is never broken, so it counts as one column.
+    const doc = /<parameter name="content">/.test(output) ? artifactOf(output) : output;
+    const longLines = proseLinesOf(doc).filter(l =>
+      !/^\s*\|/.test(l) && l.replace(/https?:\/\/\S+/g, 'U').length > MAX_LINE_COLUMNS);
+    if (longLines.length === 0) return { pass: true, reason: `Prose lines within ${MAX_LINE_COLUMNS}-column wrap.` };
+    return { pass: false, reason: `${longLines.length} prose line(s) exceed ${MAX_LINE_COLUMNS} columns.` };
   },
 
   // ── Utility Family ─────────────────────────────────────────────────────
@@ -285,27 +278,28 @@ const CHECKS: ProbeCheckers = {
     return { pass: true, reason: 'curl flags correct.' };
   },
 
-  /** Learn output must route to learnings/, not memory/. */
+  /** A tool quirk routes to learnings/skills/<tool>/<date>_<slug>.md, scrubbed of work-item identity. */
   learn_routing(output: string) {
-    const t = lower(output);
-    const hasLearning = /learning|learned/i.test(output);
-    if (!hasLearning) return { pass: true, reason: 'No learning context (N/A).' };
-    const routesToMemory = /\.claude\/memory/i.test(output);
-    const routesToLearnings = /learnings\//i.test(output);
-    if (routesToMemory) return { pass: false, reason: 'Routes learning to memory/ instead of learnings/.' };
-    if (routesToLearnings) return { pass: true, reason: 'Routes learning to learnings/ directory.' };
-    return { pass: true, reason: 'Learning mentioned without file routing (N/A).' };
+    if (/\.claude\/memory/i.test(output)) return { pass: false, reason: 'Routes learning to agent memory.' };
+    const routed = /learnings\/skills\/jq\/\d{4}-\d{2}-\d{2}_[a-z0-9]+(?:-[a-z0-9]+)*\.md\b/.test(output);
+    if (!routed) return { pass: false, reason: 'Not written to learnings/skills/jq/<YYYY-MM-DD>_<slug>.md (tool quirk → tool skill).' };
+    const contents = codeOf(output) || output;
+    return /4821|\bjdoe\b|\bacme\b/i.test(contents)
+      ? { pass: false, reason: 'Learning file keeps the PR number, reviewer handle, or org/repo name.' }
+      : { pass: true, reason: 'Routed to the jq tool skill and scrubbed.' };
   },
 
-  /** Retro must capture structured learnings. */
+  /** Retro entry: worked / could-be-better buckets, no timestamps or work-item identity. */
   retro_structured(output: string) {
-    const t = lower(output);
-    const hasRetro = /retro|retrospective/i.test(output);
-    if (!hasRetro) return { pass: true, reason: 'No retro context (N/A).' };
-    const hasStructure = /\b(what went well|what didn't|improve|learning|action item|takeaway|keep doing|stop doing|start doing)\b/i.test(output);
-    return hasStructure
-      ? { pass: true, reason: 'Retrospective has structured sections.' }
-      : { pass: false, reason: 'Retrospective missing structured sections (what went well/didn\'t/improve).' };
+    const entry = artifactOf(output, /what\s+worked|went\s+well/i);
+    if (/\b\d{1,2}:\d{2}\b|\bUTC\b|#\d+|\bacme\//i.test(entry)) {
+      return { pass: false, reason: 'Retro entry keeps a timestamp, PR number, or repo name.' };
+    }
+    const worked = /what\s+worked|went\s+well|\bkeep\s+doing\b/i.test(entry);
+    const better = /could(?:'ve|\s+have)\s+been\s+better|didn'?t\s+go\s+well|went\s+wrong|to\s+improve|improvements?|\bgaps?\b|action\s+items?/i.test(entry);
+    return worked && better
+      ? { pass: true, reason: 'Two-bucket retro entry, scrubbed of timestamps and identifiers.' }
+      : { pass: false, reason: 'Retro entry missing a what-worked or could-be-better section.' };
   },
 };
 

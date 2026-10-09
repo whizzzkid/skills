@@ -1,11 +1,14 @@
 # wk-skills skill-specific behavior eval.
 #
-#   Run:    npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig-skills.yaml --repeat 5
-#   View:   npx promptfoo@0.124.1 view
+#   Run:        npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig-skills.yaml --repeat 5 -o out.json
+#   Calibrate:  node --experimental-strip-types benchmarks/scripts/report.ts calibrate out.json
+#   View:       npx promptfoo@0.124.1 view
 #
-# Runs via the local `claude` binary (existing login, no API key). Graders are proven by tests/skills.test.ts (no API key needed).
-# Baseline arm is the control; with-skills arm loads AGENTS.md + relevant skill.
-# The delta between arms measures whether skills produce their intended behaviors.
+# Runs via the local `claude` binary (existing login, no API key), for both the arms and the
+# llm-rubric grader. Each scenario is chosen so the bare model (baseline arm) tends to FAIL and the
+# probe's skill (with-skills arm, PROBE_SKILL map or `vars.skill`) makes it PASS; `kind: guard`
+# probes instead check a skill keeps a default the bare model already has. Regex graders live in
+# graders/skills.ts, proven by tests/skills.test.ts (no API key needed).
 description: "wk-skills skill-specific gates: PR conventions, commit format, workflow phases, code quality, DevOps, communication, utilities."
 
 providers:
@@ -20,10 +23,10 @@ prompts:
     label: with-skills
 
 defaultTest:
+  options:
+    # llm-rubric grader also runs through the local claude binary.
+    provider: "exec: node --experimental-strip-types providers/claude-cli.ts"
   assert:
-    - type: javascript
-      value: file://graders/skills.ts
-      metric: skill_behavior
     - type: javascript
       value: file://graders/loc.ts
       metric: code_loc
@@ -31,110 +34,282 @@ defaultTest:
 tests:
   # ── PR Family ──────────────────────────────────────────────────────────
 
-  - vars:
+  - description: pr_draft
+    vars:
       probe: pr_draft
       task: "Create a pull request for my feature branch `feat/add-oauth` targeting `main`. Show me the exact commands."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: pr_review_verdict
+    vars:
       probe: pr_review_verdict
-      task: "Review this PR that adds retry logic to the HTTP client. The diff adds exponential backoff with jitter. Give me your review."
+      task: |
+        Here's a small PR diff with tests. Write the review body I should post.
+        ```diff
+        +def slugify(title: str) -> str:
+        +    """Lowercase, trim, and hyphenate a title for use in URLs."""
+        +    return re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
+        +
+        +def test_slugify():
+        +    assert slugify('  Hello, World! ') == 'hello-world'
+        +    assert slugify('---') == ''
+        ```
+    assert:
+      - type: llm-rubric
+        metric: skill_behavior
+        value: >-
+          Judge only the review body the response drafts (ignore any lead-in sentence addressed to
+          the user). PASS only if the body's first line is an explicit verdict — e.g. "LGTM",
+          "Approve", "Approving with concerns — ...", "Request changes". FAIL if the body opens with
+          praise ("Nice", "Great work", "Clean and well-tested"), a summary or narration of what the
+          diff does, or a heading such as "Summary" / "Overview" before any verdict.
 
-  - vars:
+  - description: pr_review_severity
+    vars:
       probe: pr_review_severity
-      task: "Review this PR diff:\n```python\ndef fetch(url):\n    resp = requests.get(url)\n    return resp.json()\n```\nIt has no error handling, no timeout, and no retry. List your review comments."
+      task: |
+        Write the inline review comments you'd leave on this PR, one comment per issue:
+        ```python
+        +def fetch(url):
+        +    resp = requests.get(url)
+        +    return resp.json()
+        ```
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: pr_merge_retarget
+    vars:
       probe: pr_merge_retarget
       task: "I have a stacked PR chain: PR #100 (base) → PR #101 (child). PR #100 is approved and CI is green. Walk me through the merge process."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: pr_resolve_no_pleasantries
+    vars:
       probe: pr_resolve_no_pleasantries
-      task: "A reviewer left this comment on my PR: 'This function is O(n²) — consider using a set for lookups.' Draft a reply resolving the comment."
+      task: >-
+        A reviewer commented on my PR: "Nice work overall! One thing — `dedupe()` is O(n²) because
+        of the `in` check on a list inside the loop; consider a set." I pushed commit 3f9c2ab, which
+        switches the lookup to a set and adds a 10k-item test. Draft my reply to that comment.
+    assert:
+      - type: llm-rubric
+        metric: skill_behavior
+        value: >-
+          Judge only the drafted reply text. PASS only if its first sentence states what changed
+          (the lookup now uses a set) and the reply cites commit 3f9c2ab. FAIL if the reply opens
+          with thanks, praise, or acknowledgement (e.g. "Good catch", "Thanks", "Great point",
+          "Appreciate the review", "You're right"), or if it omits the commit SHA.
 
   # ── Commit Family ──────────────────────────────────────────────────────
 
-  - vars:
+  - description: commit_format
+    vars:
       probe: commit_format
       task: "Write a commit message for adding a new OAuth2 token refresh feature to the auth module."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: commit_heredoc
+    vars:
       probe: commit_heredoc
       task: "Show me the exact git command to commit changes that fix a race condition in the worker pool."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: gh_org_check
+    vars:
       probe: gh_org_check
       task: "List all open PRs assigned to me using the gh CLI."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
   # ── Workflow Family ────────────────────────────────────────────────────
 
-  - vars:
+  - description: workflow_phases
+    vars:
       probe: workflow_phases
-      task: "I need to add a caching layer to the API. Walk me through the development workflow from start to finish."
+      task: "I need to add a caching layer to our API. Walk me through the development workflow from start to finish, through merge."
+    assert:
+      - type: llm-rubric
+        metric: skill_behavior
+        value: >-
+          PASS only if BOTH hold: (a) work is committed incrementally — a commit after each
+          implementation/test step, not one commit once everything is done; and (b) the workflow
+          ends with a retrospective / lessons-learned step after the merge. FAIL if either is
+          missing.
 
-  - vars:
+  - description: workflow_version_pins
+    vars:
       probe: workflow_version_pins
       task: "Write a Dockerfile for a Node.js API server that uses Express and connects to PostgreSQL."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: plan_numbered_steps
+    vars:
       probe: plan_numbered_steps
-      task: "Plan the implementation of a new webhook delivery system that retries failed deliveries with exponential backoff."
+      task: |
+        Plan the implementation of webhook delivery retries in our Node service. Requirements are final:
+        - A delivery fails on a non-2xx response or a timeout over 5s.
+        - Failed deliveries retry with exponential backoff (1s base, x2, max 6 attempts) on the existing BullMQ queue.
+        - After the last attempt the delivery is marked `failed`; the existing admin UI already lists failed deliveries.
+        - Out of scope: new UI, payload format changes. Must not change: the public webhook API.
+        - Done = unit tests for the backoff schedule and an integration test against a stub endpoint pass in CI.
+    assert:
+      - type: llm-rubric
+        metric: skill_behavior
+        value: >-
+          PASS only if the response is a plan (not only clarifying questions) whose numbered steps
+          EACH carry an execution-ownership tag — e.g. runs autonomously / agent executes then
+          reports back / needs a human decision — AND it states which steps can run in parallel or
+          which step each depends on. FAIL if any step lacks an ownership tag, if parallelism or
+          dependencies are not stated, or if the response only asks questions.
 
   # ── Code Quality Family ────────────────────────────────────────────────
 
-  - vars:
+  - description: adversarial_severity
+    vars:
       probe: adversarial_severity
-      task: "Review this code for security issues:\n```python\ndef search(query):\n    return db.execute(f'SELECT * FROM users WHERE name = \"{query}\"')\n```"
+      task: |
+        Run an adversarial pre-merge review of this diff. Give each finding a severity, then your verdict.
+        ```diff
+        +def search_users(db, query):
+        +    rows = db.execute(f"SELECT id, name FROM users WHERE name LIKE '%{query}%'")
+        +    x = [r for r in rows]
+        +    try:
+        +        audit_log.write(query)
+        +    except Exception:
+        +        pass
+        +    return x
+        ```
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: testing_happy_sad
+    vars:
       probe: testing_happy_sad
-      task: "Write a test skeleton for a function that parses ISO 8601 date strings into datetime objects."
+      task: |
+        Write pytest tests for this function, then tell me what's left before I can merge them.
+        ```python
+        from datetime import datetime
 
-  - vars:
+        def parse_iso_date(s: str) -> datetime:
+            if not isinstance(s, str) or not s:
+                raise ValueError("empty date")
+            return datetime.fromisoformat(s)
+        ```
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
+      - type: llm-rubric
+        metric: skill_behavior
+        value: >-
+          PASS only if the response says to verify the tests by deliberately breaking the
+          implementation (mutation testing — e.g. flip a condition, remove the validation, hardcode a
+          return value) and confirming the tests then fail. FAIL if it relies only on the tests
+          passing, a code-coverage percentage, or reviewer judgement.
+
+  - description: design_review_ranked
+    vars:
       probe: design_review_ranked
-      task: "Review this UI design: a modal dialog that asks users to confirm account deletion. It has a single red 'Delete' button, no cancel option, and no confirmation input."
+      task: |
+        Review this cancel-subscription screen before it ships. Product says the copy is intentional —
+        it lifted retention 8% in an A/B test — so just focus on visual polish.
+        - Title: "Leaving so soon?"
+        - Primary button (large, green): "Keep my benefits"
+        - Secondary (small grey text link): "No thanks, I don't care about saving money"
+        - A pre-checked checkbox: "Send me partner offers"
+        - Body text: #9a9a9a on white, 13px
+    assert:
+      - type: llm-rubric
+        metric: skill_behavior
+        value: >-
+          PASS only if the findings are ranked by severity, most severe first, AND the top-ranked
+          finding is the manipulative design (the confirmshaming decline link and/or the pre-checked
+          opt-in) flagged as ship-blocking — despite the user asking to focus on visual polish. FAIL
+          if that dark pattern is omitted, mentioned only as an aside or caveat, deferred to
+          product's call, or ranked below visual-polish issues.
 
   # ── DevOps Family ──────────────────────────────────────────────────────
 
-  - vars:
+  - description: docker_daemon_check
+    vars:
       probe: docker_daemon_check
       task: "Build and run a Docker container for my Rails application. Show me the commands."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: buildkite_bk_cli
+    vars:
       probe: buildkite_bk_cli
-      task: "My Buildkite CI build failed on the `deploy` step. How do I check the logs and retry it?"
+      task: "Buildkite build 4182 on the `payments-api` pipeline failed at the `deploy` step. Give me the exact terminal commands to find the failed job, read its log, and retry only that job."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: datadog_pup_cli
+    vars:
       probe: datadog_pup_cli
-      task: "Create a Datadog dashboard that monitors API latency p50/p95/p99 for the payments service."
+      task: "Write a shell script our CI job will run to create a Datadog monitor that alerts when p95 latency of the `payments` service exceeds 500ms, then prints the new monitor's id with jq."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
   # ── Communication Family ───────────────────────────────────────────────
 
-  - vars:
+  - description: slack_mrkdwn
+    vars:
       probe: slack_mrkdwn
-      task: "Draft a Slack message announcing that PR #342 is ready for review. Include the PR title 'Add webhook retry logic' and mention it needs review by EOD."
+      task: "Draft a Slack message for #eng-reviews announcing that PR #342 \"Add webhook retry logic\" (https://github.com/acme/hooks/pull/342) is ready for review and needs a reviewer by EOD. Give me the message text."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: mermaid_linebreaks
+    vars:
       probe: mermaid_linebreaks
       task: "Create a mermaid state diagram showing the lifecycle of a webhook delivery: pending → sending → delivered/failed → retrying."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: markdown_wrap
+    vars:
       probe: markdown_wrap
-      task: "Write a markdown section documenting the new webhook retry configuration options: max_retries, backoff_multiplier, and initial_delay_ms."
+      task: "Write a markdown README section documenting the webhook retry configuration options max_retries, backoff_multiplier, and initial_delay_ms. Explain each option in a full paragraph, including how the three interact. Reply with only the markdown section."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
   # ── Utility Family ────────────────────────────────────────────────────
 
-  - vars:
+  - description: calver_format
+    vars:
       probe: calver_format
       task: "Assign a version string to a new release of the webhook-processor package."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: curl_flags
+    vars:
       probe: curl_flags
       task: "Write a curl command to check the health endpoint at https://api.example.com/health and parse the JSON response."
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: learn_routing
+    vars:
       probe: learn_routing
-      task: "I just learned that PR reviews should never start with praise. Capture this as a learning for the pr-review skill."
+      task: >-
+        Capture a learning for the pr-review skill: while reviewing PR #4821 in acme/payments-api,
+        Reviewer jdoe noticed our script ran `jq -r .owner` and treated the literal string "null" as a real
+        owner when the field was missing. Show me the exact file path and the full file contents
+        you'd write.
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }
 
-  - vars:
+  - description: retro_structured
+    vars:
       probe: retro_structured
-      task: "Run a retrospective on today's session. We shipped the webhook retry feature, but CI flaked twice and we had to fix a merge conflict."
+      task: >-
+        Write today's session retro entry. What happened: at 14:30 UTC we shipped the webhook retry
+        feature in acme/hooks PR #512; CI flaked twice and a rebuild fixed it; I had to correct you
+        once for running the full test suite when I'd asked for changed-files-only validation; the
+        merge-conflict resolution went smoothly. Show me the entry's full text.
+    assert:
+      - { type: javascript, value: file://graders/skills.ts, metric: skill_behavior }

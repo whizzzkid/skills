@@ -20,7 +20,7 @@ benchmarks/
 │   └── claude-cli.ts           # exec provider: isolated `claude -p`
 ├── graders/
 │   ├── principles.ts           # Deterministic probes (imperative, nevercut, concise, reuse)
-│   ├── skills.ts               # Skill-specific probes
+│   ├── skills.ts               # Skill-specific regex probes (semantic ones use llm-rubric)
 │   └── loc.ts                  # Code LOC counter (measurement, not gate)
 ├── scripts/
 │   └── report.ts               # calibrate / compare promptfoo results
@@ -34,6 +34,7 @@ No API key needed. Proves grader logic distinguishes good from bad output.
 
 ```bash
 node --experimental-strip-types benchmarks/tests/principles.test.ts
+node --experimental-strip-types benchmarks/tests/skills.test.ts
 node --experimental-strip-types benchmarks/tests/loc.test.ts
 ```
 
@@ -85,7 +86,9 @@ with-skills arm ≥80% (`scripts/report.ts calibrate`). Guard probes (`kind: gua
 2. Grade it: a deterministic check in `graders/principles.ts` (with RED + GREEN cases in
    `tests/principles.test.ts`), or an `llm-rubric` assertion when the behavior is semantic.
 3. Add the test to `promptfooconfig.yaml` with `probe`, `skill` (the skill whose text states
-   the rule), and `task` vars.
+   the rule), and `task` vars. Skill-specific probes go in `promptfooconfig-skills.yaml` the same
+   way — `description` equal to the probe name (for `--filter-pattern`) and a per-test `assert`
+   (`graders/skills.ts` + `tests/skills.test.ts`, or `llm-rubric`).
 4. Calibrate: `--repeat 10`, then `scripts/report.ts calibrate`. REDESIGN → fix the scenario
    (baseline passes) or the skill rule (skill arm fails) before relying on the probe.
 
