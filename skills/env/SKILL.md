@@ -5,7 +5,8 @@ description: >-
   declared in a skill's frontmatter are present, sources $HOME/.profile when
   they are not, reports what is still missing, and provides remediation. Also
   diagnoses a set-but-stale value (rotated secret) and stops the retry loop it
-  causes. Also invoked automatically by the Skill PreToolUse hook before any
+  causes, and auto-mode denials caused by a hook rewriting Bash input. Also
+  invoked automatically by the Skill PreToolUse hook before any
   skill that declares env-vars in its frontmatter.
 argument-hint: '[skill-name | --check <VAR> ... | --all]'
 allowed-tools:
@@ -20,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.09-212439"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash-8b
@@ -136,6 +137,26 @@ rotated after this process started leaves a stale copy here.
   to run the failing command in their own shell.
 - **HARD RULE — never hunt a second shell file, and never retry the command a third time.** Sourcing a static profile
   cannot import a value minted after this process started, so every further attempt fails identically.
+
+## Step 3.6: Diagnose a hook input-rewrite refusal
+
+Enter when a Bash call is denied with `a hook changed this call's input after the model wrote it` (auto-mode
+classifier gave no verdict). This is not a missing var: a `PreToolUse` hook on `Bash` emits
+`hookSpecificOutput.updatedInput` (e.g. prepends a profile `source`), so the reviewed command differs from the one that
+would run. Read-only calls skip the classifier → only writes (push, POST, merge) fail.
+
+- Name the hook — read it, never guess:
+
+  ```bash
+  command grep -n 'updatedInput' "$HOME/.claude/settings.json"
+  ```
+
+- Retry the identical call **once**, as the denial instructs. Denied again → **HARD RULE — stop; never retry a
+  third time** (the hook rewrites every call, so each retry fails identically).
+- Hand off: report the hook, the blocked action, and any payload already written to disk; ask the user to re-authorize
+  the call or run it themselves.
+- Remediate the env, never the call: make the hook observe-only (no `updatedInput`), or remove it and deliver env via
+  the login-shell profile the Bash tool already initializes from. Never edit settings yourself (Hard Rule 1).
 
 ## Step 4: Report and remediate
 
