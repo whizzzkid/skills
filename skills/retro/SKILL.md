@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash
@@ -41,19 +41,15 @@ metadata:
 
 # Session Retro
 
-Structured retrospective → captures session learnings + promotes them globally
-so ALL future sessions benefit, regardless of project. Run at end of a work
-session or after a significant task. `/wk-retro "<topic>"` → focus the retro on that topic.
+Capture session learnings and promote them globally. `/wk-retro "<topic>"` → focus the retro on that topic.
 
 ## HARD RULE: audit live capture before reconstruction
 
-- Real-time capture is a [`wk-workflow`](../workflow/README.md) activation rule.
-- Verify each correction and self-caught error had a same-response
-  [`wk-learn`](../learn/README.md) invocation.
-- Retro refines and promotes; it must not be the first capture.
-- Missing live capture → invoke `wk-learn` now, then record the control failure.
+Real-time capture is a [`wk-workflow`](../workflow/README.md) activation rule: verify each correction and self-caught
+error had a same-response [`wk-learn`](../learn/README.md) invocation. Retro refines and promotes; it must not be the
+first capture. Missing live capture → invoke `wk-learn` now, then record the control failure.
 
-## Global Paths
+## Paths
 
 ```
 RETRO_LOG_DIR="$WK_SKILLS_HOME/learnings/retrospect"
@@ -61,23 +57,18 @@ GLOBAL_MEMORY="$HOME/.claude/memory"
 GLOBAL_CLAUDE="$HOME/.claude/CLAUDE.md"
 ```
 
-- Retro entries → `$RETRO_LOG_DIR/<YYYY-MM-DD>_session-<N>.md` — one **write-once
-  file per session**, never `$HOME/.claude/memory/`.
-- Step 4 memory writes still target `$GLOBAL_MEMORY` for cross-session agent context
-  (rules, preferences). The retrospect log carries only distilled session principles.
+Retro entries → `$RETRO_LOG_DIR`, never `$HOME/.claude/memory/`; Step 4 memory writes (cross-session rules,
+preferences) still target `$GLOBAL_MEMORY`.
 
-## Step 1: Review Session Context
+**HARD RULE:** Write and Edit may ONLY target files under `$WK_SKILLS_HOME/learnings/retrospect/` or `$HOME/.claude/`
+(memory files, MEMORY.md). Never write/edit files in the project working directory or anywhere else. Read, Glob, Grep
+may access any path (read-only).
 
-Gather what happened this session:
+## Step 1: Review session context
 
 ```bash
 git log --oneline -15
 git diff HEAD~5..HEAD --stat 2>/dev/null || git diff --stat
-```
-
-Read global MEMORY.md for prior context:
-
-```bash
 cat "$HOME/.claude/memory/MEMORY.md" 2>/dev/null || echo "No global MEMORY.md found"
 ```
 
@@ -85,82 +76,41 @@ Also check conversation history for corrections, redirects, decisions.
 
 ## Step 1.5: Auto-mine interruptions via `wk-learn scan`
 
-**HARD RULE:** Invoke `wk-learn scan` before reflecting. The scan walks session
-transcript(s), extracts every moment the user interrupted or redirected the agent,
-classifies each by affected skill, and writes per-skill learning files →
-evidence-based capture instead of memory-based recall.
+**HARD RULE:** Invoke `wk-learn scan` before reflecting: `Skill(wk-learn, args="scan")`. It extracts every user
+interruption/redirect from the transcript(s), classifies each by skill, and writes learning files under
+`$WK_SKILLS_HOME/learnings/skills/`. Run it before Step 2; auto mode is **not** an exemption — the scan runs every
+retro.
+Treat its files as Step 2 inputs: acknowledge each and, where appropriate, promote it in Step 4. Zero interruptions →
+continue; reflection still covers the other lenses.
 
-- Invoke via `Skill` tool: `Skill(wk-learn, args="scan")`.
-- Run before Step 2 — scan findings feed the reflection.
-- Auto mode is **not** an exemption. The scan runs every retro.
-- Zero interruptions → continue to Step 2; reflection still covers the other four
-  lenses.
+## Step 1.6: Audit capture timing
 
-Scan emits learning files under `$WK_SKILLS_HOME/learnings/skills/`. Treat those as
-inputs to Step 2 — each is a candidate finding the retro should acknowledge and,
-where appropriate, promote globally in Step 4.
+Classify every finding: **live** (the same response as the correction, redirect, or self-caught error invoked
+`wk-learn`) or **reconstructed** (retro or scan made the first actionable capture). Report `live: N, reconstructed: M`.
+All-reconstructed is an explicit real-time capture-control failure. Invoke every missing per-skill call now.
 
-## Step 1.6: Audit Capture Timing
+## Step 2: Reflect across lenses
 
-Classify every finding before reflection:
+Be specific and concrete; skip any lens with no meaningful findings: 1) where Claude got it wrong (misread, wrong
+assumption, corrected output, wrong convention, missed existing code) 2) where the user corrected the approach (plan
+redirected, design wrong, test revealed a gap) 3) gaps in tools, skills, or docs (missing step, uncovered case, outdated
+docs) 4) decisions made and why (rejected options, tradeoffs) 5) what worked well (patterns worth reinforcing).
 
-- **Live:** same response as the correction, redirect, or self-caught error invoked
-  `wk-learn`.
-- **Reconstructed:** retro or transcript scan created the first actionable capture.
+## Step 3: Write distilled retro entry (only if actionable)
 
-Report `live: N, reconstructed: M`. An all-reconstructed result is an explicit
-real-time capture-control failure. Invoke every missing per-skill call now.
-
-## Step 2: Reflect Across Lenses
-
-Work each lens. Retro uses 5 lenses — superset of wk-learn's 4, adding "What Worked"
-to reinforce good patterns. Be specific and concrete; vague observations are useless.
-Skip any lens with no meaningful findings.
-
-- **Lens 1 — Where Claude got it wrong:** misread a file / wrong assumption?
-  Produced output the user corrected? Followed a convention that was wrong? Missed
-  something obvious already in the codebase?
-- **Lens 2 — Where the user corrected the approach:** redirected the plan mid-execution?
-  Design wrong, only clear during implementation? Test/experiment revealed a gap?
-- **Lens 3 — Gaps in tools, skills, or docs:** step missing from a skill's instructions?
-  Case not covered by existing patterns? Real scenario exposed something a skill didn't
-  account for? Docs outdated or incomplete?
-- **Lens 4 — Decisions made (and why):** non-obvious choices this session? What was
-  explicitly rejected, and why? Tradeoffs accepted?
-- **Lens 5 — What worked well:** what did the agent get right without correction? Which
-  parts felt smooth? Good patterns worth reinforcing?
-
-## File Access Rules
-
-**HARD RULE:** Write and Edit may ONLY target files under
-`$WK_SKILLS_HOME/learnings/retrospect/` or `$HOME/.claude/` (memory files, MEMORY.md).
-Never write/edit files in the project working directory or anywhere else.
-
-Read, Glob, Grep may access any path (read-only).
-
-## Step 3: Write Distilled Retro Entry (only if actionable)
-
-**HARD RULE — log only when there is an actionable finding.** Write a retro entry
-only when the session surfaced at least one skill-gap or improvement ("what could've
-been better"). No skill-gap → write nothing; real-time `wk-learn` captures already
-hold anything notable. Never add an entry just to record that a session ran. Retro-log
-volume should trend **down** as the system matures — a sparse log is success, not a gap.
+**HARD RULE — log only when there is an actionable finding.** Write an entry only when the session surfaced at least
+one skill-gap or improvement ("what could've been better"); otherwise write nothing — real-time `wk-learn` captures
+already hold anything notable. Never add an entry just to record that a session ran; a sparse log is success.
 
 **HARD RULE — one write-once file per session at
 `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>_session-<N>.md`, never
-`$HOME/.claude/memory/retro-log.md`.** The retrospect log is a skill-improvement
-artifact; the memory store is for cross-session agent context.
+`$HOME/.claude/memory/retro-log.md`.** Write a **new** file per session, never append to an existing session file:
+`wk-sharpen` distills a file once and renames it `.learned.md`, so appended content is orphaned. Create the directory if
+missing: `mkdir -p "$WK_SKILLS_HOME/learnings/retrospect"`.
 
-- Write a **new** file per session — never append to an existing session file. A
-  write-once file is distilled exactly once and renamed `.learned.md` by `wk-sharpen`;
-  appending later sessions to a shared daily file orphans their content (file is already
-  distilled and never re-read).
-- Create the directory if missing: `mkdir -p "$WK_SKILLS_HOME/learnings/retrospect"`.
-
-**HARD RULE — no timestamps, no work narrative.** In-file header is `## Session-N` and
-nothing else — never a time of day, never the task/topic, never what was built. The retro
-records *findings*, not *activity*. Derive N from today's existing session-file count
-(processed or not) and never reuse a filename:
+**HARD RULE — no timestamps, no work narrative.** In-file header is `## Session-N` and nothing else — never a time of
+day, never the task/topic, never what was built. Derive N from today's existing session-file count (processed or not)
+and never reuse a filename:
 
 ```bash
 DIR="$WK_SKILLS_HOME/learnings/retrospect"; DAY=$(date -u +%F)
@@ -168,9 +118,8 @@ N=$(( $(ls "$DIR/${DAY}_session-"*.md 2>/dev/null | wc -l | tr -d ' ') + 1 ))
 FILE="$DIR/${DAY}_session-${N}.md"
 ```
 
-**HARD RULE — distilled findings only, two buckets.** Each bullet is a one-sentence
-actionable rule, not a story. Use only these two sections; omit either if empty (and if
-both are empty, write nothing per the rule above):
+**HARD RULE — distilled findings only, two buckets.** Each bullet is a one-sentence actionable rule, not a story. Use
+only these sections; omit either if empty (both empty → write nothing):
 
 ```markdown
 ## Session-N
@@ -182,63 +131,29 @@ both are empty, write nothing per the rule above):
 - [skill-name]: [one-sentence actionable gap — folded by Step 4 wk-learn]
 ```
 
-**HARD RULE — no internal references.** This is a **public** repo; the retro captures
-principles, not the identity of the system. Before writing, strip:
+**HARD RULE — no internal references.** This is a **public** repo. Before writing, strip: resolved `$EMPLOYER` and
+`$GITHUB_ORG` values; internal or code-named repos, services, bots, projects; reviewer logins, ticket IDs, commit SHAs,
+PR numbers; hard-coded user-land paths (home dirs, worktree paths, machine-local absolute paths); secrets, tokens,
+credentials, sensitive information. Replace with `{owner}/{repo}`, `{repo}`, `{bot}`, `{service}`, "the file", "the
+reviewer", "the PR"; anonymize a user-land path to repo-relative or `/tmp/agent/…` — never commit an absolute
+home/worktree path.
 
-- Resolved value of `$EMPLOYER` and `$GITHUB_ORG` (env vars).
-- Any internal or code-named repo, service, bot, or project.
-- Reviewer logins, ticket IDs, commit SHAs, PR numbers.
-- Hard-coded user-land file paths (home dirs, worktree paths, machine-local absolute paths).
-- Secrets, tokens, credentials, or sensitive information.
+Run [references/validation-gate.md](references/validation-gate.md) on the draft (fixed path
+`/tmp/retro-draft-wkretro.md`)
+after composing it, before Write. Validation fails → stop and rewrite the offending bullet. Passes → write the new
+per-session file:
+`cp "$DRAFT" "$FILE"`. Never append to an existing session file.
 
-Replace with generic placeholders: `{owner}/{repo}`, `{repo}`, `{bot}`, `{service}`,
-"the file", "the reviewer", "the PR". Anonymize a user-land path to repo-relative or
-`/tmp/agent/…` — never commit an absolute home/worktree path.
+## Step 4: Promote — distill and route globally
 
-### Validation gate (run after composing the draft, before Write)
+Distillation rules, promotion targets, per-lesson process, and the `wk-learn` contract:
+[references/memory-promotion.md](references/memory-promotion.md).
 
-```bash
-# Use a FIXED temp path, not $$ — each Bash tool call is a new subprocess,
-# so $$ differs between the write call and a later read/sed call and the
-# file is not found. A fixed slug survives across tool invocations.
-DRAFT=/tmp/retro-draft-wkretro.md
-# write the proposed entry to $DRAFT first
-# Guard: an empty/unset $DRAFT appends nothing and passes every grep below
-# silently — fail loudly instead of writing a blank entry.
-[[ -s "$DRAFT" ]] || { echo "FAIL: draft is empty — refusing to append a blank retro entry"; exit 1; }
-DENY="$(printenv EMPLOYER):$(printenv GITHUB_ORG)"
-echo "$DENY" | tr ':' '\n' | grep -v '^$' > /tmp/retro-deny-wkretro.txt
-if grep -iF -f /tmp/retro-deny-wkretro.txt "$DRAFT" 2>/dev/null; then
-  echo "FAIL: forbidden employer/org token in draft"; exit 1
-fi
-# user-land absolute paths (home dir / worktree) must be anonymized
-if grep -nE '(/Users/|/home/)[a-z._-]+/|'"$HOME"'/' "$DRAFT" 2>/dev/null; then
-  echo "FAIL: user-land absolute path in draft — anonymize to repo-relative or /tmp/agent/…"; exit 1
-fi
-# no time-of-day stamps — the header is Session-N, not a clock time
-if grep -nE '\b[0-9]{1,2}:[0-9]{2}\b|UTC' "$DRAFT" 2>/dev/null; then
-  echo "FAIL: timestamp in retro entry — use 'Session-N', not a time of day"; exit 1
-fi
-```
+**HARD RULE:** For every "What could've been better" bullet naming a skill, invoke `wk-learn` in this same retro
+response — do not defer. Both the log entry and the `wk-learn` call are required; skipping either orphans the lesson.
 
-- Stop and rewrite the offending bullet if validation fails.
-- Write the new per-session file (`$FILE`) only after validation passes —
-  `cp "$DRAFT" "$FILE"`. Never append to an existing session file.
-
-## Step 4: Promote — Distill and Route Globally
-
-Distillation rules, promotion target table, per-lesson process, and the `wk-learn` invocation contract are in [references/memory-promotion.md](references/memory-promotion.md).
-
-**HARD RULE:** For every "What could've been better" bullet naming a skill, invoke `wk-learn` in this same retro response — do not defer. Both the log entry and the `wk-learn` call are required; skipping either orphans the lesson.
-
-## Optional: Stop Hook
-
-A Stop hook can remind you to run a retro at session end. Add a `Stop` hook in `$HOME/.claude/settings.json` pointing to `{SKILL_DIR}/scripts/suggest-retro.sh`. The script prints a reminder — it does not auto-run the retro.
-
-## Requirements
-
-- Git repository (for reviewing session changes)
-- Shell access (for running git commands and discovering targets)
+Optional: a `Stop` hook in `$HOME/.claude/settings.json` pointing to `{SKILL_DIR}/scripts/suggest-retro.sh` prints a
+retro reminder at session end (it does not auto-run the retro).
 
 ---
 

@@ -3,7 +3,7 @@
 Ensures Colima is running before any container operation and provides a clean
 restart path when Colima or Docker misbehaves.
 
-**Version:** `2026.10.09-171327`
+**Version:** `2026.10.09-184159`
 
 ## Trigger
 

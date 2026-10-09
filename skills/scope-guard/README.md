@@ -2,7 +2,7 @@
 
 > A PreToolUse hook that blocks filesystem-root searches and out-of-repo recursive searches, and warns on Edit/Write outside the project root — the mechanical backstop for [wk-plan](../plan/README.md)'s simplest-viable scope gate.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-184159`
 
 ## Purpose
 

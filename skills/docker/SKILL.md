@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -43,9 +43,6 @@ metadata:
 ---
 
 # Docker
-
-Workflows and safety checks for Docker — image building, tag verification,
-container inspection, daemon troubleshooting.
 
 ## Pre-Flight Checks
 
@@ -96,7 +93,8 @@ grouped block near the bottom of the build stage.
 ## Audit Runtime Env Reads Against the Forwarding List
 
 **HARD RULE:** Compose/plugins forward only explicitly listed vars — unlisted vars
-are silently absent. Audit the full runtime read set, not just vars the diff added: grep the runtime call graph for env reads (`ENV[`,
+are silently absent. Audit the full runtime read set, not just vars the diff added: grep the runtime call graph for env
+reads (`ENV[`,
 `ENV.fetch`, `os.environ`, `process.env`, `$VAR`), diff against the forwarding
 list, flag gaps. Cross-check sibling compose files. Never use a host-side SHA as
 proxy for a target-artifact SHA inside the container.
@@ -104,7 +102,8 @@ proxy for a target-artifact SHA inside the container.
 ## Reference Pointers
 
 - **Bind-mount overlay shadows COPY:** [references/bind-mount-overlay.md](references/bind-mount-overlay.md)
-- **Worktree `.git` file breaks git in containers:** [references/git-worktree-gitfile.md](references/git-worktree-gitfile.md)
+- **Worktree `.git` file breaks git in containers:**
+  [references/git-worktree-gitfile.md](references/git-worktree-gitfile.md)
 - **Seed dependency volume from sibling:** [references/seed-dependency-volume.md](references/seed-dependency-volume.md)
 - **Multi-worktree port conflicts:** [references/port-conflicts.md](references/port-conflicts.md)
 
@@ -122,9 +121,9 @@ exact env var name/format. Generic `<REGISTRY>_API_KEY` is almost never correct.
 ## Bind-Mount Permission Fixes — Scoped, Never Recursive
 
 **HARD RULE:** Never `chmod -R` a git tree or any path in a persistent/shared host
-checkout for container EACCES. Grant write
-only on exact needed files/dirs. Prefer `chown <container-uid>` or a scratch
-dir outside the checkout. Recursive perms on `.git/` is a red flag.
+checkout for container EACCES. Grant write only on exact needed files/dirs. Prefer
+`chown <container-uid>` or a scratch dir outside the checkout. Recursive perms on
+`.git/` is a red flag.
 
 ## Debugging Build Failures
 
@@ -144,8 +143,6 @@ dir outside the checkout. Recursive perms on `.git/` is a red flag.
 | 127 | Command not found |
 | 137 | OOM killed |
 | 139 | Segfault |
-
----
 
 ## Post-Completion
 

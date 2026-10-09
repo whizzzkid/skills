@@ -3,7 +3,7 @@
 Diagnoses environment variable availability before skill execution and provides
 actionable remediation.
 
-**Version:** `2026.10.09-171327`
+**Version:** `2026.10.09-184159`
 
 ## Purpose
 

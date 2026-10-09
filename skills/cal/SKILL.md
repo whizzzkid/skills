@@ -18,7 +18,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -30,38 +30,34 @@ metadata:
 
 # 📅 Calendar
 
-Canonical calendar operations for Google Calendar via MCP. All skills that
-interact with calendar data delegate here.
+All skills that touch calendar data delegate here.
 
 ## Auth Check
 
-**HARD RULE:** Always perform this check first.
-
-Before any calendar operation, verify the Google Calendar MCP is available:
+**HARD RULE:** Always perform this check first, before any calendar operation:
 
 ```
 ToolSearch("gcal")
 ```
 
-If no tools are returned, tell the user:
+No tools returned → tell the user:
 
 > Google Calendar MCP is not connected. Check your MCP settings and ensure
 > the Gcal integration is enabled, then retry.
 
-Stop immediately — do not attempt calendar operations without MCP access.
-Do not fall back to manual date math or placeholder data.
+Then stop immediately: no calendar operations without MCP access, no fallback to
+manual date math or placeholder data.
 
 ## Working Hours
 
-Default working window: **9:00 AM – 6:00 PM** in the user's local timezone.
-Never schedule events outside this window unless the user explicitly requests it.
-Lunch window (12:00–1:00 PM) is soft-protected — prefer not to schedule here.
+Default window: **9:00 AM – 6:00 PM** user-local. Never schedule outside it unless
+the user explicitly requests it. Lunch (12:00–1:00 PM) is soft-protected: prefer
+not to schedule there.
 
 ## § Fetch Day Events
 
-Canonical pattern for fetching events for a given day or range. Used by
-`wk-sitrep` (start: today; end: today + tomorrow preview) and "check my calendar" /
-"what's on today".
+Used by `wk-sitrep` (start: today; end: today + tomorrow preview) and "check my
+calendar" / "what's on today".
 
 ```
 gcal.list_events(
@@ -73,37 +69,27 @@ gcal.list_events(
 )
 ```
 
-For each event extract:
-- Title, start time, end time, duration
-- Attendees list (flag the organizer)
-- Location or video conference link
-- Description / notes field
-- Whether it is a recurring event
-- Any linked document URLs in the description
-
-Skip all-day events that are auto-generated (e.g., out-of-office banners,
+Extract per event: title, start, end, duration; attendees (flag the organizer);
+location or video link; description/notes; recurring or not; linked document URLs
+in the description. Skip auto-generated all-day events (out-of-office banners,
 public holidays) unless the user is the organizer.
 
 ## § Smart Event Creation
 
-Use this when asked to schedule a new event ("schedule a meeting" / "find time for X"). Never just pick a time — always
+For "schedule a meeting" / "find time for X": never just pick a time — always
 find a free slot.
 
 ### Step 1: Understand the event
 
-Collect from the user or context:
-- Title and intended duration
-- Required attendees (names or emails)
-- Preferred date range (default: this week or next business day)
-- Any hard constraints (e.g., "after 2pm", "not Monday")
+Collect from user or context: title and duration; required attendees (names or
+emails); preferred date range (default: this week or next business day); hard
+constraints ("after 2pm", "not Monday").
 
 ### Step 2: Fetch busy blocks
 
-For **1–3 attendees**, fetch the primary calendar's events for each candidate
-day and identify free windows manually.
-
-For **4+ attendees**, use `get_free_busy` across all attendee emails to find
-genuine overlap:
+**1–3 attendees:** fetch the primary calendar's events per candidate day and find
+free windows manually. **4+ attendees:** use `get_free_busy` across all attendee
+emails for genuine overlap:
 
 ```
 gcal.get_free_busy(
@@ -113,9 +99,8 @@ gcal.get_free_busy(
 )
 ```
 
-Parse the response: for each candidate slot, count how many attendees have a
-conflict. Rank slots by **fewest conflicts** — the slot where the most
-attendees are free, weighted by seniority/necessity if provided.
+Count conflicting attendees per candidate slot; rank by **fewest conflicts**,
+weighted by seniority/necessity if provided.
 
 ### Step 3: Rank candidate slots
 
@@ -129,18 +114,14 @@ Score each 30-minute window inside working hours:
 | Attendee conflict | +3 per conflicting attendee |
 | Already used as a focus block | +1 |
 
-Pick the slot with the lowest total penalty. If there is a tie, prefer
-earlier in the day. If no slot has zero conflicts for large groups, pick the
-lowest-conflict option and surface the conflict list to the user for a call.
+Pick the lowest total penalty; tie → earlier in the day. No zero-conflict slot
+for a large group → pick the lowest-conflict option and surface the conflict list
+to the user for a call.
 
 ### Step 4: Confirm and create
 
-Present the proposed time to the user:
-
-> "Best slot found: **{day} {time}** ({duration}). {N} of {M} attendees are
-> free. Proceed?"
-
-After confirmation, create the event:
+Propose: "Best slot found: **{day} {time}** ({duration}). {N} of {M} attendees
+are free. Proceed?" After confirmation, create:
 
 ```
 gcal.create_event(
@@ -155,16 +136,13 @@ gcal.create_event(
 
 ## § Interview Prep Scan
 
-Run during `wk-sitrep start` (or on "do I have interviews coming up") to ensure every upcoming interview has prep and
-scorecard blocks. See
-[references/interview-prep-scan.md](references/interview-prep-scan.md) for the
-full scan protocol (detection keywords, debrief skip rule, prep/scorecard
-creation, and reporting format).
+Run during `wk-sitrep start` (or on "do I have interviews coming up") so every
+upcoming interview has prep and scorecard blocks. Follow
+[references/interview-prep-scan.md](references/interview-prep-scan.md) (detection
+keywords, debrief skip rule, prep/scorecard creation, reporting format).
 
 **HARD RULE:** The scorecard is always a booked calendar event, never a
 checkbox or to-do item. Create via calendar MCP before any caller renders.
-
----
 
 ## Post-Completion
 

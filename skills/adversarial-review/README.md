@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-184159`
 
 ## Invocation
 

@@ -86,7 +86,7 @@ function compare(oldPath: string, newPath: string): number {
     const n = Math.min(get(o, WITH_SKILLS, probe)?.total ?? 1, get(n_, WITH_SKILLS, probe)?.total ?? 1);
     const floor = Math.max(spread, MIN_NOISE_FLOOR, 1 / n);
     const delta = so !== undefined && sn !== undefined ? sn - so : undefined;
-    const flag = delta !== undefined && delta < -floor ? '  ⚠ REGRESSION' : '';
+    const flag = delta !== undefined && delta < -floor - 1e-9 ? '  ⚠ REGRESSION' : '';
     if (flag) regressed.push(probe);
     const pooledBaseline = fmt(bo && bn ? { pass: bo.pass + bn.pass, total: bo.total + bn.total } : bo ?? bn);
     console.log(

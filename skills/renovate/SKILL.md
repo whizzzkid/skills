@@ -29,7 +29,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -37,14 +37,8 @@ metadata:
 
 # Renovate — Batch Dependabot PRs
 
-Combine all open Dependabot PRs in the current repo into a single
-dependency-update PR. One branch, one review, one merge.
-
-## When to Use
-
-- Open Dependabot PRs are piling up and you want a single combined update.
-- `/wk-renovate` invoked directly.
-- "combine dependabot PRs", "batch dependency updates", "merge all dependabot".
+Combine all open Dependabot PRs in the current repo into a single dependency-update PR: one branch, one review, one
+merge. Triggers: `/wk-renovate`, "combine dependabot PRs", "batch dependency updates", "merge all dependabot".
 
 ## Step 1: Discover Dependabot PRs
 
@@ -55,12 +49,11 @@ gh pr list --author "app/dependabot" --state open --json number,title,headRefNam
 ```
 
 - Zero results → report "no open Dependabot PRs" and stop.
-- Display a numbered summary table: PR number, title, package, version bump.
-- Extract the dependency name and version range from each PR title/body.
-- **Pause for confirmation** before proceeding to Step 2.
-  - Ask the user to confirm or exclude packages (e.g., "exclude 3, 7" or "proceed").
-  - Major-version bumps → call out explicitly in the table; these are most likely to break.
-  - Excluded PRs are skipped in Steps 2–5 and omitted from the combined PR.
+- Display a numbered summary table: PR number, title, package, version bump. Extract the dependency name and version
+  range from each PR title/body.
+- **Pause for confirmation** before proceeding to Step 2: ask the user to confirm or exclude packages (e.g., "exclude 3,
+  7" or "proceed"); call out major-version bumps explicitly in the table (most likely to break). Excluded PRs are
+  skipped in Steps 2–5 and omitted from the combined PR.
 
 ## Step 2: Create a Combined Branch
 
@@ -69,17 +62,15 @@ git fetch origin
 git checkout -b dependabot/combined-updates origin/main
 ```
 
-- Branch name: `dependabot/combined-updates` (or
-  `dependabot/combined-updates-<YYYYMMDD>` if the branch already exists).
+Branch name: `dependabot/combined-updates`, or `dependabot/combined-updates-<YYYYMMDD>` if the branch already exists.
 
 ## Step 3: Apply Each Upgrade
 
-For each Dependabot PR, cherry-pick or merge its changes:
-
-- Prefer cherry-picking the Dependabot commit(s) to keep the upgrade atomic.
-- On conflict: attempt auto-resolution of lockfile conflicts by re-running
-  the package manager's install/lock command.
-- Track which PRs applied cleanly and which conflicted.
+- Prefer cherry-picking each Dependabot PR's commit(s) to keep the upgrade atomic.
+- On lockfile conflict: always regenerate by re-running the package manager's install/lock command — never cherry-pick a
+  lockfile conflict without regenerating.
+- Track which PRs applied cleanly and which conflicted. Cherry-pick fails irrecoverably for a PR → skip it, log it,
+  continue with the rest.
 
 ```bash
 for branch in <dependabot_branches>; do
@@ -92,9 +83,7 @@ for branch in <dependabot_branches>; do
 done
 ```
 
-### Package manager detection
-
-Detect from repo root and regenerate lockfiles accordingly:
+Detect the package manager from repo root:
 
 | Signal | Manager | Regenerate |
 |--------|---------|------------|
@@ -106,70 +95,40 @@ Detect from repo root and regenerate lockfiles accordingly:
 | `poetry.lock` | poetry | `poetry lock` |
 | `requirements.txt` | pip | — (no lockfile regen) |
 
-If cherry-pick fails irrecoverably for a PR, skip it, log it, and continue
-with the rest.
-
 ## Step 4: Verify the Combined State
 
-- Run the install command for the detected package manager to confirm the
-  lockfile is consistent.
-- If a test command is obvious (`npm test`, `bundle exec rake`, `cargo test`),
-  run it. On failure, report which upgrade likely broke it but do not block —
-  the CI on the PR will catch it.
+- Run the install command for the detected package manager to confirm the lockfile is consistent.
+- Test command obvious (`npm test`, `bundle exec rake`, `cargo test`) → run it. On failure, report which upgrade likely
+  broke it but do not block — the CI on the PR will catch it.
 
 ## Step 5: Create the Combined PR
 
-Push the branch and open a PR:
+Push the branch and open a PR with the body from [`references/pr-body-template.md`](references/pr-body-template.md):
 
 ```bash
 git push -u origin dependabot/combined-updates
 ```
 
-### PR body format
-
-```markdown
-## Combined Dependency Updates
-
-Batches the following Dependabot PRs into a single update:
-
-| PR | Package | Version |
-|----|---------|---------|
-| #<N> | <package> | <old> → <new> |
-...
-
-### Superseded PRs
-Closes #<N1>, #<N2>, #<N3>, ...
-
-### Post-merge cleanup
-GitHub auto-closes PRs referenced by `Closes #N` on merge.
-Verify closed state; if any remain open: `gh pr close <N> --delete-branch --comment "Superseded by #<this_PR>"`
-Or invoke `/wk-renovate cleanup` to handle stragglers.
-```
-
-### `Closes #N` auto-closes PRs too
-
-GitHub's `Closes` keyword auto-closes both issues **and** pull requests on
-merge (field-verified). Use `Closes #N` in the PR body for each superseded
-Dependabot PR. Step 7 handles any that remain open as stragglers.
+Use `Closes #N` for each superseded Dependabot PR: GitHub's `Closes` keyword auto-closes both issues **and** pull
+requests on merge (field-verified); never assume it only works for issues. Step 7 handles any that remain open as
+stragglers.
 
 ## Step 6: Skip Optional Gates
 
 - **Automated external review:** skip for dependency-only updates.
-- **Adversarial review:** skip unless the combined diff contains non-lockfile,
-  non-manifest code changes (e.g., a Dependabot PR that patches application
-  code). Detect:
+- **Adversarial review:** skip unless the combined diff contains non-lockfile, non-manifest code changes (e.g., a
+  Dependabot PR that patches application code) — pure dependency bumps waste review time on lockfile diffs. Detect:
 
 ```bash
 git diff origin/main...HEAD --name-only | grep -vE '(package\.json|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Gemfile|Gemfile\.lock|Cargo\.toml|Cargo\.lock|requirements.*\.txt|poetry\.lock|\.github/|go\.sum|go\.mod)' | head -5
 ```
 
-Non-empty → invoke [wk-adversarial-review](../adversarial-review/README.md).
-Empty → skip with a note: "dependency-only update, adversarial review skipped."
+Non-empty → invoke [wk-adversarial-review](../adversarial-review/README.md). Empty → skip with a note: "dependency-only
+update, adversarial review skipped."
 
 ## Step 7: Post-Merge Cleanup (`/wk-renovate cleanup`)
 
-After the combined PR merges, `Closes #N` keywords auto-close the referenced
-PRs. This step handles stragglers:
+After the combined PR merges, `Closes #N` keywords auto-close the referenced PRs; close stragglers:
 
 ```bash
 for pr in <superseded_pr_numbers>; do
@@ -181,20 +140,10 @@ done
 - Parse superseded PR numbers from the merged PR body (`Closes #...`).
 - Already-closed PRs are expected (auto-closed by `Closes`) — skip gracefully.
 
-## Common Mistakes
-
-- **Assuming `Closes #N` only works for issues** — it auto-closes PRs too;
-  use it in the combined PR body for each superseded Dependabot PR.
-- **Cherry-picking lockfile conflicts without regenerating** — always re-run
-  the package manager to produce a consistent lockfile.
-- **Running adversarial review on pure dependency bumps** — wastes time on
-  lockfile diffs with no semantic code changes.
-
 ## Requirements
 
-- `gh` CLI authenticated with repo access
-- `$GITHUB_ORG` set (via [wk-gh](../gh/README.md))
-- Package manager available for lockfile regeneration
+`gh` CLI authenticated with repo access; `$GITHUB_ORG` set (via [wk-gh](../gh/README.md)); package manager available for
+lockfile regeneration.
 
 ## Post-Completion
 

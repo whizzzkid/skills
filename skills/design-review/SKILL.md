@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   internal: false
   model:
     claude: claude-opus-4-7
@@ -35,31 +35,24 @@ metadata:
 
 # Design Review
 
-Act as a **principal-level UX / product designer**. Critically evaluate design
-changes — visual, interaction, information architecture, and the design language
-itself. Hold a hard line on consistency, accessibility, and known anti-patterns.
-Judge against principle, not taste; every finding names the heuristic it violates
-and a concrete fix.
+Act as a **principal-level UX / product designer**: critically evaluate visual,
+interaction, IA, and design-language changes; hold a hard line on consistency,
+accessibility, and known anti-patterns. Judge against principle, not taste; every
+finding names the heuristic it violates and a concrete fix.
 
-## When to Use
+Use for: a diff touching UI/UX surfaces (components, CSS, tokens, layout); reviewing
+or authoring a `design.md`, design-system doc, or UX spec; a consult from another
+skill/agent (Consult Mode); auditing an existing screen/flow.
 
-- Reviewing a diff that touches UI/UX surfaces (components, CSS, tokens, layout).
-- Reviewing or authoring a `design.md`, design-system doc, or UX spec.
-- Another skill/agent consults you for a design opinion (see Consult Mode).
-- Auditing an existing screen/flow against design principles.
-
-## Scope: design vs architecture
-
-- **This skill** owns visual, interaction, IA, content, and accessibility design.
-- **[`wk-arch-review`](../arch-review/README.md)** owns system architecture — SPOFs,
-  data flow, topology, trust boundaries.
-- A change can trigger both. When a doc mixes both, review the design layer here
-  and hand the system-design layer to `wk-arch-review`; do not adjudicate topology.
+Scope: this skill owns visual, interaction, IA, content, and accessibility design;
+[`wk-arch-review`](../arch-review/README.md) owns system architecture (SPOFs, data
+flow, topology, trust boundaries). A doc mixing both: review the design layer here,
+hand the system-design layer to `wk-arch-review`; do not adjudicate topology.
 
 ## Step 1: Gather the change
 
-- Argument is a path/URL → read it. Argument is `consult <pr|path>` → Consult Mode.
-  Argument is `write <topic>` → draft/critique a design spec against Step 2 principles.
+- Argument is a path/URL → read it. `consult <pr|path>` → Consult Mode.
+  `write <topic>` → draft/critique a design spec against Step 2 principles.
 - PR number → `gh pr diff <n> --name-only`, then read the design-relevant files.
 - Identify the design surfaces touched:
 
@@ -67,25 +60,23 @@ and a concrete fix.
   gh pr diff <n> --name-only | grep -iE '\.(css|scss|sass|less|styl)$|design|tokens?|theme|component|stories|figma|\.stories\.|a11y'
   ```
 
-- For a rendered UI, drive it with the Playwright MCP (`browser_navigate` →
-  `browser_snapshot`/`browser_take_screenshot`) to review the actual output, not
-  just the source. Run headless; `browser_close` when done.
-- **Verify the render target before trusting it.** A port returning HTTP 200
-  proves only that *something* answers, not that it is this app's dev server on
-  the current branch — a stale SSH port-forward or unrelated service renders a
-  plausible-looking wrong page. Grep the fetched source for a project-specific
-  marker from the current diff (a known class/id/string); on mismatch,
-  `lsof -i :<port>` to confirm the listener is the project's own process. If it
-  is not, fall back to static source analysis and say so in the findings — never
-  silently skip the render.
+- Rendered UI → drive it with the Playwright MCP (`browser_navigate` →
+  `browser_snapshot`/`browser_take_screenshot`) to review actual output, not just
+  source. Run headless; `browser_close` when done.
+- **Verify the render target before trusting it** — HTTP 200 proves only that
+  *something* answers (a stale SSH port-forward renders a plausible wrong page).
+  Grep the fetched source for a project-specific marker from the current diff; on
+  mismatch, `lsof -i :<port>` to confirm the listener is the project's own process.
+  Not it → fall back to static source analysis and say so in the findings; never
+  silently skip the render. Detail: [references/verify-render-target.md](references/verify-render-target.md).
 - Establish the **existing design language** first (token file, existing
-  components, prior `design.md`) — you cannot flag an inconsistency without the
-  baseline. A change that matches an established-but-poor pattern is a separate,
-  lower-severity finding than one that breaks a good one.
+  components, prior `design.md`): no inconsistency finding without the baseline.
+  Matching an established-but-poor pattern is a separate, lower-severity finding
+  than breaking a good one.
 
 ## Step 2: Evaluate against principles
 
-Walk each lens; skip a lens only when the change cannot touch it.
+Walk each lens; skip one only when the change cannot touch it.
 
 - **Consistency / design language** — reuses tokens, scale, and existing
   components; no one-off magic values (`13px`, `#3a3a3a`) where a token exists;
@@ -127,7 +118,7 @@ Flag on sight (each maps to a Step 2 lens):
 
 ## Step 4: Rank and write findings
 
-Rank most-severe first. Severity ladder:
+Rank most-severe first:
 
 - **blocker** — ships broken UX, fails accessibility law, or is a dark pattern.
 - **major** — breaks the design language, misses a critical state, hurts a core task.
@@ -140,43 +131,35 @@ Each finding carries: `severity` · location (file/component/screen) · the
 
 ## Step 5: Deliver
 
-- **Direct invocation** → present the ranked findings to the user. A direct
-  `/wk-design-review` (or auto mode) IS approval to report; do not re-ask.
+- **Direct invocation** → present ranked findings. A direct `/wk-design-review`
+  (or auto mode) IS approval to report; do not re-ask.
 - Never auto-apply UI changes — design fixes are proposals; the human decides.
-- Recommend deeper visual iteration via the `dataviz` or `artifact-design` skills
-  when the change is a chart or a shareable artifact, not a product surface.
+- Chart or shareable artifact (not a product surface) → recommend deeper visual
+  iteration via the `dataviz` or `artifact-design` skills.
 
 ## Consult Mode
 
 Invoked by another skill/agent (e.g. `wk-pr-review`) with `consult <pr|path>`:
-
-- Run Steps 1–4, then **return structured findings only** — do not post comments,
-  do not commit, do not open a browser tab for the user.
-- Return a compact list the caller can fold in: each item = `severity · location ·
-  principle · fix`. Keep it to what changed; do not review untouched surfaces.
-- Say "no design concerns" explicitly when the diff is clean — silence reads as
-  "not reviewed."
+run Steps 1–4, then **return structured findings only** — no comments posted, no
+commit, no browser tab opened for the user. Return a compact list
+(`severity · location · principle · fix`) covering only what changed. Clean diff →
+say "no design concerns" explicitly; silence reads as "not reviewed."
 
 ## Common Mistakes
 
-- **Reviewing source without rendering.** A stylesheet reads fine and still ships
+- **Reviewing source without rendering:** a stylesheet reads fine and still ships
   a broken layout. Render when a live surface exists.
-- **Signing off a theme-aware surface in one theme.** Validate in BOTH light and
-  dark before declaring done — a token that reads fine on one background can fail
-  contrast on the other.
-- **Taste dressed as principle.** If you cannot name the heuristic and the user
-  harm, it is a nit at most — say so.
-- **Ignoring the baseline.** Flagging a "new" inconsistency that is actually the
-  established pattern; establish the design language before judging.
-- **Gate-creep.** Marking polish as a blocker erodes trust in the severity ladder.
-- **Trusting a 200 as proof the app is live.** Confirm the render target is the
-  project's own dev server (diff-specific marker in the source, `lsof` the port)
-  before reviewing — a wrong-page screenshot looks plausible.
+- **Signing off a theme-aware surface in one theme:** validate in BOTH light and
+  dark before declaring done; a token can pass contrast on one background and fail
+  on the other.
+- **Taste dressed as principle:** no nameable heuristic and user harm → a nit at most; say so.
+- **Ignoring the baseline:** establish the design language before flagging a "new"
+  inconsistency that is actually the established pattern.
+- **Gate-creep:** marking polish as a blocker erodes trust in the severity ladder.
+- **Trusting a 200 as proof the app is live:** confirm the render target first (Step 1).
 
-## Requirements
-
-- `gh` for PR diffs; Playwright MCP for rendered-UI review.
-- Read access to the repo's token/design-system files for the baseline.
+Requires `gh` for PR diffs, Playwright MCP for rendered-UI review, and read access
+to the repo's token/design-system files for the baseline.
 
 ## Post-Completion
 

@@ -27,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -40,21 +40,14 @@ metadata:
 
 # Colima
 
-Ensure Colima is running and healthy before any container operation. Handles
-startup with the correct resource profile and provides a clean restart path for
-when Colima or Docker misbehaves.
+Ensure Colima is running and healthy before any `docker` or `colima` command. Also run on `colima
+start|stop|restart|status`, Docker daemon errors (`Cannot connect to the Docker daemon`, `Error response from
+daemon`), a missing/unresponsive Docker socket, or build/run/compose failures where the daemon is the suspect.
+Requires `colima` via mise (`mise use -g colima@latest`; Lima installs alongside it, not as a separate package), the
+`docker` CLI, and `nproc` or `sysctl` (macOS fallback).
 
-## When to Use
-
-Auto-invoked before any `docker` or `colima` command in the session. Also
-triggered by:
-
-- `colima start`, `colima stop`, `colima restart`, `colima status` invocations
-- Docker daemon errors (`Cannot connect to the Docker daemon`, `Error response from daemon`)
-- Docker socket missing or unresponsive
-- Container build, run, or compose failures where the daemon is the suspect
-- Explicit `/wk-colima` call — `status` → Step 1 only, report and exit; `start` →
-  Steps 1–3; `stop` → `colima stop` only; `restart` → Step 4 unconditionally
+Explicit `/wk-colima`: `status` → Step 1 only, report and exit; `start` → Steps 1–3; `stop` → `colima stop` only;
+`restart` → Step 4 unconditionally.
 
 ## Step 1: Check status
 
@@ -62,14 +55,14 @@ triggered by:
 mise exec -- colima status 2>&1
 ```
 
-- If output contains `Running` — Colima is healthy. Proceed; skip Steps 2–3.
-- If output contains `Stopped`, `not found`, or any error — go to Step 2.
-- If Colima itself is not installed, stop and report: `colima` must be
-  installed (`mise use -g colima@latest`).
+Take the first that matches: 1) `colima` not installed → stop and report it must be installed
+(`mise use -g colima@latest`); 2) `Running` → healthy, proceed, skip Steps 2–3; 3) `Stopped`, `not found`, or any
+error → Step 2.
 
 ## Step 2: Compute CPU and memory limits
 
-Derive CPU and memory from the host and halve both (floor):
+Derive CPU and memory from the host and halve both (floor). Never hardcode memory — the VZ driver rejects requests
+above the host's `maximumAllowedMemorySize`. Disk (100 GB) stays constant.
 
 ```bash
 PROC=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo 8)
@@ -81,42 +74,28 @@ MEM_GB=$(( MEM_BYTES / 1073741824 / 2 ))
 echo "Starting colima with CPU=$CPU / ${MEM_GB} GB / 100 GB"
 ```
 
-Halving prevents Colima from monopolizing the host. Derive memory from the host
-— the VZ driver rejects requests above the host's `maximumAllowedMemorySize`, so
-never hardcode it. Disk (100 GB) stays constant.
-
 ## Step 3: Start Colima
 
 ```bash
 mise exec -- colima start --cpu "$CPU" --memory "$MEM_GB" --disk 100 --mount-inotify --very-verbose
 ```
 
-Wait for the command to exit. A zero exit code means Colima started
-successfully. Confirm Docker is reachable — resolve the socket from
-`docker context ls`, never assume `$HOME/.colima/` (a mise-managed colima serves
-under `$HOME/.config/colima/`):
+Wait for exit; zero means started. Confirm Docker is reachable — resolve the socket from `docker context ls`, never
+assume `$HOME/.colima/` (a mise-managed colima serves under `$HOME/.config/colima/`):
 
 ```bash
 docker context ls
 docker info > /dev/null 2>&1 && echo "Docker OK" || echo "Docker not reachable"
 ```
 
-**Important:** If `colima start` claims the VM is already running while
-`colima status` or `docker info` disagrees, treat runtime state as stale and
-proceed to the forced-stop restart sequence (Step 4); do not retry start in
-place.
+**Important:** `colima start` claims the VM is already running while `colima status` or `docker info` disagrees →
+treat runtime state as stale and go to the forced-stop restart sequence (Step 4); do not retry start in place.
 
 ## Step 4: Restart sequence (Colima or Docker is broken)
 
-Use this path when:
-
-- `colima start` exits non-zero
-- Docker is unresponsive after a start
-- Any Docker command returns `Cannot connect to the Docker daemon` or
-  `Error response from daemon` during an otherwise normal session
-- The user says "colima is broken", "restart colima", or "docker isn't working"
-
-**Full shutdown first — never skip this step.**
+Use when `colima start` exits non-zero, Docker is unresponsive after a start, any Docker command returns `Cannot
+connect to the Docker daemon` or `Error response from daemon` during an otherwise normal session, or the user says
+"colima is broken", "restart colima", or "docker isn't working". **Full shutdown first — never skip this step.**
 
 ```bash
 # 1. Stop containers gracefully (best-effort — don't block on failure)
@@ -138,26 +117,14 @@ MEM_GB=$(( MEM_BYTES / 1073741824 / 2 ))
 mise exec -- colima start --cpu "$CPU" --memory "$MEM_GB" --disk 100 --mount-inotify --very-verbose
 ```
 
-After restart, re-run `docker info` to confirm the daemon is reachable. If the
-restart sequence fails twice consecutively, report the full `colima start`
-output to the user — there may be a VM-level issue requiring manual intervention
-(e.g., `colima delete` to wipe state and start from scratch).
+After restart, re-run `docker info` to confirm the daemon is reachable. Restart sequence fails twice consecutively →
+report the full `colima start` output to the user; a VM-level issue may need manual intervention (e.g., `colima
+delete` to wipe state and start from scratch).
 
 ## Step 5: Report state
 
-After any start or restart, emit a one-line status:
-
-> "Colima running: CPU={n}, memory={m} GB, disk=100 GB. Docker reachable."
-
-If Colima was already running (Step 1 found it healthy), emit nothing — silent
-is correct when there is nothing to do.
-
-## Requirements
-
-- `colima` installed via mise (`mise use -g colima@latest`) — Lima is a colima
-  dependency installed alongside it, not a separate package
-- `docker` CLI installed
-- `nproc` or `sysctl` available to detect CPU/memory (macOS: `sysctl` is the fallback)
+After any start or restart, emit: "Colima running: CPU={n}, memory={m} GB, disk=100 GB. Docker reachable." Step 1
+found it healthy → emit nothing.
 
 ## Post-Completion
 

@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -31,133 +31,98 @@ metadata:
 
 # Tone
 
-Rewrite any human-facing message drafted on the user's behalf into their
-personal voice: **encouraging, energetic, humorous**, with emoji used to carry
-intent — never as decoration.
+Rewrite any human-facing message drafted on the user's behalf into their personal voice: **encouraging,
+energetic, humorous**, with emoji carrying intent — never decoration.
 
 ## When to Use
 
-- About to post a message **as the user** anywhere human-facing: Slack, Jira /
-  Confluence comments, GitHub / PR review comments, email, docs.
-- Auto-invoke this skill before sending such a message — apply the voice, then
-  send.
-- A user asks to "draft", "reply", "post", or "send" something in their name.
-- `/wk-tone "<draft>"` rewrites the supplied draft; `/wk-tone` (no args) rewrites
-  the message currently being drafted in context.
-
-**Do NOT apply to:** commit messages, code, code comments, config, log lines,
-or any machine-consumed output. Those follow their own conventions (e.g.
-`wk-commit`). Tone is for prose a human reads.
+- Posting **as the user** anywhere human-facing (Slack, Jira / Confluence comments, GitHub / PR review comments,
+  email, docs) → auto-invoke before sending: apply the voice, then send.
+- User asks to "draft", "reply", "post", or "send" something in their name.
+- `/wk-tone "<draft>"` rewrites the supplied draft; `/wk-tone` (no args) rewrites the message currently being
+  drafted in context.
+- **Do NOT apply to:** commit messages, code, code comments, config, log lines, or any machine-consumed output —
+  those follow their own conventions (e.g. `wk-commit`).
 
 ## The Voice
 
-Five load-bearing traits, in priority order. Hit the first three on every
-message; emoji and casing are texture, not requirement.
+Five traits, in priority order. Hit the first three on every message; emoji and casing are texture, not
+requirement.
 
-1. **Encouraging & collaborative** — soften asks, assume good intent, push the
-   work forward without blame.
+1. **Encouraging & collaborative** — soften asks, assume good intent, push the work forward without blame.
    - "can you help validate before you end your day?" not "please review this."
    - "no worries at all, I wasn't blocked so all good" when something slips.
-   - When flagging many issues, affirm the person: "everything here is fixable,
-     don't fret it."
-2. **Energetic & decisive** — short, punchy, momentum-forward. State the next
-   action. No hedging stacks ("maybe we could potentially consider").
+   - Flagging many issues → affirm the person: "everything here is fixable, don't fret it."
+2. **Energetic & decisive** — short, punchy, momentum-forward. State the next action. No hedging stacks.
    - "I'll fix this." / "yep" / "I'll have a look tomorrow."
    - Progress framing: "we now have X, merging once comments resolve, next up Y."
-3. **Humorous** — dry wit, self-aware tech jokes, playful rebuttals. Light, never
-   mean. Punch at the situation, never the person.
-   - "anthropic buys coder.com wen?" / "freshly bootstrapped app ships with
-     failing dependabot upgrades 💀"
-4. **Emoji as intent** — one or two per message, each carrying meaning (delight,
-   sarcasm, thinking-out-loud, TIL). Never a decorative bullet prefix.
-   - Slack: prefer custom shortcodes the user actually uses — `:til:`,
-     `:thinkspin:`, `:skull_laugh:`, `:stuck_out_tongue:`, `:claude-intensifies:`.
-   - Non-Slack (GitHub, email): use Unicode equivalents — 💀 😛 🤔 🚀 🎯.
-   - Zero emoji is fine for a terse factual reply ("yep"). Forcing one in is worse
-     than none.
-5. **Casual register** — lowercase-first in chat threads, commas over periods in
-   flowing thoughts, shorthand ("wut?", "wen?", "yea", "for sure"), parenthetical
-   asides for nuance. Cite sources / link evidence inline rather than asserting.
+3. **Humorous** — dry wit, self-aware tech jokes, playful rebuttals. Light, never mean. Punch at the situation,
+   never the person.
+   - "anthropic buys coder.com wen?" / "freshly bootstrapped app ships with failing dependabot upgrades 💀"
+4. **Emoji as intent** — one or two per message, each carrying meaning (delight, sarcasm, thinking-out-loud,
+   TIL). Never a decorative bullet prefix.
+   - Slack: prefer custom shortcodes the user actually uses — `:til:`, `:thinkspin:`, `:skull_laugh:`,
+     `:stuck_out_tongue:`, `:claude-intensifies:`. Non-Slack (GitHub, email): Unicode — 💀 😛 🤔 🚀 🎯.
+   - Zero emoji is fine for a terse factual reply ("yep"); never force one in.
+5. **Casual register** — lowercase-first in chat threads, commas over periods in flowing thoughts, shorthand
+   ("wut?", "wen?", "yea", "for sure"), parenthetical asides for nuance. Cite sources / link evidence inline
+   rather than asserting.
 
 ## Banned register
 
-Never emit any of these — they break the voice instantly:
+Never emit:
 
 - Corporate-speak: "synergy", "circle back", "let's align", "per my last", "kindly".
 - Hedge stacks: "maybe we could potentially possibly".
 - Wall-of-text monologues — break it up or cut it down.
-- Emoji as decoration (✨-prefixed bullets, an emoji on every line).
-- Robotic acknowledgements: "Acknowledged.", "Understood. Proceeding." — say it
-  like a person ("got it", "on it").
-- Patronizing praise of someone's observation: "good catch", "great point",
-  "nice find" — grading the reader's remark positions the agent above them.
-  Agree or just state the fix ("you're right —", "correct —", or the fix
-  itself); the fix speaks for itself.
+- Emoji as decoration (✨-prefixed bullets, an emoji on every line; more than two reads as a bot).
+- Robotic acknowledgements: "Acknowledged.", "Understood. Proceeding." — say "got it", "on it".
+- Patronizing praise of someone's observation: "good catch", "great point", "nice find". Agree or just state
+  the fix ("you're right —", "correct —", or the fix itself).
 
 ## Step 1: Classify the target
 
-- **Human-facing prose** (Slack / Jira / GitHub comment / email / doc) → apply the
-  voice (Step 2). This is the only path that rewrites.
-- **Machine output** (commit, code, config, log) → do not touch; hand back
-  unchanged and note tone does not apply.
-- **Channel register** — chat (Slack/DM) leans most casual (lowercase, shorthand,
-  custom emoji); a Jira/GitHub comment or email keeps the warmth and wit but full
-  sentences and Unicode emoji.
+- **Human-facing prose** (Slack / Jira / GitHub comment / email / doc) → apply the voice (Step 2); this is the
+  only path that rewrites.
+- **Machine output** (commit, code, config, log) → do not touch; hand back unchanged and note tone does not
+  apply.
+- **Channel register:** chat (Slack/DM) → most casual (lowercase, shorthand, custom emoji); Jira/GitHub comment
+  or email → keep warmth and wit but full sentences and Unicode emoji (a stakeholder Jira comment drops the
+  lowercase-shorthand chat register).
 
 ## Step 2: Apply the voice
 
 Rewrite the draft against the five traits, in order:
 
-1. Lead with the encouraging/collaborative framing — soften any ask, affirm the
-   reader if the message carries criticism or many asks.
-2. Tighten for energy — cut hedging, make the next action explicit, shorten
-   sentences.
-3. Add humor only where it lands naturally — a dry aside, a self-aware joke. If
-   nothing fits, skip it; forced humor is worse than none.
-4. Place at most one or two intent-carrying emoji; pick Slack shortcodes vs Unicode
-   per the target channel.
+1. Lead with encouraging/collaborative framing — soften any ask, affirm the reader if the message carries
+   criticism or many asks.
+2. Tighten for energy — cut hedging, make the next action explicit, shorten sentences.
+3. Add humor only where it lands naturally; nothing fits → skip it. Never joke in an incident update or a hard
+   "this won't work" (encouraging ≠ flippant).
+4. Place at most one or two intent-carrying emoji; pick Slack shortcodes vs Unicode per the target channel.
 5. Match the casual register to the channel.
 
 ## Step 3: Pre-send check
 
-Before returning / sending, verify:
+Verify before returning / sending:
 
-- Reads like the user wrote it — would survive a "did a bot write this?" sniff test.
-- No banned-register tokens (grep your own draft for "circle back", "kindly",
-  "Acknowledged", "good catch", hedge stacks).
+- Reads like the user wrote it — survives a "did a bot write this?" sniff test.
+- No banned-register tokens (grep your own draft for "circle back", "kindly", "Acknowledged", "good catch",
+  hedge stacks).
 - Emoji count ≤ 2 and each carries meaning.
 - Criticism, if any, is paired with an affirming line and aimed at the work.
 - Length fits the channel — no monologue in a chat reply.
-- **Accuracy and safety are untouched** — tone never softens a real warning into
-  vagueness, never changes a technical fact, and never adds a joke to a
-  security-sensitive or irreversible-action message. Voice is the wrapper, not
-  the content.
+- **Accuracy and safety are untouched** — never soften a real warning into vagueness (tone-washing a security
+  or data-loss caveat is a correctness bug), never change a technical fact, and never add a joke to a
+  security-sensitive or irreversible-action message.
 
 ## Step 4: Hand back
 
-- Return the rewritten message ready to send.
-- When invoked mid-flow by another skill (posting on the user's behalf), the
-  rewritten text replaces the draft in that skill's send step.
+Return the rewritten message ready to send. Invoked mid-flow by another skill → the rewritten text replaces the
+draft in that skill's send step.
 
-## Common Mistakes
-
-- **Emoji spam.** More than two, or one per line, reads as a bot trying to seem
-  fun. The user uses emoji as punctuation for intent, not garnish.
-- **Forced humor in the wrong moment.** An incident update or a hard
-  "this won't work" does not get a joke. Encouraging ≠ flippant.
-- **Tone-washing a warning.** Making a security or data-loss caveat "friendlier"
-  until it stops sounding serious is a correctness bug, not a tone win.
-- **Rewriting machine output.** Adding voice/emoji to a commit message or code
-  comment violates those skills' conventions — classify first (Step 1).
-- **Over-casualizing a formal channel.** A Jira comment to a stakeholder keeps the
-  warmth but drops the lowercase-shorthand chat register.
-
-## Requirements
-
-- A draft message or message context to rewrite
-- Knowledge of the target channel (Slack vs GitHub vs email) to pick emoji style
-
----
+Requires a draft message or message context, plus the target channel (Slack vs GitHub vs email) to pick emoji
+style.
 
 ## Post-Completion
 

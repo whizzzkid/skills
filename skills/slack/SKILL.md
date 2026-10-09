@@ -25,7 +25,7 @@ license: MIT
 group: communication
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -36,118 +36,45 @@ metadata:
 
 # wk-slack
 
-Post Slack messages in Nishant's voice: emoji-led heading, concise tl;dr,
-structured body, optional CC, warm close. Always Slack mrkdwn — never
-standard Markdown.
+Post Slack messages in Nishant's voice: emoji-led heading, concise tl;dr, structured body, optional CC, warm close.
+Always Slack mrkdwn — never standard Markdown.
 
-## When to Use
-
-- Feature announcement or milestone → public channel
-- Sharing a PR or doc for review
-- Status update or weekly digest
-- Asking for approvals, feedback, or eyes on something
-- Any Slack message where voice and format matter
-
----
+Use for: announcements, PR/doc review requests, status updates/digests, approval asks, any voice-sensitive post.
 
 ## Step 1: Resolve channel and intent
 
-- Identify target channel → if not named, ask.
-- Pick message type:
-  - **announcement** — milestone, launch, or plan going public
-  - **review-request** — eyes on a PR, doc, or spec
-  - **status-update** — progress report or digest
-  - **ask** — specific request for action or approval
-  - **fyi** — informational link or note, no action needed
+- Identify the target channel; if not named, ask.
+- Pick the type: **announcement** (milestone/launch/plan going public), **review-request** (eyes on PR/doc/spec),
+  **status-update** (progress/digest), **ask** (action or approval), **fyi** (link or note, no action).
 - Collect content: links, epic lists, PR numbers, context sentences.
 
----
+## Step 2: Draft from the template
 
-## Step 2: Draft with the message template
-
-Apply template matching the message type:
-
-### Announcement / review-request
-
-```
-:emoji: *Heading — Subtitle or Context*
-
-tl;dr one or two sentence summary of what's happening and why.
-
-:section-emoji: Detail line or paragraph.
-
-1. First item — short description
-2. Second item — short description
-3. ...
-
-:link-emoji: Link label: <url|display text>
-
-Closing ask or CTA — what you need from readers.
-```
-
-### Status update / digest
-
-```
-*Heading*
-
-Pending / done items:
-• Item — <url|link>
-• Item — <url|link>
-    ◦ Sub-item — <url|link>
-
-Closing note (sign-off, next steps, or weekend wish).
-```
-
-### Ask / approval request
-
-```
-Hey <@handle> [or "Folks"],
-
-One-line context — what you need and why.
-
-:link-emoji: <url|label>
-
-Optional: what happens next or deadline.
-```
-
-### FYI link-drop
-
-Short sentence + `<url|display text>`.
-
----
+Apply the template for the type from [references/message-templates.md](references/message-templates.md).
 
 ## Step 3a: Pick the right formatting context
 
-**HARD RULE — Slack has three formatting contexts. Pick the right
-one before writing anything; mixing them silently breaks links and
-structure.**
+**HARD RULE — Slack has three formatting contexts. Pick the right one before writing anything; mixing them silently
+breaks links and structure.**
 
-- **Context A — Slack API / Bot messages (`chat.postMessage`):** Slack
-  mrkdwn. Links `<url|label>`; bold `*text*`; italic `_text_`; bullets
-  `-` at line start, 4-space indent for nesting. Never use HTML tags —
-  they post as literal text.
-- **Context B — Plain text typed/pasted into compose box:** bare URLs
-  auto-linkify; mrkdwn `*bold*` and `_italic_` render. `<url|label>`
-  does **not** render — appears as literal angle brackets. Use bare
-  URLs when no label available; else use Context C for clickable labels.
-- **Context C — Copy-to-clipboard from a web dashboard into compose
-  box:** write `text/html` to clipboard via `ClipboardItem` with real
-  `<a href>` tags and nested `<ul><li>` structure → Slack desktop
-  respects the HTML MIME type on paste, renders clickable labels with
-  preserved indentation. `textContent`-only copies strip every link.
-  Fall back to `navigator.clipboard.writeText(el.innerText)` when
-  `ClipboardItem` is unavailable (older browsers, insecure context) —
-  labels degrade to plain text but the copy still works.
+- **Context A — Slack API / Bot messages (`chat.postMessage`):** mrkdwn: links `<url|label>`, bold `*text*`, italic
+  `_text_`, bullets `-` at line start, 4-space indent for nesting. Never use HTML tags — they post as literal text.
+- **Context B — plain text typed/pasted into the compose box:** bare URLs auto-linkify; `*bold*` and `_italic_` render;
+  `<url|label>` does **not** render (literal angle brackets). Use bare URLs when no label is available; else use
+  Context C for clickable labels.
+- **Context C — copy-to-clipboard from a web dashboard into the compose box:** write `text/html` via `ClipboardItem`
+  with real `<a href>` tags and nested `<ul><li>` — Slack desktop honors the HTML MIME type and keeps labels and
+  indentation. `textContent`-only copies strip every link. Fall back to `navigator.clipboard.writeText(el.innerText)`
+  when `ClipboardItem` is unavailable (older browsers, insecure context): labels degrade to plain text, copy still
+  works.
 
-Default Context C for a dashboard copy button. Context A only when
-posting via the Slack API. Context B only for ad-hoc plaintext drops.
-
----
+Default to Context C for a dashboard copy button, Context A only when posting via the Slack API, Context B only for
+ad-hoc plaintext drops.
 
 ## Step 3: Apply formatting rules (mrkdwn — not Markdown)
 
-**HARD RULE — never use standard Markdown in Slack messages.** Slack
-renders its own `mrkdwn` dialect; `**bold**` appears as literal asterisks.
+**HARD RULE — never use standard Markdown in Slack messages.** Slack renders `mrkdwn`; `**bold**` shows literal
+asterisks.
 
 | Element | Slack mrkdwn | Never use |
 |---------|-------------|-----------|
@@ -163,93 +90,49 @@ renders its own `mrkdwn` dialect; `**bold**` appears as literal asterisks.
 | Emoji | `:name:` | Unicode directly for custom emojis |
 | Flow arrow | `→` | `->` |
 
-Convert before sending: `**...**` → `*...*`, `~~...~~` → `~...~`,
-`[label](url)` → `<url|label>`.
+Convert before sending: `**...**` → `*...*`, `~~...~~` → `~...~`, `[label](url)` → `<url|label>`.
 
----
+## Step 4: Voice and style
 
-## Step 4: Voice and style rules
+- Pick a topical heading emoji (`:eyes:` review, `:mega:` milestone, `:dart:` goal, `:page_facing_up:` doc, `:git:`
+  code, `:tada:` launch); announcements always get one.
+- Separate noun from context with an em-dash in headings: `*Fresh Eyes Q1 FY27 — Vision doc is up for review*`.
+- Write the tl;dr conversationally ("We've been heads-down turning async discussions into a structured plan"), not
+  corporately ("This document summarizes Q1 FY27 objectives.").
+- Number ordered items (epics, stack PRs, rollout steps); bullet unordered ones; nest sub-bullets as `    ◦ ` for
+  stacked PRs or multi-part items, never nested `-`.
+- Close with an invitation ("Would love eyes on sequencing and the open questions"), not a demand ("Please review by
+  EOD").
+- Add a warm sign-off only when ending a week or heading OOO ("Have a good weekend folks" / "I'll be away Monday").
+- Keep excitement genuine and brief ("Exciting things are coming!!!"); no excessive hype.
+- Open direct asks with "Hey Folks": one crisp sentence, link, done.
+- Never over-tag: CC only people whose attention is genuinely required; one or two `<@handle>` is normal, five is noise.
+- No signature block, no "Thanks, Nishant": the Slack profile is the signature.
 
-Derived from real messages posted by the user:
+## Step 5: Pick the send mechanism
 
-- **Heading emoji is topical** — match the subject (`:eyes:` review,
-  `:mega:` milestone, `:dart:` goal, `:page_facing_up:` doc, `:git:`
-  code, `:tada:` launch).
-- **Em-dash `—` in headings** separates noun from context:
-  `*Fresh Eyes Q1 FY27 — Vision doc is up for review*`.
-- **tl;dr conversational, not corporate** — "We've been heads-down
-  turning async discussions into a structured plan", not "This document
-  summarizes Q1 FY27 objectives."
-- **Numbered lists for ordered/sequential** — epics, stack PRs, rollout steps.
-- **Bullets for unordered** — pending reviews, options, links.
-- **Nested sub-bullets** for stacked PRs or multi-part items.
-- **Closing CTA is an invitation, not a demand** — "Would love eyes on
-  sequencing and the open questions", not "Please review by EOD."
-- **Warm sign-off when ending a week or heading OOO** — "Have a good
-  weekend folks" / "I'll be away Monday".
-- **Excitement genuine and brief** — "Exciting things are coming!!!"
-  works; excessive hype does not.
-- **Direct asks use "Hey Folks"** — informal opener, one crisp sentence,
-  link, done.
-- **Never over-tag** — CC only people whose attention is genuinely
-  required. One or two `<@handle>` is normal; a list of five is noise.
-- **No signature block / no "Thanks, Nishant"** — the Slack profile is
-  the signature.
+Take the first that applies: 1) channel ID unknown → `slack_search_channels` first; 2) user should review first →
+`slack_send_message_draft`, show it, wait for approval; 3) thread reply → `slack_send_message` with `thread_ts`;
+4) ready now → `slack_send_message`.
 
----
-
-## Step 5: Pick the right send mechanism
-
-| Situation | Tool |
-|-----------|------|
-| Ready to post now | `slack_send_message` |
-| Want user to review first | `slack_send_message_draft` — show the draft, wait for approval |
-| Unsure of channel ID | `slack_search_channels` first |
-| Replying to a thread | `slack_send_message` with `thread_ts` |
-
-**HARD RULE — always show the composed message to the user before posting,
-unless they have explicitly asked for a fire-and-forget post.** Slack messages
-are hard to retract; approval is cheap.
-
----
+**HARD RULE — always show the composed message to the user before posting, unless they have explicitly asked for a
+fire-and-forget post.** Slack messages are hard to retract; approval is cheap.
 
 ## Step 6: Post and confirm
 
-After sending, confirm:
-- Channel name
-- Permalink or message ts
-- Top-level message or thread reply
-
----
+Report channel name, permalink or message ts, and whether it is top-level or a thread reply.
 
 ## Standup Snippet
 
-See [references/standup-snippet-spec.md](references/standup-snippet-spec.md)
-for the full standup structure (Context C HTML), privacy filter, and caller
-contract. Every rule there is a HARD RULE. Callers must not re-implement the
+See [references/standup-snippet-spec.md](references/standup-snippet-spec.md) for the full standup structure (Context C
+HTML), privacy filter, and caller contract. Every rule there is a HARD RULE. Callers must not re-implement the
 structure, link format, or privacy filter inline — invoke the spec instead.
-
----
-
-## Common Mistakes
-
-- Using `**bold**` — renders as literal `**`. Always `*bold*`.
-- Using `[label](url)` — renders as literal brackets. Always `<url|label>`.
-- Posting without showing draft — ask before sending to public channels.
-- Over-tagging — tag only who genuinely needs the ping.
-- No emoji in heading for announcements — pick a topical one, it aids scannability.
-- Using nested `-` for sub-bullets — use `    ◦ ` (4-space indent + ◦).
-- Writing a formal "Thanks" sign-off — Slack is informal; end with the ask or a warm note.
-
----
 
 ## Requirements
 
-- Slack MCP connector (`mcp__claude_ai_Slack_*`)
-- Channel ID, or channel name → resolve to ID via `slack_search_channels`
-- User handle (from `slack_read_user_profile` if only a name is given)
-
----
+- Slack MCP connector (`mcp__claude_ai_Slack_*`).
+- Channel ID, or channel name resolved via `slack_search_channels`.
+- User handle (via `slack_read_user_profile` if only a name is given).
 
 ## Post-Completion
 

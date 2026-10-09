@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -29,16 +29,13 @@ metadata:
 
 # GitHub Organization Scope
 
-Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization. Activates before any `gh`
-command or GitHub PR, issue, or notification interaction.
+Scope every `gh` CLI and GitHub interaction to the user's organization; activate before any `gh` command or GitHub
+PR, issue, or notification interaction.
 
-**HARD RULE — no size or surface exemption.** Every `gh` write
-fires this skill: `gh pr create`, `gh pr edit`, `gh pr comment`,
-`gh issue comment`, `gh api` POST/PATCH/DELETE, `gh pr review`,
-reply posts, thread resolutions. "It's just a comment" / "it's
-one-line" / "the user asked for it inline" are not bypass criteria.
-Read-only `gh` calls (`view`, `diff`, `search`, `api` GET) still
-honor Step 1–2 scoping but skip Step 4 (no body to footer).
+**HARD RULE — no size or surface exemption.** Every `gh` write fires this skill: `gh pr create`, `gh pr edit`,
+`gh pr comment`, `gh issue comment`, `gh api` POST/PATCH/DELETE, `gh pr review`, reply posts, thread resolutions.
+"It's just a comment" / "it's one-line" / "the user asked for it inline" are not bypass criteria. Read-only `gh` calls
+(`view`, `diff`, `search`, `api` GET) still honor Step 1–2 scoping but skip Step 4 (no body to footer).
 
 ## Step 0: Select stored vs environment credentials
 
@@ -69,11 +66,6 @@ Run `echo "${GITHUB_ORG:?}"` before any `gh` command.
 
 ## Step 2: Scope All Commands
 
-Once `$GITHUB_ORG` is confirmed, apply the org filter to every `gh`
-command:
-
-### Search commands
-
 Add `--owner=$GITHUB_ORG` to all `gh search` commands:
 
 ```bash
@@ -85,17 +77,13 @@ gh search prs --owner="$GITHUB_ORG" --author=@me --state=open ...
 gh search issues --owner="$GITHUB_ORG" --assignee=@me --state=open ...
 ```
 
-### Notifications
-
 Filter notifications to the org:
 
 ```bash
 gh api notifications --jq ".[] | select(.repository.owner.login == \"$GITHUB_ORG\") | ..."
 ```
 
-### Issue/PR creation
-
-No special filtering needed — warn if current repo not in `$GITHUB_ORG`:
+Issue/PR creation needs no filter — warn if the current repo is not in `$GITHUB_ORG`:
 
 ```bash
 CURRENT_ORG=$(gh repo view --json owner --jq '.owner.login')
@@ -106,83 +94,57 @@ fi
 
 ## Exceptions
 
-The org scope is **not applied** when:
+Do not apply the org scope when:
 
-- The user explicitly names a different org or repo (e.g., "check PRs on `other-org/repo`")
-- The user says "all orgs", "everywhere", or "across all repos"
-- The command targets the current repo specifically (e.g., `gh pr view`)
+- The user explicitly names a different org or repo (e.g., "check PRs on `other-org/repo`").
+- The user says "all orgs", "everywhere", or "across all repos".
+- The command targets the current repo specifically (e.g., `gh pr view`).
 - `gh pr view --repo` requires a positional PR: pass `<number-or-url>` before `--repo` for `--web`; omit `--repo`
   when relying on current-branch inference.
 
-### Variable-dependent jq projections
-
-- `gh --jq` accepts one expression and no standalone `jq` flags (`--arg`, `--argjson`).
-- Constant projection → keep `gh --jq`:
-
-  ```bash
-  gh pr view --json headRefOid --jq '.headRefOid'
-  ```
-
-- Projection needs shell values → pipe raw `--json` to standalone `jq`:
-
-  ```bash
-  gh pr view --json headRefOid \
-    | jq --arg expected "$expected_sha" 'select(.headRefOid == $expected)'
-  ```
-
-- Quote complete `gh api` endpoints containing shell metacharacters (`?`, `&`, `*`) → prevent zsh globbing.
+Projections needing shell values (`gh --jq` takes no `--arg`) and endpoint quoting:
+[`references/jq-projections.md`](references/jq-projections.md).
 
 ## Stack topology vs live pull-request state
 
-- Treat `gh stack view --json` as topology and membership data; its
-  `branches[].head` comes from persisted local stack state and can lag the remote
-  pull-request head.
-- Resolve each pull request’s live `headRefOid` with
-  `gh pr view <number> --json headRefOid` immediately before CI or merge gates;
-  never substitute `branches[].head`.
+- Treat `gh stack view --json` as topology and membership data; its `branches[].head` comes from persisted local stack
+  state and can lag the remote pull-request head.
+- Resolve each pull request’s live `headRefOid` with `gh pr view <number> --json headRefOid` immediately before CI or
+  merge gates; never substitute `branches[].head`.
 
 ## Step 3: Canonical surface for GitHub writes
 
-All GitHub write operations (PR create/edit, review comments, inline replies,
-issue comments, thread state changes) route through this skill. Build JSON bodies
-with `jq -n`, never heredocs. Check for pending reviews before GraphQL replies.
-Resolve repo names from the API, not URLs. Use the reactions API for emoji responses.
-
-Full API surface rules, endpoint gotchas, and pending-review guards:
-[`references/github-api-surfaces.md`](references/github-api-surfaces.md).
+Route all GitHub write operations (PR create/edit, review comments, inline replies, issue comments, thread state
+changes) through this skill. Build JSON bodies with `jq -n`, never heredocs. Check for pending reviews before GraphQL
+replies. Resolve repo names from the API, not URLs. Use the reactions API for emoji responses. Full API surface rules,
+endpoint gotchas, and pending-review guards: [`references/github-api-surfaces.md`](references/github-api-surfaces.md).
 
 ## Step 4: Outbound message footer
 
-**HARD RULE:** Every agent-authored outbound body (GitHub, Jira, Slack, docs)
-must end with the canonical footer verbatim. Paste the literal block at render
-time — never hand-write or paraphrase. The commit-message footer is a DIFFERENT
-string; never ship it on an outbound body.
+**HARD RULE:** Every agent-authored outbound body (GitHub, Jira, Slack, docs) must end with the canonical footer
+verbatim. Paste the literal block at render time — never hand-write or paraphrase. The commit-message footer is a
+DIFFERENT string; never ship it on an outbound body.
 
 ```
 ---
 <sup>Generated using [wk-skills](https://github.com/whizzzkid/skills/tree/main@%7B<UTC>%7D) and multiple agents/models. DM me your feedback.</sup>
 ```
 
-Pin `<UTC>` to render-time (`date -u +%Y-%m-%dT%H:%M:%SZ`). Run the pre-emit
-gate on every body before posting. Full placement rules, scope, pre-emit gate
-bash, and exceptions: [`references/footer-gate-details.md`](references/footer-gate-details.md).
+Pin `<UTC>` to render-time (`date -u +%Y-%m-%dT%H:%M:%SZ`). Run the pre-emit gate on every body before posting. Full
+placement rules, scope, pre-emit gate bash, and exceptions:
+[`references/footer-gate-details.md`](references/footer-gate-details.md).
 
 ## CI Status and Merge Readiness
 
-`statusCheckRollup` is a heterogeneous union — inspect both `.status`/`.conclusion`
-(CheckRun) and `.state` (Status). `gh pr checks --watch` is not proof of green;
-re-query the full rollup after exit. `BLOCKED` with green checks → compare
-ruleset `required_status_checks` against rollup names.
-
-Full rollup union rules, superseded-run handling, `--json` schema differences,
-BLOCKED diagnosis, and workflow-run gate:
+`statusCheckRollup` is a heterogeneous union — inspect both `.status`/`.conclusion` (CheckRun) and `.state` (Status).
+`gh pr checks --watch` is not proof of green; re-query the full rollup after exit. `BLOCKED` with green checks →
+compare ruleset `required_status_checks` against rollup names. Full rollup union rules, superseded-run handling,
+`--json` schema differences, BLOCKED diagnosis, and workflow-run gate:
 [`references/status-check-rollup.md`](references/status-check-rollup.md).
 
 ## Canonical download path
 
 [`references/canonical-download-path.md`](references/canonical-download-path.md).
-
----
 
 ## Post-Completion
 

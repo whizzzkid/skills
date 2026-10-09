@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -33,32 +33,21 @@ metadata:
 
 # Workstyle
 
-Code-quality orchestrator for every code write or edit. Detects the project's
-style authority once, then routes to the focused `wk-workstyle-*` sub-skills
-that carry the actual rule sets. Project settings are authoritative — this
-family fills gaps only, never overrides.
+Detect the project's style authority once, then route to the `wk-workstyle-*`
+sub-skills that carry the rules. Project settings are authoritative: fill gaps
+only, never override. Sub-skills also fire independently on adjacent work
+(`.py` edit → `wk-workstyle-python`); this orchestrator is the full pre-commit
+pass.
 
-Each sub-skill is **independently model-invocable** on adjacent work: editing a
-`.py` file auto-fires `wk-workstyle-python`, writing an async block auto-fires
-`wk-workstyle-async`, and so on. This orchestrator is the entry point for a
-full pre-commit pass that runs Step 0 once and fans out to every sub-skill the
-diff touches.
-
-**Invocation modes:**
-
-| Mode | Trigger |
-|------|---------|
-| Auto | Before any `wk-commit` on a code-change diff; after any Edit/Write to a source file |
-| `wk-adversarial-review` | Step 2 mechanical sweeps include a workstyle pass |
-| Manual | `/wk-workstyle scan` — full repo scan; `/wk-workstyle check <path>` — single file, report only |
-
----
+Invocation: auto before any `wk-commit` on a code-change diff and after any
+Edit/Write to a source file; from `wk-adversarial-review` Step 2 mechanical
+sweeps; manual `/wk-workstyle scan` (full repo) or `/wk-workstyle check <path>`
+(single file, report only).
 
 ## Step 0: Detect project style authority
 
-Probe for existing style enforcement. Run once per session; cache
-the result. **Every `wk-workstyle-*` sub-skill defers to whatever this
-probe finds** — they reference this step rather than re-running it.
+Run once per session; cache the result. Every `wk-workstyle-*` sub-skill defers
+to this probe rather than re-running it.
 
 ```bash
 # Detect style configs without shell glob expansion.
@@ -74,19 +63,15 @@ find . ! -name . -prune -type f -print |
   done
 ```
 
-- If a config governs a rule, **that config wins**. Do not emit a
-  finding that contradicts an active config.
-- If no config governs a rule, apply the workstyle default.
+- Config governs a rule: that config wins; never emit a finding that contradicts it.
+  No config: apply the workstyle default.
 - Never emit a finding that would require adding `// eslint-disable`,
   `# rubocop:disable`, or equivalent to pass — escalate to user.
 
----
-
 ## Step 1: Route to sub-skills
 
-Determine which rule sets apply from the change type and the touched
-file extensions, then invoke the matching sub-skills. The sub-skills
-carry the rules; this orchestrator only dispatches and aggregates.
+Invoke one language sub-skill plus every universal sub-skill whose change type
+the diff matches; dispatch and aggregate only.
 
 ### Universal rule sets (by change type)
 
@@ -113,52 +98,31 @@ carry the rules; this orchestrator only dispatches and aggregates.
 | `.rs` | `wk-workstyle-rust` |
 | `.sh` + shell bin scripts | `wk-workstyle-shell` |
 
-A typical code change invokes one language sub-skill plus every
-universal sub-skill whose change type the diff matches. When the agent
-is already mid-edit on an adjacent concern (e.g. writing an async
-block), that sub-skill fires on its own — this full pass is the
-belt-and-suspenders sweep before commit.
-
----
-
 ## Step 2: Apply or report
 
-Each sub-skill classifies its own findings; aggregate them here:
+Aggregate each sub-skill's classified findings:
 
-- **Auto-fixable** (rename, add constant, wrap line, add missing
-  import sort, add doc stub) → apply silently and note in the
-  commit message.
-- **Requires judgment** (restructure nested ternary, add test,
-  extract function) → surface as a suggestion before committing.
-  Present: what the finding is, where, and a concrete fix sketch.
-- **Conflicts with project config** → suppress the finding; never
-  fight the linter.
+- **Auto-fixable** (rename, add constant, wrap line, import sort, doc stub): apply
+  silently; note in the commit message.
+- **Requires judgment** (restructure nested ternary, add test, extract function):
+  surface before committing with the finding, location, and a concrete fix sketch.
+- **Conflicts with project config**: suppress; never fight the linter.
 
-After the pass, summarize:
-
-> "Workstyle pass: {n} auto-fixed, {m} suggestions, {p} suppressed
-> (project config). Sub-skills run: {list}. Changed files: {list}."
-
----
+Summarize: "Workstyle pass: {n} auto-fixed, {m} suggestions, {p} suppressed
+(project config). Sub-skills run: {list}. Changed files: {list}."
 
 ## Hard Rules
 
-1. **Never override project settings.** If `.editorconfig` says
-   4-space indent, use 4 spaces. If `rubocop.yml` sets 100-col
-   width, use 100. Project config always wins.
-2. **Do not emit a finding that would require disabling a linter
-   rule** to pass. Escalate to user instead.
-3. **Coverage reminder is non-skippable.** For any non-trivial
-   code addition without a corresponding test, note it. Do not
-   silently skip. (Enforced by `wk-workstyle-testing`.)
-4. **Stale comment removal is mandatory.** When editing code,
-   update or delete adjacent comments that no longer match.
-   (Enforced by `wk-workstyle-docs`.)
-5. **Sub-skills do not re-run Step 0.** The project-style-authority
-   probe lives here and is the single source of truth all sub-skills
-   defer to.
-
----
+1. **Never override project settings.** `.editorconfig` says 4-space indent → use
+   4 spaces; `rubocop.yml` sets 100-col width → use 100. Project config always wins.
+2. **Do not emit a finding that would require disabling a linter rule** to pass.
+   Escalate to user instead.
+3. **Coverage reminder is non-skippable.** Note any non-trivial code addition
+   without a corresponding test; never silently skip. (Enforced by `wk-workstyle-testing`.)
+4. **Stale comment removal is mandatory.** When editing code, update or delete
+   adjacent comments that no longer match. (Enforced by `wk-workstyle-docs`.)
+5. **Sub-skills do not re-run Step 0.** The probe here is the single source of
+   truth all sub-skills defer to.
 
 ## Post-Completion
 

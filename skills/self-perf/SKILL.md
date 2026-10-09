@@ -23,7 +23,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.09-184159"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -35,21 +35,10 @@ metadata:
 
 # Self-Performance Review
 
-Pull data from all connected work systems in parallel → distill accomplishments,
-impact signals, leadership evidence → narrative ready for QPR submission.
-
-```
-Parse period ──► Parallel data fetch (7 agents) ──► Synthesize ──► Draft narrative
-     │                                                    │
-     └── day|week|month|quarter|half|annual               └── QPR/<period>/references/*.md
-                                                              QPR/<period>/synthesis.md
-```
-
----
+Pull data from all connected work systems in parallel, distill accomplishments, impact signals, and leadership evidence,
+and draft a narrative ready for QPR submission: `QPR/<period>/references/*.md` + `QPR/<period>/synthesis.md`.
 
 ## Stage 0: Parse Period and Set Date Range
-
-### Parse the period argument
 
 Map the period argument to a start/end date range:
 
@@ -63,13 +52,9 @@ Map the period argument to a start/end date range:
 | `annual` | Feb 1 of current FY | Jan 31 of next FY |
 | `YYYY-MM-DD:YYYY-MM-DD` | Custom start | Custom end |
 
-**$EMPLOYER FY quarters** (Feb–Jan fiscal year, adjust per `$EMPLOYER_FY_START` if set):
-- Q1: Feb 1 – Apr 30
-- Q2: May 1 – Jul 31
-- Q3: Aug 1 – Oct 31
-- Q4: Nov 1 – Jan 31
-
-**Buffer:** Add 2 days before and after the period for context.
+- **$EMPLOYER FY quarters** (Feb–Jan fiscal year, adjust per `$EMPLOYER_FY_START` if set): Q1 Feb 1 – Apr 30; Q2 May 1 –
+  Jul 31; Q3 Aug 1 – Oct 31; Q4 Nov 1 – Jan 31.
+- **Buffer:** add 2 days before and after the period for context.
 
 ```bash
 # Example for Q1 FY2026
@@ -79,7 +64,7 @@ DISPLAY_PERIOD="Q1 FY2026"
 PERIOD_SLUG="Q1"  # for folder naming
 ```
 
-### Determine output paths
+Set output paths:
 
 ```bash
 QPR_DIR="$PWD/QPR/${PERIOD_SLUG}"
@@ -88,33 +73,19 @@ SYNTHESIS_FILE="$QPR_DIR/synthesis.md"
 mkdir -p "$REFS_DIR"
 ```
 
-### Check for existing corpus
-
-If `$SYNTHESIS_FILE` exists, prompt:
-
-> "A QPR corpus already exists for `${PERIOD_SLUG}` (synthesis.md found).
->
-> **(a)** Open existing synthesis — no regeneration
-> **(b)** Re-gather from scratch — overwrites all reference files and synthesis
-> **(c)** Supplement — run only missing or stale reference files, then re-synthesize
->
-> Reply with your choice."
-
-Auto mode → default **(c)** (supplement is safe and additive).
-
----
+If `$SYNTHESIS_FILE` exists, prompt "A QPR corpus already exists for `${PERIOD_SLUG}` (synthesis.md found)." with
+choices **(a)** Open existing synthesis — no regeneration; **(b)** Re-gather from scratch — overwrites all reference
+files and synthesis; **(c)** Supplement — run only missing or stale reference files, then re-synthesize. Auto mode →
+default **(c)** (supplement is safe and additive).
 
 ## Stage 1: Parallel Data Gathering
 
-- Launch **7 agents in parallel**.
-- Each writes its output to a file in `$REFS_DIR/`.
-- Include the period context in every prompt.
+Launch **7 agents in parallel**; each writes its output to a file in `$REFS_DIR/`; include the period context in every
+prompt.
 
-### Subagent contract (mandatory)
-
-> See [`wk-sitrep`](../sitrep/SKILL.md#stage-2-parallel-data-gathering)
-> for the base contract. Prepend verbatim to every agent prompt, then append these
-> self-perf-specific additions:
+**Subagent contract (mandatory):** prepend the base contract from
+[`wk-sitrep`](../sitrep/references/subagent-contract.md) verbatim to every agent prompt, then append these
+self-perf-specific additions:
 
 ```
 SUBAGENT CONTRACT ADDITIONS (self-perf):
@@ -125,10 +96,6 @@ SUBAGENT CONTRACT ADDITIONS (self-perf):
 ```
 
 The base contract's source-identifier and verified/claim tagging rules apply here too.
-
----
-
-### Agent Summary
 
 | # | Agent | Output file | Sources |
 |---|-------|-------------|---------|
@@ -143,82 +110,53 @@ The base contract's source-identifier and verified/claim tagging rules apply her
 Full agent prompts with queries, structure requirements, and MCP tool references:
 [`references/agent-prompts.md`](references/agent-prompts.md).
 
----
-
 ## Stage 2: Synthesize into Narrative
 
-After all 7 agents complete → read every reference file → synthesize into `$SYNTHESIS_FILE`.
-
-Write `$SYNTHESIS_FILE` using the synthesis template — includes evidence-integrity
-checks, revision boundaries, the full markdown structure, impact language guide,
-and level-expectation calibration:
-[`references/synthesis-template.md`](references/synthesis-template.md).
-
----
+After all 7 agents complete, read every reference file and write `$SYNTHESIS_FILE` using the synthesis template
+(evidence-integrity checks, revision boundaries, full markdown structure, impact language guide, level-expectation
+calibration): [`references/synthesis-template.md`](references/synthesis-template.md).
 
 ## Stage 3: Write Output Files
 
-### 3a. Commit reference files
+1. After all agents write their output files, commit the reference files:
 
-After all agents write their output files:
+   ```bash
+   git add QPR/
+   git commit -m "feat(QPR): add ${PERIOD_SLUG} performance reference corpus"
+   ```
 
-```bash
-git add QPR/
-git commit -m "feat(QPR): add ${PERIOD_SLUG} performance reference corpus"
-```
+2. Write the synthesized narrative to `$SYNTHESIS_FILE`, then commit:
 
-### 3b. Write synthesis
+   ```bash
+   git add "$SYNTHESIS_FILE"
+   git commit -m "feat(QPR): add ${PERIOD_SLUG} self-performance synthesis"
+   git push
+   ```
 
-Write the synthesized narrative to `$SYNTHESIS_FILE`, then commit:
+3. Open the synthesis, then announce:
 
-```bash
-git add "$SYNTHESIS_FILE"
-git commit -m "feat(QPR): add ${PERIOD_SLUG} self-performance synthesis"
-git push
-```
+   ```bash
+   open "$SYNTHESIS_FILE"
+   ```
 
-### 3c. Open synthesis
-
-```bash
-open "$SYNTHESIS_FILE"
-```
-
-Announce:
-
-> "Your `${PERIOD_SLUG}` self-performance corpus is ready:
-> - `QPR/${PERIOD_SLUG}/references/` — {N} source files with raw evidence
-> - `QPR/${PERIOD_SLUG}/synthesis.md` — narrative draft ready for QPR submission
->
-> Top accomplishments surfaced:
-> 1. {accomplishment 1}
-> 2. {accomplishment 2}
-> 3. {accomplishment 3}
->
-> The 'Quarter Narrative' section has suggested self-review language you can
-> paste directly."
-
----
+   Announcement: corpus ready for `${PERIOD_SLUG}`; `QPR/${PERIOD_SLUG}/references/` — {N} source files with raw
+   evidence; `QPR/${PERIOD_SLUG}/synthesis.md` — narrative draft ready for QPR submission; the top 3 accomplishments
+   surfaced; the 'Quarter Narrative' section has suggested self-review language to paste directly.
 
 ## Stage 4: Distill Learnings into Daily Sitreps
 
-After synthesis, evaluate whether meaningful patterns from this period belong in the daily sitrep:
+After synthesis, route meaningful patterns from this period into the daily sitrep: a recurring impact signal worth
+tracking daily → sitrep end brag/snapshot section; a type of work worth preparing for in the morning → wk-sitrep start
+context section; a metric that should be monitored → DX section of sitrep end.
 
-| Pattern | Add to |
-|---------|--------|
-| A recurring impact signal worth tracking daily | sitrep end brag/snapshot section |
-| A type of work worth preparing for in the morning | wk-sitrep start context section |
-| A metric that should be monitored | DX section of sitrep end |
-
-**QPR brag log:** Append notable accomplishments to the QPR running log:
+**QPR brag log:** append notable accomplishments to the QPR running log:
 
 ```bash
 QPR_LOG="$PWD/QPR/brag-log.md"
 # Append this period's highlights with date range
 ```
 
-This log accumulates across quarters so the next QPR has a richer corpus.
-
----
+The log accumulates across quarters so the next QPR has a richer corpus.
 
 ## Post-Completion
 
