@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.13-185720"
+  version: "2026.10.09-005632"
   internal: false
   model:
     claude: claude-opus-4-7
@@ -36,271 +36,113 @@ metadata:
 
 # Architecture Review
 
-Act as distinguished engineer / principal architect. Critically evaluate
-architecture docs, specs, implementation plans, delivery estimates. Produce a
-falsifiable findings report — SPOFs, unhappy paths, hidden assumptions, scaling
-cliffs — and on request an interactive HTML playground of the design and its
-failure modes.
+Distinguished-engineer-level critique of architecture docs, specs, plans,
+estimates. Produces falsifiable findings — SPOFs, unhappy paths, hidden
+assumptions, scaling cliffs — plus optional interactive HTML playground.
 
 ## Operating Stance
 
-- **Critique, don't summarise** — reader has the doc; output findings, not paraphrase.
-- **Every finding falsifiable** — state failure mode, when it fires, customer-visible impact. No vague "consider X."
-- **Specific and actionable** — name the pattern/tech/change. "Do X because Y," not "you might look at X."
-- **Earn trust with balance** — one short section acknowledges sound choices; the rest is problems.
-- **Severity-rate everything** — 🔴 Critical · 🟠 High · 🟡 Medium · 🟢 Low · ℹ️ Info.
-- **Quantify when you can** — "~200ms p99 per hop × 4 hops = 800ms" beats "may be slow."
+- Critique, don't summarise — output findings, not paraphrase.
+- Every finding: failure mode + when it fires + customer impact. No "consider X."
+- Severity-rate everything: 🔴 Critical · 🟠 High · 🟡 Medium · 🟢 Low · ℹ️ Info.
+- Quantify when possible. One section acknowledges sound choices; the rest is problems.
 
 ## Non-Negotiable Contract
 
-1. **Mandatory trigger — an arch-bearing artifact always gets a review.** Fires on the artifact, never on the caller's judgement: any spec, ADR, RFC, design doc, HLD/LLD, tech-spec, implementation plan, or delivery estimate — **authored or reviewed** — plus any change to system topology (new service, datastore, queue/cache, hot-path external dependency, IaC, deploy/runtime shape), trust boundary, auth flow, public API/contract, or a migration reshaping data ownership or consistency. Detect mechanically:
-
-   ```bash
-   git diff --name-only "$BASE...HEAD" \
-     | grep -qiE 'docs/(specs?|adr|arch|design|rfc|plans?)/|architecture|design|spec|rfc|adr|hld|lld|tech-spec' \
-     && echo "ARCH-REVIEW REQUIRED"
-   ```
-
-   - No docs-only exemption, and **authoring counts** — a doc this session wrote is reviewed before it is presented for approval, not only when someone else reviews the PR.
-2. **One dispatch per artifact version.** The owner is the first gate at which the artifact is complete: the authoring skill at draft-complete for a doc it wrote, the completion gate (post-ready, pre-merge) for a PR. Record the verdict at `.review-playground/.arch-cleared-{SHA}.json`. Every other caller reads that record; a missing record at a non-owner caller means the artifact has not reached its gate yet — route it there, never dispatch a second run.
-3. **Re-review only on artifact change.** Doc and topology unchanged since the recorded verdict → print the record. Changed → ONE re-review scoped to the delta.
-4. **Only this skill satisfies the gate.** A general-purpose subagent running an arch-shaped prompt skips the Eight Lenses, the empirical pass, and the findings contract — it is a valid addition, never a replacement.
+1. **Mandatory trigger** on any arch-bearing artifact (spec, ADR, RFC, design doc,
+   HLD/LLD, plan, topology change, trust boundary, public API, migration).
+   Authoring counts. Detect: `git diff --name-only "$BASE...HEAD" | grep -qiE
+   'docs/(specs?|adr|arch|design|rfc|plans?)/|architecture|design|spec|rfc|adr'`.
+2. **One dispatch per artifact version.** Record at `.review-playground/.arch-cleared-{SHA}.json`;
+   all other callers read the record.
+3. **Re-review only on change.** Unchanged → print record. Changed → one delta-scoped re-review.
+4. **Only this skill satisfies the gate** — general subagents skip the Eight Lenses.
 
 ## Step 1: Resolve the Input
 
-Determine mode from argument + intent:
+- **REVIEW** (default): local file → `Read`; URL → `WebFetch`; directory → scan for
+  `arch|design|spec|rfc|adr|plan|hld|lld` files; nothing → ask once.
+- **WRITE**: argument starts with `write` → skip to Step 2, author in Step 4's shape.
+- **PLAYGROUND**: reuse last review's findings, jump to Step 5.
 
-- **REVIEW** (default) — path, URL, or pasted document.
-  - Local file → `Read` it.
-  - URL → `WebFetch` it.
-  - Directory → scan for design docs, then read matches:
-
-    ```bash
-    find "<dir>" -type f \( -iname '*.md' -o -iname '*.txt' -o -iname '*.rst' \) \
-      | grep -iE 'arch|design|spec|rfc|adr|plan|hld|lld' 2>/dev/null
-    ```
-
-  - Nothing provided → ask user once for the document or a description.
-- **WRITE** — argument starts with `write` (e.g. `write a payments service arch`).
-  Skip extraction; go to Step 2 for requirements, then author in Step 4's
-  document shape instead of a findings report.
-- **PLAYGROUND** — argument is `playground` → reuse last review's findings, jump to Step 5.
-
-Extract (REVIEW) or elicit (WRITE):
-
-- System name and purpose
-- Components / services / layers and their responsibilities
-- Data flows, state ownership, consistency model
-- Scalability and availability claims
-- Named tech choices (datastores, queues, runtimes, providers)
-- Anything marked "out of scope" / "future work" — review it anyway
-- Stated SLAs, SLOs, error budgets, performance budgets
+Extract: system name, components, data flows, consistency model, tech choices,
+SLAs/SLOs, "out of scope" items (review those anyway).
 
 ## Step 2: Gather Context
 
-Extract from the document first. Ask user **only** for what is genuinely absent
-and material — never re-ask what the text already answers:
+Extract from doc first; ask only for genuinely absent material:
+scale (RPS, data volume, regions), top-3 quality attributes, deployment env,
+hard constraints (regulatory, budget, team), timeline.
 
-1. **Scale** — users, RPS/QPS, data volume, growth rate, regions.
-2. **Top-3 quality attributes** — rank from {availability, latency, throughput,
-   cost, security, consistency, maintainability}. Judge trade-offs against this ranking.
-3. **Deployment environment** — cloud provider(s), on-prem, edge, hybrid.
-4. **Hard constraints** — regulatory (PCI/HIPAA/GDPR/data residency), budget,
-   team size/expertise, mandated technologies.
-5. **Timeline** — delivery target and immovable dates.
-
-Use `AskUserQuestion` for gaps. Record answers as a **Context Block** at the top
-of the output — every finding is evaluated relative to this context (a SPOF
-acceptable at 10 RPS is critical at 10k RPS).
+Record as **Context Block** — every finding evaluated relative to this.
 
 ## Step 3: Critical Analysis — the Eight Lenses
 
-Apply **every** lens. For each, record findings or state "none observed —
-<one-line reason>." Never silently skip a lens. Probes are the minimum bar; go
-deeper where the design invites it. See `references/review-lenses.md` for the
-exhaustive probe list. Summary:
+Apply every lens; record findings or "none observed — reason." Full probe list:
+`references/review-lenses.md`.
 
-- **A · Single Points of Failure** — every component/dependency whose loss
-  exceeds its expected blast radius. Hunt hidden ones: primary-only datastores,
-  single-consumer queues, shared caches, CDN origin chains, DNS, schedulers,
-  monolithic auth, single deploy pipeline, one-region control plane, a lone
-  secrets store. For each: "Down 5 min? 30 min? Permanently?"
-- **B · Unhappy Paths** — downstream timeout, queue past retention, partial
-  rollout / split-brain, mid-flight migration failure, third-party contract
-  change, clock skew, duplicate delivery. Demand: retry budgets, backoff +
-  jitter, circuit breakers, idempotency keys on every mutation, dead-letter
-  handling.
-- **C · Underlying Assumptions** — enumerate every unstated assumption. Tag
-  each **Verified** / **Unverified** / **Risky**. Classic traps: "network is
-  reliable," "third-party meets its SLA," "read:write ratio is N:1," "payload
-  fits in memory," "clocks are synchronised," "the team can build X in Y weeks."
-  For systems that declare behavior in config/frontmatter (e.g. `file_types:`,
-  routing/dispatch metadata), read — and for logic-bearing specs, *execute* (see
-  the empirical pass below) — the runtime to confirm the engine actually consumes
-  it — "the config gates behavior" is Unverified until the dispatch code proves it,
-  and specs often describe a capability the engine lacks.
-  - **Settled-vs-pending cross-check** — for every value in a section headed
-    settled / resolved / "pin exactly", grep the whole document set for that value
-    or concept marked pending / TBD / unresolved. Any hit is a finding: leave the
-    cell explicitly unresolved and name the item that resolves it.
-  - **A self-referential assertion proves nothing** — when both sides of a
-    consistency check trace back to the same literal, it compares a guess against a
-    copy of itself and passes green. Require every derived value stated as a
-    derivation (read from the named source of truth), never as a second literal.
-- **D · Scalability & Performance** — bottleneck at 10× and 100×; hot
-  partition / hot key; O(n) or O(n²) hiding in a loop or fan-out; connection-pool
-  and thread budgets; thundering herd on cold start or cache eviction; backpressure
-  propagation; write amplification.
-- **E · Security & Trust Boundaries** — every internal↔external and authn↔authz
-  crossing; secrets/PII in logs, caches, queues, or URLs; SSRF, injection,
-  confused-deputy, IDOR at API edges; blast radius of one compromised service;
-  least-privilege on every credential.
-- **F · Operability & Observability** — metrics/traces/logs sufficient to
-  diagnose each failure mode in Lens B; graceful degradation vs. all-or-nothing;
-  zero-downtime deploy + rollback + re-deploy; implied on-call runbook surface;
-  feature flags / kill switches for risky paths.
-- **G · Cost & Efficiency** — always-on compute for bursty load; cross-AZ /
-  cross-region data-transfer cost; storage-class and retention waste; per-request
-  cost at target scale; a cost ceiling + alerting strategy.
-- **H · Delivery Risk** — external dependencies on the critical path (3rd
-  parties, other teams, hardware, procurement); unproven tech adding discovery
-  risk; phasing into independently verifiable milestones; the minimum viable
-  slice that validates the single riskiest assumption first.
+- **A · SPOFs** — hidden: primary-only datastores, single queues, shared caches, DNS, schedulers, one-region control plane. "Down 5/30 min? Permanently?"
+- **B · Unhappy Paths** — timeouts, queue retention, split-brain, migration failure, duplicate delivery. Demand: retry budgets, circuit breakers, idempotency, dead-letter.
+- **C · Assumptions** — enumerate unstated ones; tag Verified/Unverified/Risky. Cross-check settled vs. pending values. Self-referential assertions prove nothing.
+- **D · Scalability** — bottleneck at 10×/100×; hot partitions; O(n²) in loops; connection pools; thundering herd; write amplification.
+- **E · Security** — trust boundary crossings; secrets/PII in logs/caches/URLs; SSRF/injection/IDOR; blast radius per compromised service.
+- **F · Operability** — metrics/traces/logs per failure mode; graceful degradation; zero-downtime deploy/rollback; kill switches.
+- **G · Cost** — always-on compute for bursty load; cross-AZ transfer; per-request cost at scale; cost ceiling + alerting.
+- **H · Delivery Risk** — critical-path external deps; unproven tech; phased milestones; minimum viable slice for riskiest assumption.
 
-### Empirical pass — execute logic-bearing specs before returning
+### Empirical pass
 
 **HARD RULE:** Lens findings on executable logic are hypotheses, not conclusions.
-When the reviewed doc describes executable logic (matcher, grader, parser, state
-machine, algorithm) — especially one naming a concrete existing implementation —
-drive the real implementation (or a minimal faithful harness) with adversarial /
-edge inputs and record actual PASS/FAIL before returning findings.
-
-- Static lenses miss emergent interactions (two orthogonal knobs coupling) and the
-  exact break points that only surface on execution.
-- Mark any finding you could have tested but only argued as **Unverified**.
+When the doc describes executable logic (matcher, grader, parser, state machine), drive the real implementation with adversarial inputs and record
+PASS/FAIL before returning. Mark untested findings **Unverified**.
 
 ## Step 4: Produce the Output
 
-### Document-quality gate (run first — applies to every doc this skill writes or edits)
+### Document-quality gate
 
-Before writing a findings report or authoring/editing a spec, enforce all six.
-See `references/2026-06-02_rfc-doc-quality-checklist.md`.
-
-- **Frontmatter:** emit machine-readable YAML — `title`, `type`, `status`,
-  `author`, `created`, `last_updated`, `epic`, `reviewers`, `labels`, `related`
-  (each entry a title + resolvable path/url).
-- **Structure (Diátaxis):** separate explanation (why/motivation) from reference
-  (what/interfaces) from how-to (guide/tutorial); never blend them in one
-  section. Open with a short "How to read this" note mapping the sections.
-- **Diagrams:** never one giant diagram. Emit one high-level block/interaction
-  diagram showing every part + its contracts, then one detail diagram per major
-  block; label which detail diagram belongs to which section.
-- **Links:** every internal doc link must resolve on disk (`Read`/`Glob`); every
-  ticket reference must exist. Mark any not-yet-created artifact `TBD` explicitly
-  — never link a nonexistent path without the marker.
-- **Sizing:** never invent effort estimates; include only when user supplied
-  them, else mark `TBD` or omit. No fabricated numbers.
-- **Incorporate, don't ask:** findings are mandatory to fold into the target doc
-  — apply them, then commit; do not ask whether to incorporate.
+Enforce before writing. See `references/2026-06-02_rfc-doc-quality-checklist.md`:
+YAML frontmatter, Diataxis structure, multi-level diagrams, resolvable links,
+no fabricated sizing, incorporate findings without asking.
 
 ### REVIEW mode — findings report
 
-Write to `arch-review-<system-slug>.md` (and print a summary). Follow
-`references/findings-report-template.md`. Required sections, in order:
+Write to `arch-review-<system-slug>.md`. Template:
+`references/findings-report-template.md`. Sections: Header → Context Block →
+Executive Summary (3–5 sentences, biggest risk) → Critical Findings
+(severity-ordered, per-finding: Lens, Where, Problem, Failure mode,
+Recommendation, Effort) → Assumptions table → SPOF Map → Prioritised Actions →
+What the Design Gets Right.
 
-1. **Header** — system name, reviewer role, date (`date +%Y-%m-%d`).
-2. **Context Block** — from Step 2.
-3. **Executive Summary** — 3–5 sentences: overall verdict + single biggest risk.
-   A busy director reads only this. Derive blast radius from lens findings
-   (SPOFs, assumption failures, delivery risk), never from diff size or
-   "doc-only" — the analysis determines blast radius. State low blast radius only
-   with lens evidence behind it.
-4. **Critical Findings** — one block per finding, severity-ordered:
+No padding, no hedging. Quote document location for every finding.
 
-   ```
-   #### [🔴 Critical] <finding title>
-   - **Lens:** <A–H>
-   - **Where:** <section / line / component>
-   - **Problem:** one precise paragraph — what is wrong and why it matters.
-   - **Failure mode:** what breaks, when it fires, customer-visible impact.
-   - **Recommendation:** concrete change — name the pattern/tech. "Do X because Y."
-   - **Effort:** only if the user supplied sizing; otherwise `TBD`. Never fabricate.
-   ```
+### WRITE mode
 
-5. **Underlying Assumptions** — table: `| Assumption | Status | Risk if wrong |`.
-6. **SPOF Map** — each SPOF with its blast radius (text list or mermaid).
-7. **Prioritised Actions** — ordered by risk-reduction ÷ effort; the riskiest
-   cheap fixes first.
-8. **What the Design Gets Right** — short, honest; establishes credibility.
-
-Rules: no padding, no hedging, no praise outside section 8. Quote the document
-location for every finding so the author can navigate to it.
-
-### WRITE mode — architecture document
-
-Author a new doc with: Overview & goals · Non-goals · Context & constraints ·
-Proposed architecture (components, data flow, a mermaid diagram) · Key design
-decisions with rationale + alternatives considered · Failure modes & mitigations
-· Scalability plan · Security model · Observability plan · Rollout & migration ·
-Open questions · Delivery phases with milestones. Then **review your own draft**
-through the Step 3 lenses and fold fixes back in before presenting. Invoke
-[`wk-markdown`](../markdown/README.md) for formatting.
+Author: overview, non-goals, constraints, proposed architecture (mermaid),
+design decisions + alternatives, failure modes, scalability, security,
+observability, rollout, open questions, delivery phases. Self-review through
+Step 3 lenses before presenting. Format via `wk-markdown`.
 
 ## Step 5: Interactive HTML Playground
 
-Generate when user asks, or proactively offer when the system has ≥4 components
-or non-obvious failure cascades.
+Offer when ≥4 components or non-obvious failure cascades.
 
-- Copy `references/playground-template.html` as the start; inject the reviewed
-  system's graph + findings.
-- Produce **one self-contained file** — `arch-review-<slug>-playground.html`.
-  Inline all CSS/JS; load mermaid from a CDN with a graceful fallback note if offline.
-- Required interactions:
-  - **Architecture diagram** rendered from the component graph.
-  - **Failure injection** — click a node to mark it failed; downstream dependent
-    nodes turn red (compute reachability over the dependency edges).
-  - **Blast-radius sidebar** — selected node's role, direct dependencies,
-    worst-case downstream impact set.
-  - **Gotchas panel** — cycles the Step 4 findings (severity badge, problem,
-    recommendation) with Next/Prev.
-- Define the graph as a single `const NODES`/`const EDGES`/`const FINDINGS` data
-  block near the top so the file is easy to regenerate per system.
-- **Verify it renders** before declaring done:
-
-  ```bash
-  open "arch-review-<slug>-playground.html"   # macOS; xdg-open on Linux
-  ```
-
-  When Playwright MCP is available, also load the file (`browser_navigate` →
-  `file://<abs-path>`) and take a `browser_snapshot` to confirm the diagram and
-  panels mounted with no console errors.
-
-## Common Mistakes
-
-- Summarising the document instead of critiquing it — output must be findings.
-- Hedge language ("consider", "might", "could potentially") — state the
-  imperative and the reason.
-- Missing hidden SPOFs not named in the doc (DNS, secrets store, single
-  pipeline, one-region control plane).
-- Skipping "out of scope" sections — they hide the riskiest deferred decisions.
-- A findings list with no prioritised action plan.
-- Findings without a document location — the author can't act on them.
-- A cluttered playground diagram — one clear graph beats an exhaustive one.
+- Self-contained `arch-review-<slug>-playground.html`; inline CSS/JS.
+- Required: architecture diagram, failure injection (click node → downstream red),
+  blast-radius sidebar, gotchas panel (cycles findings).
+- Graph as `const NODES/EDGES/FINDINGS` data block.
+- Verify renders: `open` (macOS); Playwright snapshot when available.
 
 ## Quick Reference
 
 | Invocation | Behavior |
 |------------|----------|
-| `/wk-arch-review path/to/doc.md` | Review a local architecture document |
-| `/wk-arch-review https://…` | Fetch and review a doc at a URL |
-| `/wk-arch-review write <topic>` | Author a new architecture document |
-| `/wk-arch-review playground` | Build the interactive playground for the last review |
-
-## Requirements
-
-- Read access to the document (local path or URL via `WebFetch`).
-- Write access to the current directory (findings report + playground output).
-- A browser for playground verification (`open` / `xdg-open`); Playwright MCP
-  optional for automated render verification.
+| `/wk-arch-review path/to/doc.md` | Review local doc |
+| `/wk-arch-review https://…` | Fetch and review URL |
+| `/wk-arch-review write <topic>` | Author new architecture doc |
+| `/wk-arch-review playground` | Build interactive playground |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn arch-review`.

@@ -2,7 +2,7 @@
 
 > Post inline self-review comments on your own PR to document design decisions for human reviewers.
 
-**Version:** `2026.08.28-023637`
+**Version:** `2026.10.09-005632`
 
 ## Invocation
 

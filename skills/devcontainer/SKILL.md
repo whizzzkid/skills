@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.18-203656"
+  version: "2026.10.09-005632"
   model:
     openai: gpt-5.6-terra
 ---
@@ -49,8 +49,15 @@ grep -E "redis|sidekiq|elasticsearch" Gemfile | head -10  # extra services neede
 
 See [references/config-templates.md](references/config-templates.md) for
 complete Dockerfile, docker-compose.yml, and devcontainer.json templates with
-key decisions and HARD RULES (no manual PATH/shim wiring, no COPY mise.toml,
-`auto_install = true` instead).
+key decisions and HARD RULEs (no manual PATH/shim wiring, no COPY mise.toml,
+no env var the app conditionally defaults).
+
+**HARD RULE: Never stream `devcontainer up` output when Compose interpolates a
+host credential** — some CLI versions print the resolved Compose model. Enumerate
+host vars Compose references first; prefer file-backed secrets; else `umask 077`,
+capture output to a temp file, show only an exact-value-redacted copy, delete the raw
+capture on exit, and prove it with a canary. Direct startup with a forwarded
+credential is a blocker.
 
 **Mise profiles (optional):** keep host `mise.toml` lean; add container-only
 tools via `mise.devcontainer.toml` + `MISE_PROFILE: devcontainer` in compose.
@@ -144,3 +151,7 @@ Investigation order for a new project:
 3. `.ruby-version` — exact Ruby version for mise.toml
 4. `Gemfile` — extra services (Sidekiq, Elasticsearch, etc.)
 5. DB adapter in `Gemfile` — `trilogy` (no `libmysqlclient-dev` needed) vs `mysql2` (needs it)
+
+## Post-Completion
+
+Invoke `wk-learn devcontainer`.

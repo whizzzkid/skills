@@ -26,7 +26,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.08.18-211308"
+  version: "2026.10.09-005632"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -283,3 +283,7 @@ Full detection thresholds and rules:
 | Message names a prohibited token | Stop — rewrite using category description only |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn commit`.

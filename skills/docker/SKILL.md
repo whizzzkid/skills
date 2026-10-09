@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.27-092415"
+  version: "2026.10.09-005632"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -44,86 +44,35 @@ metadata:
 
 # Docker
 
-Workflows and safety checks for Docker operations — image building, tag
-verification, container inspection, and daemon troubleshooting.
-
-## When to Use
-
-- Building or modifying Dockerfiles
-- Debugging Docker build failures or container runtime errors
-- Verifying Docker image tags exist before using them
-- Working with docker-compose services
-- Troubleshooting Docker daemon connectivity
+Workflows and safety checks for Docker — image building, tag verification,
+container inspection, daemon troubleshooting.
 
 ## Pre-Flight Checks
 
-### Docker CLI on PATH (macOS)
-
-`docker: command not found` on macOS despite a Homebrew install → the
-`/opt/homebrew/bin/docker` symlink was dropped on a package upgrade (binary
-still in the Cellar). Bash-tool sessions also may not inherit the full PATH.
-
-```bash
-command -v docker >/dev/null 2>&1 || brew link docker
-```
-
-- Prepend Homebrew's bin to PATH in macOS Bash invocations: `PATH="/opt/homebrew/bin:$PATH"`.
-- Run `brew link docker` before any retry when the binary is missing.
-
-### Docker Daemon
-
-Before any Docker operation, verify the daemon is running:
-
-```bash
-docker info > /dev/null 2>&1 || echo "DAEMON_NOT_RUNNING"
-```
-
-If the daemon is not running, tell the user:
-> Docker daemon is not running. Start Docker Desktop or run `colima start`.
-
-Do NOT attempt to start the daemon yourself.
-
-### ECR / Registry Auth
-
-If you encounter `authorization failed`, `no basic auth credentials`, or
-`ExpiredToken` errors from ECR or other registries:
-
-> AWS credentials have expired. Run `aws sso login` to refresh.
+- **CLI on PATH (macOS):** `command -v docker >/dev/null 2>&1 || brew link docker`
+  Prepend `PATH="/opt/homebrew/bin:$PATH"` in Bash invocations.
+- **Daemon:** `docker info > /dev/null 2>&1 || echo "DAEMON_NOT_RUNNING"` →
+  tell user to start Docker Desktop or `colima start`. Never start it yourself.
+- **Registry auth:** `authorization failed` / `ExpiredToken` → tell user: `aws sso login`.
 
 ## Image Tag Verification
 
-**HARD RULE:** Before using any Docker image tag in a Dockerfile `FROM`
-directive, verify it exists:
+**HARD RULE:** Verify an image tag exists before using it in any `FROM` directive:
 
 ```bash
 docker manifest inspect <image>:<tag> 2>&1
 ```
 
-- If the manifest exists, proceed.
-- If it returns `no such manifest`, try common tag format variations:
-  - With/without `v` prefix (`v1.2.3` vs `1.2.3`)
-  - With/without patch version (`1.2.3` vs `1.2`)
-  - Report the correct tag to the user before using it.
+`no such manifest` → try `v` prefix / without patch version; report the correct tag
+to the user before using it.
 
-### Check Base OS
-
-When using an unfamiliar base image, verify the OS to choose the right
-package manager:
-
-```bash
-docker run --rm --entrypoint cat <image>:<tag> /etc/os-release 2>&1
-```
-
-- Debian/Ubuntu → `apt-get`
-- Alpine → `apk`
-- If the image has a custom ENTRYPOINT, use `--entrypoint cat` to bypass it.
+Check unfamiliar base OS: `docker run --rm --entrypoint cat <image>:<tag> /etc/os-release`
+(Debian → `apt-get`; Alpine → `apk`).
 
 ## `docker compose run` Env Inheritance
 
-`docker compose run` does NOT inherit service-level `environment:` from
-`docker-compose.yml` — it uses the container's own defaults. Always pass
-`-e RAILS_ENV=test` (or equivalent) when running specs via `run` instead
-of `exec` on a running service.
+`docker compose run` does NOT inherit service-level `environment:` — pass
+`-e VAR=value` explicitly:
 
 ```bash
 docker compose run --rm -T -e RAILS_ENV=test app bundle exec rspec ...
@@ -131,234 +80,83 @@ docker compose run --rm -T -e RAILS_ENV=test app bundle exec rspec ...
 
 ## ENTRYPOINT Awareness
 
-Some base images set a custom ENTRYPOINT that interferes with
-docker-compose commands.
+Custom ENTRYPOINT turns `sh -c '...'` into `custom-tool sh -c '...'` → add
+`ENTRYPOINT []` after installing tools. Verify: `docker run --rm <image> sh -c 'echo works'`.
 
-**Example:** an image that sets `ENTRYPOINT ["/custom-tool"]` turns
-`docker-compose run <service> sh -c '...'` into `custom-tool sh -c '...'`,
-breaking all commands.
-
-**Fix:** Add `ENTRYPOINT []` in the Dockerfile after installing tools to
-reset the entrypoint. Verify with:
-
-```bash
-docker run --rm <image> sh -c 'echo works'
-```
-
-If the output shows an error about unknown commands or arguments, the
-ENTRYPOINT needs to be reset.
-
-## Verify the ENTRYPOINT Before Editing a Wrapper Script
-
-Before editing any script named `entrypoint.*`, `run.*`, `start.*`, or
-any file whose role *looks* like a container entrypoint, confirm the
-Dockerfile actually invokes it. Repos that ship a compiled binary
-(Rust, Go, etc.) as the production entrypoint frequently keep a
-same-named shell script for local-dev or legacy paths — editing the
-shell script produces a change that passes review but never runs in
-production.
-
-```bash
-grep -E '^(ENTRYPOINT|CMD)' Dockerfile
-```
-
-- The grep target — file path, binary name, or shell line — is the
-  real entrypoint. Confirm the file you are about to edit matches.
-- If a binary is named (e.g., `/usr/local/bin/foo`), find where it is
-  built from in the repo. The companion shell script is rarely the
-  production path.
+Before editing `entrypoint.*`/`run.*`/`start.*`, confirm the Dockerfile actually
+invokes it: `grep -E '^(ENTRYPOINT|CMD)' Dockerfile`. Compiled-binary repos keep
+same-named shell scripts for local-dev only.
 
 ## Declare Runtime Env Vars in the Dockerfile
 
-Every environment variable the entrypoint or CMD reads at runtime
-must be declared with `ENV VAR=""` (or a real default) in the
-Dockerfile, before the `ENTRYPOINT` / `USER` line.
-
-The Dockerfile is the canonical interface document for the image.
-An env var that only appears in compose, CI pipeline, or orchestrator
-config is invisible to anyone reading the image alone — they cannot
-tell whether the var is supported, ignored, or required without
-spelunking the entrypoint script.
-
-**How to apply.** When wiring a new runtime env var, after updating
-compose / pipeline allowlists, grep the Dockerfile for the var name.
-If absent, add it inside a grouped `# Optional runtime env vars`
-block near the bottom of the build stage:
-
-```dockerfile
-# Optional runtime env vars (defaults documented; override at run time)
-ENV LOG_LEVEL=""
-ENV FEATURE_FLAG_X=""
-```
-
-Use an empty string for "unset by default; entrypoint handles
-absence" and a real value when there is a meaningful default. Either
-way the variable name is now part of the image's documented contract.
+Every env var the entrypoint reads must be declared with `ENV VAR=""` before
+`ENTRYPOINT`/`USER`. Grep Dockerfile when wiring a new var; if absent, add to a
+grouped block near the bottom of the build stage.
 
 ## Audit Runtime Env Reads Against the Forwarding List
 
-**HARD RULE:** Compose and the Buildkite `docker_compose` plugin forward
-*only* the env vars explicitly listed in the `environment:` / `env:` array.
-Agent-level vars — CI builtins and user-defined secrets alike — are silently
-absent inside the container unless declared. A missing entry surfaces as a
-runtime "feature not enabled" with no error, not a failure.
+**HARD RULE:** Compose/plugins forward only explicitly listed vars — unlisted vars
+are silently absent. Audit the full runtime read set, not just vars the diff added: grep the runtime call graph for env reads (`ENV[`,
+`ENV.fetch`, `os.environ`, `process.env`, `$VAR`), diff against the forwarding
+list, flag gaps. Cross-check sibling compose files. Never use a host-side SHA as
+proxy for a target-artifact SHA inside the container.
 
-Before treating a compose/plugin config as complete, audit the full runtime
-read set — not just the vars the diff added:
+## Reference Pointers
 
-1. Grep every script and library in the container's runtime call graph for
-   env reads: `ENV[`, `ENV.fetch`, `os.environ`, `process.env`, `$VAR`, etc.
-2. Collect the full set of env var names read.
-3. Diff that set against the `environment:` / `env:` list.
-4. Flag any read with no corresponding forwarding entry.
-5. Cross-check sibling templates/compose files serving the same role —
-   inconsistency between siblings is a strong signal of a missing entry.
-
-**Never use a host-side SHA or build identifier (e.g. the CI runner's own
-commit SHA) as a proxy for a target-artifact SHA inside the container** —
-they are different values and fail downstream comparisons.
-
-## Bind-Mount Overlay Shadows Image COPY
-
-Volume mounts replace the image filesystem at the mount point — any `COPY` to that path is invisible at runtime. Details and fix pattern in [references/bind-mount-overlay.md](references/bind-mount-overlay.md).
-
-## Git Worktree `.git` File Breaks Git Inside Containers
-
-Worktree `.git` file contains a host-absolute `gitdir:` path that dangles inside a container. Materialize a standalone repo before mounting. Details and script in [references/git-worktree-gitfile.md](references/git-worktree-gitfile.md).
-
-## Seed a Dependency Volume from a Sibling
-
-Copy a sibling container's volume to bypass expired registry credentials, then install offline. Volume copy command, guards (lockfile match, volume name verification), and full process in [references/seed-dependency-volume.md](references/seed-dependency-volume.md).
+- **Bind-mount overlay shadows COPY:** [references/bind-mount-overlay.md](references/bind-mount-overlay.md)
+- **Worktree `.git` file breaks git in containers:** [references/git-worktree-gitfile.md](references/git-worktree-gitfile.md)
+- **Seed dependency volume from sibling:** [references/seed-dependency-volume.md](references/seed-dependency-volume.md)
+- **Multi-worktree port conflicts:** [references/port-conflicts.md](references/port-conflicts.md)
 
 ## Devcontainer Startup — Suppress Secret Exposure
 
-**HARD RULE:** Devcontainer and Compose startup commands log the resolved
-configuration as plain text, including forwarded secret env vars. Suppress
-verbose startup output (`--log-level error`, stdout redirect) when Compose
-forwards credentials — ordinary startup verbosity is unsafe for agent-visible
-logs.
-
-- Never run `docker compose config` or equivalent in agent-visible output when
-  the config forwards secrets.
-- Treat any startup log that resolves env vars as potentially containing
-  credentials.
-
-## Multi-Worktree Port Conflicts
-
-Use `docker run` with `--network=<project-network>` and no `-p` instead of compose when a sibling holds the port. Never stop a sibling's devcontainer. Details in [references/port-conflicts.md](references/port-conflicts.md).
+**HARD RULE:** Startup commands log resolved config including secrets. Suppress
+verbose output (`--log-level error`) when Compose forwards credentials. Never
+run `docker compose config` in agent-visible output with secrets.
 
 ## Hand-Started Containers: Replicate Setup-Script Credentials
 
-When running a container manually (`docker run`, not via the project's setup
-script), private-registry auth failures often mean the wrong env var name —
-package managers use tool-specific credential naming, not a generic API key.
-
-- Grep the project's setup/provisioning script for how it exports registry
-  credentials — replicate the exact env var name and value format.
-- A generic `<REGISTRY>_API_KEY` is almost never what the package manager reads.
+Private-registry auth failure in manual `docker run` → grep setup script for
+exact env var name/format. Generic `<REGISTRY>_API_KEY` is almost never correct.
 
 ## Bind-Mount Permission Fixes — Scoped, Never Recursive
 
-**HARD RULE:** Never `chmod -R` a git tree or any path inside a persistent/shared
-host checkout to fix a container EACCES.
-
-- Recursive world-writable chmod (`chmod -R a+rwX`) on a bind-mounted workspace
-  sets the other-write bit across the entire `.git` tree (objects, refs, config),
-  leaving the host's git tree dirty and tripping git's `safe.directory` /
-  dubious-ownership guard.
-- Grant write **only** on the exact files/dirs the container uid needs —
-  e.g. a single git-exclude file + an output directory.
-- Prefer `chown <container-uid>` on the target path, or mount a dedicated scratch
-  dir **outside** any real checkout, over loosening permissions.
-- Treat any recursive perm change touching `.git/` as a red flag.
-
-## Building Images
-
-### docker build
-
-```bash
-# Build with specific target
-docker build --target <stage> -f <Dockerfile> -t <tag> <context>
-
-# Build with cache
-docker build --cache-from <image> -t <tag> .
-```
-
-### docker-compose build
-
-```bash
-# Build specific service
-docker compose -f <compose-file> build <service>
-
-# Build and run
-docker compose -f <compose-file> run --rm <service> <command>
-```
-
-## Inspecting Containers
-
-```bash
-# List running containers
-docker ps
-
-# View logs
-docker logs <container> --tail 50
-
-# Execute command in running container
-docker exec -it <container> sh
-
-# Inspect image layers
-docker history <image>:<tag>
-```
+**HARD RULE:** Never `chmod -R` a git tree or any path in a persistent/shared host
+checkout for container EACCES. Grant write
+only on exact needed files/dirs. Prefer `chown <container-uid>` or a scratch
+dir outside the checkout. Recursive perms on `.git/` is a red flag.
 
 ## Debugging Build Failures
 
-When a Docker build fails:
-
-1. **Read the full error output** — the actual error is often buried in build
-   output
-2. **Check the failing RUN command** — run it interactively in a temporary
-   container from the previous layer
-3. **Verify COPY sources exist** — ensure the build context contains the files
-   being copied
-4. **Check multi-stage references** — ensure `COPY --from=<stage>` references
-   valid stages
-
-### dind Network Failures — Check Floating Tags Before `--network=host`
-
-**HARD RULE:** When a `RUN` step inside `docker build` fails with a network or
-fetch error in a docker-in-docker (dind) environment, check the stage's `FROM`
-tag before reaching for `--network=host`.
-
-- A floating base tag (`rust:bookworm`, `node:slim`, `:latest`) that updated
-  upstream invalidates the layer cache, forcing the `RUN` to execute cold — and
-  the cold run needs external network the dind bridge network lacks.
-- Pin the tag to match the project's tool-version file (`mise.toml`,
-  `.tool-versions`): `rust:bookworm` → `rust:1.93-bookworm`. A stable cache means
-  the `RUN` never runs cold inside dind.
-- `--network=host` masks the real cause; reserve it for when pinning is impossible
-  or the failure is not cache-related.
+- Read full error output; check the failing `RUN` interactively from the previous layer.
+- Verify `COPY` sources exist; check `COPY --from=<stage>` references.
+- **HARD RULE:** A `RUN` step failing with a network/fetch error in dind → check the
+  stage's floating `FROM` tag before `--network=host`. Pin to the tool-version file's
+  version; `--network=host` masks the cause.
 
 ### Common Exit Codes
 
 | Exit Code | Meaning |
 |-----------|---------|
-| 1 | General error (command failed) |
-| 2 | Misuse of shell command |
-| 17 | Docker build failed (image pull or build step) |
-| 125 | Docker daemon error |
-| 126 | Command not executable |
+| 1 | General error |
+| 17 | Build failed (pull/build step) |
+| 125 | Daemon error |
 | 127 | Command not found |
-| 137 | OOM killed (SIGKILL) |
-| 139 | Segfault (SIGSEGV) |
+| 137 | OOM killed |
+| 139 | Segfault |
 
 ## Quick Reference
 
 | Trigger | Behavior |
 |---------|----------|
-| Dockerfile edit | Verify base image tags exist before committing |
-| Build failure | Read error, check exit code, debug failing layer |
-| Daemon not running | Tell user to start Docker Desktop or Colima |
-| Auth failure | Tell user to run `aws sso login` |
-| ENTRYPOINT issues | Check with `docker run --rm <image> sh -c 'echo test'` |
+| Dockerfile edit | Verify base image tags before committing |
+| Build failure | Read error, check exit code, debug layer |
+| Daemon not running | Tell user: Docker Desktop or `colima start` |
+| Auth failure | Tell user: `aws sso login` |
+| ENTRYPOINT issues | `docker run --rm <image> sh -c 'echo test'` |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn docker`.

@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-003641"
+  version: "2026.10.09-005632"
   model:
     openai: gpt-5.6-terra
 ---
@@ -67,9 +67,11 @@ page; dated snapshots at close. No standalone HTML files.
 
 ## Core hard rules
 
-- **Workspace-scoped output only.** All output stays in `$SITREP_REPO/$EMPLOYER/`. Never write into cwd or `$WK_SKILLS_HOME`. Never assert missing without `Read`/`ls`.
-- **No interactive triage.** Compile-only (gather → render → write → open). Never `AskUserQuestion`; user edits in browser.
-- **Evidence connector gates.** Required connectors = every company-data domain in agent roster (source control excluded). Any unavailable → abort publication. Gaps inside available domains → label, preserve `data-done`/carry-over, withhold accrual artifacts.
+- **HARD RULE — never write outside `$SITREP_REPO/$EMPLOYER/`.** Never write `morning.md`, `evening.md`, or any sitrep file into cwd or `$WK_SKILLS_HOME`.
+- **HARD RULE — no interactive triage.** Compile-only (gather → render → write → open); sole exception is the connector abort below. Never `AskUserQuestion` to keep/skip/resolve; write items unconditionally as `data-done="false"` spans; user edits in browser.
+- **HARD RULE — never assert missing without checking.** `Read`/`ls` the path first; unchecked → say "I have not read X", not "X is missing."
+- **HARD RULE — a missing required evidence connector aborts publication.** Required = every company-data domain in the invoked sub-command's own agent roster (source control excluded), derived from that roster, never a restated list. Any unavailable → stop before writing: live page byte-unchanged, no rollover marker or brag entry, no commit/push; name every missing connector and await instruction. Never publish a partial page.
+- **Gaps inside available domains** → label, preserve `data-done`/carry-over, withhold accrual artifacts.
 
 ## Rendering contract
 
@@ -150,7 +152,7 @@ Render in col3 using canonical rich-copy block from [`references/standup-copy-bl
 
 ### Stage 5: Verify render, then open
 
-**HARD RULE — gate on verified render.** `browser_navigate` → `browser_evaluate` containment (3 non-empty `.sitrep-col`, every `.st-copy-block`/`.st-item` inside a column). `false` → fix per `wk-silverbullet` Step 6. Verify standup copy per [`references/standup-copy-block.md`](references/standup-copy-block.md). `browser_close` before `open`.
+**HARD RULE — gate the "Live page ready" announcement on a verified render.** `open` confirms nothing. Before announcing, `browser_navigate` → `browser_evaluate` containment (3 non-empty `.sitrep-col`, every `.st-copy-block`/`.st-item` inside a column — assert containment, not presence). `false` → fix per `wk-silverbullet` Step 6. Verify standup copy per [`references/standup-copy-block.md`](references/standup-copy-block.md). `browser_close` before `open`.
 
 ```bash
 open "http://localhost:$SITREP_PORT/$EMPLOYER/live.md"

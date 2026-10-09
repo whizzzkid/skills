@@ -23,7 +23,7 @@ narrower; it's Confirmed → silent skip.
 
 ## Per-thread reply gate
 
-A per-thread bot reply or body anchor is justified only with new evidence beyond
+**HARD RULE:** A per-thread bot reply or body anchor is justified only with new evidence beyond
 confirming the bot's exact claim. Pure Confirmed outcomes get silent skip; never
 narrate bot validation. Justified replies use one mechanism: fold into the body
 as `Re: {bot} thread on {file}:{line} — …` (no extra call), or a live

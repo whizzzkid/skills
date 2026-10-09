@@ -23,7 +23,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.13-191814"
+  version: "2026.10.09-005632"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -146,3 +146,7 @@ All known failure modes:
 - Browser access for force-reload verification after CSS changes
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn silverbullet`.

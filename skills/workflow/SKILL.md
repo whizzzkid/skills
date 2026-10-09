@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-003641"
+  version: "2026.10.09-005632"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -36,7 +36,7 @@ Fires on EVERY task producing code changes, a commit, a push, a PR, or a CI buil
 
 ### HARD RULE — live learning capture
 
-Invoke [`wk-learn`](../learn/README.md) immediately on user correction, scope redirect, or self-caught error — before continuing. Invoke after every skill run. Phase 8 retro only verifies live capture.
+Invoke [`wk-learn`](../learn/README.md) immediately on user correction, scope redirect, or self-caught error — before continuing or ending the response. Invoke after every skill run; never ask or offer. Phase 8 retro only verifies live capture.
 
 ### Autonomy Rules
 
@@ -63,7 +63,7 @@ Execute without asking permission at each step.
 
 ### HARD RULE — needs shell? then no worktree isolation
 
-`isolation: "worktree"` blocks Bash, Grep, Glob — Read/Edit/Write only. Tests, lint, build, commit, push, PR → never `isolation: "worktree"`.
+`isolation: "worktree"` blocks Bash, Grep, Glob — Read/Edit/Write only, with no runtime error. Decide at dispatch: tests, lint, build, commit, push, PR → never `isolation: "worktree"`. Shell unavoidable → skip isolation, or coordinator runs shell ops on worktree paths after agents finish.
 
 ### Continuity Rules
 
@@ -83,7 +83,7 @@ Skill(wk-plan, args="<task from session context>")
 - Optional sibling-repo work is opt-in — confirm before touching another repo.
 - Complex task → consult `advisor` server tool: [`references/advisor-tool.md`](references/advisor-tool.md).
 
-**HARD RULE — wait for plan approval before first write-action.** No size exemption. User-supplied plan arrives approved.
+**HARD RULE — wait for plan approval before first Edit/Write/Bash write-action (incl. fetching/reading *for* a build).** No size exemption — "too small"/"obviously right" both violate. Present → approve → execute; user-supplied plan arrives approved.
 
 ---
 
@@ -91,7 +91,7 @@ Skill(wk-plan, args="<task from session context>")
 
 ### HARD RULE — branch pre-flight before first edit
 
-Run `git rev-parse --abbrev-ref HEAD` — verify branch matches intended base. Linked worktree → resolve paths under `git rev-parse --show-toplevel`. Rebase conflicts → `git log --oneline -5` to verify base.
+Run `git rev-parse --abbrev-ref HEAD` — verify branch matches intended base before any Edit/Write. Linked worktree → resolve paths under `git rev-parse --show-toplevel`. Rebase/cherry-pick conflicts → `git log --oneline -5`; base mismatches worktree parent → stop, never force through.
 
 Pre-patch routing: `.md` → [`wk-markdown`](../markdown/README.md); Mermaid →
 [`wk-mermaid`](../mermaid/README.md); arch-bearing →
@@ -140,7 +140,7 @@ Enumerate every affected site; fix all in one pass before tests:
 
 ### HARD RULE — select execution environment before validation
 
-Inspect container, devcontainer, runner, repo instructions first. Use documented runnable container; if none, say so before host fallback. Explicit validation waiver short-circuits provisioning. Mixed toolchains: [announce subsystem ownership](references/environment-guardrails.md).
+Before first build/lint/test, inspect container, devcontainer, runner, repo instructions. Use documented runnable container; if none, say so before host fallback. Explicit validation waiver short-circuits provisioning — never build an env for a removed gate; name what stays unverified. Mixed toolchains: [announce subsystem ownership](references/environment-guardrails.md).
 
 Required paths: **happy** (expected flow), **sad** (failures, invalid input, error handling), **edge** (boundaries, nulls, concurrency, off-by-one).
 
@@ -183,7 +183,7 @@ Runs only when diff changes browser-rendered UI (`.tsx/.jsx/.vue/.svelte/.html/.
 
 ## Phase 5: PR
 
-**HARD RULE — "push succeeded" is NOT "work complete".** After push, if no open PR → invoke `wk-pr` immediately.
+**HARD RULE — "push succeeded" is NOT "work complete".** After push, run `gh pr view 2>/dev/null`; no open PR → invoke `wk-pr` immediately.
 
 ### Repo convention
 
@@ -193,7 +193,7 @@ Invoke `wk-pr` (never raw `gh pr create`) after tests and Phase 3.5/3.6 pass. Ea
 
 ### Post-push sync
 
-`wk-commit` handles PR description sync and stale comment resolution. **HARD RULE:** auto-sync drifted artifacts — never ask. After push, code change, or pivot: audit PR title/body, self-review, ticket, docs; update same turn. On pivot, resolve stale self-review threads via `wk-self-review`.
+`wk-commit` handles PR description sync and stale comment resolution. **HARD RULE:** auto-sync drifted artifacts — never ask. After push, code change, or pivot: audit PR title/body, self-review, ticket, docs; update same turn. On pivot, resolve stale self-review threads and re-post via `wk-self-review`. Confirm only when genuinely ambiguous.
 
 Before reworking a PR branch, [reconcile against actual base](references/pre-rework-base-reconcile.md).
 
@@ -203,14 +203,14 @@ Before reworking a PR branch, [reconcile against actual base](references/pre-rew
 
 Invoke `wk-adversarial-review` with PR published and ready. **This is the workflow's only dispatch point.**
 
-**HARD RULE — review gates merge, not publish.** Push/PR/readying need no verdict. Merge requires clear review lineage. No size or docs-only exemption.
+**HARD RULE — review gates merge, not publish.** Push/PR/readying need no verdict. Merge and `gh pr merge --auto` require clear review lineage (SHA equality not required). No size or docs-only exemption.
 
 Returns **clear**, **blocked**, or **suggestions-only**:
 - **Clear** → re-stage via `wk-self-review` if fix commits landed; proceed to Phase 6.
 - **Blocked** → fix via `wk-commit`, re-invoke until clear. Never merge on blocked.
 - **Suggestions only** → follow skill's A/B/C prompt.
 
-**HARD RULE — never defer a security guard.** Missing guard/input validation (SSRF, injection, path traversal) → blocker-class, apply now.
+**HARD RULE — never defer a security guard.** Missing guard/input validation (SSRF, injection, path traversal) → blocker-class, apply now; never propose deferring without explicit user instruction. Split a tooling swap into a follow-up, never the guard.
 
 ---
 
@@ -225,7 +225,7 @@ Monitor and fix CI until green. Runs concurrently with Phase 5.5.
 
 Fix loop: (1) targeted fix, (2) run failing gate locally, (3) `wk-commit`, (4) push, (5) update PR, (6) re-enter. Max 3 attempts per run; each must differ; before attempt 3, state the axis being varied. After 3, hand off.
 
-**HARD RULE:** verify every test-plan checkbox before merge/auto-merge.
+**HARD RULE:** verify every test-plan checkbox before updating the PR description and before merge/auto-merge. Run every runnable verification; leave a box unchecked only when impossible, noting why.
 
 ---
 
@@ -243,7 +243,7 @@ Invoke `wk-docs`. Verify README, ADRs, specs, `docs/README.md`. No `docs/` → `
 
 ## Phase 8: Session Retro — NON-NEGOTIABLE
 
-**HARD RULE:** invoke `wk-retro` at end of every session. `gh pr ready` is not a terminus — `wk-retro` follows.
+**HARD RULE:** invoke `wk-retro` at end of every session, no exceptions. `gh pr ready` is not a terminus — the next action after it is `Skill(wk-retro)`.
 
 ---
 
@@ -273,3 +273,7 @@ Final gate before claiming complete:
 - [ ] Session retro via `wk-retro`; every plan step finished or deferred
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn workflow`.

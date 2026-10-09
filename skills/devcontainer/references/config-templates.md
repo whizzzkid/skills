@@ -22,9 +22,8 @@ WORKDIR /workspace
 CMD ["sleep", "infinity"]
 ```
 
-**HARD RULES:**
-- Do NOT add `ENV PATH=.../shims` or `echo 'eval "$(mise activate bash)"' >> /etc/bash.bashrc` -- `jdx/mise` image already configures both.
-- Do NOT `COPY mise.toml` or `RUN mise install` -- use `auto_install = true` in `mise.toml` instead.
+- **HARD RULE: Do NOT add `ENV PATH=.../shims` or `echo 'eval "$(mise activate bash)"' >> /etc/bash.bashrc`** -- `jdx/mise` image already configures both; manual additions double-activate.
+- **HARD RULE: Do NOT `COPY mise.toml` or `RUN mise install`** -- use `auto_install = true` in `mise.toml` instead.
 
 ## docker-compose.yml
 
@@ -84,6 +83,13 @@ Key decisions:
 - `depends_on.condition: service_healthy` -- waits for real readiness
 - `bundle-cache:/usr/local/bundle` -- persists gems; only works with `BUNDLE_PATH` in Dockerfile
 - Host config mounts: `mise/config.toml:ro` (global mise settings), `~/.claude` (Claude Code r/w)
+
+**HARD RULE — never set an env var the app's own bootstrap conditionally defaults.**
+An unconditional `environment:` entry beats every `||=`/`:-`/`setdefault`, so the
+container silently runs the wrong mode. Before adding a name, grep app bootstrap and
+test-harness files; a conditional assignment there → omit it from compose. Symptom:
+suite errors in-container on infra missing from the forced mode, passes on host → fix
+the compose entry, never a per-invocation override.
 
 ## devcontainer.json
 

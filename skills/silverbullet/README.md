@@ -3,7 +3,7 @@
 Working guide for SilverBullet 2.x — interactive HTML dashboards, `space-style` CSS,
 the `window.client` file API, and every rendering constraint discovered in production.
 
-**Version:** `2026.08.13-191814`
+**Version:** `2026.10.09-005632`
 
 ## When It Activates
 

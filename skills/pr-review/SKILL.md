@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-003641"
+  version: "2026.10.09-005632"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -45,9 +45,9 @@ metadata:
 
 Gather context → delegate to [`wk-adversarial-review`](../adversarial-review/README.md) → post encouraging but critical inline comments as a pending GitHub review.
 
-**HARD RULE:** Invoke `wk-gh` (Skill tool) before drafting any review body or comment — footer lives in Step 4, not reproducible from memory. Omitting = violation.
+**HARD RULE:** Every `gh` read and GitHub write follows `wk-gh`. Invoke it (Skill tool) before drafting any review body or comment — footer lives in Step 4, not reproducible from memory; append it to the body and every inline comment. Omitting = violation.
 
-**HARD RULE — optional reviewers require current-task opt-in.** Phase-owned dispatches remain mandatory: `wk-adversarial-review`, `wk-arch-review`, `wk-design-review`.
+**HARD RULE — optional reviewers require current-task opt-in.** Never launch an optional local/external model reviewer unless the user requests it in this task; existing CI output is evidence, not authorization. Phase-owned dispatches remain mandatory: `wk-adversarial-review`, `wk-arch-review`, `wk-design-review`.
 
 ## Phase 1: Context
 
@@ -85,8 +85,9 @@ Announce: > "Reviewing PR #N: *title* — X files, Y commits. Base: `{base}`. Au
 `.review-playground/.arch-cleared-{SHA}.json` → consume; else
 `Skill(wk-arch-review, args="<path | PR>")`. Fold findings into Phase 3/4.
 
-**HARD RULE — spec-doc claims about existing code are Unverified.** Grep/read to
-confirm; delegate batch to one subagent.
+**HARD RULE — spec-doc claims about existing code are Unverified.** Named structs/fields,
+"reuses X", "~N-line port" → grep/read to confirm; delegate batch to one subagent.
+Re-verify a posted finding the moment a later result contradicts it.
 
 **Design:** diff touches styles/tokens/theme/components/stories/a11y →
 `Skill(wk-design-review, args="consult <n>")` before Phase 3.
@@ -102,7 +103,7 @@ mismatches. Categorize: **stale (fixed)**, **stale (unclear)**, **active**.
 Bodies referencing absent files → **stale (superseded)**.
 
 **HARD RULE:** Never resolve threads without explicit user consent. Present list,
-confirm, resolve via GraphQL mutation.
+confirm, match each by `path`+`line`+`body`, resolve via GraphQL mutation.
 
 **Build queues:** `bot_findings_to_validate` (active bot comments → Phase 3) and
 exclusion list `(file, line_range, topic)` → prevents dupes. Re-scope bot
@@ -135,10 +136,14 @@ On findings:
 - Agent verdicts override static reasoning — drop/revise candidates the results
   refute.
 
-**HARD RULE — logic-bearing findings need empirical proof.** Executable logic →
-drive with adversarial inputs; record PASS/FAIL before Phase 4.
+**HARD RULE — logic-bearing findings need empirical proof.** Executable logic
+(incl. `wk-arch-review` findings) → drive the real implementation or a faithful
+harness with adversarial inputs; record PASS/FAIL before Phase 4. Never compose
+comments from un-run reasoning.
 
-**HARD RULE — check derivation before contradicting a figure.** Refuted but
+**HARD RULE — check derivation before contradicting a figure.** Grep the
+artifact for its derivation rule; read a timing constant's whole comment block
+before replacing it. Refuted but
 derivation unstated → clarity suggestion, not drop. Failing line not in diff →
 environmental.
 
@@ -161,7 +166,8 @@ uncertainty; **`praise:`** non-obvious patterns (generic → body).
 Body: `**{severity}:** {observation}` + optional context/evidence/fix.
 
 **HARD RULE — attribute agent evidence:** "My agent ran `<X>` and found `<Y>`",
-never bare "I verified".
+never bare "I verified" — in inline comments and body. Bare first-person only
+for the human's own posture.
 
 Prefer ` ```suggestion ` fences for concrete replacements on diff lines:
 - Match exact whitespace — verify with `cat -A`.
@@ -170,8 +176,9 @@ Prefer ` ```suggestion ` fences for concrete replacements on diff lines:
 
 ### Dedup and position validation
 
-**HARD RULE — no duplicates.** Check Phase 2 exclusion list. Human dup → skip if
-holds. Bot dup → Phase 3 outcome per
+**HARD RULE — no duplicates** (same file/line range + same concern). Check
+Phase 2 exclusion list. Human dup → skip if holds; reply only with new info or
+evidenced disagreement. Bot dup → Phase 3 outcome per
 [`references/bot-finding-validation.md`](references/bot-finding-validation.md);
 Confirmed → silent skip.
 
@@ -190,7 +197,8 @@ user approval.
 ## Phase 5: Post Review
 
 **HARD RULE:** Auto-create pending review after Phase 4 unless user said "don't
-post"/"wait". Never submit/approve/request-changes. Omit `event` entirely (422
+post"/"wait"/"let me review first". User submits from GitHub UI; never call
+submit/approve/request-changes. Omit `event` entirely (422
 on `"PENDING"`).
 
 ### Recheck reviewed head
@@ -227,18 +235,22 @@ comments return `line: null`; rebuild from scratch.
 
 Live inline comment (`POST /pulls/{n}/comments`) or thread reply
 (`/comments/{id}/replies`). Never second pending review for one finding.
-**HARD RULE — distinct findings anchor at their own line.**
+**HARD RULE — distinct findings anchor at their own line** — own comment on
+the subject's diff line, never buried in a reply on an adjacent thread. Replies
+only continue the *same* finding.
 
 ### Review body
 
 **HARD RULE — verdict-first opener.** `LGTM 🚀` (clean), `LGTM, one minor nit`,
-or `Approving with concerns — <risk>`. Ban praise-adjective openers. Body must
+or `Approving with concerns — <risk>`. Ban praise-adjective openers.
+**HARD RULE — LGTM is one line:** no concerns → one-line body plus footer. Body must
 not restate inline findings. Apply `wk-gh` footer. Never emit: process
 meta-commentary, diff narration, bot re-narration.
 
 ### After posting
 
-**HARD RULE — open URL on every create/recreate.** Trust `path`+`body`, not
+**HARD RULE — open URL on every create/recreate**, whether or not the POST
+response parsed; parse failure → re-query for `html_url`, never drop the open. Trust `path`+`body`, not
 `line` for verification.
 
 > "Pending review with N comments — {html_url}. Submit on GitHub when ready."
@@ -250,3 +262,7 @@ meta-commentary, diff narration, bot re-narration.
 - `wk-adversarial-review` available (owns investigation + playground)
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn pr-review`.

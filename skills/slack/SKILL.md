@@ -25,7 +25,7 @@ license: MIT
 group: communication
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171109"
+  version: "2026.10.09-005632"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -259,3 +259,7 @@ structure, link format, or privacy filter inline — invoke the spec instead.
 - User handle (from `slack_read_user_profile` if only a name is given)
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn slack`.

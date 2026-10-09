@@ -28,7 +28,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171057"
+  version: "2026.10.09-005632"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -40,289 +40,99 @@ metadata:
 
 # PR Takeover
 
-Take over an in-flight PR from another author — understand work done so far, join
-as co-author, drive to completion via full `wk-workflow`.
+Take over an in-flight PR — understand existing work, join as co-author, drive to
+completion via `wk-workflow`.
 
 ## Hard Rules
 
-0. **Never approve your own work.** Both user and original author are PR authors
-   after takeover → user must not self-approve. CI requires approval → request a
-   peer review.
-1. **Preserve co-authorship.** Every new commit adds both original author and
-   user via `Co-Authored-By` trailers.
-2. **Scope explosion → stacked PR.** Takeover changes exceed ~30% of original
-   PR's line-count diff → auto-switch to `stack` mode for new work; do not expand
-   the existing PR.
-3. **Full workflow always runs.** `wk-workflow` governs all implementation work
-   regardless of mode. Skipping phases not permitted.
-4. **PR description reflects new reality.** After any substantive change → update
-   PR body to combined work (original scope + takeover additions). Preserve all
-   metadata lines per `skills/pr/references/pr-description-metadata.md`.
-
----
+0. **Never self-approve.** Both authors are PR authors post-takeover → request peer review.
+1. **Co-authorship on every commit** via `Co-Authored-By` trailers.
+2. **Scope explosion → stack.** Takeover changes >30% of original diff → auto-switch to stack mode.
+3. **Full `wk-workflow` always runs.** No phase skipping.
+4. **PR description reflects combined work.** Preserve metadata per `skills/pr/references/pr-description-metadata.md`.
 
 ## Step 1: Parse Arguments
 
-Accept: `wk-pr-takeover <pr-number-or-url> [--stack]`
+`wk-pr-takeover <pr-number-or-url> [--stack]`
 
-- `--stack` present → **stack mode** (create new branch on top).
-- Else → **overwrite mode** (continue on existing branch).
-- No PR argument → infer target from current branch before prompting; fall
-  through to prompt only when none found:
-
-  ```bash
-  PR_NUMBER=$(gh pr view --json number --jq .number 2>/dev/null)
-  ```
-
-  - PR found → confirm: "Taking over PR #N (<title>) on the current branch —
-    continue?"
-  - No PR resolves → ask "Which PR are you taking over? Provide a number or URL."
-- Extract `PR_NUMBER` from URL/argument: `echo "$PR_URL" | grep -oE '[0-9]+$'`
-
----
+- `--stack` → stack mode; else overwrite mode.
+- No argument → infer from current branch: `gh pr view --json number --jq .number 2>/dev/null`. Found → confirm; not found → ask.
 
 ## Step 2: Fetch PR Context
 
-Pull full metadata: `gh pr view "$PR_NUMBER" --json number,title,body,headRefName,baseRefName,author,state,isDraft,reviews,comments`. Fetch review + timeline comments via `gh api` (pulls comments + issues comments). Read `gh pr diff "$PR_NUMBER" | head -500`.
-
-Summarize: original author's goal, code written, review feedback, unresolved threads.
-
----
+`gh pr view "$PR_NUMBER" --json number,title,body,headRefName,baseRefName,author,state,isDraft,reviews,comments`
+plus `gh api` for review/timeline comments, `gh pr diff "$PR_NUMBER" | head -500`.
+Summarize: goal, code written, review feedback, unresolved threads.
 
 ## Step 3: Check Out the Branch
 
-### Revive precheck — closed PR whose base was merged + deleted
+### Revive precheck — closed PR with deleted base
 
-- A PR auto-closes when its base branch is squash-merged into the default branch
-  and deleted. GitHub then forbids **both** reopen and base-retarget on it.
-- Detect before any checkout:
-
-  ```bash
-  gh pr view "$PR_NUMBER" --json state,baseRefName
-  git ls-remote --heads origin "$BASE_BRANCH"   # empty output = base ref gone
-  ```
-
-- `state: CLOSED` + empty `ls-remote` → do NOT `gh pr reopen` (returns
-  `Could not open the pull request`) or `gh pr edit --base` (returns
-  `GraphQL: Cannot change the base branch of a closed pull request`). There is
-  no in-place revive.
-- Recovery — re-parent only the PR's own commits onto the default branch, then
-  supersede with a fresh PR:
-
-  ```bash
-  git rebase --onto "origin/$DEFAULT_BRANCH" "$LAST_BASE_COMMIT" HEAD
-  git push --force-with-lease
-  ```
-
-  Open a NEW PR to `$DEFAULT_BRANCH`; cross-link both ways with a lifecycle
-  comment noting it supersedes the closed one. Reuse prior adversarial-review
-  clearance only after recording a fresh clearance for the rebased HEAD.
+`state: CLOSED` + `git ls-remote --heads origin "$BASE_BRANCH"` empty → no in-place revive. Recovery: rebase onto default branch, open new PR, cross-link.
 
 ### Overwrite Mode (default)
 
-```bash
-gh pr checkout "$PR_NUMBER"
-```
-
-Verify branch is clean and up to date with its base:
-
-```bash
-git status --short
-git log --oneline "$(git merge-base HEAD origin/$(gh pr view $PR_NUMBER --json baseRefName -q .baseRefName))..HEAD"
-```
-
-Branch has merge conflicts with base → run `wk-pr-update` before proceeding.
+`gh pr checkout "$PR_NUMBER"` → verify clean + up to date. Conflicts → `wk-pr-update`.
 
 ### Stack Mode
-
-Compute new branch name from existing head + suffix:
 
 ```bash
 HEAD_BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName -q .headRefName)
-NEW_BRANCH="${HEAD_BRANCH}-takeover"
 git fetch origin "$HEAD_BRANCH"
-git checkout -b "$NEW_BRANCH" "origin/$HEAD_BRANCH"
+git checkout -b "${HEAD_BRANCH}-takeover" "origin/$HEAD_BRANCH"
 ```
 
-New PR targets `$HEAD_BRANCH` as base. Stacked-on-draft rule: `$HEAD_BRANCH` is
-itself an unapproved draft PR → surface this choice before continuing:
+Stacked on draft → surface options: (A) stack anyway, (B) retarget to default (auto-mode default), (C) cancel.
 
-> "The base branch `{HEAD_BRANCH}` is still a draft PR. Options:
-> (A) Stack here anyway — reviewer must merge both in sequence.
-> (B) Retarget to the repo default branch — combines both changesets.
-> (C) Cancel."
->
-> Auto-mode default: **B** (retarget to default branch).
+## Step 4: Orient to Existing Work
 
----
-
-## Step 4: Orient to the Existing Work
-
-Read all files touched by existing commits:
-
-```bash
-git diff --name-only "$(git merge-base HEAD "origin/$(gh pr view $PR_NUMBER --json baseRefName -q .baseRefName)")"
-```
-
-Read each changed file. Understand:
-- Pattern/convention being followed
-- Incomplete sections (TODO, FIXME, `raise NotImplementedError`)
-- Tests exist? pass?
-
-Run the test suite to establish a baseline. See [test-runner examples](references/test-runner-examples.md). Record passing/failing/skipped; pre-existing failures are documented, not owned.
-
-**Prose/config-dominated diff** → substitute a gate-preservation audit: run
-pre-commit hooks as baseline, diff touched files against base, verify all
-load-bearing rules survived compression.
-
----
+Read all touched files. Identify: patterns, incomplete sections (TODO/FIXME),
+test coverage. Run test suite as baseline per [test-runner examples](references/test-runner-examples.md).
+Prose/config diff → gate-preservation audit instead.
 
 ## Step 5: Establish Co-Authorship
 
-Extract original author from existing commits: `git log --format="%an <%ae>" $(git merge-base HEAD origin/$BASE)..HEAD | sort -u`. Sole author is the user → skip co-authorship entirely.
+`git log --format="%an <%ae>" $(git merge-base HEAD origin/$BASE)..HEAD | sort -u`
+Sole author is user → skip. Otherwise: `export WK_CO_AUTHOR="$ORIGINAL_AUTHOR"`.
 
-Otherwise store as `$ORIGINAL_AUTHOR` and `export WK_CO_AUTHOR="$ORIGINAL_AUTHOR"` — every commit carries `Co-Authored-By: $ORIGINAL_AUTHOR` via `wk-commit`.
+## Step 6: Plan Remaining Work
 
----
-
-## Step 6: Plan the Remaining Work
-
-From Step 4's orientation, produce a task list:
-
-1. Unresolved review feedback → items to implement
-2. Incomplete code sections → items to finish
-3. Missing tests → items to add
-4. Pre-existing failures → flag as pre-existing; include remediation if in scope
-
-Estimated work > 30% of original diff line-count AND in **overwrite mode** →
-auto-switch to **stack mode** (compare `gh pr diff | grep -c '^[+-]'` against
-estimate; re-run Step 3 in stack mode).
-
----
+Task list from Step 4: unresolved feedback, incomplete code, missing tests,
+pre-existing failures. >30% scope in overwrite mode → switch to stack mode.
 
 ## Step 7: Run `wk-workflow`
 
-Invoke the full `wk-workflow` as if this were new work:
+`Skill("wk-workflow")` — Plan from existing work, implement with `$WK_CO_AUTHOR`,
+test both original + new code, adversarial review covers full diff, self-review
+posts comments only (never approve), retro with `wk-learn pr-takeover`.
 
-```
-Skill("wk-workflow")
-```
+## Step 8: Update or Create PR
 
-Key phase adaptations:
+**Overwrite:** `gh pr edit` with combined description + takeover note; `git push origin HEAD`.
 
-| Phase | Adaptation |
-|-------|-----------|
-| **Plan** | Start from the existing work; fill gaps identified in Step 6 |
-| **Implement** | Commit incrementally via `wk-commit` with `$WK_CO_AUTHOR` set |
-| **Test** | Cover both original code and new additions; pre-existing failures must be flagged explicitly |
-| **Adversarial Review** | Review considers the full diff (original + takeover), not just new changes |
-| **PR** | See Step 8 for mode-specific PR handling |
-| **Self-Review** | User posts self-review; user MUST NOT approve the PR |
-| **Retro** | Capture learnings with `wk-learn pr-takeover` at session end |
-
----
-
-## Step 8: Update or Create the PR
-
-### Overwrite Mode
-
-PR already exists. Update description to reflect combined work:
-
-```bash
-gh pr edit "$PR_NUMBER" --body "$(cat <<'EOF'
-<combined description>
-
-> **Note:** This PR has been taken over by @{user}. Original work by @{original_author}.
-> Co-authored commits from this point forward carry `Co-Authored-By` trailers.
-
-EOF
-)"
-```
-
-Push ungated — the completion gate owns the single adversarial review before merge:
-
-```bash
-git push origin HEAD
-```
-
-### Stack Mode
-
-Create a new PR targeting the original head branch as base:
-
-```bash
-gh pr create \
-  --title "[Takeover] <original title> — continued" \
-  --base "$HEAD_BRANCH" \
-  --draft \
-  --body "$(cat <<'EOF'
-Stacked on #<PR_NUMBER> (@{original_author}'s PR).
-
-## What this PR adds
-<summary of takeover work>
-
-## Relationship to base PR
-This PR continues work from #<PR_NUMBER>. It should be merged after the base PR
-is merged. Both authors own the combined changeset.
-
-EOF
-)"
-```
-
-Update the original PR description to note the stacked continuation:
-
-```bash
-gh pr edit "$PR_NUMBER" --body "$(existing_body)
-
----
-> **Continued in:** #<new_pr_number> (stacked, @{user})"
-```
-
----
+**Stack:** `gh pr create --draft --base "$HEAD_BRANCH"` with stacked-on reference;
+update original PR to note continuation.
 
 ## Step 9: Self-Review
 
-Invoke `wk-self-review` → post inline comments documenting decisions and
-non-obvious choices added during takeover:
-
-```
-Skill("wk-self-review")
-```
-
-**Hard rule:** Do not submit an approving review. Post comments only.
-
----
+`Skill("wk-self-review")` — post comments only, never approve.
 
 ## Step 10: Handoff Summary
 
-Post a comment on the PR summarizing the takeover:
-
-```bash
-gh pr comment "$PR_NUMBER" --body "$(cat <<'EOF'
-**Takeover summary** (@{user} → continuing from @{original_author})
-
-- Mode: overwrite | stack (circle one)
-- Pre-existing failures at checkout: <list or "none">
-- Work completed in this session: <bullet list>
-- Unresolved items deferred: <bullet list or "none">
-- Stacked PR (if created): #<number> or N/A
-
-All new commits carry `Co-Authored-By: @{original_author}`.
-EOF
-)"
-```
-
-Build the `Co-Authored-By:` email per wk-commit's HARD RULE: the current user's
-address is `$WK_SKILLS_EMPLOYEE_EMAIL` (unset → STOP); `@{original_author}` uses
-their `<id>+<login>@users.noreply.github.com` form. Never guess `<login>@<domain>`.
-
----
+Post PR comment: mode, pre-existing failures, work completed, deferred items,
+stacked PR reference. `Co-Authored-By` email per wk-commit's HARD RULE: user =
+`$WK_SKILLS_EMPLOYEE_EMAIL` (unset → STOP); original author = `<id>+<login>@users.noreply.github.com` (never guess `<login>@<domain>`).
 
 ## Quick Reference
 
 | Command | Behavior |
 |---------|----------|
-| `/wk-pr-takeover 123` | Overwrite mode — check out PR #NNN, continue on existing branch |
-| `/wk-pr-takeover 123 --stack` | Stack mode — create new branch on top of PR #NNN |
-| `/wk-pr-takeover <url>` | Accept full PR URL, extract number automatically |
+| `/wk-pr-takeover 123` | Overwrite mode |
+| `/wk-pr-takeover 123 --stack` | Stack mode |
+| `/wk-pr-takeover <url>` | Extract PR number from URL |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn pr-takeover`.
