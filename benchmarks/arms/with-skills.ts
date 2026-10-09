@@ -7,8 +7,11 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { PromptVars, PromptMessage } from '../types.ts';
 
-const SKILLS_DIR = join(import.meta.dirname, '..', '..', 'skills');
-const AGENTS_MD = join(import.meta.dirname, '..', '..', 'AGENTS.md');
+// SKILLS_ROOT points at another checkout (e.g. a `git archive` of an older commit)
+// to compare skill versions with the same graders.
+const ROOT = process.env.SKILLS_ROOT || join(import.meta.dirname, '..', '..');
+const SKILLS_DIR = join(ROOT, 'skills');
+const AGENTS_MD = join(ROOT, 'AGENTS.md');
 
 /** Map probe → skill whose principles it tests. */
 const PROBE_SKILL: Record<string, string> = {

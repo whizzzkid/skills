@@ -47,6 +47,14 @@ npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig.yaml --repeat 5
 npx promptfoo@0.124.1 view
 ```
 
+Compare skill versions with the same graders by pointing the with-skills arm at
+another tree:
+
+```bash
+git archive <old-sha> skills AGENTS.md | tar -x -C /tmp/old-skills
+SKILLS_ROOT=/tmp/old-skills npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig.yaml -o old.json
+```
+
 ## Probes
 
 | Probe | Tests | Pass signal |
