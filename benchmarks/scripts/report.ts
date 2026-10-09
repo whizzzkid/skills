@@ -70,21 +70,23 @@ function calibrate(path: string): number {
 }
 
 function compare(oldPath: string, newPath: string): number {
-  const o = load(oldPath), n = load(newPath);
+  const o = load(oldPath), n_ = load(newPath);
   console.log(`${'probe'.padEnd(28)} ${'baseline'.padStart(9)} ${'old'.padStart(7)} ${'new'.padStart(7)}  delta  floor`);
   const regressed: string[] = [];
-  for (const probe of probesOf(o, n)) {
-    const bo = get(o, BASELINE, probe), bn = get(n, BASELINE, probe);
-    const so = rate(get(o, WITH_SKILLS, probe)), sn = rate(get(n, WITH_SKILLS, probe));
+  for (const probe of probesOf(o, n_)) {
+    const bo = get(o, BASELINE, probe), bn = get(n_, BASELINE, probe);
+    const so = rate(get(o, WITH_SKILLS, probe)), sn = rate(get(n_, WITH_SKILLS, probe));
     const spread = rate(bo) !== undefined && rate(bn) !== undefined ? Math.abs(rate(bo)! - rate(bn)!) : 0;
-    const floor = Math.max(spread, MIN_NOISE_FLOOR);
+    // A single flipped sample (1/n) is never evidence on its own.
+    const n = Math.min(get(o, WITH_SKILLS, probe)?.total ?? 1, get(n_, WITH_SKILLS, probe)?.total ?? 1);
+    const floor = Math.max(spread, MIN_NOISE_FLOOR, 1 / n);
     const delta = so !== undefined && sn !== undefined ? sn - so : undefined;
     const flag = delta !== undefined && delta < -floor ? '  ⚠ REGRESSION' : '';
     if (flag) regressed.push(probe);
     const pooledBaseline = fmt(bo && bn ? { pass: bo.pass + bn.pass, total: bo.total + bn.total } : bo ?? bn);
     console.log(
       `${probe.padEnd(28)} ${pooledBaseline.padStart(9)} ${fmt(get(o, WITH_SKILLS, probe)).padStart(7)} ` +
-      `${fmt(get(n, WITH_SKILLS, probe)).padStart(7)}  ${delta === undefined ? '  -  ' : (delta >= 0 ? '+' : '') + delta.toFixed(2)}  ${floor.toFixed(2)}${flag}`,
+      `${fmt(get(n_, WITH_SKILLS, probe)).padStart(7)}  ${delta === undefined ? '  -  ' : (delta >= 0 ? '+' : '') + delta.toFixed(2)}  ${floor.toFixed(2)}${flag}`,
     );
   }
   console.log(`regressed: ${regressed.join(', ') || 'none'}`);

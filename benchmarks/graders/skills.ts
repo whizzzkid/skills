@@ -125,7 +125,12 @@ const CHECKS: ProbeCheckers = {
 
   /** Workflow must follow phase ordering. */
   workflow_phases(output: string) {
-    const t = lower(output);
+    // Order by section headings, not first mention: a Plan section that says
+    // "run tests" must not read as Test-before-Implement.
+    const headings = output.split('\n')
+      .filter(l => /^\s*(#{1,6}\s|\*\*|phase\s*\d|\d+[.)]\s)/i.test(l))
+      .join('\n').toLowerCase();
+    const t = headings.length ? headings : lower(output);
     const phases = ['plan', 'implement', 'test', 'review'];
     const positions = phases.map(p => t.indexOf(p)).filter(i => i >= 0);
     if (positions.length < 2) return { pass: true, reason: 'Fewer than 2 phases mentioned (N/A).' };

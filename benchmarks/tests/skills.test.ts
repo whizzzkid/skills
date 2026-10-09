@@ -147,6 +147,17 @@ describe('workflow_phases', () => {
     const r = check('workflow_phases', '1. Review the code\n2. Implement the feature\n3. Plan the next steps');
     assert.equal(r.pass, false);
   });
+
+  it('orders by headings, not first mention in prose', () => {
+    const r = check('workflow_phases',
+      '## Phase 1: Plan\nList the tests to write and who will review.\n\n## Phase 2: Implement\nBuild it.\n\n## Phase 3: Test\nRun them.\n\n## Phase 4: Review\nOpen the PR.');
+    assert.equal(r.pass, true);
+  });
+
+  it('still fails when headings are out of order', () => {
+    const r = check('workflow_phases', '## Phase 1: Test\nx\n## Phase 2: Plan\ny\n## Phase 3: Implement\nz');
+    assert.equal(r.pass, false);
+  });
 });
 
 describe('workflow_version_pins', () => {
