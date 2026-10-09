@@ -39,6 +39,8 @@ pre-commit:
       run: .githooks/check-model-routing.sh
     check-skill-principles:
       run: .githooks/check-skill-principles.sh
+    check-hard-rules:
+      run: .githooks/check-hard-rules.sh
 
 pre-push:
   commands:

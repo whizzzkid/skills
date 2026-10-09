@@ -3,7 +3,7 @@
 #
 # Pre-commit/pre-push gate: if any SKILL.md is staged, run the grader tests
 # to ensure the heuristic checkers still pass. Does NOT call the LLM — only
-# exercises the deterministic grader logic (tests/principles.test.ts, tests/loc.test.ts).
+# exercises the deterministic grader logic (tests/principles.test.ts, tests/loc.test.ts, tests/skills.test.ts).
 #
 # The full promptfoo eval (which calls the LLM) runs separately via:
 #   npx promptfoo@0.124.1 eval -c benchmarks/promptfooconfig.yaml
@@ -34,6 +34,9 @@ node --experimental-strip-types "$BENCH_DIR/tests/principles.test.ts" 2>&1 \
   | tail -5 >&2
 
 node --experimental-strip-types "$BENCH_DIR/tests/loc.test.ts" 2>&1 \
+  | tail -5 >&2
+
+node --experimental-strip-types "$BENCH_DIR/tests/skills.test.ts" 2>&1 \
   | tail -5 >&2
 
 echo "✓ Principle grader tests passed" >&2

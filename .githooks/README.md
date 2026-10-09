@@ -196,6 +196,21 @@ content.
 
 Behavioral coverage lives in `.githooks/test-model-routing.bats`.
 
+## check-hard-rules.sh — HARD RULE non-regression guard
+
+Pre-commit hook that blocks any commit lowering a skill's `HARD RULE` count,
+summed across `SKILL.md` + `references/*.md`, staged tree vs `HEAD`. De-bloat
+passes compress wording; stripping the label silently demotes a load-bearing
+rule. Relocating a rule into `references/` keeps the count, so extraction is
+unaffected. A deliberate merge of two rules (both constraints kept) passes with
+`HARD_RULE_MERGE_OK=<skill>[,<skill>]`.
+
+## check-skill-principles.sh — eval grader gate
+
+Pre-commit and pre-push hook that runs the deterministic grader unit tests in
+`benchmarks/tests/` whenever a `SKILL.md` or `benchmarks/` file is staged. No
+model calls. See [`benchmarks/README.md`](../benchmarks/README.md).
+
 ## scrub-staged.sh — identifier leakage guard
 
 Pre-commit hook that blocks any staged diff containing:
