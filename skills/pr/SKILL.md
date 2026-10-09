@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.09-213616"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -59,6 +59,10 @@ Create and manage GitHub PRs: draft mode, stacking, and a post-creation workflow
      delta-scoped review.
    - **No-ask on findings:** incorporate immediately — fix blockers, fold improvements, commit via `wk-commit`. Pause
      only for genuinely ambiguous design decisions requiring user input.
+   - **Report gates by source.** Telling the user what stands before merge → list repo-enforced gates (required
+     checks, branch protection, CODEOWNERS — read them, never assume) apart from skill conventions like this rule.
+     Label a convention "skill convention"; never call it a merge blocker or "needed before merge" (the repo does not
+     enforce it).
 3. **Resolve the true base before `gh pr create`.** Run Step 1's merge-base detection unconditionally. Do not call
    `gh pr create` until `$BEST_BASE` is computed this session. `--base` takes `$BEST_BASE` only — never hand-typed.
    `$BEST_BASE != $DEFAULT_BRANCH` → surface the A/B/C prompt first.

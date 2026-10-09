@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.09-213616`
 
 ## Invocation
 
@@ -43,6 +43,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **Merge gates are reported by source** — repo-enforced gates (required checks, branch protection, CODEOWNERS) are
+  listed apart from skill conventions; a convention is labelled as one, never called a merge blocker.
 - **HARD RULE — always draft first:** PRs are always created with `--draft`. Never create a non-draft PR
   unless the user explicitly requests it.
 - **Adversarial review gates the merge, not the publish:** `gh pr create`, pushes, and `gh pr ready` are
