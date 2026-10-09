@@ -26,6 +26,10 @@ gh api repos/{owner}/{repo}/pulls/{n}/reviews --method POST --input <file>
 
 Omit `event` entirely (422 on `"PENDING"`).
 
+Run that POST as its own Bash call — no chained footer gate, payload build, or `open`. A compound call that fails
+classifier review takes every chained step down with it; an isolated POST is cheap to retry once and simple for the
+user to re-authorize. Hook input-rewrite denial → [`wk-env`](../../env/README.md) Step 3.6 (one retry, then hand off).
+
 ## Append to existing pending review
 
 GitHub allows no append — delete review, recreate with full comment set. Pending comments return `line: null`; rebuild

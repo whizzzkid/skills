@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.09-212907"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -140,6 +140,11 @@ submits from GitHub UI; never call submit/approve/request-changes. Omit `event` 
 
 Recheck the reviewed head before each POST, write the payload with the Write tool, append by delete+recreate, and post
 follow-ups live: [references/posting-pending-review.md](references/posting-pending-review.md).
+
+**HARD RULE — the POST is its own single Bash call.** Footer build, payload (Write tool), footer gate, and `open` each
+run as separate calls; never chain them with the `gh api ... --method POST`. Denied with `a hook changed this call's
+input` → retry the identical POST once ([`wk-env`](../env/README.md) Step 3.6); denied again → stop, report the payload
+path, ask the user to re-authorize or post it. Never a third attempt.
 
 **HARD RULE — distinct findings anchor at their own line** — own comment on the subject's diff line, never buried in a
 reply on an adjacent thread. Replies only continue the *same* finding.

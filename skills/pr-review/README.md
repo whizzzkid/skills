@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.09-212907`
 
 ## Invocation
 
@@ -33,6 +33,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **The pending-review POST is its own Bash call** — payload via the Write tool, footer gate and `open` as separate
+  calls; a hook input-rewrite denial gets one retry, then a hand-off with the payload path.
 - **Investigation is delegated, and never re-run:** Phase 3 consumes an existing clearance record when one covers
   this HEAD, else dispatches [`wk-adversarial-review`](../adversarial-review/README.md) once,
   which owns the mechanical sweep catalog, the fresh adversarial subagent, and all `.review-playground/`
