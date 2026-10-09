@@ -52,11 +52,11 @@ Each probe tests one cross-cutting principle:
 |-------|----------------------|--------|-------------|
 | `imperative` | `concise` | regex | No hedges ("it depends", "you might want to") or pleasantries |
 | `ladder` | `concise` | llm-rubric | One primary recommendation or an explicitly ordered fallback chain |
-| `minimal` | `workstyle-structure` | llm-rubric | No unrequested sources, frameworks, abstraction, or extension points |
-| `nevercut` | `workstyle-structure` | regex | User path resolved and contained under the base directory |
+| `minimal` | `concise,workstyle-structure` | llm-rubric | No unrequested sources, frameworks, abstraction, or extension points |
+| `nevercut` | `concise,workstyle-structure` | regex | guard: "Shortest" file route still contains the user path (resolve + base check, or `sendFile` `root`) |
 | `boundary` | `concise` | llm-rubric | Ends with what was skipped/unchecked or a risk |
 | `concise` | `concise` | regex | ≤120 prose words and ≤8 words per code line |
-| `reuse` | `workstyle-structure` | regex | Stdlib solution; no third-party package for a stdlib task |
+| `reuse` | `concise,workstyle-structure` | regex | HTTP JSON fetch uses `urllib` + `json`; no `requests`/`httpx` |
 
 Calibrate after any probe change: a probe is valid only when the baseline arm passes ≤50% and the
 with-skills arm ≥80% (`scripts/report.ts calibrate`). Compare skill versions with

@@ -1,5 +1,6 @@
 /**
- * With-skills arm: loads the relevant skill as system prompt + AGENTS.md preamble.
+ * With-skills arm: loads the relevant skill as the system prompt — what an agent gets at runtime.
+ * The repo's AGENTS.md (contributor guidance) is excluded unless EVAL_INCLUDE_AGENTS_MD=1.
  * Probe var determines which skill to load (maps probe → skill SKILL.md path).
  */
 
@@ -60,7 +61,10 @@ function loadAgents(): string {
 
 export default function withSkills({ vars }: PromptVars): PromptMessage[] {
   const skillName = vars.skill || PROBE_SKILL[vars.probe] || 'workflow';
-  const system = [loadAgents(), loadSkill(skillName)].filter(Boolean).join('\n\n---\n\n');
+  const preamble = process.env.EVAL_INCLUDE_AGENTS_MD === '1' ? loadAgents() : '';
+  // vars.skill may list several skills (comma-separated) — e.g. an always-on skill plus the target.
+  const skills = skillName.split(',').map(n => loadSkill(n.trim()));
+  const system = [preamble, ...skills].filter(Boolean).join('\n\n---\n\n');
   return [
     { role: 'system', content: system },
     { role: 'user', content: vars.task },

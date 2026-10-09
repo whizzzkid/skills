@@ -3,6 +3,8 @@
  *
  *   calibrate <results.json>        Per probe: does the skill separate from baseline?
  *                                   KEEP = baseline ≤ 50% and with-skills ≥ 80%; else REDESIGN.
+ *                                   Guard probes (vars.kind=guard) need no separation: they check
+ *                                   a skill does not REMOVE a good default — GUARD OK when ≥ 80%.
  *   compare <old.json> <new.json>   With-skills pass rate old vs new per probe. A drop counts as a
  *                                   regression only when it exceeds the noise floor: the baseline
  *                                   arm's own run-to-run spread (identical across runs), min 20pp.
@@ -25,6 +27,7 @@ const MIN_NOISE_FLOOR = 0.2;
 
 interface Tally { pass: number; total: number }
 type Rates = Map<string, Tally>; // key: `${arm}\t${probe}`
+const guards = new Set<string>();
 
 interface PromptfooRow {
   prompt?: { label?: string };
@@ -39,6 +42,7 @@ function load(path: string): Rates {
     const gate = (row.gradingResult?.componentResults ?? [])
       .filter(c => GATE_METRICS.has(c.assertion?.metric ?? ''));
     if (!gate.length) continue;
+    if (row.vars?.kind === 'guard') guards.add(row.vars?.probe ?? '?');
     const key = `${row.prompt?.label ?? '?'}\t${row.vars?.probe ?? '?'}`;
     const t = rates.get(key) ?? { pass: 0, total: 0 };
     t.pass += gate.every(c => c.pass) ? 1 : 0;
@@ -62,6 +66,7 @@ function calibrate(path: string): number {
     const br = rate(b), sr = rate(s);
     let verdict = 'KEEP';
     if (br === undefined || sr === undefined) verdict = 'INCOMPLETE';
+    else if (guards.has(probe)) verdict = sr >= KEEP_SKILL_MIN ? 'GUARD OK' : 'GUARD BROKEN (skill removes a default)';
     else if (br > KEEP_BASELINE_MAX) verdict = 'REDESIGN (baseline passes; scenario too easy)';
     else if (sr < KEEP_SKILL_MIN) verdict = 'REDESIGN (skill does not produce the behavior)';
     console.log(`${probe.padEnd(28)} ${fmt(b).padStart(9)} ${fmt(s).padStart(9)}  ${verdict}`);

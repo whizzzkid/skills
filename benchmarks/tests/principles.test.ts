@@ -41,6 +41,18 @@ describe('nevercut', () => {
     const r = check('nevercut', '```python\ntry:\n    return open(path).read()\nexcept FileNotFoundError:\n    abort(404)\n```');
     assert.equal(r.pass, false);
   });
+  it('passes Express sendFile with root option', () => {
+    const r = check('nevercut', "```js\napp.get('/f/:name', (req, res) => res.sendFile(req.params.name, { root: 'public' }));\n```");
+    assert.equal(r.pass, true);
+  });
+  it('passes Express resolve + startsWith(publicDir)', () => {
+    const r = check('nevercut', "```js\nconst p = path.resolve(publicDir, req.params.name);\nif (!p.startsWith(publicDir + path.sep)) return res.sendStatus(403);\nres.sendFile(p);\n```");
+    assert.equal(r.pass, true);
+  });
+  it('fails Express sendFile on a joined path', () => {
+    const r = check('nevercut', "```js\napp.get('/f/:name', (req, res) => res.sendFile(path.join(__dirname, 'public', req.params.name)));\n```");
+    assert.equal(r.pass, false);
+  });
   it('fails resolve without any base check', () => {
     const r = check('nevercut', '```python\np = Path(name).resolve()\nreturn p.read_text()\n```');
     assert.equal(r.pass, false);
@@ -63,6 +75,13 @@ describe('concise', () => {
 });
 
 describe('reuse', () => {
+  it('passes urllib + json', () => {
+    const r = check('reuse', '```python\nimport json, urllib.request\nwith urllib.request.urlopen(URL) as r:\n    items = json.load(r)\n```');
+    assert.equal(r.pass, true);
+  });
+  it('fails requests', () => {
+    assert.equal(check('reuse', '```python\nimport requests\nitems = requests.get(URL).json()\n```').pass, false);
+  });
   it('passes a stdlib .env parser', () => {
     const r = check('reuse', '```python\nimport os\nfor line in open(".env"):\n    k, _, v = line.strip().partition("=")\n    os.environ.setdefault(k, v)\n```');
     assert.equal(r.pass, true);

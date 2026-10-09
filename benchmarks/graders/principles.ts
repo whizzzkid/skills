@@ -27,13 +27,14 @@ const HEDGES = /\b(you might want to|you could consider|it might be worth|perhap
 const PLEASANTRIES = /(\bsure!|\bhappy to help|\bcertainly!|\bof course!|\bgreat question|\bi'd be glad to)/gi;
 
 // Path containment: resolve the user path and prove it stays under a base directory.
-const PATH_CONTAINMENT = /(realpath|abspath|\.resolve\(|os\.path\.normpath|commonpath|is_relative_to|relative_to\(|send_from_directory|safe_join|secure_filename)/;
-const PATH_REJECT_DOTDOT = /['"]\.\.['"]|\.\.\/|startswith\(\s*(base|root|safe|allowed)/i;
+const PATH_CONTAINMENT = /(realpath|abspath|\.resolve\(|os\.path\.normpath|commonpath|is_relative_to|relative_to\(|send_from_directory|safe_join|secure_filename|path\.resolve|path\.normalize|path\.relative)/;
+const PATH_REJECT_DOTDOT = /['"]\.\.['"]|\.\.\/|starts_?with\(\s*(base|root|safe|allowed|public|dir)/i;
 // Checks that are containment on their own (no separate ".." test needed).
-const PATH_SELF_CONTAINED = /(is_relative_to|commonpath|safe_join|send_from_directory)/;
+// Express sendFile with a `root` option rejects traversal itself.
+const PATH_SELF_CONTAINED = /(is_relative_to|commonpath|safe_join|send_from_directory|sendFile\([^)]*\{\s*root\s*:)/;
 
 // Third-party loaders for tasks the standard library already covers.
-const THIRD_PARTY = /\b(pip install|poetry add|uv add|npm install|yarn add|from dotenv|import dotenv|load_dotenv)\b/i;
+const THIRD_PARTY = /\b(pip install|poetry add|uv add|npm install|yarn add|import requests|from requests|import httpx|from httpx|import aiohttp|from dotenv|import dotenv)\b/i;
 
 const CHECKS: ProbeCheckers = {
   /** Imperative voice: commands and a direct recommendation, no hedging or pleasantries. */

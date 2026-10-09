@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-014345"
+  version: "2026.10.09-165052"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -33,6 +33,25 @@ metadata:
 # Workstyle — Layout & Structure
 
 Enforces code layout and structural quality for every function body, branch, and file the agent writes. Part of the `wk-workstyle` family. **Project settings are authoritative — this skill fills gaps only, never overrides.** When a linter/formatter config governs a rule below, that config wins; see `wk-workstyle` Step 0 for the project-style-authority probe.
+
+## HARD RULE — build the smallest complete change
+
+Before writing code, state the ask in one line — `Building: <exactly what was asked>. Skipping: <extras>.` —
+then build only that. Then take the first option that fully works:
+
+1. Not asked for → don't build it. Name what you skipped in one line.
+2. Existing helper, component, or pattern in this codebase → reuse it the way callers do.
+3. Standard library or platform feature → use it, even if a popular package exists.
+4. Already-installed dependency → use it. "Installed" means present in a manifest or lockfile you have seen —
+   never assume it. Never add a package for what ~20 lines of stdlib code covers.
+5. Otherwise → the minimum code that works.
+
+- One request, one path: a loader, client, or parser reads one source in one format. Search paths,
+  env-var overrides, merged defaults, version shims, fallbacks, and plugin points are extras → list
+  them on the `Skipping:` line instead of building them.
+- A function beats a class; a class beats a framework. No abstraction for a single caller.
+- **HARD RULE — never cut:** validation at trust boundaries, error handling that prevents data loss,
+  security, accessibility, anything the user asked for.
 
 ## When to Use
 
@@ -57,20 +76,6 @@ Manual: `/wk-workstyle-structure scan` (full working tree) · `/wk-workstyle-str
 - **Imports / requires / uses at the top.** Group and sort:
   standard library first, then third-party, then local. A blank
   line between each group. Never scatter imports mid-file.
-
-### Smallest complete change
-
-Take the first option that fully works:
-
-1. Not needed → skip it; name skipped features/options in one line.
-2. Existing helper, component, or pattern in this codebase → use it the way callers do.
-3. Standard library or platform feature → use it.
-4. Already-installed dependency → use it. Never add a dependency for a few lines.
-5. Otherwise → the minimum code that works.
-
-- No unrequested abstraction, wrapper, option, config, or "for later" code.
-- **HARD RULE — never cut:** validation at trust boundaries, error handling that prevents data loss,
-  security, accessibility, anything the user asked for.
 
 ### Structure
 

@@ -23,7 +23,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-014345"
+  version: "2026.10.09-165052"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -41,6 +41,15 @@ Cut response verbosity. Same information. Fewer words.
 Three modes: **brief** (default), **dense**, **off**.
 
 ---
+
+## HARD RULES — answer shape (every mode)
+
+- **HARD RULE — one recommendation, not a menu.** Asked how to fix or which to pick → lead with the one
+  thing to do. More steps appear only as an ordered fallback ("if that still fails, …"); never parallel
+  options, "layers", or "Option 1/2/3". Name a rejected alternative only with why not.
+- **HARD RULE — close with the gap.** After writing non-trivial code or a fix, the final line names what
+  you skipped or did not verify and any risk the user must know (unhandled inputs, edge cases,
+  assumptions). Not a recap; omit only when nothing was skipped.
 
 ## Activation
 
@@ -92,9 +101,6 @@ per-turn hook reminder carries a THINK-BRIEFLY / THINK-MINIMALLY clause.
 - **No tables for ≤3 items** — write a sentence ("X (foo), Y (bar), Z (baz)"). Tables are for ≥4 row × ≥2 column comparisons.
 - **No section headers for single-section answers.** Headers are for navigation; drop them if nothing to navigate to.
 - **No trailing summary, no recap, no "let me know if".** End on the result.
-- **Close with what you skipped.** After code or a change, end with one line: what you skipped or did
-  not check, and any risk the user must know. Not a recap — omit when nothing was skipped.
-- **Recommend, don't survey.** Weighing options → recommend one; name an alternative only with why not.
 
 Caps surfaced per-turn by `concise-reminder.sh` hook so they stay top of mind despite chatty defaults.
 

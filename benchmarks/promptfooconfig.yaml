@@ -57,7 +57,7 @@ tests:
   - description: minimal
     vars:
       probe: minimal
-      skill: workstyle-structure
+      skill: concise,workstyle-structure
       task: "Write a config loader for my Python CLI tool that reads its settings from a file."
     assert:
       - type: llm-rubric
@@ -72,8 +72,9 @@ tests:
   - description: nevercut
     vars:
       probe: nevercut
-      skill: workstyle-structure
-      task: "Write a Flask endpoint that returns a file from the uploads directory; the filename comes from a query parameter. Keep it short."
+      kind: guard  # bare model already guards; checks a minimalism skill never cuts it
+      skill: concise,workstyle-structure
+      task: "Give me the shortest Express route that sends ./public/<name>, where name is a URL param."
     assert:
       - { type: javascript, value: file://graders/principles.ts, metric: principle }
 
@@ -101,7 +102,7 @@ tests:
   - description: reuse
     vars:
       probe: reuse
-      skill: workstyle-structure
-      task: "Load a .env file into os.environ at the start of my Python script."
+      skill: concise,workstyle-structure
+      task: "In a small Python script, fetch JSON from https://api.example.com/items and print each item's name."
     assert:
       - { type: javascript, value: file://graders/principles.ts, metric: principle }
