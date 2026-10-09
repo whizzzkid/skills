@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.09-202501"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -65,6 +65,16 @@ Extract the **principle** behind a failure → update the skill to prevent the b
   (reference-file-only forbidden). Rename to `.learned.md` only after edit + version bump land. Ownership resolves
   before thoroughness — MUST-FOLD sets depth, not ownership. Blocked target path → extend existing fold, never open a
   competing one.
+
+## Step 0: Eval freshness
+
+```bash
+STAMP="$WK_SKILLS_HOME/benchmarks/results/.last-eval"
+[[ -n "$(find "$STAMP" -mtime -7 2>/dev/null)" ]] && cat "$STAMP" || echo "eval stale or never run"
+```
+
+- Stale or missing → propose `scripts/weekly-eval.sh` once per session (≈400 Claude Code calls); run it only on an
+  explicit yes, then continue the fold either way. Fresh → continue silently.
 
 ## Step 1: Read the Incident Report
 
