@@ -2,7 +2,7 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.10.09-202501`
+**Version:** `2026.10.09-211953`
 
 ## Invocation
 
@@ -48,6 +48,9 @@ flowchart TD
 
 ## Noteworthy
 
+- **De-bloat preservation is verified, never self-reported** — every compression pass gates on the HARD RULE count
+  hook plus a per-rule phrase audit; a repeated section that invokes another skill is a runtime trigger, deleted only
+  when its replacement ships in the same commit.
 - **HARD RULE: [`wk-learn`](../learn/README.md) vs [`wk-sharpen`](../sharpen/README.md)** — [`wk-learn`](../learn/README.md) captures to `learnings/` only;
   [`wk-sharpen`](../sharpen/README.md) edits `SKILL.md`. Ambiguous phrasing ("learn from this") defaults to
   [`wk-learn`](../learn/README.md); only explicit "sharpen" or `/wk-sharpen` triggers SKILL.md edits.

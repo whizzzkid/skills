@@ -47,5 +47,7 @@ the procedure and the remaining hard rules. Anything stated in `SKILL.md` wins.
 ## Apply
 
 - Apply approved edits with the single-mode audit.
+- Before each commit, run the Step 7.5 preservation gate (HARD RULE count + per-rule phrase audit); never
+  accept a sub-agent's "rules preserved" report.
 - Bump each skill's `metadata.version`.
 - Commit per skill or phase, then push once at the end.

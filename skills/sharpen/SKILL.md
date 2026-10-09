@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.10.09-202501"
+  version: "2026.10.09-211953"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -155,6 +155,13 @@ report diff.
 cross-reference duplicates (keep earliest occurrence). Reject any edit that drops a HARD RULE, error code, or
 failure-mode explanation. Re-run Drift check after.
 
+- **Verify preservation mechanically; never accept a self-report.** A sub-agent's "all rules preserved" is a claim →
+  gate on the per-skill HARD RULE count across `SKILL.md` + `references/` (`.githooks/check-hard-rules.sh`), then
+  phrase-audit every pre-edit rule — label and each clause — against the post-edit text. A count holds while a clause
+  drops.
+- **A repeated section that invokes another skill is a runtime trigger, not boilerplate** (e.g. Post-Completion
+  `wk-learn`). Delete it only when its replacement ships in the same commit — else that capture silently stops.
+
 **HARD RULE: hard size ceilings per `SKILL.md`.** Body ≤ 24576 bytes plus front-matter / `description:` /
 `allowed-tools:` limits per `.githooks/check-skill-size.sh`; stay under proactively, never rely on the hook alone.
 Details: [`references/byte-budget.md`](references/byte-budget.md).
@@ -190,4 +197,5 @@ All five must pass before returning:
 
 ## Post-Completion
 
-Invoke `wk-learn sharpen`.
+Interactive run → invoke `wk-learn sharpen`. Loop or dispatched worker → return the terminal summary to the dispatcher;
+never invoke `wk-learn` or `wk-retro` (self-records re-enter the queue).
