@@ -35,7 +35,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171110"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -231,3 +231,7 @@ Produce a Markdown block for embedding in a calling brief:
 - Write access to `$WK_SKILLS_HOME/config/team-hud.yaml` (handle→channel cache).
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn team-hud`.

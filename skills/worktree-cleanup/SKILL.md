@@ -31,7 +31,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171130"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -282,3 +282,7 @@ For unmerged worktrees, tell the user:
 - Shell access
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn worktree-cleanup`.

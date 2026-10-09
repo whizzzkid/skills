@@ -23,7 +23,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171036"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -193,3 +193,7 @@ Defaults to `brief` if no mode active. Refuses code files (>50%), secrets/creden
 | "clarify" / repeat question | any | Full prose; resume on next unrelated task |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn concise`.

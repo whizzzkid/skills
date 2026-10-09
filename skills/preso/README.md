@@ -1,6 +1,6 @@
 # wk-preso
 
-**Version:** 2026.08.18-214753
+**Version:** 2026.10.09-005006
 
 Interactive HTML slide deck generator — publishes a self-contained, accessible
 presentation as an Artifact with full keyboard navigation, dark/light theming,

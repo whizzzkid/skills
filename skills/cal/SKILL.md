@@ -19,7 +19,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171032"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -176,3 +176,7 @@ checkbox or to-do item. Create via calendar MCP before any caller renders.
 | MCP unavailable | Stop and ask user to check Gcal MCP settings |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn cal`.

@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.17-205622"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -261,3 +261,7 @@ Fires after `wk-pr-update` or `wk-pr-resolve` resolved conflicts → run an addi
 | Any regression remains | Non-pass; user override possible but logged |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn refactor`.

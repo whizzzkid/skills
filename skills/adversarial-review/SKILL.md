@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.28-053208"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -256,3 +256,7 @@ then apply the lineage rule. Print the verdict line to the caller
 - Repo with base branch resolvable via `gh pr view` or `git symbolic-ref refs/remotes/origin/HEAD`.
 - Write access to `.review-playground/` (gitignored).
 - Runtime matrix installed via `mise` or equivalent when matrix checks run.
+
+## Post-Completion
+
+Invoke `wk-learn adversarial-review`.

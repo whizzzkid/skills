@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.19-052846"
+  version: "2026.10.09-005006"
   internal: false
   model:
     claude: claude-haiku-4-5-20251001
@@ -124,3 +124,7 @@ Manual: `/wk-workstyle-astro scan` (full working tree) · `/wk-workstyle-astro c
   stale on persisted elements after navigation.
 - Using `client:load` everywhere — defeats Astro's zero-JS default; most
   components need `client:visible` or `client:idle` at most.
+
+## Post-Completion
+
+Invoke `wk-learn workstyle-astro`.

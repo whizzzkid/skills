@@ -3,7 +3,7 @@
 > Apply the user's personal voice — encouraging, energetic, humorous, with
 > purposeful emoji — to any message drafted on their behalf.
 
-**Version:** `2026.07.28-171112`
+**Version:** `2026.10.09-005006`
 
 ## Invocation
 

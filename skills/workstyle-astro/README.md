@@ -1,6 +1,6 @@
 # wk-workstyle-astro
 
-**Version:** 2026.08.19-052846
+**Version:** 2026.10.09-005006
 
 Astro idiom enforcement — view transitions, island architecture, content
 collections, and accessibility patterns for `.astro` files and `astro.config.*`.

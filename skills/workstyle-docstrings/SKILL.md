@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171117"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash
@@ -142,3 +142,7 @@ format table, summary line rule, and stale comment removal checklist.
 - Column limit known before writing any comment line.
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn workstyle-docstrings`.

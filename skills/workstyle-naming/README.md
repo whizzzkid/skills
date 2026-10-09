@@ -3,7 +3,7 @@
 > Enforces descriptive, semantically accurate identifier names — variables,
 > functions, classes, constants, and boolean predicates.
 
-**Version:** `2026.07.28-171120`
+**Version:** `2026.10.09-005006`
 
 ## Invocation
 

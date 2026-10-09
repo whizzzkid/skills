@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.08.28-201131"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -200,3 +200,7 @@ BLOCKED diagnosis, and workflow-run gate:
 | Calling skill writes to GitHub | Route the write through this skill's Step 3/4 |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn gh`.

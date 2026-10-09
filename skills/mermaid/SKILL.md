@@ -15,7 +15,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171050"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
 ---
@@ -152,3 +152,7 @@ done.
 - **Forgetting the `mermaid` fence tag** — renders as a code block, not a diagram.
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn mermaid`.

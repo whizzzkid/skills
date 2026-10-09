@@ -2,7 +2,7 @@
 
 > Author Mermaid diagrams that render correctly on GitHub — the strictest common target.
 
-**Version:** `2026.07.28-171050`
+**Version:** `2026.10.09-005006`
 
 ## Invocation
 

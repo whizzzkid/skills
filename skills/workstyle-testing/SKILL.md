@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.31-015104"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -92,3 +92,7 @@ Manual: `/wk-workstyle-testing scan` (full working tree) · `/wk-workstyle-testi
 - **Requires judgment** → surface as a suggestion before committing: what the
   finding is, where, and a concrete fix sketch.
 - **Conflicts with project config** → suppress; never fight the linter.
+
+## Post-Completion
+
+Invoke `wk-learn workstyle-testing`.

@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.19-025803"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -173,3 +173,7 @@ After the pass, summarize:
 | Finding conflicts with project config | Suppress silently |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn workstyle`.

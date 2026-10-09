@@ -29,7 +29,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.08.20-231910"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -202,3 +202,7 @@ done
 - `gh` CLI authenticated with repo access
 - `$GITHUB_ORG` set (via [wk-gh](../gh/README.md))
 - Package manager available for lockfile regeneration
+
+## Post-Completion
+
+Invoke `wk-learn renovate`.

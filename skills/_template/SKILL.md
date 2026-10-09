@@ -16,7 +16,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171028"
+  version: "2026.10.09-005006"
   internal: true
   model:
     openai: gpt-5.6-terra
@@ -68,4 +68,4 @@ failure mode it prevents and how to comply.
 
 ## Post-Completion
 
-Invoke `wk-learn` with this skill's short name as the argument (e.g., `wk-learn skill-name`).
+Invoke `wk-learn skill-name`.

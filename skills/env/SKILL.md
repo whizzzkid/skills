@@ -20,7 +20,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: "2026.08.12-161750"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash-8b
@@ -263,3 +263,7 @@ it never blocks skill execution, only warns.
   env-based config and persists as destructive global state.
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn env`.

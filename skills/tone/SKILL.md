@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171112"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -164,3 +164,7 @@ Before returning / sending, verify:
 - Knowledge of the target channel (Slack vs GitHub vs email) to pick emoji style
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn tone`.

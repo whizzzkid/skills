@@ -23,7 +23,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.08.05-220522"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -232,3 +232,7 @@ This log accumulates across quarters so the next QPR has a richer corpus.
 | `/wk-self-perf 2026-02-01:2026-04-30` | Custom range |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn self-perf`.

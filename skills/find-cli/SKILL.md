@@ -13,7 +13,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171044"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-luna
 ---
@@ -112,3 +112,7 @@ After the call completes:
 - Write access to `$WK_SKILLS_HOME/learnings/skills/find-cli/` for learning capture.
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn find-cli`.

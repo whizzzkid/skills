@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.08.28-135458"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -65,66 +65,15 @@ after integration.
 
 ## Stage 0: Pre-flight
 
-Confirm the environment is safe to mutate.
-
-```bash
-# Must be in a git repo, with a current branch that isn't the base
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
-# Reject dirty tree
-if [ -n "$(git status --porcelain)" ]; then
-  echo "Working tree is dirty. Stash or commit before running."
-  exit 1
-fi
-
-# Capture starting SHA for the safety net
-START_SHA=$(git rev-parse HEAD)
-```
-
-If the tree is dirty, ask:
-
-> "Working tree has uncommitted changes. (a) stash → run → unstash,
-> (b) commit them first via `wk-commit`, (c) abort."
-
-Auto mode defaults to **(c) abort** (stash/commit silently mutates).
+Reject dirty tree (auto mode → abort). Capture `$START_SHA` for safety net.
+Dirty tree → offer (a) stash, (b) commit via `wk-commit`, (c) abort.
 
 ---
 
 ## Stage 1: Detect base, fetch, compute commit count
 
-### PR-state validation
-
-`gh pr view --json state --jq .state` → `OPEN` proceeds; `CLOSED`/`MERGED`/absent →
-checked-out branch is stale (worktree may hold an abandoned child). Scan open DIRTY PRs
-(`gh pr list --state open --json headRefName,mergeStateStatus`); single match → switch
-and restart Stage 1; otherwise ask.
-
-### Base detection
-
-Base branch given as argument or inferred:
-
-```bash
-# 1. Argument > 2. PR base > 3. repo default
-BASE="${1:-$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null \
-            || git symbolic-ref refs/remotes/origin/HEAD --short \
-                | sed 's@^origin/@@')}"
-
-# Base may have been merged and deleted; re-detect if fetch fails
-if ! git fetch origin "$BASE" 2>/dev/null; then
-  BASE=$(gh pr view --json baseRefName --jq .baseRefName)
-  git fetch origin "$BASE"
-fi
-BASE_REF="origin/$BASE"
-
-# Commits the branch is ahead of the base
-AHEAD=$(git rev-list --count "$BASE_REF..HEAD")
-BEHIND=$(git rev-list --count "HEAD..$BASE_REF")
-
-echo "Branch $BRANCH is $AHEAD ahead, $BEHIND behind $BASE."
-```
-
-If `$BEHIND` is 0, branch is already up to date — exit early with a one-line note.
-Otherwise continue to strategy selection.
+Validate PR is OPEN. Base: argument > PR base > repo default. Fetch and compute
+`$AHEAD`/`$BEHIND`. If `$BEHIND == 0`, exit early — already up to date.
 
 ### Sequential identifier collision pre-flight
 
@@ -191,190 +140,33 @@ git merge "$BASE_REF"
 
 ## Stage 3b: Rebase strategy (explicit opt-in)
 
-```bash
-git rebase "$BASE_REF"
-```
+`git rebase "$BASE_REF"`. For merged-parent branches, use `--onto` to skip
+already-merged commits. Squash-merged parent → cherry-pick instead. After
+`--update-refs`, verify HEAD before committing. Conflicts → Stage 4.
 
-**Merged-parent branches: rebase `--onto` to skip already-merged commits.** Branch
-stacked on a parent that has since merged into base → plain `git rebase "$BASE_REF"`
-replays the parent's commits too, producing add/add conflicts on files the parent
-introduced. Replay only this branch's own commits:
-
-```bash
-# tip SHA of the now-merged parent branch (the old fork point)
-git rebase --onto "$BASE_REF" <merged-parent-tip-sha>
-```
-
-- Detect: unexpected add/add conflicts on files this branch never touched, right after a
-  parent branch merged.
-- Find the parent tip via `git log --oneline` (last commit before this branch's own
-  work); re-run with `--onto`.
-- **Retargeting a child is not rebasing it.** When a parent PR merges, retargeting
-  each child's base only changes what the child is compared against — the parent's
-  commits remain in the child, so its diff claims that work as its own. Replay each
-  retargeted child with `--onto` and force-push; do it when the parent merges, not
-  when a reviewer notices.
-- **Squash-merged parent → cherry-pick over rebase.** Rebase through a squash delta
-  conflicts on every commit touching squashed lines. Cherry-pick the child's commits
-  onto the post-squash base to skip the delta entirely.
-- **Resolving in place instead of restarting** — merge strategy, parent already
-  squash-landed: take `--theirs` for files the squashed parent fully supersedes,
-  hand-merge files both histories added to, then gate on the full suite. In a merge
-  `--theirs` is the incoming base and `--ours` the PR branch; inverted, this discards
-  the branch's own work. Prefer `--onto` whenever the replay has not started yet.
-
-**Base moved / stacked parent merged mid-flight → rebase the WHOLE stack.** Treat a moved
-base as a first-class event. When a stacked PR's parent merges externally, or GitHub's
-auto-update-branch silently merges the new default into a descendant (injecting an
-unrelated lockfile delta and a synthetic `Merge branch …` commit, and retargeting the
-base), rebase the entire current stack onto the new base — never patch around the injected
-merge or accept the pollution:
-
-```bash
-git rebase --onto <newbase> <oldbase> <branch> --update-refs
-```
-
-- Detect an auto-merge: the remote branch head is a SHA absent from locally-fetched
-  history (a `bad object`/unknown-SHA head). Re-fetch and inspect before trusting local refs.
-- **After any `--update-refs` (or stack-rewriting) rebase, verify HEAD before the next Write
-  or commit.** `--update-refs` moves branch *pointers* but leaves HEAD on whatever branch was
-  checked out for the rebase — not the topmost branch. Run `git branch --show-current` /
-  `git status` and explicitly `git checkout` the intended branch, or the next commit lands on
-  the wrong branch of the stack.
-- **A rebase reporting success may have done nothing.** `git rebase <base>` no-ops
-  when `<base>` already equals the merge-base, keeping every SHA; `--rebase-merges`
-  does not defeat it. Recreating commits for a side effect (re-sign, re-author) needs
-  `--force-rebase`, and the proof is `HEAD != $START_SHA` — never a clean exit.
-- Rebase reports conflicts → **conflict resolution loop** (Stage 4). Clean rebase → jump
-  to Stage 5.
-- Rebase introduces test failures or behavioral regressions (detected in Stage 5) →
-  safety net `git reset --hard $START_SHA` restores the pre-rebase state (Stage 6 abort
-  path).
+Full rebase details, stacked-branch handling, and no-op detection:
+[`references/rebase-strategy-details.md`](references/rebase-strategy-details.md).
 
 ---
 
 ## Stage 3c: Patch-replay strategy (`$AHEAD ≥ 5`)
 
-Goal: land the branch's **net diff** on the new base as a single integration commit,
-preserving traceability to the original commits.
+Snapshot the net diff against the OLD merge-base, reset to new base, apply as one
+integration commit listing original SHAs in the body. Conflicts → Stage 4.
 
-```bash
-# 1. Snapshot the net diff against the OLD base (the merge-base, not the
-#    new tip — patch-replay is "what did this branch change", not "what
-#    happened on main since this branch forked").
-OLD_BASE=$(git merge-base HEAD "$BASE_REF")
-git diff "$OLD_BASE..HEAD" > /tmp/pr-update-$$.patch
-
-# 2. Capture the original commit log for the integration commit body
-git log --reverse --format='- %h %s' "$OLD_BASE..HEAD" > /tmp/pr-update-$$.log
-
-# 3. Reset the branch to the new base
-git reset --hard "$BASE_REF"
-
-# 4. Apply the patch
-if ! git apply --3way /tmp/pr-update-$$.patch; then
-  # Conflicts — fall into the resolution loop with patch context
-  echo "Patch did not apply cleanly. Resolving conflicts..."
-fi
-```
-
-After patch application (clean or post-conflict-resolution), produce **one** integration
-commit naming the squashed subject and listing the original commits in the body for
-git-log traceability:
-
-```bash
-git add -A
-git commit -S -m "$(cat <<EOF
-<conventional-subject>: <emoji> <one-line summary of the net change>
-
-Squashed via wk-pr-update onto $BASE @ $(git rev-parse --short "$BASE_REF").
-
-Original commits:
-$(cat /tmp/pr-update-$$.log)
-
-Co-Authored-By: <agent>
-EOF
-)"
-```
-
-Commit subject MUST follow `wk-commit`'s conventional format with a single emoji
-classifier. Clear branch theme → use it; mixed → use 🤖 (the "no single emoji fits"
-fallback).
-
-Patch-replay rewrites the branch to one commit — **the original commits are lost from
-its git log**, living only in the integration commit's body (the accepted cost at ≥5
-commits of not picking "force rebase").
+Full procedure and commit format:
+[`references/patch-replay-strategy.md`](references/patch-replay-strategy.md).
 
 ---
 
 ## Stage 4: Conflict resolution loop
 
-Merging, rebasing, or patch-applying surfaces conflicts the same way — files
-with `<<<<<<<` markers, `git status` listing "both modified."
+**HARD RULE — never trust a rerere-cached resolution.** Recreate and re-resolve by hand. Prefer
+branch intent unless base supersedes it. Regenerate lockfiles/generated output
+last. Auto mode resolves only trivial conflicts; semantic conflicts prompt.
 
-```bash
-git status --short | grep '^UU\|^AA\|^DD'
-```
-
-**HARD RULE — never trust a rerere-cached resolution.** When merge/rebase/patch prints
-`Staged '<file>' using previous resolution`, `rerere.enabled` silently re-applied a
-prior resolution by content hash and left **no conflict markers** — a wrong-direction
-cached resolution (e.g. one that dropped this branch's own additions) applies invisibly,
-and `git diff --check` finds nothing because the file is already staged.
-
-- Do not accept the staged result. Recreate the real conflict and re-resolve by hand:
-
-  ```bash
-  git rerere forget <file>
-  git checkout --merge <file>   # restores <<<<<<< markers for manual resolution
-  ```
-
-- Hand-verify **both sides are represented** in the final result before staging.
-- **Important:** regenerate any build/generate output (schema dumps, digest manifests,
-  screenshots, lockfiles) from source and verify; never side-pick or textually resolve.
-  Regenerate **once, last** — any later source commit re-invalidates it, so resolve
-  either way, mark the path, and generate after all other fixes land, as the final
-  pre-push commit.
-
-For each conflicted file:
-
-1. **Read** both sides. Marker labels change meaning by operation: during a
-   merge, `HEAD` is the current branch; during a rebase, `HEAD` is the replay
-   target; during patch-replay, the other side is the patch. Inspect the named
-   refs or index stages instead of assuming one label always means "base."
-2. **Decide** the resolution. Prefer keeping the branch's intent (the work being
-   integrated is why the PR exists) unless the base change supersedes it (e.g. file
-   renamed on base → apply the branch's edits to the new filename).
-   - **Lockfile conflict** (`Gemfile.lock`, `package-lock.json`, `Cargo.lock`, …):
-     keep the branch's structural changes (remotes, added/removed deps, source
-     migration) and re-apply only the base's dependency version bumps onto it —
-     never take one whole side. A real install from the resolved manifest
-     (Stage 5 pre-check) outranks a clean-looking textual merge.
-3. **Verify** the resolved file — open it, scan for stray markers, run a quick syntax
-   check (`node --check`, `python -m py_compile`, `cargo check`, etc. — whatever is cheap
-   for the language).
-4. **Stage**: `git add <file>`.
-
-Auto mode resolves only **trivial** conflicts (non-overlapping additions, whitespace).
-Semantic conflicts pause and prompt: path + excerpt, options (a) branch (b) base (c) manual (d) abort.
-
-After all files are resolved:
-
-- **Merge:** `GIT_EDITOR=true git merge --continue` (`--no-edit` is invalid on
-  `--continue`). Proceed to Stage 5 after the integration commit is created.
-- **Rebase:** `git rebase --continue`. Loop if more conflicts.
-- **Patch-replay:** working tree now has a clean diff → proceed to the integration
-  commit (Stage 3c step 4).
-
-Conflicts too tangled to resolve cleanly → **abort** and restore the starting state:
-
-```bash
-git merge --abort 2>/dev/null
-git rebase --abort 2>/dev/null
-git reset --hard "$START_SHA"
-```
-
-Report: conflicts unresolvable, branch at `$START_SHA`. Resolve manually and re-run.
+Full resolution procedure, lockfile handling, and abort path:
+[`references/conflict-resolution.md`](references/conflict-resolution.md).
 
 ---
 
@@ -412,92 +204,24 @@ Branch returns to its pre-integration state; retry after fixing what broke it.
 
 ### Behavior-preservation check
 
-Tests passing is necessary but **not sufficient** — when both production code and its
-spec are picked from the same side of a conflict, the regression is internally
-consistent and CI does not catch it.
+Diff `$START_SHA..HEAD` for removed env lookups, fallbacks, error handling, guards,
+and spec blocks. Surface any removed behavior with no replacement. Do not push
+until the user confirms.
 
-For every file touched by the integration, diff the integrated result against the
-pre-integration base:
-
-```bash
-git diff "$START_SHA"..HEAD -- <file>
-```
-
-Scan for removed lines in these high-risk categories:
-
-| Category | Examples |
-|----------|---------|
-| Environment lookups | `ENV.fetch`, `process.env`, `os.environ` |
-| Fallback chains | `if x.nil?`, `x || default`, `?? fallback` |
-| Error handling | `rescue`, `catch`, `try/except`, `.on_error` |
-| Guards / early returns | `unless`, `return if`, `if !x` |
-| Spec coverage | removed `it` / `test` / `describe` blocks |
-
-If a removed line's behavior appears nowhere else in the diff, surface
-it:
-
-> "Line removed: `{line}` — behavior `{description}` now has no owner.
-> Was this intentional?"
-
-Do not push if the user has not answered. A pure integration's net diff should be
-narrow; large unexplained deletions warrant line-by-line review, not just a passing test
-suite.
+Full scan categories and procedure:
+[`references/behavior-preservation-check.md`](references/behavior-preservation-check.md).
 
 ---
 
 ## Stage 6: Push and sync PR description
 
-Branch is now correct; publish without dropping a concurrent remote advance,
-then align the PR with the pushed state.
+Merge strategy → normal push. Rebase/patch-replay → `--force-with-lease`.
+Non-fast-forward after local integration → fetch, inspect, merge, re-validate.
+**HARD RULE:** after push, sync PR title/body via `wk-commit` PR Sync.
+**HARD RULE:** preserve human-ticked test-plan checkboxes verbatim during the sync.
 
-### Push
-
-- **Merge strategy → normal push.** Never force-push a merge-style branch:
-
-  ```bash
-  git push
-  ```
-
-- **Non-fast-forward after a local integration commit → fetch, inspect, merge,
-  and re-validate.** The remote may have gained another contributor's commit or
-  an automated base merge after Stage 1. Preserve both histories:
-
-  ```bash
-  git fetch origin "$BRANCH"
-  REMOTE_SHA=$(git rev-parse FETCH_HEAD)
-  git log --left-right --oneline HEAD..."$REMOTE_SHA"
-  git merge "$REMOTE_SHA"
-  ```
-
-  Bind the comparison and merge to `FETCH_HEAD`'s resolved SHA; an explicit
-  single-branch fetch does not guarantee that `origin/$BRANCH` moved. Inspect
-  the left/right log before merging. Unexpected remote scope → stop and surface
-  it. Conflict → Stage 4. Clean merge or resolved conflict → rerun all of Stage
-  5, then retry a normal `git push`; pre-remote validation does not carry
-  forward. Never switch to `--force-with-lease` to bypass the remote commits.
-- **Rebase or patch-replay strategy → rewritten history.** Push with a lease:
-
-  ```bash
-  git push --force-with-lease
-  ```
-
-  Lease rejection means the remote advanced → fetch and restart from Stage 1.
-  Never escalate to `--force` or merge the pre-rewrite remote history back into
-  a deliberately rewritten branch.
-
-### Sync the PR after the push
-
-Invoke the PR Sync flow from `wk-commit` (HARD RULE: post-push, PR title and body must
-reflect the post-push branch state). For patch-replay specifically, also update:
-
-- PR body's commit list / "What's included" section, if present — branch is now one
-  squashed commit, not N.
-- Metadata lines (issue-closing annotations, co-author trailers, automation blocks,
-  ticked test-plan checkboxes) — **HARD RULE:** preserve verbatim per
-  `skills/pr/references/pr-description-metadata.md`.
-
-No PR yet (skill ran on a local branch) → skip the sync step and stop after the
-validated integration — the user wanted "update", not "create".
+Full push logic, remote-advance reconciliation, and PR sync rules:
+[`references/push-and-sync.md`](references/push-and-sync.md).
 
 ---
 
@@ -538,3 +262,7 @@ Routing between this skill and `wk-workflow`, `wk-pr`, and `wk-commit`:
 | Conflicts unresolvable | Reset to `$START_SHA`, hand back to user |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn pr-update`.

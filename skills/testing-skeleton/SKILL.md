@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.28-061352"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -226,3 +226,7 @@ Coverage tools count line execution, not assertion quality. A 100%-covered file 
 | CI coverage gate failed | Stage 5 — find the missing path; never paper over with structural tests |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn testing-skeleton`.

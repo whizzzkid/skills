@@ -21,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171102"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash-8b
@@ -188,3 +188,7 @@ The hook reads the tool payload from stdin, emits any message to stderr
   `$HOME/.agents/skills/wk-scope-guard/hooks/`); registered in
   `$HOME/.claude/settings.json` → `hooks.PreToolUse`.
 - Tests: `skills/scope-guard/tests/scope-guard.bats`.
+
+## Post-Completion
+
+Invoke `wk-learn scope-guard`.

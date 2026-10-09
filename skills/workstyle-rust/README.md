@@ -2,7 +2,7 @@
 
 > Rust-specific code-quality gate for `.rs` files. Part of the [`wk-workstyle`](../workstyle/README.md) family.
 
-**Version:** `2026.07.28-171124`
+**Version:** `2026.10.09-005006`
 
 ## Invocation
 

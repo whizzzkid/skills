@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171108"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -138,10 +138,7 @@ skeleton:
   or "RED phase not yet run" placeholders unless the user requested a
   scaffold-only pass.
 - `## Post-Completion` always ends with:
-  ```
-  Invoke `wk-learn` with this skill's short name as the argument
-  (e.g., `wk-learn <name>`).
-  ```
+  ``Invoke `wk-learn <name>`.`` — `<name>` is the unprefixed skill dir name.
 - Step 3 surfaced learnings → add a `## Common Mistakes` section with those insights.
 
 Write the sibling `$WK_SKILLS_HOME/skills/<name>/README.md` in the **same
@@ -293,3 +290,7 @@ Invoke `wk-commit` with `SKILL.md` and `README.md` staged together:
 - `superpowers:writing-skills` (only for an explicitly-requested RED-GREEN-REFACTOR pass)
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn skill`.

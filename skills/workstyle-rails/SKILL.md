@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171122"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -118,3 +118,7 @@ done
 
 - Read access to the repo root (`bin/`, `script/`, `Makefile`)
 - Bash access to run the bootstrap script (when authorized)
+
+## Post-Completion
+
+Invoke `wk-learn workstyle-rails`.

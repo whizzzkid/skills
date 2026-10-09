@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171053"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -249,3 +249,7 @@ Branch naming (`-part-N` suffix), collision validation, and per-child execution 
 | Plan violates an invariant | Return to Stage 3; never ship a violating plan |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn pr-break`.

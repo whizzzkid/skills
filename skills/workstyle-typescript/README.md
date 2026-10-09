@@ -3,7 +3,7 @@
 > Idiomatic, type-safe TypeScript/JavaScript on every file the agent writes or
 > edits. Project tsconfig/eslint/prettier config wins.
 
-**Version:** `2026.07.31-025254`
+**Version:** `2026.10.09-005006`
 
 ## Invocation
 

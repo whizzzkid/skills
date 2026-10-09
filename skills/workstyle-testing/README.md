@@ -3,7 +3,7 @@
 > Enforces the test quality bar — new-function/branch coverage, behavioral
 > assertions, and mandatory sad-path tests for every error branch.
 
-**Version:** `2026.07.31-015104`
+**Version:** `2026.10.09-005006`
 
 ## Invocation
 

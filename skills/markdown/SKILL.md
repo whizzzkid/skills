@@ -28,7 +28,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.31-025706"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -168,3 +168,7 @@ Verify:
   (GFM rules: lowercase, spaces → `-`, punctuation stripped).
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn markdown`.

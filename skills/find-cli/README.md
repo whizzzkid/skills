@@ -2,7 +2,7 @@
 
 > Auto-invoked before any `find` CLI call — enforces PWD scope, targeted filters, and captures slow/failing invocations as learnings.
 
-**Version:** `2026.07.28-171044`
+**Version:** `2026.10.09-005006`
 
 ## Invocation
 

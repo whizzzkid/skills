@@ -27,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.08.18-184219"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -168,3 +168,7 @@ is correct when there is nothing to do.
   dependency installed alongside it, not a separate package
 - `docker` CLI installed
 - `nproc` or `sysctl` available to detect CPU/memory (macOS: `sysctl` is the fallback)
+
+## Post-Completion
+
+Invoke `wk-learn colima`.

@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.07.30-214306"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash
@@ -248,3 +248,7 @@ A Stop hook can remind you to run a retro at session end. Add a `Stop` hook in `
 - Shell access (for running git commands and discovering targets)
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn retro`.

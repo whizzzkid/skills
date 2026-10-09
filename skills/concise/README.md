@@ -2,7 +2,7 @@
 
 > Reduce response verbosity and token usage while preserving technical accuracy.
 
-**Version:** `2026.07.28-171036`
+**Version:** `2026.10.09-005006`
 
 ## Invocation
 

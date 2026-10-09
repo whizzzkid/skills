@@ -17,7 +17,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171037"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -84,3 +84,7 @@ hardcode a literal token in the command.
 | `-w` for status code | `curl -sS -o body.txt -w '%{http_code}'` to separate body from status |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn curl`.

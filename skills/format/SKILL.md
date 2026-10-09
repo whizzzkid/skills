@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171045"
+  version: "2026.10.09-005006"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -175,3 +175,7 @@ defaults.
 | No repo config | Apply hard preferences as defaults |
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn format`.

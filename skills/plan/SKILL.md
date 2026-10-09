@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-003641"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -272,3 +272,7 @@ exists → skip own planning. Direct invocation → standalone plan.
 - Read/Grep/Glob/Bash for codebase research
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn plan`.

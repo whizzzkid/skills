@@ -19,7 +19,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.07.28-171038"
+  version: "2026.10.09-005006"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -210,3 +210,7 @@ Ask before build: name, cells (markdown, timeseries, log stream, etc.), time ran
 - Network access to `api.${DD_SITE}`.
 
 ---
+
+## Post-Completion
+
+Invoke `wk-learn datadog`.

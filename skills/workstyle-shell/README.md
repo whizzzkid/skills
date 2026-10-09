@@ -2,7 +2,7 @@
 
 > Enforces safe, idiomatic shell conventions in scripts and compound ad-hoc commands.
 
-**Version:** `2026.08.17-202223`
+**Version:** `2026.10.09-005006`
 
 ## Invocation
 
