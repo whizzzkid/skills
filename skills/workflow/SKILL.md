@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.08.28-192037"
+  version: "2026.10.09-003641"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -32,67 +32,42 @@ Master orchestration. Phases run ascending; review gate is Phase 5.5 (follows pu
 
 ## Mandatory Activation
 
-- Fires on EVERY task producing code changes, a commit, a push, a PR, or a CI build from a code change. No opt-out, no "too small" exemption.
-- Session resumption is a fresh start → before any write action after context compaction, rollover, or "continue where we left off", invoke `wk-workflow` again.
-- A planning discussion in chat is NOT a substitute for this invocation — invoke the skill before the first Edit/Write/Bash; it may surface branch hygiene/guardrails/pre-flight the chat missed.
-- Before first CLI/subsystem use, re-check skill triggers; invoke matches first.
+Fires on EVERY task producing code changes, a commit, a push, a PR, or a CI build. No opt-out, no "too small" exemption. Session resumption → re-invoke before any write action. A planning discussion is NOT a substitute — invoke before the first Edit/Write/Bash.
 
 ### HARD RULE — live learning capture
 
-- **CRITICAL:** Invoke [`wk-learn`](../learn/README.md) immediately when a
-  user correction, scope redirect, or self-caught error occurs — before
-  continuing the task or ending that response.
-- Invoke it after every skill run; never ask or offer. Phase 8 retro only verifies live capture.
+Invoke [`wk-learn`](../learn/README.md) immediately on user correction, scope redirect, or self-caught error — before continuing. Invoke after every skill run. Phase 8 retro only verifies live capture.
 
 ### Autonomy Rules
 
-Execute the workflow without asking permission at each step.
+Execute without asking permission at each step.
 
-| Situation | Do this | Do NOT do this |
-|---|---|---|
-| Ready to commit | Invoke `wk-commit` | Ask “shall I commit?” |
-| Tests pass | Invoke `wk-pr` | Ask “would you like a PR?” |
-| CI fails | Enter fix loop automatically | Ask “should I investigate?” |
-| Review blocks | Fix blockers, re-invoke `wk-adversarial-review` | Ask “should I fix these?” |
-| Docs need updating | Invoke `wk-docs` | Ask “should I update docs?” |
-| Merge approved | Invoke `wk-pr-merge` | Run raw `gh pr merge` |
-| Session ending | Invoke `wk-retro` | Ask “should I do a retro?” |
-| Terminal directive as a question (“mark ready?”, “merge?”, “push?”) | Query current state and act now | Wait/poll on CI or approvals as if conditional |
-| Defect diagnosed, owning file identified | Edit that file now | Re-state the tradeoffs again |
-| Feedback lands mid-action | Finish the authorized action, then adjust | Acknowledge and stop, leaving it undone |
+| Situation | Action |
+|---|---|
+| Skill-owned event (commit, PR, docs, merge, retro) | Invoke the skill — never raw `git commit`/`gh pr merge`/ad-hoc planning |
+| CI fails or review blocks | Fix loop automatically — up to 3 attempts |
+| Terminal directive as question ("merge?", "push?") | Query state and act now — not wait/poll |
+| Defect diagnosed, owning file identified | Edit that file now — not re-state tradeoffs |
+| Feedback lands mid-action | Finish authorized action, then adjust |
+| Plan ambiguous / CI persists after 3 / user-owned design / explicit pause / destructive action | Stop and ask |
 
-- **Important:** a mandated PR lifecycle authorizes the initial push and PR creation. Ask only where publishing is genuinely optional.
-
-Stop and ask only when: plan ambiguous; CI persists after 3 attempts; user-owned design decision needed; explicit pause requested; or destructive/shared-state action required.
-
-- **Interpret user execution bans broadly:** "don't run {tool} locally" covers all heavy local ops against that repo (full suites, servers, builds), not just the product action — prefer changed-file-only validation; confirm before any full local run.
-- **Never ask for what your own inputs answer** — search the plan, merged PRs, and tracked config first (a question they already answer proves they went unread).
-- **Linked artifact first.** Prompt references a URL/comment/PR → fetch before parallel research.
-
-- **Volunteered feedback is not a stop signal:** unless it revokes the action, finish the authorized step same turn.
-- **Curiosity ≠ commission.** A clarifying question ("why is X slow?") after the primary goal is met seeks understanding, not more work → answer and stop; do not pair with a new proposal unless the user explicitly asks.
-- **A turn producing no new facts must end in a write** — no new file read or command output means analysis is done, so edit the owning file instead of re-deliberating.
-- When soliciting feedback, block on it → end the turn after asking; do not implement until answered. Gather and confirm the full decision set before executing any.
-- **Verify mechanism before offering options.** A claim "accomplish X via Y" → read Y's interface from source before presenting; unverified → research first or label unconfirmed.
-- **Important:** use Skill tool for every skill-owned event — raw `git commit`/`gh pr merge`/ad-hoc planning is the approximation this forbids. First write-action is the highest-risk skip point.
-- **Announce-and-invoke same turn.** A skill counts only when its `Skill` call is
-  in that response; narration alone is a violation. Catch it → invoke before any
-  other action.
-- **Skill presence and phase routing:** [`references/skill-reference.md`](references/skill-reference.md).
+- A mandated PR lifecycle authorizes push + PR creation. Ask only where publishing is genuinely optional.
+- **Interpret execution bans broadly:** "don't run {tool}" covers all heavy local ops — prefer changed-file-only validation.
+- **Never ask for what your inputs answer** — search plan, merged PRs, tracked config first.
+- **Linked artifact first.** Prompt references a URL/PR → fetch before parallel research.
+- **Curiosity ≠ commission.** Clarifying question after goal met → answer and stop; no new proposal unless asked.
+- **A turn with no new facts must end in a write** — analysis done, edit the owning file.
+- **Verify mechanism before offering options** — read Y's interface before claiming "accomplish X via Y".
+- **Announce-and-invoke same turn.** A skill counts only when its `Skill` call is in that response.
+- Skill presence and phase routing: [`references/skill-reference.md`](references/skill-reference.md).
 
 ### HARD RULE — needs shell? then no worktree isolation
 
-- **Decide at dispatch from tool needs:** tests, lint, build, commit, push, PR creation → never `isolation: "worktree"`.
-- `isolation: "worktree"` blocks Bash, Grep, and Glob — Read/Edit/Write only. No runtime error; agents already dispatched need manual recovery.
-- Shell unavoidable → skip isolation, or the coordinator runs shell ops on worktree paths after agents finish editing.
+`isolation: "worktree"` blocks Bash, Grep, Glob — Read/Edit/Write only. Tests, lint, build, commit, push, PR → never `isolation: "worktree"`.
 
 ### Continuity Rules
 
-The Phase 1 plan is the session contract.
-
-- **Important:** Enumerate every deliverable before acting — a noun task + closing imperative is two items. Mid-session explicit requests are deliverables; act or track. Never drop an ask.
-- On interruption: stop, update plan, re-state top item, resume from earliest incomplete.
-- Final gate: re-read plan before completion claim; every step finished or explicitly deferred.
+The Phase 1 plan is the session contract. Enumerate every deliverable before acting. On interruption: update plan, re-state top item, resume earliest incomplete. Final gate: re-read plan; every step finished or explicitly deferred.
 
 ---
 
@@ -104,13 +79,11 @@ The Phase 1 plan is the session contract.
 Skill(wk-plan, args="<task from session context>")
 ```
 
-- **Plan supplied by user or `wk-plan` → supplying is approval.** Structural minimum: implementation sequence, scope decisions, verification — raw feedback without these is planning input, not a plan. Validate only: references resolve, order valid, nothing done — then Phase 2.
-- **Optional sibling-repository work is opt-in.** Confirm before inspecting or changing another repository; adjacency,
-  a possible follow-up, or shared ownership does not expand current task scope.
-- If `wk-plan` surfaced unanswered questions, resolve them before proceeding.
-- **Complex task → advisor:** consult the `advisor` server tool during Phase 1: [`references/advisor-tool.md`](references/advisor-tool.md).
+- Plan supplied → validate only (references resolve, order valid), then Phase 2.
+- Optional sibling-repo work is opt-in — confirm before touching another repo.
+- Complex task → consult `advisor` server tool: [`references/advisor-tool.md`](references/advisor-tool.md).
 
-**HARD RULE — wait for plan approval before first Edit/Write/Bash write-action (incl. fetching/reading *for* a build).** No size exemption — "too small" and "obviously right" both violate. Present → approve → execute; user-supplied plan arrives approved.
+**HARD RULE — wait for plan approval before first write-action.** No size exemption. User-supplied plan arrives approved.
 
 ---
 
@@ -118,320 +91,185 @@ Skill(wk-plan, args="<task from session context>")
 
 ### HARD RULE — branch pre-flight before first edit
 
-- Run `git rev-parse --abbrev-ref HEAD` and verify the branch matches the task's intended base before any Edit/Write.
-- **Linked worktree:** resolve edit targets under `git rev-parse --show-toplevel` — absolute paths anchored to the primary checkout silently edit the wrong tree.
-- **Rebase/cherry-pick conflicts → verify target base.** Run `git log --oneline -5`; if base mismatches worktree parent, stop and re-examine — never force through a wrong-base conflict.
+Run `git rev-parse --abbrev-ref HEAD` — verify branch matches intended base. Linked worktree → resolve paths under `git rev-parse --show-toplevel`. Rebase conflicts → `git log --oneline -5` to verify base.
 
 Pre-patch routing: `.md` → [`wk-markdown`](../markdown/README.md); Mermaid →
 [`wk-mermaid`](../mermaid/README.md); arch-bearing →
 [`wk-arch-review`](../arch-review/README.md) detector, then draft-complete gate.
-Post-edit classification fails.
 
-**Subtractive-first:** before adding code, evaluate if removal/simplification eliminates the problem — zero new failure modes.
+**Subtractive-first:** evaluate if removal/simplification eliminates the problem before adding code. Fleet-first for shared integrations: grep 2-3 sibling repos before fixing shared code.
 
-- **Fleet-first for shared integrations:** grep 2-3 sibling repos for the same pattern before fixing shared code; fleet consensus outranks spec.
-
-Execute the plan step by step. After each step:
-
-1. Run tests.
-2. Invoke `wk-workstyle` before every code commit — no size exemption.
-3. Invoke `wk-docs` for affected docs; config-schema additions land with `docs/specs/` in the same or next commit.
-4. Invoke `wk-commit`.
-
-Never batch multiple plan steps into one commit, defer docs, or skip tests between commits.
-
-- **Narrate branch-rewriting ops.** Print before/after SHAs after rebase/merge — silence reads as lost work.
+Execute step by step. After each: (1) run tests, (2) `wk-workstyle`, (3) `wk-docs` for affected docs, (4) `wk-commit`. Never batch steps, defer docs, or skip tests between commits. Print before/after SHAs on branch-rewriting ops.
 
 ### Cross-cutting changes
 
-For normalization, renames, required fields, schema changes:
+For normalization, renames, schema changes: grep all sites → implement all → commit → adversarial review once → ≤1 follow-up commit.
 
-1. `grep -rn '<pattern>' <src-dirs>` — enumerate every affected site.
-2. Implement all sites; commit.
-3. Publish, then run adversarial review once.
-4. Fix residuals in ≤1 follow-up commit.
+### Artifact sync
 
-### Artifact sync with code changes
-
-Structural change → [sync artifacts](references/doc-sync-mechanics.md) in the
-same commit. External failure → [reproduce before fixing](references/external-call-reproduction.md).
+Structural change → [sync artifacts](references/doc-sync-mechanics.md) same commit. External failure → [reproduce before fixing](references/external-call-reproduction.md).
 
 ### Edit-scope pre-flights
 
-Enumerate every affected site and fix all in one pass before tests:
+Enumerate every affected site; fix all in one pass before tests:
 
-- **Signature widening** — non-optional public param/required field → grep every caller/initializer, fix each in the same commit.
-- **`replace_all: true`** — grep the target string first; reject if any occurrence needs a different value/context or must stay unchanged.
-- **Agent-brief identifiers** — grep the declaring source; quote exact names/values into the prompt, never recalled ones. One wrong identifier multiplies across every agent trusting the brief.
-- **Guard modification** — before editing a guard/filter/null-check, verify whether the upstream change already makes it correct; a callee now returning valid data means existing checks pass.
-- **Test-harness reachability** — when adding branch logic, assess which branches the existing test harness can exercise; unreachable branches (client-only state in a server-rendered spec, in-memory collisions) → extract into a pure module with unit tests in the same task.
-- **Shared-contract ownership** — before writing a helper that parses/serializes a shared format, grep for the existing owner of that grammar and import from it; extract only genuinely helper-specific logic into a new module.
-- **False-positive scoping** — fix targets the offending class, not the severity ladder; unverifiable claims are noise at any severity → suppress the class.
+- **Signature widening** — grep every caller/initializer; fix same commit.
+- **`replace_all: true`** — grep first; reject if any occurrence needs different treatment.
+- **Agent-brief identifiers** — grep declaring source; quote exact names, never recalled.
+- **Guard modification** — verify upstream change doesn't already make the guard correct.
+- **Test-harness reachability** — unreachable branches → extract pure module with unit tests.
+- **Shared-contract ownership** — grep for existing format owner; import, don't duplicate.
+- **False-positive scoping** — fix targets the offending class, not severity ladder.
 
 ### Code Standards
 
-Apply to ALL code:
-
-- **Version pins:** exact versions only — no `latest`/`stable`/`nightly`/`^`/`~` in `FROM`, `mise.toml`, Actions, or package managers. Official-action semver majors permitted.
+- **Version pins:** exact only — no `latest`/`^`/`~`. Official-action semver majors permitted.
 - **Regexes:** named capture groups: `(?<year>\d{4})`.
-- **Bash:** no `cd` per command; use absolute paths or `git -C <repo>`. [`references/code-standards-extended.md`](references/code-standards-extended.md) (base resolution + niche).
-- **Shell simplicity:** sequential single-purpose commands, not compound chains — classifiers block what they cannot decompose. Surface denials; never silently restructure.
+- **Bash:** absolute paths, no `cd`. Extended: [`references/code-standards-extended.md`](references/code-standards-extended.md).
+- **Shell:** sequential single-purpose commands. Surface denials; never silently restructure.
 - **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md).
-- **Layer responsibility:** side effects live only in entrypoint layers. ENV reads in decision modules are side effects.
+- **Layer responsibility:** side effects in entrypoint layers only.
 - **Platform-API traps:** [`references/platform-api-traps.md`](references/platform-api-traps.md).
-- **Two-sided flow survey:** survey caller-side conditions and callee enforcement before designing a gate/filter/guardrail.
-- **Identifier composition:** before combining sources into a key, classify each by semantic domain (target vs. self, external vs. internal); cross-domain fallback is a presence check, not identity.
-- **HARD RULE — reuse existing config/secret resolution; never invent parallel overrides.** User pushback naming existing convention → adopt it. ([`reuse-existing-mechanism.md`](references/reuse-existing-mechanism.md))
+- **Two-sided flow survey:** survey caller + callee before designing gates.
+- **Identifier composition:** classify sources by semantic domain before combining into keys.
+- **HARD RULE — reuse existing config/secret resolution; never invent parallel overrides.** User names an existing convention → adopt it. ([`reuse-existing-mechanism.md`](references/reuse-existing-mechanism.md))
 
 ---
 
 ## Phase 3: Test
 
-Before code review, verify coverage and pass all checks.
-
 ### HARD RULE — select execution environment before validation
 
-- Before first build/lint/test, inspect tracked container, devcontainer, runner, and repo instructions.
-- Use a documented runnable project container; if none exists, say so before host fallback.
-- **An explicit waiver of local validation short-circuits provisioning** — never
-  build an environment to satisfy a gate the user removed; name what stays
-  unverified instead.
-- Mixed toolchains: [announce subsystem ownership; retain primary repo gate](references/environment-guardrails.md).
+Inspect container, devcontainer, runner, repo instructions first. Use documented runnable container; if none, say so before host fallback. Explicit validation waiver short-circuits provisioning. Mixed toolchains: [announce subsystem ownership](references/environment-guardrails.md).
 
-Required paths:
-
-- **Happy path** — expected successful flow works end to end.
-- **Sad path** — failures, invalid input, missing data, error conditions handled gracefully.
-- **Edge cases** — boundaries, empty collections, null/undefined fields, concurrency, large inputs, off-by-one errors.
+Required paths: **happy** (expected flow), **sad** (failures, invalid input, error handling), **edge** (boundaries, nulls, concurrency, off-by-one).
 
 Verification:
-
-- All tests pass before code review.
-- Each commit passes tests independently.
-- **Important — local lint before every push.** Run the project linter/type checker on changed files before any `git push`; never rely on CI for lint errors. Inspect hook config to enumerate every pre-push gate.
+- All tests pass; each commit passes independently.
+- **Local lint before every push** — inspect hook config for every pre-push gate.
 - Re-run every gate against final HEAD, not a mid-session snapshot.
-- **User-loadable artifact:**
-  [`build last after mutating gates`](references/2026-08-04_final-development-build.md).
-- Validate transformations with a formerly-failing input.
-- **Data-only change → compare the published set's membership and count
-  before/after**, never a diff read alone.
-- **Fix-symptom match:** verify a fix targets the exact user-reported symptom — not a plausible-but-different failure mode. When in-agent testing is impossible, state what the user should observe differently.
-- **Default-branch-only producers:** apply
-  [`generated-artifact acceptance`](references/2026-08-01_generated-artifact-acceptance.md);
-  a post-merge-only caveat is a blocker, not a waiver.
-- **A fast/narrow check is never the authoritative gate.** A pre-commit hook may lint a narrower file set than the full CI-mirroring check — run the full gate before claiming lint/format clean.
-- **Dependent verification fails fast.** Run expected-red proof and its green gate in separate tool calls; if sharing one shell, `set -euo pipefail` — never launch green after a non-zero exit.
-- **Important — never take a verdict from `$?` after a pipe.** See `wk-workstyle-shell` for limiters and the `PIPESTATUS` split.
-
-Shell-script structure & symlink-guard tests: [`references/shell-script-test-checks.md`](references/shell-script-test-checks.md).
+- Validate transformations with formerly-failing input.
+- **Fix-symptom match:** verify fix targets exact reported symptom.
+- **A fast/narrow check is never the authoritative gate** — run the full gate.
+- **Dependent verification fails fast** — run expected-red and green gate separately; `set -euo pipefail` if sharing one shell.
+- **Never take a verdict from `$?` after a pipe** — see `wk-workstyle-shell`.
+- User-loadable artifact: [`build last`](references/2026-08-04_final-development-build.md). Generated artifacts: [`acceptance`](references/2026-08-01_generated-artifact-acceptance.md). Data-only change → compare published set membership/count before and after.
+- Shell-script tests: [`references/shell-script-test-checks.md`](references/shell-script-test-checks.md).
 
 ---
 
 ## Phase 3.5: Refactor & Deletion-Safety Scan
 
-For every new/modified function/block, scan file + siblings for: existing helpers, repeated literals, near-duplicates (≥3 lines), nested conditionals, re-implemented patterns.
+Scan every new/modified function for: existing helpers, repeated literals, near-duplicates (≥3 lines), nested conditionals, re-implemented patterns. Post-correction → re-diff full change set; revert hunks whose justification no longer holds.
 
-- **Post-correction re-audit:** after any mid-session correction, re-diff the full change set; revert/simplify hunks whose justification no longer holds.
+Classify: **Apply now** (reuse helper, lift duplicate, flatten conditional — one commit), **Defer** (TODO in PR "Follow-ups"), **Skip** (no real win). Re-run tests after Apply-now.
 
-Classify each opportunity:
+### Deletion-safety
 
-- **Apply now** — reuse existing helper/constant, lift near-duplicate into a helper, flatten conditionals. Land as one commit before Phase 5.
-- **Defer with note** — real but out-of-scope; add TODO to PR "Follow-ups".
-- **Skip** — no real win or premature abstraction.
+Every removed line/symbol/file: intentional or accidental? Unexplained removal = blocker.
 
-Re-run tests after every Apply-now change. Clean diff → record "refactor scan: none" in Phase 8.
-
-### Deletion-safety scan
-
-For every removed line/symbol/file, classify intentional or accidental — unexplained removal is a blocker, not a style nit.
-
-- Removed symbol (function, const, field, export) → grep for surviving references; live caller = accidental drop → restore or migrate.
-- Removed guard/validation/error-handling/cleanup/test → confirm replacement covers the case; none = regression → restore.
-- Removed file → confirm no surviving imports and responsibility moved elsewhere.
-- Deletion collateral to the stated goal (unrelated cleanup) → split into own commit, never bundle silently.
+- Removed symbol → grep for live callers; found = accidental → restore or migrate.
+- Removed guard/validation/test → confirm replacement covers the case; none = regression.
+- Removed file → no surviving imports + responsibility moved.
+- Unrelated cleanup → split into own commit.
 
 ---
 
 ## Phase 3.6: Frontend Live Preview
 
-Run only when the diff changes browser-rendered UI (`.tsx/.jsx/.vue/.svelte/.html/.css/.scss`, view/component/template dirs).
-
-- Launch the app via the `run` skill or documented dev-server command.
-- Drive every changed view in a real browser with Playwright tools; exercise happy paths.
-- Capture snapshots/console; platform-pinned baselines → regenerate in CI container, never local host ([artifacts](references/2026-08-04_linux-visual-artifacts.md)).
-- Load failure, console error on changed surface, or broken interaction → blocker; fix before publishing.
-- Leave app/browser running and hand off the URL; continue Phase 5 onward while the user inspects.
-
-Backend/config/docs-only diffs → record "frontend preview: N/A" in Phase 8.
+Runs only when diff changes browser-rendered UI (`.tsx/.jsx/.vue/.svelte/.html/.css/.scss`). Launch via `run` skill or dev-server. Drive every changed view with Playwright; capture snapshots/console; platform-pinned baselines → regenerate in CI container, never local host ([artifacts](references/2026-08-04_linux-visual-artifacts.md)). Load failure, console error, or broken interaction → blocker. Leave app running; continue Phase 5. Backend/config/docs-only → "frontend preview: N/A".
 
 ---
 
 ## Phase 5: PR
 
-**HARD RULE — "push succeeded" is NOT "work complete".** After `git push`, run `gh pr view 2>/dev/null`; no open PR → invoke `wk-pr` immediately. Push triggers this gate, not ends the task.
+**HARD RULE — "push succeeded" is NOT "work complete".** After push, if no open PR → invoke `wk-pr` immediately.
 
-### Repo convention before branching
+### Repo convention
 
-Branching is the default, not an absolute. Probe first:
+Treat the current task branch as authoritative. Branch from default only on detached HEAD, unrelated dirty work, or explicit request. Resolve default branch dynamically. Branch when evidence points to PR-gated workflow; otherwise commit to default. Follow-up branch → from `origin/<default>` (fetch first).
 
-- Treat the user's current task branch as authoritative. Branch only from default, detached HEAD, unrelated dirty work, or explicit isolation request.
-- Resolve default branch dynamically.
-- Gather PR-gated evidence: branch protection, `CODEOWNERS`, recent feature-branch merge commits.
-- Branch only when evidence points to PR-gated workflow; otherwise commit straight to default and skip auto-PR.
-- If signals conflict/are absent for a non-trivial change, branch and say why in one line.
-- **Follow-up branch:** after a merged PR, branch from `origin/<default>` (fetch first) — stale local ref inflates diff.
-
-After tests and Phase 3.5/3.6 scans pass, invoke `wk-pr` (never raw `gh pr create`) — it handles draft creation, stacking, self-review, feedback triage, and marking ready. Publishing precedes review; it does not wait on a verdict.
-
-### Stacked PRs — per-PR lifecycle
-
-- Each PR in a stack must independently complete Phases 5 → 6.5. Batch-pushing all PRs as drafts without running the lifecycle per PR is a violation.
+Invoke `wk-pr` (never raw `gh pr create`) after tests and Phase 3.5/3.6 pass. Each stacked PR independently completes Phases 5→6.5.
 
 ### Post-push sync
 
-`wk-commit` handles PR description sync and stale comment resolution after every push.
+`wk-commit` handles PR description sync and stale comment resolution. **HARD RULE:** auto-sync drifted artifacts — never ask. After push, code change, or pivot: audit PR title/body, self-review, ticket, docs; update same turn. On pivot, resolve stale self-review threads via `wk-self-review`.
 
-**HARD RULE:** auto-sync drifted artifacts — never ask. After push, code change, or pivot, audit PR title/body, self-review, ticket, docs; update same turn. On pivot, resolve stale self-review threads and re-post via `wk-self-review`. Confirm only when genuinely ambiguous.
-
-Before reworking a PR branch, [reconcile against its actual base](references/pre-rework-base-reconcile.md) — resolve the PR's base first; never assume default as the rebase target.
+Before reworking a PR branch, [reconcile against actual base](references/pre-rework-base-reconcile.md).
 
 ---
 
-## Phase 5.5: Adversarial Review — the single review gate
+## Phase 5.5: Adversarial Review
 
-With the PR published and ready, invoke `wk-adversarial-review`. **This is the
-workflow's only dispatch point.**
+Invoke `wk-adversarial-review` with PR published and ready. **This is the workflow's only dispatch point.**
 
-**HARD RULE — review gates merge, not publish.** Push, PR creation, and readying
-need no verdict. Merge and `gh pr merge --auto` require clear review lineage;
-SHA equality is not required. No size or docs-only exemption.
+**HARD RULE — review gates merge, not publish.** Push/PR/readying need no verdict. Merge requires clear review lineage. No size or docs-only exemption.
 
-- Every other skill reads the record; missing means Phase 5.5 never ran.
-- Publishing first lets CI and review run together.
-- Finding-response commits and tree-identical rewrites preserve lineage through
-  targeted validation. Unmatched scope, refactor, or logic gets one
-  delta-scoped re-review:
-  [`wk-adversarial-review`](../adversarial-review/README.md).
+Returns **clear**, **blocked**, or **suggestions-only**:
+- **Clear** → re-stage via `wk-self-review` if fix commits landed; proceed to Phase 6.
+- **Blocked** → fix via `wk-commit`, re-invoke until clear. Never merge on blocked.
+- **Suggestions only** → follow skill's A/B/C prompt.
 
-`wk-adversarial-review` returns **clear**, **blocked**, or **suggestions-only**.
-
-- **Clear** — if fix commits landed since self-review was staged, re-stage via
-  `wk-self-review`; proceed to Phase 6.
-- **Blocked** — fix each blocker via `wk-commit`, re-invoke until clear. Never merge or enable auto-merge on a blocked verdict.
-- **Suggestions only** — follow the skill's A/B/C prompt.
-
-Pre-flight findings are mandatory → fold blockers/improvements into the artifact and commit. Pause only for a genuine user-owned design decision.
-
-**HARD RULE — never defer a security guard.** Missing guard/input validation (SSRF, injection, path traversal, scheme check) is blocker-class — apply now; never propose deferring without explicit user instruction. Split a larger tooling swap into a follow-up, never the guard itself.
+**HARD RULE — never defer a security guard.** Missing guard/input validation (SSRF, injection, path traversal) → blocker-class, apply now.
 
 ---
 
 ## Phase 6: CI Fix Loop
 
-After PR creation or any push, monitor and fix CI until green. CI runs concurrently with Phase 5.5 — fold failures into the same fix pass.
+Monitor and fix CI until green. Runs concurrently with Phase 5.5.
 
-- **Do not repeat a green pre-push gate locally after pushing the same SHA.**
-  Poll CI; re-run locally only after a new commit or to reproduce a CI failure.
-  Before any command, name the new evidence it can produce; known output is not
-  verification.
-- Use `gh pr checks --watch --fail-fast` for generic checks; it can exit on partial resolution → re-confirm the rollup is terminal before calling CI green (`wk-gh`).
-- Use `wk-buildkite` for Buildkite.
-- Run long watches in background; before any wait >~1 min, state what runs and rough duration.
-- **Complete CI watches same turn** — never hand "merge once CI passes" to the user or end a turn announcing a holding pattern.
-- **Don't idle on CI — interleave.** Start independent plan tasks while polling; hard-wait only when nothing else can progress.
-- Read actual logs first.
+- Do not re-run a green pre-push gate locally after pushing same SHA.
+- `gh pr checks --watch --fail-fast` for generic; `wk-buildkite` for Buildkite.
+- Long watches → background. **Complete CI watches same turn** — never hand off. **Interleave** independent tasks while polling.
+- Diagnosis: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md). Fix ordering: [`references/ci-fix-candidate-ordering.md`](references/ci-fix-candidate-ordering.md).
 
-Diagnosis rules — map failure type to action and error signal to first check: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md).
+Fix loop: (1) targeted fix, (2) run failing gate locally, (3) `wk-commit`, (4) push, (5) update PR, (6) re-enter. Max 3 attempts per run; each must differ; before attempt 3, state the axis being varied. After 3, hand off.
 
-Fix and re-push:
-
-1. Apply minimal targeted fix.
-2. Run failing gate locally.
-3. Commit via `wk-commit`.
-4. Push normally — never force-push unless explicitly required.
-5. Update PR description via `wk-commit`.
-6. Re-enter loop.
-
-Fix-candidate ordering — least invasive first, never skip ahead: [`references/ci-fix-candidate-ordering.md`](references/ci-fix-candidate-ordering.md).
-
-Loop limits:
-
-- Maximum 3 fix attempts per CI run.
-- Each attempt must differ from prior attempts.
-- Before attempt 3, state the axis being varied; if prior attempts varied the same axis, broaden.
-- After 3 failures, stop and hand off with what was tried and the current failure.
-
-Exit on all-green, max attempts, or confirmed infra/flaky failure. After green, resume `wk-pr` post-creation.
-
-**HARD RULE:** verify every test-plan checkbox before updating the PR description and before merge or auto-merge enablement. Run every runnable verification command; leave a box unchecked only when genuinely impossible and note why.
+**HARD RULE:** verify every test-plan checkbox before merge/auto-merge.
 
 ---
 
-## Phase 6.5: Review-Comment Resolution Loop
+## Phase 6.5: Review-Comment Resolution
 
-After CI green and PR ready, drive every open review comment to resolution before merge.
-
-- Poll unresolved review threads.
-- While any remain, invoke `wk-pr-resolve`.
-- Re-poll after every pass **and after every later push** — bots re-review on each push, so resolution is per-push, not one-time.
-- Re-enter Phase 6 if a resolving commit turns CI red.
-- Exit only when zero unresolved threads remain and CI is green.
-- Treat the loop as spanning sessions; resume from the poll step on later invocations. Never run the Phase 8 retro while a push since the last `wk-pr-resolve` pass has unaddressed threads.
+Poll unresolved threads → invoke `wk-pr-resolve` while any remain → re-poll after every pass and push (bots re-review per push) → re-enter Phase 6 if CI turns red → exit on zero unresolved + green CI. Spans sessions. Never run Phase 8 retro while a post-push pass has unaddressed threads.
 
 ---
 
 ## Phase 7: Documentation Audit
 
-Final audit after all code is complete:
-
-1. Invoke `wk-docs`.
-2. Verify README reflects user-facing changes.
-3. ADRs for architectural decisions; specs if behavior changed; `docs/README.md` current.
-6. If no `docs/` folder exists, `wk-docs` bootstraps `plans/`, `specs/`, `adr/`, `tutorials/`, `examples/`.
+Invoke `wk-docs`. Verify README, ADRs, specs, `docs/README.md`. No `docs/` → `wk-docs` bootstraps.
 
 ---
 
 ## Phase 8: Session Retro — NON-NEGOTIABLE
 
-**HARD RULE:** at the end of every session, invoke `wk-retro`. No exceptions.
-
-**HARD RULE:** `gh pr ready` is not a session terminus. After every successful `gh pr ready`, the next action is `Skill(wk-retro)`.
+**HARD RULE:** invoke `wk-retro` at end of every session. `gh pr ready` is not a terminus — `wk-retro` follows.
 
 ---
 
 ## Environment Guardrails
 
-[`references/environment-guardrails.md`](references/environment-guardrails.md) (cloud auth, containers, global config, CI-provider routing).
+[`references/environment-guardrails.md`](references/environment-guardrails.md).
 
 ---
 
 ## Skill Reference
 
-Use [`references/skill-reference.md`](references/skill-reference.md) for phase
-ownership and invocation routing.
+[`references/skill-reference.md`](references/skill-reference.md).
 
 ---
 
 ## Checklist
 
-Use this as a final gate before claiming work is complete:
+Final gate before claiming complete:
 
-- [ ] Every commit is atomic and passes tests/CI independently
-- [ ] `wk-workstyle` pass completed on all touched files
-- [ ] Documentation updated alongside each code change
-- [ ] Tests cover happy path, sad path, and edge cases
-- [ ] `wk-adversarial-review` returned clear review lineage before merge
-- [ ] CI fix loop exited green on the current head — local HEAD, remote head, and
-      the SHA the checks ran against are one commit
-- [ ] PR description reflects current branch state
-- [ ] Self-review posted for critical changes only
-- [ ] All PR review threads resolved
-- [ ] Version pins are exact
-- [ ] Scripts have correct file permissions
-- [ ] Diagrams use Mermaid, not ASCII art
-- [ ] Regexes use named capture groups
-- [ ] ADRs created for significant architectural decisions
-- [ ] Session retro completed via `wk-retro`
-- [ ] Every numbered plan step is finished or explicitly deferred
+- [ ] Atomic commits, each passes tests/CI independently
+- [ ] `wk-workstyle` + docs updated alongside code
+- [ ] Tests cover happy/sad/edge paths
+- [ ] `wk-adversarial-review` clear before merge; CI green on current HEAD
+- [ ] PR description current; all review threads resolved
+- [ ] Version pins exact; scripts have correct permissions
+- [ ] Diagrams use Mermaid; regexes use named captures; ADRs for arch decisions
+- [ ] Session retro via `wk-retro`; every plan step finished or deferred
 
 ---
