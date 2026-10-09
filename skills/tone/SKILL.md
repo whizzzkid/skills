@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -42,6 +42,8 @@ intent — never as decoration.
 - Auto-invoke this skill before sending such a message — apply the voice, then
   send.
 - A user asks to "draft", "reply", "post", or "send" something in their name.
+- `/wk-tone "<draft>"` rewrites the supplied draft; `/wk-tone` (no args) rewrites
+  the message currently being drafted in context.
 
 **Do NOT apply to:** commit messages, code, code comments, config, log lines,
 or any machine-consumed output. Those follow their own conventions (e.g.
@@ -149,14 +151,6 @@ Before returning / sending, verify:
   comment violates those skills' conventions — classify first (Step 1).
 - **Over-casualizing a formal channel.** A Jira comment to a stakeholder keeps the
   warmth but drops the lowercase-shorthand chat register.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| Auto (posting a message as the user) | Classify → apply voice → pre-send check → send |
-| `/wk-tone "<draft>"` | Rewrite the supplied draft in the user's voice |
-| `/wk-tone` (no args) | Apply to the message currently being drafted in context |
 
 ## Requirements
 

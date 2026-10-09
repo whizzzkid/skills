@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -93,7 +93,7 @@ mise current
 ```
 
 If `mise which <tool>` returns a path but the tool isn't on `$PATH`,
-see the `mise exec --` pattern in the next section.
+see the `mise exec --` pattern in the next section. Mise itself misbehaving → `mise doctor`.
 
 ## Diagnosing Toolchain Version Mismatch (silent failure)
 
@@ -132,18 +132,6 @@ See [references/tool-patterns.md](references/tool-patterns.md) for `mise exec`
 patterns, installation commands, config file formats (`.mise.toml` /
 `.tool-versions`), trust issues, diagnostics (`mise doctor`), and git hook
 integration.
-
-## Quick Reference
-
-| Situation | Command |
-|-----------|---------|
-| Tool not found in Claude/CI context | `mise exec -- <tool> [args]` |
-| Check what's installed | `mise ls` |
-| Install project tools | `mise install` |
-| Pin a tool version | `mise use node@{version}` |
-| Find where a tool is | `mise which <tool>` |
-| Debug mise setup | `mise doctor` |
-| Trust project config | `mise trust` |
 
 ---
 

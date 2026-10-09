@@ -25,7 +25,7 @@ license: MIT
 group: communication
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -109,6 +109,10 @@ One-line context — what you need and why.
 
 Optional: what happens next or deadline.
 ```
+
+### FYI link-drop
+
+Short sentence + `<url|display text>`.
 
 ---
 
@@ -224,19 +228,6 @@ See [references/standup-snippet-spec.md](references/standup-snippet-spec.md)
 for the full standup structure (Context C HTML), privacy filter, and caller
 contract. Every rule there is a HARD RULE. Callers must not re-implement the
 structure, link format, or privacy filter inline — invoke the spec instead.
-
----
-
-## Quick Reference
-
-| Message type | Opener pattern |
-|---|---|
-| Announcement | `:emoji: *Subject — Subtitle*` |
-| Milestone | `:mega: *Bold milestone statement*` |
-| Review request | `:eyes: *Subject — doc/PR is up for review*` |
-| Status digest | `*Pending Reviews:* \n • item \n • item` |
-| Ask / approval | `Hey Folks, \n One-line ask. \n :link: <url\|label>` |
-| FYI link-drop | Short sentence + `<url\|display text>` |
 
 ---
 

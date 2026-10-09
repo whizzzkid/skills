@@ -13,7 +13,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-luna
 ---
@@ -96,15 +96,6 @@ After the call completes:
   describing the slow invocation, the result count, and the filter change that
   would speed it up next time. Do not re-run without the improved filters.
 - **If both pass** — no learning needed; continue.
-
-## Quick Reference
-
-| Check | Rule |
-|-------|------|
-| Start path | Must be `.` or a subtree of `$PWD` |
-| Minimum filters | ≥2 of: `-type`, `-name`, `-maxdepth`, `2>/dev/null` |
-| Slow (> 1s) | Log a wk-find-cli learning with the improved filter |
-| Failed | Log a wk-find-cli learning with the error and fix |
 
 ## Requirements
 

@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -144,16 +144,6 @@ dir outside the checkout. Recursive perms on `.git/` is a red flag.
 | 127 | Command not found |
 | 137 | OOM killed |
 | 139 | Segfault |
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| Dockerfile edit | Verify base image tags before committing |
-| Build failure | Read error, check exit code, debug layer |
-| Daemon not running | Tell user: Docker Desktop or `colima start` |
-| Auth failure | Tell user: `aws sso login` |
-| ENTRYPOINT issues | `docker run --rm <image> sh -c 'echo test'` |
 
 ---
 

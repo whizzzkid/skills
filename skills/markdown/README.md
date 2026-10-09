@@ -3,7 +3,7 @@
 > Enforce markdown standards — 120-column line width, heading hierarchy, mermaid diagrams, glyphs, and link
 > validation — whenever creating or editing any `.md` file.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-171327`
 
 ## Invocation
 

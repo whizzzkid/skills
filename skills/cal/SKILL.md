@@ -4,8 +4,7 @@ description: >-
   Use for all Google Calendar operations — fetching events, creating events in
   smart free slots, checking availability across attendees, and scanning for
   upcoming interviews to automatically schedule prep and scorecard blocks.
-  Invoked by wk-sitrep (start: interview prep scan; end: tomorrow preview) and
-  directly for any calendar management task.
+  Invoked by wk-sitrep (start: interview prep scan; end: tomorrow preview).
 argument-hint: '[fetch-today | fetch-range <start> <end> | create | interview-prep-scan]'
 allowed-tools:
   - ToolSearch
@@ -19,7 +18,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -61,7 +60,8 @@ Lunch window (12:00–1:00 PM) is soft-protected — prefer not to schedule here
 ## § Fetch Day Events
 
 Canonical pattern for fetching events for a given day or range. Used by
-`wk-sitrep` (start: today; end: today + tomorrow preview).
+`wk-sitrep` (start: today; end: today + tomorrow preview) and "check my calendar" /
+"what's on today".
 
 ```
 gcal.list_events(
@@ -86,7 +86,7 @@ public holidays) unless the user is the organizer.
 
 ## § Smart Event Creation
 
-Use this when asked to schedule a new event. Never just pick a time — always
+Use this when asked to schedule a new event ("schedule a meeting" / "find time for X"). Never just pick a time — always
 find a free slot.
 
 ### Step 1: Understand the event
@@ -155,7 +155,7 @@ gcal.create_event(
 
 ## § Interview Prep Scan
 
-Run during `wk-sitrep start` to ensure every upcoming interview has prep and
+Run during `wk-sitrep start` (or on "do I have interviews coming up") to ensure every upcoming interview has prep and
 scorecard blocks. See
 [references/interview-prep-scan.md](references/interview-prep-scan.md) for the
 full scan protocol (detection keywords, debrief skip rule, prep/scorecard
@@ -163,17 +163,6 @@ creation, and reporting format).
 
 **HARD RULE:** The scorecard is always a booked calendar event, never a
 checkbox or to-do item. Create via calendar MCP before any caller renders.
-
-## Quick Reference
-
-| Invocation | Behavior |
-|---|---|
-| `wk-sitrep start` | Automatically runs `§ Interview Prep Scan` for next 5 days |
-| `wk-sitrep end` | Uses `§ Fetch Day Events` for today + tomorrow preview |
-| "schedule a meeting" / "find time for X" | Runs `§ Smart Event Creation` |
-| "check my calendar" / "what's on today" | Runs `§ Fetch Day Events` for today |
-| "do I have interviews coming up" | Runs `§ Interview Prep Scan` |
-| MCP unavailable | Stop and ask user to check Gcal MCP settings |
 
 ---
 

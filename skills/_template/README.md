@@ -2,7 +2,7 @@
 
 > Copy this file with `SKILL.md`, then replace each placeholder with the new skill's details.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-171327`
 
 ## Invocation
 

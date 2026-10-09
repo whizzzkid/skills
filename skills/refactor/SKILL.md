@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -246,19 +246,6 @@ Fires after `wk-pr-update` or `wk-pr-resolve` resolved conflicts → run an addi
 - **`wk-testing-skeleton`** complements: it writes tests for new
   behavior; this skill protects existing behavior from disappearing
   during reshape. Together they cover both directions.
-
----
-
-## Quick Reference
-
-| Trigger | Stages |
-|---------|--------|
-| `/wk-refactor` (current branch's PR) | 0 → 5 |
-| `/wk-refactor <pr>` | Same; explicit PR target |
-| Auto after wk-pr-update / wk-pr-resolve | 0 → 5; conflict-resolution audit fires |
-| Diff shape deviates from refactor kind | Stop at Stage 0; surface mismatch first |
-| All findings confirmed intentional | PASS, append report to PR |
-| Any regression remains | Non-pass; user override possible but logged |
 
 ---
 

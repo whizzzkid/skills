@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash
@@ -43,7 +43,7 @@ metadata:
 
 Structured retrospective → captures session learnings + promotes them globally
 so ALL future sessions benefit, regardless of project. Run at end of a work
-session or after a significant task.
+session or after a significant task. `/wk-retro "<topic>"` → focus the retro on that topic.
 
 ## HARD RULE: audit live capture before reconstruction
 
@@ -234,13 +234,6 @@ Distillation rules, promotion target table, per-lesson process, and the `wk-lear
 ## Optional: Stop Hook
 
 A Stop hook can remind you to run a retro at session end. Add a `Stop` hook in `$HOME/.claude/settings.json` pointing to `{SKILL_DIR}/scripts/suggest-retro.sh`. The script prints a reminder — it does not auto-run the retro.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| `/wk-retro` | Full 4-step retro with promotion |
-| `/wk-retro "auth refactor"` | Retro focused on a specific topic |
 
 ## Requirements
 

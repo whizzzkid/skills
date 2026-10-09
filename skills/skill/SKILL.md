@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -44,7 +44,8 @@ README, field learnings, and infrastructure hooks.
 ## When to Use
 
 - Creating a new skill from scratch
-- `/wk-skill <name>` invoked directly
+- `/wk-skill <name>` invoked directly; `/wk-skill <name> "description"` pre-fills the Step 4 description
+- `/wk-skill --install` → skip authoring; run Steps 8–9 on the current dir
 
 **Implement the full skill when asked.** One pass → frontmatter + complete,
 runnable body + README. Do not stop at a skeleton. Do not gate delivery on any
@@ -273,14 +274,6 @@ Invoke `wk-commit` with `SKILL.md` and `README.md` staged together:
 ```
 ✨ feat(skills): add wk-<name> skill
 ```
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| `/wk-skill <name>` | Full implementation + metadata prompts |
-| `/wk-skill <name> "description"` | Implement with pre-filled description |
-| `/wk-skill --install` | Skip authoring, run Steps 8–9 on current dir |
 
 ## Requirements
 

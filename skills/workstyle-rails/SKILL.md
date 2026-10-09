@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -105,14 +105,6 @@ done
   environment half-initialized.
 - **Treating a slow bootstrap as a hang.** Allow time for gem builds and
   container starts before aborting.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| `bundle exec`/`bin/*`/`rails` fails with gem/env error | Locate bootstrap → run it → retry |
-| `/wk-workstyle-rails check` | Report the repo's bootstrap entry point |
-| No bootstrap script present | Fall through to manual repair |
 
 ## Requirements
 

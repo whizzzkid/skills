@@ -30,7 +30,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -72,7 +72,7 @@ Read PR ──► Read context ──► Identify seams ──► Plan stack
 
 Plan violates any invariant → **rework the plan**; never ship a violation.
 
-**HARD RULE:** All GitHub reads/writes route through `wk-gh`. Every child PR's title/body ends with the canonical outbound footer per `wk-gh` Step 4, appended after any child-specific metadata block.
+**HARD RULE:** All GitHub reads/writes follow [`wk-gh`](../gh/README.md). Each child PR body's footer goes after any child-specific metadata block.
 
 ---
 
@@ -235,18 +235,6 @@ Branch naming (`-part-N` suffix), collision validation, and per-child execution 
 - **`wk-commit`** — child commits use `wk-commit`'s conventional format with single-emoji classifier.
 - **`wk-pr-resolve`** — comments collected in Stage 1 may inform `wk-pr-resolve` if the original PR has open feedback; the planner's job is structural, not addressing the comments.
 - **`wk-pr-update`** — children land out of order or main moves under the stack → use `wk-pr-update` to keep each child's base current.
-
----
-
-## Quick Reference
-
-| Trigger | Stages |
-|---------|--------|
-| `/wk-pr-break` (current branch's PR) | 0 → 6 always; 7 on approval |
-| `/wk-pr-break <pr-num>` | Same; explicit PR target |
-| Auto mode | 0 → 6 then save plan to file and stop |
-| Reviewer asks "can this be split?" | Quote the ask; cite as the trigger in the plan |
-| Plan violates an invariant | Return to Stage 3; never ship a violating plan |
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks via the `pup` CLI.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-171327`
 
 ## Invocation
 

@@ -6,7 +6,7 @@
 > manual gem install or environment repair. Project bootstrap scripts are
 > authoritative.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-171327`
 
 ## Invocation
 

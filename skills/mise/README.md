@@ -3,7 +3,7 @@
 > Manage mise (formerly rtx) tool versions — install tools, fix "command not found" in non-interactive shells,
 > diagnose version mismatches, and run commands with the correct runtime context.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-171327`
 
 ## Invocation
 

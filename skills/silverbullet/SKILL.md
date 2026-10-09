@@ -23,7 +23,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -124,20 +124,6 @@ All known failure modes:
 - **Validated on stale tab** → cached DOM masks a broken handler after source edit; reload fresh first.
 - **Shipping a CSS/HTML change without a browser screenshot** → file looks right, render is wrong (single column, collapsed lines, disabled handlers).
 - **`SB_USER` unset on a `0.0.0.0` bind** → workspace exposed without auth.
-
-## Quick Reference
-
-| Problem | Fix |
-|---------|-----|
-| Column renders empty | Remove all blank lines inside `<div>` tags |
-| Nested block renders below the layout | Delete the blank lines padding the nested `<div>` |
-| Checkbox not clickable | Replace `<input>` with `<span onclick>` |
-| Handler truncated | Remove `=>` (use `function(){}`); no `"` in attribute |
-| File read returns HTML | Use `window.client.space.readPage()` not `fetch()` |
-| CSS not applying | Write-back the style page + `location.reload(true)` |
-| Handler has entity text, not operators | Write raw `&&`/`||` in source; never pre-escape |
-| Widget shows raw props | Move widget expression outside table to standalone line |
-| Task items as text in table | Use `⬜`/`✅` glyphs or switch to HTML div columns |
 
 ## Requirements
 

@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
 ---
@@ -44,6 +44,7 @@ grep -E "redis|sidekiq|elasticsearch" Gemfile | head -10  # extra services neede
 
 - Read all four.
 - CI compose → exact image versions, service names, `CONFIG__` keys. Copy them, don't guess.
+- DB adapter in `Gemfile`: `trilogy` → no `libmysqlclient-dev` needed; `mysql2` → needs it.
 
 ## Steps 2-4: Write the config files
 
@@ -135,22 +136,6 @@ docker run --rm -it \
 | Startup output contains a host credential | CLI printed the interpolated Compose model | Use file-backed secrets, or capture under `umask 077` and print only an exact-value-redacted copy |
 | `port is already allocated` bringing the stack up | A sibling worktree's stack of the same project already publishes that host port | Attach a throwaway container to the running stack's network and volumes with nothing published — *Host port already bound by a sibling worktree* |
 | `bundle install` 401s in a manually-started container | Bundler credentials come from a hostname-derived `BUNDLE_<HOST>` var the provisioning script exports; a manual `docker run` does not inherit it | Export it explicitly (`wk-cloudsmith` → *Bundler credentials for a Cloudsmith gem source*) |
-
-## Quick Reference
-
-```
-.devcontainer/
-├── Dockerfile          # FROM ghcr.io/jdx/mise:<version>, no PATH wiring
-├── docker-compose.yml  # app + db + redis, context: ..
-└── devcontainer.json   # postCreateCommand, rubyLsp.rubyVersionManager: mise
-```
-
-Investigation order for a new project:
-1. `.buildkite/docker/compose.yml` — CONFIG__ override pattern + image versions
-2. `config/database.yml` — DB config keys
-3. `.ruby-version` — exact Ruby version for mise.toml
-4. `Gemfile` — extra services (Sidekiq, Elasticsearch, etc.)
-5. DB adapter in `Gemfile` — `trilogy` (no `libmysqlclient-dev` needed) vs `mysql2` (needs it)
 
 ## Post-Completion
 

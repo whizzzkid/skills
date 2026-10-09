@@ -5,7 +5,7 @@ distinct from [wk-workstyle-docs](../workstyle-docs/README.md), which handles in
 comments. Validates callable signature documentation (inputs/outputs), enforces full column-width
 utilization, and mandates stale-comment removal when editing adjacent code.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-171327`
 
 ## Trigger
 

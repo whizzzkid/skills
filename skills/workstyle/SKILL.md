@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -50,7 +50,7 @@ diff touches.
 |------|---------|
 | Auto | Before any `wk-commit` on a code-change diff; after any Edit/Write to a source file |
 | `wk-adversarial-review` | Step 2 mechanical sweeps include a workstyle pass |
-| Manual | `/wk-workstyle scan` — full repo scan; `/wk-workstyle check <path>` — single file |
+| Manual | `/wk-workstyle scan` — full repo scan; `/wk-workstyle check <path>` — single file, report only |
 
 ---
 
@@ -157,20 +157,6 @@ After the pass, summarize:
 5. **Sub-skills do not re-run Step 0.** The project-style-authority
    probe lives here and is the single source of truth all sub-skills
    defer to.
-
----
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| Before any `wk-commit` on a code diff | Run Step 0, route to every matching sub-skill, aggregate |
-| `/wk-workstyle scan` | Full pass on all source files in working tree |
-| `/wk-workstyle check <path>` | Pass on one file, report only |
-| Editing an adjacent concern (async, naming, a `.py` file) | The matching sub-skill auto-fires on its own |
-| Finding auto-fixable | Apply, note in commit |
-| Finding needs judgment | Surface as suggestion before commit |
-| Finding conflicts with project config | Suppress silently |
 
 ---
 

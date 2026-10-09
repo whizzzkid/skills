@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   internal: false
   model:
     claude: claude-opus-4-7
@@ -131,15 +131,6 @@ Offer when ≥4 components or non-obvious failure cascades.
   blast-radius sidebar, gotchas panel (cycles findings).
 - Graph as `const NODES/EDGES/FINDINGS` data block.
 - Verify renders: `open` (macOS); Playwright snapshot when available.
-
-## Quick Reference
-
-| Invocation | Behavior |
-|------------|----------|
-| `/wk-arch-review path/to/doc.md` | Review local doc |
-| `/wk-arch-review https://…` | Fetch and review URL |
-| `/wk-arch-review write <topic>` | Author new architecture doc |
-| `/wk-arch-review playground` | Build interactive playground |
 
 ---
 

@@ -23,7 +23,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-165052"
+  version: "2026.10.09-171327"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -144,7 +144,7 @@ Regardless of mode, always write these at full verbosity:
 3. **Irreversible action confirmations** — destructive git ops, production deploys, file deletions
 4. **Technical terms** — library names, API names, flags, env vars, version numbers, file paths, URLs
 5. **Error messages** — reproduce exact error text; never paraphrase
-6. **When the user asks to clarify** — drop mode temporarily, explain fully.
+6. **When the user asks to clarify or repeats a question** — drop mode temporarily, explain fully.
    Resume concise mode only when the user's next message is clearly a new
    task, not a follow-up clarification. Never auto-resume mid-clarification
    thread.
@@ -187,19 +187,6 @@ Confirm deactivation: `Normal mode restored. Opt back in with /concise (or remov
 LLM-based rewrite of verbose text/files using active mode rules. Full process (read → apply → diff → confirm), good/bad target lists, and preservation rules in [references/compress-process.md](references/compress-process.md).
 
 Defaults to `brief` if no mode active. Refuses code files (>50%), secrets/credentials, and files under `.ssh/`/`.aws/`/`.gnupg/`/`.kube/`/`.docker/`.
-
----
-
-## Quick Reference
-
-| Trigger | Mode | Action |
-|---------|------|--------|
-| `/concise` | brief | Drop filler/hedging, keep grammar |
-| `/concise dense` | dense | + fragments, arrows, drop articles |
-| `/concise off` | off | Full verbose responses |
-| `/concise:compress <target>` | active mode | Rewrite file/text, show diff, confirm |
-| Security / destructive action | any | Auto-switch to full prose for that line |
-| "clarify" / repeat question | any | Full prose; resume on next unrelated task |
 
 ---
 

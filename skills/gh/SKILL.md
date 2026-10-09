@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -181,23 +181,6 @@ BLOCKED diagnosis, and workflow-run gate:
 ## Canonical download path
 
 [`references/canonical-download-path.md`](references/canonical-download-path.md).
-
-## Quick Reference
-
-| Scenario | Behavior |
-|----------|----------|
-| Stored/keyring auth explicitly confirmed | Run every `gh` command with `GH_TOKEN` and `GITHUB_TOKEN` unset; skip auth inspection |
-| Unexpected authorization failure | Compare normal and token-unset `gh auth status` before credential refresh |
-| `$GITHUB_ORG` set | Add `--owner=$GITHUB_ORG` to search commands |
-| `$GITHUB_ORG` missing | Stop and prompt user to set it |
-| User names a different org | Use that org instead |
-| User says "all orgs" | Skip org filter |
-| Current-repo commands | No filter needed |
-| Projection needs variables | Pipe raw `gh --json` output to standalone `jq --arg`; never pass `--arg` after `gh --jq` |
-| Saving any `gh` payload to disk | Use `/tmp/agent/gh/<owner>/<repo>/...` |
-| Stack topology vs gate SHA | Use stack JSON for membership; resolve live `headRefOid` with `gh pr view` |
-| Any outbound GitHub message | Append canonical footer (Step 4) — once, last |
-| Calling skill writes to GitHub | Route the write through this skill's Step 3/4 |
 
 ---
 

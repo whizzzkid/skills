@@ -6,7 +6,7 @@ and underlying assumptions. Can also author architecture documents and generate
 interactive HTML playgrounds that visualise a proposed design and its failure
 modes.
 
-**Version:** `2026.10.09-005632`
+**Version:** `2026.10.09-171327`
 
 ## Trigger
 

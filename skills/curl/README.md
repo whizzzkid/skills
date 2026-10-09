@@ -2,7 +2,7 @@
 
 > Use whenever invoking curl to call an HTTP/HTTPS endpoint whose response is parsed or whose success matters — enforces transport-error-safe flags, exit-status capture, and token hygiene.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-171327`
 
 ## Invocation
 

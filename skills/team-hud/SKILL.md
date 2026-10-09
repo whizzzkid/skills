@@ -35,7 +35,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -212,14 +212,6 @@ Produce a Markdown block for embedding in a calling brief:
   returns org-wide noise.
 - **Including the calling user's own activity:** Step 1 excludes the
   caller — their activity surfaces in the calling brief's other sections.
-
-## Quick Reference
-
-| Invocation | Behavior |
-|------------|----------|
-| `/wk-team-hud` | On-demand snapshot, writes to `~/.claude/team-hud/` |
-| `wk-sitrep` → parallel | Returns HUD block, no disk write |
-| `/wk-team-hud --since 48h` | Extends the look-back window |
 
 ## Requirements
 

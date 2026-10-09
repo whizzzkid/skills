@@ -19,7 +19,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -192,16 +192,6 @@ Ask before build: type (`metric`/`monitor`/time-slice), name, description, targe
 Ask before build: name, cells (markdown, timeseries, log stream, etc.), time range.
 
 ---
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| "create a dashboard" | Ask for details, build JSON, `pup dashboards create --file` |
-| "list my monitors" | `pup monitors list` with filters, show summary |
-| "set up an SLO" | Walk through type/target/timeframe, `pup slos create --file` |
-| "create a notebook" | Ask for name + cells, `pup notebooks create --file` |
-| "delete monitor X" | Confirm, then `pup monitors delete <id>` |
 
 ## Requirements
 

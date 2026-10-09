@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -55,9 +55,7 @@ after integration.
    integration, not before.
 5. **Never skip PR description sync.** Updating the branch but leaving a stale PR body
    violates `wk-commit`'s PR Sync HARD RULE.
-6. **All GitHub reads/writes route through `wk-gh`.** Org scoping per `wk-gh` Step 1–2;
-   PR-body sync emits the canonical outbound footer per `wk-gh` Step 4 once at the end
-   of the body — never duplicated.
+6. **All GitHub reads/writes follow [`wk-gh`](../gh/README.md).**
 7. **Detect sequential identifier collisions before integration.** Compare new
    allocations on both histories; never leave a same-ID conflict for the merge.
 
@@ -247,19 +245,6 @@ false-alarm "did you drop my commits?" corrections.
 
 Routing between this skill and `wk-workflow`, `wk-pr`, and `wk-commit`:
 [`references/skill-coordination.md`](references/skill-coordination.md).
-
----
-
-## Quick Reference
-
-| Trigger | Stages |
-|---------|--------|
-| `/wk-pr-update` | 0 → 7 |
-| `/wk-pr-update <branch>` | 0 → 7 with explicit base |
-| `wk-workflow` Phase 6 detects "behind base" | 0 → 7 (then resume CI fix loop) |
-| Branch already up to date (`$BEHIND == 0`) | Exit at Stage 1 |
-| Dirty tree | Abort at Stage 0 unless user picks stash/commit |
-| Conflicts unresolvable | Reset to `$START_SHA`, hand back to user |
 
 ---
 

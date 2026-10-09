@@ -28,7 +28,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -122,14 +122,6 @@ update original PR to note continuation.
 Post PR comment: mode, pre-existing failures, work completed, deferred items,
 stacked PR reference. `Co-Authored-By` email per wk-commit's HARD RULE: user =
 `$WK_SKILLS_EMPLOYEE_EMAIL` (unset → STOP); original author = `<id>+<login>@users.noreply.github.com` (never guess `<login>@<domain>`).
-
-## Quick Reference
-
-| Command | Behavior |
-|---------|----------|
-| `/wk-pr-takeover 123` | Overwrite mode |
-| `/wk-pr-takeover 123 --stack` | Stack mode |
-| `/wk-pr-takeover <url>` | Extract PR number from URL |
 
 ---
 

@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -212,18 +212,6 @@ Coverage tools count line execution, not assertion quality. A 100%-covered file 
 - **`wk-format`:** test files are code — formatting rules apply identically.
 - **`wk-commit`:** test additions ship with their own commit (preferred), or alongside the implementation in a single commit with the `🧪` classifier emoji when tests + impl are inseparable.
 - **`wk-pr-review` Phase 4:** the playground's mutation step is the same idea applied to *someone else's* tests. The plan produced here is what the reviewer checks against.
-
----
-
-## Quick Reference
-
-| Trigger | Stages |
-|---------|--------|
-| Agent about to write/modify any test | 0 → 5 |
-| Bug fix | 0 (kind: bug fix) → regression test first → 1-5 |
-| Refactor | 0 (kind: refactor) → existing tests must pass; rewrite structural ones behaviorally |
-| New feature | 0 → 5 with full happy/sad/edge matrix |
-| CI coverage gate failed | Stage 5 — find the missing path; never paper over with structural tests |
 
 ---
 

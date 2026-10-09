@@ -2,7 +2,7 @@
 
 > Code-quality orchestrator for every file the agent writes or edits — runs the style-authority probe, then routes to the `wk-workstyle-*` sub-skills (naming, structure, async, docs, testing, error-handling, per-language). Project linter wins.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-171327`
 
 ## Invocation
 

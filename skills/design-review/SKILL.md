@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     claude: claude-opus-4-7
@@ -59,6 +59,7 @@ and a concrete fix.
 ## Step 1: Gather the change
 
 - Argument is a path/URL → read it. Argument is `consult <pr|path>` → Consult Mode.
+  Argument is `write <topic>` → draft/critique a design spec against Step 2 principles.
 - PR number → `gh pr diff <n> --name-only`, then read the design-relevant files.
 - Identify the design surfaces touched:
 
@@ -171,14 +172,6 @@ Invoked by another skill/agent (e.g. `wk-pr-review`) with `consult <pr|path>`:
 - **Trusting a 200 as proof the app is live.** Confirm the render target is the
   project's own dev server (diff-specific marker in the source, `lsof` the port)
   before reviewing — a wrong-page screenshot looks plausible.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---|---|
-| `/wk-design-review <path>` | Review a design doc / file, present ranked findings |
-| `/wk-design-review consult <pr>` | Consult mode — return structured findings only |
-| `/wk-design-review write <topic>` | Draft/critique a design spec against principles |
 
 ## Requirements
 

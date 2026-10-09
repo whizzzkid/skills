@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -39,8 +39,7 @@ non-obvious logic, critical context for human reviewers. Not a bug hunt.
 
 ## HARD RULES
 
-- **HARD RULE: all GitHub reads/writes follow `wk-gh`** — org scoping (Step 1–2), canonical footer
-  on every inline comment body (Step 4), injected at payload-render time.
+- **HARD RULE:** All GitHub reads/writes follow [`wk-gh`](../gh/README.md).
 - **HARD RULE: self-review is always a pending review** — stage via `/pulls/{n}/reviews` with `event` omitted.
   Never use `gh api .../pulls/{n}/comments` (publishes immediately, skips
   human-in-the-loop). Holds for single notes too.
@@ -137,15 +136,6 @@ New commits on a PR with existing self-review:
    preserve bodies (Write tool), DELETE, re-stage against new HEAD. Also check
    `position` vs `original_position` (pending comments report `line: null`).
 3. Add new comments for critical changes in the new commits.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| Invoked by `wk-pr` | Full flow before CI poll |
-| "self-review this PR" | Manual invocation |
-| New commits pushed | Update/resolve stale comments |
-| PR about to merge | Submit pending review (Step 4.5) |
 
 ---
 

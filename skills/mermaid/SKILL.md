@@ -1,12 +1,11 @@
 ---
 name: wk-mermaid
 description: >-
-  Use whenever authoring or editing a Mermaid diagram in any markdown file.
-  Encodes GitHub's Mermaid rendering rules — line breaks via <br/> not \n,
-  quoting labels that carry special characters, supported diagram types, and
-  validating the render — so diagrams render correctly on GitHub instead of
-  showing raw syntax. Auto-invoked whenever the agent generates or edits a
-  mermaid block.
+  Auto-invoked whenever the agent authors or edits a Mermaid diagram in any
+  markdown file. Encodes GitHub's Mermaid rendering rules — line breaks via
+  <br/> not \n, quoting labels that carry special characters, supported
+  diagram types, and validating the render — so diagrams render correctly on
+  GitHub instead of showing raw syntax.
 model-invocable: true
 user-invocable: true
 model: sonnet
@@ -15,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
 ---
@@ -33,6 +32,7 @@ GitHub. Apply these rules to every mermaid block.
 - A flowchart, sequence, class, state, or ER diagram in a README, spec, or doc.
 - Auto-invoke before emitting any mermaid block; defer broad markdown
   formatting (headings, width, link checks) to [wk-markdown](../markdown/README.md).
+- Manual `/wk-mermaid` → audit mermaid blocks in the current file/repo against Steps 1–5.
 
 ## Step 1: Pick a supported diagram type
 
@@ -125,14 +125,6 @@ done.
   feedback). URL generation is not validation — the browser open is.
 - When fixing existing diagrams across many files, sweep mermaid-fenced lines
   only — never replace `\n` in surrounding prose.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| Authoring a mermaid block | Apply Steps 1–4, then validate (Step 5) |
-| `/wk-mermaid` | Audit mermaid blocks in the current file/repo for these rules |
-| Fixing broken GitHub diagrams | Replace `\n` → `<br/>`, quote special-char labels, make every `click` target absolute |
 
 ## Requirements
 

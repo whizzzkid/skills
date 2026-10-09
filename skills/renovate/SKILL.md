@@ -29,7 +29,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -180,13 +180,6 @@ done
 
 - Parse superseded PR numbers from the merged PR body (`Closes #...`).
 - Already-closed PRs are expected (auto-closed by `Closes`) — skip gracefully.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| `/wk-renovate` | Discover → combine → PR (Steps 1–6) |
-| `/wk-renovate cleanup` | Close superseded PRs after merge (Step 7) |
 
 ## Common Mistakes
 

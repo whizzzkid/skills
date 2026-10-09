@@ -23,7 +23,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -217,19 +217,6 @@ QPR_LOG="$PWD/QPR/brag-log.md"
 ```
 
 This log accumulates across quarters so the next QPR has a richer corpus.
-
----
-
-## Quick Reference
-
-| Command | Behavior |
-|---------|----------|
-| `/wk-self-perf quarter` | Current FY quarter |
-| `/wk-self-perf Q1` | Q1 FY2026 (Feb–Apr) |
-| `/wk-self-perf week` | Current week |
-| `/wk-self-perf month` | Current month |
-| `/wk-self-perf annual` | Full FY |
-| `/wk-self-perf 2026-02-01:2026-04-30` | Custom range |
 
 ---
 

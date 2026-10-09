@@ -17,7 +17,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -66,6 +66,9 @@ fi
 Branch order is fixed: non-zero exit → transport failure (curl already printed
 the reason); zero exit + missing expected field → API-level error.
 
+Need the HTTP status code → `curl -sS -o body.txt -w '%{http_code}'` to separate
+body from status.
+
 ## HARD RULE — keep secrets off the command line
 
 A token passed inline (`-H "Authorization: Bearer abc123"`) is visible in the
@@ -73,15 +76,6 @@ process table (`ps`) and shell history to any local user. Pass secrets via an
 environment variable referenced inside the quoted header (`-H "Authorization:
 Bearer $TOKEN"`), or via `--config -` / a `@file` on a restricted path. Never
 hardcode a literal token in the command.
-
-## Quick Reference
-
-| Situation | Rule |
-|---|---|
-| Response is parsed | `curl -sS …`, never bare `-s` |
-| Call can fail at the transport layer | Capture `$?`, branch before parsing body |
-| Request carries a credential | Reference `$TOKEN` in the header; never inline the literal |
-| `-w` for status code | `curl -sS -o body.txt -w '%{http_code}'` to separate body from status |
 
 ---
 

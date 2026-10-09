@@ -20,7 +20,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash-8b
@@ -233,16 +233,6 @@ it never blocks skill execution, only warns.
    missing. Never fabricate a default.
 
 ---
-
-## Quick Reference
-
-| Invocation | Behavior |
-|-----------|---------|
-| `/wk-env` | Session default vars report |
-| `/wk-env wk-workflow` | Check vars declared by wk-workflow |
-| `/wk-env --check WK_SKILLS_HOME GITHUB_ORG` | Check specific vars |
-| `/wk-env --all` | Check all declared vars across all skills |
-| Auto (PreToolUse hook) | Checks `env-vars:` of the skill being invoked |
 
 ## Requirements
 

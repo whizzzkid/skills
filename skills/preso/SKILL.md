@@ -8,7 +8,6 @@ description: >-
 argument-hint: "<topic or outline>"
 user-invocable: true
 model-invocable: true
-disable-model-invocation: false
 model: sonnet
 effort: medium
 group: communication
@@ -22,7 +21,7 @@ allowed-tools:
   - AskUserQuestion
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -82,14 +81,6 @@ Embed the result as `data:image/png;base64,...` in the HTML.
 
 - Confirm the Artifact URL is live.
 - Report the link to the user with the slide count and key features.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| `/wk-preso <topic>` | Generate and publish a slide deck on the topic |
-| "make a presentation about X" | Auto-invoked, same flow |
-| "create slides for Y" | Auto-invoked, same flow |
 
 ## Post-Completion
 

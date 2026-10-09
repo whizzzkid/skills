@@ -16,7 +16,7 @@ user-invocable: true
 license: MIT
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: true
   model:
     openai: gpt-5.6-terra
@@ -52,13 +52,6 @@ Continue with clear, actionable instructions.
 
 **HARD RULE:** State the rule in one sentence. Follow with a brief explanation of the
 failure mode it prevents and how to comply.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| `/wk-skill-name` | Full flow description |
-| `/wk-skill-name <arg>` | Variant behavior |
 
 ## Requirements
 

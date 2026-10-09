@@ -4,8 +4,7 @@ description: >-
   Use when creating or editing any markdown file — enforces 120-column line
   width, multi-level heading hierarchy, mermaid diagrams for relational content,
   glyphs and emojis for visual hierarchy, and validates all links before writing.
-  Activates on .md file edits, documentation tasks, README authoring, or any
-  markdown content work.
+  Also activates on documentation tasks and README authoring.
 allowed-tools:
   - Read
   - Glob
@@ -28,7 +27,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash

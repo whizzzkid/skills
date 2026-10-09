@@ -27,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -53,7 +53,8 @@ triggered by:
 - Docker daemon errors (`Cannot connect to the Docker daemon`, `Error response from daemon`)
 - Docker socket missing or unresponsive
 - Container build, run, or compose failures where the daemon is the suspect
-- Explicit `/wk-colima` call
+- Explicit `/wk-colima` call — `status` → Step 1 only, report and exit; `start` →
+  Steps 1–3; `stop` → `colima stop` only; `restart` → Step 4 unconditionally
 
 ## Step 1: Check status
 
@@ -150,17 +151,6 @@ After any start or restart, emit a one-line status:
 
 If Colima was already running (Step 1 found it healthy), emit nothing — silent
 is correct when there is nothing to do.
-
-## Quick Reference
-
-| Trigger | Action |
-|---------|--------|
-| `colima status` is Stopped / error | Steps 2–3: start with dynamic CPU/memory |
-| Docker daemon unreachable | Step 4: full shutdown → start |
-| Explicit `/wk-colima restart` | Step 4 unconditionally |
-| Explicit `/wk-colima start` | Steps 1–3 (starts only if not running) |
-| Explicit `/wk-colima stop` | `colima stop` only |
-| Explicit `/wk-colima status` | Step 1 only — report and exit |
 
 ## Requirements
 

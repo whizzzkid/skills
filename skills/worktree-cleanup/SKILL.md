@@ -31,7 +31,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -45,6 +45,9 @@ metadata:
 
 Scan all git worktrees in the current repo → identify merged branches → clean
 merged ones → report unmerged ones for the user to decide.
+
+- "list worktrees" → just run `git wtl` (Step 1) and show the output.
+- "remove worktree X" → remove only that worktree; confirm merge status (Step 3) first.
 
 ## Prerequisites
 
@@ -265,15 +268,6 @@ No unmerged worktrees → say: "All worktrees have been cleaned up."
 For unmerged worktrees, tell the user:
 > "These worktrees have unmerged branches. Let me know if you'd like to
 > force-remove any of them, or I can leave them as-is."
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| "clean up worktrees" | Full scan, remove merged, report unmerged |
-| "list worktrees" | Just run `git wtl` and show the output |
-| "remove worktree X" | Remove a specific worktree (confirm merge status first) |
-| `--current` | Clean the worktree you're inside (chdir to main, then remove) |
 
 ## Requirements
 

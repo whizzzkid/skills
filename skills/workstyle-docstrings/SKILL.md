@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash
@@ -40,7 +40,7 @@ this skill fills gaps only.
 - Writing or editing any doc comment, docstring, or structured comment on a public symbol
 - Adding a new function, method, class, interface, struct, or module with a comment block
 - Editing code adjacent to an existing docstring (stale-comment removal is mandatory)
-- `/wk-workstyle-docstrings check <path>` — audit a single file
+- `/wk-workstyle-docstrings check <path>` — audit a single file; report all violations, no auto-fix
 
 ---
 
@@ -121,18 +121,6 @@ format table, summary line rule, and stale comment removal checklist.
 - **Multi-sentence summaries**: one sentence; split the function if more is needed.
 - **Documenting the obvious**: `// returns nil if not found` when the return type is `*T, error` and
   `ErrNotFound` is defined — the type and error name already say it.
-
----
-
-## Quick Reference
-
-| Trigger | Check |
-|---------|-------|
-| New public callable | Add one-sentence summary + params/returns if non-trivial |
-| Editing adjacent code | Scan block for stale comments; delete or update |
-| Multi-line single-thought comment | Compress to one line at column limit |
-| WHAT comment ("increments x") | Delete unconditionally |
-| `/wk-workstyle-docstrings check <path>` | Report all violations in the file, no auto-fix |
 
 ---
 

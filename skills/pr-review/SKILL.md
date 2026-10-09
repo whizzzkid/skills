@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -45,7 +45,7 @@ metadata:
 
 Gather context → delegate to [`wk-adversarial-review`](../adversarial-review/README.md) → post encouraging but critical inline comments as a pending GitHub review.
 
-**HARD RULE:** Every `gh` read and GitHub write follows `wk-gh`. Invoke it (Skill tool) before drafting any review body or comment — footer lives in Step 4, not reproducible from memory; append it to the body and every inline comment. Omitting = violation.
+**HARD RULE:** All GitHub reads/writes follow [`wk-gh`](../gh/README.md). Invoke it (Skill tool) before drafting any review body or comment; footer goes on the body and every inline comment.
 
 **HARD RULE — optional reviewers require current-task opt-in.** Never launch an optional local/external model reviewer unless the user requests it in this task; existing CI output is evidence, not authorization. Phase-owned dispatches remain mandatory: `wk-adversarial-review`, `wk-arch-review`, `wk-design-review`.
 

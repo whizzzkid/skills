@@ -2,7 +2,7 @@
 
 > Use for all Google Calendar operations — fetching events, creating events in smart free slots, checking availability, and scanning for upcoming interviews.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.09-171327`
 
 ## Invocation
 

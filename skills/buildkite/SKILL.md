@@ -3,8 +3,8 @@ name: wk-buildkite
 description: >-
   Use when working with Buildkite CI — checking build status, investigating
   failures, viewing job logs, or monitoring builds after push. Activates on
-  Buildkite URLs, CI failure investigation, build monitoring, or `bk` CLI
-  operations. Use this instead of GitHub tools for CI status.
+  Buildkite URLs or `bk` CLI operations. Use this instead of GitHub tools for
+  CI status.
 allowed-tools:
   # Read-only bk commands
   - "Bash(bk build view:*)"
@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -192,22 +192,6 @@ explicitly asks to open the browser.
 
 Write to `/tmp/agent/buildkite/<build_number>/<job_id>/<filename>`.
 `mkdir -p` before writing.
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| "check CI" / "build status" | Status check for current branch |
-| Build URL shared | Parse pipeline/build, fetch details |
-| "why did CI fail" | Progressive: status → logs → classify → analysis |
-| Auth error (401/403/scope) | **Stop.** Tell user: `bk auth login` |
-| `bk job retry` mutation error | Try `bk build rebuild` first |
-| After git push | Fetch and report build state |
-| Cancel build | Within: `buildkite-agent build cancel`; outside: REST API |
-| Specific job claim | Per-job view, never rollup |
-| No matching job for check | Unwired gate finding, not a pass |
-| `job_executor_error` / env-hook | Infra — retry job, leave code alone |
-| Post-merge failure unrelated to diff | State trigger AND cause separately |
 
 ---
 

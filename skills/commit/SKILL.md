@@ -1,9 +1,8 @@
 ---
 name: wk-commit
 description: >-
-  Use when creating git commits or pushing code. Enforces conventional commits
-  with emoji, commit signing, and safe push behavior. Use for all git commit
-  and push operations.
+  Use for all git commit and push operations. Enforces conventional commits
+  with emoji, commit signing, and safe push behavior.
 allowed-tools:
   - "Bash(git add:*)"
   - "Bash(git commit:*)"
@@ -26,7 +25,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -268,19 +267,6 @@ Surface `--amend` for single trivial follow-ups; offer batch squash when ≥3
 
 Full detection thresholds and rules:
 [`references/ci-fix-squash.md`](references/ci-fix-squash.md).
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| "commit this" | Stage relevant files, create signed commit with conventional format |
-| "push" | Regular push, ask on rejection |
-| Signing failure | Stop, tell user to fix GPG/SSH config |
-| Hook failure | Stop, ask user to run manually |
-| Push succeeded + open PR exists | Run PR Sync — diff title/body vs branch, `gh pr edit` if drifted |
-| Push succeeded + no PR | Skip PR Sync silently |
-| First push of new branch + no PR | Confirm push intent — unless auto mode + an originating directive or repo mandate authorizes a tracked PR (then push) |
-| Message names a prohibited token | Stop — rewrite using category description only |
 
 ---
 

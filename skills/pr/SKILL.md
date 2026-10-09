@@ -32,7 +32,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005632"
+  version: "2026.10.09-171327"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -49,10 +49,8 @@ ensures quality before marking ready.
 
 ## Hard Rules
 
-0. **All GitHub I/O routes through `wk-gh`.** Org scoping per `wk-gh` Step 1–2;
-   canonical outbound footer per Step 4 on every PR/review/comment body — inject
-   at render time, run the pre-emit gate before `gh pr create`/`gh pr edit`.
-   Unconditional: "skip the review" waives Rule 2 only, never `wk-gh` routing.
+0. **All GitHub reads/writes follow [`wk-gh`](../gh/README.md).** Unconditional:
+   "skip the review" waives Rule 2 only, never `wk-gh` routing.
    Use `<<'EOF'` heredocs; reject empty/implausibly-short/shorter-than-submitted bodies.
 1. **Preserve PR body metadata across rewrites** per
    `skills/pr/references/pr-description-metadata.md`.

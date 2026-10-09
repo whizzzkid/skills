@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.09-171327"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -160,19 +160,6 @@ resolved set):
 No repo config to read (greenfield repo, scratch script, dotfile edit) → apply
 hard preferences as-is; note in the first commit that formatting reflects user
 defaults.
-
----
-
-## Quick Reference
-
-| Trigger | Behavior |
-|---------|----------|
-| About to write/edit code | Auto-resolve rule set; apply during write |
-| `/wk-format` | Rescan repo configs, refresh cached rule set |
-| `/wk-format rules` | Print merged active rule set |
-| `/wk-format check <path>` | Lint an existing file against the merged set; report violations |
-| Repo config conflicts with preference | Repo wins; flag once per session |
-| No repo config | Apply hard preferences as defaults |
 
 ---
 
