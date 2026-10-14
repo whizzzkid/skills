@@ -27,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.14-233845"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -126,6 +126,10 @@ transition, Done transition, Child-completion gate): Stage 3 when `wk-pr` create
 Stage 4 on draft → ready (`gh pr ready`) or non-draft first observed; Stage 5 when PR state = `MERGED`. Run the
 Child-completion gate before every terminal transition, auto (Stage 5) and manual.
 
+**Assignee check before every terminal transition** (Done/Resolved/Won't Fix — auto, manual, and each ticket in a
+batch close, children included): fetch `assignee`; unset → assign to the user; someone else → never reassign, report.
+Report assignee state with the transition result (claims made only at Stage 2 leave resolved tickets unowned).
+
 ## Stage 6: Surface ticket context (read-only)
 
 Jira URL/key outside the dev lifecycle → fetch once per session per key: "Jira: {KEY} — {summary} ({status},
@@ -135,7 +139,7 @@ assignee: @<them>)." No transitions, no writes. Max 5 digests per turn; list rem
 
 User-initiated creates/edits/batch-transitions → confirm before any write; Jira writes are irreversible (no delete
 API). **HARD RULE:** never write without explicit approval of the change set on user-initiated work. Auto mode does
-not exempt. Default `issueTypeName`: `"Story"`. Auto (no confirm): assign (Stage 2), lifecycle comments. After
+not exempt. Default `issueTypeName`: `"Story"`. Auto (no confirm): assign (Stage 2, terminal assignee check), lifecycle comments. After
 creating → Active-sprint assignment.
 
 ## Conflict and missing-state handling
