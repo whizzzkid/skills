@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-212907"
+  version: "2026.10.14-232400"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -112,11 +112,11 @@ Failing line not in diff → environmental.
 ## Phase 4: Review comments
 
 No comment cap — surface every actionable finding. Inline: bugs, suggestions, genuine intent/behavior questions; never
-narration, generic praise, or bot agreements (body only). Default approve-with-concerns; never "blocker" in
+narration, generic praise, or bot agreements (in the body either). Default approve-with-concerns; never "blocker" in
 author-facing text — use "concern"/"limitation". One to two sentences.
 
 - Severity: **`concern:`** critical/security/data-loss (sparingly); **`suggestion:`** style/naming/refactoring
-  (default); **`question:`** genuine uncertainty; **`praise:`** non-obvious patterns (generic → body).
+  (default); **`question:`** genuine uncertainty; **`praise:`** non-obvious patterns (generic → omit).
 - Body: `**{severity}:** {observation}` + optional context/evidence/fix.
 - **HARD RULE — attribute agent evidence:** "My agent ran `<X>` and found `<Y>`", never bare "I verified" — in inline
   comments and body. Bare first-person only for the human's own posture.
@@ -149,10 +149,17 @@ path, ask the user to re-authorize or post it. Never a third attempt.
 **HARD RULE — distinct findings anchor at their own line** — own comment on the subject's diff line, never buried in a
 reply on an adjacent thread. Replies only continue the *same* finding.
 
-**HARD RULE — verdict-first opener.** `LGTM 🚀` (clean), `LGTM, one minor nit`, or `Approving with concerns — <risk>`.
-Ban praise-adjective openers.
-**HARD RULE — LGTM is one line:** no concerns → one-line body plus footer. Body must not restate inline findings. Apply
-`wk-gh` footer. Never emit: process meta-commentary, diff narration, bot re-narration.
+**HARD RULE — the body is the verdict line plus the `wk-gh` footer, with or without concerns.** Verdict: `LGTM 🚀`
+(clean), `LGTM, one minor nit` / `LGTM, two minor questions`, or `Approving with concerns`. Inline comments carry the
+substance; GitHub shows them under the review. Ban praise-adjective openers.
+
+- Never in the body: a `— <risk>` suffix, thread pointers, praise or "the rest looks right", process meta-commentary
+  (review depth, what was checked), bot/duplicate-thread bookkeeping, restated inline findings, diff narration. Review
+  depth → tell the user in the terminal.
+- One extra sentence each, only for: a change-wide concern with no inline anchor; a `Re:` answer to an un-anchored
+  `review_focus` item; an evidenced bot reply per [`bot-finding-validation`](references/bot-finding-validation.md).
+- **HARD RULE — pre-POST body gate:** count sentences before the footer; cut any past the verdict that is not one of
+  those three.
 
 **HARD RULE — open URL on every create/recreate**, whether or not the POST response parsed; parse failure → re-query for
 `html_url`, never drop the open. Trust `path`+`body`, not `line` for verification.

@@ -15,3 +15,6 @@ verdict.
 **Where:** wk-pr-review Phase 5 body composition. (Filed under wk-gh; folded into
 pr-review because it is a review-body convention — wk-gh Step 4 owns only the
 generic outbound footer.)
+
+**Superseded (2026-10-09):** the `— <biggest risk>` suffix and the later praise line were removed; the body is
+the verdict line plus the footer. See `2026-10-09_body-verdict-only.md`.

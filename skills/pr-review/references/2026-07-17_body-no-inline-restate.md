@@ -13,3 +13,6 @@ inline comments; restating each inline finding double-reports it, bloats the bod
 and makes the reader read the same concern twice.
 
 **Where:** wk-pr-review Phase 5 "Compose the review body."
+
+**Superseded (2026-10-09):** the one-line thread pointer allowance was removed; the body is the verdict line plus
+the footer. See `2026-10-09_body-verdict-only.md`.
