@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-213235"
+  version: "2026.10.09-214351"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -98,6 +98,12 @@ approved.
 intended base before any Edit/Write. Linked worktree → resolve paths under `git rev-parse --show-toplevel`.
 Rebase/cherry-pick conflicts → `git log --oneline -5`; base mismatches worktree parent → stop, never force through.
 
+- **Important — probe repo convention before creating any branch, not at PR time.** Treat the current task branch as
+  authoritative. On the default branch (resolved dynamically) → gather PR-gated evidence first: branch protection,
+  `CODEOWNERS`, feature-branch merges in `git log --first-parent -10 origin/<default>`. Direct non-merge commits by the
+  user, no protection → commit to default, no branch. Branch only on PR-gated evidence, detached HEAD, unrelated dirty
+  work, or explicit request.
+
 - **Pre-patch routing:** `.md` → [`wk-markdown`](../markdown/README.md); Mermaid → [`wk-mermaid`](../mermaid/README.md);
   arch-bearing → [`wk-arch-review`](../arch-review/README.md) detector, then draft-complete gate.
 - **Subtractive-first:** evaluate if removal/simplification eliminates the problem before adding code. Fleet-first for
@@ -171,12 +177,11 @@ blocker. Leave app running; continue Phase 5.
 
 ## Phase 5: PR
 
-**HARD RULE — "push succeeded" is NOT "work complete".** After push, run `gh pr view 2>/dev/null`; no open PR → invoke
-`wk-pr` immediately.
+**HARD RULE — "push succeeded" is NOT "work complete".** After push, run `gh pr view 2>/dev/null`; no open PR on a
+feature branch → invoke `wk-pr` immediately (commit-to-default per the Phase 2 probe needs no PR).
 
-- **Repo convention:** treat the current task branch as authoritative. Branch from default only on detached HEAD,
-  unrelated dirty work, or explicit request. Resolve default branch dynamically. Branch when evidence points to PR-gated
-  workflow; otherwise commit to default. Follow-up branch → from `origin/<default>` (fetch first).
+- **Repo convention:** decided by the Phase 2 pre-flight probe, never re-decided here. Follow-up branch → from
+  `origin/<default>` (fetch first).
 - Invoke `wk-pr` (never raw `gh pr create`) after tests and Phase 3.5/3.6 pass. Each stacked PR independently completes
   Phases 5→6.5.
 - **Post-push sync:** `wk-commit` handles PR description sync and stale comment resolution. **HARD RULE:** auto-sync
