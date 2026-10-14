@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.10.09-214351`
+**Version:** `2026.10.14-231743`
 
 ## Invocation
 
@@ -44,6 +44,8 @@ flowchart TD
 
 - **Repo convention is probed before the first branch** — the Phase 2 pre-flight reads branch protection, `CODEOWNERS`,
   and first-parent history; a direct-to-default repo gets commits on default and no PR.
+- **One command per Bash call** — no `&&`/`||`/`;` chains; independent commands run as parallel calls so each stays
+  reviewable and classifiable.
 - **Plan diff at every batch boundary** — done vs remaining is checked after each batch, the next covered item starts
   without asking, and anything not done is deferred explicitly with a reason, never silently dropped.
 - **Live learning capture is a Mandatory Activation rule** — invoke

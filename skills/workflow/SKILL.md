@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-214351"
+  version: "2026.10.14-231743"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -124,8 +124,10 @@ Code standards:
 - **Version pins:** exact only — no `latest`/`^`/`~`. Official-action semver majors permitted.
 - **Regexes:** named capture groups: `(?<year>\d{4})`.
 - **Bash:** absolute paths, no `cd`. Extended:
-  [`references/code-standards-extended.md`](references/code-standards-extended.md). **Shell:** sequential single-purpose
-  commands. Surface denials; never silently restructure.
+  [`references/code-standards-extended.md`](references/code-standards-extended.md).
+- **Important — one command per Bash call.** Never chain with `&&`, `||`, or `;`; independent commands → parallel
+  calls, dependent → separate sequential calls (chains defeat per-command review, and classifiers block what they
+  cannot decompose). Surface denials; never silently restructure.
 - **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md). **Platform-API traps:**
   [`references/platform-api-traps.md`](references/platform-api-traps.md).
 - **Layer responsibility:** side effects in entrypoint layers only. **Two-sided flow survey:** survey caller + callee
