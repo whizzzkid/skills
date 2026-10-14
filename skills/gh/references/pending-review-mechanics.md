@@ -37,3 +37,12 @@ class: principle
   the substantive reply as a top-level `POST /issues/{n}/comments`, and defer any
   edit to the author's own annotation until the pending review is submitted or
   dismissed — never submit it to unblock.
+
+## Submit 422 — re-read the review state before touching the payload
+
+- `POST /pulls/{n}/reviews/{id}/events` returns 422 `"Could not comment pull request review."` when the review is
+  no longer `PENDING` — e.g. the user submitted it in the browser the agent just opened. The message does not say
+  "already submitted", so it reads like a payload error.
+- On that 422, re-GET the review and read `state` / `submitted_at` before retrying or changing the body or `event`.
+  Not `PENDING` → report the submitted state and stop. Never resubmit.
+- A `PENDING` check taken before the browser opened is stale; the user can act in between.
