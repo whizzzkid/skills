@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.14-233556"
   model:
     openai: gpt-5.6-terra
 ---
@@ -72,6 +72,9 @@ page; dated snapshots at close; no standalone HTML.
   invoked sub-command's own agent roster (source control excluded), derived from that roster, never a restated list. Any
   unavailable → stop before writing: live page byte-unchanged, no rollover marker or brag entry, no commit/push; name
   every missing connector and await instruction. Never publish a partial page.
+  - **User waivers only, never agent-inferred.** Subtract from the required set the connectors in `.sitrep.yml`
+    `waived_connectors:` (write an entry only when the user waives "for all runs") plus any the user waived for this
+    run; applies to nested rollover `end` too. Echo every waiver in the page's Meta section.
 - **Gaps inside available domains** → label, preserve `data-done`/carry-over, withhold accrual artifacts.
 
 References: layout/spans/urgency/nesting/styles [`references/rendering-contract.md`](references/rendering-contract.md)
@@ -89,7 +92,8 @@ Resolve `$SITREP_REPO`, `$EMPLOYER`, `$SITREP_PORT` (`.sitrep.yml` wins), export
 ## Sub-command: start
 
 - **Stage 0.5 — Close unfinished prior day.** **HARD RULE — close before overwrite.** Prior `date:` with no valid end
-  state → full `end` flow first; failure stops `start`. Details:
+  state → full `end` flow first; failure stops `start`. User explicitly declares the stale page closed → skip the
+  rollover, carry its open spans forward, note it in Meta. Details:
   [`references/missed-end-rollover.md`](references/missed-end-rollover.md).
 - **Stage 1 — Load previous live.md.** Read `$LIVE_FILE`: open `data-done="false"` → carry-over, completed → count.
   Canonical state is `data-done` (legacy glyphs read-only). Resolve previous working day from frontmatter. Read

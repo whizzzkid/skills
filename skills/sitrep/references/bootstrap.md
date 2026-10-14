@@ -20,6 +20,8 @@ if [ -f "$_CFG" ]; then
   _v=$(_yml sitrep_repo); [ -n "$_v" ] && SITREP_REPO="$_v"
   _v=$(_yml employer);    [ -n "$_v" ] && EMPLOYER="$_v"
   _v=$(_yml sitrep_port); [ -n "$_v" ] && SITREP_PORT="$_v"
+  # Comma-separated connector domains the user waived for all runs, e.g. "lattice, dx".
+  WAIVED_CONNECTORS=$(_yml waived_connectors)
 fi
 
 test -n "$SITREP_REPO" || { echo "SITREP_REPO is not set"; exit 1; }

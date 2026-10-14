@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.14-233556`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -62,6 +62,10 @@ stops before writing and reports rather than prompting through a tool.
   committed or pushed, no accrual artifact (`end_completed_at`, the brag log)
   accrues, and the user is prompted with the missing connectors. Source control
   alone is never sufficient evidence for a sitrep.
+- **User waivers** — a connector the user waives (for all runs via
+  `waived_connectors:` in `.sitrep.yml`, or for this run) leaves the required set,
+  and a stale page the user declares closed skips rollover. Every waiver is echoed
+  in the page's Meta section; the agent never infers one.
 - **Degraded run** — gaps *inside* an available domain still render: every
   unavailable source is labelled, checkbox state and carry-over survive, stale
   dated meeting lines are dropped, no unverified outcome is claimed, and accrual

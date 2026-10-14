@@ -10,6 +10,9 @@ prerequisite to today's overwrite, not a separate required invocation.
 ## Detect closure
 
 - Read `$LIVE_FILE`; no file or `date:` equal to `$TODAY` → skip rollover.
+- User explicitly declares the stale page closed → skip rollover: no nested `end`, no snapshot, no
+  `end_completed_at:`. Carry its open spans forward and note "prior day closed by user" in today's Meta
+  section. Never infer this from a failed or blocked close.
 - Missing, malformed, or future `date:` → stop; never guess which day to close.
 - Resolve that date's snapshot before judging state.
 - Close artifacts are `$LIVE_FILE`, the dated snapshot, `$WEEK_MEM_FILE`, and
