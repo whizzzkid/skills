@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.14-231743"
+  version: "2026.10.14-234135"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -128,6 +128,8 @@ Code standards:
 - **Important — one command per Bash call.** Never chain with `&&`, `||`, or `;`; independent commands → parallel
   calls, dependent → separate sequential calls (chains defeat per-command review, and classifiers block what they
   cannot decompose). Surface denials; never silently restructure.
+- **Open a local file for the user** → `"${IDE:-open}" <file>`, never bare `open` (it picks the OS default app, not
+  the user's editor). Never launch a terminal editor or a `--wait` command from Bash — it blocks the call.
 - **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md). **Platform-API traps:**
   [`references/platform-api-traps.md`](references/platform-api-traps.md).
 - **Layer responsibility:** side effects in entrypoint layers only. **Two-sided flow survey:** survey caller + callee
