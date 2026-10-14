@@ -31,7 +31,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.14-232400"
+  version: "2026.10.14-233206"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -131,7 +131,8 @@ author-facing text — use "concern"/"limitation". One to two sentences.
   ±5 same hunk → move; else file-level or body.
 - Answer every `review_focus` item inline or in body `Re: <question>`; mark each `answered: inline | body | open`.
 
-Present a numbered summary (`1. [concern] src/auth.ts:42 — description`) and wait for user approval.
+Present a numbered summary (`1. [concern] src/auth.ts:42 — description`), then go straight to Phase 5 in the same turn —
+never ask "post as pending review?". The review is pending, so the user still decides at submit time.
 
 ## Phase 5: Post review
 
