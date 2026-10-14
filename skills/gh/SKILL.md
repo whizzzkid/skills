@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.14-232810"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -118,6 +118,19 @@ Route all GitHub write operations (PR create/edit, review comments, inline repli
 changes) through this skill. Build JSON bodies with `jq -n`, never heredocs. Check for pending reviews before GraphQL
 replies. Resolve repo names from the API, not URLs. Use the reactions API for emoji responses. Full API surface rules,
 endpoint gotchas, and pending-review guards: [`references/github-api-surfaces.md`](references/github-api-surfaces.md).
+
+**HARD RULE — outbound comment bodies are terse: the point, then the footer.** Covers every comment surface posted for
+the user: review bodies, inline comments, replies, PR/issue conversation comments (PR/issue descriptions follow their
+owning skill's template). Callers (`wk-pr-review`, `wk-self-review`, `wk-pr-resolve`) inherit it — stricter, never
+looser. Voice per [`wk-tone`](../tone/README.md).
+
+- First line is the verdict, answer, ask, or finding; nothing precedes it. Top-level bodies default to one line; add
+  one short sentence only per point with nowhere else to live.
+- Never: pointers to what GitHub shows beside the body (inline threads, diff, CI); evaluative filler ("looks right",
+  "solid", "nice work"); process notes (review depth, tools run, what was checked and found fine, bot-thread
+  bookkeeping) → tell the user in the terminal instead.
+- Inline shape: `**<severity>:** <what is wrong, with a code ref>. <ask or fix>?` — only what the one finding needs.
+- Before posting, drop every sentence that only describes what the agent did.
 
 ## Step 4: Outbound message footer
 

@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.14-232810`
 
 ## Invocation
 
@@ -45,6 +45,9 @@ flowchart TD
 
 ## Noteworthy
 
+- **Outbound comment bodies are terse:** every review body, inline comment, and reply posted for the user leads with
+  the point and stops — no process notes, filler praise, or pointers to what GitHub already shows. Calling skills may
+  be stricter, never looser.
 - **Hard stop on missing var:** The skill never guesses the org from the current repo URL — if `$GITHUB_ORG` is
   unset, all `gh` operations halt and the user is prompted to set it explicitly.
 - **Exceptions are explicit:** The org filter is bypassed only when the user names a different org, says "all orgs",
