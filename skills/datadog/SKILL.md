@@ -1,10 +1,11 @@
 ---
 name: wk-datadog
 description: >-
-  Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks
-  via the `pup` CLI (Datadog's agent-ready command-line interface). Use when
-  asked to create a dashboard, set up a monitor, define an SLO, manage
-  notebooks, or interact with Datadog resources.
+  Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks,
+  and query metrics, via the `pup` CLI (Datadog's agent-ready command-line
+  interface). Use when asked to create a dashboard, set up a monitor, define
+  an SLO, manage notebooks, query a metric's rate, or interact with Datadog
+  resources.
 argument-hint: '[action: list|get|create|update|delete] [resource: dashboard|monitor|slo|notebook]'
 allowed-tools:
   - Bash
@@ -19,7 +20,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.15-000704"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -162,6 +163,20 @@ All domains follow `pup <resource> <action>` over `dashboards`, `monitors`, `slo
 - `pup notebooks list`; `get <id>`; `create --file notebook.json`; `update <id> --file notebook.json`; `delete <id>`
   (confirm first).
 - Ask before build: name, cells (markdown, timeseries, log stream, etc.), time range.
+
+## Metrics
+
+- `pup metrics list --filter='<pattern>' [--from=<window>]`; `query --query='<agg>:<name>{<scope>} by {env}'
+  --from=<window>`; `tags list <name>`.
+
+### HARD RULE: resolve the published metric name before reading an empty series as zero
+
+- Datadog answers a query for a nonexistent metric with an empty series (`series: []`), never an error — a wrong name
+  and a real zero look identical.
+- The name in app source is often not the published name: metrics clients commonly prepend an app namespace.
+- Before concluding "never fires" / "zero rate": run `pup metrics list --filter='*<name-suffix>'` with a `--from`
+  window covering the period (default `1h` misses sparse metrics), re-query the listed name, group `by {env}`.
+- No listed match → report the rate as **unknown**, never as zero (a fix plan built on a false zero inverts).
 
 ## Requirements
 
