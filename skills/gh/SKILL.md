@@ -17,7 +17,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.10.14-234408"
+  version: "2026.10.15-004500"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -116,8 +116,9 @@ Projections needing shell values (`gh --jq` takes no `--arg`) and endpoint quoti
 
 Route all GitHub write operations (PR create/edit, review comments, inline replies, issue comments, thread state
 changes) through this skill. Build JSON bodies with `jq -n`, never heredocs. Check for pending reviews before GraphQL
-replies. Resolve repo names from the API, not URLs. Use the reactions API for emoji responses. Full API surface rules,
-endpoint gotchas, and pending-review guards: [`references/github-api-surfaces.md`](references/github-api-surfaces.md).
+replies; resolve a thread only after its reply lands, never in the same chained command. Resolve repo names from the
+API, not URLs. Use the reactions API for emoji responses. Full API surface rules, endpoint gotchas, and pending-review
+guards: [`references/github-api-surfaces.md`](references/github-api-surfaces.md).
 
 **HARD RULE — outbound comment bodies are terse: the point, then the footer.** Covers every comment surface posted for
 the user: review bodies, inline comments, replies, PR/issue conversation comments (PR/issue descriptions follow their

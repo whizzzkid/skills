@@ -74,6 +74,10 @@ later submitted. Guard every reply post:
   pending review exists, use the REST `/replies` endpoint (it fails loudly with
   422 `user_id can only have one pending review`) or surface the pending review
   and wait for the user to resolve it — do not post via GraphQL.
+- Resolve a thread only after its reply call succeeds, in a separate step — never chain `resolveReviewThread` with
+  the reply. On the REST 422, fall back to the top-level comment per
+  [`pending-review-mechanics.md`](pending-review-mechanics.md) → REST block, then resolve (a chained resolve leaves the
+  thread closed with no answer).
 - Never treat a `state: "PENDING"` response from a reply mutation as success —
   read the returned `state` and treat any non-published state as a failure needing
   remediation.
