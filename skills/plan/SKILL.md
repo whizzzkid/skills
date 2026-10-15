@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.15-001500"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -57,6 +57,11 @@ Proceed to Step 1 only when every blocker resolves.
 - **Is-a-fix-warranted gate:** benign root cause → surface "no fix needed / close as working-as-intended" as
   `[HUMAN-IN-LOOP]`; revert already landed → plan re-land (cherry-pick / revert-the-revert), not re-implementation;
   perception-based symptom → surface the UI-affordance gap as the real follow-up.
+  - **Reject/fail-closed step → quote observed traffic first.** Before planning any step that rejects on a missing or
+    invalid input (handoff, spec, or ticket says "fail closed on missing X"), look up the existing fallback metric or
+    log for that condition and quote its real-world rate per environment. High rate → plan "make it safe now" plus the
+    upstream fix as a separate follow-up (a spec says the input is mandatory; traffic says whether it arrives — a
+    fail-closed step on a commonly-missing input locks everyone out).
 - **Fix-philosophy branch:** multiple valid fixes splitting "add/produce" vs "disable/suppress" → `[HUMAN-IN-LOOP]`.
   Consumer-only service must never produce — confirm role before drafting.
 

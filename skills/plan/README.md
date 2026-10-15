@@ -2,7 +2,7 @@
 
 > Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.15-001500`
 
 ## Invocation
 
@@ -84,6 +84,7 @@ Run these probes during research and validation:
 
 - **HARD RULE:** Do not start executing any step until the user explicitly approves the plan — silence is not approval.
 - **HARD RULE:** Stop at Step 0 when requirements are vague, missing acceptance criteria, or conflicting — planning a wrong requirement produces more rework than grilling.
+- **Fail-closed steps quote observed traffic:** before planning a step that rejects on a missing input, the plan quotes that condition's real-world rate from its existing metric or log — a spec-mandatory input that rarely arrives turns the step into a lockout.
 - **Parallelism default:** Steps that don't share a write target and don't have a data dependency go in the same parallel phase. Sequential ordering must be justified.
 - **Mandatory 8 elements:** Every plan must include implementation steps, commit boundaries, docs updates, testing, one adversarial review at the completion gate, PR offer, CI fix loop, and session retro — the plan is invalid without all 8. A 9th element fires conditionally: when a ticket key is in scope, Jira lifecycle transitions appear as named numbered steps (each `[AGENT-READY]` with an auto-mode-may-block caveat), not invisible side-effects.
 - **Progressive disclosure:** SKILL.md stays under 500 lines; detailed probes are compressed into gates and validation checklist.
