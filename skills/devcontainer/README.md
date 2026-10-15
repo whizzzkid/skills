@@ -2,7 +2,7 @@
 
 > Use when creating or debugging a devcontainer for a Rails app (or any mise-managed project).
 
-**Version:** `2026.10.09-171327`
+**Version:** `2026.10.15-003800`
 
 ## Invocation
 
@@ -31,5 +31,6 @@ flowchart TD
 - **`BUNDLE_PATH` and `BUNDLE_APP_CONFIG` must both be set** in the Dockerfile to `/usr/local/bundle`; without them the named `bundle-cache` volume is bypassed and gems reinstall on every restart.
 - **`trilogy` adapter does not need `libmysqlclient-dev`** — only the `mysql2` adapter links against libmysqlclient; adding it for trilogy is a common unnecessary dependency.
 - **`MISE_TRUSTED_CONFIG_PATHS: /workspace` is required** in the compose environment — the bind mount replaces the `/workspace` directory that was trusted at image build time, so trust must be re-granted at runtime.
-- **Pin the Compose project name in every teardown/rebuild command** — `devcontainer up`/VS Code create the stack under `<basename>_devcontainer`; a bare `docker compose -f … down` targets an empty project and silently leaves it running.
+- **Pin the Compose project name in every teardown/rebuild command** — `devcontainer up`/VS Code create the stack under the lowercased `<basename>_devcontainer` (Compose rejects uppercase project names); a bare `docker compose -f … down` targets an empty project and silently leaves it running.
+- **Surface the real build error first** — `devcontainer up` hides the cause behind a generic build failure; a trace log shows it. Under Compose 5.x bake the usual cause is a filesystem entitlement for the CLI's temp features Dockerfile (`BUILDX_BAKE_ENTITLEMENTS_FS=0`, else plain compose when no features are declared).
 - **Do not stream startup output when Compose resolves host credentials** — prefer file-backed secrets; otherwise capture under `umask 077`, print only an exact-value-redacted copy, and verify with a canary.

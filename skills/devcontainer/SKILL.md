@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.15-003800"
   model:
     openai: gpt-5.6-terra
 ---
@@ -82,13 +82,14 @@ lockfile platform conflicts.
 
 **HARD RULE: pin the Compose project name in every teardown/rebuild command.**
 `devcontainer up` and VS Code "Reopen in Container" create the stack under
-project `<workspace-folder-basename>_devcontainer`. A bare `docker compose -f
+project `<workspace-folder-basename>_devcontainer`, **lowercased** (Compose rejects uppercase
+project names, so an unlowered `-p` fails on a mixed-case worktree directory). A bare `docker compose -f
 .devcontainer/docker-compose.yml down` defaults the project to the compose
 file's parent-directory basename (`devcontainer`) → targets an empty project and
 silently leaves the real stack running.
 
 ```bash
-proj="$(basename "$PWD")_devcontainer"
+proj="$(basename "$PWD" | tr '[:upper:]' '[:lower:]')_devcontainer"
 docker compose -p "$proj" ps                                          # verify target before acting
 docker compose -p "$proj" -f .devcontainer/docker-compose.yml down    # stop (add -v to drop volumes)
 docker compose -p "$proj" -f .devcontainer/docker-compose.yml build   # rebuild
@@ -105,7 +106,7 @@ Attach a throwaway container to the running stack's network and named volumes,
 publishing nothing:
 
 ```bash
-proj="$(basename "$PWD")_devcontainer"
+proj="$(basename "$PWD" | tr '[:upper:]' '[:lower:]')_devcontainer"
 docker network ls; docker volume ls          # resolve real names before running
 docker run --rm -it \
   --network "${proj}_default" \
@@ -120,6 +121,21 @@ docker run --rm -it \
 - Never resolve this by editing the committed port mapping — that breaks the other
   worktree and lands an unrelated diff.
 
+## `devcontainer up` fails at the image build
+
+**HARD RULE: surface the real build error before changing config.** The CLI reports only
+"An error occurred building the Docker Compose images"; never guess from that line.
+
+- Rerun with `devcontainer up --log-level trace` (capture under the credential rule above) and grep the capture for
+  `privileges` / `error`, or rerun the generated compose overlay command from the trace by hand.
+- `additional privileges requested: pass "--allow=fs.read=<tmp>/Dockerfile-with-features"` → Compose 5.x builds via
+  buildx bake, which gates reads outside the build context; the CLI writes its features Dockerfile to a temp dir.
+  `COMPOSE_BAKE=false` does not help. Export `BUILDX_BAKE_ENTITLEMENTS_FS=0` (buildx's documented opt-out) in the
+  shell that launches the CLI and retry — reported to work in one run and not in another.
+- Still failing and the config declares no features (the overlay adds nothing) → bring the stack up with plain
+  `docker compose -p "$proj" -f .devcontainer/docker-compose.yml up -d`, then run the `postCreateCommand` script by
+  hand.
+
 ## Common Mistakes
 
 | Symptom | Root cause | Fix |
@@ -132,10 +148,11 @@ docker run --rm -it \
 | DB connection uses `localhost` | Service hostname confusion | Use `db` (service name) as MySQL host inside Compose network |
 | Tools silently absent | `auto_install = true` missing from `mise.toml` | Add `[settings] auto_install = true` |
 | Dependency install fails on registry `401` in a fresh container | Expired package-registry credential; the provisioning script treats the registry as the only source | Not a hard stop — seed the dependency volume from a sibling container's volume on the same daemon and install offline (`wk-docker` → *Seed a Dependency Volume from a Sibling*) |
-| `down` reports success but containers stay up | Teardown used bare `-f` with no `-p` → empty/wrong project | Pin `-p "$(basename "$PWD")_devcontainer"` to match `devcontainer up`/VS Code |
+| `down` reports success but containers stay up | Teardown used bare `-f` with no `-p` → empty/wrong project | Pin `-p` to the lowercased `<basename>_devcontainer` to match `devcontainer up`/VS Code |
 | Startup output contains a host credential | CLI printed the interpolated Compose model | Use file-backed secrets, or capture under `umask 077` and print only an exact-value-redacted copy |
 | `port is already allocated` bringing the stack up | A sibling worktree's stack of the same project already publishes that host port | Attach a throwaway container to the running stack's network and volumes with nothing published — *Host port already bound by a sibling worktree* |
 | `bundle install` 401s in a manually-started container | Bundler credentials come from a hostname-derived `BUNDLE_<HOST>` var the provisioning script exports; a manual `docker run` does not inherit it | Export it explicitly (`wk-cloudsmith` → *Bundler credentials for a Cloudsmith gem source*) |
+| `devcontainer up` fails "building the Docker Compose images" while a plain base build succeeds | Compose bake requests an fs entitlement for the CLI's temp features Dockerfile | Trace-log the real error, export `BUILDX_BAKE_ENTITLEMENTS_FS=0`, else plain compose — *`devcontainer up` fails at the image build* |
 
 ## Post-Completion
 
