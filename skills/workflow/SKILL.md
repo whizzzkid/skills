@@ -14,7 +14,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.14-234135"
+  version: "2026.10.15-005000"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -35,8 +35,9 @@ Session resumption → re-invoke before any write action. A planning discussion 
 first Edit/Write/Bash.
 
 **HARD RULE — live learning capture.** Invoke [`wk-learn`](../learn/README.md) immediately on user correction, scope
-redirect, or self-caught error — before continuing or ending the response. Invoke after every skill run; never ask or
-offer. Phase 8 retro only verifies live capture.
+redirect, self-caught error, or a tool/environment/API failure that needed a non-obvious workaround (a workaround is a
+caught error, not routine progress) — before continuing or ending the response. Invoke after every skill run; never ask
+or offer. Phase 8 retro only verifies live capture.
 
 ### Autonomy Rules
 
