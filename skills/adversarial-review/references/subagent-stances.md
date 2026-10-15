@@ -28,3 +28,9 @@ naming-aware, and diff-sensitive.
 - **Artifact-provenance-aware:** state derived from a produced artifact (summary, report, comment, log) must be gated on
   the artifact's production fidelity — a degraded, partial, or fallback production path voids any state inference drawn
   from the artifact's content or existence. "Artifact exists" ≠ "artifact is complete."
+- **Auth-boundary-aware:** a diff that tightens or moves the authenticated/anonymous boundary shifts it for every
+  background fetch on public pages, not only the edited route. Have the subagent list each lazy frame, poller, and
+  stream on public pages and check its target against the new boundary; reproduce each resulting `question` in a real
+  browser with no session before closing it (a request spec never exercises the poll tick). Flag an audit spec that
+  checks only class ancestry as a coverage gap — any subclass passes it, whatever its skip callbacks. A confirmed issue
+  that predates the diff → separate ticket, not a fold-in.

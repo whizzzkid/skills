@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.15-003000`
 
 ## Invocation
 
@@ -60,7 +60,7 @@ flowchart TD
   Fix rounds validate recorded findings without re-running sweeps or a subagent.
 - **[`wk-pr-merge`](../pr-merge/README.md) is record-only** — missing clearance
   or genuinely new work returns to the completion gate; merge never dispatches.
-- **Fresh adversarial subagent** — the diff is piped directly, never hand-transcribed; the subagent stays coverage-aware, refactor-aware, relocation-aware, and introduction-claim-aware.
+- **Fresh adversarial subagent** — the diff is piped directly, never hand-transcribed; the subagent stays coverage-aware, refactor-aware, relocation-aware, and introduction-claim-aware, and auth-boundary-aware (background fetches on public pages are re-checked against a moved auth boundary in a no-session browser).
 - **Playground validation is mandatory** for any runtime-behavior claim — findings that cannot be reproduced in
   `.review-playground/` are downgraded from `blocker` to `question`. Every local run is scoped to the changed examples
   (never a suite or whole spec directory) — CI owns full-suite regressions, and mutation cycles inherit that scoping.

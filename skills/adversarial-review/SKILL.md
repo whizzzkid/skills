@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.15-003000"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -117,7 +117,8 @@ After sweeps, dispatch a fresh subagent with no prior session context. Pipe `git
 PR title/body purpose section; never hand-transcribe; verify hunk boundaries if excerpting. Make it adversarial,
 objective, naming-aware, and diff-sensitive, and brief it with every stance in
 [`references/subagent-stances.md`](references/subagent-stances.md) (coverage, narrate-why, refactor, relocation,
-introduction-claim, runtime-behavior, absence-claim, intent, design-invariant, artifact-provenance). `category:` values:
+introduction-claim, runtime-behavior, absence-claim, intent, design-invariant, artifact-provenance,
+auth-boundary). `category:` values:
 [`references/hunt-categories.md`](references/hunt-categories.md).
 
 ## Step 4: Findings Format and Severity
