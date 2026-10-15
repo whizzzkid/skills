@@ -25,7 +25,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.09-211241"
+  version: "2026.10.15-002300"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -136,6 +136,10 @@ preservation, false alarms: [`references/commit-signing.md`](references/commit-s
 - **Never truncate `git commit` output so a hook abort is hidden:** `| tail -N` drops both the hook's `✗`/error block
   and the `[branch sha]` success line. Show full output or append `&& echo OK`, and confirm HEAD advanced
   (`git rev-parse HEAD`); treat an absent `[branch sha]` confirmation as a failed commit, not a display artifact.
+- **Important — never pipe a validation gate before `&& git commit`:** `<lint|test> | tail -1 && git commit` gates on
+  `tail`'s status (always 0), so a failing gate commits and pushes. Redirect gate output to a file, capture `$?`, and
+  branch on it — or `set -o pipefail` first (escalated from the fail-fast chain rule in
+  [`references/staging-discipline.md`](references/staging-discipline.md)).
 - **Self-heal stale-bundle hook failures:** pre-push hook fails with `GemNotFound` / `Bundler::GemNotFound` /
   `Could not find gem` (stale local bundle after a base bump or rebase) → run `bundle install`, then retry the push
   once. Escalate only if `bundle install` fails or the hook fails again after it.

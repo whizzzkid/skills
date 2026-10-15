@@ -2,7 +2,7 @@
 
 > Use when creating git commits or pushing code. Enforces conventional commits with emoji, commit signing, and safe push behavior.
 
-**Version:** `2026.10.09-211241`
+**Version:** `2026.10.15-002300`
 
 ## Invocation
 
@@ -35,6 +35,7 @@ flowchart TD
 
 - **Push is part of the commit sequence**, not a separate step — every commit is followed by a push unless the user has explicitly said not to. Silent skip is a violation. Exception: the first push of a brand-new branch with no open PR is gated on user confirmation, to avoid orphaned remote branches — unless auto mode is on and the originating directive already authorizes a tracked PR, in which case it pushes without re-confirming.
 - **Exactly one emoji per commit subject** — classifiers beat primary action emojis (`📌` beats `🔧` for a pin), and `🤖` is the canonical fallback for agent-authored or mixed-bag commits rather than stacking multiple emojis.
+- **Never pipe a gate before `&& git commit`** — a pipeline's status is its last stage's, so `lint | tail -1 && git commit` commits on a failing lint; capture the gate's `$?` first.
 - **Dependent commit chains fail fast** — every grouped stage/verify/commit shell starts with `set -euo pipefail`,
   so an early failure cannot be hidden by later read-only output.
 - **PR Sync runs after every successful push** to a branch with an open PR — title and body are diffed against the post-push state and updated if they have drifted, with human-authored sections (review checkboxes, hand-edited test plans) preserved.
