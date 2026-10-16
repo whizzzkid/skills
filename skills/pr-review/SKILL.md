@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.16-175427"
+  version: "2026.10.16-194341"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -102,7 +102,12 @@ ask for number/URL, then `gh pr checkout`.
 - **Review focus:** parse the description for explicit asks → `review_focus` list of `{topic, files, question,
   severity-hint}`; drop boilerplate. Prioritize them in Phase 3; answer every ask in Phase 4 (unanswered = gap).
 - **Claims:** parse description + commit messages for assertions (behavior, "no-op", perf, "tested X", "fixes Y") →
-  `pr_claims`; every mode marks each Confirmed / Refuted / Unverified against the code. Refuted → comment.
+  `pr_claims`; every mode marks each Confirmed / Refuted / Unverified. Refuted → comment.
+  - Empirical claims (mutation results, test counts, gating, "fails without the fix") → replay in a detached scratch
+    worktree; reading alone never confirms them. `light` caps at one targeted run per claim, else Unverified.
+  - Related PRs the description calls pending or "lands first" → check their merge state; merged → re-check the
+    follow-up steps it predicted.
+  - Tee full test output to a log file, never `tail -1`; rerun a bare FAIL before treating it as real.
 - Announce: > "Reviewing PR #N (`{mode}`): *title* — X files, Y commits. Base: `{base}`. Author asks: {k}. Claims:
   {c}."
 - **Architecture:** run the [`wk-arch-review`](../arch-review/README.md) detector over `gh pr diff <n> --name-only`.

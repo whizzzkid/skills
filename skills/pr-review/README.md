@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.10.16-175427`
+**Version:** `2026.10.16-194341`
 
 ## Invocation
 
