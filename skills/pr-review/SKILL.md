@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.16-194752"
+  version: "2026.10.16-195048"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -189,6 +189,9 @@ submits from GitHub UI; never call submit/approve/request-changes. Omit `event` 
 
 Recheck the reviewed head before each POST, write the payload with the Write tool, append by delete+recreate, and post
 follow-ups live: [references/posting-pending-review.md](references/posting-pending-review.md).
+
+- **Important:** build the payload with the Write tool every time — never inline `jq -n '…'` or any single-quoted
+  shell string (an apostrophe in a comment body ends the quote and breaks the call).
 
 **HARD RULE — the POST is its own single Bash call.** Footer build, payload (Write tool), footer gate, and `open` each
 run as separate calls; never chain them with the `gh api ... --method POST`. Denied with `a hook changed this call's
