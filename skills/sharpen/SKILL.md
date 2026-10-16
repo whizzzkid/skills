@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.10.09-211953"
+  version: "2026.10.16-195605"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -101,7 +101,8 @@ Transform incident into a generalizable principle.
 
 - **HARD RULE: prohibited-subject gate — scan subject before drafting.** `command grep` subject (stdin) against
   `.skillprohibit` as pattern file (`-f`, comment/blank lines stripped; inverted fails open). Prove the zero with a
-  canary. Match → route to private `CLAUDE.md`, skip fold. Category-only naming in commits. Details:
+  canary; canary denied → run `.githooks/check-prohibited.sh` on the staged fold as the proof and record "canary
+  denied; hook-proven" (never skip silently). Match → route to private `CLAUDE.md`, skip fold. Category-only naming in commits. Details:
   [`references/staged-path-scan.md`](references/staged-path-scan.md).
 - **HARD RULE: full-read before `already-covered`.** Read body + every linked reference; match at rule level; cite
   proving lines with file. Missing rule → `partial`.
