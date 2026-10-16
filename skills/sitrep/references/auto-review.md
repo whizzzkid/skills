@@ -60,7 +60,9 @@ Each subagent:
    `git wta <pr-head-branch>` (= `git pull; git worktree add worktrees/<branch>
    <branch>`). Fallback when the alias is absent:
    `git worktree add "worktrees/<branch>" "<branch>"`.
-3. Invoke [`/wk-pr-review`](../../pr-review/README.md) scoped to that PR.
+3. Invoke [`/wk-pr-review`](../../pr-review/README.md) scoped to that PR, in
+   its default `medium` mode — never `heavy`, which needs an interactive
+   confirmation a subagent cannot give.
 
 ## Render
 

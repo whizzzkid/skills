@@ -4,23 +4,37 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.10.14-233206`
+**Version:** `2026.10.16-175427`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
-| User-invocable | `/wk-pr-review [PR number or URL]` |
+| User-invocable | `/wk-pr-review [light\|medium\|heavy] [PR number or URL]` |
 | Model-invocable | Automatic on: "review this PR", "review code changes", "create review comments", or "investigate a pull request" |
+
+## Review Modes
+
+| Mode | Scope | Time box |
+|------|-------|----------|
+| `light` | Diff, description, and PR claims validated; objective static review; no adversarial dispatch | a few minutes |
+| `medium` (default) | light + adversarial harness that tries to break the change + thorough arch/functional review | 10–15 min |
+| `heavy` | medium + runs the change (browser for UI), every local gate, full path/edge/mutation matrix | confirms first |
+
+`heavy` always asks before starting; non-interactive callers (e.g. sitrep auto-reviews) fall back to `medium`.
 
 ## How It Works
 
 ```mermaid
 flowchart TD
-    A[Phase 1: Gather context + extract author review-focus] --> B[Phase 2: Fetch existing review comments]
+    M{"Mode: light / medium / heavy"} -->|heavy| Q[Confirm cost with user]
+    M -->|light / medium| A
+    Q -->|yes| A
+    Q -->|no| A
+    A[Phase 1: Gather context + extract review-focus and PR claims] --> B[Phase 2: Fetch existing review comments]
     B --> C[Resolve stale threads with user consent]
     C --> D[Build exclusion list + bot-findings validation queue]
-    D --> E["Phase 3: Read clearance record;<br/>dispatch wk-adversarial-review only if none"]
+    D --> E["Phase 3: Read clearance record;<br/>dispatch wk-adversarial-review only if none (not in light)"]
     E --> F[Consume findings; prioritize review-focus; validate bot findings]
     F --> G[Phase 4: Formulate inline comments]
     G --> H[Deduplicate against exclusion list]

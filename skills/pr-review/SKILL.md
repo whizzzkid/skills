@@ -5,8 +5,10 @@ description: >-
   review a PR, review code changes, help review this PR, create review comments,
   or investigate a pull request. Reads existing review comments, resolves stale
   threads, delegates deep investigation to wk-adversarial-review, and creates
-  pending review comments via GitHub API.
-argument-hint: '[PR number or URL]'
+  pending review comments via GitHub API. Modes: light (diff + claims),
+  medium (default; harness + arch/functional review), heavy (runs the
+  change and every local gate; confirms first).
+argument-hint: '[light|medium|heavy] [PR number or URL]'
 allowed-tools:
   - "Bash(gh pr view:*)"
   - "Bash(gh pr diff:*)"
@@ -31,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.14-233206"
+  version: "2026.10.16-175427"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -51,7 +53,42 @@ review body or comment; footer goes on the body and every inline comment.
 
 **HARD RULE — optional reviewers require current-task opt-in.** Never launch an optional local/external model reviewer
 unless the user requests it in this task; existing CI output is evidence, not authorization. Phase-owned dispatches
-remain mandatory: `wk-adversarial-review`, `wk-arch-review`, `wk-design-review`.
+remain mandatory: `wk-adversarial-review`, `wk-arch-review`, `wk-design-review` — except where `light` mode defers
+them below.
+
+## Review Modes
+
+Mode = first argument token (`light` | `medium` | `heavy`, case-insensitive); none → `medium`. "quick"/"skim" →
+`light`; "deep"/"exhaustive" → `heavy` (still confirms). Each mode includes everything in the one above it.
+
+| Mode | Adds | Time box |
+|------|------|----------|
+| `light` | Diff, description, `pr_claims` validated; objective static review | a few minutes |
+| `medium` | Adversarial harness that tries to break the change; thorough arch + functional review | 10–15 min |
+| `heavy` | Runs the change (browser if UI); every local gate; full path/edge/mutation matrix | unbounded, confirm first |
+
+- **`light`:** Phases 1, 2, 4, 5 in full; Phase 3 consumes an existing clearance record only — never dispatches
+  `wk-adversarial-review`. Arch/design detectors still run; a hit is not dispatched → tell the user in the terminal to
+  re-run at `medium`.
+  - Logic-bearing finding → prove it with one targeted run (single command, test, or snippet); unrun → post as
+    `question:`, never `concern:` (the Phase 3 proof rule still binds, scaled down).
+- **`medium`:** every phase as written. The adversarial harness must attack each changed behavior on multiple axes —
+  invalid/hostile input, boundaries, ordering/concurrency, dependency failure, backward compatibility. Functional
+  review traces each changed entrypoint caller → callee; arch review dispatches whenever the detector fires.
+- **`heavy`:** **HARD RULE — confirm before heavy.** `AskUserQuestion` with the cost (wall time, local processes,
+  dependency installs) before any heavy-only step; declined → `medium`. Non-interactive caller (dispatched subagent,
+  loop) → run `medium`, report "heavy requested, not confirmed". Then add:
+  - **Run the change:** launch via the `run` skill or the documented dev server, in the repo's documented container;
+    UI diff → drive every changed view with Playwright (snapshot, console errors, broken interactions); CLI/API →
+    exercise every claimed behavior end to end.
+  - **Every local gate:** full test suite, linters, type-checker, coverage of changed lines, mutation testing of
+    changed logic, security scanners the repo already configures.
+  - **Path matrix:** happy/sad/edge row per changed behavior, each PASS/FAIL with the command; unrunnable rows listed
+    with the reason.
+  - **Local only:** never deploy, push, hit shared/production environments, or load real customer data (a run is
+    verification, not a release).
+- **Time box:** soft, checked at phase boundaries. Over budget → finish the current phase, post what is proven, list
+  uncovered items in the terminal; never silently truncate. Mode and coverage go to the terminal, never the review body.
 
 ## Phase 1: Context
 
@@ -61,11 +98,13 @@ ask for number/URL, then `gh pr checkout`.
 - **Verify local HEAD:** compare `git rev-parse HEAD` vs `gh pr view --json headRefOid --jq '.headRefOid'`. Mismatch →
   `git pull --ff-only`; pull fails → use `gh pr diff` as source of truth; note desync in summary.
 - **Collect:** title, body, linked issues, full diff, changed files, commits, base, size. Recommend a stack when large
-  or
-  mixing concerns.
+  or mixing concerns.
 - **Review focus:** parse the description for explicit asks → `review_focus` list of `{topic, files, question,
   severity-hint}`; drop boilerplate. Prioritize them in Phase 3; answer every ask in Phase 4 (unanswered = gap).
-- Announce: > "Reviewing PR #N: *title* — X files, Y commits. Base: `{base}`. Author asks: {k}."
+- **Claims:** parse description + commit messages for assertions (behavior, "no-op", perf, "tested X", "fixes Y") →
+  `pr_claims`; every mode marks each Confirmed / Refuted / Unverified against the code. Refuted → comment.
+- Announce: > "Reviewing PR #N (`{mode}`): *title* — X files, Y commits. Base: `{base}`. Author asks: {k}. Claims:
+  {c}."
 - **Architecture:** run the [`wk-arch-review`](../arch-review/README.md) detector over `gh pr diff <n> --name-only`.
   Clearance at `.review-playground/.arch-cleared-{SHA}.json` → consume; else
   `Skill(wk-arch-review, args="<path | PR>")`.
@@ -94,7 +133,8 @@ Fetch, classify stale threads, build the Phase 3/4 exclusion list via
 
 ## Phase 3: Adversarial investigation
 
-Clearance at `.review-playground/.cleared-{HEAD_SHA}.json` → consume; else dispatch `Skill(wk-adversarial-review)` for
+Scope per [Review Modes](#review-modes). Clearance at `.review-playground/.cleared-{HEAD_SHA}.json` → consume; else
+(`medium`/`heavy`) dispatch `Skill(wk-adversarial-review)` for
 structured findings + verdict. Prioritize `review_focus`; fold Phase 1 `wk-arch-review` findings; mark exclusion-list
 overlaps `[COVERED]`; map `blocker` → Phase 4 `concern` (`suggestion`/`question` pass through). Agent verdicts override
 static reasoning — drop/revise candidates the results refute.
