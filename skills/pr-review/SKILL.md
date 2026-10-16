@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.16-195048"
+  version: "2026.10.16-195319"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -169,7 +169,8 @@ author-facing text — use "concern"/"limitation". One to two sentences.
 - **HARD RULE — attribute agent evidence:** "My agent ran `<X>` and found `<Y>`", never bare "I verified" — in inline
   comments and body. Bare first-person only for the human's own posture.
 - Prefer ` ```suggestion ` fences for concrete replacements on diff lines: match exact whitespace (verify with
-  `cat -A`); one fence = one contiguous range, split non-adjacent fixes; lines outside diff → anchor a nearby diff line,
+  `cat -A`); one fence = one contiguous range, split non-adjacent fixes; fence lines replace exactly
+  `start_line..line` — a context line goes inside the range or out of the fence (else it duplicates); lines outside diff → anchor a nearby diff line,
   plain example, note manual apply.
 - **HARD RULE — no duplicates** (same file/line range + same concern). Check the Phase 2 exclusion list. Human dup →
   skip
