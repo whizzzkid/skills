@@ -33,7 +33,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.16-194341"
+  version: "2026.10.16-194752"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -105,6 +105,9 @@ ask for number/URL, then `gh pr checkout`.
   `pr_claims`; every mode marks each Confirmed / Refuted / Unverified. Refuted → comment.
   - Empirical claims (mutation results, test counts, gating, "fails without the fix") → replay in a detached scratch
     worktree; reading alone never confirms them. `light` caps at one targeted run per claim, else Unverified.
+  - Cited figures (counts, timestamps, CI windows, "fails in env X not Y") → re-derive from primary data (CI API,
+    logs) and rerun the author's own experiment; most figures checking out never confirms the rest. Pair log events
+    by matching the result line's pattern, never the next physical line (payloads span lines).
   - Related PRs the description calls pending or "lands first" → check their merge state; merged → re-check the
     follow-up steps it predicted.
   - Tee full test output to a log file, never `tail -1`; rerun a bare FAIL before treating it as real.
