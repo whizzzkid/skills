@@ -6,7 +6,7 @@ and underlying assumptions. Can also author architecture documents and generate
 interactive HTML playgrounds that visualise a proposed design and its failure
 modes.
 
-**Version:** `2026.10.19-190513`
+**Version:** `2026.10.19-191800`
 
 ## Trigger
 
@@ -88,6 +88,8 @@ Bundled under `references/`, read by the skill at runtime:
 - Research summaries (subagent or tool) are leads, not sources: every claim a
   recommendation or security conclusion rests on is checked against its primary
   source before the draft is complete.
+- Meeting notes are leads only: WRITE mode never names speakers, quotes
+  attendees, or links private notes — claims are re-anchored to primary sources.
 - Auto-invoked by [`wk-pr-review`](../pr-review/README.md) when a diff changes
   architecture/spec/design docs or fundamentally alters the project's
   architecture.

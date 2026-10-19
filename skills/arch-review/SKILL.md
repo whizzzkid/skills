@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.19-190513"
+  version: "2026.10.19-191800"
   internal: false
   model:
     claude: claude-opus-4-7
@@ -130,6 +130,10 @@ Author: overview, non-goals, constraints, proposed architecture (mermaid),
 design decisions + alternatives, failure modes, scalability, security,
 observability, rollout, open questions, delivery phases. Self-review through
 Step 3 lenses before presenting. Format via `wk-markdown`.
+
+- Meeting notes are leads, never citations: re-anchor every meeting-sourced claim
+  to a primary source (code, vendor docs, tickets) or mark it an open question.
+  Never name speakers, quote attendees, or link private notes in a shared doc.
 
 ## Step 5: Interactive HTML Playground
 
