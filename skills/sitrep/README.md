@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.10.19-202220`
+**Version:** `2026.10.19-202629`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -66,6 +66,11 @@ stops before writing and reports rather than prompting through a tool.
   `waived_connectors:` in `.sitrep.yml`, or for this run) leaves the required set,
   and a stale page the user declares closed skips rollover. Every waiver is echoed
   in the page's Meta section; the agent never infers one.
+- **Connector migration** — when a missing connector's domain is covered by
+  another available connector, the abort also offers "migrate roster"; on user
+  confirmation the skill's roster, ToolSearch hint, allowed-tools, and
+  requirements list are edited together so the retired connector stops being
+  required on every run.
 - **Push-destination gate** — commits always land locally, but `git push` runs
   only when the workspace repo's `origin` owner is in the approved set
   (`push_owners:` in `.sitrep.yml`, else `$GITHUB_ORG`). A missing list, missing

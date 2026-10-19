@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.19-202220"
+  version: "2026.10.19-202629"
   model:
     openai: gpt-5.6-terra
 ---
@@ -75,6 +75,10 @@ page; dated snapshots at close; no standalone HTML.
   - **User waivers only, never agent-inferred.** Subtract from the required set the connectors in `.sitrep.yml`
     `waived_connectors:` (write an entry only when the user waives "for all runs") plus any the user waived for this
     run; applies to nested rollover `end` too. Echo every waiver in the page's Meta section.
+  - **Offer migration before waiver.** Missing connector + an available connector covering the same domain → offer
+    "migrate roster" beside "waive once" / "waive always". User confirms → edit the skill source in one pass: roster
+    agent line, ToolSearch hint, `allowed-tools`, Requirements MCP list (a waiver re-fires next run; a retired
+    connector in a hard-coded roster stays mandatory). Never migrate on inference.
 - **Gaps inside available domains** → label, preserve `data-done`/carry-over, withhold accrual artifacts.
 - **HARD RULE — push only to an approved destination.** Never `git push` until Step 0's push-destination gate sets
   `PUSH_ALLOWED=1`: `origin`'s owner must be in `.sitrep.yml` `push_owners:` (else `$GITHUB_ORG`). Unset list, no
