@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.10.19-202629`
+**Version:** `2026.10.19-212915`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -24,9 +24,9 @@ no per-day live directories, and dated snapshots at close.
   tomorrow and includes `end_completed_at` in the final close commit.
 - `/wk-sitrep` (no arg) — defaults to `start`.
 
-No interactive triage — the user resolves items directly in SilverBullet. The one
-break in the compile-only flow is the missing-required-connector abort below, which
-stops before writing and reports rather than prompting through a tool.
+No interactive triage — the user resolves items directly in SilverBullet. Connector
+gaps never interrupt the compile-only flow: the page publishes first and the gaps are
+reported afterwards in the response.
 
 ## Key Design
 
@@ -56,21 +56,21 @@ stops before writing and reports rather than prompting through a tool.
   context, including query windows, outputs, and dependent actions before
   compiling. Calendar fallback records the five-day interview scan plus created
   block links or a no-slot/write-access result.
-- **Missing required connector** — when the main-context replay leaves a
-  company-data evidence domain (messaging, mail, calendar/meeting notes, tracker)
-  toolless, publication aborts. The live page is left byte-unchanged, nothing is
-  committed or pushed, no accrual artifact (`end_completed_at`, the brag log)
-  accrues, and the user is prompted with the missing connectors. Source control
-  alone is never sufficient evidence for a sitrep.
+- **Publish first, report gaps after** — a missing, unauthenticated,
+  permission-denied, or blocked connector never stops the run. The page is written,
+  verified, and committed from the domains that answered; each gap is labelled in
+  Meta and in the affected section, and the final response ends with a
+  `Connector gaps` report (failure kind, affected sections, re-auth CTA).
+- **Optional connectors** — DX is optional: when unavailable its sections are
+  omitted and it appears in the report only as `(optional)`.
 - **User waivers** — a connector the user waives (for all runs via
-  `waived_connectors:` in `.sitrep.yml`, or for this run) leaves the required set,
-  and a stale page the user declares closed skips rollover. Every waiver is echoed
-  in the page's Meta section; the agent never infers one.
-- **Connector migration** — when a missing connector's domain is covered by
-  another available connector, the abort also offers "migrate roster"; on user
+  `waived_connectors:` in `.sitrep.yml`, or for this run) drops out of the gap
+  report, and a stale page the user declares closed skips rollover. Every waiver is
+  echoed in the page's Meta section; the agent never infers one.
+- **Connector migration** — when a gap connector's domain is covered by another
+  available connector, the report also offers "migrate roster"; on user
   confirmation the skill's roster, ToolSearch hint, allowed-tools, and
-  requirements list are edited together so the retired connector stops being
-  required on every run.
+  requirements list are edited together.
 - **Push-destination gate** — commits always land locally, but `git push` runs
   only when the workspace repo's `origin` owner is in the approved set
   (`push_owners:` in `.sitrep.yml`, else `$GITHUB_ORG`). A missing list, missing

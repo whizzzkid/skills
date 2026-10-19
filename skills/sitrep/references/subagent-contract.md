@@ -42,6 +42,6 @@ orchestrator does not poll, so a silent-failure loop is indistinguishable from
 - Degrade gracefully: carry forward the prior day's items for that domain with an
   explicit "not reverified — agent unresponsive" note.
 - Move on to the remaining agents — never hang the *gather* on one stalled agent.
-- Gathering never aborts; publication may. A domain left toolless after the
-  main-context replay is a missing connector, and on a required evidence domain the
-  skill's Core hard rules abort publication rather than publish a partial page.
+- Neither gathering nor publication aborts. A domain left toolless after the
+  main-context replay is a connector gap: the page publishes with it labelled, and
+  the skill's Core hard rules report it after publish.

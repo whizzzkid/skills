@@ -3,7 +3,12 @@ class: principle
 skill: wk-sitrep
 date: 2026-08-17
 supersedes: 2026-08-17_degraded-output-on-missing-connectors.md
+status: superseded
+superseded-by: 2026-10-19_publish-first-report-gaps.md
 ---
+
+> **Superseded 2026-10-19 by explicit user direction:** publish first, report connector gaps after. See
+> [`2026-10-19_publish-first-report-gaps.md`](2026-10-19_publish-first-report-gaps.md).
 
 # A missing required evidence connector aborts publication
 

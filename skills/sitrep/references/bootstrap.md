@@ -20,7 +20,7 @@ if [ -f "$_CFG" ]; then
   _v=$(_yml sitrep_repo); [ -n "$_v" ] && SITREP_REPO="$_v"
   _v=$(_yml employer);    [ -n "$_v" ] && EMPLOYER="$_v"
   _v=$(_yml sitrep_port); [ -n "$_v" ] && SITREP_PORT="$_v"
-  # Comma-separated connector domains the user waived for all runs, e.g. "lattice, dx".
+  # Comma-separated connector domains the user waived for all runs, e.g. "lattice, jira".
   WAIVED_CONNECTORS=$(_yml waived_connectors)
   # Comma-separated remote owners (orgs) approved to receive pushes, e.g. "my-employer-org".
   PUSH_OWNERS=$(_yml push_owners)

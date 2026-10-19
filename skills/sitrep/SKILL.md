@@ -35,7 +35,7 @@ allowed-tools:
   - "mcp__claude_ai_Slack_*__*"
   - "mcp__claude_ai_Gmail_*__*"
   - "mcp__claude_ai_Gcal_*__*"
-  - "mcp__claude_ai_Granola_*__*"
+  - "mcp__claude_ai_Notion*__*"
   - "mcp__claude_ai_Gdrive_*__*"
   - "mcp__claude_ai_Gdocs_*__*"
   - "mcp__claude_ai_Github_*__*"
@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.19-202629"
+  version: "2026.10.19-212915"
   model:
     openai: gpt-5.6-terra
 ---
@@ -63,23 +63,27 @@ page; dated snapshots at close; no standalone HTML.
 
 - **HARD RULE — never write outside `$SITREP_REPO/$EMPLOYER/`.** Never write `morning.md`, `evening.md`, or any sitrep
   file into cwd or `$WK_SKILLS_HOME`.
-- **HARD RULE — no interactive triage.** Compile-only (gather → render → write → open); sole exception is the connector
-  abort below. Never `AskUserQuestion` to keep/skip/resolve; write items unconditionally as `data-done="false"` spans;
-  user edits in browser.
+- **HARD RULE — no interactive triage.** Compile-only (gather → render → write → open); never `AskUserQuestion` to
+  keep/skip/resolve; write items unconditionally as `data-done="false"` spans; user edits in browser. The connector
+  report below is in-response, never a prompt.
 - **HARD RULE — never assert missing without checking.** `Read`/`ls` the path first; unchecked → say "I have not read
   X", not "X is missing."
-- **HARD RULE — a missing required evidence connector aborts publication.** Required = every company-data domain in the
-  invoked sub-command's own agent roster (source control excluded), derived from that roster, never a restated list. Any
-  unavailable → stop before writing: live page byte-unchanged, no rollover marker or brag entry, no commit/push; name
-  every missing connector and await instruction. Never publish a partial page.
-  - **User waivers only, never agent-inferred.** Subtract from the required set the connectors in `.sitrep.yml`
-    `waived_connectors:` (write an entry only when the user waives "for all runs") plus any the user waived for this
-    run; applies to nested rollover `end` too. Echo every waiver in the page's Meta section.
-  - **Offer migration before waiver.** Missing connector + an available connector covering the same domain → offer
+- **HARD RULE — publish first, report connector gaps after.** A missing, unauthenticated, permission-denied, or blocked
+  connector never stops the run: write, verify, and commit the page from the domains that answered. Never abort or
+  wait for instruction before publishing.
+  - **Label every gap on the page.** Meta lists each gap connector + failure kind; the affected section says
+    "⚠️ {connector} unavailable — not reverified". Preserve `data-done`/carry-over for its items; never claim an outcome
+    from a missing domain; brag-log entries need evidence from an available domain.
+  - **Report after publish.** Final response ends with `Connector gaps`: per connector — failure kind (no tool / auth
+    required / permission denied / blocked), affected sections, fix CTA (re-auth link or command). Mark optional
+    connectors `(optional)`. No gaps → omit the block.
+  - **Optional connectors** (DX): absent → skip their sections silently on the page; never a gap CTA beyond the
+    `(optional)` line.
+  - **User waivers only, never agent-inferred.** Connectors in `.sitrep.yml` `waived_connectors:` (written only when the
+    user waives "for all runs") plus any waived for this run drop out of the report; echo every waiver in Meta.
+  - **Offer migration in the report.** Gap connector + an available connector covering the same domain → offer
     "migrate roster" beside "waive once" / "waive always". User confirms → edit the skill source in one pass: roster
-    agent line, ToolSearch hint, `allowed-tools`, Requirements MCP list (a waiver re-fires next run; a retired
-    connector in a hard-coded roster stays mandatory). Never migrate on inference.
-- **Gaps inside available domains** → label, preserve `data-done`/carry-over, withhold accrual artifacts.
+    agent line, ToolSearch hint, `allowed-tools`, Requirements MCP list. Never migrate on inference.
 - **HARD RULE — push only to an approved destination.** Never `git push` until Step 0's push-destination gate sets
   `PUSH_ALLOWED=1`: `origin`'s owner must be in `.sitrep.yml` `push_owners:` (else `$GITHUB_ORG`). Unset list, no
   remote, or any other owner → commit locally, skip every push this run, tell the user to move the repo to an
@@ -114,8 +118,8 @@ ensure SilverBullet serving. Recipes:
   [`references/yesterday-synthesis.md`](references/yesterday-synthesis.md); separate previous-workday from today.
   - **Slack:** unread DMs/mentions, open threads, announcements. ToolSearch: `"slack"`.
   - **Gmail:** unread needing response, sent without reply, announcements. ToolSearch: `"gmail"`.
-  - **Calendar + Granola + Drive:** today's meetings with agendas and notes; interviews lacking prep/scorecard (data
-    only — Stage 2c creates). ToolSearch: `"gcal"`, `"granola"`, `"gdrive"`.
+  - **Calendar + Notion + Drive:** today's meetings with agendas and Notion meeting notes; interviews lacking
+    prep/scorecard (data only — Stage 2c creates). ToolSearch: `"gcal"`, `"notion"`, `"gdrive"`.
   - **GitHub:** PRs needing review (`--draft=false`), your open PRs with failing CI/comments, assigned issues, mentions.
     All `gh` requires `--owner="$GITHUB_ORG"`. ToolSearch: `"github"`. **HARD RULE — verify authorship** via
     `gh pr view --json author`, never infer. Sweep unsubmitted reviews (`state: PENDING`, org-wide).
@@ -168,7 +172,8 @@ ensure SilverBullet serving. Recipes:
 
 - **Stage 7 — Auto-launch PR reviews.** One review worktree per PR awaiting review, rendered as done `⚙️ Auto-Action`.
   Pending draft only — never submit/approve/request changes. Reserve slots for nested workers. Mechanics:
-  [`references/auto-review.md`](references/auto-review.md). Then invoke `wk-learn sitrep`.
+  [`references/auto-review.md`](references/auto-review.md). Then invoke `wk-learn sitrep`; end the response with the
+  `Connector gaps` report.
 
 ## Sub-command: end
 
@@ -177,12 +182,12 @@ ensure SilverBullet serving. Recipes:
 - **Stage 2 — Gather in parallel.** Launch 7 agents with
   [`references/subagent-contract.md`](references/subagent-contract.md):
   - **GitHub/git:** today's commits, PRs created/merged/reviewed, issues closed.
-  - **Calendar + Granola:** meetings with decisions/actions; tomorrow's prep.
+  - **Calendar + Notion:** meetings with decisions/actions; tomorrow's prep.
   - **Slack:** unanswered DMs/mentions, notable contributions. **Gmail:** unreplied emails, notable outgoing.
   - **Lattice:** pending feedback with deadlines, new feedback.
   - **Jira + Confluence:** activity, unanswered comments, Confluence mentions. Full sweep:
     `assignee = currentUser() AND statusCategory != Done`.
-  - **DX:** review turnaround, cycle time, deploy frequency vs averages.
+  - **DX (optional):** review turnaround, cycle time, deploy frequency vs averages. Unavailable → omit DX sections.
 - **Stage 3 — Compile into two buckets.** Historical → snapshot (done items, meeting notes, achievements, feedback, DX,
   stats); pending → live.md (tomorrow's prep, untracked actions, unanswered items, Lattice requests, DX improvements,
   confirmed pending spans). Cross-validate pending against external state (GitHub merged, Jira Done, Calendar occurred,
@@ -198,7 +203,7 @@ ensure SilverBullet serving. Recipes:
 - **Stage 7 — Distill learnings.** `$WK_SKILLS_HOME` set + unprocessed learnings → highest severity first, cap 5; invoke
   [`wk-sharpen`](../sharpen/README.md).
 - **Stage 8 — Mark complete, commit, push.** Invoke `wk-learn sitrep`; add `end_completed_at: {ISO_8601_UTC}` to
-  `$LIVE_FILE`.
+  `$LIVE_FILE` (gaps do not withhold it); end the response with the `Connector gaps` report.
 
   ```bash
   BRAG_LOG="$SITREP_REPO/$EMPLOYER/QPR/brag-log.md"
@@ -214,4 +219,4 @@ ensure SilverBullet serving. Recipes:
 - QPR season: once-per-day nudge, never blocking: [`references/qpr-nudge.md`](references/qpr-nudge.md).
 - Env: `$SITREP_REPO`, `$EMPLOYER`, `$SITREP_PORT` (default `3000`), `$GITHUB_ORG`, `$GITC_ROOT` (default `$HOME/gitc`).
   Tools: `jq`; `silverbullet` CLI serving `$SITREP_REPO`.
-- MCP: Slack, Gmail, Calendar, Granola, Drive, Docs, GitHub, Jira, Lattice.
+- MCP: Slack, Gmail, Calendar, Notion, Drive, Docs, GitHub, Jira, Lattice; DX optional.
