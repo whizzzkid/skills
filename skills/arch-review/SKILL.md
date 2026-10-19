@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.19-190513"
   internal: false
   model:
     claude: claude-opus-4-7
@@ -75,6 +75,15 @@ scale (RPS, data volume, regions), top-3 quality attributes, deployment env,
 hard constraints (regulatory, budget, team), timeline.
 
 Record as **Context Block** — every finding evaluated relative to this.
+
+**HARD RULE: a research summary is a lead, not a source.** Before the draft or
+findings are complete, open the primary source behind every claim the
+recommendation or a security/compliance conclusion depends on — never at the merge
+gate.
+
+- Subagent or tool summaries drop qualifiers; the security nuance lives in the source.
+- Claim contradicts or overstates its source → correct it. Source unread → mark **Unverified**.
+- A linked citation proves only that a source exists, not that it says what the summary says.
 
 ## Step 3: Critical Analysis — the Eight Lenses
 

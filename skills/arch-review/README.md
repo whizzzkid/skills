@@ -6,7 +6,7 @@ and underlying assumptions. Can also author architecture documents and generate
 interactive HTML playgrounds that visualise a proposed design and its failure
 modes.
 
-**Version:** `2026.10.09-171327`
+**Version:** `2026.10.19-190513`
 
 ## Trigger
 
@@ -85,6 +85,9 @@ Bundled under `references/`, read by the skill at runtime:
 - Playground is self-contained and dependency-free; works offline.
 - "Out of scope" sections in the input doc are explicitly reviewed —
   they often contain the riskiest deferred decisions.
+- Research summaries (subagent or tool) are leads, not sources: every claim a
+  recommendation or security conclusion rests on is checked against its primary
+  source before the draft is complete.
 - Auto-invoked by [`wk-pr-review`](../pr-review/README.md) when a diff changes
   architecture/spec/design docs or fundamentally alters the project's
   architecture.
