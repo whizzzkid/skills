@@ -4,7 +4,7 @@ class: recipe
 
 # Step 0 bootstrap recipes
 
-Canonical env/path resolution and SilverBullet start probe for both sub-commands.
+Canonical env/path resolution, push-destination gate, and SilverBullet start probe for both sub-commands.
 
 ## Verify environment and paths
 
@@ -22,6 +22,8 @@ if [ -f "$_CFG" ]; then
   _v=$(_yml sitrep_port); [ -n "$_v" ] && SITREP_PORT="$_v"
   # Comma-separated connector domains the user waived for all runs, e.g. "lattice, dx".
   WAIVED_CONNECTORS=$(_yml waived_connectors)
+  # Comma-separated remote owners (orgs) approved to receive pushes, e.g. "my-employer-org".
+  PUSH_OWNERS=$(_yml push_owners)
 fi
 
 test -n "$SITREP_REPO" || { echo "SITREP_REPO is not set"; exit 1; }
@@ -38,6 +40,27 @@ WEEK_MEM_FILE="$SITREP_REPO/$EMPLOYER/.dismissed/$YEAR-W$WEEK.jsonl"
 
 mkdir -p "$SITREP_REPO/$EMPLOYER" "$SNAPSHOT_DIR" "$(dirname "$WEEK_MEM_FILE")"
 ```
+
+## Verify push destination
+
+Fail closed: `PUSH_ALLOWED=1` only when `origin`'s owner is in the approved set (`push_owners:`, else
+`$GITHUB_ORG`). Empty set, no `origin`, a local-path remote, or any other owner → `0`. Visibility is not a
+criterion — a private repo under a personal account is still a personal destination.
+
+```bash
+PUSH_OWNERS="${PUSH_OWNERS:-$GITHUB_ORG}"
+_OWNER=$(git -C "$SITREP_REPO" remote get-url origin 2>/dev/null \
+  | sed -E 's#^[A-Za-z+]+://([^@/]+@)?[^/]+/##; s#^[^@/]+@[^:]+:##; s#/.*##')
+PUSH_ALLOWED=0
+if [ -n "$_OWNER" ] && printf ',%s,\n' "$PUSH_OWNERS" | sed 's/[[:space:]]//g' \
+    | command grep -qiF -- ",$_OWNER,"; then
+  PUSH_ALLOWED=1
+fi
+```
+
+- `PUSH_ALLOWED=0` → still commit locally; skip every `git push` this run; tell the user the remote owner
+  (`$_OWNER`, or "none") is not approved and to move the repo to an employer-managed org, then add that org to
+  `push_owners:`. Never add the current owner to the list on the user's behalf.
 
 ## Verify SilverBullet is running
 

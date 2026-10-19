@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.10.14-233556`
+**Version:** `2026.10.19-202220`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -66,6 +66,13 @@ stops before writing and reports rather than prompting through a tool.
   `waived_connectors:` in `.sitrep.yml`, or for this run) leaves the required set,
   and a stale page the user declares closed skips rollover. Every waiver is echoed
   in the page's Meta section; the agent never infers one.
+- **Push-destination gate** — commits always land locally, but `git push` runs
+  only when the workspace repo's `origin` owner is in the approved set
+  (`push_owners:` in `.sitrep.yml`, else `$GITHUB_ORG`). A missing list, missing
+  remote, or any other owner — including a private repo under a personal
+  account — skips the push and tells the user to move the repo to an
+  employer-managed org. Confidential figures (spend, forecasts) stay out of the
+  page and snapshots.
 - **Degraded run** — gaps *inside* an available domain still render: every
   unavailable source is labelled, checkbox state and carry-over survive, stale
   dated meeting lines are dropped, no unverified outcome is claimed, and accrual
@@ -78,7 +85,7 @@ stops before writing and reports rather than prompting through a tool.
 | `$SITREP_REPO` | Path to SilverBullet workspace repo | required |
 | `$EMPLOYER` | Org slug for path scoping | required |
 | `$SITREP_PORT` | SilverBullet server port | `3000` |
-| `$GITHUB_ORG` | GitHub org scope for `gh` commands | required |
+| `$GITHUB_ORG` | GitHub org scope for `gh` commands; fallback approved push owner | required |
 | `$GITC_ROOT` | Local clone root for auto-launched PR reviews | `$HOME/gitc` |
 
 ## Integrations

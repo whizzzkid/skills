@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.14-233556"
+  version: "2026.10.19-202220"
   model:
     openai: gpt-5.6-terra
 ---
@@ -76,6 +76,12 @@ page; dated snapshots at close; no standalone HTML.
     `waived_connectors:` (write an entry only when the user waives "for all runs") plus any the user waived for this
     run; applies to nested rollover `end` too. Echo every waiver in the page's Meta section.
 - **Gaps inside available domains** → label, preserve `data-done`/carry-over, withhold accrual artifacts.
+- **HARD RULE — push only to an approved destination.** Never `git push` until Step 0's push-destination gate sets
+  `PUSH_ALLOWED=1`: `origin`'s owner must be in `.sitrep.yml` `push_owners:` (else `$GITHUB_ORG`). Unset list, no
+  remote, or any other owner → commit locally, skip every push this run, tell the user to move the repo to an
+  employer-managed org. Private visibility is not approval (a personal account's private repo is a personal
+  destination; the page holds work data).
+  - Keep confidential figures (spend, cost, forecasts) out of the page and snapshots — link the source system instead.
 
 References: layout/spans/urgency/nesting/styles [`references/rendering-contract.md`](references/rendering-contract.md)
 (HTML-block mechanics via [`wk-silverbullet`](../silverbullet/README.md)); canonical span + toggle handler
@@ -86,7 +92,8 @@ user-resolved items (path, key, safe-write, validation)
 ## Step 0: Bootstrap (both sub-commands)
 
 Resolve `$SITREP_REPO`, `$EMPLOYER`, `$SITREP_PORT` (`.sitrep.yml` wins), export `$TODAY`, `$LIVE_FILE`,
-`$SNAPSHOT_FILE`, `$SNAPSHOT_URL`, `$WEEK_MEM_FILE`, `mkdir -p` parents, ensure SilverBullet serving. Recipes:
+`$SNAPSHOT_FILE`, `$SNAPSHOT_URL`, `$WEEK_MEM_FILE`, `mkdir -p` parents, set `PUSH_ALLOWED` (push-destination gate),
+ensure SilverBullet serving. Recipes:
 [`references/bootstrap.md`](references/bootstrap.md).
 
 ## Sub-command: start
@@ -152,7 +159,7 @@ Resolve `$SITREP_REPO`, `$EMPLOYER`, `$SITREP_PORT` (`.sitrep.yml` wins), export
   ```bash
   git -C "$SITREP_REPO" add "$LIVE_FILE"
   git -C "$SITREP_REPO" commit -m "chore(sitrep): 📋 start $TODAY — {N} items, {M} meetings"
-  git -C "$SITREP_REPO" push
+  if test "$PUSH_ALLOWED" = 1; then git -C "$SITREP_REPO" push; else echo "push skipped: origin owner not approved"; fi
   ```
 
 - **Stage 7 — Auto-launch PR reviews.** One review worktree per PR awaiting review, rendered as done `⚙️ Auto-Action`.
@@ -195,7 +202,7 @@ Resolve `$SITREP_REPO`, `$EMPLOYER`, `$SITREP_PORT` (`.sitrep.yml` wins), export
   test ! -f "$WEEK_MEM_FILE" || git -C "$SITREP_REPO" add "$WEEK_MEM_FILE"
   test ! -f "$BRAG_LOG" || git -C "$SITREP_REPO" add "$BRAG_LOG"
   git -C "$SITREP_REPO" commit -m "chore(sitrep): 📸 end $TODAY — {N} done, {M} carried forward"
-  git -C "$SITREP_REPO" push
+  if test "$PUSH_ALLOWED" = 1; then git -C "$SITREP_REPO" push; else echo "push skipped: origin owner not approved"; fi
   ```
 
 ## Requirements
