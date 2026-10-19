@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.15-003800"
+  version: "2026.10.19-212229"
   model:
     openai: gpt-5.6-terra
 ---
@@ -130,11 +130,17 @@ docker run --rm -it \
   `privileges` / `error`, or rerun the generated compose overlay command from the trace by hand.
 - `additional privileges requested: pass "--allow=fs.read=<tmp>/Dockerfile-with-features"` → Compose 5.x builds via
   buildx bake, which gates reads outside the build context; the CLI writes its features Dockerfile to a temp dir.
-  `COMPOSE_BAKE=false` does not help. Export `BUILDX_BAKE_ENTITLEMENTS_FS=0` (buildx's documented opt-out) in the
-  shell that launches the CLI and retry — reported to work in one run and not in another.
-- Still failing and the config declares no features (the overlay adds nothing) → bring the stack up with plain
-  `docker compose -p "$proj" -f .devcontainer/docker-compose.yml up -d`, then run the `postCreateCommand` script by
-  hand.
+  `COMPOSE_BAKE=false` does not help. Set `BUILDX_BAKE_ENTITLEMENTS_FS=0` (buildx's documented opt-out) in the CLI's
+  own process env and retry: `BUILDX_BAKE_ENTITLEMENTS_FS=0 devcontainer up --workspace-folder .`
+  (`devcontainer.json` env keys reach the container, never the host-side build).
+- **Plain compose is a last resort, never a substitute.** `devcontainer exec` resolves its container by the
+  `devcontainer.local_folder` / `devcontainer.config_file` labels only `devcontainer up` sets, so a stack started by
+  plain compose is invisible to it — and to every git hook or script that shells in through it. Grep hooks and scripts
+  for `devcontainer exec` first; any hit → fix the build, never fall back.
+- Still failing, no features declared (the overlay adds nothing), and nothing relies on `devcontainer exec` → bring
+  the stack up with plain `docker compose -p "$proj" -f .devcontainer/docker-compose.yml up -d`, run the
+  `postCreateCommand` script by hand, and enter via `docker compose -p "$proj" exec` or
+  `devcontainer exec --container-id <id>`.
 
 ## Common Mistakes
 
@@ -152,7 +158,9 @@ docker run --rm -it \
 | Startup output contains a host credential | CLI printed the interpolated Compose model | Use file-backed secrets, or capture under `umask 077` and print only an exact-value-redacted copy |
 | `port is already allocated` bringing the stack up | A sibling worktree's stack of the same project already publishes that host port | Attach a throwaway container to the running stack's network and volumes with nothing published — *Host port already bound by a sibling worktree* |
 | `bundle install` 401s in a manually-started container | Bundler credentials come from a hostname-derived `BUNDLE_<HOST>` var the provisioning script exports; a manual `docker run` does not inherit it | Export it explicitly (`wk-cloudsmith` → *Bundler credentials for a Cloudsmith gem source*) |
-| `devcontainer up` fails "building the Docker Compose images" while a plain base build succeeds | Compose bake requests an fs entitlement for the CLI's temp features Dockerfile | Trace-log the real error, export `BUILDX_BAKE_ENTITLEMENTS_FS=0`, else plain compose — *`devcontainer up` fails at the image build* |
+| `devcontainer up` fails "building the Docker Compose images" while a plain base build succeeds | Compose bake requests an fs entitlement for the CLI's temp features Dockerfile | Trace-log the real error, prefix `BUILDX_BAKE_ENTITLEMENTS_FS=0` on the CLI call; plain compose only when nothing uses `devcontainer exec` — *`devcontainer up` fails at the image build* |
+| `devcontainer exec` finds no container; hooks that shell into it fail | Stack was started by plain `docker compose`, which never sets the CLI's `devcontainer.local_folder` / `config_file` labels | Fix the build and bring it up via `devcontainer up`; ad hoc only: `devcontainer exec --container-id <id>` |
+| Test counts / uniqueness fail on a freshly prepared test DB | `RAILS_ENV=test bin/rails db:prepare` runs `db/seeds.rb` whenever it initializes a DB (seeding defaults on for the primary config in every env) | Mirror CI's test-DB recipe (e.g. `db:drop db:create db:migrate`) or `bin/rails db:test:prepare` (purge + schema load, no seeds) |
 
 ## Post-Completion
 

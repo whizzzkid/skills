@@ -2,7 +2,7 @@
 
 > Use when creating or debugging a devcontainer for a Rails app (or any mise-managed project).
 
-**Version:** `2026.10.15-003800`
+**Version:** `2026.10.19-212229`
 
 ## Invocation
 
@@ -32,5 +32,9 @@ flowchart TD
 - **`trilogy` adapter does not need `libmysqlclient-dev`** — only the `mysql2` adapter links against libmysqlclient; adding it for trilogy is a common unnecessary dependency.
 - **`MISE_TRUSTED_CONFIG_PATHS: /workspace` is required** in the compose environment — the bind mount replaces the `/workspace` directory that was trusted at image build time, so trust must be re-granted at runtime.
 - **Pin the Compose project name in every teardown/rebuild command** — `devcontainer up`/VS Code create the stack under the lowercased `<basename>_devcontainer` (Compose rejects uppercase project names); a bare `docker compose -f … down` targets an empty project and silently leaves it running.
-- **Surface the real build error first** — `devcontainer up` hides the cause behind a generic build failure; a trace log shows it. Under Compose 5.x bake the usual cause is a filesystem entitlement for the CLI's temp features Dockerfile (`BUILDX_BAKE_ENTITLEMENTS_FS=0`, else plain compose when no features are declared).
+- **Surface the real build error first** — `devcontainer up` hides the cause behind a generic build failure; a trace log shows it. Under Compose 5.x bake the usual cause is a filesystem entitlement for the CLI's temp features Dockerfile (prefix `BUILDX_BAKE_ENTITLEMENTS_FS=0` on the CLI call). Plain compose is a last resort only when no features are
+  declared and nothing relies on `devcontainer exec` — a stack started outside the CLI lacks the labels `exec` finds
+  containers by.
+- **Prepare the test DB the way CI does** — `RAILS_ENV=test db:prepare` loads seeds into a fresh DB and skews
+  count-based tests; use CI's recipe or `db:test:prepare`.
 - **Do not stream startup output when Compose resolves host credentials** — prefer file-backed secrets; otherwise capture under `umask 077`, print only an exact-value-redacted copy, and verify with a canary.
