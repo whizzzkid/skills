@@ -36,7 +36,7 @@ clearing a command against the bash-only entries below proves nothing. Five trap
   **Important:** Never let a composed command depend on a glob qualifier or on `nullglob`/`failglob`
   state; enumerate with `find … -print` fed through `while IFS= read -r`, which cannot
   conflate "nothing matched" with "pattern unsupported".
-- **Lowercase `path` is a zsh special array tied to `PATH`.** In scripts and
+- **Important:** **Lowercase `path` (and `cdpath`, `fpath`, `manpath`, `module_path`) is a zsh special tied to its uppercase twin.** In scripts and
   compound ad-hoc commands, never use it as a loop or script variable: one
   scalar assignment replaces the executable search path. Use role-specific names such as `doc_path`,
   `source_path`, or `target_path`. See [zsh special
