@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.20-230344"
+  version: "2026.10.20-230626"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -132,6 +132,10 @@ HARD RULE unchanged — still *created* as pending; this step *submits* it at th
 
 New commits on a PR with existing self-review:
 
+0. **List your reviews first** (`GET /pulls/{n}/reviews`, filter to your login) and branch on `state`:
+   - `PENDING` → steps below (preserve, DELETE, re-stage).
+   - Submitted (`COMMENTED` etc.) → its comments are already public; never re-post them. Stage a new pending review
+     with only new or changed notes; reply on stale threads instead of duplicating them.
 1. Resolve stale comments via `gh api`.
 2. HEAD rewritten → confirm `commit_id` still matches `headRefOid`; mismatch →
    preserve bodies (Write tool), DELETE, re-stage against new HEAD. Also check
