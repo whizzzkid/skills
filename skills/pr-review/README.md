@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.10.20-174011`
+**Version:** `2026.10.20-175635`
 
 ## Invocation
 
@@ -53,7 +53,7 @@ flowchart TD
     F --> G[Phase 4: Formulate inline comments]
     G --> H[Deduplicate against exclusion list]
     H --> I[Validate comment positions against diff]
-    I --> J[Present numbered summary for approval]
+    I --> J[Present numbered summary]
     J --> K["Phase 5: Recheck reviewed head"]
     K --> L[POST pending review unless user pauses]
     L --> N{"approve flag + gate passes?"}
@@ -70,14 +70,11 @@ flowchart TD
 - **The pending-review POST is its own Bash call** — payload via the Write tool, footer gate and `open` as separate
   calls; a hook input-rewrite denial gets one retry, then a hand-off with the payload path.
 - **Investigation is delegated, and never re-run:** Phase 3 consumes an existing clearance record when one covers
-  this HEAD, else dispatches [`wk-adversarial-review`](../adversarial-review/README.md) once,
-  which owns the mechanical sweep catalog, the fresh adversarial subagent, and all `.review-playground/`
-  validation (runtime matrix, mutation testing, standalone upstream-source harness, producer/consumer, cluster,
-  interface-contract, allowlist, and doc/prose/compression checks). pr-review consumes its structured findings
-  and verdict rather than re-deriving them — the verdict is advisory, never a block.
-- **Optional reviewer systems require current-task opt-in:** Existing
-  CI-triggered output is consumed as evidence; no fresh optional local or
-  external model review starts without an explicit user request.
+  this HEAD, else dispatches [`wk-adversarial-review`](../adversarial-review/README.md) once; it owns the sweep
+  catalog, the fresh adversarial subagent, and all `.review-playground/` validation. pr-review consumes its findings
+  and verdict rather than re-deriving them — the verdict never blocks posting, only an `approve` submission.
+- **Optional reviewer systems require current-task opt-in:** existing CI-triggered output is consumed as evidence; no
+  fresh optional local or external model review starts without an explicit user request.
 - **HARD RULE — never submit without explicit user confirmation:** The pending review is created after the
   Phase 4 summary unless the user explicitly pauses; the user still submits it from the GitHub UI. Sole exception:
   the literal `approve` token plus a passing approve gate submits it as `APPROVE` — never `COMMENT` or

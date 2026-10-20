@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.20-174011"
+  version: "2026.10.20-175635"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -60,8 +60,9 @@ them below.
 
 ## Review Modes
 
-Mode = first argument token (`light` | `medium` | `heavy`, case-insensitive); none → `medium`. "quick"/"skim" →
-`light`; "deep"/"exhaustive" → `heavy` (still confirms). Each mode includes everything in the one above it.
+Args parse positionally, all optional: mode → `approve` → PR number/URL → focus (the rest). Mode tokens `light` |
+`medium` | `heavy` (case-insensitive); none → `medium`. "quick"/"skim" → `light`; "deep"/"exhaustive" → `heavy` (still
+confirms). Each mode includes everything in the one above it.
 
 | Mode | Adds | Time box |
 |------|------|----------|
@@ -94,8 +95,8 @@ Mode = first argument token (`light` | `medium` | `heavy`, case-insensitive); no
 
 ## Approve Flag
 
-`approve` token (case-insensitive, after the mode, before the PR/focus) → `APPROVE = true`; absent → pending review
-only. The word inside focus text is never the flag.
+`approve` token (case-insensitive) → `APPROVE = true`; absent → pending review only; the word inside focus text is
+never the flag.
 
 - **HARD RULE — approval needs the literal token from the user in this task.** Never infer it from tone ("looks
   fine", "ship it"), a prior task, or a dispatching caller's prompt; dispatched subagents and loops never approve
@@ -108,8 +109,7 @@ only. The word inside focus text is never the flag.
 
 ## Focus Argument
 
-Parse positionally: mode? → `approve`? → PR number/URL? → everything left = `user_focus` (free text; quotes
-optional). No PR token → the remainder after the last recognized token is focus. Empty → no focus.
+`user_focus` = free text after the last recognized token (quotes optional); empty → none.
 
 - **Extra care, not exclusive scope** — review the full diff as usual; focus never suppresses other findings.
 - Phase 1: split focus into `review_focus` items tagged `source: user`, ranked ahead of author asks; resolve each to
@@ -145,8 +145,7 @@ ask for number/URL, then `gh pr checkout`.
   {c}. Focus: {user_focus | none}."
 - **Architecture:** run the [`wk-arch-review`](../arch-review/README.md) detector over `gh pr diff <n> --name-only`.
   Clearance at `.review-playground/.arch-cleared-{SHA}.json` → consume; else
-  `Skill(wk-arch-review, args="<path | PR>")`.
-  Fold findings into Phase 3/4.
+  `Skill(wk-arch-review, args="<path | PR>")`. Fold findings into Phase 3/4.
 - **HARD RULE — spec-doc claims about existing code are Unverified.** Named structs/fields, "reuses X", "~N-line port" →
   grep/read to confirm; delegate batch to one subagent. Re-verify a posted finding the moment a later result
   contradicts it.
@@ -163,17 +162,15 @@ Fetch, classify stale threads, build the Phase 3/4 exclusion list via
   (fixed)**, **stale (unclear)**, **active**; bodies referencing absent files → **stale (superseded)**.
 - **HARD RULE:** Never resolve threads without explicit user consent. Present list, confirm, match each by
   `path`+`line`+`body`, resolve via GraphQL mutation.
-- **Queues:** `bot_findings_to_validate` (active bot comments → Phase 3) and exclusion list `(file, line_range, topic)`
-  →
-  prevents dupes. Re-scope bot severity: grep trigger + one hop downstream.
+- **Queues:** `bot_findings_to_validate` (active bot comments → Phase 3) and exclusion list
+  `(file, line_range, topic)` → prevents dupes. Re-scope bot severity: grep trigger + one hop downstream.
 - **Re-review:** prior comments by the current user exist → close the loop before new issues per
   [references/re-review-follow-up.md](references/re-review-follow-up.md); a modified file proves an attempt, not a fix.
 
 ## Phase 3: Adversarial investigation
 
 Scope per [Review Modes](#review-modes). Clearance at `.review-playground/.cleared-{HEAD_SHA}.json` → consume; else
-(`medium`/`heavy`) dispatch `Skill(wk-adversarial-review)` for
-structured findings + verdict. Prioritize `review_focus`; fold Phase 1 `wk-arch-review` findings; mark exclusion-list
+(`medium`/`heavy`) dispatch `Skill(wk-adversarial-review)` for structured findings + verdict. Prioritize `review_focus`; fold Phase 1 `wk-arch-review` findings; mark exclusion-list
 overlaps `[COVERED]`; map `blocker` → Phase 4 `concern` (`suggestion`/`question` pass through). Agent verdicts override
 static reasoning — drop/revise candidates the results refute.
 
@@ -200,11 +197,10 @@ author-facing text — use "concern"/"limitation". One to two sentences.
   comments and body. Bare first-person only for the human's own posture.
 - Prefer ` ```suggestion ` fences for concrete replacements on diff lines: match exact whitespace (verify with
   `cat -A`); one fence = one contiguous range, split non-adjacent fixes; fence lines replace exactly
-  `start_line..line` — a context line goes inside the range or out of the fence (else it duplicates); lines outside diff → anchor a nearby diff line,
-  plain example, note manual apply.
+  `start_line..line` — a context line goes inside the range or out of the fence (else it duplicates); lines outside
+  diff → anchor a nearby diff line, plain example, note manual apply.
 - **HARD RULE — no duplicates** (same file/line range + same concern). Check the Phase 2 exclusion list. Human dup →
-  skip
-  if it holds; reply only with new info or evidenced disagreement. Bot dup → Phase 3 outcome per
+  skip if it holds; reply only with new info or evidenced disagreement. Bot dup → Phase 3 outcome per
   [`references/bot-finding-validation.md`](references/bot-finding-validation.md); Confirmed → silent skip.
 - **HARD RULE — valid positions.** Every comment targets a diff line. `+` and context = valid `RIGHT`; removed = not.
   ±5 same hunk → move; else file-level or body.
@@ -212,7 +208,8 @@ author-facing text — use "concern"/"limitation". One to two sentences.
   open`. `source: user` items → terminal only, per [Focus Argument](#focus-argument).
 
 Present a numbered summary (`1. [concern] src/auth.ts:42 — description`), then go straight to Phase 5 in the same turn —
-never ask "post as pending review?". The review is pending, so the user still decides at submit time.
+never ask "post as pending review?". The review stays pending (bar a passing approve gate), so the user decides at
+submit time.
 
 ## Phase 5: Post review
 
@@ -221,11 +218,11 @@ submits from GitHub UI; never call submit/approve/request-changes — sole excep
 passes → submit that pending review as `APPROVE`, never `COMMENT`/`REQUEST_CHANGES`. Omit `event` from the create
 POST (422 on `"PENDING"`).
 
-Recheck the reviewed head before each POST, write the payload with the Write tool, append by delete+recreate, and post
-follow-ups live: [references/posting-pending-review.md](references/posting-pending-review.md).
+Recheck the reviewed head before each POST, append by delete+recreate, and post follow-ups live:
+[references/posting-pending-review.md](references/posting-pending-review.md).
 
-- **Important:** build the payload with the Write tool every time — never inline `jq -n '…'` or any single-quoted
-  shell string (an apostrophe in a comment body ends the quote and breaks the call).
+- **Important:** build every payload with the Write tool — never inline `jq -n '…'` or any single-quoted shell string
+  (an apostrophe in a comment body ends the quote and breaks the call).
 
 **HARD RULE — the POST is its own single Bash call.** Footer build, payload (Write tool), footer gate, and `open` each
 run as separate calls; never chain them with the `gh api ... --method POST`. Denied with `a hook changed this call's
@@ -253,8 +250,6 @@ substance; GitHub shows them under the review. Ban praise-adjective openers.
 > "Pending review with N comments — {html_url}. Submit on GitHub when ready."
 
 Approved → > "Approved with N comments — {html_url}."
-
----
 
 ## Post-Completion
 
