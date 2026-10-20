@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.19-212915"
+  version: "2026.10.20-225952"
   model:
     openai: gpt-5.6-terra
 ---
@@ -128,6 +128,8 @@ ensure SilverBullet serving. Recipes:
     `In Review`/`Blocked`/`On Deck`, past-due, merged-but-open candidates; no-activity tickets → `## 🗂 Jira backlog`.
   - Block handling: OAuth soft blocks degrade with CTA; `tool_unavailable` → replay in main; still toolless = missing
     connector.
+  - Truncated result (ends mid-item) → re-request only the named sections with the contract's word cap; never
+    compile a cut-off report as complete.
   - Cross-tracker pending-on-me: fold all trackers into one view; compare carry-over status vs previous `live.md` and
     prefix changes `🔁 {old}→{new}`; append `⏳ {N}d` for >7 days; sort by native priority (missing → lowest).
 - **Stage 2b — Auto-transition merged-PR tickets.** `start` only, before writing `live.md`: tickets in
