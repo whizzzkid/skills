@@ -9,7 +9,8 @@ description: >-
   medium (default; harness + arch/functional review), heavy (runs the
   change and every local gate; confirms first). Optional `approve` token
   submits an approval when no concern or blocker remains; else pending.
-argument-hint: '[light|medium|heavy] [approve] [PR number or URL]'
+  Trailing free text = user focus investigated with extra depth.
+argument-hint: '[light|medium|heavy] [approve] [PR number or URL] [focus...]'
 allowed-tools:
   - "Bash(gh pr view:*)"
   - "Bash(gh pr diff:*)"
@@ -34,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.20-173258"
+  version: "2026.10.20-174011"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -93,7 +94,8 @@ Mode = first argument token (`light` | `medium` | `heavy`, case-insensitive); no
 
 ## Approve Flag
 
-`approve` token (case-insensitive, any position after the mode) → `APPROVE = true`; absent → pending review only.
+`approve` token (case-insensitive, after the mode, before the PR/focus) → `APPROVE = true`; absent → pending review
+only. The word inside focus text is never the flag.
 
 - **HARD RULE — approval needs the literal token from the user in this task.** Never infer it from tone ("looks
   fine", "ship it"), a prior task, or a dispatching caller's prompt; dispatched subagents and loops never approve
@@ -103,6 +105,20 @@ Mode = first argument token (`light` | `medium` | `heavy`, case-insensitive); no
   re-review); no failing required check (`gh pr view --json statusCheckRollup`); current user is not the PR author
   (GitHub 422s self-approval). `suggestion:`/`question:`/`praise:` never block.
 - Gate fails → post pending as usual; tell the terminal "approve requested; held as pending: {reasons}".
+
+## Focus Argument
+
+Parse positionally: mode? → `approve`? → PR number/URL? → everything left = `user_focus` (free text; quotes
+optional). No PR token → the remainder after the last recognized token is focus. Empty → no focus.
+
+- **Extra care, not exclusive scope** — review the full diff as usual; focus never suppresses other findings.
+- Phase 1: split focus into `review_focus` items tagged `source: user`, ranked ahead of author asks; resolve each to
+  the files/symbols it names (grep); unmatched → say so in the announce line, never guess.
+- Phase 3: pass `user_focus` verbatim to `wk-adversarial-review` as the priority target; every mode (incl. `light`)
+  attacks each focus item with at least one targeted run on the multi-axis list in Review Modes.
+- Phase 4: findings on focus items post inline like any other. Report each item's outcome (finding / clean, with the
+  evidence) in the terminal; never quote or answer the user's focus in the review body (private steering, not an
+  author ask).
 
 ## Phase 1: Context
 
@@ -126,7 +142,7 @@ ask for number/URL, then `gh pr checkout`.
     follow-up steps it predicted.
   - Tee full test output to a log file, never `tail -1`; rerun a bare FAIL before treating it as real.
 - Announce: > "Reviewing PR #N (`{mode}`): *title* — X files, Y commits. Base: `{base}`. Author asks: {k}. Claims:
-  {c}."
+  {c}. Focus: {user_focus | none}."
 - **Architecture:** run the [`wk-arch-review`](../arch-review/README.md) detector over `gh pr diff <n> --name-only`.
   Clearance at `.review-playground/.arch-cleared-{SHA}.json` → consume; else
   `Skill(wk-arch-review, args="<path | PR>")`.
@@ -192,7 +208,8 @@ author-facing text — use "concern"/"limitation". One to two sentences.
   [`references/bot-finding-validation.md`](references/bot-finding-validation.md); Confirmed → silent skip.
 - **HARD RULE — valid positions.** Every comment targets a diff line. `+` and context = valid `RIGHT`; removed = not.
   ±5 same hunk → move; else file-level or body.
-- Answer every `review_focus` item inline or in body `Re: <question>`; mark each `answered: inline | body | open`.
+- Answer every author `review_focus` item inline or in body `Re: <question>`; mark each `answered: inline | body |
+  open`. `source: user` items → terminal only, per [Focus Argument](#focus-argument).
 
 Present a numbered summary (`1. [concern] src/auth.ts:42 — description`), then go straight to Phase 5 in the same turn —
 never ask "post as pending review?". The review is pending, so the user still decides at submit time.
@@ -226,7 +243,7 @@ substance; GitHub shows them under the review. Ban praise-adjective openers.
   (review depth, what was checked), bot/duplicate-thread bookkeeping, restated inline findings, diff narration. Review
   depth → tell the user in the terminal.
 - One extra sentence each, only for: a change-wide concern with no inline anchor; a `Re:` answer to an un-anchored
-  `review_focus` item; an evidenced bot reply per [`bot-finding-validation`](references/bot-finding-validation.md).
+  author `review_focus` item; an evidenced bot reply per [`bot-finding-validation`](references/bot-finding-validation.md).
 - **HARD RULE — pre-POST body gate:** count sentences before the footer; cut any past the verdict that is not one of
   those three.
 

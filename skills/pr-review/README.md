@@ -4,13 +4,13 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.10.20-173258`
+**Version:** `2026.10.20-174011`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
-| User-invocable | `/wk-pr-review [light\|medium\|heavy] [approve] [PR number or URL]` |
+| User-invocable | `/wk-pr-review [light\|medium\|heavy] [approve] [PR number or URL] [focus...]` |
 | Model-invocable | Automatic on: "review this PR", "review code changes", "create review comments", or "investigate a pull request" |
 
 ## Review Modes
@@ -29,6 +29,13 @@ Add `approve` (e.g. `/wk-pr-review medium approve 123`) to submit the review as 
 no `concern:` comments, no blocked verdict, no open prior concern, no failing required check, and you are not the
 author. Any gate miss → the review stays pending and the terminal lists why. Without `approve`, the review is always
 pending. Dispatched callers never approve.
+
+## Focus Argument
+
+Anything after the PR (or after the last recognized token) is free-text focus, e.g.
+`/wk-pr-review heavy 123 retry logic under partial network failure`. Focus items rank ahead of the author's asks and
+get at least one targeted adversarial run in every mode, but the full diff is still reviewed. Each item's outcome is
+reported in the terminal, never in the GitHub review body.
 
 ## How It Works
 
