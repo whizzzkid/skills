@@ -12,6 +12,12 @@ Batches the following Dependabot PRs into a single update:
 | #<N> | <package> | <old> → <new> |
 ...
 
+### Major-bump audit
+| Package | Direct/transitive | Version | Breaking changes vs app usage |
+|---------|-------------------|---------|-------------------------------|
+| <package> | transitive | <old> → <new> | <verdict> |
+(None → "No major bumps, direct or transitive.")
+
 ### Superseded PRs
 Closes #<N1>, #<N2>, #<N3>, ...
 

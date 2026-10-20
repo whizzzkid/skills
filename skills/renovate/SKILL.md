@@ -29,7 +29,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.20-225726"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -100,6 +100,12 @@ Detect the package manager from repo root:
 - Run the install command for the detected package manager to confirm the lockfile is consistent.
 - Test command obvious (`npm test`, `bundle exec rake`, `cargo test`) → run it. On failure, report which upgrade likely
   broke it but do not block — the CI on the PR will catch it.
+- **HARD RULE: audit every major bump, direct or transitive — a green suite is not evidence of safety.**
+  - Diff each lockfile against base (`git diff origin/main...HEAD -- <lockfile>`); list every package whose major
+    version changed, including transitive deps that no Dependabot PR title names (a grouped patch bump can pull one in).
+  - Per major: read its changelog / breaking changes, check the app's use of changed APIs, and record the verdict in the
+    PR body's major-bump audit section.
+  - Why: a transitive major can break an error path no test covers — only reading upstream changes surfaces it.
 
 ## Step 5: Create the Combined PR
 
@@ -116,15 +122,17 @@ stragglers.
 ## Step 6: Skip Optional Gates
 
 - **Automated external review:** skip for dependency-only updates.
-- **Adversarial review:** skip unless the combined diff contains non-lockfile, non-manifest code changes (e.g., a
-  Dependabot PR that patches application code) — pure dependency bumps waste review time on lockfile diffs. Detect:
+- **Adversarial review:** run when Step 4 found any major bump (direct or transitive) — never skip it then. Otherwise
+  skip unless the combined diff contains non-lockfile, non-manifest code changes (e.g., a Dependabot PR that patches
+  application code) — pure minor/patch bumps waste review time on lockfile diffs. Detect code changes:
 
 ```bash
 git diff origin/main...HEAD --name-only | grep -vE '(package\.json|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Gemfile|Gemfile\.lock|Cargo\.toml|Cargo\.lock|requirements.*\.txt|poetry\.lock|\.github/|go\.sum|go\.mod)' | head -5
 ```
 
-Non-empty → invoke [wk-adversarial-review](../adversarial-review/README.md). Empty → skip with a note: "dependency-only
-update, adversarial review skipped."
+Non-empty or any major bump → invoke [wk-adversarial-review](../adversarial-review/README.md), pointing it at each
+major's upstream changes. Empty and no major → skip with a note: "minor/patch dependency-only update, adversarial review
+skipped."
 
 ## Step 7: Post-Merge Cleanup (`/wk-renovate cleanup`)
 
