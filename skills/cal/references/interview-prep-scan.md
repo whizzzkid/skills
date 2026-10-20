@@ -22,7 +22,8 @@ Scorecard (debrief sessions are already the scorecard discussion).
 
 ### A. 15-min Interview Prep block (immediately before)
 
-Check if 15 minutes before interview start are free via `get_free_busy`:
+Check if 15 minutes before interview start are free via `list_events` on the primary calendar (single calendar —
+no free/busy needed):
 - Free: create event `"Interview Prep -- {title}"` with description "Review
   candidate profile, questions, and role context."
 - Busy: note conflict; do not create.

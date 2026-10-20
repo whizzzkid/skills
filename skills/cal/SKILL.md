@@ -18,7 +18,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.20-230851"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -95,9 +95,12 @@ emails for genuine overlap:
 gcal.get_free_busy(
   time_min: "<range_start>",
   time_max: "<range_end>",
-  items: [{ id: "<email>" }, ...]
+  calendar_ids: ["<email>", ...]
 )
 ```
+
+Connector schema, not the raw Google API: `calendar_ids` (string list), never `items`; flat ISO strings for every
+time field. Single calendar → `list_events` instead of free/busy.
 
 Count conflicting attendees per candidate slot; rank by **fewest conflicts**,
 weighted by seniority/necessity if provided.
@@ -127,9 +130,10 @@ are free. Proceed?" After confirmation, create:
 gcal.create_event(
   calendar_id: "primary",
   summary: "<title>",
-  start: { dateTime: "<ISO8601>", timeZone: "<tz>" },
-  end:   { dateTime: "<ISO8601>", timeZone: "<tz>" },
-  attendees: [{ email: "<email>" }, ...],
+  start_time: "<ISO8601 with offset>",
+  end_time:   "<ISO8601 with offset>",
+  time_zone: "<IANA tz>",
+  attendees: ["<email>", ...],
   description: "<optional notes>"
 )
 ```
