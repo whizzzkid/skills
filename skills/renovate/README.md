@@ -1,6 +1,6 @@
 # wk-renovate
 
-> **Version:** 2026.10.20-225726 · **Group:** pull-request · **Model:** sonnet
+> **Version:** 2026.10.20-230741 · **Group:** pull-request · **Model:** sonnet
 
 Batch all open Dependabot PRs in the current repo into a single combined
 dependency-update PR — one branch, one review, one merge.

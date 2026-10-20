@@ -29,7 +29,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.10.20-225726"
+  version: "2026.10.20-230741"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -100,6 +100,8 @@ Detect the package manager from repo root:
 - Run the install command for the detected package manager to confirm the lockfile is consistent.
 - Test command obvious (`npm test`, `bundle exec rake`, `cargo test`) → run it. On failure, report which upgrade likely
   broke it but do not block — the CI on the PR will catch it.
+- Red gate → rerun it on base (`origin/main` and its lockfile) before blaming a bump; red there too → pre-existing,
+  not the update's.
 - **HARD RULE: audit every major bump, direct or transitive — a green suite is not evidence of safety.**
   - Diff each lockfile against base (`git diff origin/main...HEAD -- <lockfile>`); list every package whose major
     version changed, including transitive deps that no Dependabot PR title names (a grouped patch bump can pull one in).
