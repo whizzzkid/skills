@@ -2,7 +2,7 @@
 
 > Use when working with Docker — building images, inspecting containers, debugging Dockerfile issues, verifying image tags exist, or troubleshooting Docker daemon connectivity.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.20-230146`
 
 ## Invocation
 
@@ -42,6 +42,7 @@ flowchart TD
 - **ECR auth:** `authorization failed` / `ExpiredToken` errors always mean `aws sso login` — the skill does not attempt re-authentication.
 - **Exit code table:** Codes 137 (OOM) and 125 (daemon error) have specific meanings; the skill maps them rather than treating all failures as generic errors.
 - **Bind-mount overlay:** A CI step running under `-v checkout:/workdir --workdir=/workdir` shadows the image at the mount point — `COPY` to that path is invisible. Generated artifacts must come from the step command (e.g. `go generate`), not a Dockerfile `COPY`.
+- **Devcontainer errors route to [wk-devcontainer](../devcontainer/README.md):** bake fs-entitlement build failures and uppercase Compose project names have tested fixes there.
 - **Multi-worktree port conflicts:** When a sibling worktree's devcontainer holds the default port, skip `docker compose up` and use `docker run --network=<project-network>` with named volumes (no `-p`) to get a working shell without stopping the sibling's stack.
 - **Hand-started container credentials:** Before debugging private-registry auth in a manually started container, grep the project's setup script for credential env var export format — package managers use tool-specific naming, not generic API key vars.
 - **HARD RULE — no recursive chmod on git trees or shared bind mounts:** Never `chmod -R` a git tree or any path inside a persistent/shared host checkout to fix a container EACCES. Scope grants to the exact files/dirs needed; prefer `chown` to the container uid or a dedicated scratch dir outside the checkout. Recursive world-writable chmod sets the other-write bit across `.git/`, dirtying the host tree and tripping dubious-ownership guards.

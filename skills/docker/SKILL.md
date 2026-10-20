@@ -32,7 +32,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.20-230146"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -132,6 +132,10 @@ checkout for container EACCES. Grant write only on exact needed files/dirs. Pref
 - **HARD RULE:** A `RUN` step failing with a network/fetch error in dind → check the
   stage's floating `FROM` tag before `--network=host`. Pin to the tool-version file's
   version; `--network=host` masks the cause.
+- **Devcontainer stack errors are owned by [wk-devcontainer](../devcontainer/README.md) — load it before retrying.**
+  Bake `additional privileges requested: --allow=fs.read=...` on `devcontainer up` (`COMPOSE_BAKE=false` does not help;
+  `BUILDX_BAKE_ENTITLEMENTS_FS=0` on the CLI call does) and `invalid project name` on a teardown `-p` (Compose rejects
+  uppercase; lowercase the derived `<basename>_devcontainer`) both have tested fixes there.
 
 ### Common Exit Codes
 
