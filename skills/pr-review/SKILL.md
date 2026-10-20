@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.20-230344"
+  version: "2026.10.20-230539"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -177,6 +177,13 @@ static reasoning — drop/revise candidates the results refute.
 **HARD RULE — logic-bearing findings need empirical proof.** Executable logic (incl. `wk-arch-review` findings) → drive
 the real implementation or a faithful harness with adversarial inputs; record PASS/FAIL before Phase 4. Never compose
 comments from un-run reasoning.
+
+- **Concurrency/lock findings need real separate connections.** A single-connection spec (transactional fixtures, one
+  snapshot) cannot observe cross-transaction locking, so it is never a faithful harness for a deadlock or race claim.
+  Run a script through the framework's runner: one winner holds the conflicting write uncommitted, N losers each check
+  out their own connection inside an outer transaction and call the real method. Compare against a mutant (lock
+  variant, or the change reverted) — identical results mean the probe cannot see the effect. Delete the probe's rows
+  afterwards.
 
 **HARD RULE — check derivation before contradicting a figure.** Grep the artifact for its derivation rule; read a timing
 constant's whole comment block before replacing it. Refuted but derivation unstated → clarity suggestion, not drop.
