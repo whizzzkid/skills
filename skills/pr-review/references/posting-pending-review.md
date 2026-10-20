@@ -30,6 +30,19 @@ Run that POST as its own Bash call — no chained footer gate, payload build, or
 classifier review takes every chained step down with it; an isolated POST is cheap to retry once and simple for the
 user to re-authorize. Hook input-rewrite denial → [`wk-env`](../../env/README.md) Step 3.6 (one retry, then hand off).
 
+## Submit as approval (`approve` flag only)
+
+Only after the SKILL.md Approve gate passes and the pending review exists. Recheck `headRefOid` == `PR_HEAD` first;
+moved → stay pending. Write `{"event": "APPROVE", "body": "<same verdict + footer>"}` with the Write tool, then, as its
+own Bash call:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{n}/reviews/{review_id}/events --method POST --input <file>
+```
+
+Response `state` must be `APPROVED`; anything else → report the pending review as-is. 422 → stay pending; never retry
+as `COMMENT`. Submitting is irreversible — inline comments publish with it.
+
 ## Append to existing pending review
 
 GitHub allows no append — delete review, recreate with full comment set. Pending comments return `line: null`; rebuild

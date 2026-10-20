@@ -7,8 +7,9 @@ description: >-
   threads, delegates deep investigation to wk-adversarial-review, and creates
   pending review comments via GitHub API. Modes: light (diff + claims),
   medium (default; harness + arch/functional review), heavy (runs the
-  change and every local gate; confirms first).
-argument-hint: '[light|medium|heavy] [PR number or URL]'
+  change and every local gate; confirms first). Optional `approve` token
+  submits an approval when no concern or blocker remains; else pending.
+argument-hint: '[light|medium|heavy] [approve] [PR number or URL]'
 allowed-tools:
   - "Bash(gh pr view:*)"
   - "Bash(gh pr diff:*)"
@@ -33,7 +34,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.16-195319"
+  version: "2026.10.20-173258"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -89,6 +90,19 @@ Mode = first argument token (`light` | `medium` | `heavy`, case-insensitive); no
     verification, not a release).
 - **Time box:** soft, checked at phase boundaries. Over budget → finish the current phase, post what is proven, list
   uncovered items in the terminal; never silently truncate. Mode and coverage go to the terminal, never the review body.
+
+## Approve Flag
+
+`approve` token (case-insensitive, any position after the mode) → `APPROVE = true`; absent → pending review only.
+
+- **HARD RULE — approval needs the literal token from the user in this task.** Never infer it from tone ("looks
+  fine", "ship it"), a prior task, or a dispatching caller's prompt; dispatched subagents and loops never approve
+  (approval is irreversible and speaks for the user).
+- **Approve gate — all must hold at Phase 5, else hold as pending:** zero `concern:` comments in this review
+  (`blocker` maps there in Phase 3); adversarial/arch verdict not `blocked`; no prior own concern still open (Phase 2
+  re-review); no failing required check (`gh pr view --json statusCheckRollup`); current user is not the PR author
+  (GitHub 422s self-approval). `suggestion:`/`question:`/`praise:` never block.
+- Gate fails → post pending as usual; tell the terminal "approve requested; held as pending: {reasons}".
 
 ## Phase 1: Context
 
@@ -186,7 +200,9 @@ never ask "post as pending review?". The review is pending, so the user still de
 ## Phase 5: Post review
 
 **HARD RULE:** Auto-create pending review after Phase 4 unless user said "don't post"/"wait"/"let me review first". User
-submits from GitHub UI; never call submit/approve/request-changes. Omit `event` entirely (422 on `"PENDING"`).
+submits from GitHub UI; never call submit/approve/request-changes — sole exception: [Approve Flag](#approve-flag) gate
+passes → submit that pending review as `APPROVE`, never `COMMENT`/`REQUEST_CHANGES`. Omit `event` from the create
+POST (422 on `"PENDING"`).
 
 Recheck the reviewed head before each POST, write the payload with the Write tool, append by delete+recreate, and post
 follow-ups live: [references/posting-pending-review.md](references/posting-pending-review.md).
@@ -218,6 +234,8 @@ substance; GitHub shows them under the review. Ban praise-adjective openers.
 `html_url`, never drop the open. Trust `path`+`body`, not `line` for verification.
 
 > "Pending review with N comments — {html_url}. Submit on GitHub when ready."
+
+Approved → > "Approved with N comments — {html_url}."
 
 ---
 

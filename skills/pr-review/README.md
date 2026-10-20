@@ -4,13 +4,13 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.10.16-195319`
+**Version:** `2026.10.20-173258`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
-| User-invocable | `/wk-pr-review [light\|medium\|heavy] [PR number or URL]` |
+| User-invocable | `/wk-pr-review [light\|medium\|heavy] [approve] [PR number or URL]` |
 | Model-invocable | Automatic on: "review this PR", "review code changes", "create review comments", or "investigate a pull request" |
 
 ## Review Modes
@@ -22,6 +22,13 @@
 | `heavy` | medium + runs the change (browser for UI), every local gate, full path/edge/mutation matrix | confirms first |
 
 `heavy` always asks before starting; non-interactive callers (e.g. sitrep auto-reviews) fall back to `medium`.
+
+## Approve Flag
+
+Add `approve` (e.g. `/wk-pr-review medium approve 123`) to submit the review as an approval on your behalf when it has
+no `concern:` comments, no blocked verdict, no open prior concern, no failing required check, and you are not the
+author. Any gate miss → the review stays pending and the terminal lists why. Without `approve`, the review is always
+pending. Dispatched callers never approve.
 
 ## How It Works
 
@@ -42,7 +49,10 @@ flowchart TD
     I --> J[Present numbered summary for approval]
     J --> K["Phase 5: Recheck reviewed head"]
     K --> L[POST pending review unless user pauses]
-    L --> M[Open html_url in browser]
+    L --> N{"approve flag + gate passes?"}
+    N -->|yes| P[Submit pending review as APPROVE]
+    N -->|no| O[Open html_url in browser]
+    P --> O
 ```
 
 ## Noteworthy
@@ -62,7 +72,9 @@ flowchart TD
   CI-triggered output is consumed as evidence; no fresh optional local or
   external model review starts without an explicit user request.
 - **HARD RULE — never submit without explicit user confirmation:** The pending review is created after the
-  Phase 4 summary unless the user explicitly pauses; the user still submits it from the GitHub UI.
+  Phase 4 summary unless the user explicitly pauses; the user still submits it from the GitHub UI. Sole exception:
+  the literal `approve` token plus a passing approve gate submits it as `APPROVE` — never `COMMENT` or
+  `REQUEST_CHANGES`.
 - **Bot findings are validated before reply:** Every active bot comment is routed through the adversarial engine
   and classified Confirmed, Refuted, or Inconclusive. Confirmed findings get silent skip; confirmed-but-narrower,
   confirmed-but-broader, refuted, and agent-backed inconclusive cases get replies with new evidence.
