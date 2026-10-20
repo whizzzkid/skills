@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.20-230344"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -94,7 +94,8 @@ post this?".** Opt-out only before the summary ("don't post"/"wait"); then proce
 
 **HARD RULE:** Before POSTing, verify each comment's `line` falls inside a `@@` hunk
 range (else `422 "Line could not be resolved"`). Out-of-hunk → snap to nearest or
-convert to file-level comment (omit `line` + `side`). `Read` line numbers ≠ hunk lines.
+move it to the review body — `comments[]` rejects file-level / anchorless items (422; see `wk-gh`
+Step 3). `Read` line numbers ≠ hunk lines.
 
 ```bash
 BASE=$(gh pr view --json baseRefName --jq .baseRefName)

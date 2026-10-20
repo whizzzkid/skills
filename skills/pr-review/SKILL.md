@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.20-175635"
+  version: "2026.10.20-230344"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -203,7 +203,7 @@ author-facing text — use "concern"/"limitation". One to two sentences.
   skip if it holds; reply only with new info or evidenced disagreement. Bot dup → Phase 3 outcome per
   [`references/bot-finding-validation.md`](references/bot-finding-validation.md); Confirmed → silent skip.
 - **HARD RULE — valid positions.** Every comment targets a diff line. `+` and context = valid `RIGHT`; removed = not.
-  ±5 same hunk → move; else file-level or body.
+  ±5 same hunk → move; else review body (`comments[]` takes no file-level items — 422).
 - Answer every author `review_focus` item inline or in body `Re: <question>`; mark each `answered: inline | body |
   open`. `source: user` items → terminal only, per [Focus Argument](#focus-argument).
 

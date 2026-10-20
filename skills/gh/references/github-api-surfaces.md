@@ -19,6 +19,12 @@ fires).** Conversation comments have no reply subresource; a new comment is alwa
 comment, capture its body for recovery.
 After any conversation write, re-list the surface → new comment ID must appear, prior comments body lengths unchanged.
 
+**The create-review payload has no file-level comments.** Every `comments[]` item in `POST /pulls/{n}/reviews` needs
+a `line` (or `position`) anchor; `subject_type: file`, or omitting the anchor, returns 422 (`subjectType not defined on
+DraftPullRequestReviewComment` / `position expected not null`). File-level comments exist only on the single-comment
+endpoint (`POST /pulls/{n}/comments` with `subject_type: file`), which publishes immediately. Off-diff finding in a
+pending review → one sentence in the review body; post a live file-level comment only when publishing now is intended.
+
 **Inline-reply IDs are numeric REST IDs.** `in_reply_to` (and
 `/pulls/{n}/comments/{id}/replies`) require the integer REST `id` from
 `GET /pulls/{n}/comments` (or `databaseId` from a GraphQL reviewThreads query),
