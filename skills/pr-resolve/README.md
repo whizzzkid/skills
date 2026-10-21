@@ -4,7 +4,7 @@
 > and manage the full resolution cycle from branch sync through push, CI
 > polling, and session retro.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.21-180951`
 
 ## Invocation
 
@@ -90,6 +90,9 @@ sequenceDiagram
   [`wk-sharpen`](../sharpen/README.md) batch to fold the detection into
   adversarial-review's mechanical sweeps. The Step 9.5 loop re-runs Step 9.4
   for each cycle's newly surfaced findings.
+- **Post-CI thread re-fetch:** The CI watch starts in the same turn as the push;
+  when it completes, Step 3 re-runs (bot summaries included) before any "done"
+  report, because review bots re-review each push.
 - **Terminal remote-state check:** Before reporting completion, re-fetch the PR
   and confirm its head, recorded reply/resolution decisions, and required CI
   state. Local commits alone never complete a PR resolution.

@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.21-180951"
   model:
     openai: gpt-5.6-terra
 ---
@@ -158,9 +158,11 @@ conversation=N` (fetch all three surfaces) and `pending-self-review: yes|no → 
 - **Step 9.4 — Capture Adversarial-Review Learnings. HARD RULE:** Emit `wk-learn adversarial-review` for every
   issue class surfaced before the CI wait — never skip; re-run per post-CI batch. Zero findings → one baseline
   learning. No paths/lines/logins/SHAs.
-- **Step 9.5 — Wait for CI, Then Loop:** 1) CI poll via configured skill; failed/canceled → surface and exit. 2) CI
-  passes → re-run Step 3; new unresolved → loop Steps 4–9. Cap: 3 iterations. 3) Before terminal summary: verify
-  remote HEAD = pushed commit, CI terminal.
+- **Step 9.5 — Wait for CI, Then Loop:** **Important:** start the CI watch in the same turn as the push, and on its
+  completion re-run Step 3 (all surfaces, incl. bot summary comments) before any "done" report. (A review bot
+  re-reviews every push and can post a blocking finding after CI turns green.) 1) CI poll via configured skill;
+  failed/canceled → surface and exit. 2) CI passes → re-run Step 3; new unresolved → loop Steps 4–9. Cap: 3
+  iterations. 3) Before terminal summary: verify remote HEAD = pushed commit, CI terminal.
 - **Step 10 — Final Summary:** template: commands.md §10.
 - **Step 11 — Session Retro:** run `wk-retro` on every completion — never silently skip.
 
