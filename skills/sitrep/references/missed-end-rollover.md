@@ -33,7 +33,7 @@ prerequisite to today's overwrite, not a separate required invocation.
 ## Run the missed close
 
 - Save the actual-day context. Bind the nested `end` flow's logical "today" to
-  the prior `date:` and bound every gathering query to that local calendar day.
+  the prior `date:` and bound every close-gathering query to that local calendar day.
 - Derive the dated snapshot path without platform-specific `date` parsing:
 
   ```bash
@@ -52,6 +52,26 @@ prerequisite to today's overwrite, not a separate required invocation.
 - On retry, re-read the existing snapshot and append only entries not already
   present; only Stage 8 writes `end_completed_at:`.
 - Any failure stops `start` before today's `live.md` can be written.
+
+## Shared gather (closed day = previous workday)
+
+- Closed `date:` equals `start`'s previous workday → launch one fleet that
+  serves both `end` Stage 2 and `start` Stage 2; never relaunch (both read the
+  same evidence window).
+  - Roster = union of both rosters, one agent per domain; prepend the subagent
+    contract to each.
+  - Every brief states both windows as explicit half-open bounds in the user's
+    timezone: parts B and C query only the closed day, part A only today.
+  - Three-part return: **A** open now (today's `start`), **B** closed-day
+    evidence (snapshot, brag log, Yesterday), **C** carry-over status (both
+    pages' carry-forward).
+- Closed day older than the previous workday → separate gathers (the windows
+  differ).
+- Date each carry-over's completion from its owning system's timestamp (ticket
+  resolution, PR merge), never from the page it was toggled on (a prior page
+  can record the outcome a day off).
+- Sharing changes launch count only: nested `end` still runs every stage and
+  commits before `start` Stage 1.
 
 ## Restore today's start
 

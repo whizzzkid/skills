@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.20-225952"
+  version: "2026.10.21-183323"
   model:
     openai: gpt-5.6-terra
 ---
@@ -108,7 +108,8 @@ ensure SilverBullet serving. Recipes:
 
 - **Stage 0.5 — Close unfinished prior day.** **HARD RULE — close before overwrite.** Prior `date:` with no valid end
   state → full `end` flow first; failure stops `start`. User explicitly declares the stale page closed → skip the
-  rollover, carry its open spans forward, note it in Meta. Details:
+  rollover, carry its open spans forward, note it in Meta. Closed day = previous workday → one shared gather feeds
+  both flows. Details:
   [`references/missed-end-rollover.md`](references/missed-end-rollover.md).
 - **Stage 1 — Load previous live.md.** Read `$LIVE_FILE`: open `data-done="false"` → carry-over, completed → count.
   Canonical state is `data-done` (legacy glyphs read-only). Resolve previous working day from frontmatter. Read
