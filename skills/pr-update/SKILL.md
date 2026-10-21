@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.21-220037"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -108,6 +108,10 @@ and no-op detection: [`references/rebase-strategy-details.md`](references/rebase
 Snapshot the net diff against the OLD merge-base, reset to new base, apply as one integration commit listing original
 SHAs in the body. Conflicts → Stage 4. Procedure and commit format:
 [`references/patch-replay-strategy.md`](references/patch-replay-strategy.md).
+
+- **Base already replaced most of the branch's code** (superseded takeover, long-stale PR) → rebuild from the new base
+  and re-apply only the still-missing slice; never resolve conflicts through code the base replaced (re-litigates
+  landed work). List every dropped superseded hunk before pushing (never-drop-commits rule).
 
 ## Stage 4: Conflict resolution loop
 
