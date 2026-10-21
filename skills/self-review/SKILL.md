@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.20-230626"
+  version: "2026.10.21-215624"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -53,7 +53,8 @@ the GitHub-routing HARD RULE (no org scoping, no footer).
 
 ## Step 0.5: Pre-flight POST permission
 
-Check `gh api repos/.*/pulls/.*/reviews` in settings; no match → warn early.
+**Important:** run before Step 1 in every mode — auto mode included, never optional (the classifier denies at
+Step 4, after the payload is built). Check `gh api repos/.*/pulls/.*/reviews` in settings; no match → warn early.
 **HARD RULE: author the payload with the Write tool** to `/tmp/agent/gh/{owner}/{repo}/pulls/{n}/self-review.json` — never inline
 prose in bash. Blocked → hand user the one-liner. See
 [permission-preflight](references/permission-preflight.md).

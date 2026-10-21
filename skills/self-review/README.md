@@ -2,7 +2,7 @@
 
 > Post inline self-review comments on your own PR to document design decisions for human reviewers.
 
-**Version:** `2026.10.20-230626`
+**Version:** `2026.10.21-215624`
 
 ## Invocation
 
@@ -19,6 +19,7 @@ sequenceDiagram
     participant GH as GitHub API
     participant U as User
 
+    A->>A: Pre-flight POST permission (every mode)
     A->>GH: gh pr view + gh pr diff
     A->>A: Read all changed files in full
     A->>GH: Fetch existing self-review threads (GraphQL)
@@ -37,6 +38,8 @@ sequenceDiagram
   and bypasses the human-in-the-loop checkpoint.
 - `"event": "PENDING"` is **not** a valid enum value and returns HTTP 422 — omit the field
   entirely to create a pending (draft) review.
+- **Step 0.5 POST-permission preflight** runs before context gathering in every mode, auto mode
+  included — a classifier denial is surfaced up front, not after the payload is built.
 - **Step 2.5 deduplication** is mandatory on multi-round PRs — prior self-review threads are
   fetched and checked for topical overlap before proposing new comments to avoid restating
   rationale that's already on the PR.
