@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.20-230936"
+  version: "2026.10.20-232907"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -186,7 +186,7 @@ comments from un-run reasoning.
   afterwards.
   - Non-locking pre-check mixed with a locking write (stale-snapshot claim) → one connection opens a transaction and
     reads, another commits the conflicting change, then the first calls the method; run on head and on the
-    pre-check-removed mutant, then restore the file.
+    pre-check-removed mutant, then restore the file from a pre-mutation copy (never via VCS).
 
 **HARD RULE — check derivation before contradicting a figure.** Grep the artifact for its derivation rule; read a timing
 constant's whole comment block before replacing it. Refuted but derivation unstated → clarity suggestion, not drop.

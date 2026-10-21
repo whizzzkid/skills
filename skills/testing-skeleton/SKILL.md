@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.20-232907"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -139,7 +139,9 @@ After each test or batch:
 2. Run the intended example by exact description, not source line; confirm its name in runner output (a green nearby
    example is not evidence).
 3. Verify the test fails.
-4. Restore the implementation.
+4. Restore the implementation from a copy taken before step 1, on the host, and `cmp` it; never via `git checkout` /
+   `restore` / `stash` (they discard the uncommitted implementation, and fail inside a container that cannot reach a
+   worktree's git dir).
 
 - A contract-breaking mutation that breaks no test → add the missing assertion before moving on.
 - Shipping > ~5 new tests: batch 3-5 different mutations, run the suite, confirm each fails at least one test; a

@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.10.15-003000`
+**Version:** `2026.10.20-232907`
 
 ## Invocation
 
@@ -64,6 +64,7 @@ flowchart TD
 - **Playground validation is mandatory** for any runtime-behavior claim — findings that cannot be reproduced in
   `.review-playground/` are downgraded from `blocker` to `question`. Every local run is scoped to the changed examples
   (never a suite or whole spec directory) — CI owns full-suite regressions, and mutation cycles inherit that scoping.
+  Every mutant is restored from a pre-mutation playground copy and `cmp`-checked, never through VCS.
   The playground step owns the runtime matrix, mutation testing, the standalone upstream-source harness, specialized
   producer/consumer / cluster / interface-contract / allowlist checks, and read-based analysis for
   doc/prose/compression diffs (gate-survival-by-substance, count cross-checks, relocation portability). Privilege

@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.15-003000"
+  version: "2026.10.20-232907"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -146,6 +146,10 @@ a hard rule. `question`: genuine uncertainty. Omit hedging, filler, praise, diff
 - Mutation-test each new test: flip a conditional, hardcode a return, swap args, remove an assertion → green = fake
   test. **Each cycle inherits that scoping** — N mutations × a full directory is the dominant cost, and a killing test
   is by construction among the changed examples.
+- **HARD RULE — restore every mutant from a pre-mutation copy, never through VCS.** Copy the file into
+  `.review-playground/` before mutating; restore on the host from that copy and `cmp` it before the next cycle. (VCS
+  restore assumes a clean tree and a reachable git dir: on the host it discards uncommitted work; in a container a
+  worktree's `.git` file points at an unmounted host path, git exits 128, and the mutant stays in the file.)
 - App cannot boot → standalone playground: fetch pinned upstream source, replicate method signatures, cite SHA/tag:
 
   ```bash

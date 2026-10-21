@@ -2,7 +2,7 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.20-232907`
 
 ## Invocation
 
@@ -40,6 +40,8 @@ flowchart TD
   property-based tests (fuzzer does it) and snapshot tests (diff is the verification).
 - **Select mutations by exact example description, not a line number.** Confirm
   the runner reports that name; a green nearby example is not mutation evidence.
+- **Restore each mutant from a pre-mutation copy, never via VCS** — `git checkout` wipes the
+  uncommitted implementation on the host and fails in a container that cannot see the git dir.
 - The **behavioral/structural dividing line** test: "if I rewrote this function from scratch
   keeping its contract, would the test still pass?" — yes = behavioral, no = structural.
 - **Format validators** must be derived from real example values found in the codebase or
