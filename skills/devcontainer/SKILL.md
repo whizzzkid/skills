@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.19-212229"
+  version: "2026.10.21-213538"
   model:
     openai: gpt-5.6-terra
 ---
@@ -128,11 +128,12 @@ docker run --rm -it \
 
 - Rerun with `devcontainer up --log-level trace` (capture under the credential rule above) and grep the capture for
   `privileges` / `error`, or rerun the generated compose overlay command from the trace by hand.
-- `additional privileges requested: pass "--allow=fs.read=<tmp>/Dockerfile-with-features"` → Compose 5.x builds via
-  buildx bake, which gates reads outside the build context; the CLI writes its features Dockerfile to a temp dir.
-  `COMPOSE_BAKE=false` does not help. Set `BUILDX_BAKE_ENTITLEMENTS_FS=0` (buildx's documented opt-out) in the CLI's
-  own process env and retry: `BUILDX_BAKE_ENTITLEMENTS_FS=0 devcontainer up --workspace-folder .`
-  (`devcontainer.json` env keys reach the container, never the host-side build).
+- **Important:** `additional privileges requested: pass "--allow=fs.read=<tmp>/Dockerfile-with-features"` → Compose
+  5.x builds via buildx bake, which gates reads outside the build context; the CLI writes its features Dockerfile to a
+  temp dir. `COMPOSE_BAKE=false` does not help — never try it first. Set `BUILDX_BAKE_ENTITLEMENTS_FS=0` (buildx's
+  documented opt-out) in the CLI's own process env and retry:
+  `BUILDX_BAKE_ENTITLEMENTS_FS=0 devcontainer up --workspace-folder .` (`devcontainer.json` env keys reach the
+  container, never the host-side build).
 - **Plain compose is a last resort, never a substitute.** `devcontainer exec` resolves its container by the
   `devcontainer.local_folder` / `devcontainer.config_file` labels only `devcontainer up` sets, so a stack started by
   plain compose is invisible to it — and to every git hook or script that shells in through it. Grep hooks and scripts
