@@ -28,7 +28,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.21-180603"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -50,6 +50,8 @@ completion via `wk-workflow`.
 2. **Scope explosion → stack.** Takeover changes >30% of original diff → auto-switch to stack mode.
 3. **Full `wk-workflow` always runs.** No phase skipping.
 4. **PR description reflects combined work.** Preserve metadata per `skills/pr/references/pr-description-metadata.md`.
+5. **Re-sign inherited commits before any work.** Step 3's signature gate runs before Step 4. (A required-signatures
+   rule surfaces only at merge; re-signing then rewrites history under finished work and breaks every SHA cited since.)
 
 ## Step 1: Parse Arguments
 
@@ -83,6 +85,27 @@ git checkout -b "${HEAD_BRANCH}-takeover" "origin/$HEAD_BRANCH"
 ```
 
 Stacked on draft → surface options: (A) stack anyway, (B) retarget to default (auto-mode default), (C) cancel.
+
+### Signature gate — before any work
+
+**HARD RULE — validate every inherited commit's signature right after checkout; re-sign before Step 4.** Check the whole
+range, never the head alone (a range-scoped signing rule is not answered by a point sample):
+
+```bash
+gh api "repos/{owner}/{repo}/pulls/$PR_NUMBER/commits" --paginate \
+  --jq '.[] | select(.commit.verification.verified | not) | .sha'
+```
+
+- Empty → continue.
+- Overwrite mode, any SHA listed → re-sign, then verify:
+  1. `git rebase --force-rebase --gpg-sign "origin/$BASE_BRANCH"` — re-signs every non-merge commit, keeps authors,
+     drops merge-from-base commits. `--force-rebase` is required: onto an unmoved base the rebase is a silent no-op;
+     a changed HEAD SHA is the only proof it ran.
+  2. Confirm a `gpgsig` header per commit (`git cat-file commit <sha>`); a local `%G?` of `N` is a false alarm when
+     `gpg.ssh.allowedSignersFile` is unset.
+  3. `git push --force-with-lease="<head-branch>:<old-sha>"`, then re-run the API query → must be empty.
+- Stack mode, any SHA listed → never rewrite the original branch; record the unsigned SHAs in the Step 10 handoff as a
+  merge blocker for the original author.
 
 ## Step 4: Orient to Existing Work
 
