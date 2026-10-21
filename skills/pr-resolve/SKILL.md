@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.21-180951"
+  version: "2026.10.21-181219"
   model:
     openai: gpt-5.6-terra
 ---
@@ -78,14 +78,18 @@ sync/fetch (Steps 2–3); never drop tail steps (9.4 learnings, 9.5 CI wait+loop
 5. **Commit discipline.** `wk-commit` conventions; one commit per triage unit; push once after all commits. Co-author
    only for PR author's work.
 6. **Exclude self-review comments.** Do not triage/reply/resolve threads by PR author or current user. Surface
-   external replies inside self-review threads.
+   external replies inside self-review threads. **Exception — the current user's reviewer-era threads are reviewer
+   feedback:** keep them active when their review was submitted before the user joined the PR (takeover, co-author:
+   `submittedAt` precedes the user's first commit on the branch) or its state is `CHANGES_REQUESTED`; reply with the
+   fix SHA and resolve like any reviewer thread.
 7. **Base cleanliness.** Conflict markers or `$BEHIND > 0` → integrate first. Bot reviews are first-class;
    adversarial-review gates merge, not push.
 
 ## Step 1: Identify the PR
 
 `gh pr view --json ...` (commands.md §1). Extract `{owner}`, `{repo}`, `{number}`, `{base_branch}`, `{head_sha}`.
-Co-author: `$PR_AUTHOR != $CURRENT_USER` → treat both as self for exclusion, add `Co-authored-by:` per commit.
+Co-author: `$PR_AUTHOR != $CURRENT_USER` → treat both as self for exclusion (minus Hard Rule 6's reviewer-era
+exception), add `Co-authored-by:` per commit.
 
 ## Step 2: Sync Branch (commands.md §2)
 
@@ -107,7 +111,8 @@ Build comment map via commands.md §3 (GraphQL + REST). Emit before Step 4: `sur
 conversation=N` (fetch all three surfaces) and `pending-self-review: yes|no → reply route`.
 
 - Diff description against branch state → inject drift as `surface: agent_observation`.
-- Classify: `Bot` → bot review; PR author/current user → self-review; other → reviewer.
+- Classify: `Bot` → bot review; PR author/current user → self-review, except Hard Rule 6's reviewer-era threads →
+  reviewer; other → reviewer.
 - Active = unresolved + not self-review + not truly outdated. Sort by file path, then line.
 
 ## Step 4: Generate Suggestions

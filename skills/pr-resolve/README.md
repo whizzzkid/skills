@@ -4,7 +4,7 @@
 > and manage the full resolution cycle from branch sync through push, CI
 > polling, and session retro.
 
-**Version:** `2026.10.21-180951`
+**Version:** `2026.10.21-181219`
 
 ## Invocation
 
@@ -81,7 +81,9 @@ sequenceDiagram
   and acted on directly, with no plan.
 - **Self-review threads are excluded:** Threads where the root comment was
   authored by the PR author or the current user are skipped for triage and
-  resolution — they are not reviewer feedback.
+  resolution — they are not reviewer feedback. Exception: the current user's
+  threads from a review submitted before they joined the PR (takeover,
+  co-author) or with `CHANGES_REQUESTED` are reviewer feedback and are worked.
 - **HARD RULE — Step 9.4 feedback loop to adversarial-review (pre-CI-wait):**
   Every session emits one [`wk-learn`](../learn/README.md) adversarial-review
   per issue class surfaced. The capture runs **before** the Step 9.5 CI wait so
