@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.21-183323"
+  version: "2026.10.22-182910"
   model:
     openai: gpt-5.6-terra
 ---
@@ -145,6 +145,9 @@ ensure SilverBullet serving. Recipes:
   Three-column `sitrep-row`/`sitrep-col`: **col1** Calendar + Slack + Email; **col2** ASAP + Auto-Actions + GitHub +
   Jira; **col3** Meta + Standup + This Week + Notes + Backlog. Frontmatter: `date`, `employer`, `generated_with`,
   `generated_at`. Sequential `data-t` IDs.
+  - **Generate spans; never hand-type them.** Emit item spans from an inline generator over the compiled item list
+    (e.g. a `jq` filter on stdin — no script file, per the write-scope HARD RULE): sequential `data-t`, canonical
+    handler and copy-block markup verbatim, `#` → `\#`. Same for `end` Stage 5 (hand-typed handlers and IDs drift).
 - **Stage 4b — Standup snippet.** Render in col3 using the canonical rich-copy block from
   [`references/standup-copy-block.md`](references/standup-copy-block.md); formatting via
   [`wk-slack`](../slack/README.md) §Standup Snippet.
