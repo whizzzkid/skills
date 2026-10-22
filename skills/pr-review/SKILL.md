@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.22-185321"
+  version: "2026.10.22-185702"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -209,6 +209,8 @@ author-facing text — use "concern"/"limitation". One to two sentences.
   `cat -A`); one fence = one contiguous range, split non-adjacent fixes; fence lines replace exactly
   `start_line..line` — a context line goes inside the range or out of the fence (else it duplicates); lines outside
   diff → anchor a nearby diff line, plain example, note manual apply.
+- Quoted hostile/adversarial payloads (repro strings, test inputs) → inside a code span or fence, never bare, in own
+  and the user's drafts (a bare `@<team>` mention, `#<n>` ref, or URL in a payload pings or links live on post).
 - **HARD RULE — no duplicates** (same file/line range + same concern). Check the Phase 2 exclusion list. Human dup →
   skip if it holds; reply only with new info or evidenced disagreement. Bot dup → Phase 3 outcome per
   [`references/bot-finding-validation.md`](references/bot-finding-validation.md); Confirmed → silent skip.

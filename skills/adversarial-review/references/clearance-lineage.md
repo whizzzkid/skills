@@ -19,7 +19,15 @@ Compare HEAD with the newest clear or blocked review record:
 - Blocked record + finding-response delta → validate only recorded findings.
   Skip the sweep catalog and subagent. All fixed → write a clear record for HEAD.
 - Lineage break → completion gate runs one review over
-  `git diff <reviewed-sha>..HEAD`; batch all unmatched work.
+  `git diff <delta-base>..HEAD`; batch all unmatched work.
+
+## Resolve the delta base
+
+- `git merge-base --is-ancestor <reviewed-sha> HEAD` succeeds → delta base = `<reviewed-sha>`.
+- Fails (rebase/force-push) → never diff from `<reviewed-sha>`: across a rebase that range spans every base-branch
+  change. Map the last reviewed PR commit to its rebased copy in `git log --no-merges <base>..HEAD` — match
+  `git patch-id --stable` first, subject line as fallback — and use that copy as the delta base.
+- No rebased copy found → treat the whole PR (`<base>...HEAD`) as unmatched work.
 - Merge and other readers never dispatch. Missing record or lineage break returns
   to the completion gate.
 

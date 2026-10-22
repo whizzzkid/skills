@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.20-232907"
+  version: "2026.10.22-185702"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
