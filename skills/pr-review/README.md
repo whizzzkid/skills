@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.10.20-232907`
+**Version:** `2026.10.22-185321`
 
 ## Invocation
 
@@ -93,5 +93,5 @@ flowchart TD
   ownership-reshaping migrations), consumes a recorded verdict when one covers this HEAD, and dispatches only
   when none exists — folding its SPOF / unhappy-path / assumption findings in as concerns.
 - **The reviewed head is pinned at POST time:** Phase 5 rechecks `headRefOid` immediately before every review
-  create/recreate. A mismatch stops the POST until the delta, findings, and anchors are revalidated; `commit_id`
-  then pins the payload to the investigated SHA.
+  create/recreate. A mismatch stops the POST and re-derives the review at the new head: findings the delta fixed
+  are dropped, changed-hunk probes re-run, every anchor re-resolved, and `commit_id` pins the payload to the new head.

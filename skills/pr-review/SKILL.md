@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.20-232907"
+  version: "2026.10.22-185321"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -230,6 +230,11 @@ POST (422 on `"PENDING"`).
 
 Recheck the reviewed head before each POST, append by delete+recreate, and post follow-ups live:
 [references/posting-pending-review.md](references/posting-pending-review.md).
+
+- **Head moved since Phase 1 → re-derive at the new head; never post the stale payload.** Diff old..new (old head not
+  an ancestor → map lineage first); drop findings the delta fixed; re-run probes for logic findings in changed hunks;
+  review the delta's new code or report it unreviewed in the terminal; re-anchor every comment from the new-head blob;
+  set `PR_HEAD` = new head as `commit_id`; recheck again.
 
 - **Important:** build every payload with the Write tool — never inline `jq -n '…'` or any single-quoted shell string
   (an apostrophe in a comment body ends the quote and breaks the call).

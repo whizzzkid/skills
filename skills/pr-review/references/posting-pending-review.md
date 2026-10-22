@@ -2,8 +2,20 @@
 
 ## Recheck reviewed head
 
-Before each POST, fetch `headRefOid` vs Phase 1 `PR_HEAD`. Mismatch → do not post; resolve anchors from
-`git show <PR_HEAD>:file`; revalidate; rebuild. Set `commit_id` to `PR_HEAD`.
+Before each POST, fetch `headRefOid` vs Phase 1 `PR_HEAD`. Match → post with `commit_id` = `PR_HEAD`. Mismatch →
+do not post the built payload; re-derive it at the new head (`NEW`):
+
+1. Fetch `NEW`; `git diff <PR_HEAD> <NEW>`. `PR_HEAD` not an ancestor of `NEW` (force-push/rebase) → map it to its
+   rebased equivalent first per `wk-adversarial-review`'s `references/clearance-lineage.md`; a raw two-dot diff
+   across a rebase spans every base-branch change.
+2. Each finding whose hunk the delta touches: fixed → drop; changed → re-run its probe (logic) or re-read (static),
+   then revise or drop. Untouched findings survive as-is.
+3. New code in the delta → review at the current mode's depth, or list it as unreviewed in the terminal.
+4. Re-anchor **every** comment from `git show <NEW>:file` — a delta hunk shifts the lines of every untouched finding below it.
+5. Set `PR_HEAD` = `NEW`, rebuild the full payload with `commit_id` = `NEW`, and recheck again before POST.
+
+Never post the old payload at the old `commit_id`: it publishes findings the author already fixed, anchored to lines
+the author no longer sees. Omitting `commit_id` instead attaches stale evidence to the newer head silently.
 
 ## Create pending review
 
