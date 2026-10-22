@@ -2,10 +2,10 @@
 name: wk-datadog
 description: >-
   Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks,
-  and query metrics, via the `pup` CLI (Datadog's agent-ready command-line
-  interface). Use when asked to create a dashboard, set up a monitor, define
-  an SLO, manage notebooks, query a metric's rate, or interact with Datadog
-  resources.
+  and query metrics and logs, via the `pup` CLI (Datadog's agent-ready
+  command-line interface). Use when asked to create a dashboard, set up a
+  monitor, define an SLO, manage notebooks, query a metric's rate, compare log
+  counts, or interact with Datadog resources.
 argument-hint: '[action: list|get|create|update|delete] [resource: dashboard|monitor|slo|notebook]'
 allowed-tools:
   - Bash
@@ -20,7 +20,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.15-000704"
+  version: "2026.10.22-191941"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -177,6 +177,24 @@ All domains follow `pup <resource> <action>` over `dashboards`, `monitors`, `slo
 - Before concluding "never fires" / "zero rate": run `pup metrics list --filter='*<name-suffix>'` with a `--from`
   window covering the period (default `1h` misses sparse metrics), re-query the listed name, group `by {env}`.
 - No listed match → report the rate as **unknown**, never as zero (a fix plan built on a false zero inverts).
+
+## Logs
+
+- `pup logs aggregate --query='<filter>' --from=<window> [--compute=count] [--group-by=<facets>]
+  [--interval=<bucket>]`; `--limit` caps groups **per facet** (default 10).
+
+### HARD RULE: split log counts by `env` and `version` before any causal claim
+
+- An ungrouped count blends every deployment of a service: a staging env mirroring production traffic shows
+  production-like volume, and a line emitted only by some versions appears or vanishes with a rollout — a matching or
+  empty series then reads as signal when it is a deployment artifact.
+- Before comparing counts of two log lines, or one line across time, re-run the identical aggregate with
+  `--group-by=env,version` (same `--query` scope, `--from`, `--interval`); raise `--limit` to at least each facet's
+  value count so no deployment is truncated.
+- A line present in only some envs or versions → say so, compare only within a shared `env` + `version` cell, and
+  never infer flow, latency, or loss from the cross-deployment ratio.
+- Causal finding headed to an external tracker → re-derive it from the grouped query and have an independent check try
+  to refute it before posting (a posted wrong cause steers the fix the wrong way).
 
 ## Requirements
 

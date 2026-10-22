@@ -1,14 +1,14 @@
 # wk-datadog
 
-> Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks, and query metrics, via the `pup` CLI.
+> Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks, and query metrics and logs, via the `pup` CLI.
 
-**Version:** `2026.10.15-000704`
+**Version:** `2026.10.22-191941`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
-| User-invocable | "create a dashboard", "set up a monitor", "define an SLO", "create a notebook", "how often does metric X fire", "delete monitor X" |
+| User-invocable | "create a dashboard", "set up a monitor", "define an SLO", "create a notebook", "how often does metric X fire", "compare these two log lines", "delete monitor X" |
 | Model-invocable | automatic on: any Datadog resource management request |
 
 ## How It Works
@@ -24,6 +24,8 @@ flowchart TD
     C -->|Metric| K[pup metrics list --filter<br/>resolve published name]
     K -->|Listed| L[pup metrics query by env]
     K -->|No match| M[Report rate unknown,<br/>never zero]
+    C -->|Logs| N["pup logs aggregate<br/>--group-by=env,version"]
+    N --> O["Compare only within a shared<br/>env + version cell"]
     D & E & F & G -->|Delete| H[Confirm with user first]
     H -->|Confirmed| I[pup ... delete id]
     D & E & F & G -->|Write| J[Write payload.json to cwd<br/>pup ... create/update --file<br/>Parse with jq]
@@ -39,3 +41,4 @@ flowchart TD
 - **Resolve resource-type intent first** — "create X per Y" splits into one filterable dashboard (template variables) vs. a new resource per instance; ask before building.
 - **Widget custom links** — `{{@attr.value}}` for external URLs, `{{@attr}}` for Datadog search URLs; mixing them breaks links.
 - **Resolve the published metric name before trusting an empty series** — Datadog returns `series: []` for a nonexistent metric, and metrics clients often prepend an app namespace; list the name first and report no-match as unknown, never zero.
+- **Split log counts by `env` and `version` before any causal claim** — an ungrouped count blends staging traffic mirrors and versions that emit only one of the compared lines; re-run with `--group-by=env,version`, compare within a shared cell, and independently re-check a cause before posting it to a tracker.
