@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.22-185702"
+  version: "2026.10.22-201613"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -70,9 +70,9 @@ confirms). Each mode includes everything in the one above it.
 | `medium` | Adversarial harness that tries to break the change; thorough arch + functional review | 10–15 min |
 | `heavy` | Runs the change (browser if UI); every local gate; full path/edge/mutation matrix | unbounded, confirm first |
 
-- **`light`:** Phases 1, 2, 4, 5 in full; Phase 3 consumes an existing clearance record only — never dispatches
-  `wk-adversarial-review`. Arch/design detectors still run; a hit is not dispatched → tell the user in the terminal to
-  re-run at `medium`.
+- **`light`:** **Important:** Phases 1, 2, 4, 5 in full — the time box shortens phases, never skips one; Phase 3
+  consumes an existing clearance record only — never dispatches `wk-adversarial-review`. Arch/design detectors still
+  run; a hit is not dispatched → tell the user in the terminal to re-run at `medium`.
   - Logic-bearing finding → prove it with one targeted run (single command, test, or snippet); unrun → post as
     `question:`, never `concern:` (the Phase 3 proof rule still binds, scaled down).
 - **`medium`:** every phase as written. The adversarial harness must attack each changed behavior on multiple axes —
@@ -101,10 +101,14 @@ never the flag.
 - **HARD RULE — approval needs the literal token from the user in this task.** Never infer it from tone ("looks
   fine", "ship it"), a prior task, or a dispatching caller's prompt; dispatched subagents and loops never approve
   (approval is irreversible and speaks for the user).
-- **Approve gate — all must hold at Phase 5, else hold as pending:** zero `concern:` comments in this review
-  (`blocker` maps there in Phase 3); adversarial/arch verdict not `blocked`; no prior own concern still open (Phase 2
-  re-review); no failing required check (`gh pr view --json statusCheckRollup`); current user is not the PR author
-  (GitHub 422s self-approval). `suggestion:`/`question:`/`praise:` never block.
+- **Approve gate — all must hold at Phase 5, else hold as pending:** every `pr_claims` item marked
+  Confirmed/Refuted/Unverified and each Refuted one commented; Phase 2 completed (threads classified, every
+  `bot_findings_to_validate` item routed through Phase 3); zero `concern:` comments in this review (`blocker` maps
+  there in Phase 3); adversarial/arch verdict not `blocked`; no prior own concern still open (Phase 2 re-review); no
+  failing required check (`gh pr view --json statusCheckRollup`); current user is not the PR author (GitHub 422s
+  self-approval). `suggestion:`/`question:`/`praise:` never block.
+  - Check each precondition against its recorded artifact (claim ledger, Phase 2 queue outcomes), never recall — a
+    skipped phase leaves no artifact, so the gate fails closed (approval cannot be withdrawn once submitted).
 - Gate fails → post pending as usual; tell the terminal "approve requested; held as pending: {reasons}".
 
 ## Focus Argument
@@ -141,6 +145,8 @@ ask for number/URL, then `gh pr checkout`.
   - Related PRs the description calls pending or "lands first" → check their merge state; merged → re-check the
     follow-up steps it predicted.
   - Tee full test output to a log file, never `tail -1`; rerun a bare FAIL before treating it as real.
+  - "Fixed"/"addressed" claims → read the cited file at the PR head; a compare range spanning a base merge carries
+    base changes, so a changed-file list never proves a fix.
 - Announce: > "Reviewing PR #N (`{mode}`): *title* — X files, Y commits. Base: `{base}`. Author asks: {k}. Claims:
   {c}. Focus: {user_focus | none}."
 - **Architecture:** run the [`wk-arch-review`](../arch-review/README.md) detector over `gh pr diff <n> --name-only`.
@@ -270,4 +276,4 @@ Approved → > "Approved with N comments — {html_url}."
 
 ## Post-Completion
 
-Invoke `wk-learn pr-review`.
+**Important:** Invoke `wk-learn pr-review` on every run, approved or pending.

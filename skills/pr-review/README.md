@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.10.22-185702`
+**Version:** `2026.10.22-201613`
 
 ## Invocation
 
@@ -25,7 +25,8 @@
 
 ## Approve Flag
 
-Add `approve` (e.g. `/wk-pr-review medium approve 123`) to submit the review as an approval on your behalf when it has
+Add `approve` (e.g. `/wk-pr-review medium approve 123`) to submit the review as an approval on your behalf when every
+PR claim is marked Confirmed/Refuted/Unverified, existing comments and bot findings have been processed, and it has
 no `concern:` comments, no blocked verdict, no open prior concern, no failing required check, and you are not the
 author. Any gate miss → the review stays pending and the terminal lists why. Without `approve`, the review is always
 pending. Dispatched callers never approve.
