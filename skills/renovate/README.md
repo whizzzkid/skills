@@ -1,6 +1,6 @@
 # wk-renovate
 
-> **Version:** 2026.10.23-224014 · **Group:** pull-request · **Model:** sonnet
+> **Version:** 2026.10.23-224513 · **Group:** pull-request · **Model:** sonnet
 
 Batch all open Dependabot PRs in the current repo into a single combined
 dependency-update PR — one branch, one review, one merge.
@@ -49,6 +49,8 @@ flowchart TD
   transitive, found by diffing the lockfile against base; the audit covers
   default-behavior changes, and a reverted safety default is restored
   explicitly with a failing-first spec. A green suite is not evidence of safety.
+- **Derived artifacts regenerate against fresh isolated state** — a throwaway,
+  freshly migrated DB, scoped to the bumped packages; never the shared dev DB.
 - **Adversarial review** runs when any major change exists or the diff touches
   application code beyond manifests and lockfiles.
 - **Automated external review** is always skipped for dependency-only updates.

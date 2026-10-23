@@ -29,7 +29,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.10.23-224014"
+  version: "2026.10.23-224513"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -115,6 +115,14 @@ Detect the package manager from repo root:
     each call site, with a spec that fails against the reverted default first.
   - Why: a transitive major can break an error path no test covers, and a downgrade silently loosens defaults no test
     asserts — only reading upstream changes surfaces either.
+- **Regenerate derived artifacts (type stubs, schema annotations) against fresh isolated state, never a shared dev DB.**
+  - Point the app at a throwaway DB name via its config env override, migrate it from scratch, regenerate, then compare
+    the changed-file list against what CI expects.
+  - Scope per-dependency regeneration to the bumped packages only; a full regen sweeps unrelated stale output into the
+    diff.
+  - Never drop the development DB to get fresh state — a dev-environment drop task can drop the test DB with it.
+  - Why: a dev DB volume is shared across worktrees, so it carries other branches' migrations and local output drifts
+    from CI.
 
 ## Step 5: Create the Combined PR
 
