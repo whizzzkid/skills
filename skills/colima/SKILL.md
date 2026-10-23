@@ -13,6 +13,9 @@ allowed-tools:
   - "Bash(colima delete:*)"
   - "Bash(docker info:*)"
   - "Bash(docker ps:*)"
+  - "Bash(docker system df:*)"
+  - "Bash(docker builder prune:*)"
+  - "Bash(docker image prune:*)"
   - "Bash(docker context ls:*)"
   - "Bash(nproc:*)"
   - "Bash(sysctl -n hw.logicalcpu:*)"
@@ -27,7 +30,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.23-224743"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -120,6 +123,21 @@ mise exec -- colima start --cpu "$CPU" --memory "$MEM_GB" --disk 100 --mount-ino
 After restart, re-run `docker info` to confirm the daemon is reachable. Restart sequence fails twice consecutively →
 report the full `colima start` output to the user; a VM-level issue may need manual intervention (e.g., `colima
 delete` to wipe state and start from scratch).
+
+## Disk full: prune build cache and images, never volumes
+
+Build fails with `not enough free space`, `no space left on device`, or a package manager out-of-space error → the
+fixed-size VM disk is full; a restart reclaims nothing.
+
+```bash
+docker system df
+docker builder prune -af
+docker image prune -f
+```
+
+- Confirm via `docker system df` that build cache or images hold the reclaimable space, prune, then retry the build.
+- **Never prune volumes** (`docker volume prune`, `docker system prune --volumes`) — they hold DB data shared across
+  worktrees.
 
 ## Step 5: Report state
 
