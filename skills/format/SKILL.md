@@ -22,7 +22,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.23-191829"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -62,7 +62,8 @@ agent writes or edits. Repo config wins on conflict; preferences fill gaps.
 
 ### Dislikes — avoid by default
 
-- **No multi-line ternaries.** Doesn't fit on one line → use `if`/`else` (or pattern match, or guard clause).
+- **Important:** **No multi-line ternaries.** Doesn't fit on one line → use `if`/`else` (or pattern match, or guard
+  clause). Full ternary rule (incl. in-argument ternaries): `wk-workstyle-structure`.
 - **Functions ≤40 lines.** Past that → split: extract a helper, use early returns, or flatten control flow.
   Count code lines excluding docstring and blank lines.
 - **No vague names.** Reject and rename: `data`, `temp`, `result`, `info`, `value`, `obj`, `thing`, `helper`,

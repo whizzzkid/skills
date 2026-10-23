@@ -1,8 +1,8 @@
 # wk-workstyle-structure
 
-> Layout & structure gate for code the agent writes — imports-at-top, guard clauses, bounded nesting, single-responsibility, no nested ternaries, no magic values, no boolean traps, no dead code, and a duplication threshold that triggers wk-refactor.
+> Layout & structure gate for code the agent writes — imports-at-top, guard clauses, bounded nesting, single-responsibility, no nested, multi-line, or in-argument ternaries, no magic values, no boolean traps, no dead code, and a duplication threshold that triggers wk-refactor.
 
-**Version:** `2026.10.09-165052`
+**Version:** `2026.10.23-191829`
 
 ## Invocation
 
@@ -16,7 +16,7 @@
 - **Column width 120**, wrapping longer lines (defers to `.editorconfig`/linter).
 - **Spaces not tabs** — two-space general, four-space Python; follow project for tab languages.
 - **Imports at the top**, grouped stdlib → third-party → local with blank lines between.
-- **No nested ternaries** — one level max; nested → `if/else` or early-return.
+- **Ternaries: one level, one line, never inside a call argument** — otherwise hoist into a default plus `if` override, `if/else`, or early-return.
 - **Guard clauses first**, max nesting depth 3; deeper → extract a function.
 - **Single responsibility** — one thing per function, target ≤ 30 lines.
 - **No magic numbers/strings** — name semantic literals as constants.

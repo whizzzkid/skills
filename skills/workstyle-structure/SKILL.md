@@ -2,8 +2,8 @@
 name: wk-workstyle-structure
 description: >-
   Code layout, functions, conditionals, control flow — imports-at-top, guard
-  clauses, max nesting depth 3, single-responsibility, no nested ternaries, no
-  magic numbers/strings, no boolean-trap params, no commented-out code, and a
+  clauses, max nesting depth 3, single-responsibility, no nested, multi-line, or
+  in-argument ternaries, no magic numbers/strings, no boolean-trap params, no commented-out code, and a
   duplication threshold that triggers wk-refactor. Auto-invoked on any function
   body / branching / layout edit; project linter wins.
 argument-hint: '[scan|check <path>]'
@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-165052"
+  version: "2026.10.23-191829"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -79,8 +79,12 @@ Manual: `/wk-workstyle-structure scan` (full working tree) · `/wk-workstyle-str
 
 ### Structure
 
-- **No nested ternaries.** One ternary level maximum. Nested
-  ternaries → `if/else` or early-return.
+- **Ternaries: one level, one line, never inside a call argument.**
+  A nested, line-spanning, or argument-embedded ternary → hoist the
+  choice into a statement: a default value plus a plain `if` override
+  (where the language rules permit reassignment), `if/else`, or an
+  early return. Applies to a two-way choice too (non-nesting alone is
+  not a pass; a wrapped or embedded ternary hides the branch).
 - **Guard clauses first.** Return / throw / raise early for
   invalid preconditions rather than wrapping the whole body in an
   `if`. Max nesting depth: 3 levels. Beyond that, extract a function.
