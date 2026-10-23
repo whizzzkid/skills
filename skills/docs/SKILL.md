@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.23-200358"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -80,7 +80,16 @@ Update only docs the changes made inaccurate — leave correct docs alone.
   violate it, or the repo's agent-instructions file); let the ADR carry the reasoning. Keep the note to the
   invariant plus an ADR pointer — never duplicate the rationale. The note adds to the ADR, never replaces it.
 
+- **Website and changelog count as affected docs.** A website/docs-site source outside the docs root
+  (`website/`, `docs-site/`, a mkdocs/Docusaurus/Hugo config), CLI help, or a changelog the change makes
+  inaccurate → list it for the caller to edit (`wk-workflow` Phase 7); never write it from here (File Access
+  Rules).
+
 ## Step 2: Bootstrap if Missing
+
+**Never bootstrap someone else's project.** Upstream OSS repo (public, owner neither the user nor
+`$GITHUB_ORG`) or a repo whose docs live elsewhere (website source, README-only by choice) → skip this step and
+follow its layout (an unrequested docs tree is noise for the maintainer).
 
 No `docs/` folder → create one with a minimal `docs/README.md` index:
 

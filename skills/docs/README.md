@@ -2,7 +2,7 @@
 
 > Check for and update documentation affected by code changes. Bootstraps a docs structure if the project doesn't have one.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.23-200358`
 
 ## Invocation
 
@@ -34,6 +34,7 @@ flowchart TD
 - **Surgical updates:** Only docs made inaccurate by the current changes are touched — the skill never reformats or rewrites docs that are still correct.
 - **Docs root discovery:** The skill checks for `docs/`, `documentation/`, `doc/`, and `site/` in that order; it uses whichever exists rather than assuming `docs/`.
 - **Bootstrap is non-destructive:** If the project has no docs folder, the skill creates the canonical structure; it never overwrites an existing layout.
+- **Never bootstraps someone else's project:** upstream OSS repos and repos whose docs live in a website source keep their own layout; affected website, CLI-help, and changelog files are listed for [`wk-workflow`](../workflow/README.md) to edit.
 - **Index maintenance:** `docs/README.md` is kept in sync — new docs are listed, stale entries removed — so the index is always a reliable map of what exists.
 - **Read-only code access:** Grep, Glob, and Read may access any path to understand code changes; only writes are restricted to the docs root.
 - **Claim-grounding gate:** Every doc, README, announcement, and PR-body accuracy pass extracts capability verbs (runs, validates, enforces, blocks) and requires each to name the symbol implementing it — a numbers-only grounding pass verifies statistics while a false capability claim ships unread. Regeneration from a source file adds no claim the source lacks.

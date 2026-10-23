@@ -5,7 +5,9 @@ description: >-
   planning, implementing, or executing any coding task — feature work, bug
   fixes, refactors, or infrastructure changes. Prescribes incremental commits,
   testing strategy, adversarial code review, PR lifecycle, documentation, and
-  mandatory session retro. Supersedes and extends the global CLAUDE.md workflow.
+  mandatory session retro, plus upstream OSS etiquette (contribution guides,
+  issue find-or-create, docs and website sync). Supersedes and extends the
+  global CLAUDE.md workflow.
 model-invocable: true
 user-invocable: false
 model: opus
@@ -14,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.15-005000"
+  version: "2026.10.23-200358"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -105,6 +107,16 @@ Rebase/cherry-pick conflicts → `git log --oneline -5`; base mismatches worktre
   user, no protection → commit to default, no branch. Branch only on PR-gated evidence, detached HEAD, unrelated dirty
   work, or explicit request.
 
+- **HARD RULE — upstream OSS pre-flight before first edit.** Public repo owned by someone other than the user or
+  `$GITHUB_ORG` (`gh repo view --json visibility,owner`) → read every contributor-facing guide first: `CONTRIBUTING*`,
+  `DEVELOPMENT*`/`HACKING*`, docs style guide, `CODE_OF_CONDUCT*`, `.github/` issue + PR templates, `AGENTS.md`, any
+  AI-contribution policy. Record each obligation (issue-first, DCO `Signed-off-by:`, commit format, changelog, test/lint
+  commands, docs/website build) and follow it; the project's rule wins over a wk-* default. Search existing issues and
+  PRs (`gh issue list --repo <owner/repo> --search <terms> --state all`, same for `gh pr list`) before any work;
+  duplicate or in-flight PR → stop and ask. Details: [`references/2026-10-23_oss-upstream-contribution.md`](references/2026-10-23_oss-upstream-contribution.md).
+- **Low noise for upstream maintainers:** one focused PR, minimal diff, no drive-by refactors or reformatting, no
+  self-review inline comments, no draft churn, no comments that only report progress. Batch fix-ups locally, push
+  rarely. Never put internal names, tickets, data, or URLs in public issue or PR text.
 - **Pre-patch routing:** `.md` → [`wk-markdown`](../markdown/README.md); Mermaid → [`wk-mermaid`](../mermaid/README.md);
   arch-bearing → [`wk-arch-review`](../arch-review/README.md) detector, then draft-complete gate.
 - **Subtractive-first:** evaluate if removal/simplification eliminates the problem before adding code. Fleet-first for
@@ -187,6 +199,11 @@ feature branch → invoke `wk-pr` immediately (commit-to-default per the Phase 2
 
 - **Repo convention:** decided by the Phase 2 pre-flight probe, never re-decided here. Follow-up branch → from
   `origin/<default>` (fetch first).
+- **Upstream issue — find, else create, before the PR.** OSS upstream repo, after local implementation and validation
+  pass: reuse the issue the pre-flight search found; none → `gh issue create --repo <owner/repo>` following the
+  project's issue template, labels, and title convention (bug repro / feature motivation, no solution dump). Link it in
+  the PR body with the closing keyword the project uses (`Fixes #<n>`). Issue-first projects → open the issue during
+  the pre-flight instead and wait for a maintainer ack if the guide requires one.
 - Invoke `wk-pr` (never raw `gh pr create`) after tests and Phase 3.5/3.6 pass. Each stacked PR independently completes
   Phases 5→6.5.
 - **Post-push sync:** `wk-commit` handles PR description sync and stale comment resolution. **HARD RULE:** auto-sync
@@ -235,6 +252,13 @@ retro while a post-push pass has unaddressed threads.
 
 Invoke `wk-docs`. Verify README, ADRs, specs, `docs/README.md`. No `docs/` → `wk-docs` bootstraps.
 
+- **Docs and website ship with the change.** Update every user-facing surface the change touches: README, `docs/`,
+  the website or docs-site source (`website/`, `site/`, `docs-site/`, a generator config such as mkdocs, Docusaurus,
+  or Hugo), CLI help/man pages, examples, and the changelog the project keeps. Build the site locally with its
+  documented command when one exists; record "website: N/A" only after confirming no site source covers the change.
+- **Existing project → never bootstrap.** Upstream OSS or a repo with an established docs layout → follow its layout;
+  `wk-docs` bootstrap applies only to repos with no docs at all and that the user owns.
+
 ## Phase 8: Session Retro — NON-NEGOTIABLE
 
 **HARD RULE:** invoke `wk-retro` at end of every session, no exceptions. `gh pr ready` is not a terminus — the next
@@ -249,6 +273,7 @@ Environment guardrails: [`references/environment-guardrails.md`](references/envi
 - [ ] Tests cover happy/sad/edge paths; `wk-adversarial-review` clear before merge; CI green on current HEAD
 - [ ] PR description current; all review threads resolved; version pins exact; scripts have correct permissions
 - [ ] Diagrams use Mermaid; regexes use named captures; ADRs for arch decisions
+- [ ] Upstream OSS: contribution guides followed, issue found or filed and linked, docs + website updated
 - [ ] Session retro via `wk-retro`; every plan step finished or deferred
 
 ## Post-Completion

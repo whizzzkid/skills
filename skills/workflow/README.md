@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.10.15-005000`
+**Version:** `2026.10.23-200358`
 
 ## Invocation
 
@@ -44,6 +44,9 @@ flowchart TD
 
 - **Repo convention is probed before the first branch** — the Phase 2 pre-flight reads branch protection, `CODEOWNERS`,
   and first-parent history; a direct-to-default repo gets commits on default and no PR.
+- **Upstream OSS etiquette** — contributing to a public project the user does not own starts by reading its
+  contributor guides and searching its issues/PRs; the project's rules win, the PR stays low-noise, docs and website
+  ship with the change, and an upstream issue is reused or filed (after local validation) and linked.
 - **One command per Bash call** — no `&&`/`||`/`;` chains; independent commands run as parallel calls so each stays
   reviewable and classifiable.
 - **Plan diff at every batch boundary** — done vs remaining is checked after each batch, the next covered item starts
