@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.23-200358"
+  version: "2026.10.23-201843"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -167,6 +167,12 @@ Cover required paths: **happy** (expected flow), **sad** (failures, invalid inpu
 - **A fast/narrow check is never the authoritative gate** — run the full gate. **Dependent verification fails fast** —
   run expected-red and green gate separately; `set -euo pipefail` if sharing one shell.
 - **Never take a verdict from `$?` after a pipe** — see `wk-workstyle-shell`.
+- **Important — a "slow" build is a hang until its processes prove busy; diagnose before optimizing.** Before
+  changing flags, caching, or parallelism: list long-lived build/compiler processes with elapsed time and CPU
+  (`ps -o pid,etime,%cpu,command`); any at ~0% CPU → sample its stack (`sample <pid>` on macOS, `gdb -p`/`eu-stack`
+  on Linux) to name the wait. Pinned SDK/toolchain → check inherited header/SDK env (`CPATH`, `C_INCLUDE_PATH`,
+  `OBJC_INCLUDE_PATH`, `SDKROOT`, `DEVELOPER_DIR`) and reproduce on a minimal input with vs without it (`env -u`).
+  (A 0%-CPU process is blocked, not working; no flag fixes a lock wait or mixed-toolchain headers.)
 - User-loadable artifact: [`build last`](references/2026-08-04_final-development-build.md). Generated artifacts:
   [`acceptance`](references/2026-08-01_generated-artifact-acceptance.md). Data-only change → compare published set
   membership/count before and after.
