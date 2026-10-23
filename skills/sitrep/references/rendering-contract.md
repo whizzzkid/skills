@@ -9,6 +9,9 @@
 - SilverBullet parses inline hashtags in link text → escape every `#` as `\#`,
   use full PR/issue titles (`repo\#N: commit-style title`), omit items with no
   canonical URL.
+- A patch to an existing line must keep every `\#`: `sed`/`awk` replacement
+  strings consume the backslash and silently revert the escape, so replace via
+  shell parameter substitution and compare the `\#` count before and after.
 
 ## Layout structure
 

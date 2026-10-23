@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.22-182910"
+  version: "2026.10.23-171906"
   model:
     openai: gpt-5.6-terra
 ---
@@ -148,6 +148,8 @@ ensure SilverBullet serving. Recipes:
   - **Generate spans; never hand-type them.** Emit item spans from an inline generator over the compiled item list
     (e.g. a `jq` filter on stdin — no script file, per the write-scope HARD RULE): sequential `data-t`, canonical
     handler and copy-block markup verbatim, `#` → `\#`. Same for `end` Stage 5 (hand-typed handlers and IDs drift).
+  - **Patch lines without eating `\#`.** Replace a line in place via shell parameter substitution, never a
+    `sed`/`awk` replacement (both strip the `\` from `\#`); `\#` count before = after, else re-patch.
 - **Stage 4b — Standup snippet.** Render in col3 using the canonical rich-copy block from
   [`references/standup-copy-block.md`](references/standup-copy-block.md); formatting via
   [`wk-slack`](../slack/README.md) §Standup Snippet.
@@ -176,8 +178,9 @@ ensure SilverBullet serving. Recipes:
   if test "$PUSH_ALLOWED" = 1; then git -C "$SITREP_REPO" push; else echo "push skipped: origin owner not approved"; fi
   ```
 
-- **Stage 7 — Auto-launch PR reviews.** One review worktree per PR awaiting review, rendered as done `⚙️ Auto-Action`.
-  Pending draft only — never submit/approve/request changes. Reserve slots for nested workers. Mechanics:
+- **Stage 7 — Auto-launch PR reviews.** One review worktree per PR awaiting review, rendered as done `⚙️ Auto-Action`
+  that replaces the section's placeholder line in place (never appended beside it). Pending draft only — never
+  submit/approve/request changes. Reserve slots for nested workers. Mechanics:
   [`references/auto-review.md`](references/auto-review.md). Then invoke `wk-learn sitrep`; end the response with the
   `Connector gaps` report.
 

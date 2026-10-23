@@ -68,4 +68,7 @@ Each subagent:
 
 - Render each launched review as a `data-done="true"` ⚙️ Auto-Actions item in
   col2, linking the PR — mirrors Stage 2b/2c auto-action rendering.
+- The page is already written when Stage 7 runs: replace the Auto-Actions
+  placeholder line in place with the launched items; never append them beside
+  it (a surviving placeholder contradicts the items under it).
 - Never render an auto-launched review as a passive `data-done="false"` TODO.
