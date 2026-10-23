@@ -29,7 +29,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.10.20-230741"
+  version: "2026.10.23-224014"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -102,12 +102,19 @@ Detect the package manager from repo root:
   broke it but do not block — the CI on the PR will catch it.
 - Red gate → rerun it on base (`origin/main` and its lockfile) before blaming a bump; red there too → pre-existing,
   not the update's.
-- **HARD RULE: audit every major bump, direct or transitive — a green suite is not evidence of safety.**
+- **HARD RULE: audit every major-version change — up or down, direct or transitive; a green suite is not evidence of
+  safety.**
   - Diff each lockfile against base (`git diff origin/main...HEAD -- <lockfile>`); list every package whose major
     version changed, including transitive deps that no Dependabot PR title names (a grouped patch bump can pull one in).
-  - Per major: read its changelog / breaking changes, check the app's use of changed APIs, and record the verdict in the
-    PR body's major-bump audit section.
-  - Why: a transitive major can break an error path no test covers — only reading upstream changes surfaces it.
+  - **Important:** a major *downgrade* is an audited major too — a bumped package that pins a dependency to an older
+    major rolls it back with no PR naming it.
+  - Per major: read the changelog across the whole version span for breaking changes **and default-behavior changes**;
+    check the app's use of changed APIs and of defaults it relies on implicitly; record the verdict in the PR body's
+    major-bump audit section.
+  - A change reverts a safety-relevant default (stricter parsing, validation, escaping) → set that default explicitly at
+    each call site, with a spec that fails against the reverted default first.
+  - Why: a transitive major can break an error path no test covers, and a downgrade silently loosens defaults no test
+    asserts — only reading upstream changes surfaces either.
 
 ## Step 5: Create the Combined PR
 
@@ -124,15 +131,16 @@ stragglers.
 ## Step 6: Skip Optional Gates
 
 - **Automated external review:** skip for dependency-only updates.
-- **Adversarial review:** run when Step 4 found any major bump (direct or transitive) — never skip it then. Otherwise
-  skip unless the combined diff contains non-lockfile, non-manifest code changes (e.g., a Dependabot PR that patches
-  application code) — pure minor/patch bumps waste review time on lockfile diffs. Detect code changes:
+- **Adversarial review:** run when Step 4 found any major-version change (up or down, direct or transitive) — never
+  skip it then. Otherwise skip unless the combined diff contains non-lockfile, non-manifest code changes (e.g., a
+  Dependabot PR that patches application code) — pure minor/patch bumps waste review time on lockfile diffs. Detect
+  code changes:
 
 ```bash
 git diff origin/main...HEAD --name-only | grep -vE '(package\.json|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Gemfile|Gemfile\.lock|Cargo\.toml|Cargo\.lock|requirements.*\.txt|poetry\.lock|\.github/|go\.sum|go\.mod)' | head -5
 ```
 
-Non-empty or any major bump → invoke [wk-adversarial-review](../adversarial-review/README.md), pointing it at each
+Non-empty or any major change → invoke [wk-adversarial-review](../adversarial-review/README.md), pointing it at each
 major's upstream changes. Empty and no major → skip with a note: "minor/patch dependency-only update, adversarial review
 skipped."
 

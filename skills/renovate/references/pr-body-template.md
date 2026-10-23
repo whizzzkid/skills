@@ -13,10 +13,10 @@ Batches the following Dependabot PRs into a single update:
 ...
 
 ### Major-bump audit
-| Package | Direct/transitive | Version | Breaking changes vs app usage |
-|---------|-------------------|---------|-------------------------------|
-| <package> | transitive | <old> → <new> | <verdict> |
-(None → "No major bumps, direct or transitive.")
+| Package | Direct/transitive | Version (up/down) | Breaking + default-behavior changes vs app usage |
+|---------|-------------------|-------------------|--------------------------------------------------|
+| <package> | transitive | <old> → <new> | <verdict; defaults restored explicitly, if any> |
+(None → "No major-version changes, up or down, direct or transitive.")
 
 ### Superseded PRs
 Closes #<N1>, #<N2>, #<N3>, ...

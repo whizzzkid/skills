@@ -13,5 +13,5 @@ otherwise skip for dependency-only diffs.
 broken path is untested; only reading the upstream changelog or source surfaces the regression. Step 1's table and the
 old Step 6 skip rule both saw only direct bumps, so the major went unreviewed.
 
-**Where** — `SKILL.md` → Step 4 (HARD RULE: audit every major bump) and Step 6 (adversarial-review gate); PR body
-template → major-bump audit section.
+**Where** — `SKILL.md` → Step 4 (HARD RULE: audit every major-version change) and Step 6 (adversarial-review gate);
+PR body template → major-bump audit section.
