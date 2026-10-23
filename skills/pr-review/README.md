@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.10.22-201613`
+**Version:** `2026.10.23-205701`
 
 ## Invocation
 
@@ -96,3 +96,6 @@ flowchart TD
 - **The reviewed head is pinned at POST time:** Phase 5 rechecks `headRefOid` immediately before every review
   create/recreate. A mismatch stops the POST and re-derives the review at the new head: findings the delta fixed
   are dropped, changed-hunk probes re-run, every anchor re-resolved, and `commit_id` pins the payload to the new head.
+- **Shared files are checked against every consumer:** when the diff edits a file other files include or reference,
+  each numbered or named rule reference it makes is resolved inside every includer — the same "rule N" can name a
+  different rule per consumer, and the diff alone never shows the mismatch.

@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.22-201613"
+  version: "2026.10.23-205701"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -176,9 +176,10 @@ Fetch, classify stale threads, build the Phase 3/4 exclusion list via
 ## Phase 3: Adversarial investigation
 
 Scope per [Review Modes](#review-modes). Clearance at `.review-playground/.cleared-{HEAD_SHA}.json` → consume; else
-(`medium`/`heavy`) dispatch `Skill(wk-adversarial-review)` for structured findings + verdict. Prioritize `review_focus`; fold Phase 1 `wk-arch-review` findings; mark exclusion-list
-overlaps `[COVERED]`; map `blocker` → Phase 4 `concern` (`suggestion`/`question` pass through). Agent verdicts override
-static reasoning — drop/revise candidates the results refute.
+(`medium`/`heavy`) dispatch `Skill(wk-adversarial-review)` for structured findings + verdict. Prioritize
+`review_focus`; fold Phase 1 `wk-arch-review` findings; mark exclusion-list overlaps `[COVERED]`; map `blocker` → Phase
+4 `concern` (`suggestion`/`question` pass through). Agent verdicts override static reasoning — drop/revise candidates
+the results refute.
 
 **HARD RULE — logic-bearing findings need empirical proof.** Executable logic (incl. `wk-arch-review` findings) → drive
 the real implementation or a faithful harness with adversarial inputs; record PASS/FAIL before Phase 4. Never compose
@@ -197,6 +198,11 @@ comments from un-run reasoning.
 **HARD RULE — check derivation before contradicting a figure.** Grep the artifact for its derivation rule; read a timing
 constant's whole comment block before replacing it. Refuted but derivation unstated → clarity suggestion, not drop.
 Failing line not in diff → environmental.
+
+**Shared file → check every consumer (every mode).** A changed file others include or reference (`command grep -rl`
+its path) → resolve each numbered or named reference the change adds or edits (rule N, step N, a section name) inside
+every consumer, not just the primary one — the same number can name a different rule per includer, and the diff never
+shows it.
 
 **Bot findings:** route each through the same engine → `Confirmed` / `Refuted` / `Inconclusive`. Silent skip forbidden.
 
