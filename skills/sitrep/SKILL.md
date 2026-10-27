@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.27-183848"
+  version: "2026.10.27-184119"
   model:
     openai: gpt-5.6-terra
 ---
@@ -66,6 +66,9 @@ page; dated snapshots at close; no standalone HTML.
 - **HARD RULE — no interactive triage.** Compile-only (gather → render → write → open); never `AskUserQuestion` to
   keep/skip/resolve; write items unconditionally as `data-done="false"` spans; user edits in browser. The connector
   report below is in-response, never a prompt.
+- **HARD RULE — recompute every weekday from its date.** Before writing any day-of-week label (page, snapshot,
+  standup), derive it from the ISO date (`date -j -f %Y-%m-%d <d> +%a`; GNU: `date -d <d> +%a`). Source disagrees →
+  write the computed day and note the correction; agent- and message-supplied weekdays are claims.
 - **HARD RULE — never assert missing without checking.** `Read`/`ls` the path first; unchecked → say "I have not read
   X", not "X is missing."
 - **HARD RULE — publish first, report connector gaps after.** A missing, unauthenticated, permission-denied, or blocked

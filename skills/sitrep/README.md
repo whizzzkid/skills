@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.10.27-183848`
+**Version:** `2026.10.27-184119`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -42,7 +42,9 @@ reported afterwards in the response.
   [wk-self-perf](../self-perf/README.md).
 - **SilverBullet formatting** — `#` in link text is escaped (`repo\#N`),
   links use full PR titles, items sort by urgency (🔴/🟡/🟢) with
-  `**📅 date**` due-dates.
+  `**📅 date**` due-dates. Every weekday label is recomputed from its date
+  before writing; a source or agent weekday that disagrees is corrected and
+  the correction noted.
 - **SilverBullet rendering** — no standalone HTML files are generated;
   `live.md` contains SilverBullet HTML blocks that the browser renders.
 - **Standup copy** — copies rich HTML to preserve the three-level list

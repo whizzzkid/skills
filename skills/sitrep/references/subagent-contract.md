@@ -28,6 +28,8 @@ SUBAGENT CONTRACT (mandatory):
   inference came from and tag `(inferred)`.
 - Tag each item `verified` (concrete artifact) or `claim` (single-source) — the
   orchestrator styles and conflict-detects by it.
+- Return every date as ISO `YYYY-MM-DD`. Never add a weekday of your own; a
+  weekday from the source goes in `source_weekday` — the orchestrator recomputes it.
 - PROBE TOOLS FIRST: your domain's MCP tools may not be inherited (subagents do NOT reliably get the orchestrator's connectors). Missing → return `tool_unavailable: true` at once; never fail item-by-item.
 ```
 
