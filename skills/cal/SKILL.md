@@ -18,7 +18,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.20-230851"
+  version: "2026.10.27-183004"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -105,6 +105,9 @@ time field. Single calendar → `list_events` instead of free/busy.
 Count conflicting attendees per candidate slot; rank by **fewest conflicts**,
 weighted by seniority/necessity if provided.
 
+- **Busy = every event not declined.** Unanswered (no RSVP), tentative, and accepted events all block a slot; a slot
+  is free only when the full requested duration overlaps none of them. (No-RSVP events still happen.)
+
 ### Step 3: Rank candidate slots
 
 Score each 30-minute window inside working hours:
@@ -138,6 +141,10 @@ gcal.create_event(
 )
 ```
 
+**HARD RULE — verify every created event.** After `create_event`, re-list that day and assert start, end, duration
+match the request and nothing non-declined overlaps. Mismatch → move/resize or flag; never report "created" before
+the re-list passes. (A create call's success proves the write, not the placement.)
+
 ## § Interview Prep Scan
 
 Run during `wk-sitrep start` (or on "do I have interviews coming up") so every
@@ -147,6 +154,7 @@ keywords, debrief skip rule, prep/scorecard creation, reporting format).
 
 **HARD RULE:** The scorecard is always a booked calendar event, never a
 checkbox or to-do item. Create via calendar MCP before any caller renders.
+Default 45 min (a user-stated length wins); busy and verification per §Smart Event Creation.
 
 ## Post-Completion
 

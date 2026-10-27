@@ -2,7 +2,7 @@
 
 > Use for all Google Calendar operations — fetching events, creating events in smart free slots, checking availability, and scanning for upcoming interviews.
 
-**Version:** `2026.10.20-230851`
+**Version:** `2026.10.27-183004`
 
 ## Invocation
 
@@ -25,9 +25,11 @@ flowchart TD
     G & H --> I[Score slots by penalty<br/>Conflicts, back-to-back, lunch]
     I --> J[Present best slot<br/>AskUser to confirm]
     J --> K[create_event]
+    K --> V[Re-list day: verify start,<br/>end, duration, no overlap]
     C -->|Interview scan| L[Fetch next 5 days<br/>Match interview keywords]
-    L --> M[For each interview:<br/>Create 15-min prep block before<br/>Create 30-min scorecard block after]
-    M --> N[Report scaffold status]
+    L --> M[For each interview:<br/>Create 15-min prep block before<br/>Create 45-min scorecard block after]
+    M --> V2[Re-list day: verify<br/>duration, no overlap]
+    V2 --> N[Report scaffold status]
 ```
 
 ## Noteworthy
@@ -37,4 +39,6 @@ flowchart TD
 - **Debrief interviews skip the scorecard block** — debrief sessions are already the scorecard discussion, so only the 15-min prep block is created.
 - **Slot ranking uses a penalty system** — conflicts add +3 per attendee, back-to-back adds +1, lunch window adds +2; lowest penalty wins with earlier-in-day as tiebreaker.
 - **All calendar-touching skills delegate here** — [`wk-sitrep`](../sitrep/README.md) calls this skill rather than calling the Gcal MCP directly.
-- **Scorecard blocks scan forward in 30-min increments** if the immediate post-interview slot is busy; if no same-day slot exists, it flags to the user rather than silently skipping.
+- **Scorecard blocks default to 45 min** (a user-stated length wins) and scan forward in 15-min steps for a window free for the full duration if the immediate post-interview slot is busy; if no same-day slot exists, it flags to the user rather than silently skipping.
+- **Unanswered and tentative events count as busy** — only declined events free a slot.
+- **Every created event is verified** — the day is re-listed after `create_event` to confirm start, end, duration, and zero overlap before anything is reported as created.

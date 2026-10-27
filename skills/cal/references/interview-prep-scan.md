@@ -23,20 +23,27 @@ Scorecard (debrief sessions are already the scorecard discussion).
 ### A. 15-min Interview Prep block (immediately before)
 
 Check if 15 minutes before interview start are free via `list_events` on the primary calendar (single calendar —
-no free/busy needed):
+no free/busy needed; every non-declined event is busy, including unanswered and tentative):
 - Free: create event `"Interview Prep -- {title}"` with description "Review
   candidate profile, questions, and role context."
 - Busy: note conflict; do not create.
 
-### B. 30-45-min Interview Scorecard block (after)
+### B. 45-min Interview Scorecard block (after)
 
 **HARD RULE:** The scorecard is always a booked calendar event, never a checkbox
 or to-do item. Create via calendar MCP before any caller renders its summary.
 
-- First try immediately after interview end (30min).
-- If busy, scan forward in 30-min increments through rest of working day.
-- Pick first free slot of at least 30 minutes.
+- Duration: 45 min by default; a user-stated length always wins.
+- First try immediately after interview end.
+- If busy (any non-declined event, including unanswered or tentative), scan forward in 15-min steps through the rest
+  of the working day.
+- Pick the first window free for the **full** duration — never shorten the block to fit a gap.
 - No same-day slot: flag to user with warning.
+
+### C. Verify every created block
+
+Re-list the day after each `create_event`; assert start, end, duration, and zero overlap with non-declined events.
+Mismatch → move/resize or report `[warn]`; never report `created` before this passes.
 
 ## Step 3: Report
 
