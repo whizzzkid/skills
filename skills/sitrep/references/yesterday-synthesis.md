@@ -25,7 +25,9 @@ class: principle
 - **Docs and Drive:** documents created or materially edited, especially
   proposals, decision records, and meeting preparation.
 - **Jira and Confluence:** work advanced, clarified, unblocked, completed, or
-  updated with substantive context.
+  updated with substantive context — by the user, proven by the changelog or
+  comment author. An `updated` stamp moves on anyone's edit; identical stamps
+  across many tickets signal a bulk edit, not user work.
 - **Gmail:** consequential sent responses that changed a decision or unblocked
   work.
 

@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.27-183502"
+  version: "2026.10.27-183848"
   model:
     openai: gpt-5.6-terra
 ---
@@ -127,6 +127,8 @@ ensure SilverBullet serving. Recipes:
   - **Jira + Confluence:** assigned tickets, mentions, Confluence mentions. ToolSearch: `"jira"`, `"confluence"`. Always
     run the full open-ticket sweep `assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC`; surface
     `In Review`/`Blocked`/`On Deck`, past-due, merged-but-open candidates; no-activity tickets → `## 🗂 Jira backlog`.
+    **Activity = user-authored change.** `updated` moves on anyone's edit: count a ticket as the user's work only when
+    a changelog entry or comment in the window is authored by the user; many tickets sharing one stamp = bulk edit.
   - Block handling: OAuth soft blocks degrade with CTA; `tool_unavailable` → replay in main; still toolless = missing
     connector.
   - Truncated result (ends mid-item) → re-request only the named sections with the contract's word cap; never
@@ -199,7 +201,7 @@ ensure SilverBullet serving. Recipes:
   - **Calendar + Notion:** meetings with decisions/actions; tomorrow's prep.
   - **Slack:** unanswered DMs/mentions, notable contributions. **Gmail:** unreplied emails, notable outgoing.
   - **Lattice:** pending feedback with deadlines, new feedback.
-  - **Jira + Confluence:** activity, unanswered comments, Confluence mentions. Full sweep:
+  - **Jira + Confluence:** user-authored activity (per `start`), unanswered comments, Confluence mentions. Full sweep:
     `assignee = currentUser() AND statusCategory != Done`.
   - **DX (optional):** review turnaround, cycle time, deploy frequency vs averages. Unavailable → omit DX sections.
 - **Stage 3 — Compile into two buckets.** Historical → snapshot (done items, meeting notes, achievements, feedback, DX,

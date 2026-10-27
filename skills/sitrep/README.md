@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.10.27-183502`
+**Version:** `2026.10.27-183848`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -52,7 +52,9 @@ reported afterwards in the response.
   starts it (`silverbullet $SITREP_REPO`) if not.
 - **Yesterday synthesis** — validates evidence inside the previous-workday
   window across every available work source, then ranks outcomes, decisions,
-  progress, and unblockings without preferring terminal tracker events.
+  progress, and unblockings without preferring terminal tracker events. A Jira
+  ticket counts as the user's work only when the changelog or comment author is
+  the user — an `updated` stamp moves on anyone's edit, including bulk edits.
 - **Unavailable gathering domain** — replay its complete prompt in the main
   context, including query windows, outputs, and dependent actions before
   compiling. Calendar fallback records the five-day interview scan plus created
