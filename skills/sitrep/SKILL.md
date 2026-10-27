@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.23-171906"
+  version: "2026.10.27-183502"
   model:
     openai: gpt-5.6-terra
 ---
@@ -137,7 +137,9 @@ ensure SilverBullet serving. Recipes:
   `In Review`/`Ready for Review` with linked PR → check merge state; merged within 14 days → transition to `Done`.
   Denial → block-register key, render `🔁 blocked N days` in ASAP. Render as `data-done="true"` `⚙️ Auto-Actions`.
 - **Stage 2c — Create missing interview prep blocks.** Per interview lacking prep/scorecard →
-  [`wk-cal`](../cal/README.md) block-creation: 15-min prep before, 30-min scorecard after (scan forward on busy slots).
+  [`wk-cal`](../cal/README.md) block-creation: 15-min prep before, 45-min scorecard after (user-stated length wins;
+  scan forward on busy slots). Render a block as done only after `wk-cal`'s post-create re-list confirms duration and
+  zero overlap; failed check → warn item, never a done span.
 - **Stage 3 — Compile open items.** Merge agent results + carry-over; drop completed + dismissed; write survivors as
   `data-done="false"` spans. Content inventory (skip empty): Carry-over, Meeting Prep, Slack, Email, GitHub, Jira,
   Confluence. Sort/mark urgency per rendering contract.
@@ -150,6 +152,9 @@ ensure SilverBullet serving. Recipes:
     handler and copy-block markup verbatim, `#` → `\#`. Same for `end` Stage 5 (hand-typed handlers and IDs drift).
   - **Patch lines without eating `\#`.** Replace a line in place via shell parameter substitution, never a
     `sed`/`awk` replacement (both strip the `\` from `\#`); `\#` count before = after, else re-patch.
+  - **Multi-line patch → newline in a variable.** Assign `nl=$'\n'` first and substitute `$nl`; an inline `$'\n'`
+    stays literal inside a double-quoted substitution under zsh. After any patch, grep for stray literal `\n` text
+    and assert every `data-t` ID is unique and on its own line.
 - **Stage 4b — Standup snippet.** Render in col3 using the canonical rich-copy block from
   [`references/standup-copy-block.md`](references/standup-copy-block.md); formatting via
   [`wk-slack`](../slack/README.md) §Standup Snippet.

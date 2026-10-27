@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.10.23-171906`
+**Version:** `2026.10.27-183502`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -57,6 +57,14 @@ reported afterwards in the response.
   context, including query windows, outputs, and dependent actions before
   compiling. Calendar fallback records the five-day interview scan plus created
   block links or a no-slot/write-access result.
+- **Interview blocks** — a 15-min prep block before and a 45-min scorecard block
+  after each interview (a user-stated length wins), created via [`wk-cal`](../cal/README.md); a block
+  renders as done only after the calendar is re-listed and the block's duration
+  and zero overlap are confirmed.
+- **Safe in-place patches** — line patches use shell parameter substitution (never
+  `sed`/`awk`, which strip `\#` escapes); multi-line patches put the newline in a
+  variable first, then the page is checked for stray literal `\n` text and
+  unique, line-separated item IDs.
 - **Publish first, report gaps after** — a missing, unauthenticated,
   permission-denied, or blocked connector never stops the run. The page is written,
   verified, and committed from the domains that answered; each gap is labelled in

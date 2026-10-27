@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.19-191200"
+  version: "2026.10.27-183502"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -104,9 +104,9 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   printf '%s:%s\n' "${#VAR}" "$(printf %s "$VAR" | shasum | cut -c1-8)"   # fingerprint
   ```
 
-- **Zsh/bash portability:** every command must work under both zsh and bash. Five
+- **Zsh/bash portability:** every command must work under both zsh and bash. Six
   critical traps (word-splitting, indirect expansion, PIPESTATUS, glob qualifiers,
-  reserved variables) plus bash 3.2 targeting for macOS hooks.
+  reserved variables, ANSI-C quotes inside double quotes) plus bash 3.2 targeting for macOS hooks.
   Details: [`references/zsh-bash-portability.md`](references/zsh-bash-portability.md).
   - **Important:** never name a variable `path`, `cdpath`, `fpath`, `manpath`, or `module_path` — zsh ties each to
     its uppercase twin, so `path=$(…)` in a loop wipes `PATH` and every later command fails `command not found`. Use

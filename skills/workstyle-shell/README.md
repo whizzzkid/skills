@@ -2,7 +2,7 @@
 
 > Enforces safe, idiomatic shell conventions in scripts and compound ad-hoc commands.
 
-**Version:** `2026.10.19-191200`
+**Version:** `2026.10.27-183502`
 
 ## Invocation
 
@@ -47,6 +47,7 @@
   directory full of `.md` files and matches the wrong files with status 0 once a `.mdN` exists. Enumerate with
   `find … -print` into `while IFS= read -r`.
 - A guard's verdict that contradicts the output it summarizes indicts the guard — an unset `${PIPESTATUS[0]}` plus a `${rc:-0}` default reports a *pass* for a failed command, so re-derive the status dialect-independently before believing the green.
+- Never inline `$'\n'` (or any ANSI-C quote) inside a double-quoted expansion — zsh keeps it as literal text, so a multi-line substitution fuses lines at rc 0; assign `nl=$'\n'` first and substitute `"$nl"`.
 - Keep non-assertive previews out of `pipefail` gates — an early-closing consumer can give the producer SIGPIPE
   (often rc 141), aborting before the real assertions. Remove the preview or drain its full input.
 
