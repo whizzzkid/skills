@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.10.09-213616`
+**Version:** `2026.10.28-210342`
 
 ## Invocation
 
@@ -23,7 +23,10 @@ flowchart TD
     D -->|no| I[Step 2: Resolve repo PR template]
     E --> I
     I --> J[Detect Jira key → append to title]
-    J --> K[gh pr create --draft --base BEST_BASE]
+    J --> F{Push remote is a fork of target?}
+    F -->|yes| FC[CI-only PR inside fork → wait green]
+    F -->|no| K[gh pr create --draft --base BEST_BASE]
+    FC --> K
     K --> L[Step 3: Update PR description]
     L --> P[Step 4: wk-self-review]
     P --> Q[Address automated review feedback]
@@ -61,6 +64,9 @@ flowchart TD
   the assumption that a branch "obviously" targets the default. The loop iterates candidates with
   `while IFS= read -r`: an unquoted `for CAND in $CANDIDATES` does not word-split under zsh, which drops every
   candidate and leaves the `999999` sentinel looking like a genuine detection failure.
+- **Fork CI runs before the upstream PR:** When the push remote is a fork of the target, upstream CI on fork PRs can
+  wait on maintainer approval (`action_required`). The skill first opens a CI-only PR inside the fork, waits for green
+  on its HEAD, then opens the upstream PR — so the maintainer never receives a change with no CI signal.
 - **Stacking delegates to `gh stack`:** For a stack of dependent PRs the skill prefers the `github/gh-stack`
   extension (when installed and the repo is enabled for the stacks preview), delegating branch creation, base
   chaining, linked submission, and cascading conflict recovery. Existing stacks

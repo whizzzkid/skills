@@ -19,6 +19,10 @@ allowed-tools:
   - "Bash(gh stack:*)"
   - "Bash(gh extension list:*)"
   - "Bash(gh api repos:*)"
+  - "Bash(gh repo view:*)"
+  - "Bash(gh repo sync:*)"
+  - "Bash(gh pr close:*)"
+  - "Bash(git remote get-url:*)"
   - Read
   - AskUserQuestion
   - Write
@@ -32,7 +36,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.09-213616"
+  version: "2026.10.28-210342"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -118,6 +122,15 @@ EOF
 
 - `--base "$BEST_BASE"` MUST be on every `gh pr create` (Hard Rule 3). Titles use conventional commit + emoji per
   `wk-commit`. Jira key detected via `wk-jira` → append `[<KEY>]` as the last title token.
+- **HARD RULE — push remote is a fork of the PR target → green fork CI before the upstream PR.** Upstream CI on fork
+  PRs can wait on maintainer approval (`action_required`), so the first CI signal must come from the fork.
+  - Detect: `gh repo view "$(git remote get-url --push origin)" --json isFork,parent`; `isFork` true and `parent` is
+    the target repo → apply this rule.
+  - Enable the fork's Actions if disabled (`gh api -X PUT repos/<fork>/actions/permissions -F enabled=true`); sync its
+    base (`gh repo sync <fork> --branch "$BEST_BASE"`) so the fork PR diff matches upstream's.
+  - Open a CI-only PR inside the fork (`gh pr create --repo <fork> --base "$BEST_BASE"`); skip Steps 3–5 on it. Wait
+    for green on its HEAD, fix red first, then open the upstream PR and close the fork PR.
+  - Every job skipped or none ran → state "no fork CI signal" in the upstream body; never claim CI passed.
 - **Stacking:** use `gh stack` when available; probe `gh stack view`, non-zero → manual fallback. Details:
   [`references/gh-stack-stacking.md`](references/gh-stack-stacking.md).
   - **HARD RULE — recover an existing stack as one unit.** Never rebase/push layers independently. Snapshot refs →
