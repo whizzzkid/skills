@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.23-201843"
+  version: "2026.10.28-213141"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -164,8 +164,11 @@ Cover required paths: **happy** (expected flow), **sad** (failures, invalid inpu
   pre-push gate. Re-run every gate against final HEAD, not a mid-session snapshot.
 - Validate transformations with formerly-failing input. **Fix-symptom match:** verify fix targets exact reported
   symptom.
-- **A fast/narrow check is never the authoritative gate** — run the full gate. **Dependent verification fails fast** —
-  run expected-red and green gate separately; `set -euo pipefail` if sharing one shell.
+- **Important — a fast/narrow check is never the authoritative gate; run the full gate.** Pre-commit subsets and
+  suite-selector runs scoped to the changed feature are narrow; repo-wide scanners (style, lint-like, localization
+  tests) cover every file, so they gate every change. (A green narrow run feels authoritative while CI stays red.)
+- **Dependent verification fails fast** — run expected-red and green gate separately; `set -euo pipefail` if sharing
+  one shell.
 - **Never take a verdict from `$?` after a pipe** — see `wk-workstyle-shell`.
 - **Important — a "slow" build is a hang until its processes prove busy; diagnose before optimizing.** Before
   changing flags, caching, or parallelism: list long-lived build/compiler processes with elapsed time and CPU
