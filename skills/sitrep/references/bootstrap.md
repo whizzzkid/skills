@@ -27,6 +27,11 @@ if [ -f "$_CFG" ]; then
 fi
 
 test -n "$SITREP_REPO" || { echo "SITREP_REPO is not set"; exit 1; }
+# Relative sitrep_repo resolves against the .sitrep.yml directory (else cwd); absolute paths keep
+# `git -C "$SITREP_REPO" add "$LIVE_FILE"` from doubling the prefix when the git toplevel is a parent.
+_BASE="$PWD"; [ -f "$_CFG" ] && _BASE="$(dirname "$_CFG")"
+case "$SITREP_REPO" in /*) ;; *) SITREP_REPO="$_BASE/$SITREP_REPO" ;; esac
+SITREP_REPO=$(cd "$SITREP_REPO" && pwd -P) || { echo "SITREP_REPO does not exist"; exit 1; }
 test -n "$EMPLOYER"    || { echo "EMPLOYER is not set"; exit 1; }
 SITREP_PORT="${SITREP_PORT:-3000}"
 

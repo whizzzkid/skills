@@ -17,8 +17,9 @@ prerequisite to today's overwrite, not a separate required invocation.
 - Resolve that date's snapshot before judging state.
 - Close artifacts are `$LIVE_FILE`, the dated snapshot, `$WEEK_MEM_FILE`, and
   `$EMPLOYER/QPR/brag-log.md` when present. Inspect repository-wide
-  `git status --short --branch`; any dirty path outside this allowlist stops
-  `start` and is never staged by rollover.
+  `git status --short --branch`; any tracked dirty path outside this allowlist
+  stops `start`. Untracked (`??`) paths outside it (local agent config, other
+  tools' files) are ignored, never staged — every commit names its paths.
 - Canonical close requires `end_completed_at:`, the dated snapshot,
   carry-forward heading + scrub note, and a committed marker proven by
   `git log -1 -S'end_completed_at:' -- "$LIVE_FILE"` while every close artifact

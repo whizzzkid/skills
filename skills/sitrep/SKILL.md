@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.27-184119"
+  version: "2026.10.28-211030"
   model:
     openai: gpt-5.6-terra
 ---
@@ -104,7 +104,8 @@ user-resolved items (path, key, safe-write, validation)
 
 Resolve `$SITREP_REPO`, `$EMPLOYER`, `$SITREP_PORT` (`.sitrep.yml` wins), export `$TODAY`, `$LIVE_FILE`,
 `$SNAPSHOT_FILE`, `$SNAPSHOT_URL`, `$WEEK_MEM_FILE`, `mkdir -p` parents, set `PUSH_ALLOWED` (push-destination gate),
-ensure SilverBullet serving. Recipes:
+ensure SilverBullet serving. Absolutize `$SITREP_REPO` first (relative → against the `.sitrep.yml` dir); its git
+toplevel may be a parent repo, so never assume they are equal. Recipes:
 [`references/bootstrap.md`](references/bootstrap.md).
 
 ## Sub-command: start
@@ -112,7 +113,7 @@ ensure SilverBullet serving. Recipes:
 - **Stage 0.5 — Close unfinished prior day.** **HARD RULE — close before overwrite.** Prior `date:` with no valid end
   state → full `end` flow first; failure stops `start`. User explicitly declares the stale page closed → skip the
   rollover, carry its open spans forward, note it in Meta. Closed day = previous workday → one shared gather feeds
-  both flows. Details:
+  both flows. Dirty-path check: tracked non-artifact → stop; untracked non-artifact → ignore, never stage. Details:
   [`references/missed-end-rollover.md`](references/missed-end-rollover.md).
 - **Stage 1 — Load previous live.md.** Read `$LIVE_FILE`: open `data-done="false"` → carry-over, completed → count.
   Canonical state is `data-done` (legacy glyphs read-only). Resolve previous working day from frontmatter. Read
