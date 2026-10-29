@@ -10,9 +10,11 @@ dispatches read-only-gathering subagents that each drive one review.
 
 ## Rule
 
-- **Source, never re-query.** Reuse the Stage 2 GitHub agent's "PRs to review"
-  bucket (already `--draft=false --owner="$GITHUB_ORG"`). Re-querying risks
-  drift from the compiled report.
+- **Source the candidate set, never re-query it.** Reuse the Stage 2 GitHub agent's "PRs to review"
+  bucket (already `--draft=false --owner="$GITHUB_ORG"`). Re-querying the set risks
+  drift from the compiled report; re-checking each candidate's state (below) is not a re-query.
+- **Skip settled PRs.** Re-check each candidate's live `state` and `reviewDecision` right before dispatch; merged,
+  closed or `APPROVED` → no review, no worktree. A review there is wasted work.
 - **Repo allowlist required.** Filter candidates to repos in the project's
   config `review_repos` allowlist before dispatching any subagent — scope to
   repos the user actively works in, not every repo cloned locally.
@@ -61,8 +63,16 @@ Each subagent:
    <branch>`). Fallback when the alias is absent:
    `git worktree add "worktrees/<branch>" "<branch>"`.
 3. Invoke [`/wk-pr-review`](../../pr-review/README.md) scoped to that PR, in
-   its default `medium` mode — never `heavy`, which needs an interactive
-   confirmation a subagent cannot give.
+   `light` mode — never `medium` or `heavy`. Report the draft's review URL.
+
+## Open the draft
+
+- **Re-check at publish time.** PRs merge while reviews run: re-read each PR's `state`/`reviewDecision` after its
+  review returns; merged, closed or `APPROVED` → do not open or list the draft.
+- Subagents never `open` (contract). After a draft is verified `PENDING`, the orchestrator runs
+  `open "<review-url>"` once per draft so the user lands on the pending review to submit or discard it.
+- Every posted draft, and every older `PENDING` draft on a still-open PR, appears as its own link in the GitHub
+  Inbox; an unopened, unlisted draft is how drafts pile up unnoticed. Drafts on merged or closed PRs are not listed.
 
 ## Render
 

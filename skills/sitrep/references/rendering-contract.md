@@ -29,7 +29,7 @@
 **Mark done only what is terminal.** An auto-action leaving an artifact the
 user must still act on (unsubmitted draft, unsent reply) renders its launch
 done but stays open work — re-query and re-surface it every run until the
-artifact is terminal.
+artifact is terminal. A draft whose PR merged or closed is moot — drop it, never list it.
 
 ## Nesting constraints
 

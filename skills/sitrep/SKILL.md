@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.29-175900"
+  version: "2026.10.29-180348"
   model:
     openai: gpt-5.6-terra
 ---
@@ -127,7 +127,9 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     prep/scorecard (data only — Stage 2c creates). ToolSearch: `"gcal"`, `"notion"`, `"gdrive"`.
   - **GitHub:** PRs needing review (`--draft=false`), your open PRs with failing CI/comments, assigned issues, mentions.
     All `gh` requires `--owner="$GITHUB_ORG"`. ToolSearch: `"github"`. **HARD RULE — verify authorship** via
-    `gh pr view --json author`, never infer. Sweep unsubmitted reviews (`state: PENDING`, org-wide).
+    `gh pr view --json author`, never infer. Sweep unsubmitted reviews (`state: PENDING`, org-wide) with a batched
+    GraphQL `reviews(states: PENDING, author:)` over the candidate PRs (not `gh search`); return each draft's review
+    URL, comment count and its PR's state (open vs merged/closed orphan).
   - **Jira + Confluence:** assigned tickets, mentions, Confluence mentions. ToolSearch: `"jira"`, `"confluence"`. Always
     run the full open-ticket sweep `assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC`; surface
     `In Review`/`Blocked`/`On Deck`, past-due, merged-but-open candidates; no-activity tickets → `## 🗂 Jira backlog`.
@@ -199,7 +201,9 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
 
 - **Stage 7 — Auto-launch PR reviews.** One review worktree per PR awaiting review, rendered as done `⚙️ Auto-Action`
   that replaces the section's placeholder line in place (never appended beside it). Pending draft only — never
-  submit/approve/request changes. Reserve slots for nested workers. Mechanics:
+  submit/approve/request changes. Re-check live state right before dispatch and again before publishing: merged, closed
+  or approved → no review, no listed draft. Run `/wk-pr-review` in **light** mode; the orchestrator `open`s each posted
+  draft's review URL. Reserve slots for nested workers. Mechanics:
   [`references/auto-review.md`](references/auto-review.md). Then invoke `wk-learn sitrep`; end the response with the
   `Connector gaps` report.
 
