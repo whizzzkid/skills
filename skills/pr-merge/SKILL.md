@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.29-204104"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -144,7 +144,7 @@ resume. Compaction does not reset the unit. Invoke `Skill(wk-retro)` immediately
 
 Step 10 — **HARD RULE — run dead last, after every Step 8 follow-up is resolved.** `{entered_merged}` → audit
 for open children before branch deletion. Removal: [`references/worktree-cleanup.md`](references/worktree-cleanup.md).
-Requires `gh` CLI + Jira MCP authenticated, `$GITHUB_ORG` for discovery, `git wtr` alias for cleanup.
+Requires `gh` CLI + Jira MCP authenticated, `$GITHUB_ORG` for discovery.
 
 ## Post-Completion
 

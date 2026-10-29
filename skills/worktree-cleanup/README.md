@@ -2,7 +2,7 @@
 
 > Clean up git worktrees whose branches have been merged.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.10.29-204104`
 
 ## Invocation
 
@@ -15,19 +15,19 @@
 
 ```mermaid
 flowchart TD
-    A[git wtl — list all worktrees] --> B[Skip main worktree + detached HEADs]
+    A["git worktree list --porcelain — path + branch pairs"] --> B[Skip main worktree + detached HEADs]
     B --> C[Resolve default branch dynamically]
     C --> D{For each worktree branch}
     D --> E[Local check: git branch --merged]
     D --> F[Remote check: gh pr list --state merged]
     E & F --> G{Either check passed?}
-    G -->|merged| H[Step 4: retro check before deletion]
+    G -->|merged| H[Step 4: retro check before deletion<br/>bulk: one consolidated question]
     G -->|unmerged / unknown| I[Add to unmerged report]
     H --> H1{Retro already run for this branch?}
     H1 -->|yes| J[git clean -fd inside worktree]
     H1 -->|no| K[Invoke wk-retro --worktree branch]
     K --> J
-    J --> L[git wtr branch — remove worktree + delete branch]
+    J --> L["git worktree remove listed path + git branch -D"]
     L --> M[git worktree prune]
     M --> N[Report: cleaned + still active table]
     I --> N
@@ -36,15 +36,19 @@ flowchart TD
 
 ## Noteworthy
 
-- **HARD RULE: run [`wk-retro`](../retro/README.md) before `git wtr`** — worktrees may hold
+- **HARD RULE: run [`wk-retro`](../retro/README.md) before removal** — worktrees may hold
   the only copy of session notes or draft plans. Once removed, that context is unrecoverable.
 - **[`wk-retro`](../retro/README.md) vs [`wk-learn`](../learn/README.md) are not interchangeable
   here** — retro writes the session narrative to
   `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md` (and only distilled rules, if any, to
   `$HOME/.claude/memory/`); [`wk-learn`](../learn/README.md) writes skill-specific learnings under
   `$WK_SKILLS_HOME/learnings/skills/`. This step uses retro.
-- **`git wtr` uses `-D` (force-delete)** regardless of merge status — never call it on an
-  unconfirmed branch. When in doubt, classify as unmerged and let the user decide.
+- **Removal uses `git branch -D` (force-delete)** regardless of merge status — never run it on
+  an unconfirmed branch. When in doubt, classify as unmerged and let the user decide.
+- **Worktrees are addressed by their listed path**, never `worktrees/{branch}` — directory
+  names drift from branch names, so the `git wtr` alias (which rebuilds the path) is not used.
+- **Bulk sweeps** classify every worktree in one scripted pass and ask one consolidated
+  question; above 5 merged own-authored worktrees, retro is batched or explicitly skipped once.
 - A branch is considered merged if **either** check passes (local `git branch --merged` OR
   GitHub PR state), not both — squash merges and rebases don't show in local --merged.
 - **Disposable untracked content** (temp dirs, OS metadata, gitignore'd files) is cleaned

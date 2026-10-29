@@ -16,3 +16,6 @@ alias is faster and the remote branch was already deleted by the merge's
 current working tree.
 
 **Where** — `pr-merge` Step 10.
+
+**Superseded (2026-10-29)** — remove by the current worktree's resolved path, not `git wtr <name>`; see
+[`worktree-cleanup.md`](worktree-cleanup.md).

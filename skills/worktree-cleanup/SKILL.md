@@ -8,7 +8,6 @@ description: >-
 argument-hint: '[--current]'
 allowed-tools:
   - "Bash(git wtl:*)"
-  - "Bash(git wtr:*)"
   - "Bash(git symbolic-ref:*)"
   - "Bash(git branch:*)"
   - "Bash(git worktree:*)"
@@ -31,7 +30,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.29-204104"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -45,18 +44,23 @@ metadata:
 
 Scan worktrees → clean merged ones → report unmerged ones for the user to decide. "list worktrees": run `git wtl`
 (Step 1) and show the output. "remove worktree X": remove only that one, after confirming merge status (Step 3).
-Requires: `git wtl`/`git wtr` aliases in `$HOME/.gitconfig`; `gh` authenticated with repo access; run from the main
-worktree (repo root). `--current` (clean the worktree you are inside, e.g., after
+Requires: `git wtl` alias in `$HOME/.gitconfig`; `gh` authenticated with repo access; run from the main worktree
+(repo root). `--current` (clean the worktree you are inside, e.g., after
 [`wk-pr-merge`](../pr-merge/README.md)): follow [references/current-mode.md](references/current-mode.md) and stop.
 
 ## Step 1: List Worktrees
 
 ```bash
-git wtl
+git wtl                        # pulls, then lists — show this output
+git worktree list --porcelain  # parse this one
 ```
 
-Parse each line (`/path/to/repo/worktrees/feat-x  def5678 [feat-x]`) into path + bracketed branch. Skip the main
-worktree (first entry without `/worktrees/`; never remove) and any `(detached HEAD)` entry.
+Parse each porcelain record (`worktree <path>`, then `branch refs/heads/<name>` or `detached`) into a `{path}` +
+`{branch}` pair. Skip the first record (main worktree; never remove) and any `detached` record (no branch to check).
+
+- **Address every worktree by its listed `{path}`, never a path rebuilt from `{branch}`.** Directory names drift from
+  branch names (slashed or renamed branches, manual `git worktree add`), so a rebuilt `worktrees/{branch}` misses the
+  checkout or hits a different one. The `git wtr` alias rebuilds `worktrees/$1` — never use it here.
 
 ## Step 2: Detect the Default Branch
 
@@ -83,13 +87,19 @@ gh pr list --state merged --head '{branch}' --json number,title --jq 'length'
 
 **HARD RULE:** A worktree often holds the only copy of session-specific context (notes, transcripts, draft plans not
 yet distilled into `$WK_SKILLS_HOME/learnings/`); removal is unrecoverable. Run `wk-retro` against each merged worktree
-**before** `git wtr`. `wk-retro` → `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md` (only distilled rules to
+**before** removal. `wk-retro` → `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>.md` (only distilled rules to
 `$HOME/.claude/memory/`); `wk-learn` → `$WK_SKILLS_HOME/learnings/skills/`; never substitute one for the other.
 
 Disposable paths (skip retro, clean without prompting): `.agents/`, `skills-lock.json`, `.review-playground/` (even
 when not gitignored), plus `.gitignore`-matched build artifacts, IDE caches, OS metadata, editor swap files. Only
-disposable untracked content → worktree is clean; `git clean -fd` may run before `git wtr` without per-worktree
+disposable untracked content → worktree is clean; `git clean -fd` may run before removal without per-worktree
 confirmation. Anything else (notes, plans, uncommitted code) → normal retro check.
+
+**Bulk runs:** classify every worktree (merge status, content scan, author, retro-already-run) in one scripted pass,
+then ask one consolidated question — never prompt per worktree. More than 5 merged own-authored worktrees still need a
+retro → ask once (`AskUserQuestion`): one batched `wk-retro` run over the `{path}` list, or an explicit skip for all
+(record "retro skipped by user (bulk)" in the report). (Per-worktree prompts stall a large sweep on one interactive
+stop per worktree.)
 
 For each `merged` branch, in order:
 
@@ -97,39 +107,38 @@ For each `merged` branch, in order:
    before any retro/delete decision:
 
    ```bash
-   git -C worktrees/{branch} status --short
-   git -C worktrees/{branch} stash list
+   git -C "{path}" status --short
+   git -C "{path}" stash list
    ```
 
 2. **Author check** — another user's branch yields empty retro lenses; `SKIP_RETRO=1` → go to Step 5 and record the
    skip reason in the report:
 
    ```bash
-   AUTHOR=$(git -C worktrees/{branch} log -1 --format='%ae')
+   AUTHOR=$(git -C "{path}" log -1 --format='%ae')
    ME=$(git config user.email)
    [ "$AUTHOR" = "$ME" ] || SKIP_RETRO=1
    ```
 
 3. **Retro already run** (learning-file mtime in this worktree's active window, `$HOME/.claude/memory/retro-log.md`
    entry for this branch/PR, or explicit user skip this run) → Step 5.
-4. Otherwise invoke `Skill(wk-retro, args="--worktree worktrees/{branch}")`; unavailable or failed → stop and ask.
+4. Otherwise invoke `Skill(wk-retro, args="--worktree {path}")`; unavailable or failed → stop and ask.
    After it returns, confirm the worktree is clean, then Step 5.
 
 ## Step 5: Clean Up Merged Worktrees
 
-For each merged branch with retro confirmed, pre-clean then remove (`git wtr` = `git worktree remove
-worktrees/{branch} && git branch -D {branch}`). `git worktree remove` refuses untracked files; never fall back to
-`--force` (masks uncommitted work the classifier missed). Scope `git clean` to the worktree path, never the primary
-checkout, and run it only after Step 4 confirmed every untracked path disposable; a new non-disposable path since
-Step 4 (e.g., a `wk-retro` file) → re-run Step 4's check.
+For each merged branch with retro confirmed, pre-clean then remove by listed `{path}` (Step 1). `git worktree remove`
+refuses untracked files; never fall back to `--force` (masks uncommitted work the classifier missed). Scope `git clean`
+to the worktree path, never the primary checkout, and run it only after Step 4 confirmed every untracked path
+disposable; a new non-disposable path since Step 4 (e.g., a `wk-retro` file) → re-run Step 4's check.
 
 ```bash
-git -C worktrees/{branch} clean -fd
-git wtr {branch}
+git -C "{path}" clean -fd
+git worktree remove "{path}" && git branch -D '{branch}'
 ```
 
-**HARD RULE:** Never call `git wtr` on a branch not confirmed merged. The `-D` flag force-deletes the branch regardless
-of merge status. If in doubt, classify as unmerged and let the user decide.
+**HARD RULE:** Never remove a worktree or `git branch -D` a branch not confirmed merged (`git wtr` included). The `-D`
+flag force-deletes the branch regardless of merge status. If in doubt, classify as unmerged and let the user decide.
 
 Then prune stale metadata:
 ```bash
