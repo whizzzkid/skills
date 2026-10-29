@@ -40,6 +40,10 @@ blank line before or after it — a blank line anywhere in a column body ends th
 column's HTML block and ejects the rest full-width below the row, at any nesting
 depth.
 
+Link lists of actionable items (e.g. the GitHub Inbox) use one `<span class="st-item st-nested">` per link, each
+with its own `st-cb` checkbox and `data-t`, exactly like any other actionable item. A checkbox-less bullet is only for
+non-actionable text. Escape `[` and `]` inside link text.
+
 ## Non-actionable content
 
 Non-actionable content (meeting lines, headers, standup block) is plain text

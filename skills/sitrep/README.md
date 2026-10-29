@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.10.28-211030`
+**Version:** `2026.10.29-175900`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -45,6 +45,11 @@ reported afterwards in the response.
   `**📅 date**` due-dates. Every weekday label is recomputed from its date
   before writing; a source or agent weekday that disagrees is corrected and
   the correction noted.
+- **Actionable means checkbox** — every item you must act on, each link in a
+  list included, is its own checkbox item; action sections (such as the
+  GitHub Inbox of merges, review requests and pending drafts on open PRs) sit
+  directly under ASAP, one short line per item. The render check fails on any
+  checkbox-less item.
 - **SilverBullet rendering** — no standalone HTML files are generated;
   `live.md` contains SilverBullet HTML blocks that the browser renders.
 - **Standup copy** — copies rich HTML to preserve the three-level list

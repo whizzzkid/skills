@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.28-211030"
+  version: "2026.10.29-175900"
   model:
     openai: gpt-5.6-terra
 ---
@@ -150,9 +150,16 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
   `data-done="false"` spans. Content inventory (skip empty): Carry-over, Meeting Prep, Slack, Email, GitHub, Jira,
   Confluence. Sort/mark urgency per rendering contract.
 - **Stage 4 — Write live.md.** Re-read `$LIVE_FILE`; preserve `data-done="true"` spans; prefer `Edit` over `Write`.
-  Three-column `sitrep-row`/`sitrep-col`: **col1** Calendar + Slack + Email; **col2** ASAP + Auto-Actions + GitHub +
-  Jira; **col3** Meta + Standup + This Week + Notes + Backlog. Frontmatter: `date`, `employer`, `generated_with`,
-  `generated_at`. Sequential `data-t` IDs.
+  Three-column `sitrep-row`/`sitrep-col`: **col1** Calendar + Slack + Email; **col2** ASAP + GitHub Inbox +
+  Auto-Actions + Jira; **col3** Meta + Standup + This Week + Notes + Backlog. Frontmatter: `date`, `employer`,
+  `generated_with`, `generated_at`. Sequential `data-t` IDs.
+  - **Important: actionable means checkbox.** Every item the user must act on — each link in a link list included — is
+    its own `st-item` with an `st-cb` and `data-t`; checkbox-less text is for non-actionable content only (a list of
+    links is items, not presentation). Action sections sit directly under ASAP, one short line per item.
+  - **HARD RULE — GitHub Inbox.** One col2 section lists everything on GitHub waiting on the user, one checkbox item
+    per link (`st-item st-nested`, `[repo\#N: title](url) — note`): merges, review requests (allowlist vs other repos)
+    and each unsubmitted PENDING draft on an open PR (linking its review URL). Open PRs only: drop merged, closed and
+    already-approved PRs and every orphan draft on them. Never a bare count or a prose run of PR numbers.
   - **Generate spans; never hand-type them.** Emit item spans from an inline generator over the compiled item list
     (e.g. a `jq` filter on stdin — no script file, per the write-scope HARD RULE): sequential `data-t`, canonical
     handler and copy-block markup verbatim, `#` → `\#`. Same for `end` Stage 5 (hand-typed handlers and IDs drift).
@@ -172,7 +179,8 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     write.
 - **Stage 5 — Verify render, then open.** **HARD RULE — gate the "Live page ready" announcement on a verified render.**
   `open` confirms nothing. Before announcing, `browser_navigate` → `browser_evaluate` containment (3 non-empty
-  `.sitrep-col`, every `.st-copy-block`/`.st-item` inside a column — assert containment, not presence). `false` → fix
+  `.sitrep-col`, every `.st-copy-block`/`.st-item` inside a column — assert containment, not presence — and zero
+  `.st-item` without an `.st-cb`). `false` → fix
   per `wk-silverbullet` Step 6. Verify standup copy per
   [`references/standup-copy-block.md`](references/standup-copy-block.md). `browser_close` before `open`, then announce
   "Live page ready — {X} items, {Y} meetings, {Z} carry-overs."
