@@ -36,7 +36,10 @@ class: principle
   review returns 404. Resolve the thread via GraphQL `resolveReviewThread`, post
   the substantive reply as a top-level `POST /issues/{n}/comments`, and defer any
   edit to the author's own annotation until the pending review is submitted or
-  dismissed — never submit it to unblock.
+  dismissed — never submit or delete it to unblock.
+- Batch the fallback: one top-level issue comment that addresses every blocked thread (quote or link each), plus a
+  reaction on each thread's root comment; then tell the user their pending review is what blocks thread replies (the
+  user, not the agent, owns the draft).
 
 ## Submit 422 — re-read the review state before touching the payload
 
