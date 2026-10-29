@@ -28,7 +28,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.21-180603"
+  version: "2026.10.29-185707"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -112,6 +112,14 @@ gh api "repos/{owner}/{repo}/pulls/$PR_NUMBER/commits" --paginate \
 Read all touched files. Identify: patterns, incomplete sections (TODO/FIXME),
 test coverage. Run test suite as baseline per [test-runner examples](references/test-runner-examples.md).
 Prose/config diff → gate-preservation audit instead.
+
+- **HARD RULE — triage inherited CI by log; a canceled check is unexplained, never presumed infra.** Read the log of
+  every non-green job, canceled included, before calling it a flake (a fail-closed gate that cancels its own build
+  renders as a flake on the checks summary). Buildkite → `wk-buildkite` "Investigating failures"; GitHub Actions →
+  `wk-gh` superseded-run rule.
+- Dependency-bump PR → run `wk-renovate` Step 4's major-version audit over every lockfile (transitive majors
+  included). Linter bump enabling new rules → autocorrect, then review each unsafe correction and every touched
+  fixture or corpus file individually.
 
 ## Step 5: Establish Co-Authorship
 

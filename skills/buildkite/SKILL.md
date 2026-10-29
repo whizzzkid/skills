@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.10.29-185707"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -80,7 +80,7 @@ identical error → classify as infra-side, stop diagnosing.
 ```bash
 bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | \
   jq '{number: .number, state: .state, finished: .finished_at, \
-       jobs: [.jobs[] | select(.state == "failed" or .state == "broken") | \
+       jobs: [.jobs[] | select(.state | IN("failed","broken","canceled","timed_out")) | \
               {name: .name, state: .state, exit_status: .exit_status}]}'
 ```
 
@@ -107,7 +107,7 @@ Never state a build will pass without fetching the actual result. After every pu
 **HARD RULE: check branch currency before diagnosing failures** — `git rev-list --count origin/main..HEAD`; branch
 behind main → sync first, rebuild second.
 
-1. Overall status → canonical query, failed jobs only.
+1. Overall status → canonical query (failed, broken, canceled, timed-out jobs).
 2. Fetch + analyze logs: `bk job log <job-uuid> -p <pipeline> -b <build-number> --no-timestamps 2>&1`. Raw REST logs →
    strip ANSI escapes AND `_bk;t=<epoch-ms>` markers first.
 3. **HARD RULE: classify infra vs. code before attributing a red build to the diff** — read the log body; infra markers
@@ -115,6 +115,8 @@ behind main → sync first, rebuild second.
    `Error setting up job executor`, `job_executor_error`, `exit code -1`,
    `Running agent environment hook` failures, agent lost/terminated.
    Retry single job: `bk job retry <job-uuid>`; retry succeeds = classification done.
+   - **A `canceled` job is unexplained, not infra** — read its log and the job that issued the cancel before retrying
+     (a fail-closed gate can `buildkite-agent build cancel`, so a real failure renders as `canceled`).
 4. Check if pre-existing: canonical query against `-b main`.
 5. **Report trigger AND cause separately** — "Build #N triggered by your merge;
    failure in step X is pre-existing/infra, not your diff."

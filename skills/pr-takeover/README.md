@@ -3,7 +3,7 @@
 Take over a pull request being worked on by someone else and drive it to
 completion using the full [`wk-workflow`](../workflow/README.md).
 
-**Version:** `2026.10.21-180603`
+**Version:** `2026.10.29-185707`
 
 ## Purpose
 
@@ -36,7 +36,7 @@ original PR's line-count diff.
 2. **Fetch context** — read PR description, diff, reviews, and comments
 3. **Check out** — branch checkout (overwrite) or new branch from head (stack), then the signature gate: every
    unverified inherited commit is re-signed (overwrite) or flagged (stack) before any work starts
-4. **Orient** — read changed files, run baseline tests, identify gaps. Prose/docs-dominated diffs substitute a gate-preservation audit (hooks as baseline; verify every claimed rule/link/count survived)
+4. **Orient** — read changed files, run baseline tests, identify gaps. Prose/docs-dominated diffs substitute a gate-preservation audit (hooks as baseline; verify every claimed rule/link/count survived). Inherited CI is triaged by log (canceled checks included); dependency bumps get the lockfile major-version audit
 5. **Co-authorship** — extract original author identity; set `$WK_CO_AUTHOR`
 6. **Plan** — task list from unresolved feedback + incomplete code
 7. **[`wk-workflow`](../workflow/README.md)** — full workflow (plan → implement → test → review → PR → retro)
@@ -52,6 +52,7 @@ original PR's line-count diff.
 - Stacking on a draft base surfaces a three-option prompt; auto-mode retargets to the default branch.
 - 30% scope threshold triggers automatic switch to stack mode.
 - Inherited unsigned commits are re-signed right after checkout, before any work, so later-cited SHAs stay stable.
+- A canceled inherited check is read by log before it is called infra — a fail-closed gate can cancel its own build.
 
 ## Integration Points
 

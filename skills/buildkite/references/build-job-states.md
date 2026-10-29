@@ -19,6 +19,7 @@
 | `failed` | Job failed with non-zero exit |
 | `broken` | **Usually means skipped** -- upstream dependency failed or conditional logic excluded it. NOT necessarily a failure. |
 | `running` | Job in progress |
+| `canceled` | Job canceled — by a user, a newer build, or a fail-closed gate calling `buildkite-agent build cancel`. Read its log before calling it infra. |
 
 **Key insight:** `broken` jobs are almost never the root cause. Always
 investigate `failed` jobs first.
