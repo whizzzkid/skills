@@ -2,7 +2,8 @@
 name: wk-gh
 description: >-
   Activates whenever the agent uses the gh CLI or interacts with GitHub
-  PRs, issues, or notifications. Ensures all GitHub operations are scoped
+  PRs, issues, or notifications, including every comment, reply, or reaction
+  posted mid-step in another skill. Ensures all GitHub operations are scoped
   to the user's organization via $GITHUB_ORG. Prompts the user to set
   the variable if missing.
 model-invocable: true
@@ -17,7 +18,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.10.29-190159"
+  version: "2026.10.29-192344"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -32,10 +33,15 @@ metadata:
 Scope every `gh` CLI and GitHub interaction to the user's organization; activate before any `gh` command or GitHub
 PR, issue, or notification interaction.
 
-**HARD RULE — no size or surface exemption.** Every `gh` write fires this skill: `gh pr create`, `gh pr edit`,
-`gh pr comment`, `gh issue comment`, `gh api` POST/PATCH/DELETE, `gh pr review`, reply posts, thread resolutions.
-"It's just a comment" / "it's one-line" / "the user asked for it inline" are not bypass criteria. Read-only `gh` calls
-(`view`, `diff`, `search`, `api` GET) still honor Step 1–2 scoping but skip Step 4 (no body to footer).
+**Important — HARD RULE — no size or surface exemption.** Every `gh` write fires this skill: `gh pr create`,
+`gh pr edit`, `gh pr comment`, `gh issue comment`, `gh api` POST/PATCH/DELETE, `gh pr review`, reply posts, reactions,
+thread resolutions. "It's just a comment" / "it's one-line" / "the user asked for it inline" are not bypass criteria.
+Read-only `gh` calls (`view`, `diff`, `search`, `api` GET) still honor Step 1–2 scoping but skip Step 4 (no body to
+footer).
+
+- `Skill("wk-gh")` lands in the same turn as the write, even mid-step in another skill — an active parent skill whose
+  step says "post a comment" has not loaded this one. Body voice → `wk-tone` in that turn too.
+- A host-injected PR-description attribution line is not the comment footer; Step 4's block is the only comment footer.
 
 ## Step 0: Select stored vs environment credentials
 

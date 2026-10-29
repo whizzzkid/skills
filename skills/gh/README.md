@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.10.29-190159`
+**Version:** `2026.10.29-192344`
 
 ## Invocation
 
@@ -45,6 +45,9 @@ flowchart TD
 
 ## Noteworthy
 
+- **Loaded per write, not per parent skill:** a comment, reply, or reaction posted mid-step in another skill still
+  invokes this skill (and [`wk-tone`](../tone/README.md)) in that turn; a host-injected PR-description attribution line is never the comment
+  footer.
 - **Outbound comment bodies are terse:** every review body, inline comment, and reply posted for the user leads with
   the point and stops — no process notes, filler praise, or pointers to what GitHub already shows. Calling skills may
   be stricter, never looser.

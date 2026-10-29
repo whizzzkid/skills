@@ -28,7 +28,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.29-185707"
+  version: "2026.10.29-192344"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -150,8 +150,9 @@ update original PR to note continuation.
 
 ## Step 10: Handoff Summary
 
-Post PR comment: mode, pre-existing failures, work completed, deferred items,
-stacked PR reference. `Co-Authored-By` email per wk-commit's HARD RULE: user =
+`Skill("wk-gh")` + `Skill("wk-tone")` in this turn, then post the PR comment: mode, pre-existing failures, work
+completed, deferred items, stacked PR reference. Every PR write in Steps 8–10 routes through `wk-gh` (terse body,
+canonical comment footer — never the PR-description attribution line). `Co-Authored-By` email per wk-commit's HARD RULE: user =
 `$WK_SKILLS_EMPLOYEE_EMAIL` (unset → STOP); original author = `<id>+<login>@users.noreply.github.com` (never guess `<login>@<domain>`).
 
 ---

@@ -3,7 +3,7 @@
 Take over a pull request being worked on by someone else and drive it to
 completion using the full [`wk-workflow`](../workflow/README.md).
 
-**Version:** `2026.10.29-185707`
+**Version:** `2026.10.29-192344`
 
 ## Purpose
 
@@ -42,7 +42,7 @@ original PR's line-count diff.
 7. **[`wk-workflow`](../workflow/README.md)** — full workflow (plan → implement → test → review → PR → retro)
 8. **PR update / creation** — update existing PR or create stacked PR
 9. **Self-review** — inline comments; no self-approval
-10. **Handoff comment** — summary posted to the PR
+10. **Handoff comment** — summary posted to the PR via [`wk-gh`](../gh/README.md) + [`wk-tone`](../tone/README.md) (canonical comment footer)
 
 ## Hard Rules
 
