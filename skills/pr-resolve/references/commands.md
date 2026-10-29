@@ -87,7 +87,7 @@ git rebase --onto "$TRUNK" "$OLD_BASE_TIP" HEAD
 
 **Pending review handling** (a pending review blocks reply posting with 422, and blocks `PATCH` edits to its own review comments with 404):
 
-- Author's/current-user's own → never submit (Hard Rule 13); note once; resolve worked threads via the no-body GraphQL mutation (not gated by the pending review). The pending review 422s reply-creation on **every** thread — bot and reviewer included, not just the author's own. For any substantive reply that cannot post inline (bot, reviewer, or author's own thread alike), use a top-level `POST /issues/{n}/comments` noting the constraint; defer any edit to the author's own annotation until the pending review is submitted or dismissed. Note the deferral in the summary — pushed fixes stand on their own and bots re-scan on green CI.
+- Author's/current-user's own → never submit (Hard Rule 13); note once; resolve worked threads via the no-body GraphQL mutation (not gated by the pending review). The pending review 422s reply-creation on **every** thread — bot and reviewer included, not just the author's own. Any reply 422 → stop and ask the user to submit or discard the draft, or approve adding the replies to it; then reply in every thread (bot, reviewer, or author's own alike). Never answer threads via a top-level issue comment or a bare reaction (`wk-gh` Step 3). Defer any edit to the author's own annotation until the pending review is submitted or dismissed.
 - Another user's pending review → surface once, proceed without it.
 
 **Bot REST comment IDs 404 on reads, not writes.** After a bot replaces its review the REST `databaseId` 404s on `GET`, but `POST .../comments/{id}/replies` on the same ID still returns 201. Read bodies via GraphQL `reviewThreads` → `comments.nodes[0].body`; for replies, try the REST `/replies` POST before GraphQL (wk-gh).
@@ -128,11 +128,10 @@ PENDING_REVIEW_ID=$(gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   '.[] | select(.state == "PENDING" and .user.login == $u) | .id')
 ```
 
-`PENDING_REVIEW_ID` non-empty → route around it; **never submit or delete it to
-unblock a reply** (Hard Rule 13). Apply the pending-review handling above to every
-blocked reply (bot, reviewer, or author's own): post substance via a single
-top-level `POST /issues/{n}/comments`, then resolve each worked thread with the
-`resolveReviewThread` mutation. Submit only on an explicit "submit my review".
+`PENDING_REVIEW_ID` non-empty → **never submit or delete it to unblock a reply**
+(Hard Rule 13). Apply the pending-review handling above: stop and ask the user, then
+reply in every thread and resolve each only after its reply lands. Submit only on an
+explicit "submit my review".
 
 ## Step 4 — Suggestion format
 

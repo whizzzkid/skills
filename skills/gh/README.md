@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.10.29-192344`
+**Version:** `2026.10.29-193155`
 
 ## Invocation
 
@@ -70,7 +70,7 @@ flowchart TD
   unexpected authorization failure is diagnosed by comparing normal and token-unset status before any refresh.
 - **Pending-review comments use a follow-up read:** create responses project only review identity/state/commit; the
   review-specific comments endpoint proves staged anchors before any retry decision.
-- **A pending review blocks thread replies:** REST `/replies` returns 422 `one pending review`; the skill never submits or deletes the user's draft — it reacts per thread, posts one issue comment answering each, and tells the user.
+- **A pending review blocks thread replies:** REST `/replies` returns 422 `one pending review`; the skill never submits or deletes the user's draft — it stops and asks the user to submit, discard, or approve adding the replies, then replies in every thread (never a bare reaction or an off-thread issue comment).
 - **Pending-review creation rechecks concurrent state:** Re-query immediately
   before create; a newly appeared draft or HTTP 422 triggers content-preserving,
   deduplicated recovery instead of a blind retry.

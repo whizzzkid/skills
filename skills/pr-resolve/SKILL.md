@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.21-181219"
+  version: "2026.10.29-193155"
   model:
     openai: gpt-5.6-terra
 ---

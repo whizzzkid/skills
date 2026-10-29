@@ -33,13 +33,13 @@ class: principle
 - While the author's own review stays PENDING, its inline comments are not
   addressable via standard REST: `POST /pulls/{n}/comments` returns 422
   (`one pending review`), and `PATCH` on a comment belonging to that pending
-  review returns 404. Resolve the thread via GraphQL `resolveReviewThread`, post
-  the substantive reply as a top-level `POST /issues/{n}/comments`, and defer any
-  edit to the author's own annotation until the pending review is submitted or
-  dismissed — never submit or delete it to unblock.
-- Batch the fallback: one top-level issue comment that addresses every blocked thread (quote or link each), plus a
-  reaction on each thread's root comment; then tell the user their pending review is what blocks thread replies (the
-  user, not the agent, owns the draft).
+  review returns 404. Never submit or delete it to unblock (the user owns the draft).
+- Stop and ask the user to submit or discard the draft, or approve adding the replies to it (GraphQL reply with the
+  draft's `pullRequestReviewId`; they publish on submit). Then reply in every thread; resolve each only after its
+  reply lands.
+- Superseded fallback — never use: per-thread reaction plus one top-level issue comment. A reaction without an
+  in-thread reply tells the reader nothing, and an off-thread answer is invisible to reviewers and bots in context.
+  Issue comments carry non-thread findings only.
 
 ## Submit 422 — re-read the review state before touching the payload
 

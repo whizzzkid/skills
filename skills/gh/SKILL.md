@@ -18,7 +18,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.10.29-192344"
+  version: "2026.10.29-193155"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -124,8 +124,10 @@ Route all GitHub write operations (PR create/edit, review comments, inline repli
 changes) through this skill. Build JSON bodies with `jq -n`, never heredocs. Review `comments[]` take line anchors only
 — off-diff findings go in the review body (file-level exists only on the single-comment endpoint). Check for pending
 reviews before GraphQL replies; resolve a thread only after its reply lands, never in the same chained command. REST
-`/replies` 422 `one pending review` → never submit or delete the user's pending review: react per thread, post one
-issue comment answering each thread, and tell the user their draft blocks replies. Resolve
+`/replies` 422 `one pending review` → **Important:** stop and ask the user to submit or discard their draft, or to
+approve adding the replies to it; then reply in every thread. Never submit or delete the draft yourself; never react
+without an in-thread reply; never move thread answers to an issue comment (issue comments carry non-thread findings
+only). Resolve
 repo names from the API, not URLs. Use the reactions API for emoji responses. Full API surface rules, endpoint gotchas,
 and pending-review guards: [`references/github-api-surfaces.md`](references/github-api-surfaces.md).
 
