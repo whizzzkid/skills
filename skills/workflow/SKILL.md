@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.28-213141"
+  version: "2026.10.29-192812"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -48,7 +48,9 @@ Execute without asking permission at each step. Take the first that matches:
 1. Plan ambiguous / CI persists after 3 attempts / user-owned design / explicit pause / destructive action → stop and
    ask.
 2. Skill-owned event (commit, PR, docs, merge, retro) → invoke the skill — never raw `git commit`/`gh pr merge`/ad-hoc
-   planning.
+   planning. **HARD RULE — outbound writes too:** before any comment, reply, reaction, or message (GitHub, Jira, Slack,
+   docs), invoke its owner (`wk-gh`, `wk-jira`, `wk-slack`) plus `wk-tone` in that turn — even mid-step in an active
+   parent skill (a parent's "post a comment" step loads nothing; a host attribution reminder is not the footer).
 3. CI fails or review blocks → fix loop automatically, up to 3 attempts.
 4. Terminal directive phrased as question ("merge?", "push?") → query state and act now; never wait/poll.
 5. Defect diagnosed, owning file identified → edit that file now; never re-state tradeoffs.

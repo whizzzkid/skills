@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.10.28-213141`
+**Version:** `2026.10.29-192812`
 
 ## Invocation
 
@@ -69,6 +69,9 @@ flowchart TD
   draft-complete authoring gate.
 - **Skill invocation is mandatory** via the `Skill` tool — approximating skill behavior with
   raw commands skips guards and conventions that the skills contain.
+- **Outbound writes load their owner in the same turn** — every comment, reply, reaction, or message invokes
+  [`wk-gh`](../gh/README.md), [`wk-jira`](../jira/README.md), or [`wk-slack`](../slack/README.md) plus
+  [`wk-tone`](../tone/README.md), even mid-step inside another skill.
 - **Re-check command-level triggers before a CLI's first use.** Task-level
   selection is not enough when a later command activates a subsystem skill.
 - **Mandatory PR lifecycle authorizes first publication.** Push the tracked task
