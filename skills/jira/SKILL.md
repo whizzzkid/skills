@@ -27,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.14-233845"
+  version: "2026.10.30-195658"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -77,8 +77,12 @@ the org name (404s).
 
 Match `[A-Z][A-Z0-9]+-\d+`; take the first hit: 1) branch name (`git rev-parse --abbrev-ref HEAD`) 2) last commit
 (`git log -1 --pretty=%B`) 3) PR title/body (`gh pr view --json title,body`) 4) recent user prompts. Normalize to
-UPPERCASE. Multiple keys → prefer branch name; ambiguous → ask. No key → skip transitions; ask once whether a ticket
-exists; "no" → stop offering.
+UPPERCASE. Multiple keys → prefer branch name; ambiguous → ask.
+
+**Important — no key at first development intent → offer a ticket before the first commit.** Any task turning into
+code (incl. an investigation pivoting to a fix) runs Stage 1 at that pivot; no key → skip transitions, ask once
+whether a ticket exists or offer to create one (project, priority, sprint) via Manual ticket operations; "no" → stop
+offering. (Skipping Stage 1 on a pivot ships the PR untracked.)
 
 **HARD RULE — detected key is candidate, not confirmed.** Before transitioning it or writing it into a PR title/body,
 fetch (`getJiraIssue`) and confirm `summary`/component/`status` plausibly match the diff. Mismatch (different service,
@@ -139,7 +143,8 @@ assignee: @<them>)." No transitions, no writes. Max 5 digests per turn; list rem
 
 User-initiated creates/edits/batch-transitions → confirm before any write; Jira writes are irreversible (no delete
 API). **HARD RULE:** never write without explicit approval of the change set on user-initiated work. Auto mode does
-not exempt. Default `issueTypeName`: `"Story"`. Auto (no confirm): assign (Stage 2, terminal assignee check), lifecycle comments. After
+not exempt. Default `issueTypeName`: `"Story"`. Requested priority absent from the project's scheme → use the
+highest allowed value and say so. Auto (no confirm): assign (Stage 2, terminal assignee check), lifecycle comments. After
 creating → Active-sprint assignment.
 
 ## Conflict and missing-state handling

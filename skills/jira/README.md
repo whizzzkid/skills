@@ -2,7 +2,7 @@
 
 > Coordinate Jira ticket state with the development lifecycle and surface Jira context whenever the agent encounters a Jira artifact.
 
-**Version:** `2026.10.14-233845`
+**Version:** `2026.10.30-195658`
 
 ## Invocation
 
@@ -35,6 +35,9 @@ stateDiagram-v2
 - **Description quality gate runs at every writable stage:** Stages 2, 3, and 4 each invoke the gate, so a session that joins mid-branch (e.g., after the initial commit) still gets a checkpoint before reviewers see the ticket.
 - **HARD RULE — confirm before any user-initiated write:** `createJiraIssue`, `editJiraIssue`, and transition calls on user-requested operations all require explicit approval. Jira has no delete API. Auto mode does not exempt this.
 - **PR title format is enforced:** `feat(auth): ✨ OAuth login [BOARD-123]` — key in square brackets, last token, exactly one key. If the title already has the wrong key, the skill asks before replacing.
+- **No key → ticket offered before the first commit:** when work turns into code (including an investigation that
+  pivots to a fix) and no key is found, the skill asks once whether a ticket exists or offers to create one. A
+  requested priority missing from the project's scheme falls back to the highest allowed value, stated.
 - **Assignee is never stolen:** If a ticket is already assigned to someone else, the skill reports once and leaves it — the work may genuinely be reassigned.
 - **HARD RULE — starting work is one atomic, self-healing claim:** Assign-to-user + In Progress + active sprint + a start comment fire together on *any* development intent (edit/commit/PR work), not only the literal first commit — so mid-branch joins and resumed sessions still claim the ticket.
 - **HARD RULE — a blocked write is surfaced once, never silently retried:** Auto mode treats a Jira write as an external-system write needing explicit intent (a referenced ticket = context, not authorization). On a permission denial, the skill surfaces the block once and asks the user to confirm intent or add a Jira-write permission rule — it never spins on denials or swallows the block silently.
