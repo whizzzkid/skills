@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.10.29-180348`
+**Version:** `2026.10.30-194506`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -51,8 +51,13 @@ reported afterwards in the response.
 - **Actionable means checkbox** — every item you must act on, each link in a
   list included, is its own checkbox item; action sections (such as the
   GitHub Inbox of merges, review requests and pending drafts on open PRs) sit
-  directly under ASAP, one short line per item. The render check fails on any
-  checkbox-less item.
+  directly under ASAP, one short line per item. Non-actionable lines are
+  checkbox-less `st-info` spans, never raw text. The render check fails on any
+  checkbox-less item that is not `st-info`.
+- **Layout-geometry render gate** — before "Live page ready", the check asserts
+  the three columns are direct children of the row with distinct, increasing
+  left edges (containment alone passes on nested columns), and takes a
+  screenshot. A same-day re-run regathers or says the earlier gather was reused.
 - **SilverBullet rendering** — no standalone HTML files are generated;
   `live.md` contains SilverBullet HTML blocks that the browser renders.
 - **Standup copy** — copies rich HTML to preserve the three-level list

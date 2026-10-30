@@ -49,7 +49,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.29-180348"
+  version: "2026.10.30-194506"
   model:
     openai: gpt-5.6-terra
 ---
@@ -118,6 +118,8 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
 - **Stage 1 — Load previous live.md.** Read `$LIVE_FILE`: open `data-done="false"` → carry-over, completed → count.
   Canonical state is `data-done` (legacy glyphs read-only). Resolve previous working day from frontmatter. Read
   `$PREV_SNAPSHOT_FILE`; treat `## Achievements` as candidate evidence, never freshness waiver.
+  - **Same-day re-run** (`date:` = `$TODAY`) → regather every domain, or state in Meta and the response that the
+    earlier gather (with its time) was reused; never present a reused gather as fresh.
 - **Stage 2 — Gather in parallel.** Launch 5 agents; prepend
   [`references/subagent-contract.md`](references/subagent-contract.md), append
   [`references/yesterday-synthesis.md`](references/yesterday-synthesis.md); separate previous-workday from today.
@@ -158,6 +160,9 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
   - **Important: actionable means checkbox.** Every item the user must act on — each link in a link list included — is
     its own `st-item` with an `st-cb` and `data-t`; checkbox-less text is for non-actionable content only (a list of
     links is items, not presentation). Action sections sit directly under ASAP, one short line per item.
+  - **Info lines are spans too.** Inside a column, each non-actionable line (meeting, FYI, sub-heading) is a
+    checkbox-less `<span class="st-item st-info">`; only a section's `**bold**` header stays bare. Never raw text or a
+    `<br>`-terminated line (observed: a raw-text rewrite nested columns 2-3 inside column 1).
   - **HARD RULE — GitHub Inbox.** One col2 section lists everything on GitHub waiting on the user, one checkbox item
     per link (`st-item st-nested`, `[repo\#N: title](url) — note`): merges, review requests (allowlist vs other repos)
     and each unsubmitted PENDING draft on an open PR (linking its review URL). Open PRs only: drop merged, closed and
@@ -180,12 +185,17 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
   - Apply `wk-slack` privacy filter + formatting. Rich body = `<ul>` with three `<li>`. Verify skin-tone emoji survive
     write.
 - **Stage 5 — Verify render, then open.** **HARD RULE — gate the "Live page ready" announcement on a verified render.**
-  `open` confirms nothing. Before announcing, `browser_navigate` → `browser_evaluate` containment (3 non-empty
-  `.sitrep-col`, every `.st-copy-block`/`.st-item` inside a column — assert containment, not presence — and zero
-  `.st-item` without an `.st-cb`). `false` → fix
-  per `wk-silverbullet` Step 6. Verify standup copy per
-  [`references/standup-copy-block.md`](references/standup-copy-block.md). `browser_close` before `open`, then announce
-  "Live page ready — {X} items, {Y} meetings, {Z} carry-overs."
+  `open` confirms nothing; containment alone cannot fail on columns nested inside each other (`closest('.sitrep-col')`
+  and scoped counts stay true). Before announcing, `browser_navigate` → `browser_evaluate`, all must hold:
+  - **Geometry:** exactly 3 non-empty `.sitrep-row > .sitrep-col` (direct children), zero `.sitrep-col .sitrep-col`,
+    and distinct, strictly increasing `getBoundingClientRect().left` across the three.
+  - **Containment, not presence:** every `.st-copy-block`/`.st-item` inside a column (scoped count = global count).
+  - **Checkboxes:** zero `.st-item:not(.st-info)` without an `.st-cb`.
+  - **Screenshot:** `browser_take_screenshot` and confirm three side-by-side columns.
+  - `false` → fix the markup per `wk-silverbullet` Step 6. Never reshape content to pass a clause; a clause that
+    rejects canonical markup is the defect — fix the clause.
+  - Verify standup copy per [`references/standup-copy-block.md`](references/standup-copy-block.md). `browser_close`
+    before `open`, then announce "Live page ready — {X} items, {Y} meetings, {Z} carry-overs."
 
   ```bash
   open "http://localhost:$SITREP_PORT/$EMPLOYER/live.md"

@@ -70,7 +70,7 @@ Write column content with NO blank lines inside any `<div>`:
 </div>
 <div class="sitrep-col">
 **Section 3**
-<span class="st-item">Plain text item</span>
+<span class="st-item st-info">Plain text item (non-actionable)</span>
 </div>
 </div>
 ```

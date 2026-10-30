@@ -20,6 +20,10 @@
   `<div class="sitrep-row">` containing three `<div class="sitrep-col">`.
 - Actionable items use `<span class="st-item">` with a nested
   `<span class="st-cb" data-t="tN" data-done="false" onclick="HANDLER">`.
+- The three columns are siblings: each `sitrep-col` closes before the next
+  opens, all direct children of `sitrep-row`. Containment checks cannot detect
+  a column nested inside another — the render gate asserts parentage and
+  distinct, increasing left edges.
 - `data-t` is unique and sequential per page (`t1`…`tN`).
 - Auto-action items already done at generation start `data-done="true"`; nested
   sub-items use `class="st-item st-nested"`.
@@ -46,8 +50,12 @@ non-actionable text. Escape `[` and `]` inside link text.
 
 ## Non-actionable content
 
-Non-actionable content (meeting lines, headers, standup block) is plain text
-or inline markdown.
+- Inside a column, each non-actionable line (meeting, FYI, sub-heading) is a
+  checkbox-less `<span class="st-item st-info">`; the render gate exempts
+  `st-info` from its checkbox assertion.
+- Only a section's `**bold**` header line and the documented standup copy
+  block stay outside spans. Never write raw text or `<br>`-terminated lines in
+  a column — that shape nested later columns inside the first.
 
 ## Priority/urgency sorting
 

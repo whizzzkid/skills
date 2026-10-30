@@ -23,7 +23,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.10.30-194506"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -101,7 +101,7 @@ Key rules: scope layout classes under `.cm-content`; use `.st-item + br { displa
 
 **HARD RULE:** After any CSS or HTML change, verify in a browser — a file diff does not prove the running instance renders correctly.
 
-Force-reload pattern, CSS selector reference, and the full 6-step verification loop (screenshot → DOM inspect → containment assert → interactivity test) are in [references/rendering-rules.md](references/rendering-rules.md).
+Force-reload pattern, CSS selector reference, and the full 6-step verification loop (screenshot → DOM inspect → containment + geometry assert → interactivity test) are in [references/rendering-rules.md](references/rendering-rules.md).
 
 ## Common Mistakes
 
@@ -110,6 +110,7 @@ All known failure modes:
 - **Blank line inside `<div>`** → column renders empty; content falls below layout.
 - **Blank line padding a nested `<div>`/`<pre>`** → child ejected full-width below the parent, which still renders its other content.
 - **Verifying with a presence/count assertion only** → escaped nested content still counts as present; assert containment.
+- **Verifying sibling columns by containment only** → a column nested inside its sibling passes `closest()` and scoped counts; assert direct parentage and distinct increasing left edges.
 - **`<input type="checkbox">`** → disabled by SilverBullet; handler silently stripped.
 - **`=>` in onclick attribute** → handler truncated at `>`; function never called.
 - **`"` inside `"..."` attribute** → attribute closes early; handler and subsequent attributes break.

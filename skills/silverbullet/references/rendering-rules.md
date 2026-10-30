@@ -96,5 +96,11 @@ Run this loop (Playwright MCP, or browser console for steps 1/3/4):
    ```javascript
    document.querySelectorAll('PARENT CHILD').length === document.querySelectorAll('CHILD').length
    ```
+   - **Sibling containers need geometry, not containment.** A column nested inside its sibling column still passes `closest()` and scoped counts. Assert direct parentage, no self-nesting, and distinct increasing left edges:
+   ```javascript
+   const cols = [...document.querySelectorAll('ROW > COL')];
+   const lefts = cols.map(c => c.getBoundingClientRect().left);
+   cols.length === N && !document.querySelector('COL COL') && lefts.every((l, i) => i === 0 || l > lefts[i - 1])
+   ```
 5. **Reload fresh** — after source changes, navigate to the page fresh (`browser_navigate`) before validating; cached DOM may mask a broken handler.
 6. **Test interactivity** — `.click()` a checkbox span, re-read the page (`window.client.space.readPage`) to confirm the toggle persisted to file.
