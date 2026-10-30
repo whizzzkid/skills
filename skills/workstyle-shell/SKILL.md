@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.27-183502"
+  version: "2026.10.30-221813"
   internal: false
   model:
     openai: gpt-5.6-luna

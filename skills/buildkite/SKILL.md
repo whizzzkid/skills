@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.29-185707"
+  version: "2026.10.30-221813"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -131,6 +131,17 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | jq -
   with `run_in_background: true` if needed.
 - **HARD RULE: a monitoring announcement states URL + failing step + next action — never just "monitoring in
   background."**
+- **HARD RULE: a background watch loop must prove each poll parsed.** Run it under explicit `bash -c` with pipeline and
+  build as separate positional args (never word-split a combined `$p` — zsh does not split it); print a first-poll
+  line and a line on every state change; empty/unparsable state → print and exit non-zero, never re-poll silently. (A
+  parse that fails without output starves the failure branch: the loop reads "still running" while the build is red.)
+  ```bash
+  bash -c 'prev=; n=0; while :; do n=$((n+1))
+    s=$(bk build view -p "$1" "$2" --json 2>&1 | grep -v "^Warning:" | jq -r ".state" 2>/dev/null) || s=
+    [[ -z "$s" || "$s" == null ]] && { echo "poll $n: UNPARSABLE state"; exit 2; }
+    [[ "$s" != "$prev" ]] && echo "poll $n: $s"; prev=$s
+    case $s in passed) exit 0;; failed|canceled|blocked) exit 1;; esac; sleep 30; done' _ "$PIPELINE" "$BUILD"
+  ```
 - Non-required checks do not gate merge — gate on
   `gh pr checks --json name,state,required | jq 'select(.required==true)'`.
 

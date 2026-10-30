@@ -32,3 +32,7 @@ the rule's *shape*, not its volume. The framing fix (any position, not just `for
 load-bearing half; the notch records the repeat.
 
 **Where** — Rules list, zsh-portability trap family, first trap.
+
+**Escalation (2026-10-30) — rung 3 → rung 4 (`**CRITICAL:**`).** Re-violated while in force: a background CI watch
+loop split a "pipeline build" pair with `set -- $p` under zsh, so every poll received one malformed argument and the
+loop went silent. `set -- $p` is now named as a position. Companion liveness rule lives in `wk-buildkite`.

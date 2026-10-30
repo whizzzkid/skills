@@ -2,7 +2,7 @@
 
 > Use when working with Buildkite CI — checking build status, investigating failures, viewing job logs, or monitoring builds after push.
 
-**Version:** `2026.10.29-185707`
+**Version:** `2026.10.30-221813`
 
 ## Invocation
 
@@ -40,6 +40,7 @@ flowchart TD
 - **Env vars must be forwarded at every layer** (pipeline YAML → build script → docker-compose → Dockerfile `ENV`) or they are silently dropped before reaching the container.
 - **Artifact downloads use a namespaced path** `/tmp/agent/buildkite/<build>/<job_id>/...` to prevent cross-session overwrites and provide a greppable audit trail.
 - **Never foreground-poll** — an `until`/`while` loop on `bk build view` blocks the turn for minutes; run a single status check, or watch with `run_in_background: true`.
+- **A background watch loop must prove each poll parsed** — a parse that fails with no output starves the failure branch, so the loop looks like "still running" while the build is red. Run it under explicit `bash -c` with pipeline and build as separate args, print a first-poll line plus every state change, and exit loudly on an empty/unparsable state.
 - **An agent-side failure wears the step’s own name.** `job_executor_error`, a failed `agent environment` hook, or a lost agent is stamped with the step name and a synthetic exit status (255/-1), so the check list is indistinguishable from a real test failure — only the log body separates them. The tell is position: it prints *before* the step’s command runs. Retry the single job; never bisect the diff.
 - **A GraphQL-only token blocks `bk job retry`** ("mutation operations are not allowed") but not `bk build rebuild <n> -p <pipeline> -y` — try the rebuild before treating it as an auth failure.
 - **Separate trigger from cause in failure reports** — "your merge triggered this build" and "the failure is [not] caused by your diff" are independent facts; state both explicitly, never a single "unrelated" verdict.

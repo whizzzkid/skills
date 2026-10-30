@@ -9,11 +9,11 @@ command passes no review, so the trap lands there unchallenged. Traps run **both
 directions — a bash-ism zsh rejects, *and* a zsh-ism the shell declines to honor — so
 clearing a command against the bash-only entries below proves nothing. Six traps:
 
-- **Very important:** unquoted **parameter** expansion does not word-split under zsh — in
+- **CRITICAL:** unquoted **parameter** expansion does not word-split under zsh — in
   **any** position, not only a `for` list. `for x in $LIST` runs the body once over the
   whole newline-joined blob; `cmd $FILES` hands the tool a *single* argument containing
-  every path, so it reports `No such file or directory` naming a blob it was never
-  given. Either way every element-wise command fails and any no-match sentinel survives
+  every path (and `set -- $p` sets one positional, not a pair), so it reports
+  `No such file or directory` naming a blob it was never given. Either way every element-wise command fails and any no-match sentinel survives
   untouched, so the run reads as a clean zero. Never materialize a file list in a variable
   at all — pipe the producer into the loop (`producer | while IFS= read -r x; do …; done`),
   one operand per call, so the unquoted form is never available to compose; `<<< "$LIST"`
