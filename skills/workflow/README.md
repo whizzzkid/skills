@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.10.30-021032`
+**Version:** `2026.10.30-195232`
 
 ## Invocation
 
@@ -111,6 +111,9 @@ flowchart TD
   `set -euo pipefail`.
 - **Execution environment is selected before validation:** inspect tracked container and runner configuration, use a
   runnable documented project container, and surface its absence before falling back to the host.
+- **Environment failures block only their gates:** a credential, registry, or install failure stops the gates that
+  need it, not implementation — work is still written and committed, and the blocker is reported against the
+  unverified gates.
 - **Mixed-toolchain boundaries are explicit:** name the subsystem owning a secondary-toolchain command before its
   first invocation, then still run the repository-wide primary gate.
 - **Recursive repository searches are bounded before execution:** prefer tracked-content search; otherwise exclude

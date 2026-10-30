@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.30-021032"
+  version: "2026.10.30-195232"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -161,6 +161,11 @@ Code standards:
 devcontainer, runner, repo instructions. Use documented runnable container; if none, say so before host fallback.
 Explicit validation waiver short-circuits provisioning — never build an env for a removed gate; name what stays
 unverified. Mixed toolchains: [announce subsystem ownership](references/environment-guardrails.md).
+
+- **An environment failure blocks only the gates that need it.** Registry auth, credentials, daemon, or install
+  failure → keep implementing and committing; surface the blocker once (fix CTA, never a retry loop) scoped to the
+  gates it leaves unverified, and never mark those gates passed. (A broken env is not a plan blocker; halting writes
+  nothing the user asked for.)
 
 Cover required paths: **happy** (expected flow), **sad** (failures, invalid input, error handling), **edge**
 (boundaries, nulls, concurrency, off-by-one). Verify:
