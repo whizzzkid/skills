@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.10.28-210342`
+**Version:** `2026.10.30-202125`
 
 ## Invocation
 
@@ -55,6 +55,9 @@ flowchart TD
   it. Finding-response commits and tree-identical rewrites preserve clearance;
   only unmatched new work gets a delta-scoped review. Clear lineage is required
   before merge or `--auto` enablement. No size exemption.
+- **Review threads are re-polled after every push:** green CI and a merge state of "review required" never mean only
+  approval is left. Before any status report the skill queries unresolved `reviewThreads` (GraphQL) once each bot
+  reviewer has reviewed the current head, and treats any open thread as work.
 - **Fresh CI per push before merge:** Every push that lands new commits starts a new CI run. The skill verifies
   the run for the *current* HEAD SHA has completed and is green before merging — a prior green run against
   older commits never satisfies the gate.

@@ -1,7 +1,7 @@
 # GraphQL: Unresolved Review Threads
 
-Shared query used by `wk-pr-review` (Phase 2/4), `wk-pr-merge` (Step 4), and
-`wk-pr-resolve`.
+Shared query used by `wk-pr` (Hard Rule 5), `wk-pr-review` (Phase 2/4),
+`wk-pr-merge` (Step 4), and `wk-pr-resolve`.
 
 ```bash
 gh api graphql -f query='

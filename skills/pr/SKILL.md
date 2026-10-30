@@ -19,6 +19,7 @@ allowed-tools:
   - "Bash(gh stack:*)"
   - "Bash(gh extension list:*)"
   - "Bash(gh api repos:*)"
+  - "Bash(gh api graphql:*)"
   - "Bash(gh repo view:*)"
   - "Bash(gh repo sync:*)"
   - "Bash(gh pr close:*)"
@@ -36,7 +37,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.28-210342"
+  version: "2026.10.30-202125"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -73,6 +74,12 @@ Create and manage GitHub PRs: draft mode, stacking, and a post-creation workflow
 4. **Verify every claim from its source, not memory.** Re-read source files before writing behavioral descriptions;
    quote severity ladders directly. External-capability claims cite upstream source at composition time. Every
    identifier (run id, SHA, URL) in the body comes from a command run this turn.
+5. **HARD RULE — re-poll review threads before every status report after a push.** Green CI plus a `reviewDecision`
+   / merge state never proves "only approval left": bots post inline findings under an empty review body. Query
+   unresolved `reviewThreads` via GraphQL
+   ([`../pr-review/references/graphql-unresolved-threads.md`](../pr-review/references/graphql-unresolved-threads.md))
+   after each bot reviewer has a review whose `commit_id` equals `headRefOid`. Any unresolved thread is open work
+   (`wk-pr-resolve`), never "awaiting approval". A review waiver does not waive this rule.
 
 ## Step 1: Assess Scope
 
@@ -162,8 +169,9 @@ After draft creation (or pushing new commits to an existing PR), open it in the 
 2. **Sync description + check off CI items** — tick satisfied test-plan items; re-sync after every state change.
 3. **HARD RULE — self-review is mandatory after CI green.** If Step 3's self-review was skipped, invoke now. No
    size/scope exemption; skipping requires explicit user instruction this session — never silent skip.
-4. **Address automated feedback** — fetch via `gh api .../pulls/{number}/comments` + `gh pr reviews`. Fix small
-   correct findings in-round; defer only large, contested, or out-of-scope ones.
+4. **Address automated feedback** — fetch unresolved `reviewThreads` (GraphQL, per Rule 5; REST comments carry no
+   resolution state) plus review bodies. Fix small correct findings in-round; defer only large, contested, or
+   out-of-scope ones.
 
 ## Step 5: Mark Ready
 
