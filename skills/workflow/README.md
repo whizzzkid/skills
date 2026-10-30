@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.10.29-192812`
+**Version:** `2026.10.30-021032`
 
 ## Invocation
 
@@ -87,6 +87,8 @@ flowchart TD
   is never re-planned: it is validated for stale references, then executed from Phase 2.
 - **Optional cross-repository scope is explicit:** confirm before inspecting or changing a sibling repository, and
   prefer its runnable devcontainer before proposing task-specific host installs.
+- **Each phase PR ships only its phase's deliverable:** scaffolding, fields, or config that only a later phase of a
+  multi-phase spec uses waits for that phase.
 - **The current dedicated task branch is authoritative:** do not propose
   another branch unless the checkout is default, detached, carries unrelated
   dirty work, or the user asks for additional isolation.
@@ -98,6 +100,8 @@ flowchart TD
   and ready, so CI runs concurrently. Clearance follows reviewed work:
   finding-response commits and tree-identical rewrites preserve it; unmatched
   scope, refactor, or logic gets one delta-scoped review.
+- **PR created is not done:** the CI watch starts in the same turn as the PR create or push, and nothing is reported
+  complete before CI is green or a failure is diagnosed.
 - **CI fix loop** has a 3-attempt limit with an axis-of-variation check: attempts 1 and 2 on
   the same axis require broadening to a different axis on attempt 3, not "the same thing harder."
 - **Post-push verification adds evidence:** poll CI for the pushed SHA; do not

@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.29-192812"
+  version: "2026.10.30-021032"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -121,6 +121,9 @@ Rebase/cherry-pick conflicts → `git log --oneline -5`; base mismatches worktre
   rarely. Never put internal names, tickets, data, or URLs in public issue or PR text.
 - **Pre-patch routing:** `.md` → [`wk-markdown`](../markdown/README.md); Mermaid → [`wk-mermaid`](../mermaid/README.md);
   arch-bearing → [`wk-arch-review`](../arch-review/README.md) detector, then draft-complete gate.
+- **Scope each phase PR to that phase's stated deliverable.** Multi-phase spec or plan → build only what the current
+  phase's deliverable needs; scaffolding, jobs, schema fields, config keys, or columns that only a later phase uses wait
+  for that phase. (Pre-built later-phase code inflates review and locks in design the later phase has not validated.)
 - **Subtractive-first:** evaluate if removal/simplification eliminates the problem before adding code. Fleet-first for
   shared integrations: grep 2-3 sibling repos before fixing shared code.
 - Execute step by step. After each: (1) run tests, (2) `wk-workstyle`, (3) `wk-docs` for affected docs, (4) `wk-commit`.
@@ -205,8 +208,9 @@ blocker. Leave app running; continue Phase 5.
 
 ## Phase 5: PR
 
-**HARD RULE — "push succeeded" is NOT "work complete".** After push, run `gh pr view 2>/dev/null`; no open PR on a
-feature branch → invoke `wk-pr` immediately (commit-to-default per the Phase 2 probe needs no PR).
+**HARD RULE — "push succeeded" / "PR created" is NOT "work complete".** After push, run `gh pr view 2>/dev/null`; no
+open PR on a feature branch → invoke `wk-pr` immediately (commit-to-default per the Phase 2 probe needs no PR). PR open
+→ start the Phase 6 CI watch in that same turn.
 
 - **Repo convention:** decided by the Phase 2 pre-flight probe, never re-decided here. Follow-up branch → from
   `origin/<default>` (fetch first).
@@ -243,8 +247,9 @@ Monitor and fix CI until green, concurrently with Phase 5.5.
 
 - Do not re-run a green pre-push gate locally after pushing same SHA. `gh pr checks --watch --fail-fast` for generic;
   `wk-buildkite` for Buildkite.
-- Long watches → background. **Complete CI watches same turn** — never hand off. **Interleave** independent tasks while
-  polling.
+- **Important — start the CI watch in the same turn as every PR create or push, and complete it.** Never report a
+  phase or PR done before CI is green or a diagnosed failure is surfaced; never hand off. Long watches → background.
+  **Interleave** independent tasks while polling.
 - Diagnosis: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md). Fix ordering:
   [`references/ci-fix-candidate-ordering.md`](references/ci-fix-candidate-ordering.md).
 - Fix loop: (1) targeted fix, (2) run failing gate locally, (3) `wk-commit`, (4) push, (5) update PR, (6) re-enter. Max
