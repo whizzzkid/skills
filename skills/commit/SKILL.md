@@ -25,7 +25,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.15-002300"
+  version: "2026.10.30-190958"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -105,16 +105,19 @@ preservation, false alarms: [`references/commit-signing.md`](references/commit-s
 
 - **Push after every commit unless the user explicitly said not to** — the push is the tail of the commit sequence, not
   a separate step the user must request.
-- **First push of a brand-new branch with no PR → confirm intent first.** The push mandate applies once a branch has an
-  upstream or an open PR. When `gh pr view 2>/dev/null` finds no open PR **and** the push would create a *new* remote
-  branch (no upstream tracking), pause and confirm before pushing. **Exception — auto mode + authorizing directive:**
-  auto mode on *and* an originating prompt or repo mandate authorizes a published/tracked PR (e.g. *create a ticket to
-  track this*, *open a PR*) → skip the confirm and push. Confirm only on genuinely ambiguous intent; the no-upstream
-  signal alone does not mean unclear intent. Detect the new-branch case:
+- **Important — first push of a brand-new branch: an authorized session pushes; only an unauthorized one confirms.**
+  The push mandate applies once a branch has an upstream or an open PR. For a push that would create a *new* remote
+  branch (no upstream tracking) while `gh pr view 2>/dev/null` finds no open PR:
+  - **Authorized → push without asking, then invoke `wk-pr`.** Any implementation directive (*implement*, *fix*,
+    *build*, *ship X*) running under `wk-workflow`'s mandated PR lifecycle authorizes it, as does a repo or
+    agent-instruction mandate or an explicit publish prompt (*open a PR*, *create a ticket to track this*). Auto mode is
+    not a precondition — the mandate authorizes publication, not the permission mode.
+  - **Confirm only** in exploratory, analysis-only, or spike sessions where publishing is genuinely optional. The
+    no-upstream signal alone never means unclear intent.
 
   ```bash
   git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null \
-    || echo "no upstream — first push, confirm intent"
+    || echo "no upstream — first push: push if authorized, else confirm"
   ```
 - Push blocked (branch protection, no upstream branch, rejection) → report it explicitly to the user. Never silently
   skip the push.
