@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.30-222300"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -69,6 +69,7 @@ Manual: `/wk-workstyle-ruby scan` (full working tree) · `/wk-workstyle-ruby che
 
 - **Exercise a shared base-controller `before_action` via a concrete named subclass in the spec**, not an anonymous `controller do … end` block — the block form trips `Sorbet/BlockMethodDefinition` against the no-metaprogramming cop.
 - **Prefer a plain sig'd class with an inlined filter over `ActiveSupport::Concern`** when the app has no concern precedent and Sorbet `requires_ancestor` + `included do` fails to type-check.
+- **Never forward a sig'd method's named block bare (`def m(&blk) = run(&blk)`)** — `Naming/BlockForwarding` autocorrects it to anonymous `&`, and sorbet-runtime rejects the sig when it is built (`missing parameter(s): &`, a `RuntimeError` on the first call). Reference the block as a value instead (`return x unless blk`, `run { blk.call }`) so the cop has nothing to rewrite. (A disable directive cannot fix it when two RuboCop configs see the code — e.g. a generator and its generated app: one flags the directive redundant, the other autocorrects without it.)
 
 ## Verify with RuboCop
 

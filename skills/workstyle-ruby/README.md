@@ -5,7 +5,7 @@
 > returns, enumerable methods, specific exception subclasses, and ASCII-only
 > comments. Project RuboCop config wins.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.30-222300`
 
 ## Invocation
 
@@ -35,3 +35,4 @@
   model-invocable on adjacent work.
 - ASCII-only comments (RuboCop `Style/AsciiComments`) — em/en dashes, smart quotes, and Unicode ellipsis are findings in `.rb` files and Ruby bin scripts.
 - Predicate `?` / bang `!` naming contract and `frozen_string_literal: true` are enforced per file.
+- **Sorbet-sig'd methods never forward a named block bare** — RuboCop's `Naming/BlockForwarding` autocorrect rewrites `&blk` to anonymous `&`, which sorbet-runtime rejects with a `RuntimeError`; reference the block as a value (`blk.call`) instead.
