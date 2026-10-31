@@ -9,3 +9,5 @@ Before tests, enumerate every affected site; fix all in one pass:
 - **Test-harness reachability** — unreachable branches → extract pure module with unit tests.
 - **Shared-contract ownership** — grep for existing format owner; import, don't duplicate.
 - **False-positive scoping** — fix targets the offending class, not severity ladder.
+- **Coupled edits** — name the invariant tying the edits together; gate all of them on every precondition up front,
+  never per edit (rule: `SKILL.md` Phase 2, coupled edits land all-or-nothing).

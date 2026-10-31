@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.30-195232"
+  version: "2026.10.31-002658"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -136,6 +136,13 @@ Rebase/cherry-pick conflicts → `git log --oneline -5`; base mismatches worktre
 Edit-scope pre-flights — enumerate every affected site (callers, `replace_all` occurrences, brief identifiers, guards,
 harness reachability, contract owners, false-positive class); fix all in one pass before tests:
 [`references/edit-scope-preflights.md`](references/edit-scope-preflights.md).
+
+- **HARD RULE — coupled edits land all-or-nothing.** A fix adding an edit that another edit depends on (a reference and
+  the file it needs, a call and its definition, two injections that only work together) → name the coupling invariant,
+  check every precondition (each anchor, target, and file present) before applying any edit, and fail loudly when one
+  is missing; add one sad-path test per absent precondition before committing. An edit helper that silently skips a
+  missing anchor is a red flag that needs an explicit guard. (Independently applied halves reproduce the original bug,
+  or silently wire nothing, on any target missing one anchor.)
 
 Code standards:
 
