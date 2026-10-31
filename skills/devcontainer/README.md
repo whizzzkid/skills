@@ -2,7 +2,7 @@
 
 > Use when creating or debugging a devcontainer for a Rails app (or any mise-managed project).
 
-**Version:** `2026.10.21-213538`
+**Version:** `2026.10.31-003026`
 
 ## Invocation
 
@@ -35,6 +35,10 @@ flowchart TD
 - **Surface the real build error first** — `devcontainer up` hides the cause behind a generic build failure; a trace log shows it. Under Compose 5.x bake the usual cause is a filesystem entitlement for the CLI's temp features Dockerfile (prefix `BUILDX_BAKE_ENTITLEMENTS_FS=0` on the CLI call). Plain compose is a last resort only when no features are
   declared and nothing relies on `devcontainer exec` — a stack started outside the CLI lacks the labels `exec` finds
   containers by.
+- **Host port held by a sibling worktree** — never edit the committed mapping or stop the other stack. A throwaway
+  container on the stack's network covers ad hoc work; when hooks call `devcontainer exec`, start this worktree's stack
+  with an uncommitted override that resets published ports and stamps the `devcontainer.local_folder` /
+  `devcontainer.config_file` labels, then run the post-create steps by hand.
 - **Prepare the test DB the way CI does** — `RAILS_ENV=test db:prepare` loads seeds into a fresh DB and skews
   count-based tests; use CI's recipe or `db:test:prepare`.
 - **Do not stream startup output when Compose resolves host credentials** — prefer file-backed secrets; otherwise capture under `umask 077`, print only an exact-value-redacted copy, and verify with a canary.

@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.21-213538"
+  version: "2026.10.31-003026"
   model:
     openai: gpt-5.6-terra
 ---
@@ -119,7 +119,31 @@ docker run --rm -it \
   and volume prefixes follow the **pinned project name**, not the compose file's
   directory.
 - Never resolve this by editing the committed port mapping — that breaks the other
-  worktree and lands an unrelated diff.
+  worktree and lands an unrelated diff. Never stop the other worktree's stack.
+
+**Important — hooks or scripts call `devcontainer exec` → the throwaway container is not enough.** Grep them first.
+`devcontainer exec` finds its container only by the `devcontainer.local_folder` + `devcontainer.config_file` labels
+(exact path match off Windows), which neither a throwaway nor a hand-started compose container carries — hooks then
+fail with "Dev container not found". Start this worktree's own stack with an **uncommitted** override, kept outside
+the tree, that resets every published port and stamps both labels:
+
+```yaml
+services:
+  <service>:                 # devcontainer.json "service"; reset ports on every service that publishes one
+    ports: !reset []
+    labels:
+      devcontainer.local_folder: <absolute workspace path>
+      devcontainer.config_file: <absolute workspace path>/.devcontainer/devcontainer.json
+```
+
+```bash
+docker compose -p "$proj" -f .devcontainer/docker-compose.yml -f <override.yml> up -d
+```
+
+- Then run the `postCreateCommand` steps by hand (only `devcontainer up` runs them) and prove the lookup with
+  `devcontainer exec --workspace-folder . true` before relying on any hook.
+- Features declared → plain compose never applies the CLI's features overlay; confirm the tools the hooks need exist in
+  the container before trusting a hook's result.
 
 ## `devcontainer up` fails at the image build
 
@@ -157,10 +181,10 @@ docker run --rm -it \
 | Dependency install fails on registry `401` in a fresh container | Expired package-registry credential; the provisioning script treats the registry as the only source | Not a hard stop — seed the dependency volume from a sibling container's volume on the same daemon and install offline (`wk-docker` → *Seed a Dependency Volume from a Sibling*) |
 | `down` reports success but containers stay up | Teardown used bare `-f` with no `-p` → empty/wrong project | Pin `-p` to the lowercased `<basename>_devcontainer` to match `devcontainer up`/VS Code |
 | Startup output contains a host credential | CLI printed the interpolated Compose model | Use file-backed secrets, or capture under `umask 077` and print only an exact-value-redacted copy |
-| `port is already allocated` bringing the stack up | A sibling worktree's stack of the same project already publishes that host port | Attach a throwaway container to the running stack's network and volumes with nothing published — *Host port already bound by a sibling worktree* |
+| `port is already allocated` bringing the stack up | A sibling worktree's stack of the same project already publishes that host port | Attach a throwaway container to the running stack's network and volumes with nothing published; hooks use `devcontainer exec` → ports-reset + labels override instead — *Host port already bound by a sibling worktree* |
 | `bundle install` 401s in a manually-started container | Bundler credentials come from a hostname-derived `BUNDLE_<HOST>` var the provisioning script exports; a manual `docker run` does not inherit it | Export it explicitly (`wk-cloudsmith` → *Bundler credentials for a Cloudsmith gem source*) |
 | `devcontainer up` fails "building the Docker Compose images" while a plain base build succeeds | Compose bake requests an fs entitlement for the CLI's temp features Dockerfile | Trace-log the real error, prefix `BUILDX_BAKE_ENTITLEMENTS_FS=0` on the CLI call; plain compose only when nothing uses `devcontainer exec` — *`devcontainer up` fails at the image build* |
-| `devcontainer exec` finds no container; hooks that shell into it fail | Stack was started by plain `docker compose`, which never sets the CLI's `devcontainer.local_folder` / `config_file` labels | Fix the build and bring it up via `devcontainer up`; ad hoc only: `devcontainer exec --container-id <id>` |
+| `devcontainer exec` finds no container; hooks that shell into it fail | Stack was started by plain `docker compose`, which never sets the CLI's `devcontainer.local_folder` / `config_file` labels | Fix the build and bring it up via `devcontainer up`; port clash only: stamp both labels in a compose override; ad hoc only: `devcontainer exec --container-id <id>` |
 | Test counts / uniqueness fail on a freshly prepared test DB | `RAILS_ENV=test bin/rails db:prepare` runs `db/seeds.rb` whenever it initializes a DB (seeding defaults on for the primary config in every env) | Mirror CI's test-DB recipe (e.g. `db:drop db:create db:migrate`) or `bin/rails db:test:prepare` (purge + schema load, no seeds) |
 
 ## Post-Completion
