@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.22-185702"
+  version: "2026.10.31-002302"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -118,8 +118,14 @@ PR title/body purpose section; never hand-transcribe; verify hunk boundaries if 
 objective, naming-aware, and diff-sensitive, and brief it with every stance in
 [`references/subagent-stances.md`](references/subagent-stances.md) (coverage, narrate-why, refactor, relocation,
 introduction-claim, runtime-behavior, absence-claim, intent, design-invariant, artifact-provenance,
-auth-boundary). `category:` values:
+auth-boundary, transaction-state). `category:` values:
 [`references/hunt-categories.md`](references/hunt-categories.md).
+
+- **Connection/session lifecycle → trace transaction state, fix sketches included.** A diff that disconnects, resets,
+  reconnects, or swaps a connection or session — or a fix sketch this review proposes that does — must have the
+  subagent trace every open-transaction and savepoint state on it, and which caller owns the connection at that moment.
+  (A framework disconnect resets transaction state, silently discarding work a rescuing savepoint still believes
+  pending; happy-path recovery proves nothing about it.)
 
 ## Step 4: Findings Format and Severity
 ```

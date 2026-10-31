@@ -34,3 +34,8 @@ naming-aware, and diff-sensitive.
   browser with no session before closing it (a request spec never exercises the poll tick). Flag an audit spec that
   checks only class ancestry as a coverage gap — any subclass passes it, whatever its skip callbacks. A confirmed issue
   that predates the diff → separate ticket, not a fold-in.
+- **Transaction-state-aware:** a change that disconnects, resets, reconnects, or swaps a connection or session —
+  typically a ported resilience/recovery mechanism — is reviewed against every state the connection can be in, not
+  only the recovery path: open transaction, nested savepoint, and connection checked out by another caller. Hold the
+  review's own fix sketches to the same trace; a proposed "disconnect on failure" that fires mid-transaction swaps a
+  race for silent data loss.
