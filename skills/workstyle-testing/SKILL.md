@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.10.31-003455"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -78,6 +78,14 @@ Manual: `/wk-workstyle-testing scan` (full working tree) · `/wk-workstyle-testi
 - **Sad-path tests are mandatory** for any error-handling branch.
   A function that throws/returns-error with no corresponding test
   is untested error handling.
+- **Error-text matchers need one real-error test.** Code that
+  classifies a dependency's error by its message (database driver,
+  client library, CLI) → keep at least one test that provokes the
+  real error from the real dependency (a real-database canary)
+  beside the stubbed cases. (A stubbed error proves only that the
+  matcher matches its own literal; when the dependency rewords the
+  message, every stubbed test stays green while production stops
+  matching.)
 - **Prove screenshot exclusion with decoded pixels.** Compare decoded pixels
   against a manually excluded baseline and include a negative control where the
   UI remains visible. Never use encoded image bytes or computed ancestor

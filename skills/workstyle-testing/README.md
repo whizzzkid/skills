@@ -3,7 +3,7 @@
 > Enforces the test quality bar — new-function/branch coverage, behavioral
 > assertions, and mandatory sad-path tests for every error branch.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.10.31-003455`
 
 ## Invocation
 
@@ -18,6 +18,8 @@
 - Tests assert observable behavior, not internal state or private method calls.
 - Shape/structure assertions never prove a feature works — drive the real path end-to-end against real values instead.
 - Sad-path tests are mandatory for every error-handling branch.
+- Code that matches a dependency's error text keeps one test that provokes the real error (a real-database canary);
+  stubbed error strings cannot catch upstream message drift.
 - Screenshot-exclusion tests compare decoded pixels with a manually excluded
   baseline plus a visible negative control; encoded bytes and computed ancestor
   visibility are not proof.
