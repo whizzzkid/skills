@@ -27,6 +27,7 @@ allowed-tools:
   - "Bash(printf:*)"
   - "Bash(open:*)"
   - "Bash(pgrep:*)"
+  - "Bash(curl:*)"
   - "Bash(silverbullet:*)"
   - "Bash(docker *:*)"
   - "Bash(gh *:*)"
@@ -49,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.30-194506"
+  version: "2026.11.02-201841"
   model:
     openai: gpt-5.6-terra
 ---
@@ -107,6 +108,11 @@ Resolve `$SITREP_REPO`, `$EMPLOYER`, `$SITREP_PORT` (`.sitrep.yml` wins), export
 ensure SilverBullet serving. Absolutize `$SITREP_REPO` first (relative → against the `.sitrep.yml` dir); its git
 toplevel may be a parent repo, so never assume they are equal. Recipes:
 [`references/bootstrap.md`](references/bootstrap.md).
+
+- **A failed probe is not a negative result.** Served = HTTP answer on `$SITREP_PORT`. A failing `docker` command
+  means the runtime is down, never "no container": with a compose file present, start the runtime via
+  [`wk-colima`](../colima/README.md), then `docker compose up -d`; report "not installed" only when no compose file
+  and no `silverbullet` binary exist.
 
 ## Sub-command: start
 
@@ -260,5 +266,5 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
 
 - QPR season: once-per-day nudge, never blocking: [`references/qpr-nudge.md`](references/qpr-nudge.md).
 - Env: `$SITREP_REPO`, `$EMPLOYER`, `$SITREP_PORT` (default `3000`), `$GITHUB_ORG`, `$GITC_ROOT` (default `$HOME/gitc`).
-  Tools: `jq`; `silverbullet` CLI serving `$SITREP_REPO`.
+  Tools: `jq`, `curl`; `silverbullet` CLI or a docker-compose deployment serving `$SITREP_REPO`.
 - MCP: Slack, Gmail, Calendar, Notion, Drive, Docs, GitHub, Jira, Lattice; DX optional.

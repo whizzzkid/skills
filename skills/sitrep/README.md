@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.10.30-194506`
+**Version:** `2026.11.02-201841`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -63,8 +63,10 @@ reported afterwards in the response.
 - **Standup copy** — copies rich HTML to preserve the three-level list
   hierarchy, falls back to plain text, and reports `Copied ✓` or
   `Copy failed` visibly.
-- **SilverBullet server** — the skill verifies the server is running and
-  starts it (`silverbullet $SITREP_REPO`) if not.
+- **SilverBullet server** — the skill verifies the server answers over HTTP
+  and, if not, starts it: a stopped container runtime is started via
+  [`wk-colima`](../colima/README.md) and the compose service brought up,
+  else the local `silverbullet $SITREP_REPO` binary runs.
 - **Yesterday synthesis** — validates evidence inside the previous-workday
   window across every available work source, then ranks outcomes, decisions,
   progress, and unblockings without preferring terminal tracker events. A Jira
@@ -128,3 +130,5 @@ reported afterwards in the response.
   [wk-self-perf](../self-perf/README.md).
 - When SilverBullet runs via Docker, a `docker-compose.yml` change is
   followed by `docker compose down && up -d` after push.
+- A stopped container runtime is started via
+  [wk-colima](../colima/README.md) before `docker compose up -d`.

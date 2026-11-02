@@ -38,3 +38,5 @@ daemon`) and on explicit `/wk-colima [start|stop|restart|status]`.
   Docker build or run.
 - Invoked automatically whenever a skill or workflow attempts a `docker`
   command and the daemon is absent.
+- Used by [wk-sitrep](../sitrep/README.md) bootstrap to start a stopped
+  runtime before bringing up a compose-served SilverBullet.

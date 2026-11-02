@@ -67,18 +67,37 @@ fi
   (`$_OWNER`, or "none") is not approved and to move the repo to an employer-managed org, then add that org to
   `push_owners:`. Never add the current owner to the list on the user's behalf.
 
-## Verify SilverBullet is running
+## Verify SilverBullet is serving
+
+"Served" means an HTTP answer on `$SITREP_PORT`; process and container probes only choose the start path. A failing
+`docker` command is a probe error (runtime stopped), never an empty container list — so it never reaches the
+"not installed" branch while a compose deployment exists.
 
 ```bash
-if ! pgrep -f "silverbullet" > /dev/null 2>&1; then
-  if docker ps --filter name=silverbullet --format '{{.Names}}' 2>/dev/null | grep -q .; then
-    :  # already served by a docker-compose deployment — treat as running
-  elif command -v silverbullet >/dev/null 2>&1; then
-    silverbullet "$SITREP_REPO" &
-    sleep 2
-  else
-    echo "SilverBullet is not installed. Install it, run: silverbullet $SITREP_REPO, then re-run."
-    exit 1
-  fi
+# Any HTTP response (even 401) proves the server answers; curl exits non-zero only on transport failure.
+_sb_up() { curl -sS -o /dev/null --max-time 3 "http://localhost:$SITREP_PORT/" 2>/dev/null; }
+_COMPOSE_FILE=""
+for _d in "$SITREP_REPO" "$(git -C "$SITREP_REPO" rev-parse --show-toplevel 2>/dev/null)"; do
+  for _f in compose.yaml compose.yml docker-compose.yaml docker-compose.yml; do
+    if [ -n "$_d" ] && [ -f "$_d/$_f" ]; then _COMPOSE_FILE="$_d/$_f"; break 2; fi
+  done
+done
+if _sb_up; then SB_STATE=served
+elif [ -n "$_COMPOSE_FILE" ]; then
+  if docker info >/dev/null 2>&1; then SB_STATE=compose-down; else SB_STATE=runtime-down; fi
+elif command -v silverbullet >/dev/null 2>&1; then SB_STATE=binary
+else SB_STATE=absent
 fi
+echo "SB_STATE=$SB_STATE COMPOSE_FILE=${_COMPOSE_FILE:-none}"
 ```
+
+Act on `SB_STATE`:
+
+- `served` → continue.
+- `runtime-down` → invoke [`wk-colima`](../../colima/README.md) `start`; re-check `docker info`, then handle as
+  `compose-down`. Runtime still down → stop and report it (never "not installed").
+- `compose-down` → `docker compose -f "$_COMPOSE_FILE" up -d`.
+- `binary` → `silverbullet "$SITREP_REPO" &`.
+- `absent` → stop: "SilverBullet is not installed. Install it, run: silverbullet $SITREP_REPO, then re-run."
+- After any start, poll `_sb_up` (about 10 × 1 s). Still down → stop; for compose, show
+  `docker compose -f "$_COMPOSE_FILE" logs --tail=20`.
