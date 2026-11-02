@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.10.23-205701`
+**Version:** `2026.11.02-204211`
 
 ## Invocation
 
@@ -46,7 +46,7 @@ flowchart TD
     M -->|light / medium| A
     Q -->|yes| A
     Q -->|no| A
-    A[Phase 1: Gather context + extract review-focus and PR claims] --> B[Phase 2: Fetch existing review comments]
+    A[Phase 1: Gather context + extract review-focus and PR claims] --> B["Phase 2: Fetch existing review comments<br/>+ own pending draft (re-verify candidates)"]
     B --> C[Resolve stale threads with user consent]
     C --> D[Build exclusion list + bot-findings validation queue]
     D --> E["Phase 3: Read clearance record;<br/>dispatch wk-adversarial-review only if none (not in light)"]
@@ -99,3 +99,7 @@ flowchart TD
 - **Shared files are checked against every consumer:** when the diff edits a file other files include or reference,
   each numbered or named rule reference it makes is resolved inside every includer — the same "rule N" can name a
   different rule per consumer, and the diff alone never shows the mismatch.
+- **A leftover pending draft is re-verified, not trusted:** a pending review the current user already holds on the PR
+  (an interrupted earlier run, or the user's own draft) is read in Phase 2. Agent-authored comments in it become
+  candidate findings that are re-checked and re-anchored at the current head; the user's own comments carry over
+  verbatim; the new review replaces the draft with the combined set.

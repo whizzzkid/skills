@@ -59,6 +59,7 @@ as `COMMENT`. Submitting is irreversible — inline comments publish with it.
 
 GitHub allows no append — delete review, recreate with full comment set. Pending comments return `line: null`; rebuild
 from scratch.
+A draft found in Phase 2 recreates the same way: re-verified candidates plus the user's unfootered comments verbatim.
 
 ## Follow-up after posted review
 

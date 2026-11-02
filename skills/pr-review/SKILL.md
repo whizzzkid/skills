@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.23-205701"
+  version: "2026.11.02-204211"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -172,6 +172,11 @@ Fetch, classify stale threads, build the Phase 3/4 exclusion list via
   `(file, line_range, topic)` → prevents dupes. Re-scope bot severity: grep trigger + one hop downstream.
 - **Re-review:** prior comments by the current user exist → close the loop before new issues per
   [references/re-review-follow-up.md](references/re-review-follow-up.md); a modified file proves an attempt, not a fix.
+- **Own pending draft** (current user's `state: PENDING` review — an interrupted run or the user's own draft) → fetch
+  its body + `/reviews/{id}/comments` now. Footer-marked comments are unverified candidates: re-verify in Phase 3,
+  re-anchor from the current-head blob (`line: null`); never exclusion-list or re-review entries (the author never saw
+  them). Unfootered comments are the user's → carry verbatim. Phase 5 recreates the union via the append path (a
+  second create 422s).
 
 ## Phase 3: Adversarial investigation
 
