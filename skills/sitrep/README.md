@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.02-201841`
+**Version:** `2026.11.04-225034`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -95,6 +95,8 @@ reported afterwards in the response.
   `waived_connectors:` in `.sitrep.yml`, or for this run) drops out of the gap
   report, and a stale page the user declares closed skips rollover. Every waiver is
   echoed in the page's Meta section; the agent never infers one.
+- **Missed-close checklist** — a rollover counts the user-ticked spans first and asserts the snapshot keeps them all
+  before marking the prior day closed.
 - **Connector migration** — when a gap connector's domain is covered by another
   available connector, the report also offers "migrate roster"; on user
   confirmation the skill's roster, ToolSearch hint, allowed-tools, and

@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.02-201841"
+  version: "2026.11.04-225034"
   model:
     openai: gpt-5.6-terra
 ---

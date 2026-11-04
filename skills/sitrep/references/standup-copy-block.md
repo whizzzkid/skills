@@ -40,6 +40,9 @@ than `element.click()` inside `browser_evaluate`.
    `ClipboardItem` constructor, and synchronous `write()` failure must all
    reach the plain fallback.
 
+No real browser click ran (browser unavailable, tool denied) → say in the response that copy verification was
+skipped; never report the copy button verified.
+
 Do not accept a mocked-call assertion by itself. It proves handler routing but
 not browser gesture permissions, SilverBullet DOM freshness, or the actual
 clipboard promise result.

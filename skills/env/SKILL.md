@@ -21,7 +21,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: "2026.10.09-212439"
+  version: "2026.11.04-225034"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash-8b
@@ -145,6 +145,9 @@ classifier gave no verdict). This is not a missing var: a `PreToolUse` hook on `
 `hookSpecificOutput.updatedInput` (e.g. prepends a profile `source`), so the reviewed command differs from the one that
 would run. Read-only calls skip the classifier → only writes (push, POST, merge) fail.
 
+- **Sibling variant:** a parallel call (any tool) denied with `another call in this response was changed` → re-issue
+  it alone in its own response. While a rewriting hook is registered, issue state-changing calls alone, never batched
+  beside a Bash call. (Inferred from symptom: the rewrite invalidates review of the whole batch.)
 - Name the hook — read it, never guess:
 
   ```bash

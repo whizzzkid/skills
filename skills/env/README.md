@@ -3,7 +3,7 @@
 Diagnoses environment variable availability before skill execution and provides
 actionable remediation.
 
-**Version:** `2026.10.09-212439`
+**Version:** `2026.11.04-225034`
 
 ## Purpose
 
@@ -25,6 +25,7 @@ to add to `$HOME/.profile` for vars that are genuinely missing.
 - **Hook input-rewrite refusal is diagnosed, not retried** — a `Bash` denial saying a hook changed the call's input
   traces to a `PreToolUse` hook emitting `updatedInput`; retry once, then stop, hand off, and remediate the hook
   (observe-only or removed), never the command.
+  A sibling call denied because another call in the same response was changed is re-issued alone.
 - Source `$HOME/.profile` in a read-only subprocess to test resolution.
 - Exit 0 (all set), 1 (resolved after sourcing → restart), 2 (still missing →
   add to `$HOME/.profile`, or stale-in-process → restart the session).

@@ -74,6 +74,17 @@ prerequisite to today's overwrite, not a separate required invocation.
 - Sharing changes launch count only: nested `end` still runs every stage and
   commits before `start` Stage 1.
 
+## Close checklist (run in order)
+
+1. Marker check: `end_completed_at:` present and committed (Detect closure above) → skip; else close.
+2. Count user-ticked spans (`data-done="true"`) on the stale page before any write — the user may have edited it in
+   the browser since the last commit.
+3. Derive the snapshot path from the page's `date:` (recipe above), never from the wall clock.
+4. Write the snapshot; assert its done-item count ≥ the step 2 count (every ticked span survives the close).
+5. Write completed keys to the dated week registry, append brag-log entries.
+6. Rewrite the page with pending spans only, carry-forward heading + scrub note.
+7. Add `end_completed_at:`, commit every close artifact, then restore today's start.
+
 ## Restore today's start
 
 - Re-run Step 0 to restore `$TODAY`, snapshot path + URL, and current-week
