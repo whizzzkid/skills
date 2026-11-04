@@ -52,7 +52,7 @@
 - External visibility: {talks, events, blog posts}
 
 ## DX / Engineering Health
-- PR velocity: {avg/period}
+- PR velocity: {rank + ratio vs team average, e.g. "most on the team, ~2.4× average"; the user's own figures only}
 - Review quality: {notes}
 - Documentation: {every feature shipped with docs?}
 - Test coverage: {patterns}

@@ -23,7 +23,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.04-225618"
+  version: "2026.11.04-225738"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -130,6 +130,12 @@ After all 7 agents complete:
 active declarative verbs ("I set", "I led", "I shipped"). Render prior-review feedback themes as self-directed habits,
 never as direction from others; ban "I was asked/told to", "I tried", "helped with". State a miss as a learning with
 its correction already in motion. (Attributed or passive voice implies someone else directed the work.)
+
+**HARD RULE — teammates' data never enters the corpus.** A team-wide analytics export (per-person metrics, names,
+emails) stays outside `QPR/` or is gitignored before Stage 3's `git add`; check `git status --short QPR/` first. Quote
+only the user's own figures, as rank and ratio vs team average ("most on the team, ~2.4× average"), never raw counts.
+Flag any org-wide superlative without a source as unverified. (Peers' figures are sensitive; raw counts read as
+activity-justifying.)
 
 ## Stage 3: Write Output Files
 

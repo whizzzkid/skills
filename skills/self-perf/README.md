@@ -2,7 +2,7 @@
 
 > Generate a self-performance review narrative by pulling data from all work systems.
 
-**Version:** `2026.11.04-225618`
+**Version:** `2026.11.04-225738`
 
 ## Invocation
 
@@ -50,6 +50,8 @@ flowchart TD
 - Synthesis drafts from a **coverage-tagged win inventory** (`references/inventory.md`), addresses the manager's latest
   1:1 guidance, and passes completeness and voice critics; the final announcement reminds the user to add
   private-conversation unblocks by hand.
+- **Teammates' data stays out of the corpus** — team-wide analytics exports live outside `QPR/` or are gitignored;
+  stats appear as the user's rank and ratio vs team average, and unsourced superlatives are flagged.
 - User-approved sections become protected revision boundaries until the user explicitly reopens them.
 - **`{ROLE}` placeholder** in the synthesis template must be resolved from Workday/Lattice
   before writing; if unresolvable, left as placeholder with a flag.
