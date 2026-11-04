@@ -2,7 +2,7 @@
 
 > Reduce response verbosity and token usage while preserving technical accuracy.
 
-**Version:** `2026.10.09-171327`
+**Version:** `2026.11.04-224910`
 
 ## Invocation
 
@@ -31,6 +31,7 @@ stateDiagram-v2
 ## Noteworthy
 
 - **Three hard caps in brief mode**: ≤3 sentences per answer (excluding code/diffs/safety warnings), no tables for ≤3 items, no section headers for single-section answers — enforced per-turn by the `concise-reminder.sh` hook.
+- **One open decision per turn** — with several decisions pending, ask one, wait, then ask the next; a response never closes on a prose list of open questions.
 - **Six categories that are never compressed** regardless of mode: code blocks, security warnings, irreversible-action confirmations, technical terms/paths/URLs, exact error messages, and clarification threads (resume only after a new unrelated task).
 - **Self-installing on first invocation** — detects whether the `settings.json` hook and `CLAUDE.md` snippet are installed, offers to wire them up automatically (one-time, gated by `$HOME/.claude/.concise-setup-offered`).
 - **Mode persists via `$HOME/.claude/.concise-mode`** file — the hook reads it on every turn; `$CONCISE_OFF=1` and `$HOME/.claude/.concise-off` take precedence as opt-out signals.
