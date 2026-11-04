@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.02-204211"
+  version: "2026.11.04-225932"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -210,6 +210,10 @@ every consumer, not just the primary one — the same number can name a differen
 shows it.
 
 **Bot findings:** route each through the same engine → `Confirmed` / `Refuted` / `Inconclusive`. Silent skip forbidden.
+
+**Verifier severity is a draft.** Restate Phase 4's severity definitions verbatim in every verifier prompt; before the
+approve gate, re-map each verifier-assigned `concern` against them — not correctness/security/data-loss → `suggestion`.
+(Per-finding refute agents inflate severity, and one inflated `concern` holds approval on a non-critical item.)
 
 ## Phase 4: Review comments
 

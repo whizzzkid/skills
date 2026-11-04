@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.11.02-204211`
+**Version:** `2026.11.04-225932`
 
 ## Invocation
 
@@ -68,6 +68,8 @@ flowchart TD
 - **The review body is the verdict line plus the footer** — with or without concerns. Inline comments carry the
   substance; a pre-POST gate cuts every extra sentence that is not an un-anchored concern, a `Re:` answer, or an
   evidenced bot reply. Review depth is reported in the terminal, never on GitHub.
+- **Verifier severity is a draft** — verifier prompts carry the severity definitions verbatim, and every
+  verifier-assigned `concern` is re-mapped against them before the approve gate.
 - **The pending-review POST is its own Bash call** — payload via the Write tool, footer gate and `open` as separate
   calls; a hook input-rewrite denial gets one retry, then a hand-off with the payload path.
 - **Investigation is delegated, and never re-run:** Phase 3 consumes an existing clearance record when one covers
