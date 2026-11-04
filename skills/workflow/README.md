@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.04-225500`
+**Version:** `2026.11.04-230021`
 
 ## Invocation
 
@@ -53,7 +53,7 @@ flowchart TD
 - **No commit while a parallel agent may hold a mutant** — agents share the working tree, so before committing with
   agents possibly live, confirm they finished and diff every production file against the intended change.
 - **One command per Bash call** — no `&&`/`||`/`;` chains; independent commands run as parallel calls so each stays
-  reviewable and classifiable.
+  reviewable and classifiable. A pre-send check splits any chain first (stage, commit, push = three calls).
 - **A "slow" build is diagnosed before it is optimized** — long-lived compiler processes at ~0% CPU are blocked, not
   working; Phase 3 samples one, checks inherited header/SDK env against the pinned toolchain, and reproduces on a
   minimal input before any flag change.

@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.04-225500"
+  version: "2026.11.04-230021"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -155,9 +155,10 @@ Code standards:
 - **Regexes:** named capture groups: `(?<year>\d{4})`.
 - **Bash:** absolute paths, no `cd`. Extended:
   [`references/code-standards-extended.md`](references/code-standards-extended.md).
-- **Important — one command per Bash call.** Never chain with `&&`, `||`, or `;`; independent commands → parallel
+- **Very important — one command per Bash call.** Never chain with `&&`, `||`, or `;`; independent commands → parallel
   calls, dependent → separate sequential calls (chains defeat per-command review, and classifiers block what they
-  cannot decompose). Surface denials; never silently restructure.
+  cannot decompose). Pre-send check: a call with `&&`/`||`/`;` between commands is split before sending — stage,
+  commit, and push are three calls; an edit and its verify grep are two. Surface denials; never silently restructure.
 - **Open a local file for the user** → `"${IDE:-open}" <file>`, never bare `open` (it picks the OS default app, not
   the user's editor). Never launch a terminal editor or a `--wait` command from Bash — it blocks the call.
 - **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md). **Platform-API traps:**
