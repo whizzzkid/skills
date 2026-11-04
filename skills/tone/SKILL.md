@@ -19,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.11.04-230111"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -89,6 +89,9 @@ Never emit:
 - **Channel register:** chat (Slack/DM) → most casual (lowercase, shorthand, custom emoji); Jira/GitHub comment
   or email → keep warmth and wit but full sentences and Unicode emoji (a stakeholder Jira comment drops the
   lowercase-shorthand chat register).
+- **Feedback about a person** (peer review, recognition, reference) → the reader is the subject: open with one genuine
+  line about working with them, bold the one or two takeaways per section, close with a warm sign-off ("All the
+  best!"). Keep fact-check tables and verification notes out of the paste-ready text; report them in chat.
 
 ## Step 2: Apply the voice
 

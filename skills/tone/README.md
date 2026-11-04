@@ -3,7 +3,7 @@
 > Apply the user's personal voice — encouraging, energetic, humorous, with
 > purposeful emoji — to any message drafted on their behalf.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.11.04-230111`
 
 ## Invocation
 
@@ -39,6 +39,7 @@ Five load-bearing traits, in priority order:
 - **Safety is never tone-washed** — a security or irreversible-action warning keeps its weight; tone is the wrapper, not the content.
 - **Emoji ≤ 2, intent-only** — emoji spam and forced humor are the two failure modes the skill explicitly guards against.
 - **Channel-aware register** — chat leans casual; Jira/GitHub/email keep the warmth and wit in full sentences.
+- **Feedback about a person reads to its subject** — a genuine opener about working with them, bolded takeaways, a warm sign-off; verification notes stay in chat, out of the paste-ready text.
 - Discovered from the user's real Slack and Jira message history, then distilled into the five traits above.
 
 ## Requirements
