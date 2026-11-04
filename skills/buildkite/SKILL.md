@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.30-221813"
+  version: "2026.11.04-225240"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -132,15 +132,24 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | jq -
 - **HARD RULE: a monitoring announcement states URL + failing step + next action — never just "monitoring in
   background."**
 - **HARD RULE: a background watch loop must prove each poll parsed.** Run it under explicit `bash -c` with pipeline and
-  build as separate positional args (never word-split a combined `$p` — zsh does not split it); print a first-poll
-  line and a line on every state change; empty/unparsable state → print and exit non-zero, never re-poll silently. (A
+  branch as separate positional args (never word-split a combined `$p` — zsh does not split it); print a first-poll
+  line and a line on every change; empty/unparsable state → print and exit non-zero, never re-poll silently. (A
   parse that fails without output starves the failure branch: the loop reads "still running" while the build is red.)
+- **The watch resolves its own target every poll — never a hardcoded build number.** Pushed tip via `git ls-remote`,
+  then the newest build for that SHA, so a new push is followed without editing or re-arming. Launch once with
+  `run_in_background: true` (no expiring monitor); a triggered downstream pipeline → a second instance with its slug.
   ```bash
   bash -c 'prev=; n=0; while :; do n=$((n+1))
-    s=$(bk build view -p "$1" "$2" --json 2>&1 | grep -v "^Warning:" | jq -r ".state" 2>/dev/null) || s=
+    sha=$(git ls-remote origin "refs/heads/$2" | cut -f1)
+    [[ -z "$sha" ]] && { echo "poll $n: UNRESOLVED branch tip"; exit 2; }
+    b=$(bk build list -p "$1" --commit "$sha" --limit 1 --json 2>&1 | grep -v "^Warning:" \
+      | jq -r ".[0].number // \"none\"" 2>/dev/null) || b=
+    [[ -z "$b" ]] && { echo "poll $n: UNPARSABLE build list"; exit 2; }
+    s=queued; [[ "$b" != none ]] && { s=$(bk build view -p "$1" "$b" --json 2>&1 | grep -v "^Warning:" \
+      | jq -r ".state" 2>/dev/null) || s=; }
     [[ -z "$s" || "$s" == null ]] && { echo "poll $n: UNPARSABLE state"; exit 2; }
-    [[ "$s" != "$prev" ]] && echo "poll $n: $s"; prev=$s
-    case $s in passed) exit 0;; failed|canceled|blocked) exit 1;; esac; sleep 30; done' _ "$PIPELINE" "$BUILD"
+    cur="${sha:0:8} #$b $s"; [[ "$cur" != "$prev" ]] && echo "poll $n: $cur"; prev=$cur
+    case $s in passed) exit 0;; failed|canceled|blocked) exit 1;; esac; sleep 30; done' _ "$PIPELINE" "$BRANCH"
   ```
 - Non-required checks do not gate merge — gate on
   `gh pr checks --json name,state,required | jq 'select(.required==true)'`.
