@@ -2,7 +2,7 @@
 
 > Generate a self-performance review narrative by pulling data from all work systems.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.11.04-224756`
 
 ## Invocation
 
@@ -41,6 +41,8 @@ flowchart TD
   Custom ranges accepted as `YYYY-MM-DD:YYYY-MM-DD`.
 - Synthesis uses a strict **impact-language guide** — "worked on" → "designed and shipped";
   surface-level language is automatically upgraded to strong-verb form.
+- Self-review prose is **action-first and self-directed** — feedback themes read as the user's own habits, never
+  "I was asked/told to"; misses read as learning with the correction already in motion.
 - Chronology and statistics claims pass evidence-integrity checks before synthesis: dated milestones support ordering,
   and non-significant results remain inconclusive rather than becoming no-effect claims.
 - User-approved sections become protected revision boundaries until the user explicitly reopens them.

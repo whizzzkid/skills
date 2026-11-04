@@ -23,7 +23,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.11.04-224756"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -115,6 +115,11 @@ Full agent prompts with queries, structure requirements, and MCP tool references
 After all 7 agents complete, read every reference file and write `$SYNTHESIS_FILE` using the synthesis template
 (evidence-integrity checks, revision boundaries, full markdown structure, impact language guide, level-expectation
 calibration): [`references/synthesis-template.md`](references/synthesis-template.md).
+
+**HARD RULE — self-review prose is action-first and self-directed.** Write every claim as what the user did, with
+active declarative verbs ("I set", "I led", "I shipped"). Render prior-review feedback themes as self-directed habits,
+never as direction from others; ban "I was asked/told to", "I tried", "helped with". State a miss as a learning with
+its correction already in motion. (Attributed or passive voice implies someone else directed the work.)
 
 ## Stage 3: Write Output Files
 

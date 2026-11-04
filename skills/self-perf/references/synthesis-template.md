@@ -76,6 +76,8 @@ When synthesizing, prefer strong over weak verbs:
 | "made changes to" | "hardened", "refactored", "extracted" |
 | "participated in" | "co-facilitated", "presented at", "drove" |
 | "was involved in" | "owned end-to-end", "drove to completion" |
+| "I was asked/told to" | "I set", "I took on", "I chose to" |
+| "I tried to" | "I shipped", "I ran", "I tested" |
 
 ## Calibrating to Level Expectations
 
