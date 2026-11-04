@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.04-225034`
+**Version:** `2026.11.04-230209`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -57,7 +57,8 @@ reported afterwards in the response.
 - **Layout-geometry render gate** — before "Live page ready", the check asserts
   the three columns are direct children of the row with distinct, increasing
   left edges (containment alone passes on nested columns), and takes a
-  screenshot. A same-day re-run regathers or says the earlier gather was reused.
+  screenshot, and that page text holds no literal HTML entities (SilverBullet
+  renders them undecoded). A same-day re-run regathers or says the earlier gather was reused.
 - **SilverBullet rendering** — no standalone HTML files are generated;
   `live.md` contains SilverBullet HTML blocks that the browser renders.
 - **Standup copy** — copies rich HTML to preserve the three-level list

@@ -12,6 +12,8 @@
 - A patch to an existing line must keep every `\#`: `sed`/`awk` replacement
   strings consume the backslash and silently revert the escape, so replace via
   shell parameter substitution and compare the `\#` count before and after.
+- Never emit HTML entities (`&lt;`, `&gt;`, `&amp;`) in span text — SilverBullet renders them literally. Replace
+  angle brackets in titles with a plain separator glyph (`—`, `/`).
 
 ## Layout structure
 

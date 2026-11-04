@@ -23,7 +23,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.30-194506"
+  version: "2026.11.04-230209"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -121,6 +121,7 @@ All known failure modes:
 - **`.sitrep-col br { display: none }`** → collapses all text in column including meetings.
 - **Non-unique `data-t` values** → checkbox toggle replaces the wrong item in source.
 - **Pre-escaped `&&` in onclick** → renderer double-encodes → handler text is literal entities; browser discards it. Write raw operators.
+- **HTML entities (`&lt;`, `&gt;`, `&amp;`) in span text** → rendered as literal entity text, not decoded. Write a plain separator glyph instead of angle brackets.
 - **Validated handler as source string only** → `getAttribute('onclick')` returns text even when browser rejected the JS; assert `typeof el.onclick === 'function'`.
 - **Validated on stale tab** → cached DOM masks a broken handler after source edit; reload fresh first.
 - **Shipping a CSS/HTML change without a browser screenshot** → file looks right, render is wrong (single column, collapsed lines, disabled handlers).

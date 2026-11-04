@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.04-225034"
+  version: "2026.11.04-230209"
   model:
     openai: gpt-5.6-terra
 ---
@@ -197,6 +197,7 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     and distinct, strictly increasing `getBoundingClientRect().left` across the three.
   - **Containment, not presence:** every `.st-copy-block`/`.st-item` inside a column (scoped count = global count).
   - **Checkboxes:** zero `.st-item:not(.st-info)` without an `.st-cb`.
+  - **Text:** `document.body.innerText` holds no literal `&lt;`, `&gt;`, or `&amp;` (entities render undecoded).
   - **Screenshot:** `browser_take_screenshot` and confirm three side-by-side columns.
   - `false` → fix the markup per `wk-silverbullet` Step 6. Never reshape content to pass a clause; a clause that
     rejects canonical markup is the defect — fix the clause.
