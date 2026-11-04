@@ -2,7 +2,7 @@
 
 > Reduce response verbosity and token usage while preserving technical accuracy.
 
-**Version:** `2026.11.04-224910`
+**Version:** `2026.11.04-225700`
 
 ## Invocation
 
@@ -35,5 +35,6 @@ stateDiagram-v2
 - **Six categories that are never compressed** regardless of mode: code blocks, security warnings, irreversible-action confirmations, technical terms/paths/URLs, exact error messages, and clarification threads (resume only after a new unrelated task).
 - **Self-installing on first invocation** — detects whether the `settings.json` hook and `CLAUDE.md` snippet are installed, offers to wire them up automatically (one-time, gated by `$HOME/.claude/.concise-setup-offered`).
 - **Mode persists via `$HOME/.claude/.concise-mode`** file — the hook reads it on every turn; `$CONCISE_OFF=1` and `$HOME/.claude/.concise-off` take precedence as opt-out signals.
+- **"Crisper" trims wording, never structure** — a natural-language tighten request keeps every section, bullet, and fact, cuts ~15–20% of filler, and confirms before any larger cut or structural change.
 - **`/concise:compress` refuses dangerous targets** — files with >50% code content, credential/secret files (`*.pem`, `.env*`, `*password*`), and paths under `.ssh/`, `.aws/`, `.kube/`, `.gnupg/`, `.config/gcloud/`, `.docker/`.
 - **Dense mode adds fragment syntax and causality arrows** (`X → Y`) on top of brief mode's filler removal; brief preserves full sentences and articles.

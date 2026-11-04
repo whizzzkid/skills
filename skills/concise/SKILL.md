@@ -23,7 +23,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.04-224910"
+  version: "2026.11.04-225700"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -189,6 +189,11 @@ Confirm deactivation: `Normal mode restored. Opt back in with /concise (or remov
 ## `/concise:compress` — Context Compression
 
 LLM-based rewrite of verbose text/files using active mode rules. Full process (read → apply → diff → confirm), good/bad target lists, and preservation rules in [references/compress-process.md](references/compress-process.md).
+
+**HARD RULE — "crisper" trims wording, never structure.** A natural-language "make it crisper / less wordy /
+tighten" request on a draft is a compress: keep every section, bullet, and fact; cut filler and duplicate clauses
+(~15–20%). Confirm before any larger cut, merged section, or structural change. (A tone request read as a length
+request collapses the format the user wanted kept.)
 
 Defaults to `brief` if no mode active. Refuses code files (>50%), secrets/credentials, and files under `.ssh/`/`.aws/`/`.gnupg/`/`.kube/`/`.docker/`.
 
