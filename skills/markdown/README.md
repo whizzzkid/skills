@@ -3,7 +3,7 @@
 > Enforce markdown standards — 120-column line width, heading hierarchy, mermaid diagrams, glyphs, and link
 > validation — whenever creating or editing any `.md` file.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.11.04-225836`
 
 ## Invocation
 
@@ -23,8 +23,11 @@ flowchart TD
     D --> E
     E --> F{Levels skipped?}
     F -->|yes| G[Restructure headings]
-    F -->|no| H[Apply mermaid diagrams to relational content]
-    G --> H
+    F -->|no| S{Batch added or moved content?}
+    G --> S
+    S -->|yes| R[Whole-file read: items under right headings, no duplicates, one voice]
+    S -->|no| H[Apply mermaid diagrams to relational content]
+    R --> H
     H --> I[Add emoji glyphs to headers and callouts]
     I --> J[Validate all links]
     J --> K{Broken links?}
@@ -42,6 +45,8 @@ flowchart TD
   structural relationships.
 - **Link validation is mandatory before write:** HTTP links must return 2xx/3xx; relative paths must resolve;
   anchors must match an existing heading. A broken link is a documentation bug — not a warning.
+- **Structure read-through after edit batches:** lint proves syntax only; a batch that adds or moves content ends with
+  one top-to-bottom read checking each item against its heading, heading style, duplicates, and voice.
 - **Artifact templates take precedence:** Preserve the exact heading shape prescribed by another active skill,
   including deliberate no-H1 forms. Otherwise, use exactly one `# Title` per file and avoid H5/H6.
 - **Emoji in headers, not in code:** Glyphs aid scanning when applied to section headers and callout

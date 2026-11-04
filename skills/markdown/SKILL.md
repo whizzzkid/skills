@@ -27,7 +27,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.11.04-225836"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -63,6 +63,14 @@ awk 'length > 120 {print NR": "length" chars: "$0}' <file>
 - **H3** — subsections within a major section.
 - **H4** — named callouts or detail items within a subsection.
 - **Avoid H5/H6** — if content needs that depth, restructure into sub-documents.
+
+## 🧱 Structure Read-Through
+
+**HARD RULE — a batch of edits that adds or moves content ends with one whole-file read, top to bottom.** Lint and
+width checks prove syntax only. Confirm each item still fits the heading it sits under, heading style is consistent,
+no point is duplicated, and voice and pronouns match. Treat "is it formatted correctly?" as structure + syntax, never
+syntax alone. (Quote-for-quote replacements land content in sections where it no longer belongs, and no linter sees
+it.)
 
 ## 🧭 Mermaid Diagrams
 
