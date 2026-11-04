@@ -23,7 +23,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.04-224756"
+  version: "2026.11.04-225618"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -112,9 +112,19 @@ Full agent prompts with queries, structure requirements, and MCP tool references
 
 ## Stage 2: Synthesize into Narrative
 
-After all 7 agents complete, read every reference file and write `$SYNTHESIS_FILE` using the synthesis template
-(evidence-integrity checks, revision boundaries, full markdown structure, impact language guide, level-expectation
-calibration): [`references/synthesis-template.md`](references/synthesis-template.md).
+After all 7 agents complete:
+
+1. **Inventory before drafting.** One reader per reference group lists every win with a coverage tag (`in-draft` /
+   `partial` / `missing`) against the current draft; merge and dedupe into `$REFS_DIR/inventory.md`. The synthesis
+   accounts for every row. (Single-pass drafting from summaries drops small wins, recognition quotes, and cross-team
+   influence.)
+2. Write `$SYNTHESIS_FILE` from the inventory using the synthesis template (evidence-integrity checks, revision
+   boundaries, full markdown structure, impact language guide, level-expectation calibration):
+   [`references/synthesis-template.md`](references/synthesis-template.md). Address the manager's latest stated
+   guidance (Agent 6) explicitly.
+3. **Critic pass.** A completeness critic confirms every inventory row is placed or deliberately cut and flags
+   duplicates; a voice critic applies the HARD RULE below. Verify each status claim against its system (an open PR is
+   not shipped).
 
 **HARD RULE — self-review prose is action-first and self-directed.** Write every claim as what the user did, with
 active declarative verbs ("I set", "I led", "I shipped"). Render prior-review feedback themes as self-directed habits,
@@ -146,7 +156,8 @@ its correction already in motion. (Attributed or passive voice implies someone e
 
    Announcement: corpus ready for `${PERIOD_SLUG}`; `QPR/${PERIOD_SLUG}/references/` — {N} source files with raw
    evidence; `QPR/${PERIOD_SLUG}/synthesis.md` — narrative draft ready for QPR submission; the top 3 accomplishments
-   surfaced; the 'Quarter Narrative' section has suggested self-review language to paste directly.
+   surfaced; the 'Quarter Narrative' section has suggested self-review language to paste directly. Remind the user that unblocks
+   and influence from private conversations are invisible to the agents and must be added by hand.
 
 ## Stage 4: Distill Learnings into Daily Sitreps
 

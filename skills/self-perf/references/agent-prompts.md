@@ -151,6 +151,9 @@ and Glean (`mcp__claude_ai_Glean__*`).
 - Technical proposals put forward
 - Cross-team influence moments
 
+**Manager guidance:** fetch the most recent manager 1:1 notes with the transcript enabled. Extract stated
+expectations, promotion-bar guidance, and focus areas verbatim; the synthesis must address each.
+
 **Docs/Drive:** Find documents created or edited:
 - Technical specs and design docs
 - Engineering blog posts

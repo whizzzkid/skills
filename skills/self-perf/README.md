@@ -2,7 +2,7 @@
 
 > Generate a self-performance review narrative by pulling data from all work systems.
 
-**Version:** `2026.11.04-224756`
+**Version:** `2026.11.04-225618`
 
 ## Invocation
 
@@ -27,8 +27,10 @@ flowchart TD
     E --> E5[Jira + Confluence]
     E --> E6[Granola + Docs + Drive]
     E --> E7[DX metrics + sitrep files]
-    E1 & E2 & E3 & E4 & E5 & E6 & E7 --> F[Stage 2: Synthesize narrative]
-    F --> G[Write QPR/period/synthesis.md]
+    E1 & E2 & E3 & E4 & E5 & E6 & E7 --> F0[Stage 2: Coverage-tagged win inventory]
+    F0 --> F[Synthesize narrative]
+    F --> F1[Completeness + voice critics]
+    F1 --> G[Write QPR/period/synthesis.md]
     G --> H[Commit + push reference corpus]
     H --> I[Distill patterns into daily sitrep]
 ```
@@ -45,6 +47,9 @@ flowchart TD
   "I was asked/told to"; misses read as learning with the correction already in motion.
 - Chronology and statistics claims pass evidence-integrity checks before synthesis: dated milestones support ordering,
   and non-significant results remain inconclusive rather than becoming no-effect claims.
+- Synthesis drafts from a **coverage-tagged win inventory** (`references/inventory.md`), addresses the manager's latest
+  1:1 guidance, and passes completeness and voice critics; the final announcement reminds the user to add
+  private-conversation unblocks by hand.
 - User-approved sections become protected revision boundaries until the user explicitly reopens them.
 - **`{ROLE}` placeholder** in the synthesis template must be resolved from Workday/Lattice
   before writing; if unresolvable, left as placeholder with a flag.
