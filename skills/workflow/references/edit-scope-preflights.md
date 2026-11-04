@@ -11,3 +11,6 @@ Before tests, enumerate every affected site; fix all in one pass:
 - **False-positive scoping** — fix targets the offending class, not severity ladder.
 - **Coupled edits** — name the invariant tying the edits together; gate all of them on every precondition up front,
   never per edit (rule: `SKILL.md` Phase 2, coupled edits land all-or-nothing).
+- **"Every path" invariants** — enumerate every termination class (exit codes, exception, signal, failed external
+  update, crash before/after the success write) as a matrix and test each cell before the first push (rule: `SKILL.md`
+  Phase 3).

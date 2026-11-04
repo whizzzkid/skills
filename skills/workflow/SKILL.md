@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.04-224625"
+  version: "2026.11.04-225327"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -183,6 +183,10 @@ Cover required paths: **happy** (expected flow), **sad** (failures, invalid inpu
 
 - All tests pass; each commit passes independently. **Local lint before every push** — inspect hook config for every
   pre-push gate. Re-run every gate against final HEAD, not a mid-session snapshot.
+- **"Every path" invariant → termination matrix before the first push.** A fix promising no path leaves X in state Y
+  → list every way the process ends (each deliberate exit code, uncaught exception, signal, external update refused
+  once and twice, crash before vs after the success write) and test each cell before publishing. (Patching path by
+  path draws one new review finding per push.)
 - Validate transformations with formerly-failing input. **Fix-symptom match:** verify fix targets exact reported
   symptom.
 - **Important — a fast/narrow check is never the authoritative gate; run the full gate.** Pre-commit subsets and
