@@ -18,7 +18,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.10.29-193155"
+  version: "2026.11.04-224404"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -166,6 +166,17 @@ placement rules, scope, pre-emit gate bash, and exceptions:
 compare ruleset `required_status_checks` against rollup names. Full rollup union rules, superseded-run handling,
 `--json` schema differences, BLOCKED diagnosis, and workflow-run gate:
 [`references/status-check-rollup.md`](references/status-check-rollup.md).
+
+**HARD RULE — a "this can't block merge" claim cites the required-status list.** Before asserting a check, status, or
+red build is advisory (in a PR body, code comment, or design rationale), read both required-status sources for the
+target branch and cite the contexts. Pipeline config is not evidence: a CI provider's own build status can be required
+with no notify step in the pipeline. (Required statuses live in branch rules, not in the pipeline.)
+
+```bash
+gh api "repos/{owner}/{repo}/rules/branches/{branch}" \
+  --jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[].context]'
+gh api "repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks" --jq '.contexts'  # 404 = no classic rule
+```
 
 ## Canonical download path
 
