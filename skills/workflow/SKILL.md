@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.31-002658"
+  version: "2026.11.04-224625"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -128,6 +128,10 @@ Rebase/cherry-pick conflicts → `git log --oneline -5`; base mismatches worktre
   shared integrations: grep 2-3 sibling repos before fixing shared code.
 - Execute step by step. After each: (1) run tests, (2) `wk-workstyle`, (3) `wk-docs` for affected docs, (4) `wk-commit`.
   Never batch steps, defer docs, or skip tests between commits. Print before/after SHAs on branch-rewriting ops.
+- **HARD RULE — never commit while a parallel agent may hold a mutated file.** Before any commit with dispatched
+  agents possibly live: confirm every agent finished, then `git diff` each production file against the intended
+  change; an unexplained hunk blocks the commit. Dispatch mutation-testing agents to mutate copies, or only files no
+  other agent loads. (Agents share the working tree; a temporary mutant is indistinguishable from a real edit.)
 - **Cross-cutting changes** (normalization, renames, schema): grep all sites → implement all → commit → adversarial
   review once → ≤1 follow-up commit.
 - **Artifact sync:** structural change → [sync artifacts](references/doc-sync-mechanics.md) same commit. External

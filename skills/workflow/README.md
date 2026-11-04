@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.10.31-002658`
+**Version:** `2026.11.04-224625`
 
 ## Invocation
 
@@ -50,6 +50,8 @@ flowchart TD
 - **Coupled edits land all-or-nothing** — when one edit is useless or harmful without another, Phase 2 names the
   coupling, checks every anchor and target before applying either, fails loudly on a missing one, and adds a sad-path
   test per missing precondition.
+- **No commit while a parallel agent may hold a mutant** — agents share the working tree, so before committing with
+  agents possibly live, confirm they finished and diff every production file against the intended change.
 - **One command per Bash call** — no `&&`/`||`/`;` chains; independent commands run as parallel calls so each stays
   reviewable and classifiable.
 - **A "slow" build is diagnosed before it is optimized** — long-lived compiler processes at ~0% CPU are blocked, not
