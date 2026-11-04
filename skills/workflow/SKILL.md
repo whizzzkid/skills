@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.04-225327"
+  version: "2026.11.04-225500"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -36,10 +36,11 @@ Fire on EVERY task producing code changes, a commit, a push, a PR, or a CI build
 Session resumption → re-invoke before any write action. A planning discussion is NOT a substitute — invoke before the
 first Edit/Write/Bash.
 
-**HARD RULE — live learning capture.** Invoke [`wk-learn`](../learn/README.md) immediately on user correction, scope
-redirect, self-caught error, or a tool/environment/API failure that needed a non-obvious workaround (a workaround is a
-caught error, not routine progress) — before continuing or ending the response. Invoke after every skill run; never ask
-or offer. Phase 8 retro only verifies live capture.
+**HARD RULE — CRITICAL: live learning capture.** Invoke [`wk-learn`](../learn/README.md) immediately on user
+correction, scope redirect, self-caught error (a verifier refuting your claim, any "I was wrong about X" — even mid
+fix loop), or a tool/environment/API failure that needed a non-obvious workaround (a caught error, not routine
+progress) — in the response that catches it, before continuing or ending the response. Invoke after every skill
+run; never ask or offer. Phase 8 retro only verifies live capture.
 
 ### Autonomy Rules
 

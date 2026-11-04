@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.04-225327`
+**Version:** `2026.11.04-225500`
 
 ## Invocation
 
@@ -61,8 +61,9 @@ flowchart TD
   without asking, and anything not done is deferred explicitly with a reason, never silently dropped.
 - **Live learning capture is a Mandatory Activation rule** — invoke
   [`wk-learn`](../learn/README.md) immediately on a correction, scope redirect,
-  self-caught error, or tool/environment/API failure that needed a non-obvious
-  workaround, before continuing; also invoke it after every skill run.
+  self-caught error (a verifier refuting a claim counts, even mid fix loop), or
+  tool/environment/API failure that needed a non-obvious workaround, before
+  continuing; also invoke it after every skill run. Labelled CRITICAL (rung 4).
   Phase 8 only audits that capture.
 - **No opt-out, no size exemption** — "this is small" and "just a quick fix" are explicitly
   named red flags. If a diff will be produced, the full workflow applies.
