@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.04-230209"
+  version: "2026.11.05-181640"
   model:
     openai: gpt-5.6-terra
 ---
@@ -176,8 +176,12 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
   - **Generate spans; never hand-type them.** Emit item spans from an inline generator over the compiled item list
     (e.g. a `jq` filter on stdin — no script file, per the write-scope HARD RULE): sequential `data-t`, canonical
     handler and copy-block markup verbatim, `#` → `\#`. Same for `end` Stage 5 (hand-typed handlers and IDs drift).
+  - **Mostly carry-over → transform the prior page, don't regenerate.** Edit it in place keyed by `data-t` (drop,
+    replace, append, insert; new spans from the generator), then renumber from `t1` and assert uniqueness. Carried
+    handler bytes must equal the canonical recipe, else regenerate that span (a drifted page propagates its drift).
   - **Patch lines without eating `\#`.** Replace a line in place via shell parameter substitution, never a
-    `sed`/`awk` replacement (both strip the `\` from `\#`); `\#` count before = after, else re-patch.
+    `sed`/`awk` replacement (both strip the `\` from `\#`); `\#` count before = after, else re-patch. Assert each
+    substitution's target exists before writing; abort on a miss (a missed target is a silent no-op).
   - **Multi-line patch → newline in a variable.** Assign `nl=$'\n'` first and substitute `$nl`; an inline `$'\n'`
     stays literal inside a double-quoted substitution under zsh. After any patch, grep for stray literal `\n` text
     and assert every `data-t` ID is unique and on its own line.
