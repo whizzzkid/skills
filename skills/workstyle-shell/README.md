@@ -2,7 +2,7 @@
 
 > Enforces safe, idiomatic shell conventions in scripts and compound ad-hoc commands.
 
-**Version:** `2026.10.30-221813`
+**Version:** `2026.11.06-181938`
 
 ## Invocation
 
@@ -24,6 +24,7 @@
 - Probe capability, don't parse error text — branch on exit code against a known-good input, since stderr wording differs across GNU/BSD/BusyBox and fails closed on the variant it was meant to handle.
 - No PCRE shorthand (`\S`, `\d`, `\w`, `\b`) in an `awk` / POSIX-ERE pattern — the unknown escape degrades to an escaped *literal*, so the pattern stays valid, exits 0, and matches nothing; use bracket expressions like `[^[:space:]]`.
 - No verdict in an `awk` rule body's `exit N` when `END` also exits with an argument — the rule-body `exit` falls through to `END`, whose status wins, collapsing both branches to one code; set a flag and end with `END { exit !ok }`.
+- Load an `awk` side file (spec, mapping) by path via `-v` + `getline` in `BEGIN`, never also as a file operand — every operand is main input, so its lines pass through the main rules and leak into the output at rc=0; `NR==FNR` is no safer (an empty side file swallows the main file as spec, yielding empty output), and `getline` on a missing path returns -1 silently.
 - Prefix `command` on any tool call whose clean/zero result is load-bearing — a bare name hits a shell function or alias first, and an agent shell can wrap a standard tool to re-exec a different engine with implicit options, so the divergence shows up as a missing match rather than an error; `type` showing only an alias is not a clearance, since a non-interactive shell still honors the function.
 - Treat any zero / all-reject from a matcher *or a file enumeration* as unproven until a positive control moves the count — every *status-0* silent-zero trap here stays syntactically valid, writes nothing to stderr, and exits 0; run the control in the *same* invocation form as the scan, or it certifies an engine the scan never used.
 - Require a control to reach a known *true* count, not merely a changed one — a truncated aggregate still moves 0 → 1, so a "the count changed" criterion clears while the number stays false, and a control demanding "> 1" is unsatisfiable against a capped counter; a plausible wrong number is worse than a missing one, since nothing in its shape signals corruption.

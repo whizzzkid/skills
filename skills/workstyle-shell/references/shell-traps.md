@@ -57,6 +57,21 @@ check report a *unanimous pass it never performed* — inverse polarity to the t
 above. Worked example:
 [`2026-07-27_environ-disjoint-from-v-assignment.md`](2026-07-27_environ-disjoint-from-v-assignment.md).
 
+## awk Side Files as Operands
+
+Load a side file (spec, mapping, allowlist) into an `awk` program only by path via `-v` and `getline` in `BEGIN` —
+never also list it as a file operand. Every operand is main input, so each spec line runs through the main rules and
+a pass-through `print` writes it into the output. rc=0, empty stderr, and the transform itself is correct, so the
+leak reads as content. The `NR==FNR { …; next }` two-operand idiom is no safer: an empty side file makes the *main*
+file satisfy `NR==FNR`, so every line is swallowed as spec and the output is empty, still rc=0. `getline` returns -1
+on a missing path and the load loop just ends, so test `[[ -r "$spec" ]]` first, and diff the output against its
+input before overwriting in place. Worked example:
+[`2026-11-06_awk-side-file-not-operand.md`](2026-11-06_awk-side-file-not-operand.md).
+
+```bash
+awk -v spec="$spec" 'BEGIN { while ((getline l < spec) > 0) m[l] = 1; close(spec) } …' "$page"
+```
+
 ## Illegal Byte Sequence
 
 `Illegal byte sequence` points to upstream byte truncation, not UTF-8
