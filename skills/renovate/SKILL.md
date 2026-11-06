@@ -29,7 +29,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.10.23-224513"
+  version: "2026.11.06-184031"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -69,6 +69,10 @@ Branch name: `dependabot/combined-updates`, or `dependabot/combined-updates-<YYY
 - Prefer cherry-picking each Dependabot PR's commit(s) to keep the upgrade atomic.
 - On lockfile conflict: always regenerate by re-running the package manager's install/lock command — never cherry-pick a
   lockfile conflict without regenerating.
+- Regenerating inside a container (`devcontainer exec`, `docker compose exec`) → reproduce the provisioning script's
+  registry-credential export in the same exec shell (re-derive it from that script; never paste the secret literal
+  into the command). Why: a lifecycle script's `export` dies with its shell, so container creation installs fine while
+  every later exec session fails registry auth.
 - Track which PRs applied cleanly and which conflicted. Cherry-pick fails irrecoverably for a PR → skip it, log it,
   continue with the rest.
 
@@ -102,6 +106,10 @@ Detect the package manager from repo root:
   broke it but do not block — the CI on the PR will catch it.
 - Red gate → rerun it on base (`origin/main` and its lockfile) before blaming a bump; red there too → pre-existing,
   not the update's.
+- Deterministic red in a container → before blaming a bump, list forwarded config-override var **names** (compare
+  `env | cut -d= -f1` against the compose `environment:` block; never print values) and rerun with them unset; green
+  unset → environment-induced, not the update's. Why: host vars the compose file forwards override the test-env config a
+  spec reads, and the base control reproduces the same red in the same env.
 - **HARD RULE: audit every major-version change — up or down, direct or transitive; a green suite is not evidence of
   safety.**
   - Diff each lockfile against base (`git diff origin/main...HEAD -- <lockfile>`); list every package whose major

@@ -1,6 +1,6 @@
 # wk-renovate
 
-> **Version:** 2026.10.23-224513 · **Group:** pull-request · **Model:** sonnet
+> **Version:** 2026.11.06-184031 · **Group:** pull-request · **Model:** sonnet
 
 Batch all open Dependabot PRs in the current repo into a single combined
 dependency-update PR — one branch, one review, one merge.
@@ -56,6 +56,10 @@ flowchart TD
 - **Automated external review** is always skipped for dependency-only updates.
 - **Lockfile conflicts** are resolved by regenerating via the detected package
   manager, not by manual conflict resolution.
+- **Container env is not inherited** — a lockfile regen inside a container
+  reproduces the provisioning script's registry-credential export in the same
+  exec shell; a deterministic red is rerun with forwarded config-override vars
+  unset before any bump takes the blame.
 
 ## Integration
 

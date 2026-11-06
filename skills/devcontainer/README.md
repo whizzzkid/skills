@@ -2,7 +2,7 @@
 
 > Use when creating or debugging a devcontainer for a Rails app (or any mise-managed project).
 
-**Version:** `2026.10.31-003026`
+**Version:** `2026.11.06-184031`
 
 ## Invocation
 

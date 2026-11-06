@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.31-003026"
+  version: "2026.11.06-184031"
   model:
     openai: gpt-5.6-terra
 ---
@@ -182,7 +182,7 @@ docker compose -p "$proj" -f .devcontainer/docker-compose.yml -f <override.yml> 
 | `down` reports success but containers stay up | Teardown used bare `-f` with no `-p` → empty/wrong project | Pin `-p` to the lowercased `<basename>_devcontainer` to match `devcontainer up`/VS Code |
 | Startup output contains a host credential | CLI printed the interpolated Compose model | Use file-backed secrets, or capture under `umask 077` and print only an exact-value-redacted copy |
 | `port is already allocated` bringing the stack up | A sibling worktree's stack of the same project already publishes that host port | Attach a throwaway container to the running stack's network and volumes with nothing published; hooks use `devcontainer exec` → ports-reset + labels override instead — *Host port already bound by a sibling worktree* |
-| `bundle install` 401s in a manually-started container | Bundler credentials come from a hostname-derived `BUNDLE_<HOST>` var the provisioning script exports; a manual `docker run` does not inherit it | Export it explicitly (`wk-cloudsmith` → *Bundler credentials for a Cloudsmith gem source*) |
+| `bundle install` 401s in a manually-started container or a later `devcontainer exec` session | Bundler credentials come from a hostname-derived `BUNDLE_<HOST>` var the provisioning script exports in its own shell; neither a manual `docker run` nor a later `exec` session inherits it | Export it in the same command shell (`wk-cloudsmith` → *Bundler credentials for a Cloudsmith gem source*) |
 | `devcontainer up` fails "building the Docker Compose images" while a plain base build succeeds | Compose bake requests an fs entitlement for the CLI's temp features Dockerfile | Trace-log the real error, prefix `BUILDX_BAKE_ENTITLEMENTS_FS=0` on the CLI call; plain compose only when nothing uses `devcontainer exec` — *`devcontainer up` fails at the image build* |
 | `devcontainer exec` finds no container; hooks that shell into it fail | Stack was started by plain `docker compose`, which never sets the CLI's `devcontainer.local_folder` / `config_file` labels | Fix the build and bring it up via `devcontainer up`; port clash only: stamp both labels in a compose override; ad hoc only: `devcontainer exec --container-id <id>` |
 | Test counts / uniqueness fail on a freshly prepared test DB | `RAILS_ENV=test bin/rails db:prepare` runs `db/seeds.rb` whenever it initializes a DB (seeding defaults on for the primary config in every env) | Mirror CI's test-DB recipe (e.g. `db:drop db:create db:migrate`) or `bin/rails db:test:prepare` (purge + schema load, no seeds) |
