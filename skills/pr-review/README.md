@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.11.04-225932`
+**Version:** `2026.11.09-210537`
 
 ## Invocation
 
@@ -104,4 +104,6 @@ flowchart TD
 - **A leftover pending draft is re-verified, not trusted:** a pending review the current user already holds on the PR
   (an interrupted earlier run, or the user's own draft) is read in Phase 2. Agent-authored comments in it become
   candidate findings that are re-checked and re-anchored at the current head; the user's own comments carry over
-  verbatim; the new review replaces the draft with the combined set.
+  verbatim; the new review replaces the draft with the combined set. The summary discloses the replacement, the
+  combined payload is saved before the draft is deleted, and a denied delete stops with the draft intact and asks
+  the user once.

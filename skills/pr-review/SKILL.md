@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.04-225932"
+  version: "2026.11.09-210537"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -242,7 +242,8 @@ author-facing text — use "concern"/"limitation". One to two sentences.
 
 Present a numbered summary (`1. [concern] src/auth.ts:42 — description`), then go straight to Phase 5 in the same turn —
 never ask "post as pending review?". The review stays pending (bar a passing approve gate), so the user decides at
-submit time.
+submit time. Own pending draft found in Phase 2 → the summary ends "Posting deletes and recreates your pending draft
+({k} of your comments carried verbatim)" — a disclosure, never a question.
 
 ## Phase 5: Post review
 
@@ -253,6 +254,12 @@ POST (422 on `"PENDING"`).
 
 Recheck the reviewed head before each POST, append by delete+recreate, and post follow-ups live:
 [references/posting-pending-review.md](references/posting-pending-review.md).
+
+**HARD RULE — the draft DELETE is a destructive write a permission layer may deny.** Write the union payload (every
+unfootered comment verbatim) to disk before the DELETE; run the DELETE as its own Bash call. Denied (hook-rewrite →
+one identical retry first, per the POST rule below) → stop; the draft is intact: report its review ID and the payload
+path, ask the user once to authorize the DELETE or post it themselves. Never route around it (submit, second review,
+live comments). POST denied after the DELETE landed → report the payload path as the only copy of their comments.
 
 - **Head moved since Phase 1 → re-derive at the new head; never post the stale payload.** Diff old..new (old head not
   an ancestor → map lineage first); drop findings the delta fixed; re-run probes for logic findings in changed hunks;

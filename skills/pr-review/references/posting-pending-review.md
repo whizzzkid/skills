@@ -61,6 +61,18 @@ GitHub allows no append — delete review, recreate with full comment set. Pendi
 from scratch.
 A draft found in Phase 2 recreates the same way: re-verified candidates plus the user's unfootered comments verbatim.
 
+Order is load-bearing — the DELETE is the only destructive step, and permission layers may classify it as an
+external destructive write and deny it:
+
+1. Write the full union payload with the Write tool; confirm every unfootered comment from the draft is in it.
+2. `DELETE /pulls/{n}/reviews/{id}` as its own Bash call.
+3. Denied → stop. The draft still exists, so nothing is lost: report the review ID and payload path, ask the user
+   once to authorize the DELETE or to delete/post it themselves. Hook-rewrite denial gets one identical retry first
+   ([`wk-env`](../../env/README.md) Step 3.6). Never route around the denial by submitting the draft, opening a
+   second review, or posting the findings as live comments.
+4. DELETE landed → POST the recreate as its own call. POST denied → the payload file is now the only copy of the
+   user's comments; say so explicitly when handing off the path.
+
 ## Follow-up after posted review
 
 Live inline comment (`POST /pulls/{n}/comments`) or thread reply (`/comments/{id}/replies`). Never a second pending
