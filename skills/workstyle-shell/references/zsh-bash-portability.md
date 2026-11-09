@@ -7,7 +7,7 @@ matched, var missing) rather than a syntax error, so it is diagnosed as a real r
 Portability is a property of the shell, never of the authoring context — an ad-hoc
 command passes no review, so the trap lands there unchallenged. Traps run **both**
 directions — a bash-ism zsh rejects, *and* a zsh-ism the shell declines to honor — so
-clearing a command against the bash-only entries below proves nothing. Six traps:
+clearing a command against the bash-only entries below proves nothing. Seven traps:
 
 - **CRITICAL:** unquoted **parameter** expansion does not word-split under zsh — in
   **any** position, not only a `for` list. `for x in $LIST` runs the body once over the
@@ -45,6 +45,10 @@ clearing a command against the bash-only entries below proves nothing. Six traps
   bash but the five literal characters `$'\n'` under zsh (verified, zsh 5.9): rc 0, no stderr, and lines silently
   fuse. Assign the character to a variable first (`nl=$'\n'`, outside any double quotes) and substitute `"$nl"`, which
   behaves identically in both; then grep the result for the literal token.
+- **An unquoted word starting with `=` is a command lookup under zsh** (`EQUALS` option, on by default): `=foo`
+  expands to the path of command `foo`, so a bare separator like `echo ===` aborts the whole compound command with
+  `== not found` — every later step is skipped. Quote any literal starting with `=` (`echo '==='`, `printf '%s\n'
+  '----'`), or use a separator that does not start with `=`.
 - **A verdict that contradicts the output it summarizes indicts the guard, not the
   output.** Re-derive the status with a dialect-independent construct before believing
   a green whose own captured output reports a failure.

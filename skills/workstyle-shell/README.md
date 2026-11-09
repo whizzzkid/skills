@@ -2,7 +2,7 @@
 
 > Enforces safe, idiomatic shell conventions in scripts and compound ad-hoc commands.
 
-**Version:** `2026.11.06-181938`
+**Version:** `2026.11.09-210752`
 
 ## Invocation
 
@@ -38,7 +38,7 @@
 - Never pass a variable pattern as a bare `grep` operand — use `grep -e "$pat"`. A pattern beginning with `-` is parsed as options, and unlike the BSD reordering quirk this is POSIX everywhere. The failure is bimodal: an unrecognized letter aborts loudly (`grep "-Werror" f` → rc=2), but a pattern that *is* a valid option is consumed as one, the file operand becomes the pattern, and `grep` reads stdin — so `grep "--color" f` returns rc=1 with empty stdout *and* empty stderr, scoring a false MISSING for the needle's first character alone. `--` also fixes it but demotes every later word to an operand.
 - `printf` silently re-runs its format string when arguments outnumber conversion specifiers — `printf '%s=%s\n' a 1 b 2` emits *two* rows, not one. rc=0, empty stderr, identical across the bash/zsh/sh builtins and `/usr/bin/printf`. This is the inverse polarity of every zero-trap above: the count comes out too *high*, so a row-counting probe reading `2` where the loop ran once looks like corroboration rather than corruption. Make the argument count an exact multiple of the specifier count.
 - Presence-check with a test builtin, never a value expansion — `${VAR:-NO}` emits the value on the set path, so a `${VAR:+yes}${VAR:-NO}` "boolean" leaks a live secret; fingerprint with length + hash prefix when a value must be compared.
-- Keep every shell command portable to zsh as well as bash — ad-hoc commands the agent composes mid-task, not just documented snippets — an unquoted *parameter* expansion never word-splits under zsh in *any* position (`cmd $FILES` hands the tool one argument naming a blob it was never given, so the run reads as a clean zero), `${!var}` aborts as `bad substitution`, and `${PIPESTATUS[…]}` is never populated (zsh spells it `pipestatus`); never materialize a file list in a variable at all — pipe the producer into a `while IFS= read -r` loop — and use `printenv` exit status plus a pipeline-free status probe.
+- Keep every shell command portable to zsh as well as bash — ad-hoc commands the agent composes mid-task, not just documented snippets — an unquoted *parameter* expansion never word-splits under zsh in *any* position (`cmd $FILES` hands the tool one argument naming a blob it was never given, so the run reads as a clean zero), `${!var}` aborts as `bad substitution`, and `${PIPESTATUS[…]}` is never populated (zsh spells it `pipestatus`); an unquoted word starting with `=` (`echo ===`) is a zsh command lookup that aborts the chain with `== not found`; never materialize a file list in a variable at all — pipe the producer into a `while IFS= read -r` loop — and use `printenv` exit status plus a pipeline-free status probe.
 - **Important:** Never use lowercase `path` (or `cdpath`, `fpath`, `manpath`, `module_path`) as a zsh loop or script variable, including in compound ad-hoc commands — it is a special
   array tied to `PATH`, so scalar assignment replaces the executable search
   path. Prefer role-specific names such as `doc_path`.
