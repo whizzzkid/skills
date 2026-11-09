@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.05-181640`
+**Version:** `2026.11.09-192225`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -80,7 +80,8 @@ reported afterwards in the response.
 - **Interview blocks** — a 15-min prep block before and a 45-min scorecard block
   after each interview (a user-stated length wins), created via [`wk-cal`](../cal/README.md); a block
   renders as done only after the calendar is re-listed and the block's duration
-  and zero overlap are confirmed.
+  and zero overlap are confirmed. No free slot → a warn item carrying the cal skill's
+  proposed flexible-block placement; a `draft` scorecard renders as still owed.
 - **Safe in-place patches** — line patches use shell parameter substitution (never
   `sed`/`awk`, which strip `\#` escapes); multi-line patches put the newline in a
   variable first, then the page is checked for stray literal `\n` text and

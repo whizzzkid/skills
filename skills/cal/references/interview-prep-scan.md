@@ -38,7 +38,12 @@ or to-do item. Create via calendar MCP before any caller renders its summary.
 - If busy (any non-declined event, including unanswered or tentative), scan forward in 15-min steps through the rest
   of the working day.
 - Pick the first window free for the **full** duration — never shorten the block to fit a gap.
-- No same-day slot: flag to user with warning.
+- No same-day slot: flag to user with warning, plus a **proposed** placement — the earliest full-duration window
+  overlapping only flexible blocks, naming each. Create it only on user confirmation; a caller barred from prompting
+  renders the proposal inside the warning, which stays open work.
+  - Flexible = no other attendees and auto-placed or marked as habit / focus time (`eventType: focusTime`, or an
+    auto-scheduler marker in title or description). Any event with other attendees stays fixed. (Busy treats a
+    displaceable habit block like a meeting, so a day packed with them yields no slot and no option.)
 
 ### C. Verify every created block
 
@@ -57,4 +62,5 @@ Interview scaffolding:
   [warn] {title} ({date} {time})
      Prep: could not create -- {conflict reason}
      Scorecard: no same-day slot -- manual action needed
+     Scorecard: no free slot -- proposed {time} over flexible "{block}" -- confirm to book
 ```

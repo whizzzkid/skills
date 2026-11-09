@@ -2,7 +2,7 @@
 
 > Use for all Google Calendar operations — fetching events, creating events in smart free slots, checking availability, and scanning for upcoming interviews.
 
-**Version:** `2026.10.27-183004`
+**Version:** `2026.11.09-192225`
 
 ## Invocation
 
@@ -39,6 +39,6 @@ flowchart TD
 - **Debrief interviews skip the scorecard block** — debrief sessions are already the scorecard discussion, so only the 15-min prep block is created.
 - **Slot ranking uses a penalty system** — conflicts add +3 per attendee, back-to-back adds +1, lunch window adds +2; lowest penalty wins with earlier-in-day as tiebreaker.
 - **All calendar-touching skills delegate here** — [`wk-sitrep`](../sitrep/README.md) calls this skill rather than calling the Gcal MCP directly.
-- **Scorecard blocks default to 45 min** (a user-stated length wins) and scan forward in 15-min steps for a window free for the full duration if the immediate post-interview slot is busy; if no same-day slot exists, it flags to the user rather than silently skipping.
+- **Scorecard blocks default to 45 min** (a user-stated length wins) and scan forward in 15-min steps for a window free for the full duration if the immediate post-interview slot is busy; if no same-day slot exists, it flags to the user rather than silently skipping, proposing the earliest slot that overlaps only flexible (attendee-less habit / focus) blocks — booked only on user confirmation.
 - **Unanswered and tentative events count as busy** — only declined events free a slot.
 - **Every created event is verified** — the day is re-listed after `create_event` to confirm start, end, duration, and zero overlap before anything is reported as created.

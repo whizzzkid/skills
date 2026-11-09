@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.05-181640"
+  version: "2026.11.09-192225"
   model:
     openai: gpt-5.6-terra
 ---
@@ -155,7 +155,8 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
 - **Stage 2c — Create missing interview prep blocks.** Per interview lacking prep/scorecard →
   [`wk-cal`](../cal/README.md) block-creation: 15-min prep before, 45-min scorecard after (user-stated length wins;
   scan forward on busy slots). Render a block as done only after `wk-cal`'s post-create re-list confirms duration and
-  zero overlap; failed check → warn item, never a done span.
+  zero overlap; failed check → warn item, never a done span. No free slot → warn item carrying `wk-cal`'s proposed
+  flexible-block placement. A scorecard the hiring system shows as `draft` is unsubmitted → still owed, never done.
 - **Stage 3 — Compile open items.** Merge agent results + carry-over; drop completed + dismissed; write survivors as
   `data-done="false"` spans. Content inventory (skip empty): Carry-over, Meeting Prep, Slack, Email, GitHub, Jira,
   Confluence. Sort/mark urgency per rendering contract.

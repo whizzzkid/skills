@@ -36,6 +36,8 @@
 user must still act on (unsubmitted draft, unsent reply) renders its launch
 done but stays open work — re-query and re-surface it every run until the
 artifact is terminal. A draft whose PR merged or closed is moot — drop it, never list it.
+The same holds for any artifact the user owes on an external system (scorecard, feedback
+form): only its submitted state is done; a saved `draft` renders as still owed.
 
 ## Nesting constraints
 

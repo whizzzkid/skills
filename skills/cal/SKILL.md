@@ -18,7 +18,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.27-183004"
+  version: "2026.11.09-192225"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -155,6 +155,10 @@ keywords, debrief skip rule, prep/scorecard creation, reporting format).
 **HARD RULE:** The scorecard is always a booked calendar event, never a
 checkbox or to-do item. Create via calendar MCP before any caller renders.
 Default 45 min (a user-stated length wins); busy and verification per §Smart Event Creation.
+
+- **No free window → propose, never auto-book.** Offer the earliest full-duration slot overlapping only flexible
+  blocks (no other attendees; auto-placed habit / focus time), named in the warning; book only on user confirmation,
+  never shortening the block. (A packed day of displaceable habit blocks otherwise leaves the scorecard no option.)
 
 ## Post-Completion
 
