@@ -2,7 +2,7 @@
 
 > Use when creating git commits or pushing code. Enforces conventional commits with emoji, commit signing, and safe push behavior.
 
-**Version:** `2026.10.30-190958`
+**Version:** `2026.11.10-175041`
 
 ## Invocation
 
@@ -45,6 +45,8 @@ flowchart TD
 - **Signing is non-negotiable** — `--no-gpg-sign`, `-n`, and `git -c commit.gpgsign=false` are forbidden. For
   signed merges or rewrites, verify the configured key and SSH agent from the exact execution shell before starting.
   If only the login shell exposes both, run there with the verified key through one-shot `git -c`; only a completed
-  signed commit with a raw `gpgsig` header proves success.
+  signed commit with a raw `gpgsig` header proves success. On a signing failure, a key missing from config files
+  proves nothing: probe the login shell for env-delivered config (`GIT_CONFIG_PARAMETERS` / `GIT_CONFIG_COUNT`,
+  presence only) and commit through it — never ask the user to edit git config.
 - **`mise exec --` is required before push** in mise-managed repos — without it, git hooks (lefthook, husky) fail with exit 127 for tools like `lychee` and `shellcheck`. Never `eval "$(mise activate bash)"`; the supported single-command form is `mise exec --`.
 - **Post-CI squash offer** fires when ≥3 `fix(ci):` commits exist with a net diff under 50 lines — never auto-squashes, always asks, and requires explicit user approval for the mandatory force-push. A single trivial follow-up correcting the immediately prior commit gets an explicit `--amend` approval prompt at the fix site (auto mode blocks `--amend`), not silent accumulation.

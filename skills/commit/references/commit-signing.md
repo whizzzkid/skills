@@ -19,11 +19,15 @@ never start first or weaken signing.
 1. **Stop immediately.** Do not retry without signing.
 2. **Diagnose env inheritance before touching any git config.** Signing config
    is often delivered via `GIT_CONFIG_PARAMETERS` (git-native injection set in
-   the user's interactive shell) that a subprocess does not inherit — config is
-   present, just not visible in this process.
+   the user's login profile) that a non-login subprocess does not inherit —
+   config is present, just not visible in this process. Probe **both** shells,
+   testing presence only (the value carries config; never print it). Set only
+   in the login shell → run the commit/push via `"$SHELL" -lic '…'`, never ask
+   the user to move the key into a config file.
 
    ```bash
-   echo "$GIT_CONFIG_PARAMETERS"   # signing config present but not inherited?
+   p='[[ -n "${GIT_CONFIG_PARAMETERS:-}${GIT_CONFIG_COUNT:-}" ]] && echo set || echo unset'
+   bash -c "$p"; "$SHELL" -lic "$p"   # direct vs login shell
    ssh-add -l                       # agent holds the signing key?
    git config user.signingkey; ssh-add -L   # SSH signing: is the CONFIGURED key among the LOADED ones?
    ```

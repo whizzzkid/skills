@@ -25,7 +25,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.30-190958"
+  version: "2026.11.10-175041"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -96,10 +96,17 @@ it produces is agent-created.
 
 ## Commit Signing
 
-Sign all commits. Never use `--no-gpg-sign`, `-n`, or `git -c commit.gpgsign=false`. On failure, diagnose env
-inheritance before touching config. Never write `git config --global` to fix signing. Re-sign every commit a rewrite
-touches. "No signature" is usually a local-verification false alarm — check the raw `gpgsig` header. Diagnosis, rewrite
-preservation, false alarms: [`references/commit-signing.md`](references/commit-signing.md).
+- Sign all commits. Never use `--no-gpg-sign`, `-n`, or `git -c commit.gpgsign=false`.
+- **Important — on signing failure, probe the login shell before touching or proposing any config change.** Config
+  files lacking the key prove nothing: signing config often arrives as env (`GIT_CONFIG_PARAMETERS`,
+  `GIT_CONFIG_COUNT`) exported only by the login profile, which a non-login agent shell never inherits.
+  - Test presence only, never print the value:
+    `"$SHELL" -lic '[[ -n "${GIT_CONFIG_PARAMETERS:-}${GIT_CONFIG_COUNT:-}" ]]' && echo set`.
+  - Set there → run the commit/push through `"$SHELL" -lic '…'` (message via `git commit -F <file>`).
+  - Never write `git config --global` to fix signing; asking the user to edit git config is the same violation.
+- Re-sign every commit a rewrite touches. "No signature" is usually a local-verification false alarm — check the raw
+  `gpgsig` header. Diagnosis, rewrite preservation, false alarms:
+  [`references/commit-signing.md`](references/commit-signing.md).
 
 ## Pushing
 
