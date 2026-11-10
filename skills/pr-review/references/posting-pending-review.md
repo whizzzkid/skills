@@ -45,8 +45,9 @@ user to re-authorize. Hook input-rewrite denial → [`wk-env`](../../env/README.
 ## Submit as approval (`approve` flag only)
 
 Only after the SKILL.md Approve gate passes and the pending review exists. Recheck `headRefOid` == `PR_HEAD` first;
-moved → stay pending. Write `{"event": "APPROVE", "body": "<same verdict + footer>"}` with the Write tool, then, as its
-own Bash call:
+moved → stay pending. Read `statusCheckRollup` in that same query and re-check it against the branch's required-status
+list; a required check that turned red since the gate ran → stay pending. Write
+`{"event": "APPROVE", "body": "<same verdict + footer>"}` with the Write tool, then, as its own Bash call:
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{n}/reviews/{review_id}/events --method POST --input <file>

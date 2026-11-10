@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.09-210537"
+  version: "2026.11.10-181049"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -105,10 +105,14 @@ never the flag.
   Confirmed/Refuted/Unverified and each Refuted one commented; Phase 2 completed (threads classified, every
   `bot_findings_to_validate` item routed through Phase 3); zero `concern:` comments in this review (`blocker` maps
   there in Phase 3); adversarial/arch verdict not `blocked`; no prior own concern still open (Phase 2 re-review); no
-  failing required check (`gh pr view --json statusCheckRollup`); current user is not the PR author (GitHub 422s
-  self-approval). `suggestion:`/`question:`/`praise:` never block.
+  failing required check (live re-query below); current user is not the PR author (GitHub 422s self-approval).
+  `suggestion:`/`question:`/`praise:` never block.
   - Check each precondition against its recorded artifact (claim ledger, Phase 2 queue outcomes), never recall — a
     skipped phase leaves no artifact, so the gate fails closed (approval cannot be withdrawn once submitted).
+  - **Required checks are live state — re-query at the gate, never reuse Phase 1 data** (pending then can be green
+    or red now). In the same step as the head recheck, read `gh pr view --json headRefOid,statusCheckRollup`
+    (`headRefOid` must equal `PR_HEAD`) and the branch's required-status list per [`wk-gh`](../gh/README.md); judge
+    entries by its rollup union rules. Required check pending or not yet posted → not failing; name it in the terminal.
 - Gate fails → post pending as usual; tell the terminal "approve requested; held as pending: {reasons}".
 
 ## Focus Argument
