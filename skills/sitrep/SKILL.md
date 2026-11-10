@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.09-192225"
+  version: "2026.11.10-204018"
   model:
     openai: gpt-5.6-terra
 ---
@@ -109,10 +109,13 @@ ensure SilverBullet serving. Absolutize `$SITREP_REPO` first (relative → again
 toplevel may be a parent repo, so never assume they are equal. Recipes:
 [`references/bootstrap.md`](references/bootstrap.md).
 
-- **A failed probe is not a negative result.** Served = HTTP answer on `$SITREP_PORT`. A failing `docker` command
-  means the runtime is down, never "no container": with a compose file present, start the runtime via
+- **A failed probe is not a negative result.** Served = HTTP answer on `$SITREP_PORT`. A failing `docker info` with
+  the CLI present means the runtime is down, never "no container": with a compose file present, start the runtime via
   [`wk-colima`](../colima/README.md), then `docker compose up -d`; report "not installed" only when no compose file
   and no `silverbullet` binary exist.
+  - **Probe the CLI before the daemon.** `command -v docker` first: absent → CLI install/link gap, fixed per
+    [`wk-docker`](../docker/README.md) Pre-Flight; never start or restart the runtime (it refuses without the CLI,
+    and both failures exit non-zero alike).
 
 ## Sub-command: start
 
@@ -144,7 +147,8 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     **Activity = user-authored change.** `updated` moves on anyone's edit: count a ticket as the user's work only when
     a changelog entry or comment in the window is authored by the user; many tickets sharing one stamp = bulk edit.
   - Block handling: OAuth soft blocks degrade with CTA; `tool_unavailable` → replay in main; still toolless = missing
-    connector.
+    connector. Agent shells may skip the user's profile: a CLI `command not found` or unset env var is retried once
+    with `$HOME/.profile` sourced before it counts as a gap.
   - Truncated result (ends mid-item) → re-request only the named sections with the contract's word cap; never
     compile a cut-off report as complete.
   - Cross-tracker pending-on-me: fold all trackers into one view; compare carry-over status vs previous `live.md` and

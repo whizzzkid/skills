@@ -2,7 +2,7 @@
 
 > Use when working with Docker — building images, inspecting containers, debugging Dockerfile issues, verifying image tags exist, or troubleshooting Docker daemon connectivity.
 
-**Version:** `2026.10.20-230146`
+**Version:** `2026.11.10-204018`
 
 ## Invocation
 
@@ -37,7 +37,7 @@ flowchart TD
 - **Runtime env vars contract:** Every env var read by the entrypoint at runtime must have an `ENV VAR=""` declaration in the Dockerfile — the image is the canonical interface document.
 - **Env-forwarding audit:** Compose / the `docker_compose` plugin forward only vars listed in `environment:` / `env:`. Audit the full container runtime call-graph reads against that list (not just the diff delta) and cross-check siblings; a missing entry is a silent runtime no-op. Never proxy a target-artifact SHA with a host build SHA.
 - **Git worktree breaks git in containers:** A worktree's `.git` is a *file* pointing at a host absolute path that dangles inside the container → `git rev-parse` fails and git-aware tooling aborts. Materialize a standalone repo (`rm .git`, `git init && add && commit`) and mount that, never the live worktree.
-- **`docker` missing on PATH (macOS):** A dropped Homebrew symlink → run `brew link docker` and prepend `/opt/homebrew/bin` to PATH before retrying.
+- **`docker` missing on PATH (macOS):** A dropped Homebrew symlink → run `brew link docker` and prepend `/opt/homebrew/bin` to PATH before retrying. A link blocked by another formula's symlinks is dry-run first (`brew link --overwrite --dry-run docker`) and overwritten only when the conflicts are duplicates such as shell completions. A missing CLI is never treated as a daemon fault — no runtime start until the CLI resolves.
 - **Daemon startup is user-only:** The skill never attempts to start the Docker daemon itself; it instructs the user to start Docker Desktop or `colima start`.
 - **ECR auth:** `authorization failed` / `ExpiredToken` errors always mean `aws sso login` — the skill does not attempt re-authentication.
 - **Exit code table:** Codes 137 (OOM) and 125 (daemon error) have specific meanings; the skill maps them rather than treating all failures as generic errors.

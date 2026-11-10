@@ -7,6 +7,7 @@ description: >-
   misbehaving. Auto-invoked when any docker or colima command is about to run.
 argument-hint: '[start|stop|restart|status]'
 allowed-tools:
+  - "Bash(command -v:*)"
   - "Bash(colima status:*)"
   - "Bash(colima start:*)"
   - "Bash(colima stop:*)"
@@ -30,7 +31,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.23-224743"
+  version: "2026.11.10-204018"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -57,6 +58,9 @@ Explicit `/wk-colima`: `status` → Step 1 only, report and exit; `start` → St
 ```bash
 mise exec -- colima status 2>&1
 ```
+
+First `command -v docker`: absent → stop; fix the CLI per [`wk-docker`](../docker/README.md) Pre-Flight, never
+Steps 2–4 (Colima's dependency check refuses to start without it; a restart cannot fix a missing binary).
 
 Take the first that matches: 1) `colima` not installed → stop and report it must be installed
 (`mise use -g colima@latest`); 2) `Running` → healthy, proceed, skip Steps 2–3; 3) `Stopped`, `not found`, or any

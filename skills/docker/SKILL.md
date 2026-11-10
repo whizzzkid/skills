@@ -7,6 +7,7 @@ description: >-
   edits, or docker-compose operations.
 allowed-tools:
   # Read-only Docker commands
+  - "Bash(command -v:*)"
   - "Bash(docker info:*)"
   - "Bash(docker version:*)"
   - "Bash(docker inspect:*)"
@@ -32,7 +33,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.20-230146"
+  version: "2026.11.10-204018"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -48,6 +49,11 @@ metadata:
 
 - **CLI on PATH (macOS):** `command -v docker >/dev/null 2>&1 || brew link docker`
   Prepend `PATH="/opt/homebrew/bin:$PATH"` in Bash invocations.
+  - **CLI absent is never a daemon fault.** Fix the CLI before any daemon check or runtime start (`docker info` fails
+    the same way for both; Colima refuses to start without the CLI).
+  - **Link conflict** (`brew link` fails `Could not symlink … belonging to <other formula>`) → `brew list docker` to
+    confirm the install, then `brew link --overwrite --dry-run docker`; run it for real only when every listed path is
+    a file the other formula duplicates (e.g. shell completions), else report the list to the user.
 - **Daemon:** `docker info > /dev/null 2>&1 || echo "DAEMON_NOT_RUNNING"` →
   tell user to start Docker Desktop or `colima start`. Never start it yourself.
 - **Registry auth:** `authorization failed` / `ExpiredToken` → tell user: `aws sso login`.

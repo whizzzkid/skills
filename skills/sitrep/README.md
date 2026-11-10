@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.09-192225`
+**Version:** `2026.11.10-204018`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -67,7 +67,9 @@ reported afterwards in the response.
 - **SilverBullet server** — the skill verifies the server answers over HTTP
   and, if not, starts it: a stopped container runtime is started via
   [`wk-colima`](../colima/README.md) and the compose service brought up,
-  else the local `silverbullet $SITREP_REPO` binary runs.
+  else the local `silverbullet $SITREP_REPO` binary runs. A missing `docker`
+  CLI is reported as an install/link gap (fixed per
+  [`wk-docker`](../docker/README.md)), never treated as a stopped runtime.
 - **Yesterday synthesis** — validates evidence inside the previous-workday
   window across every available work source, then ranks outcomes, decisions,
   progress, and unblockings without preferring terminal tracker events. A Jira
@@ -136,3 +138,5 @@ reported afterwards in the response.
   followed by `docker compose down && up -d` after push.
 - A stopped container runtime is started via
   [wk-colima](../colima/README.md) before `docker compose up -d`.
+- Gathering agents retry a `command not found` or unset env var once with
+  `$HOME/.profile` sourced before reporting the domain unavailable.

@@ -3,7 +3,7 @@
 Ensures Colima is running before any container operation and provides a clean
 restart path when Colima or Docker misbehaves.
 
-**Version:** `2026.10.23-224743`
+**Version:** `2026.11.10-204018`
 
 ## Trigger
 
@@ -13,6 +13,9 @@ daemon`) and on explicit `/wk-colima [start|stop|restart|status]`.
 
 ## Key Behavior
 
+- **Docker CLI precondition** — a missing `docker` binary stops the skill
+  before any start or restart (Colima refuses to start without it); the CLI
+  fix lives in [wk-docker](../docker/README.md).
 - **Status check first** — if Colima is already running, exits silently.
 - **Mise-managed** — colima installs via `mise use -g colima@latest`; every
   `colima`/`docker` command runs through `mise exec --` so mise-pinned tools and

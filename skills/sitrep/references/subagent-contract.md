@@ -31,6 +31,7 @@ SUBAGENT CONTRACT (mandatory):
 - Return every date as ISO `YYYY-MM-DD`. Never add a weekday of your own; a
   weekday from the source goes in `source_weekday` — the orchestrator recomputes it.
 - PROBE TOOLS FIRST: your domain's MCP tools may not be inherited (subagents do NOT reliably get the orchestrator's connectors). Missing → return `tool_unavailable: true` at once; never fail item-by-item.
+- YOUR SHELL MAY SKIP THE USER'S PROFILE: a CLI `command not found` or an unset env var (e.g. `$GITHUB_ORG`) → retry once as `. "$HOME/.profile" >/dev/null 2>&1; <cmd>` before reporting the domain unavailable; still failing → report the exact error.
 ```
 
 ## Orchestrator: truncated results

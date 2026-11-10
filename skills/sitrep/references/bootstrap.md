@@ -70,8 +70,9 @@ fi
 ## Verify SilverBullet is serving
 
 "Served" means an HTTP answer on `$SITREP_PORT`; process and container probes only choose the start path. A failing
-`docker` command is a probe error (runtime stopped), never an empty container list — so it never reaches the
-"not installed" branch while a compose deployment exists.
+`docker info` with the CLI present is a probe error (runtime stopped), never an empty container list — so it never
+reaches the "not installed" branch while a compose deployment exists. Probe the CLI before the daemon: a missing
+`docker` binary also fails `docker info`, and treating it as runtime-down sends colima into a start it refuses.
 
 ```bash
 # Any HTTP response (even 401) proves the server answers; curl exits non-zero only on transport failure.
@@ -84,7 +85,10 @@ for _d in "$SITREP_REPO" "$(git -C "$SITREP_REPO" rev-parse --show-toplevel 2>/d
 done
 if _sb_up; then SB_STATE=served
 elif [ -n "$_COMPOSE_FILE" ]; then
-  if docker info >/dev/null 2>&1; then SB_STATE=compose-down; else SB_STATE=runtime-down; fi
+  if ! command -v docker >/dev/null 2>&1; then SB_STATE=cli-absent
+  elif docker info >/dev/null 2>&1; then SB_STATE=compose-down
+  else SB_STATE=runtime-down
+  fi
 elif command -v silverbullet >/dev/null 2>&1; then SB_STATE=binary
 else SB_STATE=absent
 fi
@@ -94,6 +98,9 @@ echo "SB_STATE=$SB_STATE COMPOSE_FILE=${_COMPOSE_FILE:-none}"
 Act on `SB_STATE`:
 
 - `served` → continue.
+- `cli-absent` → stop and report a CLI install/link gap; never start the runtime. Fix per
+  [`wk-docker`](../../docker/README.md) Pre-Flight (installed-but-unlinked package → dry-run the link first), re-run
+  Step 0.
 - `runtime-down` → invoke [`wk-colima`](../../colima/README.md) `start`; re-check `docker info`, then handle as
   `compose-down`. Runtime still down → stop and report it (never "not installed").
 - `compose-down` → `docker compose -f "$_COMPOSE_FILE" up -d`.
