@@ -37,7 +37,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.30-202125"
+  version: "2026.11.12-230031"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -73,7 +73,9 @@ Create and manage GitHub PRs: draft mode, stacking, and a post-creation workflow
    `$BEST_BASE != $DEFAULT_BRANCH` → surface the A/B/C prompt first.
 4. **Verify every claim from its source, not memory.** Re-read source files before writing behavioral descriptions;
    quote severity ladders directly. External-capability claims cite upstream source at composition time. Every
-   identifier (run id, SHA, URL) in the body comes from a command run this turn.
+   identifier (run id, SHA, URL, PR number) in the body or any follow-up (ticket comment, CI watch, self-review,
+   cross-link) comes from a command run this turn. A new PR's number comes from `gh pr create` stdout — never
+   extrapolated from earlier PRs (others open in between).
 5. **HARD RULE — re-poll review threads before every status report after a push.** Green CI plus a `reviewDecision`
    / merge state never proves "only approval left": bots post inline findings under an empty review body. Query
    unresolved `reviewThreads` via GraphQL
@@ -116,7 +118,7 @@ grep -rliE '<branch-phase-or-feature-keyword>' docs/plans docs/specs 2>/dev/null
 - **Simple PR (fallback — no repo template):**
 
 ```bash
-gh pr create --draft --base "$BEST_BASE" \
+PR_URL=$(gh pr create --draft --base "$BEST_BASE" \
   --title "feat(scope): ✨ description" --body "$(cat <<'EOF'
 ## Summary
 - What changed and why
@@ -124,11 +126,12 @@ gh pr create --draft --base "$BEST_BASE" \
 ## Test plan
 - [ ] How to verify the changes
 EOF
-)"
+)") && PR_NUMBER="${PR_URL##*/}"
 ```
 
-- `--base "$BEST_BASE"` MUST be on every `gh pr create` (Hard Rule 3). Titles use conventional commit + emoji per
-  `wk-commit`. Jira key detected via `wk-jira` → append `[<KEY>]` as the last title token.
+- Capture the printed URL and derive `$PR_NUMBER` before any follow-up (Rule 4). `--base "$BEST_BASE"` MUST be on
+  every `gh pr create` (Hard Rule 3). Titles use conventional commit + emoji per `wk-commit`. Jira key detected via
+  `wk-jira` → append `[<KEY>]` as the last title token.
 - **HARD RULE — push remote is a fork of the PR target → green fork CI before the upstream PR.** Upstream CI on fork
   PRs can wait on maintainer approval (`action_required`), so the first CI signal must come from the fork.
   - Detect: `gh repo view "$(git remote get-url --push origin)" --json isFork,parent`; `isFork` true and `parent` is
