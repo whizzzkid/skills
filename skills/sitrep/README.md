@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.10-204018`
+**Version:** `2026.11.12-195906`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -11,8 +11,8 @@ no per-day live directories, and dated snapshots at close.
 - `/wk-sitrep start` — workday start: gathers the current inbox and
   previous-workday contribution evidence via 5 parallel agents. If the prior
   live page was never closed, `start` first runs the complete dated `end` flow
-  (one shared agent fleet serves both when the closed day is the previous
-  workday); a failed close blocks today's overwrite. It then carries open items forward,
+  (one shared agent fleet serves both, with an explicit window per day across
+  any holiday or PTO gap); a failed close blocks today's overwrite. It then carries open items forward,
   compiles `$SITREP_REPO/$EMPLOYER/live.md`, verifies the 3-column layout,
   opens it in the browser, and auto-launches a
   `/wk-pr-review` subagent (via `git wta` worktree) for each PR awaiting your
@@ -71,7 +71,8 @@ reported afterwards in the response.
   CLI is reported as an install/link gap (fixed per
   [`wk-docker`](../docker/README.md)), never treated as a stopped runtime.
 - **Yesterday synthesis** — validates evidence inside the previous-workday
-  window across every available work source, then ranks outcomes, decisions,
+  window across every available work source (an empty window steps back to the
+  latest day with evidence, never past the prior page), then ranks outcomes, decisions,
   progress, and unblockings without preferring terminal tracker events. A Jira
   ticket counts as the user's work only when the changelog or comment author is
   the user — an `updated` stamp moves on anyone's edit, including bulk edits.

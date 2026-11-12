@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.10-204018"
+  version: "2026.11.12-195906"
   model:
     openai: gpt-5.6-terra
 ---
@@ -121,9 +121,9 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
 
 - **Stage 0.5 — Close unfinished prior day.** **HARD RULE — close before overwrite.** Prior `date:` with no valid end
   state → full `end` flow first; failure stops `start`. User explicitly declares the stale page closed → skip the
-  rollover, carry its open spans forward, note it in Meta. Closed day = previous workday → one shared gather feeds
-  both flows. Dirty-path check: tracked non-artifact → stop; untracked non-artifact → ignore, never stage. Details:
-  [`references/missed-end-rollover.md`](references/missed-end-rollover.md).
+  rollover, carry its open spans forward, note it in Meta. Any rollover → one shared gather, one explicit window per
+  day, feeds both flows. Dirty-path check: tracked non-artifact → stop; untracked non-artifact → ignore, never stage.
+  Details: [`references/missed-end-rollover.md`](references/missed-end-rollover.md).
 - **Stage 1 — Load previous live.md.** Read `$LIVE_FILE`: open `data-done="false"` → carry-over, completed → count.
   Canonical state is `data-done` (legacy glyphs read-only). Resolve previous working day from frontmatter. Read
   `$PREV_SNAPSHOT_FILE`; treat `## Achievements` as candidate evidence, never freshness waiver.

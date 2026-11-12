@@ -9,6 +9,9 @@ class: principle
 - Resolve the previous-workday start and end once in the user's timezone.
 - Carry a source timestamp and canonical URL or record ID with every candidate.
 - Keep only evidence timestamped inside the resolved half-open window.
+- Window empty in every available domain (holiday, PTO) → step back one day at a
+  time to the latest day with evidence, never past the prior live page's `date:`;
+  name the day used in Meta (a no-work day is not the last worked day).
 - Treat the previous snapshot and session memory as candidate leads only.
 - Reject prior standup text as evidence; never copy its bullets forward.
 
@@ -41,4 +44,4 @@ class: principle
 - Cite each bullet with its canonical source URL or record.
 - Rank by impact and emit the strongest 3–4 contributions, one per bullet.
 - Emit `No verified accomplishments found` only after every available domain
-  returns no qualifying evidence.
+  returns no qualifying evidence for every stepped-back day.

@@ -54,20 +54,21 @@ prerequisite to today's overwrite, not a separate required invocation.
   present; only Stage 8 writes `end_completed_at:`.
 - Any failure stops `start` before today's `live.md` can be written.
 
-## Shared gather (closed day = previous workday)
+## Shared gather (every rollover)
 
-- Closed `date:` equals `start`'s previous workday → launch one fleet that
-  serves both `end` Stage 2 and `start` Stage 2; never relaunch (both read the
-  same evidence window).
+- Rollover runs → launch one fleet that serves both `end` Stage 2 and `start`
+  Stage 2; never relaunch (explicit per-part bounds keep the windows apart).
   - Roster = union of both rosters, one agent per domain; prepend the subagent
     contract to each.
-  - Every brief states both windows as explicit half-open bounds in the user's
-    timezone: parts B and C query only the closed day, part A only today.
-  - Three-part return: **A** open now (today's `start`), **B** closed-day
-    evidence (snapshot, brag log, Yesterday), **C** carry-over status (both
-    pages' carry-forward).
-- Closed day older than the previous workday → separate gathers (the windows
-  differ).
+  - Every brief states each window as explicit half-open bounds in the user's
+    timezone: one per day from the closed day up to today (closed day, each gap
+    day, today). Parts B and C query only the past-day windows, part A only today.
+  - Three-part return: **A** open now (today's `start`), **B** per-day evidence,
+    one block per past-day window (closed day → snapshot + brag log; latest day
+    → Yesterday), **C** carry-over status (both pages' carry-forward).
+- Gap days between the closed day and today (holiday, PTO, missed weekday) →
+  add their windows to the same brief, never a second fleet (a second launch
+  re-queries the same domains for no new evidence).
 - Date each carry-over's completion from its owning system's timestamp (ticket
   resolution, PR merge), never from the page it was toggled on (a prior page
   can record the outcome a day off).
