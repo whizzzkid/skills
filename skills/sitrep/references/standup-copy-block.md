@@ -33,6 +33,8 @@ than `element.click()` inside `browser_evaluate`.
    available, confirm the plain payload starts with `• 👈🏽 Yesterday`, uses
    `  •` for child items and `    •` for deeper details when present, and
    contains all three headings.
+   Run the readback under a timeout (it can hang on a missing clipboard-read
+   permission); timed out → report the payload as unverified, never wait.
 4. Force rich `write()` to reject while `writeText()` succeeds; confirm exactly
    one plain fallback and `Copied ✓`.
 5. Force both paths to reject; confirm `Copy failed`.

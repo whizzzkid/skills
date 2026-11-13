@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.12-195906`
+**Version:** `2026.11.13-182000`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -141,3 +141,7 @@ reported afterwards in the response.
   [wk-colima](../colima/README.md) before `docker compose up -d`.
 - Gathering agents retry a `command not found` or unset env var once with
   `$HOME/.profile` sourced before reporting the domain unavailable.
+- In-place page transforms resolve every target line index before the first
+  edit, mark drops with a sentinel, and insert from the highest index down.
+- A clipboard readback during copy verification runs under a timeout; a hang
+  is reported as unverified rather than waited on.

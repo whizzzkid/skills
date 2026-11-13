@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.12-195906"
+  version: "2026.11.13-182000"
   model:
     openai: gpt-5.6-terra
 ---
@@ -184,6 +184,9 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
   - **Mostly carry-over → transform the prior page, don't regenerate.** Edit it in place keyed by `data-t` (drop,
     replace, append, insert; new spans from the generator), then renumber from `t1` and assert uniqueness. Carried
     handler bytes must equal the canonical recipe, else regenerate that span (a drifted page propagates its drift).
+    - **Resolve every target index before the first edit.** Build an `{old data-t: line index}` map up front, set
+      drops to a sentinel, apply inserts from the highest index down, filter sentinels, then renumber (a replaced
+      span loses its old `data-t`; any insert or delete shifts every later index).
   - **Patch lines without eating `\#`.** Replace a line in place via shell parameter substitution, never a
     `sed`/`awk` replacement (both strip the `\` from `\#`); `\#` count before = after, else re-patch. Assert each
     substitution's target exists before writing; abort on a miss (a missed target is a silent no-op).
