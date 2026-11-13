@@ -57,6 +57,13 @@ grep -qE 'tree/main@%7B[0-9T:Z-]+%7D' <<<"$body" || echo "REJECT: footer link no
 awk 'prev!="" && $0=="---"{f=1} {prev=$0} END{exit f}' <<<"$body" || echo "REJECT: non-blank line directly above ---  → renders as setext H2 heading"
 ```
 
+- **Copy these patterns verbatim, or grep `-F` the same variable that rendered the footer** — never a
+  remembered URL or text fragment. A retyped fragment that differs by one character returns 0 and reads as
+  "footer absent" on a correct payload; a zero from a hand-built pattern indicts the pattern first.
+- **Multi-body payload** (review `body` + `comments[]`): run the gate per extracted body
+  (`jq -r '.body, .comments[].body'`), or count `grep -oF "$footer" <payload> | wc -l` and expect exactly
+  1 + the number of inline comments.
+
 A REJECT on either line blocks the post — fix the footer and re-check before writing.
 A render-time append is NOT this gate — appending is not verifying. Re-run these
 greps on the FINAL body string immediately before EACH POST (every inline reply,

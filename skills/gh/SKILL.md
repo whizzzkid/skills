@@ -18,7 +18,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.11.04-224404"
+  version: "2026.11.13-221510"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -155,7 +155,9 @@ DIFFERENT string; never ship it on an outbound body.
 <sup>Generated using [wk-skills](https://github.com/whizzzkid/skills/tree/main@%7B<UTC>%7D) and multiple agents/models. DM me your feedback.</sup>
 ```
 
-Pin `<UTC>` to render-time (`date -u +%Y-%m-%dT%H:%M:%SZ`). Run the pre-emit gate on every body before posting. Full
+Pin `<UTC>` to render-time (`date -u +%Y-%m-%dT%H:%M:%SZ`). Run the pre-emit gate on every body before posting, with
+its patterns copied verbatim or taken from the rendered-footer variable — never a fragment retyped from memory (a
+mistyped pattern reads 0 and fakes "footer absent" on a correct body). Full
 placement rules, scope, pre-emit gate bash, and exceptions:
 [`references/footer-gate-details.md`](references/footer-gate-details.md).
 
