@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.11.13-000456"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -85,7 +85,7 @@ the diff matches; dispatch and aggregate only.
 | Writes or modifies tests | `wk-workstyle-testing` |
 | Touches a `catch`/`rescue`/`except` block, error return, or raise/throw | `wk-workstyle-error-handling` |
 | Adds/edits CSS, design tokens, colors, borders, or visual styles | `wk-design-review` |
-| A `bundle exec`/`bin/*`/`rake`/`rails` command fails with a gem or env error | `wk-workstyle-rails` |
+| A `bundle exec`/`bin/*`/`rake`/`rails` command fails with a gem or env error, or a routes file is edited in a Tapioca app | `wk-workstyle-rails` |
 
 ### Language rule sets (by file extension)
 

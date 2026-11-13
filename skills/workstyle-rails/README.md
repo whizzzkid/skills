@@ -4,15 +4,16 @@
 > `rake`, or `rails` erroring with a missing gem or uninitialized environment.
 > Enforces running the project's canonical bootstrap (`bin/setup`) before any
 > manual gem install or environment repair. Project bootstrap scripts are
-> authoritative.
+> authoritative. Also covers regenerating Tapioca DSL RBIs in full after a
+> routes-file edit.
 
-**Version:** `2026.10.09-171327`
+**Version:** `2026.11.13-000456`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
-| Model-invocable | Automatic whenever a Rails/Ruby project command fails with a missing-gem or uninitialized-environment error |
+| Model-invocable | Automatic whenever a Rails/Ruby project command fails with a missing-gem or uninitialized-environment error, or after a routes-file edit in a Tapioca app |
 | User-invocable | `/wk-workstyle-rails check` — report the repo's bootstrap entry point |
 
 ## Rules at a Glance
@@ -26,6 +27,9 @@
 - Manual repair runs only when the bootstrap script is absent or has itself
   failed — and a bootstrap failure is the real bug to surface.
 - Treat a slow bootstrap (gem builds, container starts) as work, not a hang.
+- **After a routes edit, run a plain `bin/tapioca dsl`** — route-helper RBIs
+  compile from the whole routing table, and a `tapioca dsl <Const>` call for an
+  unresolvable constant deletes that RBI. Check `git status` for deletions.
 
 ## Noteworthy
 

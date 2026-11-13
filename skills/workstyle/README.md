@@ -2,7 +2,7 @@
 
 > Code-quality orchestrator for every file the agent writes or edits — runs the style-authority probe, then routes to the `wk-workstyle-*` sub-skills (naming, structure, async, docs, testing, error-handling, per-language). Project linter wins.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.11.13-000456`
 
 ## Invocation
 
@@ -75,7 +75,7 @@ flowchart TD
 | [`wk-workstyle-typescript`](../workstyle-typescript/README.md) | edits `.ts/.tsx/.js/.jsx/.mjs/.cjs` |
 | [`wk-workstyle-python`](../workstyle-python/README.md) | edits `.py` |
 | [`wk-workstyle-ruby`](../workstyle-ruby/README.md) | edits `.rb` or a Ruby bin script |
-| [`wk-workstyle-rails`](../workstyle-rails/README.md) | a `bundle exec`/`bin/*`/`rails` command fails with a gem or env error |
+| [`wk-workstyle-rails`](../workstyle-rails/README.md) | a `bundle exec`/`bin/*`/`rails` command fails with a gem or env error, or a routes file is edited in a Tapioca app |
 | [`wk-workstyle-go`](../workstyle-go/README.md) | edits `.go` |
 | [`wk-workstyle-rust`](../workstyle-rust/README.md) | edits `.rs` |
 | [`wk-workstyle-shell`](../workstyle-shell/README.md) | edits `.sh` or a shell bin script |

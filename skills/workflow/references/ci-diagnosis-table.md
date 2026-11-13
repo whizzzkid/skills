@@ -21,7 +21,7 @@ Map a CI error signal to the first thing to check.
 | `permission denied` on a script | Executable bit (`chmod +x`) |
 | `command not found` for a project tool | Tool manifest (`mise.toml`, `.tool-versions`) |
 | New third-party Action on org-managed runner | Prefer `actions/*` or non-action install; ask before adding |
-| `verify`/typecheck fails on a committed generated file (RBI/type-sig, schema dump, DSL output) | A construct feeding a DSL/codegen/type compiler was added without regenerating — regenerate (e.g. `bin/tapioca dsl <Class>`) and commit it standalone (per `wk-commit`) before push |
+| `verify`/typecheck fails on a committed generated file (RBI/type-sig, schema dump, DSL output) | A construct feeding a DSL/codegen/type compiler was added without regenerating — regenerate (e.g. `bin/tapioca dsl <Class>`; a plain full `bin/tapioca dsl` when the input is global, such as routes — per `wk-workstyle-rails`) and commit it standalone (per `wk-commit`) before push |
 
 ## CI-fix rules
 

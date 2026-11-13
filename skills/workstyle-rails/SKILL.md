@@ -5,7 +5,8 @@ description: >-
   `rails`) fails to start with a missing gem or uninitialized environment.
   Enforces the canonical bootstrap (`bin/setup`) before any manual gem install
   or env repair — fix the root cause, don't pivot. Project bootstrap scripts
-  are authoritative.
+  are authoritative. Also use after editing a routes file in a Tapioca/Sorbet
+  app — regenerate the full DSL RBI set, never a constant-scoped subset.
 argument-hint: '[check]'
 allowed-tools:
   - Read
@@ -19,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.11.13-000456"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -47,6 +48,7 @@ uninitialized-environment error. Trigger contexts:
   such file`, or a similar bundler/environment error.
 - About to run `gem install` or `bundle install` manually to fix such a failure.
 - Setting up or re-initializing a checked-out Rails repo.
+- Just edited a routes file in an app that commits Tapioca DSL RBIs.
 
 Manual: `/wk-workstyle-rails check` — report the repo's bootstrap entry point.
 
@@ -96,6 +98,18 @@ done
 - A bootstrap failure is the real bug — surface its output; never silently
   pivot away from the blocked task to unrelated edits.
 
+## Generated RBIs after a routes edit (Tapioca)
+
+- **After any routes-file edit, run a plain `bin/tapioca dsl` — never a
+  constant-scoped subset.** (The URL/path-helper compiler reads the whole
+  routing table, so every route change alters its RBIs; a subset run leaves
+  them stale and CI's `tapioca dsl --verify` fails.)
+- **Never pass `tapioca dsl` a constant that does not resolve.** (It prints
+  `Error: Cannot find constant '<Name>'` and deletes that constant's generated
+  RBI instead of refreshing it.)
+- Before staging, check `git status` for deleted RBI files — any deletion is a
+  regression; stage only the RBI paths the run changed (per `wk-commit`).
+
 ## Common Mistakes
 
 - **Pivoting away on a gem error.** A `GemNotFound` from `bundle exec` means the
@@ -105,6 +119,8 @@ done
   environment half-initialized.
 - **Treating a slow bootstrap as a hang.** Allow time for gem builds and
   container starts before aborting.
+- **Regenerating only touched constants after a route change.** Route-helper
+  RBIs depend on the routing table, not on the files you edited.
 
 ## Requirements
 
