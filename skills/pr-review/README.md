@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.11.10-181049`
+**Version:** `2026.11.13-181039`
 
 ## Invocation
 
@@ -108,3 +108,11 @@ flowchart TD
   verbatim; the new review replaces the draft with the combined set. The summary discloses the replacement, the
   combined payload is saved before the draft is deleted, and a denied delete stops with the draft intact and asks
   the user once.
+- **Size is judged on hand-written lines:** generated files (codegen stubs, lockfiles, snapshots) are counted
+  separately, and the size note and any stack recommendation lead with the hand-written line count.
+- **The time box never drops a mandatory dispatch:** over budget, the phase-owned adversarial, arch, and design
+  dispatches still run and the overrun is reported in the terminal — disclosing a skip does not make it coverage.
+- **Probes without a dedicated container:** a probe may borrow another worktree's running container only for code
+  whose dependencies are injected fakes; PR files go to a scratch path (never over that worktree's files), the
+  remaining loaded files must match the PR head, the probe's scope is recorded with its result, and copies are
+  removed afterward.

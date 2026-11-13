@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.10-181049"
+  version: "2026.11.13-181039"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -92,6 +92,8 @@ confirms). Each mode includes everything in the one above it.
     verification, not a release).
 - **Time box:** soft, checked at phase boundaries. Over budget → finish the current phase, post what is proven, list
   uncovered items in the terminal; never silently truncate. Mode and coverage go to the terminal, never the review body.
+  - **Important:** the time box never drops a phase-owned dispatch. Over budget → dispatch anyway, report the overrun
+    in the terminal; a skip plus disclosure is still a skip (disclosure is not coverage).
 
 ## Approve Flag
 
@@ -137,6 +139,8 @@ ask for number/URL, then `gh pr checkout`.
   `git pull --ff-only`; pull fails → use `gh pr diff` as source of truth; note desync in summary.
 - **Collect:** title, body, linked issues, full diff, changed files, commits, base, size. Recommend a stack when large
   or mixing concerns.
+  - Count generated files (codegen stubs, lockfiles, snapshots, `linguist-generated` paths) separately; lead the size
+    note and the stack call with hand-written lines (generated bulk inflates size, not review surface).
 - **Review focus:** parse the description for explicit asks → `review_focus` list of `{topic, files, question,
   severity-hint}`; drop boilerplate. Prioritize them in Phase 3; answer every ask in Phase 4 (unanswered = gap).
 - **Claims:** parse description + commit messages for assertions (behavior, "no-op", perf, "tested X", "fixes Y") →
@@ -193,6 +197,13 @@ the results refute.
 **HARD RULE — logic-bearing findings need empirical proof.** Executable logic (incl. `wk-arch-review` findings) → drive
 the real implementation or a faithful harness with adversarial inputs; record PASS/FAIL before Phase 4. Never compose
 comments from un-run reasoning.
+
+- **No container of your own → borrow one only for dependency-injected code.** Probe in another worktree's running
+  container of the same repo only when the code under test takes its dependencies as injectable fakes (no DB, network,
+  or shared state). Copy PR-head files to a scratch path there, never over that worktree's tracked files; every other
+  file the probe loads must match PR head (`git diff --quiet <borrowed HEAD> <PR_HEAD> -- <paths>`); record the probe's
+  scope (injected deps, not integration) with its PASS/FAIL; delete the copies afterward. Needs real services →
+  Unverified, or ask.
 
 - **Concurrency/lock findings need real separate connections.** A single-connection spec (transactional fixtures, one
   snapshot) cannot observe cross-transaction locking, so it is never a faithful harness for a deadlock or race claim.
