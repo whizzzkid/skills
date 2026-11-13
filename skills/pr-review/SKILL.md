@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.13-181039"
+  version: "2026.11.13-221348"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -229,6 +229,10 @@ shows it.
 **Verifier severity is a draft.** Restate Phase 4's severity definitions verbatim in every verifier prompt; before the
 approve gate, re-map each verifier-assigned `concern` against them — not correctness/security/data-loss → `suggestion`.
 (Per-finding refute agents inflate severity, and one inflated `concern` holds approval on a non-critical item.)
+
+- Have each verifier state every `blocker`'s preconditions — shipped defaults, non-default config, or unpinned external
+  behavior — and re-map on them: non-default config → `suggestion`, unpinned external → `question`; unstated →
+  defaults. (A data-loss path reachable only under a custom setting is not critical as shipped.)
 
 ## Phase 4: Review comments
 
