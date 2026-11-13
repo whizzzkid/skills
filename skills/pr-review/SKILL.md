@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.13-221348"
+  version: "2026.11.13-221605"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -151,7 +151,9 @@ ask for number/URL, then `gh pr checkout`.
     logs) and rerun the author's own experiment; most figures checking out never confirms the rest. Pair log events
     by matching the result line's pattern, never the next physical line (payloads span lines).
   - Related PRs the description calls pending or "lands first" → check their merge state; merged → re-check the
-    follow-up steps it predicted.
+    follow-up steps it predicted. Merged stack parent → `git merge-base --is-ancestor <parent-merge> origin/<base>`;
+    not an ancestor → it landed on a dead intermediate branch, so the child's diff carries the parent's changes — scope
+    the review to the child's own commits and flag it.
   - Tee full test output to a log file, never `tail -1`; rerun a bare FAIL before treating it as real.
   - "Fixed"/"addressed" claims → read the cited file at the PR head; a compare range spanning a base merge carries
     base changes, so a changed-file list never proves a fix.
