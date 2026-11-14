@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.04-230021"
+  version: "2026.11.14-171541"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -206,6 +206,13 @@ Cover required paths: **happy** (expected flow), **sad** (failures, invalid inpu
 - User-loadable artifact: [`build last`](references/2026-08-04_final-development-build.md). Generated artifacts:
   [`acceptance`](references/2026-08-01_generated-artifact-acceptance.md). Data-only change → compare published set
   membership/count before and after.
+- **Important — a published statistic passes a meaning check, not only a render check.** Before shipping any
+  data artifact (chart, dashboard, report): (1) state each number's population and denominator in one sentence;
+  (2) test it against domain priors — cumulative shares never fall as the window widens, shares of one population sum
+  to ~100%, a cutoff or event cycle cannot manufacture a zero; (3) prefer full-follow-up cohorts with a complete
+  outcome breakdown over a partial-population share; (4) one definition per concept across every view; (5) recompute
+  independently before showing the user. (Render and privacy checks pass while a number reads as nonsense to a
+  domain reader.)
 - Shell-script tests: [`references/shell-script-test-checks.md`](references/shell-script-test-checks.md).
 
 ## Phase 3.5: Refactor & Deletion-Safety Scan

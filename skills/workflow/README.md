@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.04-230021`
+**Version:** `2026.11.14-171541`
 
 ## Invocation
 
@@ -126,6 +126,9 @@ flowchart TD
   first invocation, then still run the repository-wide primary gate.
 - **Recursive repository searches are bounded before execution:** prefer tracked-content search; otherwise exclude
   dependency, distribution, coverage, cache, and generated-output directories.
+- **Published statistics get a meaning check:** before a data artifact ships, each number's population and
+  denominator is stated, checked against domain priors (monotonic cumulative shares, shares summing to ~100%, no
+  cutoff-made zeros), defined once across every view, and recomputed independently.
 - **User-loadable artifacts are built last:** enumerate required gates that write the handoff directory, run those
   gates first, then build and validate the deliverable as the final artifact-producing command.
 - **Platform-pinned visual baselines come from CI:** inspect actual, expected, and diff images, then replace only the
