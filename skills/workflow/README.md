@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.14-171541`
+**Version:** `2026.11.16-175718`
 
 ## Invocation
 
@@ -108,6 +108,8 @@ flowchart TD
   scope, refactor, or logic gets one delta-scoped review.
 - **PR created is not done:** the CI watch starts in the same turn as the PR create or push, and nothing is reported
   complete before CI is green or a failure is diagnosed.
+- **Waits use the completion notification, not a process match:** a `pgrep -f` / `ps | grep` loop matches its own
+  shell or a sibling waiter and never exits; a forced probe brackets one pattern character.
 - **CI fix loop** has a 3-attempt limit with an axis-of-variation check: attempts 1 and 2 on
   the same axis require broadening to a different axis on attempt 3, not "the same thing harder."
 - **Post-push verification adds evidence:** poll CI for the pushed SHA; do not

@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.14-171541"
+  version: "2026.11.16-175718"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -279,6 +279,10 @@ Monitor and fix CI until green, concurrently with Phase 5.5.
 - **Important — start the CI watch in the same turn as every PR create or push, and complete it.** Never report a
   phase or PR done before CI is green or a diagnosed failure is surfaced; never hand off. Long watches → background.
   **Interleave** independent tasks while polling.
+- **Wait on a background task's completion notification, never a process-match loop.** `pgrep -f`/`ps | grep`
+  matches every live command line carrying the pattern — the waiter's own shell (Linux `pgrep` skips only itself) and
+  any sibling waiter (macOS skips ancestors, not siblings) — so `until ! pgrep -f X` never exits. Must probe →
+  bracket one char (`[t]ask` for `task`) so no waiter's own text matches.
 - Diagnosis: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md). Fix ordering:
   [`references/ci-fix-candidate-ordering.md`](references/ci-fix-candidate-ordering.md).
 - Fix loop: (1) targeted fix, (2) run failing gate locally, (3) `wk-commit`, (4) push, (5) update PR, (6) re-enter. Max
