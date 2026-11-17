@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.17-173054"
+  version: "2026.11.17-223711"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -156,6 +156,8 @@ ask for number/URL, then `gh pr checkout`.
   - Cited figures (counts, timestamps, CI windows, "fails in env X not Y") → re-derive from primary data (CI API,
     logs) and rerun the author's own experiment; most figures checking out never confirms the rest. Pair log events
     by matching the result line's pattern, never the next physical line (payloads span lines).
+  - Env-dependent claims ("fails locally", "CI-only") → replay under `env -i HOME="$HOME" PATH="$PATH"`, then add
+    each gating var singly to attribute every difference (an inherited shell env makes a "local" replay CI-like).
   - Related PRs the description calls pending or "lands first" → check their merge state; merged → re-check the
     follow-up steps it predicted. Merged stack parent → `git merge-base --is-ancestor <parent-merge> origin/<base>`;
     not an ancestor → it landed on a dead intermediate branch, so the child's diff carries the parent's changes — scope
