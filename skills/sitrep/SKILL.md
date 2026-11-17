@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.17-045130"
+  version: "2026.11.17-045333"
   model:
     openai: gpt-5.6-terra
 ---
@@ -196,7 +196,8 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     substitution's target exists before writing; abort on a miss (a missed target is a silent no-op).
   - **Multi-line patch → newline in a variable.** Assign `nl=$'\n'` first and substitute `$nl`; an inline `$'\n'`
     stays literal inside a double-quoted substitution under zsh. After any patch, grep for stray literal `\n` text
-    and assert every `data-t` ID is unique and on its own line.
+    outside the copy-block line, and assert every `data-t="t` attribute is unique and alone on its line (canonical
+    markup emits bare `'data-t='` and `join('\n')`; a check matching those fails valid pages).
 - **Stage 4b — Standup snippet.** Render in col3 using the canonical rich-copy block from
   [`references/standup-copy-block.md`](references/standup-copy-block.md); formatting via
   [`wk-slack`](../slack/README.md) §Standup Snippet.

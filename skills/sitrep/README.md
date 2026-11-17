@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.17-045130`
+**Version:** `2026.11.17-045333`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -87,8 +87,8 @@ reported afterwards in the response.
   proposed flexible-block placement; a `draft` scorecard renders as still owed.
 - **Safe in-place patches** — line patches use shell parameter substitution (never
   `sed`/`awk`, which strip `\#` escapes); multi-line patches put the newline in a
-  variable first, then the page is checked for stray literal `\n` text and
-  unique, line-separated item IDs.
+  variable first, then the page is checked for stray literal `\n` text (outside
+  the copy block) and unique, line-separated `data-t="t` attributes.
 - **Publish first, report gaps after** — a missing, unauthenticated,
   permission-denied, or blocked connector never stops the run. The page is written,
   verified, and committed from the domains that answered; each gap is labelled in
