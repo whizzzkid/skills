@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.13-182000"
+  version: "2026.11.17-045130"
   model:
     openai: gpt-5.6-terra
 ---
@@ -81,6 +81,10 @@ page; dated snapshots at close; no standalone HTML.
   - **Report after publish.** Final response ends with `Connector gaps`: per connector — failure kind (no tool / auth
     required / permission denied / blocked), affected sections, fix CTA (re-auth link or command). Mark optional
     connectors `(optional)`. No gaps → omit the block.
+  - **Stop before gather → stop report, never a bare halt.** Any stop ahead of Stage 2 (dirty tree, bad `date:`,
+    failed close or push, runtime absent) ends the response with the exact cause (every dirty path), the options
+    (commit / stash / discard, or the fix), and `Connector gaps: unchecked — gather never ran` (an omitted block reads
+    as "no gaps"). Offer a push notification when a notify tool is available.
   - **Optional connectors** (DX): absent → skip their sections silently on the page; never a gap CTA beyond the
     `(optional)` line.
   - **User waivers only, never agent-inferred.** Connectors in `.sitrep.yml` `waived_connectors:` (written only when the

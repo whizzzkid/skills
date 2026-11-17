@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.13-182000`
+**Version:** `2026.11.17-045130`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -94,6 +94,9 @@ reported afterwards in the response.
   verified, and committed from the domains that answered; each gap is labelled in
   Meta and in the affected section, and the final response ends with a
   `Connector gaps` report (failure kind, affected sections, re-auth CTA).
+- **No silent stops** — a stop before the gather (dirty tree, bad `date:`, failed
+  close or push, runtime absent) still ends with a stop report: the exact cause,
+  the remedy options, and an explicit "connector status unchecked" line.
 - **Optional connectors** — DX is optional: when unavailable its sections are
   omitted and it appears in the report only as `(optional)`.
 - **User waivers** — a connector the user waives (for all runs via

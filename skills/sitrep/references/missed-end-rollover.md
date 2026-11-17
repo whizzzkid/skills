@@ -52,7 +52,8 @@ prerequisite to today's overwrite, not a separate required invocation.
   a nested end snapshot path, URL, announcement, or gathering window.
 - On retry, re-read the existing snapshot and append only entries not already
   present; only Stage 8 writes `end_completed_at:`.
-- Any failure stops `start` before today's `live.md` can be written.
+- Any failure stops `start` before today's `live.md` can be written; report the
+  stop per `SKILL.md`'s stop-before-gather rule (cause, options, connectors unchecked).
 
 ## Shared gather (every rollover)
 
