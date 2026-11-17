@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.31-003455"
+  version: "2026.11.17-234316"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -86,6 +86,17 @@ Manual: `/wk-workstyle-testing scan` (full working tree) · `/wk-workstyle-testi
   matcher matches its own literal; when the dependency rewords the
   message, every stubbed test stays green while production stops
   matching.)
+- **A regression test is trusted green only after it ran red.** Run
+  it once with the fix defeated and require a failure. Defeat the fix
+  with a mutation that changes behavior unambiguously (e.g. a
+  per-caller lock name), never a truthiness trick the language may
+  not honor. (A spec that stays green without the fix is vacuous.)
+- **Race specs force the window open.** For check-then-act races, a
+  start barrier is not enough: wrap the check step in a bounded
+  rendezvous (each thread waits, with timeout, until all have
+  checked), so without serialization every thread passes the check
+  before any acts; keep N × timeout under any lock wait. (A start
+  barrier aligns thread start, not arrival at the critical window.)
 - **Prove screenshot exclusion with decoded pixels.** Compare decoded pixels
   against a manually excluded baseline and include a negative control where the
   UI remains visible. Never use encoded image bytes or computed ancestor

@@ -3,7 +3,7 @@
 > Enforces the test quality bar — new-function/branch coverage, behavioral
 > assertions, and mandatory sad-path tests for every error branch.
 
-**Version:** `2026.10.31-003455`
+**Version:** `2026.11.17-234316`
 
 ## Invocation
 
@@ -23,6 +23,8 @@
 - Screenshot-exclusion tests compare decoded pixels with a manually excluded
   baseline plus a visible negative control; encoded bytes and computed ancestor
   visibility are not proof.
+- A regression test is trusted only after it runs red with the fix defeated; check-then-act race specs wrap the
+  check step in a bounded rendezvous so the race window actually opens.
 
 ## Noteworthy
 
