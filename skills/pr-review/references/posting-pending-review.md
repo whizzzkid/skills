@@ -65,6 +65,11 @@ GitHub allows no append — delete review, recreate with full comment set. Pendi
 from scratch.
 A draft found in Phase 2 recreates the same way: re-verified candidates plus the user's unfootered comments verbatim.
 
+**No-delta shortcut:** draft `commit_id` == `PR_HEAD` and the re-verified comment set (path + body, no adds, drops, or
+edits) equals the intended payload → skip the DELETE and recreate. Approve gate passes → submit the existing draft
+via the `events` endpoint in "Submit as approval" (body replaced there); else leave it pending, updating only a drifted body with
+`PUT /pulls/{n}/reviews/{id}`. Any delta → the full order below.
+
 Order is load-bearing — the DELETE is the only destructive step, and permission layers may classify it as an
 external destructive write and deny it:
 

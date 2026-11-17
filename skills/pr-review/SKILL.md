@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.17-055745"
+  version: "2026.11.17-055952"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -192,7 +192,9 @@ Fetch, classify stale threads, build the Phase 3/4 exclusion list via
   its body + `/reviews/{id}/comments` now. Footer-marked comments are unverified candidates: re-verify in Phase 3,
   re-anchor from the current-head blob (`line: null`); never exclusion-list or re-review entries (the author never saw
   them). Unfootered comments are the user's → carry verbatim. Phase 5 recreates the union via the append path (a
-  second create 422s).
+  second create 422s) — unless the draft's `commit_id` equals `PR_HEAD` and the re-verified comment set (path + body)
+  is unchanged: then skip the DELETE and reuse the draft as-is (submit it if the approve gate passes; else leave it
+  pending). (A no-op delete+recreate only adds a deniable destructive write.)
 
 ## Phase 3: Adversarial investigation
 
@@ -270,7 +272,8 @@ author-facing text — use "concern"/"limitation". One to two sentences.
 Present a numbered summary (`1. [concern] src/auth.ts:42 — description`), then go straight to Phase 5 in the same turn —
 never ask "post as pending review?". The review stays pending (bar a passing approve gate), so the user decides at
 submit time. Own pending draft found in Phase 2 → the summary ends "Posting deletes and recreates your pending draft
-({k} of your comments carried verbatim)" — a disclosure, never a question.
+({k} of your comments carried verbatim)" — or "Reusing your pending draft unchanged" on the no-delta path — a
+disclosure, never a question.
 
 ## Phase 5: Post review
 
