@@ -20,7 +20,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.22-191941"
+  version: "2026.11.17-234714"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -195,6 +195,8 @@ All domains follow `pup <resource> <action>` over `dashboards`, `monitors`, `slo
   never infer flow, latency, or loss from the cross-deployment ratio.
 - Causal finding headed to an external tracker → re-derive it from the grouped query and have an independent check try
   to refute it before posting (a posted wrong cause steers the fix the wrong way).
+- Alerting error → classify it handled vs unhandled from the span's error-handling tag and its sibling spans in the
+  same trace before designing a fix (a handled error from a known race is telemetry noise, not an outage).
 
 ## Requirements
 

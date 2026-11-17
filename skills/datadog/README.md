@@ -2,7 +2,7 @@
 
 > Create, manage, and edit Datadog dashboards, monitors, SLOs, and notebooks, and query metrics and logs, via the `pup` CLI.
 
-**Version:** `2026.10.22-191941`
+**Version:** `2026.11.17-234714`
 
 ## Invocation
 
@@ -42,3 +42,4 @@ flowchart TD
 - **Widget custom links** — `{{@attr.value}}` for external URLs, `{{@attr}}` for Datadog search URLs; mixing them breaks links.
 - **Resolve the published metric name before trusting an empty series** — Datadog returns `series: []` for a nonexistent metric, and metrics clients often prepend an app namespace; list the name first and report no-match as unknown, never zero.
 - **Split log counts by `env` and `version` before any causal claim** — an ungrouped count blends staging traffic mirrors and versions that emit only one of the compared lines; re-run with `--group-by=env,version`, compare within a shared cell, and independently re-check a cause before posting it to a tracker.
+- **Classify an alerting error before fixing it** — read the span's error-handling tag and sibling spans in the same trace; a handled error from a known race is telemetry noise, not an outage.
