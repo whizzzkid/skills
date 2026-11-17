@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.10.29-204104`
+**Version:** `2026.11.17-234557`
 
 ## Invocation
 
@@ -46,7 +46,7 @@ All five must pass; any failure blocks and reports what needs fixing:
 
 - CI: all required checks green on HEAD SHA; superseded cancellations wait for their live replacement
   (non-required checks are informational — never polled or blocked on)
-- Reviews: `reviewDecision = APPROVED` (or no required reviewers)
+- Reviews: `reviewDecision = APPROVED` (or no required reviewers); a bot-only approval is surfaced to the user before merging
 - Threads: reviewer/bot threads resolved or triaged (author's own self-review threads may stay open)
 - Action items: no unchecked `- [ ]` outside designated deferred sections
 - Review: clear completion-gate record; finding-response commits and

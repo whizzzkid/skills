@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.29-204104"
+  version: "2026.11.17-234557"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -78,6 +78,9 @@ check-runs API; `BLOCKED` with green → `wk-gh` ruleset diagnostic.
 
 Step 3 reviews: `APPROVED` or `null` → proceed. `CHANGES_REQUESTED` → block. No reviews → block.
 `REVIEW_REQUIRED` + bot `COMMENTED` with resolved threads → push an empty commit to trigger re-evaluation.
+`APPROVED` → list approving reviewers; every approver a bot → tell the user before any merge call and offer: merge it
+themselves, get a human approval, or add a permission rule. (A bot-only approval satisfies the platform, but a
+permission layer can still refuse it as "merge without review".)
 
 ## Step 4: Verify all review threads are resolved
 
