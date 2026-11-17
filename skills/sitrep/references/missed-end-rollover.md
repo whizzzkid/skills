@@ -66,7 +66,8 @@ prerequisite to today's overwrite, not a separate required invocation.
     day, today). Parts B and C query only the past-day windows, part A only today.
   - Three-part return: **A** open now (today's `start`), **B** per-day evidence,
     one block per past-day window (closed day → snapshot + brag log; latest day
-    → Yesterday), **C** carry-over status (both pages' carry-forward).
+    → Yesterday), **C** carry-over status (both pages' carry-forward) — each agent gets only its domain's
+    pre-split, priority-ordered, capped subset (`SKILL.md` Stage 2 carry-over split).
 - Gap days between the closed day and today (holiday, PTO, missed weekday) →
   add their windows to the same brief, never a second fleet (a second launch
   re-queries the same domains for no new evidence).

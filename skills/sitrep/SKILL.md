@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.17-045333"
+  version: "2026.11.17-183411"
   model:
     openai: gpt-5.6-terra
 ---
@@ -155,6 +155,11 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     with `$HOME/.profile` sourced before it counts as a gap.
   - Truncated result (ends mid-item) → re-request only the named sections with the contract's word cap; never
     compile a cut-off report as complete.
+  - **Split carry-over rechecks before dispatch.** Never hand each agent the whole prior-page index: pre-split it by
+    domain, order each subset oldest/highest-priority first, and state an item cap that fits the word cap. Over-cap
+    subset → extra agent for that domain; any item still unchecked keeps its prior text tagged "not reverified",
+    never shown as checked. (An open-ended recheck of the full index burns the budget early; ordering makes the cap
+    cut the tail, not the head.)
   - Cross-tracker pending-on-me: fold all trackers into one view; compare carry-over status vs previous `live.md` and
     prefix changes `🔁 {old}→{new}`; append `⏳ {N}d` for >7 days; sort by native priority (missing → lowest).
 - **Stage 2b — Auto-transition merged-PR tickets.** `start` only, before writing `live.md`: tickets in

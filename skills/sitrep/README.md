@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.17-045333`
+**Version:** `2026.11.17-183411`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -120,6 +120,8 @@ reported afterwards in the response.
   unavailable source is labelled, checkbox state and carry-over survive, stale
   dated meeting lines are dropped, no unverified outcome is claimed, and accrual
   artifacts are withheld until full evidence can be reconciled.
+- **Split carry-over rechecks** — the prior-page index is pre-split per domain, ordered oldest/highest-priority
+  first, and capped per agent; an item no agent reached keeps its text tagged "not reverified".
 
 ## Environment
 
