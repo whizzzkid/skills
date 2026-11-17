@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.13-221605"
+  version: "2026.11.17-055745"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -115,6 +115,12 @@ never the flag.
     or red now). In the same step as the head recheck, read `gh pr view --json headRefOid,statusCheckRollup`
     (`headRefOid` must equal `PR_HEAD`) and the branch's required-status list per [`wk-gh`](../gh/README.md); judge
     entries by its rollup union rules. Required check pending or not yet posted → not failing; name it in the terminal.
+- **HARD RULE — auto-merge makes approval the merge trigger.** Read `autoMergeRequest` in that same live query.
+  Non-null and the review carries any `suggestion:`/`question:` or author-actionable `Re:` → run
+  `gh pr merge <n> --disable-auto` as its own Bash call before submitting, and add one body sentence saying auto-merge
+  was disabled so the comments land first. Disable fails → hold as pending ("auto-merge on and could not be
+  disabled"). No actionable comment → approve as-is (merging is intended). Report auto-merge state + action in the
+  terminal. (Approval as the last missing requirement merges in minutes, before the author reads a comment.)
 - Gate fails → post pending as usual; tell the terminal "approve requested; held as pending: {reasons}".
 
 ## Focus Argument
@@ -306,9 +312,10 @@ substance; GitHub shows them under the review. Ban praise-adjective openers.
   (review depth, what was checked), bot/duplicate-thread bookkeeping, restated inline findings, diff narration. Review
   depth → tell the user in the terminal.
 - One extra sentence each, only for: a change-wide concern with no inline anchor; a `Re:` answer to an un-anchored
-  author `review_focus` item; an evidenced bot reply per [`bot-finding-validation`](references/bot-finding-validation.md).
+  author `review_focus` item; an evidenced bot reply per [`bot-finding-validation`](references/bot-finding-validation.md);
+  the auto-merge-disabled note per [Approve Flag](#approve-flag).
 - **HARD RULE — pre-POST body gate:** count sentences before the footer; cut any past the verdict that is not one of
-  those three.
+  those four.
 
 **HARD RULE — open URL on every create/recreate**, whether or not the POST response parsed; parse failure → re-query for
 `html_url`, never drop the open. Trust `path`+`body`, not `line` for verification.

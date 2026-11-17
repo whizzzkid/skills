@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.11.13-221605`
+**Version:** `2026.11.17-055745`
 
 ## Invocation
 
@@ -30,7 +30,10 @@ PR claim is marked Confirmed/Refuted/Unverified, existing comments and bot findi
 no `concern:` comments, no blocked verdict, no open prior concern, no failing required check, and you are not the
 author. Required checks are re-queried live at the gate (never the Phase 1 snapshot); a pending or not-yet-posted
 required check is not a failure but is named in the terminal. Any gate miss → the review stays pending and the
-terminal lists why. Without `approve`, the review is always pending. Dispatched callers never approve.
+terminal lists why. If auto-merge is enabled and the review has any suggestion or question, it disables auto-merge
+before approving (and says so in one body sentence) so the approval does not merge the PR before the author reads the
+comments; if auto-merge cannot be disabled, the review stays pending. Without `approve`, the review is always pending.
+Dispatched callers never approve.
 
 ## Focus Argument
 
@@ -59,7 +62,11 @@ flowchart TD
     J --> K["Phase 5: Recheck reviewed head"]
     K --> L[POST pending review unless user pauses]
     L --> N{"approve flag + gate passes?"}
-    N -->|yes| P[Submit pending review as APPROVE]
+    N -->|yes| AM{"auto-merge on +<br/>actionable comments?"}
+    AM -->|no| P[Submit pending review as APPROVE]
+    AM -->|yes| DA[Disable auto-merge]
+    DA -->|disabled| P
+    DA -->|denied| O
     N -->|no| O[Open html_url in browser]
     P --> O
 ```
@@ -67,8 +74,8 @@ flowchart TD
 ## Noteworthy
 
 - **The review body is the verdict line plus the footer** — with or without concerns. Inline comments carry the
-  substance; a pre-POST gate cuts every extra sentence that is not an un-anchored concern, a `Re:` answer, or an
-  evidenced bot reply. Review depth is reported in the terminal, never on GitHub.
+  substance; a pre-POST gate cuts every extra sentence that is not an un-anchored concern, a `Re:` answer, an
+  evidenced bot reply, or the auto-merge-disabled note. Review depth is reported in the terminal, never on GitHub.
 - **Verifier severity is a draft** — verifier prompts carry the severity definitions verbatim, and every
   verifier-assigned `concern` is re-mapped against them before the approve gate; a blocker that needs non-default
   config becomes a `suggestion`, one that needs unpinned external behavior a `question`.

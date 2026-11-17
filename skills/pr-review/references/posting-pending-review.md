@@ -46,7 +46,10 @@ user to re-authorize. Hook input-rewrite denial → [`wk-env`](../../env/README.
 
 Only after the SKILL.md Approve gate passes and the pending review exists. Recheck `headRefOid` == `PR_HEAD` first;
 moved → stay pending. Read `statusCheckRollup` in that same query and re-check it against the branch's required-status
-list; a required check that turned red since the gate ran → stay pending. Write
+list; a required check that turned red since the gate ran → stay pending. Read `autoMergeRequest` in that query too:
+non-null with any actionable comment in the review → `gh pr merge <n> --disable-auto` as its own Bash call, re-query
+once to confirm `autoMergeRequest` is null, and include the auto-merge-disabled sentence in the body below; disable denied or
+still non-null → stay pending. Write
 `{"event": "APPROVE", "body": "<same verdict + footer>"}` with the Write tool, then, as its own Bash call:
 
 ```bash
