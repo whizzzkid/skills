@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.16-175718`
+**Version:** `2026.11.17-234104`
 
 ## Invocation
 
@@ -95,6 +95,8 @@ flowchart TD
   prefer its runnable devcontainer before proposing task-specific host installs.
 - **Each phase PR ships only its phase's deliverable:** scaffolding, fields, or config that only a later phase of a
   multi-phase spec uses waits for that phase.
+- **A new step inherits only the guards that ran before it:** any bound or format assumption on an input cites a
+  validation already run at that call site, else it gets a local guard and a malformed-input sad-path test.
 - **The current dedicated task branch is authoritative:** do not propose
   another branch unless the checkout is default, detached, carries unrelated
   dirty work, or the user asks for additional isolation.

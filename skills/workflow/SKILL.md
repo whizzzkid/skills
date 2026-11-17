@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.16-175718"
+  version: "2026.11.17-234104"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -142,6 +142,10 @@ Edit-scope pre-flights — enumerate every affected site (callers, `replace_all`
 harness reachability, contract owners, false-positive class); fix all in one pass before tests:
 [`references/edit-scope-preflights.md`](references/edit-scope-preflights.md).
 
+- **A new step inherits only the guards that ran before it.** Step consumes an input → walk entrypoint → new call and
+  list the validations that have run at that line; every bound or format assumption in code or comments cites one of
+  them, else guard locally and add a sad-path test whose malformed input passes the earlier, weaker checks. (A bound
+  taken from the value's validated shape breaks when that validation runs later in the chain.)
 - **HARD RULE — coupled edits land all-or-nothing.** A fix adding an edit that another edit depends on (a reference and
   the file it needs, a call and its definition, two injections that only work together) → name the coupling invariant,
   check every precondition (each anchor, target, and file present) before applying any edit, and fail loudly when one

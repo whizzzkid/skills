@@ -14,3 +14,6 @@ Before tests, enumerate every affected site; fix all in one pass:
 - **"Every path" invariants** — enumerate every termination class (exit codes, exception, signal, failed external
   update, crash before/after the success write) as a matrix and test each cell before the first push (rule: `SKILL.md`
   Phase 3).
+- **Input-bound provenance** — a new step that consumes an input sees only the validations that ran before it; list
+  them at the new call site and cite one for every bound or format assumption (rule: `SKILL.md` Phase 2, a new step
+  inherits only the guards that ran before it).
