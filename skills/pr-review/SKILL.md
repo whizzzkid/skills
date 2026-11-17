@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.17-055952"
+  version: "2026.11.17-173054"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -318,7 +318,8 @@ substance; GitHub shows them under the review. Ban praise-adjective openers.
   author `review_focus` item; an evidenced bot reply per [`bot-finding-validation`](references/bot-finding-validation.md);
   the auto-merge-disabled note per [Approve Flag](#approve-flag).
 - **HARD RULE — pre-POST body gate:** count sentences before the footer; cut any past the verdict that is not one of
-  those four.
+  those four. First line must be a verdict token above — no lead-in, narration, praise, or finding first. Text-only
+  draft (no API) keeps the shape: verdict line, then findings as an inline-comment list.
 
 **HARD RULE — open URL on every create/recreate**, whether or not the POST response parsed; parse failure → re-query for
 `html_url`, never drop the open. Trust `path`+`body`, not `line` for verification.
