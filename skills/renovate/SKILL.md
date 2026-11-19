@@ -1,10 +1,11 @@
 ---
 name: wk-renovate
 description: >-
-  Use when combining open Dependabot PRs into a single batched dependency
-  update PR. Finds all open Dependabot PRs in the current repo, applies
-  their upgrades on a single branch, creates a combined PR with
-  Supersedes annotations, and closes the originals after merge.
+  Use when handling open Dependabot dependency-upgrade PRs ("gh-deps").
+  Exactly one open → approve and merge it once CI is green. Several open →
+  apply their upgrades on a single branch, gate on a green build and CI,
+  open one combined PR whose `Closes #N` lines auto-close the originals on
+  merge, and close stragglers after.
 user-invocable: true
 model-invocable: true
 model: sonnet
@@ -29,7 +30,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.11.06-184031"
+  version: "2026.11.19-195405"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -37,8 +38,9 @@ metadata:
 
 # Renovate — Batch Dependabot PRs
 
-Combine all open Dependabot PRs in the current repo into a single dependency-update PR: one branch, one review, one
-merge. Triggers: `/wk-renovate`, "combine dependabot PRs", "batch dependency updates", "merge all dependabot".
+Land every open Dependabot PR in the current repo: a lone PR merges as-is; several combine into a single
+dependency-update PR — one branch, one review, one merge. Triggers: `/wk-renovate`, "gh-deps", "dependency upgrade
+PRs", "combine dependabot PRs", "batch dependency updates", "merge all dependabot".
 
 ## Step 1: Discover Dependabot PRs
 
@@ -51,9 +53,31 @@ gh pr list --author "app/dependabot" --state open --json number,title,headRefNam
 - Zero results → report "no open Dependabot PRs" and stop.
 - Display a numbered summary table: PR number, title, package, version bump. Extract the dependency name and version
   range from each PR title/body.
-- **Pause for confirmation** before proceeding to Step 2: ask the user to confirm or exclude packages (e.g., "exclude 3,
+- Count ≥ 2 → **pause for confirmation** before Step 2: ask the user to confirm or exclude packages (e.g., "exclude 3,
   7" or "proceed"); call out major-version bumps explicitly in the table (most likely to break). Excluded PRs are
-  skipped in Steps 2–5 and omitted from the combined PR.
+  skipped in Steps 2–5 and omitted from the combined PR. Exclusions leave exactly one → Step 1.5 single path.
+- Count = 1 → Step 1.5; no confirmation pause (invoking the skill on a lone PR is the merge directive).
+
+## Step 1.5: Single PR — approve and merge
+
+Exactly one open Dependabot PR → land it directly; skip Steps 2–7 (no combined branch).
+
+- Re-query state: `gh pr view <N> --json state,mergeable,headRefOid,statusCheckRollup,files`. Not `OPEN` → stop;
+  `CONFLICTING` → comment `@dependabot rebase` via [wk-gh](../gh/README.md) and stop (Dependabot rebases async).
+- CI not green on `headRefOid` → watch it (`gh pr checks <N> --watch --fail-fast`); red → report the failing check and
+  stop. Never approve a red PR; never push fixes onto Dependabot's branch (Dependabot force-pushes over it).
+- Run the Step 4 major-version audit against the PR's lockfile diff (`gh pr diff <N>`). Any major (up or down, direct
+  or transitive) or non-manifest file in `files` → invoke
+  [wk-adversarial-review](../adversarial-review/README.md) first; else record the waiver "minor/patch dependency-only
+  update, adversarial review skipped" for `wk-pr-merge` Step 5.5.
+- Approve, then merge via [wk-pr-merge](../pr-merge/README.md) (never raw `gh pr merge`):
+
+```bash
+gh pr review <N> --approve --body "Dependency-only update; CI green."
+```
+
+- Approval rejected (`Can not approve your own pull request`, or repo requires a non-author) → report and stop; never
+  merge on a missing approval.
 
 ## Step 2: Create a Combined Branch
 
@@ -102,8 +126,9 @@ Detect the package manager from repo root:
 ## Step 4: Verify the Combined State
 
 - Run the install command for the detected package manager to confirm the lockfile is consistent.
-- Test command obvious (`npm test`, `bundle exec rake`, `cargo test`) → run it. On failure, report which upgrade likely
-  broke it but do not block — the CI on the PR will catch it.
+- **Build and test gate the PR.** Run the repo's build and test commands (`npm run build` + `npm test`,
+  `bundle exec rake`, `cargo build` + `cargo test`). Red → bisect by dropping bumps one at a time to name the breaking
+  upgrade; fix it or exclude that PR (it stays open, no `Closes` line), then rerun until green.
 - Red gate → rerun it on base (`origin/main` and its lockfile) before blaming a bump; red there too → pre-existing,
   not the update's.
 - Deterministic red in a container → before blaming a bump, list forwarded config-override var **names** (compare
@@ -134,15 +159,19 @@ Detect the package manager from repo root:
 
 ## Step 5: Create the Combined PR
 
-Push the branch and open a PR with the body from [`references/pr-body-template.md`](references/pr-body-template.md):
+Push the branch, then open the PR **as a draft** via [wk-pr](../pr/README.md) with the body from
+[`references/pr-body-template.md`](references/pr-body-template.md):
 
 ```bash
 git push -u origin dependabot/combined-updates
 ```
 
-Use `Closes #N` for each superseded Dependabot PR: GitHub's `Closes` keyword auto-closes both issues **and** pull
-requests on merge (field-verified); never assume it only works for issues. Step 7 handles any that remain open as
-stragglers.
+- **CI gates ready.** Watch checks on the pushed SHA (`gh pr checks <combined> --watch --fail-fast`; Buildkite →
+  [wk-buildkite](../buildkite/README.md)). Red → `wk-workflow` Phase 6 fix loop (max 3 attempts); mark ready only when
+  every required check is green. (Most CI triggers on the PR, so the draft is how CI runs before review.)
+- **One closing keyword per PR, one per line:** `Closes #NNN` per line — never `Closes #NNN, #MMM` (GitHub links only
+  the number directly after a keyword; the rest stay open). `Closes` auto-closes pull requests as well as issues on
+  merge (field-verified). Only PRs actually applied get a line; Step 7 closes stragglers.
 
 ## Step 6: Skip Optional Gates
 

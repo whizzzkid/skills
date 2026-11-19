@@ -45,7 +45,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-pr-merge`](./pr-merge/README.md) | Merge after review clearance — ticket, retro, cleanup | User + Model |
 | [`wk-adversarial-review`](./adversarial-review/README.md) | The single review gate — one run per change at the completion gate, before merge | Auto (once, pre-merge) |
 | [`wk-self-review`](./self-review/README.md) | Post inline self-review comments documenting design decisions for human reviewers | User + Model |
-| [`wk-renovate`](./renovate/README.md) | Batch open Dependabot PRs into a single combined dependency-update PR | User + Model |
+| [`wk-renovate`](./renovate/README.md) | Land open Dependabot PRs ("gh-deps"): approve + merge a lone PR, or batch several into one combined PR | User + Model |
 | [`wk-jira`](./jira/README.md) | Sync Jira ticket state with PR lifecycle — auto-transitions, description audit | Auto (on Jira key/URL) |
 
 ---

@@ -19,7 +19,10 @@ Batches the following Dependabot PRs into a single update:
 (None → "No major-version changes, up or down, direct or transitive.")
 
 ### Superseded PRs
-Closes #<N1>, #<N2>, #<N3>, ...
+Closes #<N1>
+Closes #<N2>
+Closes #<N3>
+<!-- one keyword per PR: "Closes #NNN, #MMM" closes only the first -->
 
 ### Post-merge cleanup
 GitHub auto-closes PRs referenced by `Closes #N` on merge.
