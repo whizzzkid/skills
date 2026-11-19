@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.17-183411"
+  version: "2026.11.19-193149"
   model:
     openai: gpt-5.6-terra
 ---
@@ -263,6 +263,9 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
   stats); pending → live.md (tomorrow's prep, untracked actions, unanswered items, Lattice requests, DX improvements,
   confirmed pending spans). Cross-validate pending against external state (GitHub merged, Jira Done, Calendar occurred,
   Slack replied); ambiguous → pending; drop items with no link.
+  - **Cross-validate ticked spans too.** Re-query each `data-done="true"` span's owning system; still non-terminal
+    (draft, unsubmitted) → keep the tick in the snapshot, add a one-line mismatch note there and in the next page's
+    notes; never re-open the span unprompted (the tick is user intent; the source is evidence).
 - **Stage 4 — Write snapshot.md.** Historical only, never pending; existing → merge, don't overwrite. Authorship filter:
   include as user's only when `gh pr view --json author` confirms author/co-author/primary approver; enumerate via
   `gh search prs --author @me`. Template: [`references/snapshot-template.md`](references/snapshot-template.md). Append

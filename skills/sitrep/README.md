@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.17-183411`
+**Version:** `2026.11.19-193149`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -105,6 +105,8 @@ reported afterwards in the response.
   echoed in the page's Meta section; the agent never infers one.
 - **Missed-close checklist** — a rollover counts the user-ticked spans first and asserts the snapshot keeps them all
   before marking the prior day closed.
+- **Ticked-span cross-check** — every close re-queries the owning system for each user-ticked span; one still in
+  draft keeps its tick but gets a mismatch note in the snapshot and the next page, never a silent re-open.
 - **Connector migration** — when a gap connector's domain is covered by another
   available connector, the report also offers "migrate roster"; on user
   confirmation the skill's roster, ToolSearch hint, allowed-tools, and

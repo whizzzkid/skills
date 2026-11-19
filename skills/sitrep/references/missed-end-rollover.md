@@ -83,7 +83,8 @@ prerequisite to today's overwrite, not a separate required invocation.
 2. Count user-ticked spans (`data-done="true"`) on the stale page before any write — the user may have edited it in
    the browser since the last commit.
 3. Derive the snapshot path from the page's `date:` (recipe above), never from the wall clock.
-4. Write the snapshot; assert its done-item count ≥ the step 2 count (every ticked span survives the close).
+4. Write the snapshot; assert its done-item count ≥ the step 2 count (every ticked span survives the close). Re-query
+   each ticked span's owning system first; still a draft → keep the tick, add a mismatch note (`SKILL.md` end Stage 3).
 5. Write completed keys to the dated week registry, append brag-log entries.
 6. Rewrite the page with pending spans only, carry-forward heading + scrub note.
 7. Add `end_completed_at:`, commit every close artifact, then restore today's start.
