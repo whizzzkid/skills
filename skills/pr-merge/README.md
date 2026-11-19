@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.11.17-234557`
+**Version:** `2026.11.19-202635`
 
 ## Invocation
 
@@ -62,6 +62,10 @@ All five must pass; any failure blocks and reports what needs fixing:
 
 ## Noteworthy
 
+- **Merge permission is preflighted in auto mode** — with no allow rule for
+  `gh pr merge`, the user is told before the merge call that the permission
+  layer may refuse it even with a human approval, and gets the PR link to merge
+  it themselves.
 - **[`wk-pr-resolve`](../pr-resolve/README.md) first if threads exist** —
   resolve outstanding review comments before invoking this skill.
 - **Merge never dispatches [`wk-adversarial-review`](../adversarial-review/README.md)** —

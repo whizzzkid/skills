@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.17-234557"
+  version: "2026.11.19-202635"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -123,6 +123,11 @@ proceed. Tree-identical rewrite or finding-response commits → carry-forward. U
     merge. Transient 500s → retry 2x, then REST.
 - **HARD RULE — select from the active ruleset before merging.** Read `allowed_merge_methods` via `wk-gh`
   Step 3; first allowed of squash > rebase > merge. Policy error → re-read rulesets.
+- **Permission preflight (auto mode).** `command grep -rE 'gh pr merge' $HOME/.claude/settings.json
+  .claude/settings*.json`; no allow rule → before the merge call, tell the user the permission layer may refuse it
+  even with a human approval and green CI, and give `{url}` (merge it themselves) or a `Bash(gh pr merge:*)` rule
+  they add (never self-edit settings). Then attempt; a denial follows the edge-case path below. (Warning up front
+  turns a denial into a click, not a round trip.)
 
 ```bash
 gh pr merge {number} {selected-method-flag} --delete-branch --repo "{repo_with_owner}"
