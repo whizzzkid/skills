@@ -26,7 +26,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.11.19-202528"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -58,6 +58,10 @@ test -d "$WK_SKILLS_HOME/skills/<name>" && echo "EXISTS" || echo "CLEAR"
 2. Strip leading `wk-` from the directory name (`wk-` lives in `name:` frontmatter, not the directory); `name:` is
    always `wk-<name>`. No argument → ask user for the skill name.
 3. `EXISTS` → stop, do not overwrite. Suggest `wk-sharpen` to improve an existing skill.
+4. `CLEAR` → also check **capability**, not just name: grep every `skills/*/SKILL.md` `description:` for the request's
+   key nouns/verbs and read each hit. Substantial overlap → ask (`AskUserQuestion`) whether to extend that skill via
+   `wk-sharpen` or create a new one, before scaffolding. (A name check misses an existing skill that already does most
+   of the job.)
 
 ## Step 3: Surface relevant learnings
 
@@ -110,6 +114,7 @@ Write the sibling `README.md` in the **same commit** (AGENTS.md README co-change
 **Linkify every `wk-*` mention in the README from the first draft** — even an illustrative or placeholder
 `wk-<name>`: write `[wk-<name>](../<name>/README.md)` or drop the backticks (plain `wk-<name>`). A bare backticked
 `` `wk-foo` `` trips the `check-skill-links` pre-commit hook. The skill's own name in the `#` heading is exempt.
+Write example PR/issue numbers as `#NNN` placeholders (`check-pr-numbers` rejects literal numbers in markdown).
 
 **HARD RULE — sync BOTH skill indexes in the same commit.** A new skill is not done until it has a row in **both**
 index files. No "when in scope" exemption — every published skill (all except `_template/`) appears in both

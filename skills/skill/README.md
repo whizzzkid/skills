@@ -2,7 +2,7 @@
 
 > Scaffold a new wk-* skill from the canonical template with full infrastructure wiring.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.11.19-202528`
 
 ## Invocation
 
@@ -17,13 +17,15 @@
 flowchart TD
     A[Check $WK_SKILLS_HOME] --> B[Guard: skill already exists?]
     B -->|exists| Z[Stop — suggest wk-sharpen]
-    B -->|clear| C[Scan learnings for topic-relevant insights]
+    B -->|clear| O{Existing skill covers most of the job?}
+    O -->|yes| Q[Ask: extend via wk-sharpen or create new]
+    Q -->|create new| C
+    O -->|no| C[Scan learnings for topic-relevant insights]
     C --> D[Determine metadata: group, model tier, effort, invocability]
     D --> E[Generate CalVer version via wk-calver]
-    E --> F[mkdir + write SKILL.md skeleton]
-    F --> G[Display scaffold + TDD prompt]
-    G --> H{User fills in skill body}
-    H --> I[npx skills add . -g -y --agent claude-code]
+    E --> F[mkdir + write full SKILL.md and README]
+    F --> G[Display completed skill]
+    G --> I[npx skills add . -g -y --agent claude-code]
     I --> J{Done! printed?}
     J -->|yes| K[Confirm registry entry]
     J -->|no| L[Re-run from repo root / check frontmatter]
@@ -41,6 +43,9 @@ flowchart TD
   `README.md` (root mirror) and `skills/README.md` (canonical), in the same commit. The
   `check-readme-index` pre-commit hook blocks the commit otherwise; removal/rename must clear
   both rows too.
+- **Capability check, not just name** — a clear name still greps every skill
+  description for the request's key nouns; a substantial overlap asks whether to
+  extend that skill via [wk-sharpen](../sharpen/README.md) before scaffolding.
 - The `wk-` prefix lives in the `name:` frontmatter field only — the **directory name** strips
   it (e.g., skill name `wk-<name>` → directory `skills/<name>/`).
 - Step 3 surfaces unprocessed learnings relevant to the new skill's topic, which become the
