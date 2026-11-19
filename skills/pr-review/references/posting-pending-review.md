@@ -59,6 +59,11 @@ gh api repos/{owner}/{repo}/pulls/{n}/reviews/{review_id}/events --method POST -
 Response `state` must be `APPROVED`; anything else → report the pending review as-is. 422 → stay pending; never retry
 as `COMMENT`. Submitting is irreversible — inline comments publish with it.
 
+Permission-layer denial of the `events` POST (not a hook rewrite) → no retry; leave the pending review in place and
+hand the user its `html_url`, the payload path, and the one-line `gh api … --input <file>`. Preflight in auto mode:
+`command grep -rE 'gh api repos/.*/pulls/.*/reviews' $HOME/.claude/settings.json .claude/settings*.json`; no match →
+warn in the Phase 4 summary that the approval may be refused.
+
 ## Append to existing pending review
 
 GitHub allows no append — delete review, recreate with full comment set. Pending comments return `line: null`; rebuild

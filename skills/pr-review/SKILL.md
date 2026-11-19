@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.19-220327"
+  version: "2026.11.19-220601"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -122,6 +122,12 @@ never the flag.
   disabled"). No actionable comment → approve as-is (merging is intended). Report auto-merge state + action in the
   terminal. (Approval as the last missing requirement merges in minutes, before the author reads a comment.)
 - Gate fails → post pending as usual; tell the terminal "approve requested; held as pending: {reasons}".
+- **Approve submit denied by the permission layer** (e.g. as self-approval; the `approve` token does not bind it) →
+  never retry, resubmit as `COMMENT`, or open a second review; the pending review already holds every comment. Report
+  its `html_url`, the approve payload path, and the exact `events` POST; the user submits Approve on GitHub or adds a
+  Bash allow rule (never self-edit settings). Auto mode with no `gh api` reviews allow rule in the settings files →
+  say so in the Phase 4 summary first (mirrors `wk-pr-merge`'s permission preflight). Hook-rewrite denial → the
+  one-retry POST rule.
 
 ## Focus Argument
 
