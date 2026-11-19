@@ -30,7 +30,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.11.19-195405"
+  version: "2026.11.19-202254"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -143,7 +143,12 @@ Detect the package manager from repo root:
     major rolls it back with no PR naming it.
   - Per major: read the changelog across the whole version span for breaking changes **and default-behavior changes**;
     check the app's use of changed APIs and of defaults it relies on implicitly; record the verdict in the PR body's
-    major-bump audit section.
+    major-bump audit section. A pre-1.0 minor bump (`0.x` → `0.y`) is a major.
+  - **Per default-behavior change: grep every construction site of the changed type or builder across the whole
+    workspace** (every package, crate, and binary — not only the one being edited); list each in the audit section with
+    its fix or justification. Network-client defaults (retries, timeouts, endpoint parsing) → time a run on base vs
+    head with the endpoint unreachable, then with an invalid endpoint value. (Fixing only the touched caller leaves its
+    siblings regressed, and no test runs against an unreachable or malformed endpoint.)
   - A change reverts a safety-relevant default (stricter parsing, validation, escaping) → set that default explicitly at
     each call site, with a spec that fails against the reverted default first.
   - Why: a transitive major can break an error path no test covers, and a downgrade silently loosens defaults no test

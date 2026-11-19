@@ -17,6 +17,7 @@ Batches the following Dependabot PRs into a single update:
 |---------|-------------------|-------------------|--------------------------------------------------|
 | <package> | transitive | <old> → <new> | <verdict; defaults restored explicitly, if any> |
 (None → "No major-version changes, up or down, direct or transitive.")
+Default-behavior changes: list every workspace construction site of the changed type, each with its fix or justification.
 
 ### Superseded PRs
 Closes #<N1>

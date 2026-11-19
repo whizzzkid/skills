@@ -1,6 +1,6 @@
 # wk-renovate
 
-> **Version:** 2026.11.19-195405 · **Group:** pull-request · **Model:** sonnet
+> **Version:** 2026.11.19-202254 · **Group:** pull-request · **Model:** sonnet
 
 Land every open Dependabot PR in the current repo ("gh-deps"): a lone PR is
 approved and merged once CI is green; several are batched into a single
@@ -57,7 +57,10 @@ flowchart TD
 - **Every major-version change is audited** — up or down, direct or
   transitive, found by diffing the lockfile against base; the audit covers
   default-behavior changes, and a reverted safety default is restored
-  explicitly with a failing-first spec. A green suite is not evidence of safety.
+  explicitly with a failing-first spec. A changed default is traced to every
+  construction site across the workspace, and network-client defaults are
+  timed against an unreachable and an invalid endpoint. A green suite is not
+  evidence of safety.
 - **Derived artifacts regenerate against fresh isolated state** — a throwaway,
   freshly migrated DB, scoped to the bumped packages; never the shared dev DB.
 - **Adversarial review** runs when any major change exists or the diff touches
