@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.20-232907"
+  version: "2026.11.19-220327"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -144,6 +144,10 @@ After each test or batch:
    worktree's git dir).
 
 - A contract-breaking mutation that breaks no test → add the missing assertion before moving on.
+- Comparison mutant survives → check the fixtures before the assertions: a helper leaving the compared field at its zero
+  value (empty, nil, 0) keeps an `a.X == b.X` mutant green because zero equals zero. Set every field the logic under
+  test compares to the realistic non-zero value production stamps, then re-run the mutant (a fixture gap, not an
+  assertion gap).
 - Shipping > ~5 new tests: batch 3-5 different mutations, run the suite, confirm each fails at least one test; a
   mutation failing nothing means a missing or structural test.
 

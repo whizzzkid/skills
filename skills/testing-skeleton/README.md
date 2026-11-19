@@ -2,7 +2,7 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
-**Version:** `2026.10.20-232907`
+**Version:** `2026.11.19-220327`
 
 ## Invocation
 
@@ -42,6 +42,8 @@ flowchart TD
   the runner reports that name; a green nearby example is not mutation evidence.
 - **Restore each mutant from a pre-mutation copy, never via VCS** — `git checkout` wipes the
   uncommitted implementation on the host and fails in a container that cannot see the git dir.
+- **A surviving comparison mutant indicts the fixture first.** A helper that leaves the compared field at its zero value
+  keeps `a.X == b.X` green (zero equals zero); set the realistic value production stamps.
 - The **behavioral/structural dividing line** test: "if I rewrote this function from scratch
   keeping its contract, would the test still pass?" — yes = behavioral, no = structural.
 - **Format validators** must be derived from real example values found in the codebase or

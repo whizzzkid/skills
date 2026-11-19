@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.17-223711"
+  version: "2026.11.19-220327"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -243,8 +243,8 @@ approve gate, re-map each verifier-assigned `concern` against them — not corre
 (Per-finding refute agents inflate severity, and one inflated `concern` holds approval on a non-critical item.)
 
 - Have each verifier state every `blocker`'s preconditions — shipped defaults, non-default config, or unpinned external
-  behavior — and re-map on them: non-default config → `suggestion`, unpinned external → `question`; unstated →
-  defaults. (A data-loss path reachable only under a custom setting is not critical as shipped.)
+  behavior — and re-map on them: non-default config (incl. a mistyped value) → `suggestion`, unpinned external →
+  `question`; unstated → defaults. (A data-loss path reachable only under a custom setting is not critical as shipped.)
 
 ## Phase 4: Review comments
 
