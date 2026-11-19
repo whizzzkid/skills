@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.09-210752"
+  version: "2026.11.19-193336"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -111,6 +111,10 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   - **Important:** never name a variable `path`, `cdpath`, `fpath`, `manpath`, or `module_path` — zsh ties each to
     its uppercase twin, so `path=$(…)` in a loop wipes `PATH` and every later command fails `command not found`. Use
     role-specific names (`doc_path`); non-trivial loop → write a `bash` script file and run it with `bash`.
+  - **Replay a foreign snippet under its own interpreter.** Verifying a CI step or another tool's script → run it
+    verbatim via `bash -c` (or its declared shell), never in the agent's login shell, and swap platform-specific tools
+    for the CI host's equivalent (`stat -c` vs `stat -f`). (A zsh replay of an unquoted `for e in $LIST` loops once:
+    a false failure blamed on the script under test.)
 - **sed/awk/perl/grep/printf trap catalog:** silent-failure traps in common shell tools —
   BSD operand order, PCRE in ERE, awk exit overwrite, awk side-file operand leak, sed portability, perl `\s*$`
   eating newlines, grep flag conflicts, pipeline verdict loss, fallback traps, positive controls.
