@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.19-193149"
+  version: "2026.11.19-202440"
   model:
     openai: gpt-5.6-terra
 ---
@@ -243,8 +243,8 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
   submit/approve/request changes. Re-check live state right before dispatch and again before publishing: merged, closed
   or approved → no review, no listed draft. Run `/wk-pr-review` in **light** mode; the orchestrator `open`s each posted
   draft's review URL. Reserve slots for nested workers. Mechanics:
-  [`references/auto-review.md`](references/auto-review.md). Then invoke `wk-learn sitrep`; end the response with the
-  `Connector gaps` report.
+  [`references/auto-review.md`](references/auto-review.md). Then invoke `wk-learn sitrep` (own response, per end
+  Stage 8); end the response with the `Connector gaps` report.
 
 ## Sub-command: end
 
@@ -276,8 +276,11 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
 - **Stage 6 — Open snapshot.** `open "$SNAPSHOT_URL"` — announce done/carried/documented counts.
 - **Stage 7 — Distill learnings.** `$WK_SKILLS_HOME` set + unprocessed learnings → highest severity first, cap 5; invoke
   [`wk-sharpen`](../sharpen/README.md).
-- **Stage 8 — Mark complete, commit, push.** Invoke `wk-learn sitrep`; add `end_completed_at: {ISO_8601_UTC}` to
-  `$LIVE_FILE` (gaps do not withhold it); end the response with the `Connector gaps` report.
+- **Stage 8 — Mark complete, commit, push.** Add `end_completed_at: {ISO_8601_UTC}` to `$LIVE_FILE` (gaps do not
+  withhold it); commit and push; then invoke `wk-learn sitrep`; end the response with the `Connector gaps` report.
+  - **Skill call in its own response, after the commit output is read** — never batched with the patch/commit shell
+    call (the learning must see the final commit/push outcome; a batched Skill call was observed to get no
+    permission verdict).
 
   ```bash
   BRAG_LOG="$SITREP_REPO/$EMPLOYER/QPR/brag-log.md"
