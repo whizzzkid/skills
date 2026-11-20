@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.20-225707"
+  version: "2026.11.20-230703"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -48,6 +48,10 @@ Pre-merge checklist → merge → transition ticket → follow-ups → retro →
   Step 1 → skip to Step 7.
 - **HARD RULE — enter the skill directly on a merge signal; never hand-do a cosmetic pre-step first** (no
   ticking checkboxes or body edits — Step 5 decides).
+- **Merge request covering ≥2 PRs → state one merge policy before the first merge** — either the agent merges each in a
+  stated order, or the user merges them all — confirm it, then apply it the same way to every PR. A PR the user merges
+  mid-flow resumes at Step 7 under that policy. (Asking for one PR and acting alone on its sibling reads as
+  inconsistent authority.)
 
 ## Step 1: Resolve the PR
 

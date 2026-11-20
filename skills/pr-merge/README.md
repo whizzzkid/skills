@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.11.20-225707`
+**Version:** `2026.11.20-230703`
 
 ## Invocation
 
@@ -62,6 +62,9 @@ All five must pass; any failure blocks and reports what needs fixing:
 
 ## Noteworthy
 
+- **One merge policy per batch** — a request covering several PRs gets one
+  stated, confirmed policy (agent merges in a stated order, or the user merges
+  them all) applied identically to each PR.
 - **Merge permission is preflighted in auto mode** — with no allow rule for
   `gh pr merge`, the user is told before the merge call that the permission
   layer may refuse it even with a human approval, and gets the PR link to merge
