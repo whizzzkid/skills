@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.19-202635"
+  version: "2026.11.20-225707"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -148,7 +148,9 @@ manual transition. Route each via `AskUserQuestion` BEFORE cleanup: **Start now*
 ## Steps 9–10: Capture session learnings, then clean up worktree
 
 **HARD RULE — Steps 7-10 are one atomic unit.** A user question mid-flow is not a stop signal — answer and
-resume. Compaction does not reset the unit. Invoke `Skill(wk-retro)` immediately after merge.
+resume. Compaction does not reset the unit. **Important:** invoke `Skill(wk-retro)` after the merge, every run — a
+retro file written before the merge never satisfies Step 9 (it misses every later correction). Before calling any step
+done, name the artifact and the events it covers; an artifact that merely exists proves nothing.
 
 Step 10 — **HARD RULE — run dead last, after every Step 8 follow-up is resolved.** `{entered_merged}` → audit
 for open children before branch deletion. Removal: [`references/worktree-cleanup.md`](references/worktree-cleanup.md).
