@@ -25,7 +25,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.10-175041"
+  version: "2026.11.20-230952"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -112,6 +112,9 @@ it produces is agent-created.
 
 - **Push after every commit unless the user explicitly said not to** — the push is the tail of the commit sequence, not
   a separate step the user must request.
+  - **Important — never end a turn between commit and push, or between an authorized first push and `wk-pr`.** A
+    summary listing them as "next" is a stall; run them in the same turn. (The commit summary feels like a turn
+    boundary; it is not one.)
 - **Important — first push of a brand-new branch: an authorized session pushes; only an unauthorized one confirms.**
   The push mandate applies once a branch has an upstream or an open PR. For a push that would create a *new* remote
   branch (no upstream tracking) while `gh pr view 2>/dev/null` finds no open PR:
