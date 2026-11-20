@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.20-220406"
+  version: "2026.11.20-220535"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -239,7 +239,8 @@ Run only when diff changes browser-rendered UI (`.tsx/.jsx/.vue/.svelte/.html/.c
 "frontend preview: N/A". Launch via `run` skill or dev-server. Drive every changed view with Playwright; capture
 snapshots/console; platform-pinned baselines → regenerate in CI container, never local host
 ([artifacts](references/2026-08-04_linux-visual-artifacts.md)). Load failure, console error, or broken interaction →
-blocker. Leave app running; continue Phase 5.
+blocker. Restore/persistence/caching claims → assert on network request counts or a window marker, not DOM text alone
+(a re-fetch renders the same text). Leave app running; continue Phase 5.
 
 ## Phase 5: PR
 
