@@ -3,7 +3,7 @@
 > Documentation-comment gate — requires public-API docs, WHY-not-WHAT decision
 > comments, and mandatory removal of stale comments when editing adjacent code.
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.11.20-232225`
 
 ## Invocation
 
@@ -23,6 +23,8 @@
   values/order, external-bug workarounds, and conscious perf trade-offs.
 - Never leave a stale comment — update or delete any comment that no longer
   matches the adjacent code.
+- Verify a comment's factual claim (about tests, a dependency, or an external
+  tool) against source before writing it; drop or re-cite an unproven claim.
 
 ## Noteworthy
 

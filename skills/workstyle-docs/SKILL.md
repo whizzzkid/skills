@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.11.20-232225"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -70,6 +70,11 @@ Manual: `/wk-workstyle-docs scan` (full working tree) · `/wk-workstyle-docs che
 - **No stale comments.** When editing code, update or delete any
   comment that no longer accurately describes the adjacent code.
   Stale comments are worse than no comment.
+- **Verify a comment's factual claim before writing it.** A comment
+  asserting what the tests, a dependency, or an external tool does →
+  grep or read the source that proves it first; unproven → cite what
+  you did verify, or drop the claim. (A comment written from
+  assumption is stale on day one.)
 
 ## Apply or Report
 
