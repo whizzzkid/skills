@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.17-234434"
+  version: "2026.11.20-220406"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -64,7 +64,9 @@ Execute without asking permission at each step. Take the first that matches:
   prompt references a URL/PR → fetch before parallel research.
 - **Curiosity ≠ commission:** clarifying question after goal met → answer and stop; no new proposal unless asked.
 - **A turn with no new facts must end in a write** — analysis done, edit the owning file. **Verify mechanism before
-  offering options** — read Y's interface before claiming "accomplish X via Y".
+  offering options** — read Y's interface before claiming "accomplish X via Y". Same for code comments on an external
+  tool's behavior (what it checks, passes through, or costs): grep its source or drive it once on a scratch copy;
+  check plugin defaults before calling a step cheap or isolated.
 - **Announce-and-invoke same turn:** a skill counts only when its `Skill` call is in that response. Skill presence and
   phase routing: [`references/skill-reference.md`](references/skill-reference.md).
 
