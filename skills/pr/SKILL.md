@@ -37,7 +37,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.12-230031"
+  version: "2026.11.20-220154"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -147,6 +147,11 @@ EOF
     `gh stack rebase` → verify ancestry + tests → `gh stack push` → verify every remote head, current-head CI run,
     thread, and body-cited commit.
   - **Read merge order from `baseRefName`, never `part-N` labels** — labels drift after re-parent.
+- **Sibling PRs from one session → intersect changed-file sets before calling them independent.** Two or more PRs
+  opened this session → intersect each one's `git diff --name-only "origin/<base>...<head>"`. Overlap → state the
+  recommended merge order and the expected conflict files in each PR body and the hand-off; offer to update the later
+  PR via `wk-pr-update` right after the earlier merges. (Independence is a file-overlap verdict, not a behavioral one:
+  shared registries and config lists conflict even when behavior is disjoint.)
 - **Body extras:** [`references/pr-body-extras.md`](references/pr-body-extras.md) — apply each matching sub-step.
 
 ## Step 3: Post-Creation Workflow

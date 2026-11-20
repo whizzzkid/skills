@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.11.12-230031`
+**Version:** `2026.11.20-220154`
 
 ## Invocation
 
@@ -75,6 +75,9 @@ flowchart TD
   chaining, linked submission, and cascading conflict recovery. Existing stacks
   are snapshotted, rebased, validated, and pushed as one unit; independent layer
   rebases are forbidden.
+- **Sibling PRs get an overlap check:** when one session opens two or more PRs, their changed-file sets are
+  intersected before any are called independent. Overlap puts the recommended merge order and expected conflict files
+  in each PR body and the hand-off, with an offer to update the later PR once the earlier merges.
 - **Source plan is linked:** Step 2 pre-flights `docs/plans/` for the implementation plan the work derives
   from and links it (anchored to the phase) under `## Meta` — a vision/spec link is not a substitute.
 - **PR template detection:** Repo `.github/pull_request_template.md` takes precedence over the hardcoded
