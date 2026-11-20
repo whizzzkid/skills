@@ -3,7 +3,7 @@
 Take over a pull request being worked on by someone else and drive it to
 completion using the full [`wk-workflow`](../workflow/README.md).
 
-**Version:** `2026.10.29-192344`
+**Version:** `2026.11.20-210808`
 
 ## Purpose
 
@@ -38,7 +38,8 @@ original PR's line-count diff.
    unverified inherited commit is re-signed (overwrite) or flagged (stack) before any work starts
 4. **Orient** — read changed files, run baseline tests, identify gaps. Prose/docs-dominated diffs substitute a gate-preservation audit (hooks as baseline; verify every claimed rule/link/count survived). Inherited CI is triaged by log (canceled checks included); dependency bumps get the lockfile major-version audit
 5. **Co-authorship** — extract original author identity; set `$WK_CO_AUTHOR`
-6. **Plan** — task list from unresolved feedback + incomplete code
+6. **Plan** — task list from unresolved feedback + incomplete code. A directive ending in merge front-loads the merge
+   gates: adversarial review right after local validation, plus a bot-only-approval check
 7. **[`wk-workflow`](../workflow/README.md)** — full workflow (plan → implement → test → review → PR → retro)
 8. **PR update / creation** — update existing PR or create stacked PR
 9. **Self-review** — inline comments; no self-approval

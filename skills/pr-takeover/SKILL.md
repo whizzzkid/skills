@@ -28,7 +28,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.29-192344"
+  version: "2026.11.20-210808"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -130,6 +130,12 @@ Sole author is user → skip. Otherwise: `export WK_CO_AUTHOR="$ORIGINAL_AUTHOR"
 
 Task list from Step 4: unresolved feedback, incomplete code, missing tests,
 pre-existing failures. >30% scope in overwrite mode → switch to stack mode.
+
+- **Directive ends in merge → front-load `wk-pr-merge`'s gates before any review.** Right after Step 4's local
+  validation: dispatch `wk-adversarial-review` (the inherited diff is the finished change, so this is its one
+  completion-gate run; a `light` PR review never dispatches it), and list approvers from `reviews` — every approver a
+  bot → raise `wk-pr-merge`'s bot-only choice now. (Otherwise the merge gate finds no clearance record and stops
+  mid-flow.)
 
 ## Step 7: Run `wk-workflow`
 
