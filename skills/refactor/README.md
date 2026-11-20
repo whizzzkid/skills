@@ -3,7 +3,7 @@
 > Validate that a refactor preserved behavior — classifies the refactor kind, diffs against both the merge-base
 > and base branch, and runs a removed-line audit to catch dropped behavior before "ready for review."
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.11.20-232542`
 
 ## Invocation
 
@@ -48,6 +48,8 @@ flowchart TD
 - **Behavior narrowed into a conditional is a special case:** An unconditional read moved inside an `if` may
   pass all tests if default values coincide with test inputs. Stage 2 checks test invocations still drive the
   code through the arm that now owns the behavior.
+- **Formatting-only claims are proved by parse trees:** Stage 3 compares position-stripped parse trees of base and
+  HEAD, with a known structural change as the negative control, instead of reading a diff that touches every line.
 - **Auto-invoked by three skills:** [`wk-pr-update`](../pr-update/README.md) (post-rebase/replay), [`wk-pr-resolve`](../pr-resolve/README.md) (post-conflict),
   and [`wk-pr`](../pr/README.md) (before `gh pr ready` on movement-dominated diffs). Manual invocation is also supported.
 - **Report is PR-pasteable:** Stage 5 output is formatted as a `## Refactor audit` block suitable for the PR

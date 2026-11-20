@@ -25,7 +25,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.11.20-232542"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -129,6 +129,10 @@ Read for semantic divergence; ignore renames, reorderings, and formatting. Spot:
 - Different exception types raised for the same effective error.
 - Different return shapes (e.g., `nil` vs raise) for the same effective failure.
 - Tests on the base that exercise behavior the new shape no longer exercises.
+
+**Formatting-only claim ("no behaviour change")** → compare position-stripped parse trees of base and HEAD per file
+(the language's AST dump with locations dropped); identical trees prove it. Run one file with a known structural change
+through the same compare as the negative control. (A reformat diff touches every line, so reading it proves nothing.)
 
 Split into N children → build a **coverage map**: every functional concern in the source maps to one child; concerns
 with no destination = findings.
