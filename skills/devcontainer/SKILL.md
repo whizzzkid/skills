@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.11.12-230247"
+  version: "2026.11.20-201248"
   model:
     openai: gpt-5.6-terra
 ---
@@ -59,6 +59,13 @@ host vars Compose references first; prefer file-backed secrets; else `umask 077`
 capture output to a temp file, show only an exact-value-redacted copy, delete the raw
 capture on exit, and prove it with a canary. Direct startup with a forwarded
 credential is a blocker.
+
+- **Important:** the rule covers every `devcontainer up` call in any section — first run, retry, `--log-level trace`
+  — and any `environment:` entry forwarding a host var (`KEY: ${KEY:-}`) counts. Piping through `tail` is not the
+  redaction step: the final JSON line (outcome + compose project name) is safe to show only after the redacted copy
+  proves it value-free.
+- Raw output already reached tool output → tell the user a secret was written to local tool output (and which var),
+  so they can rotate it.
 
 **Mise profiles (optional):** keep host `mise.toml` lean; add container-only
 tools via `mise.devcontainer.toml` + `MISE_PROFILE: devcontainer` in compose.
@@ -180,7 +187,7 @@ docker compose -p "$proj" -f .devcontainer/docker-compose.yml -f <override.yml> 
 | Tools silently absent | `auto_install = true` missing from `mise.toml` | Add `[settings] auto_install = true` |
 | Dependency install fails on registry `401` in a fresh container | Expired package-registry credential; the provisioning script treats the registry as the only source | Not a hard stop — seed the dependency volume from a sibling container's volume on the same daemon and install offline (`wk-docker` → *Seed a Dependency Volume from a Sibling*) |
 | `down` reports success but containers stay up | Teardown used bare `-f` with no `-p` → empty/wrong project | Pin `-p` to the lowercased `<basename>_devcontainer` to match `devcontainer up`/VS Code |
-| Startup output contains a host credential | CLI printed the interpolated Compose model | Use file-backed secrets, or capture under `umask 077` and print only an exact-value-redacted copy |
+| Startup output contains a host credential | CLI printed the interpolated Compose model | Use file-backed secrets, or capture under `umask 077` and print only an exact-value-redacted copy; already leaked → tell the user which var, so they can rotate it |
 | `port is already allocated` bringing the stack up | A sibling worktree's stack of the same project already publishes that host port | Attach a throwaway container to the running stack's network and volumes with nothing published; hooks use `devcontainer exec` → ports-reset + labels override instead — *Host port already bound by a sibling worktree* |
 | `bundle install` 401s in a manually-started container or a later `devcontainer exec` session | Bundler credentials come from a hostname-derived `BUNDLE_<HOST>` var the provisioning script exports in its own shell; neither a manual `docker run` nor a later `exec` session inherits it | Export it in the same command shell (`wk-cloudsmith` → *Bundler credentials for a Cloudsmith gem source*) |
 | `devcontainer up` fails "building the Docker Compose images" while a plain base build succeeds | Compose bake requests an fs entitlement for the CLI's temp features Dockerfile | Trace-log the real error, prefix `BUILDX_BAKE_ENTITLEMENTS_FS=0` on the CLI call; plain compose only when nothing uses `devcontainer exec` — *`devcontainer up` fails at the image build* |
