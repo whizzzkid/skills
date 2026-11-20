@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.19-202440"
+  version: "2026.11.20-183334"
   model:
     openai: gpt-5.6-terra
 ---
@@ -242,7 +242,8 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
   that replaces the section's placeholder line in place (never appended beside it). Pending draft only — never
   submit/approve/request changes. Re-check live state right before dispatch and again before publishing: merged, closed
   or approved → no review, no listed draft. Run `/wk-pr-review` in **light** mode; the orchestrator `open`s each posted
-  draft's review URL. Reserve slots for nested workers. Mechanics:
+  draft's review URL. Reserve slots for nested workers. Worktrees via plain `git fetch` + `git worktree add
+  --detach`, never a user alias (aliases can launch an editor per PR). Mechanics:
   [`references/auto-review.md`](references/auto-review.md). Then invoke `wk-learn sitrep` (own response, per end
   Stage 8); end the response with the `Connector gaps` report.
 

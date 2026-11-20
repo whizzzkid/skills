@@ -58,10 +58,20 @@ Prepend the gathering-subagent contract (`references/subagent-contract.md`).
 Each subagent:
 
 1. `cd "$GITC_ROOT/$EMPLOYER/<repo>"`.
-2. Create an isolated worktree for the PR head branch with the user's alias:
-   `git wta <pr-head-branch>` (= `git pull; git worktree add worktrees/<branch>
-   <branch>`). Fallback when the alias is absent:
-   `git worktree add "worktrees/<branch>" "<branch>"`.
+2. Create a detached review worktree at the PR head with plain git, never a user alias:
+
+   ```bash
+   git fetch origin "pull/<n>/head"
+   sha=$(git rev-parse FETCH_HEAD)
+   path="worktrees/review-<n>"
+   if test -d "$path"; then git -C "$path" checkout --detach "$sha"; else git worktree add --detach "$path" "$sha"; fi
+   ```
+
+   - **Unattended recipes call primitives, not aliases.** A user's worktree alias can open `$IDE` or run a repo hook
+     on the new path and `git pull` the base clone, so one editor window spawns per PR and the user's checkout moves.
+     Read an alias's definition before trusting it equals the command it wraps.
+   - The `review-<n>` path never collides with the user's own branch worktree; reusing it on a later run only
+     re-detaches it (a review worktree holds no work).
 3. Invoke [`/wk-pr-review`](../../pr-review/README.md) scoped to that PR, in
    `light` mode — never `medium` or `heavy`. Report the draft's review URL.
 
