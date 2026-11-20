@@ -29,8 +29,15 @@ than `element.click()` inside `browser_evaluate`.
 1. Assert `.st-copy-block` and `.st-standup` are contained by `.sitrep-col`.
 2. Assert one root `<ul>`, three top-level `<li>` elements, and the exact heading
    order above.
-3. Click `.st-copy-btn`; wait for `Copied ✓`. When clipboard readback is
-   available, confirm the plain payload starts with `• 👈🏽 Yesterday`, uses
+3. Record before you click: the label resets to `Copy` after 1.5 s, shorter than
+   two tool round-trips, so a post-hoc read sees only `Copy`. In one
+   `browser_evaluate` before the click, install a `MutationObserver` on
+   `.st-copy-btn` that pushes each `textContent` into `window.__copyStates`, and
+   wrap `navigator.clipboard.write`/`writeText` with call-through spies that
+   record their payloads. Click `.st-copy-btn`, then read the recorded states and
+   assert `Copied ✓` appears. Apply the same record-first pattern to every
+   timer-reset state in checks 4-6. When clipboard readback is available (or from
+   the spy's recorded payload), confirm the plain payload starts with `• 👈🏽 Yesterday`, uses
    `  •` for child items and `    •` for deeper details when present, and
    contains all three headings.
    Run the readback under a timeout (it can hang on a missing clipboard-read
