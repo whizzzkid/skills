@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.19-220327"
+  version: "2026.11.20-201358"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -120,6 +120,10 @@ objective, naming-aware, and diff-sensitive, and brief it with every stance in
 introduction-claim, runtime-behavior, absence-claim, intent, design-invariant, artifact-provenance,
 auth-boundary, transaction-state). `category:` values:
 [`references/hunt-categories.md`](references/hunt-categories.md).
+
+- **Brief only verified environment facts.** Prove every claim about the reviewer's environment (installed versions,
+  present sources, fixtures, services) with a command before dispatch (`ls <dir> | command grep <names>`); state the
+  fetch command for anything missing. (A false "already installed" sends reviewers hunting for sources and burns time.)
 
 - **Connection/session lifecycle → trace transaction state, fix sketches included.** A diff that disconnects, resets,
   reconnects, or swaps a connection or session — or a fix sketch this review proposes that does — must have the
