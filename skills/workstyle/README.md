@@ -2,7 +2,7 @@
 
 > Code-quality orchestrator for every file the agent writes or edits — runs the style-authority probe, then routes to the `wk-workstyle-*` sub-skills (naming, structure, async, docs, testing, error-handling, per-language). Project linter wins.
 
-**Version:** `2026.11.13-000456`
+**Version:** `2026.11.20-232757`
 
 ## Invocation
 
@@ -83,6 +83,9 @@ flowchart TD
 ## Noteworthy
 
 - **Project config is always authoritative.** `.editorconfig`, `.eslintrc`, `.rubocop.yml`, `pyproject.toml`, etc. win on any conflict. Workstyle defaults fill gaps — they never fight the linter.
+- **Formatter-vs-convention conflicts use an oracle.** When the configured formatter disagrees with the style the repo
+  follows, the convention's own formatter runs on scratch copies to produce the expected output, and the conflict goes
+  to the user before any reformat.
 - **Step 0 is the single source of truth.** Sub-skills defer to the project-style-authority probe run here rather than re-running it.
 - **Config discovery is shell-neutral.** Step 0 enumerates root files as data, then matches their basenames; an absent
   optional wildcard family cannot abort the probe before it checks other configs.

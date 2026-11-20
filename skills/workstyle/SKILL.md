@@ -20,7 +20,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.13-000456"
+  version: "2026.11.20-232757"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -65,6 +65,10 @@ find . ! -name . -prune -type f -print |
 
 - Config governs a rule: that config wins; never emit a finding that contradicts it.
   No config: apply the workstyle default.
+- Configured formatter's output disagrees with the style the repo's code
+  follows → run the convention's own formatter on scratch copies as the
+  oracle (never on the tree, never hand-guessed); surface the conflict to the
+  user before reformatting.
 - Never emit a finding that would require adding `// eslint-disable`,
   `# rubocop:disable`, or equivalent to pass — escalate to user.
 
