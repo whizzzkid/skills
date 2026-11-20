@@ -36,3 +36,6 @@ class: principle
   actual logs, never guess.
 - **Mise-managed repos:** `GemNotFound` on `bundle exec` / `bin/rspec` is a
   setup gap. Run `bin/setup`, then invoke tests via `mise exec -- <cmd>`.
+- **Shared test containers:** a manual-test env override (auth bypass, feature
+  flag) injected into a shared container leaks into later spec runs there.
+  Unset those vars for test-env runs (`env -u VAR <cmd>`).

@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.20-220535"
+  version: "2026.11.20-230207"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -139,6 +139,9 @@ Rebase/cherry-pick conflicts → `git log --oneline -5`; base mismatches worktre
   review once → ≤1 follow-up commit.
 - **Artifact sync:** structural change → [sync artifacts](references/doc-sync-mechanics.md) same commit. External
   failure → [reproduce before fixing](references/external-call-reproduction.md).
+- **HARD RULE — a race/ordering bug goes red against unfixed code before the first fix edit.** Reproduce it first;
+  green → premise refuted: read the framework path that should produce it, then ask before any edit. (A fix for a race
+  the framework already prevents passes every test while its negative control stays green.)
 
 Edit-scope pre-flights — enumerate every affected site (callers, `replace_all` occurrences, brief identifiers, guards,
 harness reachability, contract owners, false-positive class); fix all in one pass before tests:
@@ -165,8 +168,6 @@ Code standards:
   calls, dependent → separate sequential calls (chains defeat per-command review, and classifiers block what they
   cannot decompose). Pre-send check: a call with `&&`/`||`/`;` between commands is split before sending — stage,
   commit, and push are three calls; an edit and its verify grep are two. Surface denials; never silently restructure.
-- **Open a local file for the user** → `"${IDE:-open}" <file>`, never bare `open` (it picks the OS default app, not
-  the user's editor). Never launch a terminal editor or a `--wait` command from Bash — it blocks the call.
 - **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md). **Platform-API traps:**
   [`references/platform-api-traps.md`](references/platform-api-traps.md).
 - **Layer responsibility:** side effects in entrypoint layers only. **Two-sided flow survey:** survey caller + callee

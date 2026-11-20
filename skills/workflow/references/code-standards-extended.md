@@ -91,3 +91,6 @@ git diff "$(git merge-base HEAD "origin/$BASE")...HEAD"
 - **File permissions:** executable scripts `chmod +x`; source-only scripts 644.
 - **Diagrams:** Mermaid over ASCII; `wk-mermaid` owns diagram-type selection.
 - **ADRs:** record significant architectural decisions in `docs/adr/` (`wk-docs` owns the template).
+- **Open a local file for the user** → `"${IDE:-open}" <file>`, never bare
+  `open` (it picks the OS default app, not the user's editor). Never launch a
+  terminal editor or a `--wait` command from Bash — it blocks the call.
