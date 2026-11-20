@@ -2,7 +2,7 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
-**Version:** `2026.11.19-220327`
+**Version:** `2026.11.20-210444`
 
 ## Invocation
 
@@ -51,6 +51,9 @@ flowchart TD
 - **Boundary fakes must enforce external API contracts.** Pair prerequisite configuration or
   permission assertions with adapter tests that reject unsupported arguments and reproduce the
   documented return and async-completion shape.
+- **Fake event sequences model the framework's object lifecycle.** A fake that reuses one
+  instance across events the framework rebuilds between hides state-lifetime bugs; add a
+  negative control that keeps state on the instance and must fail.
 - [`wk-testing-skeleton`](../testing-skeleton/README.md) produces the plan; [`wk-workflow`](../workflow/README.md) Phase 3 verifies the suite passes —
   they are complementary, not redundant.
 - **An ad-hoc probe against the test database is a state mutation.** Framework runners commit

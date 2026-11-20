@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.19-220327"
+  version: "2026.11.20-210444"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -120,6 +120,12 @@ emitted events).
 - Never use mock-call-count as the primary assertion: assert emitted record shape, not logger call count.
 - One test = one observable claim; no mega-tests.
 - Never assert on private state: widen the public observation surface or skip the assertion.
+- **Faking a framework's event sequence → model its object lifecycle too.** Read the framework source for which
+  instances it tears down and rebuilds between those events (a renderer that replaces an element connects a fresh
+  controller); have the fake disconnect the old instance and connect a new one at the same points. Add a negative
+  control: keep the cross-event state on the instance and confirm the test fails. State that must survive a rebuild
+  lives in module scope or the document, never on the instance. (A fake reusing one instance across events passes the
+  exact lifetime bug it exists to catch.)
 - Match the project's test framework, layout, and naming; defer to `wk-format` for style.
 - Framework patterns — consult when writing tests in these contexts:
   - [Bats / shell patterns](references/bats-patterns.md) — assertion propagation, tilde expansion, fake binary stubs,
