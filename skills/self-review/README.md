@@ -2,7 +2,7 @@
 
 > Post inline self-review comments on your own PR to document design decisions for human reviewers.
 
-**Version:** `2026.10.21-215624`
+**Version:** `2026.11.20-231354`
 
 ## Invocation
 
@@ -40,6 +40,8 @@ sequenceDiagram
   entirely to create a pending (draft) review.
 - **Step 0.5 POST-permission preflight** runs before context gathering in every mode, auto mode
   included — a classifier denial is surfaced up front, not after the payload is built.
+- **Payload edits and the POST never share a parallel batch** — the POST reads the payload file, so the last
+  Edit/Write lands in one turn and the POST runs in the next.
 - **Step 2.5 deduplication** is mandatory on multi-round PRs — prior self-review threads are
   fetched and checked for topical overlap before proposing new comments to avoid restating
   rationale that's already on the PR.

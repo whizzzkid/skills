@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.21-215624"
+  version: "2026.11.20-231354"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -119,7 +119,9 @@ gh api repos/{owner}/{repo}/pulls/{number}/reviews \
   --input /tmp/agent/gh/{owner}/{repo}/pulls/{number}/self-review.json
 ```
 
-Payload via Write tool only (Step 0.5 HARD RULE — never a heredoc).
+Payload via Write tool only (Step 0.5 HARD RULE — never a heredoc). **Payload edits and the POST are sequential:**
+make the last Edit/Write in one turn, POST in the next — never in one parallel batch (the POST may read the unedited
+file).
 
 Omit `event` → pending. `"event": "PENDING"` is invalid (422). `commit_id` = HEAD SHA.
 
