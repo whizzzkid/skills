@@ -37,7 +37,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.20-220154"
+  version: "2026.11.20-220435"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -152,6 +152,10 @@ EOF
   recommended merge order and the expected conflict files in each PR body and the hand-off; offer to update the later
   PR via `wk-pr-update` right after the earlier merges. (Independence is a file-overlap verdict, not a behavioral one:
   shared registries and config lists conflict even when behavior is disjoint.)
+- **Screenshots need a sanctioned route — ask, never improvise an upload.** `gh` cannot attach images. Plan or user
+  asks for screenshots → ask the user up front how to attach them (user drag-drop, committed docs asset, approved
+  host); no answer → list local screenshot paths in the body and hand attachment to the user. (Ad-hoc uploads to a
+  hosting service read as exfiltration and get denied at PR time.)
 - **Body extras:** [`references/pr-body-extras.md`](references/pr-body-extras.md) — apply each matching sub-step.
 
 ## Step 3: Post-Creation Workflow
