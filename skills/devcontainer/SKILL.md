@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.11.20-201248"
+  version: "2026.11.20-201321"
   model:
     openai: gpt-5.6-terra
 ---
@@ -128,7 +128,8 @@ docker run --rm -it \
 - Never resolve this by editing the committed port mapping — that breaks the other
   worktree and lands an unrelated diff. Never stop the other worktree's stack.
 
-**Important — hooks or scripts call `devcontainer exec` → the throwaway container is not enough.** Grep them first.
+**Very important — hooks or scripts call `devcontainer exec` → the throwaway container is not enough.** Grep them
+first (a pre-commit hook that falls back to `devcontainer exec` counts).
 `devcontainer exec` finds its container only by the `devcontainer.local_folder` + `devcontainer.config_file` labels
 (exact path match off Windows), which neither a throwaway nor a hand-started compose container carries — hooks then
 fail with "Dev container not found". Start this worktree's own stack with an **uncommitted** override, kept outside
@@ -147,6 +148,7 @@ services:
 docker compose -p "$proj" -f .devcontainer/docker-compose.yml -f <override.yml> up -d
 ```
 
+- Host access still needed → remap instead of reset: `ports: !override ["<free host port>:<container port>"]`.
 - Then run the `postCreateCommand` steps by hand (only `devcontainer up` runs them) and prove the lookup with
   `devcontainer exec --workspace-folder . true` before relying on any hook.
 - Features declared → plain compose never applies the CLI's features overlay; confirm the tools the hooks need exist in

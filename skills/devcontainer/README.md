@@ -2,7 +2,7 @@
 
 > Use when creating or debugging a devcontainer for a Rails app (or any mise-managed project).
 
-**Version:** `2026.11.20-201248`
+**Version:** `2026.11.20-201321`
 
 ## Invocation
 
@@ -38,7 +38,8 @@ flowchart TD
 - **Host port held by a sibling worktree** — never edit the committed mapping or stop the other stack. A throwaway
   container on the stack's network covers ad hoc work; when hooks call `devcontainer exec`, start this worktree's stack
   with an uncommitted override that resets published ports and stamps the `devcontainer.local_folder` /
-  `devcontainer.config_file` labels, then run the post-create steps by hand.
+  `devcontainer.config_file` labels (remap with `ports: !override` when host access is still needed), then run the
+  post-create steps by hand.
 - **Prepare the test DB the way CI does** — `RAILS_ENV=test db:prepare` loads seeds into a fresh DB and skews
   count-based tests; use CI's recipe or `db:test:prepare`.
 - **Do not stream startup output when Compose resolves host credentials** — prefer file-backed secrets; otherwise capture under `umask 077`, print only an exact-value-redacted copy, and verify with a canary. This covers every `devcontainer up` call (retries and trace runs too); a `tail` pipe is not redaction, and a leak already in tool output is reported to the user for rotation.
