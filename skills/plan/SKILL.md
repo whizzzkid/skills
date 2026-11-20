@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.20-231146"
+  version: "2026.11.20-231631"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -136,6 +136,8 @@ numbered steps, not invisible side-effects, marked `[AGENT-READY]` with auto-mod
 Check before presenting; flag every failure inline (`⚠️ MISSING: …`) and resolve all before Step 5:
 
 - Every clarified requirement → ≥1 step; every persona concern → addressed or excluded.
+- Ticket's problem restated as a post-merge outcome ("after merge, CI fails on a lint error in X"); the plan
+  achieves it, not only the task bullets.
 - Every `[AGENT-READY]` has concrete instructions; every `[HUMAN-IN-LOOP]` names the decision.
 - No unjustified sequential ordering; parallel budget = max phase width; every phase boundary has a commit.
 - All 10 mandatory elements present. Arch artifact → element 9 present. Ticket → Jira lifecycle steps present.

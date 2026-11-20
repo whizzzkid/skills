@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.20-230207"
+  version: "2026.11.20-231631"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -81,7 +81,8 @@ interruption: update plan, re-state top item, resume earliest incomplete.
 - **Important — diff the plan at every batch boundary, not only at the end.** List done vs remaining against the
   original plan, then start the next item without asking when the originating directive ("fix all") covers it. A
   sub-agent's "targets met" is not plan completion.
-- Item not being done → defer it explicitly, with a reason, in the same message; never drop it silently.
+- Item not being done → defer it explicitly, with a reason, in the same message; never drop it silently. A gap found
+  mid-work that defeats the ticket's stated outcome is in scope — fix it or ask, never self-defer it.
 - Final gate: re-read plan; every step finished or explicitly deferred.
 
 ## Phase 1: Plan

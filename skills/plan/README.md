@@ -2,7 +2,7 @@
 
 > Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
 
-**Version:** `2026.11.20-231146`
+**Version:** `2026.11.20-231631`
 
 ## Invocation
 
@@ -84,6 +84,7 @@ Run these probes during research and validation:
 
 - **HARD RULE:** Do not start executing any step until the user explicitly approves the plan — silence is not approval.
 - **HARD RULE:** Stop at Step 0 when requirements are vague, missing acceptance criteria, or conflicting — planning a wrong requirement produces more rework than grilling.
+- **The plan is checked against the ticket's outcome, not just its bullets:** the problem statement is restated as a post-merge outcome and the plan must achieve it.
 - **Claimed savings are measured first:** when acceptance criteria promise fewer requests or lower latency, the plan models the request sequence before and after and measures the baseline; a contradicting model goes to the user before any fix is drafted.
 - **Fail-closed steps quote observed traffic:** before planning a step that rejects on a missing input, the plan quotes that condition's real-world rate from its existing metric or log — a spec-mandatory input that rarely arrives turns the step into a lockout.
 - **Parallelism default:** Steps that don't share a write target and don't have a data dependency go in the same parallel phase. Sequential ordering must be justified.

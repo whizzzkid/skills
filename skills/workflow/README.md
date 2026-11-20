@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.20-230207`
+**Version:** `2026.11.20-231631`
 
 ## Invocation
 
@@ -60,7 +60,8 @@ flowchart TD
   working; Phase 3 samples one, checks inherited header/SDK env against the pinned toolchain, and reproduces on a
   minimal input before any flag change.
 - **Plan diff at every batch boundary** — done vs remaining is checked after each batch, the next covered item starts
-  without asking, and anything not done is deferred explicitly with a reason, never silently dropped.
+  without asking, and anything not done is deferred explicitly with a reason, never silently dropped; a gap that
+  defeats the ticket's stated outcome is in scope and never self-deferred.
 - **Live learning capture is a Mandatory Activation rule** — invoke
   [`wk-learn`](../learn/README.md) immediately on a correction, scope redirect,
   self-caught error (a verifier refuting a claim or a negative control that stays green counts, even mid fix loop), or
