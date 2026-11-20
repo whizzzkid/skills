@@ -13,7 +13,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-171327"
+  version: "2026.11.20-232011"
   model:
     openai: gpt-5.6-luna
 ---
@@ -37,9 +37,13 @@ Fires on:
 
 - Resolve the first positional argument to `find`. If it is an absolute path,
   confirm it lives under `$PWD`.
-- Paths that escape `$PWD` (e.g., `find /`, `find ~`, `find ..`) are
-  **forbidden without an explicit user override.** Replace with `.` or the
+- **Important:** paths that escape `$PWD` (e.g., `find /`, `find ~`, `find ..`)
+  are **forbidden without an explicit user override.** Replace with `.` or the
   appropriate relative sub-path.
+- **Target lives outside `$PWD`** (an installed package or gem asset) → resolve
+  its install dir in one call first (`bundle show <gem>`, `gem contents <gem>`,
+  `npm root`, `pip show -f <pkg>`), then search only inside that dir and note it
+  as the override. (A root-level search stalls until the call times out.)
 
 ```bash
 # Forbidden

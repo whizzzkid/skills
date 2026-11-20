@@ -2,7 +2,7 @@
 
 > Auto-invoked before any `find` CLI call — enforces PWD scope, targeted filters, and captures slow/failing invocations as learnings.
 
-**Version:** `2026.10.09-171327`
+**Version:** `2026.11.20-232011`
 
 ## Invocation
 
@@ -28,7 +28,7 @@ flowchart TD
 
 ## Noteworthy
 
-- **PWD-only rule**: `find /`, `find ~`, or `find ..` are forbidden — replace with `.` or a relative sub-path. The sole exception is `$WK_SKILLS_HOME` queries in skill plumbing, which must be documented.
+- **PWD-only rule**: `find /`, `find ~`, or `find ..` are forbidden — replace with `.` or a relative sub-path. The sole exception is `$WK_SKILLS_HOME` queries in skill plumbing, which must be documented. A target outside PWD (an installed package or gem asset) is found by resolving its install dir first (`bundle show`, `npm root`, `pip show -f`) and searching only inside it.
 - **Two-filter minimum**: every call needs ≥2 of `-type`, `-name`, `-maxdepth`, `2>/dev/null` — unfocused tree walks are the biggest source of slow `find` calls.
 - **Prefer alternatives**: `grep -rl` for content searches, `ls` or Glob for flat listings — both are faster than the equivalent `find` for known-shallow targets.
 - **Self-improving**: when a call fails or takes > 1 second, a [wk-learn](../learn/README.md) capture fires automatically — the next run benefits from the improved filter.
