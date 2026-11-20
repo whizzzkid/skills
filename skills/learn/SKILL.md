@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.11.20-211119"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -65,6 +65,9 @@ If `$WK_SKILLS_HOME` is unset, tell the user:
 > to your shell profile and restart your terminal."
 
 **Stop here if the variable is missing.**
+
+- Build every Write path by copying the printed `OK:` value; never hand-type the skills home. (The Write tool expands
+  no shell variables, so a path typed from memory creates stray directories outside the skills home.)
 
 ## Step 2: Reflect through 4 lenses
 

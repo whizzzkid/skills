@@ -2,7 +2,7 @@
 
 > Post-completion learning capture for any wk-* skill. Writes a structured learning file for later distillation via wk-sharpen.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.11.20-211119`
 
 ## Invocation
 
