@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.15-001500"
+  version: "2026.11.20-231146"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -62,6 +62,11 @@ Proceed to Step 1 only when every blocker resolves.
     log for that condition and quote its real-world rate per environment. High rate → plan "make it safe now" plus the
     upstream fix as a separate follow-up (a spec says the input is mandatory; traffic says whether it arrives — a
     fail-closed step on a commonly-missing input locks everyone out).
+  - **Claimed saving → measure the baseline before drafting.** Acceptance criteria assert a request-count or latency
+    saving → write out the request sequence before and after the change, and measure the baseline (network log,
+    aborted vs completed). Model contradicts the claim → `[HUMAN-IN-LOOP]`: fix, redesign, or close as
+    working-as-intended. Race/ordering bug → first plan step is a red reproduction on unfixed code (`wk-workflow`
+    Phase 2). (A ticket's premise is a hypothesis; an aborted request can be the cheapest path.)
 - **Fix-philosophy branch:** multiple valid fixes splitting "add/produce" vs "disable/suppress" → `[HUMAN-IN-LOOP]`.
   Consumer-only service must never produce — confirm role before drafting.
 
