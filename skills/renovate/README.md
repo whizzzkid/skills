@@ -1,6 +1,6 @@
 # wk-renovate
 
-> **Version:** 2026.11.19-202254 · **Group:** pull-request · **Model:** sonnet
+> **Version:** 2026.11.20-201034 · **Group:** pull-request · **Model:** sonnet
 
 Land every open Dependabot PR in the current repo ("gh-deps"): a lone PR is
 approved and merged once CI is green; several are batched into a single
@@ -30,11 +30,9 @@ flowchart TD
     S1 --> S2[Approve, merge via wk-pr-merge]
     B -- Two or more --> B2[Pause for user confirmation / exclusions]
     B2 --> C[Create combined branch from main]
-    C --> D[Cherry-pick each Dependabot commit]
-    D --> E{Lockfile conflict?}
-    E -- Yes --> F[Regenerate lockfile via package manager]
-    F --> D
-    E -- No --> G[Build + tests must pass]
+    C --> D[Cherry-pick each Dependabot commit for its manifest change]
+    D --> F[Re-resolve lockfile scoped to named packages, pinned to advertised versions]
+    F --> G[Build + tests must pass]
     G --> G2[Audit every major-version change, up or down]
     G2 --> H{Major change or code changes beyond deps?}
     H -- Yes --> I["Invoke [wk-adversarial-review](../adversarial-review/README.md)"]
@@ -66,8 +64,10 @@ flowchart TD
 - **Adversarial review** runs when any major change exists or the diff touches
   application code beyond manifests and lockfiles.
 - **Automated external review** is always skipped for dependency-only updates.
-- **Lockfile conflicts** are resolved by regenerating via the detected package
-  manager, not by manual conflict resolution.
+- **Only advertised bumps land** — Dependabot's lockfile is never taken
+  wholesale (clean pick or conflict); it is re-resolved scoped to the named
+  packages and pinned to their advertised versions, and any unadvertised
+  transitive bump is reported and left for a later run.
 - **Container env is not inherited** — a lockfile regen inside a container
   reproduces the provisioning script's registry-credential export in the same
   exec shell; a deterministic red is rerun with forwarded config-override vars

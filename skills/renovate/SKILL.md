@@ -30,7 +30,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.11.19-202254"
+  version: "2026.11.20-201034"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -90,9 +90,18 @@ Branch name: `dependabot/combined-updates`, or `dependabot/combined-updates-<YYY
 
 ## Step 3: Apply Each Upgrade
 
-- Prefer cherry-picking each Dependabot PR's commit(s) to keep the upgrade atomic.
-- On lockfile conflict: always regenerate by re-running the package manager's install/lock command — never cherry-pick a
-  lockfile conflict without regenerating.
+- Cherry-pick each Dependabot PR's commit(s) for its manifest changes, keeping one commit per upgrade.
+- **HARD RULE: land only the advertised bumps — never take a Dependabot lockfile wholesale, clean pick or conflict.**
+  - Drop the picked lockfile (`git checkout HEAD -- <lockfile>`: the combined branch's pre-pick state), then re-resolve
+    scoped to the PR's named packages (bundler: `bundle lock --conservative --update <names>`; cargo:
+    `cargo update -p <name> --precise <version>`).
+  - Pin each named package to its exact advertised version; a scoped update resolves to the newest release and
+    overshoots Dependabot's target (bundler: edit the lock line, rerun `bundle install` to validate).
+  - Diff the lockfile vs base: only the named packages and companions their exact pins require may move (versions or
+    new platform entries). Report each transitive bump Dependabot carried that the scoped resolve does not need, and
+    leave it for a later run.
+  - Why: a grouped PR's lockfile can carry transitive majors and platform entries its title and body never name, and
+    the Step 1 confirmation covers only the named bumps; Step 4's audit catches them only after they landed.
 - Regenerating inside a container (`devcontainer exec`, `docker compose exec`) → reproduce the provisioning script's
   registry-credential export in the same exec shell (re-derive it from that script; never paste the secret literal
   into the command). Why: a lifecycle script's `export` dies with its shell, so container creation installs fine while
@@ -102,25 +111,25 @@ Branch name: `dependabot/combined-updates`, or `dependabot/combined-updates-<YYY
 
 ```bash
 for branch in <dependabot_branches>; do
-  git cherry-pick origin/$branch || {
-    # Lockfile conflict — resolve by regenerating
-    <package_manager_install>
-    git add <lockfile>
-    git cherry-pick --continue
-  }
+  git cherry-pick --no-commit "origin/$branch" || true  # a lockfile conflict is resolved below
+  git checkout HEAD -- <lockfile>                       # drop Dependabot's lockfile, keep prior picks
+  <scoped_update <named_packages>>                      # then pin each to its advertised version
+  <package_manager_install>
+  git add <manifest> <lockfile>
+  git commit -C "origin/$branch"
 done
 ```
 
 Detect the package manager from repo root:
 
-| Signal | Manager | Regenerate |
+| Signal | Manager | Install / consistency check |
 |--------|---------|------------|
 | `package-lock.json` | npm | `npm install` |
 | `yarn.lock` | yarn | `yarn install` |
 | `pnpm-lock.yaml` | pnpm | `pnpm install` |
 | `Gemfile.lock` | bundler | `bundle install` |
-| `Cargo.lock` | cargo | `cargo update` |
-| `poetry.lock` | poetry | `poetry lock` |
+| `Cargo.lock` | cargo | `cargo fetch --locked` (never bare `cargo update`: it bumps everything) |
+| `poetry.lock` | poetry | `poetry check --lock` |
 | `requirements.txt` | pip | — (no lockfile regen) |
 
 ## Step 4: Verify the Combined State
