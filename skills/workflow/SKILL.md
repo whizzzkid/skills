@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.23-193600"
+  version: "2026.11.23-194300"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -165,7 +165,8 @@ harness reachability, contract owners, false-positive class); fix all in one pas
 
 Code standards:
 
-- **Version pins:** exact only — no `latest`/`^`/`~`. Official-action semver majors permitted.
+- **Version pins:** exact only — no `latest`/`^`/`~`. Official-action semver majors permitted. One pin file per tool,
+  read by every installer, asserted after install.
 - **Regexes:** named capture groups: `(?<year>\d{4})`.
 - **Bash:** absolute paths, no `cd`. Extended:
   [`references/code-standards-extended.md`](references/code-standards-extended.md).

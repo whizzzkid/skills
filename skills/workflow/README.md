@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.23-193600`
+**Version:** `2026.11.23-194300`
 
 ## Invocation
 
@@ -42,6 +42,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **One pin, one reader, one assert** — a tool version lives in a single pin file that every installer reads, and the
+  install asserts the installed version matches it.
 - **A ticket key routes through [`wk-jira`](../jira/README.md) before planning** — Phase 1 invokes the claim first and re-checks live ticket
   status at each PR state change, since the claim rule otherwise lives in a skill that never loads.
 - **Repo convention is probed before the first branch** — the Phase 2 pre-flight reads branch protection, `CODEOWNERS`,
