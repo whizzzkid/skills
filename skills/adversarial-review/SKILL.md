@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.23-185500"
+  version: "2026.11.23-194000"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -120,6 +120,10 @@ objective, naming-aware, and diff-sensitive, and brief it with every stance in
 introduction-claim, runtime-behavior, absence-claim, intent, design-invariant, artifact-provenance,
 auth-boundary, transaction-state). `category:` values:
 [`references/hunt-categories.md`](references/hunt-categories.md).
+
+- **One skeptic per blocker.** After the subagent returns, dispatch a fresh skeptic per `blocker` that tries to refute
+  it with a reproduction (Contract 7); refuted → `question`. (Skeptics downgraded an over-severe blocker and surfaced
+  framework side effects and mutation survivors that request specs miss.)
 
 - **Brief only verified environment facts.** Prove every claim about the reviewer's environment (installed versions,
   present sources, fixtures, services) with a command before dispatch (`ls <dir> | command grep <names>`); state the

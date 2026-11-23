@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.11.23-185500`
+**Version:** `2026.11.23-194000`
 
 ## Invocation
 
@@ -33,6 +33,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **One skeptic per blocker** — each blocker gets a fresh skeptic that tries to refute it with a reproduction; a
+  refuted blocker becomes a `question`.
 - **Perf findings are sequenced before they become tickets** — a request-count or latency finding needs the
   before/after request sequence (completed vs aborted) or a measurement; otherwise it is a `question`, not a follow-up.
 - **No opt-out exists.** "Small fix", "trivial", and "docs-only" are explicitly named red flags, not exemptions — even a docs commit can contradict test counts in a spec.
