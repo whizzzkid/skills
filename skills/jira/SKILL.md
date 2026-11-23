@@ -27,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.11.23-190200"
+  version: "2026.11.23-190800"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -53,7 +53,7 @@ PR merged  ──► Done + comment
 **HARD RULE — auto-invoke on context.** Never assume "wasn't told to look up Jira": Jira URL/key in context → Stage
 0+1+6 before any response depending on ticket context. Skip only when MCP unavailable.
 
-**HARD RULE — wk-jira claim precedes wk-workflow Phase 1.** Key in session-opening prompt is a development claim →
+**HARD RULE — Important: wk-jira claim precedes wk-workflow Phase 1.** Key in session-opening prompt is a development claim →
 Stage 0+1+2 (full claim) before Phase 1 planning; never let `wk-workflow` fire first and skip it.
 
 **HARD RULE — footer on every agent-authored Jira body.** Canonical `wk-gh` Step 4 footer on lifecycle comments,

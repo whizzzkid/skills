@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.23-184238"
+  version: "2026.11.23-190800"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -92,6 +92,9 @@ interruption: update plan, re-state top item, resume earliest incomplete.
 ```
 Skill(wk-plan, args="<task from session context>")
 ```
+
+- **Ticket key in context (`[A-Z][A-Z0-9]+-\d+`) → `Skill(wk-jira)` claim first, then `wk-plan`;** re-check live
+  ticket status at every PR create/ready/merge. (The claim rule lives in `wk-jira`, which never loads otherwise.)
 
 - Plan supplied → validate only (references resolve, order valid), then Phase 2. Optional sibling-repo work is opt-in —
   confirm before touching another repo.

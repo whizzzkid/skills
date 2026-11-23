@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.23-184238`
+**Version:** `2026.11.23-190800`
 
 ## Invocation
 
@@ -42,6 +42,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **A ticket key routes through [`wk-jira`](../jira/README.md) before planning** — Phase 1 invokes the claim first and re-checks live ticket
+  status at each PR state change, since the claim rule otherwise lives in a skill that never loads.
 - **Repo convention is probed before the first branch** — the Phase 2 pre-flight reads branch protection, `CODEOWNERS`,
   and first-parent history; a direct-to-default repo gets commits on default and no PR.
 - **Upstream OSS etiquette** — contributing to a public project the user does not own starts by reading its
