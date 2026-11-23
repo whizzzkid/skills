@@ -2,7 +2,7 @@
 
 > Frames how the agent writes tests — biases toward behavioral coverage, requires mutation verification.
 
-**Version:** `2026.11.20-210444`
+**Version:** `2026.11.23-185900`
 
 ## Invocation
 
@@ -34,6 +34,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **Earliest failure first** — a failure in the full run that passes in isolation may be a cascade from leaked
+  timers re-resolving globals, so the earliest failing test is fixed first.
 - **Structural tests are a last resort**, not a default. Any structural test must include a
   comment naming why behavioral observation was unavailable: `# structural: ...`.
 - **Mutation verification is required for every new behavioral test** — two exemptions only:

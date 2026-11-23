@@ -21,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.20-210444"
+  version: "2026.11.23-185900"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -126,6 +126,10 @@ emitted events).
   control: keep the cross-event state on the instance and confirm the test fails. State that must survive a rebuild
   lives in module scope or the document, never on the instance. (A fake reusing one instance across events passes the
   exact lifetime bug it exists to catch.)
+- **Failure in the full run that passes in isolation → fix the earliest failing test first.** Treat later failures
+  as possible cascades: a test that throws before awaiting its timers leaks callbacks that re-resolve globals (the
+  next test's `document`) at fire time, and teardown cannot cancel them. Resolve handles at schedule time unless
+  re-resolution is the point under test.
 - Match the project's test framework, layout, and naming; defer to `wk-format` for style.
 - Framework patterns — consult when writing tests in these contexts:
   - [Bats / shell patterns](references/bats-patterns.md) — assertion propagation, tilde expansion, fake binary stubs,
