@@ -37,7 +37,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.20-220435"
+  version: "2026.11.23-190500"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -147,6 +147,9 @@ EOF
     `gh stack rebase` → verify ancestry + tests → `gh stack push` → verify every remote head, current-head CI run,
     thread, and body-cited commit.
   - **Read merge order from `baseRefName`, never `part-N` labels** — labels drift after re-parent.
+  - **New layer on an open PR → branch from its head, never rebase onto it:** `git switch -c <new> origin/<pr-branch>`,
+    then `git branch --unset-upstream` (a bare `git push` would hit the parent's branch). (A rebase replays every
+    commit missing from the target — including base commits the parent lacks — into the stacked diff.)
 - **Sibling PRs from one session → intersect changed-file sets before calling them independent.** Two or more PRs
   opened this session → intersect each one's `git diff --name-only "origin/<base>...<head>"`. Overlap → state the
   recommended merge order and the expected conflict files in each PR body and the hand-off; offer to update the later

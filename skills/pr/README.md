@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.11.20-220435`
+**Version:** `2026.11.23-190500`
 
 ## Invocation
 
@@ -46,6 +46,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **A new stack layer branches from the parent PR head** — `git switch -c` from the parent branch, never a rebase
+  onto it, so base commits the parent lacks stay out of the stacked diff.
 - **Merge gates are reported by source** — repo-enforced gates (required checks, branch protection, CODEOWNERS) are
   listed apart from skill conventions; a convention is labelled as one, never called a merge blocker.
 - **HARD RULE — always draft first:** PRs are always created with `--draft`. Never create a non-draft PR
