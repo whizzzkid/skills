@@ -36,7 +36,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.11.04-225240"
+  version: "2026.11.23-191800"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -136,15 +136,19 @@ bk build view -p <pipeline> -b <branch> --json 2>&1 | grep -v '^Warning:' | jq -
   line and a line on every change; empty/unparsable state → print and exit non-zero, never re-poll silently. (A
   parse that fails without output starves the failure branch: the loop reads "still running" while the build is red.)
 - **The watch resolves its own target every poll — never a hardcoded build number.** Pushed tip via `git ls-remote`,
-  then the newest build for that SHA, so a new push is followed without editing or re-arming. Launch once with
+  then the newest build for that SHA, so a new push is followed without editing or re-arming. `--commit` takes the
+  full 40-char SHA only — a short SHA matched nothing in the field, and `none` read as queued until the time limit — so
+  cap consecutive `none` polls and exit non-zero. Launch once with
   `run_in_background: true` (no expiring monitor); a triggered downstream pipeline → a second instance with its slug.
   ```bash
-  bash -c 'prev=; n=0; while :; do n=$((n+1))
+  bash -c 'prev=; n=0; z=0; while :; do n=$((n+1))
     sha=$(git ls-remote origin "refs/heads/$2" | cut -f1)
     [[ -z "$sha" ]] && { echo "poll $n: UNRESOLVED branch tip"; exit 2; }
     b=$(bk build list -p "$1" --commit "$sha" --limit 1 --json 2>&1 | grep -v "^Warning:" \
       | jq -r ".[0].number // \"none\"" 2>/dev/null) || b=
     [[ -z "$b" ]] && { echo "poll $n: UNPARSABLE build list"; exit 2; }
+    [[ "$b" == none ]] && z=$((z+1)) || z=0
+    (( z >= 20 )) && { echo "poll $n: no build for $sha after $z polls"; exit 3; }
     s=queued; [[ "$b" != none ]] && { s=$(bk build view -p "$1" "$b" --json 2>&1 | grep -v "^Warning:" \
       | jq -r ".state" 2>/dev/null) || s=; }
     [[ -z "$s" || "$s" == null ]] && { echo "poll $n: UNPARSABLE state"; exit 2; }

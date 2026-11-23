@@ -2,7 +2,7 @@
 
 > Use when working with Buildkite CI — checking build status, investigating failures, viewing job logs, or monitoring builds after push.
 
-**Version:** `2026.11.04-225240`
+**Version:** `2026.11.23-191800`
 
 ## Invocation
 
@@ -31,6 +31,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **Watch loops fail loudly on a filter that matches nothing** — `--commit` gets the full SHA, and 20 consecutive
+  "none" polls exit non-zero instead of reading as queued until the time limit.
 - **A green check rollup is not per-job evidence** — one entry covers a whole pipeline, so a skipped or soft-failed step reads as a pass. Any claim about a specific job cites the per-job view: build number + that job's `exit_status`.
 - **`broken` jobs are almost never the root cause** — `broken` usually means skipped due to upstream failure or conditional logic. Always investigate `failed` jobs first.
 - **A `canceled` job is unexplained, not infra** — a fail-closed gate can cancel its own build, so a real failure renders as `canceled`; read the log before retrying.
