@@ -2,7 +2,7 @@
 
 > Post inline self-review comments on your own PR to document design decisions for human reviewers.
 
-**Version:** `2026.11.20-231354`
+**Version:** `2026.11.23-193300`
 
 ## Invocation
 
@@ -33,6 +33,8 @@ sequenceDiagram
 
 ## Noteworthy
 
+- **Pending drafts are flagged at hand-off** — handing a ready PR to the user names the still-pending self-review
+  comments, because a user-performed merge skips the merge-gate submission.
 - **HARD RULE: always a pending review** — comments go through `/pulls/{n}/reviews` with the
   `event` field omitted. Never use the raw `/comments` endpoint, which publishes immediately
   and bypasses the human-in-the-loop checkpoint.

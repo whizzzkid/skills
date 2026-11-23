@@ -22,7 +22,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.20-231354"
+  version: "2026.11.23-193300"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-pro
@@ -130,6 +130,10 @@ Omit `event` → pending. `"event": "PENDING"` is invalid (422). `commit_id` = H
 PR about to merge → submit any pending self-review with `event: "COMMENT"`.
 Surface "N comments still in draft — submitting before merge." Pending-review-only
 HARD RULE unchanged — still *created* as pending; this step *submits* it at the merge boundary.
+
+- **Handing a ready PR to the user → flag the pending draft in the hand-off.** State "N self-review comments are
+  still pending — submit them before merging." (A user-performed merge never reaches this step, so the notes go
+  public only after merge.)
 
 ## Updating an Existing Self-Review
 
