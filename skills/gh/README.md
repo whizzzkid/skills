@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.11.13-221510`
+**Version:** `2026.11.23-191500`
 
 ## Invocation
 
@@ -45,6 +45,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **Pending-review check before replying** — a GraphQL thread reply joins the acting user's PENDING review and stays
+  invisible, so the check runs first and a thread is resolved only once its reply is visible.
 - **Loaded per write, not per parent skill:** a comment, reply, or reaction posted mid-step in another skill still
   invokes this skill (and [`wk-tone`](../tone/README.md)) in that turn; a host-injected PR-description attribution line is never the comment
   footer.

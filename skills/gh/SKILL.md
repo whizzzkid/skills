@@ -18,7 +18,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.11.13-221510"
+  version: "2026.11.23-191500"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -122,8 +122,9 @@ Projections needing shell values (`gh --jq` takes no `--arg`) and endpoint quoti
 
 Route all GitHub write operations (PR create/edit, review comments, inline replies, issue comments, thread state
 changes) through this skill. Build JSON bodies with `jq -n`, never heredocs. Review `comments[]` take line anchors only
-— off-diff findings go in the review body (file-level exists only on the single-comment endpoint). Check for pending
-reviews before GraphQL replies; resolve a thread only after its reply lands, never in the same chained command. REST
+— off-diff findings go in the review body (file-level exists only on the single-comment endpoint). **Important:** check for
+the acting user's PENDING review before GraphQL replies (a reply joins that draft, invisible); resolve a thread only
+after its reply is visible, never in the same chained command. REST
 `/replies` 422 `one pending review` → **Important:** stop and ask the user to submit or discard their draft, or to
 approve adding the replies to it; then reply in every thread. Never submit or delete the draft yourself; never react
 without an in-thread reply; never move thread answers to an issue comment (issue comments carry non-thread findings
