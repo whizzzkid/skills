@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.19-220601"
+  version: "2026.11.23-194729"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -168,6 +168,10 @@ ask for number/URL, then `gh pr checkout`.
     follow-up steps it predicted. Merged stack parent → `git merge-base --is-ancestor <parent-merge> origin/<base>`;
     not an ancestor → it landed on a dead intermediate branch, so the child's diff carries the parent's changes — scope
     the review to the child's own commits and flag it.
+  - Governance claims ("only X can change Y", "needs X's review") → read the effective branch rules per
+    [`wk-gh`](../gh/README.md) (`pull_request` rule: `require_code_owner_review`, `required_approving_review_count`),
+    `codeowners/errors`, and recent merges' approvers; bot approvals filling the count void the gate. CODEOWNERS
+    syntax alone never confirms one.
   - Tee full test output to a log file, never `tail -1`; rerun a bare FAIL before treating it as real.
   - "Fixed"/"addressed" claims → read the cited file at the PR head; a compare range spanning a base merge carries
     base changes, so a changed-file list never proves a fix.
@@ -225,13 +229,9 @@ comments from un-run reasoning.
 
 - **Concurrency/lock findings need real separate connections.** A single-connection spec (transactional fixtures, one
   snapshot) cannot observe cross-transaction locking, so it is never a faithful harness for a deadlock or race claim.
-  Run a script through the framework's runner: one winner holds the conflicting write uncommitted, N losers each check
-  out their own connection inside an outer transaction and call the real method. Compare against a mutant (lock
-  variant, or the change reverted) — identical results mean the probe cannot see the effect. Delete the probe's rows
-  afterwards.
-  - Non-locking pre-check mixed with a locking write (stale-snapshot claim) → one connection opens a transaction and
-    reads, another commits the conflicting change, then the first calls the method; run on head and on the
-    pre-check-removed mutant, then restore the file from a pre-mutation copy (never via VCS).
+  Build the winner/losers (or stale-snapshot) harness per
+  [`references/concurrency-lock-harness.md`](references/concurrency-lock-harness.md); compare against a mutant (lock
+  variant, or the change reverted) — identical results mean the probe cannot see the effect.
 
 **HARD RULE — check derivation before contradicting a figure.** Grep the artifact for its derivation rule; read a timing
 constant's whole comment block before replacing it. Refuted but derivation unstated → clarity suggestion, not drop.
@@ -241,6 +241,10 @@ Failing line not in diff → environmental.
 its path) → resolve each numbered or named reference the change adds or edits (rule N, step N, a section name) inside
 every consumer, not just the primary one — the same number can name a different rule per includer, and the diff never
 shows it.
+
+**Logic branching on a context field (env var, event/payload key) → read its value in a real production run's inputs**
+(CI job env, logged payload), not only the code that sets it — a field always empty on one trigger path makes the
+branch dead.
 
 **Bot findings:** route each through the same engine → `Confirmed` / `Refuted` / `Inconclusive`. Silent skip forbidden.
 

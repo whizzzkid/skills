@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.11.19-220601`
+**Version:** `2026.11.23-194729`
 
 ## Invocation
 
@@ -124,3 +124,7 @@ flowchart TD
   whose dependencies are injected fakes; PR files go to a scratch path (never over that worktree's files), the
   remaining loaded files must match the PR head, the probe's scope is recorded with its result, and copies are
   removed afterward.
+- **Governance claims are checked against effective rules:** "only X can change Y" claims are confirmed from the
+  branch's effective `pull_request` rule (code-owner review required? how many approvals?), CODEOWNERS errors, and
+  recent merges' approvers — bot approvals that fill the required count void an ownership gate. Logic that branches
+  on a context field is checked against that field's value in a real production run's inputs.
