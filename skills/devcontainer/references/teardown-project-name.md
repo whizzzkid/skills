@@ -3,7 +3,9 @@ class: principle
 ---
 
 **Rule** — Every teardown/rebuild command the skill emits must pin the Compose
-project name with `-p "$(basename "$PWD")_devcontainer"`.
+project name with the **lowercased** basename:
+`-p "$(basename "$PWD" | tr '[:upper:]' '[:lower:]')_devcontainer"`. Compose rejects uppercase project names
+(`invalid project name`), and the devcontainer CLI lowercases the folder name when it creates the stack.
 
 **Why** — `devcontainer up` and VS Code "Reopen in Container" create the stack
 under project `<workspace-folder-basename>_devcontainer`. A bare `docker compose
