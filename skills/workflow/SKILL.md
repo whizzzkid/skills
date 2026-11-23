@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.20-231631"
+  version: "2026.11.23-184238"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -244,6 +244,11 @@ snapshots/console; platform-pinned baselines → regenerate in CI container, nev
 blocker. Restore/persistence/caching claims → assert on network request counts or a window marker, not DOM text alone
 (a re-fetch renders the same text). Leave app running; continue Phase 5.
 
+**HARD RULE — lifecycle-dependent UI goes live right after its first wiring commit.** Change relies on framework
+lifecycle (persisted/permanent nodes, frame busy state, morphing, cache restore) → drive it in a real browser before
+docs or PR, then add each browser-observed lifecycle step to the fake harness as a regression test. (A hand-rolled fake
+models only the lifecycle its author knew; it passed what the browser broke.)
+
 ## Phase 5: PR
 
 **HARD RULE — "push succeeded" / "PR created" is NOT "work complete".** After push, run `gh pr view 2>/dev/null`; no
@@ -324,8 +329,7 @@ action after it is `Skill(wk-retro)`.
 
 ## Checklist
 
-Environment guardrails: [`references/environment-guardrails.md`](references/environment-guardrails.md). Skill reference:
-[`references/skill-reference.md`](references/skill-reference.md). Final gate before claiming complete — confirm each:
+Final gate before claiming complete — confirm each:
 
 - [ ] Atomic commits, each passes tests/CI independently; `wk-workstyle` + docs updated alongside code
 - [ ] Tests cover happy/sad/edge paths; `wk-adversarial-review` clear before merge; CI green on current HEAD
