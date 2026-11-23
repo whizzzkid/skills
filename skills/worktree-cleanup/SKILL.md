@@ -30,7 +30,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.29-204104"
+  version: "2026.11.23-195151"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -101,6 +101,10 @@ retro → ask once (`AskUserQuestion`): one batched `wk-retro` run over the `{pa
 (record "retro skipped by user (bulk)" in the report). (Per-worktree prompts stall a large sweep on one interactive
 stop per worktree.)
 
+- Write the bulk pass to a scratch script and run it with `bash`, emitting one `branch|merged|dirty|author` row per
+  worktree; never paste it as an inline loop (the user's interactive shell may be zsh, whose word-splitting and `?`
+  globbing break the loop body).
+
 For each `merged` branch, in order:
 
 1. **Content scan** — merged proves only committed work landed. Any non-disposable output → surface to the user
@@ -110,6 +114,9 @@ For each `merged` branch, in order:
    git -C "{path}" status --short
    git -C "{path}" stash list
    ```
+
+   `git stash list` is repo-wide (`refs/stash` is shared by every worktree) — run it once per repo, never count it per
+   worktree.
 
 2. **Author check** — another user's branch yields empty retro lenses; `SKIP_RETRO=1` → go to Step 5 and record the
    skip reason in the report:

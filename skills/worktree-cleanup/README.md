@@ -2,7 +2,7 @@
 
 > Clean up git worktrees whose branches have been merged.
 
-**Version:** `2026.10.29-204104`
+**Version:** `2026.11.23-195151`
 
 ## Invocation
 
@@ -49,6 +49,8 @@ flowchart TD
   names drift from branch names, so the `git wtr` alias (which rebuilds the path) is not used.
 - **Bulk sweeps** classify every worktree in one scripted pass and ask one consolidated
   question; above 5 merged own-authored worktrees, retro is batched or explicitly skipped once.
+  The pass runs as a `bash` script file (never an inline loop in an interactive zsh), and the
+  repo-wide stash list is checked once, not per worktree.
 - A branch is considered merged if **either** check passes (local `git branch --merged` OR
   GitHub PR state), not both — squash merges and rebases don't show in local --merged.
 - **Disposable untracked content** (temp dirs, OS metadata, gitignore'd files) is cleaned
