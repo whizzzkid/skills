@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.11.20-201358`
+**Version:** `2026.11.23-185500`
 
 ## Invocation
 
@@ -33,6 +33,8 @@ flowchart TD
 
 ## Noteworthy
 
+- **Perf findings are sequenced before they become tickets** — a request-count or latency finding needs the
+  before/after request sequence (completed vs aborted) or a measurement; otherwise it is a `question`, not a follow-up.
 - **No opt-out exists.** "Small fix", "trivial", and "docs-only" are explicitly named red flags, not exemptions — even a docs commit can contradict test counts in a spec.
 - **Artifact over authority.** Containers executing branch-controlled code receive
   only host-fetched least-privilege artifacts; do not forward an authentication

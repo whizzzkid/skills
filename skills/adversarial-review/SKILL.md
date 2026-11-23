@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.20-201358"
+  version: "2026.11.23-185500"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -144,6 +144,11 @@ fix-sketch: concrete code or command, not narrative
 
 `blocker`: correctness, security, data loss, HARD RULE violations. `suggestion`: naming/style/readability unless tied to
 a hard rule. `question`: genuine uncertainty. Omit hedging, filler, praise, diff restatement.
+
+- **Perf / request-count / latency finding → sequence it before raising or deferring it.** Write the request/render
+  sequence for current code and for the fix, mark each "wasted" request completed or aborted, and measure (network log)
+  — else label it `question`, never a follow-up ticket. Check each follow-up acceptance criterion is reachable. (An
+  early-aborted request is often already the cheapest path; the inferred fix doubled requests.)
 
 ## Step 5: Playground Validation
 
