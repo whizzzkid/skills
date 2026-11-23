@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.20-230703"
+  version: "2026.11.23-201950"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -129,9 +129,14 @@ proceed. Tree-identical rewrite or finding-response commits → carry-forward. U
   Step 3; first allowed of squash > rebase > merge. Policy error → re-read rulesets.
 - **Permission preflight (auto mode).** `command grep -rE 'gh pr merge' $HOME/.claude/settings.json
   .claude/settings*.json`; no allow rule → before the merge call, tell the user the permission layer may refuse it
-  even with a human approval and green CI, and give `{url}` (merge it themselves) or a `Bash(gh pr merge:*)` rule
-  they add (never self-edit settings). Then attempt; a denial follows the edge-case path below. (Warning up front
-  turns a denial into a click, not a round trip.)
+  even with a human approval and green CI, and offer `{url}` (merge it themselves) or a `Bash(gh pr merge:*)` rule
+  they add at the scope they pick — this repo's `.claude/settings.local.json` or user-wide (never self-edit
+  settings). Then attempt; a denial follows the edge-case path below. (Warning up front turns a denial into a click,
+  not a round trip.)
+  - State that this skill's `allowed-tools` grants nothing here — it only skips prompts; the classifier is a separate
+    layer — and that no skill-scoped grant is verified. Never imply one, and never offer the user-wide rule as the
+    only fix. (A user who wants merge permission tied to the skill otherwise assumes it exists, or rejects the one
+    option offered.)
 
 ```bash
 gh pr merge {number} {selected-method-flag} --delete-branch --repo "{repo_with_owner}"
