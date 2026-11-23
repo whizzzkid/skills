@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.23-190800`
+**Version:** `2026.11.23-193600`
 
 ## Invocation
 
@@ -70,7 +70,8 @@ flowchart TD
   [`wk-learn`](../learn/README.md) immediately on a correction, scope redirect,
   self-caught error (a verifier refuting a claim or a negative control that stays green counts, even mid fix loop), or
   tool/environment/API failure that needed a non-obvious workaround, before
-  continuing; also invoke it after every skill run. Labelled CRITICAL (rung 4).
+  continuing; also invoke it after every skill run. Labelled HIGH-PRIORITY (rung 5); a repair of your own output
+  (corrected PR body, replaced watcher, fallback after an API error) is a trigger.
   Phase 8 only audits that capture.
 - **No opt-out, no size exemption** — "this is small" and "just a quick fix" are explicitly
   named red flags. If a diff will be produced, the full workflow applies.
