@@ -37,7 +37,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.23-190500"
+  version: "2026.11.23-192400"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -72,8 +72,9 @@ Create and manage GitHub PRs: draft mode, stacking, and a post-creation workflow
    `gh pr create` until `$BEST_BASE` is computed this session. `--base` takes `$BEST_BASE` only — never hand-typed.
    `$BEST_BASE != $DEFAULT_BRANCH` → surface the A/B/C prompt first.
 4. **Verify every claim from its source, not memory.** Re-read source files before writing behavioral descriptions;
-   quote severity ladders directly. External-capability claims cite upstream source at composition time. Every
-   identifier (run id, SHA, URL, PR number) in the body or any follow-up (ticket comment, CI watch, self-review,
+   quote severity ladders directly. External-capability claims cite upstream source at composition time.
+   **Important:** every identifier (run id, SHA, URL incl. issue-tracker host — resolve it via the tracker connector's
+   accessible-resources call or a sibling PR body, PR number) in the body or any follow-up (ticket comment, CI watch, self-review,
    cross-link) comes from a command run this turn. A new PR's number comes from `gh pr create` stdout — never
    extrapolated from earlier PRs (others open in between).
 5. **HARD RULE — re-poll review threads before every status report after a push.** Green CI plus a `reviewDecision`
