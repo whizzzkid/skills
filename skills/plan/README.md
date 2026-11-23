@@ -2,7 +2,7 @@
 
 > Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
 
-**Version:** `2026.11.20-231631`
+**Version:** `2026.11.23-191200`
 
 ## Invocation
 
@@ -82,6 +82,8 @@ Run these probes during research and validation:
 
 ## Noteworthy
 
+- **Test-environment options are probed first** — every precondition a live test needs is checked read-only before the
+  environment is offered; an unprobed option is labelled "unverified".
 - **HARD RULE:** Do not start executing any step until the user explicitly approves the plan — silence is not approval.
 - **HARD RULE:** Stop at Step 0 when requirements are vague, missing acceptance criteria, or conflicting — planning a wrong requirement produces more rework than grilling.
 - **The plan is checked against the ticket's outcome, not just its bullets:** the problem statement is restated as a post-merge outcome and the plan must achieve it.

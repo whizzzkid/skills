@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.20-231631"
+  version: "2026.11.23-191200"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -53,6 +53,9 @@ Proceed to Step 1 only when every blocker resolves.
 
 - **Already-done pre-check:** re-fired/looped prompt → before grilling, check open/merged PR, ticket status, artifact
   present. Complete → report and stop.
+- **Offer only probed test environments.** Before offering a live-test target, run one read-only probe per
+  precondition the test needs (e.g. who reviews recent PRs, branch protection/ruleset API); offer only confirmed
+  options, else label the option "unverified". (An assumed environment cannot produce the scenario the test exists for.)
 - **Multi-deliverable granularity:** ≥2 standalone deliverables → numbered list, ask "one PR or separate?" first.
 - **Is-a-fix-warranted gate:** benign root cause → surface "no fix needed / close as working-as-intended" as
   `[HUMAN-IN-LOOP]`; revert already landed → plan re-land (cherry-pick / revert-the-revert), not re-implementation;
