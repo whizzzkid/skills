@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.23-194729"
+  version: "2026.11.23-194940"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -265,6 +265,8 @@ author-facing text — use "concern"/"limitation". One to two sentences.
 - Severity: **`concern:`** critical/security/data-loss (sparingly); **`suggestion:`** style/naming/refactoring
   (default); **`question:`** genuine uncertainty; **`praise:`** non-obvious patterns (generic → omit).
 - Body: `**{severity}:** {observation}` + optional context/evidence/fix.
+- **Always flag opaque agent-made identifiers on a human surface** (posted output, docs, prompts): code-like IDs,
+  batch/round numbers, "rule N" with no list defined in the repo → `suggestion:` asking for a readable name or legend.
 - **HARD RULE — attribute agent evidence:** "My agent ran `<X>` and found `<Y>`", never bare "I verified" — in inline
   comments and body. Bare first-person only for the human's own posture.
 - Prefer ` ```suggestion ` fences for concrete replacements on diff lines: match exact whitespace (verify with

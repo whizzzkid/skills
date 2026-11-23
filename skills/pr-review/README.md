@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.11.23-194729`
+**Version:** `2026.11.23-194940`
 
 ## Invocation
 
@@ -128,3 +128,5 @@ flowchart TD
   branch's effective `pull_request` rule (code-owner review required? how many approvals?), CODEOWNERS errors, and
   recent merges' approvers — bot approvals that fill the required count void an ownership gate. Logic that branches
   on a context field is checked against that field's value in a real production run's inputs.
+- **Opaque agent-made identifiers are always flagged:** code-like IDs, batch numbers, or "rule N" references with no
+  definition in the repo that reach a human-facing surface get a `suggestion:` asking for a readable name or a legend.
