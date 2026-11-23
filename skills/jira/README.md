@@ -2,7 +2,7 @@
 
 > Coordinate Jira ticket state with the development lifecycle and surface Jira context whenever the agent encounters a Jira artifact.
 
-**Version:** `2026.10.30-195658`
+**Version:** `2026.11.23-190200`
 
 ## Invocation
 
@@ -27,6 +27,8 @@ stateDiagram-v2
 
 ## Noteworthy
 
+- **Created tickets come with a hand-off prompt** — every create is followed by a fenced, ready-to-paste prompt
+  (verified facts, acceptance criteria, starting files, gates, out of scope) another agent can start from.
 - **Never blocks development:** Jira sync failures (MCP unavailable, wrong transition, inaccessible ticket) are reported once and skipped — they never block a commit, push, or PR action.
 - **Silent skip when MCP is unavailable:** If `ToolSearch` finds no Jira MCP tools, the skill logs one line and exits. It never falls back to WebFetch or a browser — the browser path is slower and produces unstructured output.
 - **HARD RULE — never close a parent with open children:** Before any terminal transition (`Done`/`Closed`/`Resolved`), the Child-completion gate queries children (`statusCategory != Done`); any open child blocks the transition and the skill asks the user to decide. Defaults to hold.

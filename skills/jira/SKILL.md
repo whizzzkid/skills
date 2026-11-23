@@ -27,7 +27,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.30-195658"
+  version: "2026.11.23-190200"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -146,6 +146,11 @@ API). **HARD RULE:** never write without explicit approval of the change set on 
 not exempt. Default `issueTypeName`: `"Story"`. Requested priority absent from the project's scheme → use the
 highest allowed value and say so. Auto (no confirm): assign (Stage 2, terminal assignee check), lifecycle comments. After
 creating → Active-sprint assignment.
+
+- **Every create ends with a hand-off prompt.** In the same response, present a fenced prompt another agent can start
+  from: ticket key, the problem with the facts already verified, acceptance criteria, starting files, constraints and
+  gates (env/container rules, required checks), out-of-scope items, and an opening instruction to invoke the dev
+  workflow skill. (Key + summary alone forces a second request to make the ticket actionable.)
 
 ## Conflict and missing-state handling
 
