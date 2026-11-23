@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.20-183534"
+  version: "2026.11.23-192700"
   model:
     openai: gpt-5.6-terra
 ---
@@ -196,6 +196,9 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     - **Resolve every target index before the first edit.** Build an `{old data-t: line index}` map up front, set
       drops to a sentinel, apply inserts from the highest index down, filter sentinels, then renumber (a replaced
       span loses its old `data-t`; any insert or delete shifts every later index).
+    - **After a rollover close, transform the pre-close page.** Save it (or read it from the commit before the close)
+      as generator input; keep the close commit separate. Every insertion anchor matches exactly one line — assert
+      count == 1 before writing. (The close adds lines, shifting every index; a shared substring anchor duplicates.)
   - **Patch lines without eating `\#`.** Replace a line in place via shell parameter substitution, never a
     `sed`/`awk` replacement (both strip the `\` from `\#`); `\#` count before = after, else re-patch. Assert each
     substitution's target exists before writing; abort on a miss (a missed target is a silent no-op).

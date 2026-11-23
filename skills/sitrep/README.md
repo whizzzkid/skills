@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.20-183534`
+**Version:** `2026.11.23-192700`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -85,6 +85,8 @@ reported afterwards in the response.
   renders as done only after the calendar is re-listed and the block's duration
   and zero overlap are confirmed. No free slot → a warn item carrying the cal skill's
   proposed flexible-block placement; a `draft` scorecard renders as still owed.
+- **Pre-close page feeds the transform** — after a rollover close, the start transform reads the page as it was before
+  the close (the close adds lines), and every insertion anchor must match exactly one line.
 - **Safe in-place patches** — line patches use shell parameter substitution (never
   `sed`/`awk`, which strip `\#` escapes); multi-line patches put the newline in a
   variable first, then the page is checked for stray literal `\n` text (outside
