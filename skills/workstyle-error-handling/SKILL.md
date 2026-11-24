@@ -3,8 +3,9 @@ name: wk-workstyle-error-handling
 description: >-
   Error-handling code — catch/rescue/except, error returns, raise/throw.
   Forbids silently-swallowed errors (empty catch); requires distinguishing
-  operational errors (handle gracefully) from programmer errors (fail fast).
-  Auto-invoked on any error path; project linter wins.
+  operational errors (handle gracefully) from programmer errors (fail fast),
+  and a raise-to-retry path specified and tested via the code's own
+  retry/exhaustion hooks. Auto-invoked on any error path; project linter wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -18,7 +19,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.10.09-005006"
+  version: "2026.11.24-234230"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -56,6 +57,18 @@ Manual: `/wk-workstyle-error-handling scan` (full working tree) · `/wk-workstyl
 - **Distinguish operational errors from programmer errors.** Operational
   (network timeout, file not found) → handle gracefully.
   Programmer (null passed where required) → throw hard, fail fast.
+- **HARD RULE — a raise meant to trigger downstream handling (retry,
+  requeue, dead-letter, error mapping) is defined by the code's own
+  class-dispatching hooks, not the framework default.** Before writing it:
+  1. Grep the enclosing class and its ancestors for every hook that
+     branches on exception class (retry-delay/backoff, retries-exhausted,
+     rescue/error-mapping handlers); add an explicit branch for the new class.
+  2. Spec each hook directly with the new class — total retry window and
+     exhaustion outcome — not only that the raise fires.
+  3. Comments state the window and terminal outcome those hooks produce;
+     never "retries until it can".
+  (An unbranched class falls to the default — a short window, then the dead
+  queue — while a raise-only spec stays green.)
 
 ## Apply or Report
 

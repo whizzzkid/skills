@@ -95,7 +95,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-workstyle-docs`](./workstyle-docs/README.md) | Code docs — public-API docs, WHY-not-WHAT comments, mandatory stale-comment removal | Auto (on comment/doc edits) |
 | [`wk-workstyle-docstrings`](./workstyle-docstrings/README.md) | Docstrings — terse WHY-only, full column width, input/output types, stale removal | Auto (on docstring/public-API edits) |
 | [`wk-workstyle-testing`](./workstyle-testing/README.md) | Testing intent — new-path coverage, behavior over implementation, mandatory sad paths | Auto (on test edits) |
-| [`wk-workstyle-error-handling`](./workstyle-error-handling/README.md) | Error handling — no silent swallow, operational vs programmer errors | Auto (on error-path edits) |
+| [`wk-workstyle-error-handling`](./workstyle-error-handling/README.md) | Error handling — no silent swallow, operational vs programmer errors, raise-to-retry via own hooks | Auto (on error-path edits) |
 | [`wk-workstyle-astro`](./workstyle-astro/README.md) | Astro idioms — ClientRouter, transition:persist, island client directives, content collections | Auto (on .astro edits) |
 | [`wk-workstyle-typescript`](./workstyle-typescript/README.md) | TS/JS idioms — const/no-var, no any, explicit return types, `??`/`?.`, `Promise.all` | Auto (on .ts/.js edits) |
 | [`wk-workstyle-python`](./workstyle-python/README.md) | Python idioms — type hints, f-strings, dataclass/TypedDict, pathlib, no mutable defaults | Auto (on .py edits) |

@@ -4,7 +4,7 @@
 > split between operational errors (handle gracefully) and programmer errors
 > (fail fast).
 
-**Version:** `2026.10.09-005006`
+**Version:** `2026.11.24-234230`
 
 ## Invocation
 
@@ -17,6 +17,9 @@
 
 - Never swallow errors silently — every catch/rescue/except must log, re-raise, or translate to a domain error.
 - Distinguish operational errors (handle gracefully) from programmer errors (throw hard, fail fast).
+- **HARD RULE:** a raise meant to trigger retry / dead-letter / error mapping is defined by the code's own
+  class-dispatching hooks — add a branch for the new class, spec the window and exhaustion outcome, and make comments
+  state the real window.
 
 ## Noteworthy
 
