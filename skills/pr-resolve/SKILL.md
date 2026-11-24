@@ -53,7 +53,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.10.29-193155"
+  version: "2026.11.24-185103"
   model:
     openai: gpt-5.6-terra
 ---
@@ -153,6 +153,9 @@ conversation=N` (fetch all three surfaces) and `pending-self-review: yes|no → 
 - **Step 8 — Push and Respond:** adversarial-review never dispatched here — push is ungated.
 - History rewritten → re-check `$AHEAD`/`$BEHIND` before pushing.
 - Draft + all reviewer threads resolved → `gh pr ready` without asking.
+- Reaction/resolve deferred on a reply held in the user's pending review → re-query that reply's `state` on every
+  status report; `SUBMITTED` → react and resolve in the same turn, unasked. (A deferral nobody re-checks stays open
+  after the user submits.)
 - Finalize per [`references/post-push-finalization.md`](references/post-push-finalization.md); re-query after all
   resolutions.
 
