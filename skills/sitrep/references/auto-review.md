@@ -64,12 +64,14 @@ Each subagent:
 2. Create a detached review worktree at the PR head with plain git, never a user alias:
 
    ```bash
-   git fetch origin "pull/<n>/head"
-   sha=$(git rev-parse FETCH_HEAD)
+   git fetch origin "+pull/<n>/head:refs/remotes/origin/pr/<n>"
+   sha=$(git rev-parse "refs/remotes/origin/pr/<n>")
    path="worktrees/review-<n>"
    if test -d "$path"; then git -C "$path" checkout --detach "$sha"; else git worktree add --detach "$path" "$sha"; fi
    ```
 
+   - **Fetch into a per-PR ref, never read `FETCH_HEAD`:** linked worktrees share it, so a parallel subagent's
+     fetch can overwrite it between this fetch and the read.
    - **Unattended recipes call primitives, not aliases.** A user's worktree alias can open `$IDE` or run a repo hook
      on the new path and `git pull` the base clone, so one editor window spawns per PR and the user's checkout moves.
      Read an alias's definition before trusting it equals the command it wraps.

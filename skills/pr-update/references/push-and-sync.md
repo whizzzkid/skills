@@ -16,14 +16,16 @@ then align the PR with the pushed state.
   an automated base merge after Stage 1. Preserve both histories:
 
   ```bash
-  git fetch origin "$BRANCH"
-  REMOTE_SHA=$(git rev-parse FETCH_HEAD)
+  git fetch origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+  REMOTE_SHA=$(git rev-parse "refs/remotes/origin/$BRANCH")
   git log --left-right --oneline HEAD..."$REMOTE_SHA"
   git merge "$REMOTE_SHA"
   ```
 
-  Bind the comparison and merge to `FETCH_HEAD`'s resolved SHA; an explicit
-  single-branch fetch does not guarantee that `origin/$BRANCH` moved. Inspect
+  Bind the comparison and merge to the resolved SHA of the explicit refspec's
+  destination: a bare single-branch fetch does not guarantee `origin/$BRANCH`
+  moved, and `FETCH_HEAD` is shared by every linked worktree, so a concurrent
+  fetch elsewhere can overwrite it between the fetch and the read. Inspect
   the left/right log before merging. Unexpected remote scope → stop and surface
   it. Conflict → Stage 4. Clean merge or resolved conflict → rerun all of Stage
   5, then retry a normal `git push`; pre-remote validation does not carry

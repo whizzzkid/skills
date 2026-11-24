@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.24-185607"
+  version: "2026.11.24-234442"
   internal: false
   model:
     openai: gpt-5.6-terra

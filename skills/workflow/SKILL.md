@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.23-194300"
+  version: "2026.11.24-234442"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -260,8 +260,8 @@ models only the lifecycle its author knew; it passed what the browser broke.)
 open PR on a feature branch → invoke `wk-pr` immediately (commit-to-default per the Phase 2 probe needs no PR). PR open
 → start the Phase 6 CI watch in that same turn.
 
-- **Repo convention:** decided by the Phase 2 pre-flight probe, never re-decided here. Follow-up branch → from
-  `origin/<default>` (fetch first).
+- **Repo convention:** decided by the Phase 2 pre-flight probe, never re-decided here. **Important:** follow-up
+  branch → fetch, then branch from `origin/<default>`, never `FETCH_HEAD` (linked worktrees share it).
 - **Upstream issue — find, else create, before the PR.** OSS upstream repo, after local implementation and validation
   pass: reuse the issue the pre-flight search found; none → `gh issue create --repo <owner/repo>` following the
   project's issue template, labels, and title convention (bug repro / feature motivation, no solution dump). Link it in
@@ -318,7 +318,7 @@ retro while a post-push pass has unaddressed threads.
 
 ## Phase 7: Documentation Audit
 
-Invoke `wk-docs`. Verify README, ADRs, specs, `docs/README.md`. No `docs/` → `wk-docs` bootstraps.
+Invoke `wk-docs`. Verify README, ADRs, specs, `docs/README.md`.
 
 - **Docs and website ship with the change.** Update every user-facing surface the change touches: README, `docs/`,
   the website or docs-site source (`website/`, `site/`, `docs-site/`, a generator config such as mkdocs, Docusaurus,
