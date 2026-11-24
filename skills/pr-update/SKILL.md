@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.10.21-220037"
+  version: "2026.11.24-185607"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -156,6 +156,10 @@ fetch, inspect, merge, re-validate.
 **HARD RULE:** after push, sync PR title/body via `wk-commit` PR Sync.
 **HARD RULE:** preserve human-ticked test-plan checkboxes verbatim during the sync.
 Push logic, remote-advance reconciliation, PR sync rules: [`references/push-and-sync.md`](references/push-and-sync.md).
+- **Re-check after CI goes terminal, before any merge-ready report.** Watch CI on the integrated head in the background,
+  then re-query `gh pr view --json state,mergeStateStatus`: `MERGED` → hand off to `wk-pr-merge`'s post-merge steps,
+  never integrate again; `DIRTY`/`BEHIND` → loop from Stage 1 once more. (A busy base moves while CI runs, and the user
+  may merge the PR mid-watch.)
 
 ## Stage 7: Final report
 

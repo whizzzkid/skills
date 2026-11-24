@@ -4,7 +4,7 @@
 > patch-replay for a large draft, or rebase on explicit opt-in — with conflict
 > resolution, re-validation, and remote-history-safe publishing.
 
-**Version:** 2026.10.21-220037
+**Version:** 2026.11.24-185607
 
 ## Invocation
 
@@ -41,7 +41,10 @@ stateDiagram-v2
     MergeRemote --> ConflictLoop: conflicts
     MergeRemote --> ReValidate: merged cleanly
     Push --> SyncPR: success
-    SyncPR --> Report
+    SyncPR --> CIRecheck: CI terminal
+    CIRecheck --> Report: clean
+    CIRecheck --> [*]: PR merged, hand off to pr-merge
+    CIRecheck --> DetectBase: base moved, integrate again
     Report --> [*]
 ```
 
@@ -55,6 +58,9 @@ stateDiagram-v2
 - **A remote advance after the local merge is integrated, not overwritten:**
   Fetch and inspect the remote-only commits, merge the fetched SHA, rerun the
   full validation stage, then retry a normal push.
+- **Merge state is re-checked after CI, not assumed:** once CI on the integrated head is terminal, the PR's state
+  and merge status are re-read. A busy base can make it conflicted again, and a PR merged mid-watch hands off to
+  [`wk-pr-merge`](../pr-merge/README.md) instead of being integrated again.
 - **Sequential identifiers are reconciled before integration:** Compare new
   allocations on both histories and move the branch-owned artifact to the next
   free identifier before textual conflict resolution.
