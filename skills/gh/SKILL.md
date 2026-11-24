@@ -18,7 +18,7 @@ env-vars:
   - GITHUB_TOKEN
 metadata:
   author: whizzzkid
-  version: "2026.11.23-192100"
+  version: "2026.11.24-194715"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash

@@ -42,6 +42,11 @@ Run that POST as its own Bash call — no chained footer gate, payload build, or
 classifier review takes every chained step down with it; an isolated POST is cheap to retry once and simple for the
 user to re-authorize. Hook input-rewrite denial → [`wk-env`](../../env/README.md) Step 3.6 (one retry, then hand off).
 
+**5xx, timeout, or unparseable response → the review may exist.** A create POST can return HTTP 502 and still create
+the review. Before any retry, list the acting user's reviews (`GET /pulls/{n}/reviews`, `state == PENDING`); found →
+verify its comments and continue from it (append path if anything is missing); absent → retry once. A blind retry
+422s (`one pending review`) or doubles the review. Mechanics: `wk-gh` `references/pending-review-mechanics.md`.
+
 ## Submit as approval (`approve` flag only)
 
 Only after the SKILL.md Approve gate passes and the pending review exists. Recheck `headRefOid` == `PR_HEAD` first;

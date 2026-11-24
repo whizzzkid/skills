@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.11.24-185402`
+**Version:** `2026.11.24-194715`
 
 ## Invocation
 
@@ -120,6 +120,12 @@ flowchart TD
   verbatim; the new review replaces the draft with the combined set. The summary discloses the replacement, the
   combined payload is saved before the draft is deleted, and a denied delete stops with the draft intact and asks
   the user once.
+- **"Fixed" replies are verified, not trusted:** on a re-review each fixed claim gets a mechanical check at the
+  head — the finding's pattern is grepped across the file and its siblings, and dependent artifacts are grepped for
+  contradictions the fix itself introduced. A partial fix is answered on the original thread inside the pending
+  review, and a deferral with no tracking link stays open.
+- **A gateway error is not a failed post:** a 5xx or timeout on review create triggers a pending-review lookup before
+  any retry, since the review may already exist.
 - **Size is judged on hand-written lines:** generated files (codegen stubs, lockfiles, snapshots) are counted
   separately, and the size note and any stack recommendation lead with the hand-written line count.
 - **The time box never drops a mandatory dispatch:** over budget, the phase-owned adversarial, arch, and design

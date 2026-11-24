@@ -2,7 +2,7 @@
 
 > Ensures all `gh` CLI and GitHub interactions are scoped to the user's organization via `$GITHUB_ORG`.
 
-**Version:** `2026.11.23-192100`
+**Version:** `2026.11.24-194715`
 
 ## Invocation
 
@@ -75,7 +75,8 @@ flowchart TD
 - **A pending review blocks thread replies:** REST `/replies` returns 422 `one pending review`; the skill never submits or deletes the user's draft — it stops and asks the user to submit, discard, or approve adding the replies, then replies in every thread (never a bare reaction or an off-thread issue comment).
 - **Pending-review creation rechecks concurrent state:** Re-query immediately
   before create; a newly appeared draft or HTTP 422 triggers content-preserving,
-  deduplicated recovery instead of a blind retry.
+  deduplicated recovery instead of a blind retry. A 5xx, timeout, or unparseable create response gets the same
+  re-query first — the review may already exist.
 - **Point-in-time footer link:** The canonical outbound footer's
   [wk-skills](https://github.com/whizzzkid/skills) link pins to `tree/main@%7B<UTC>%7D` — a render-time UTC
   timestamp — so readers see the skills as they were when the message posted, not moving HEAD.

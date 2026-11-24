@@ -18,8 +18,11 @@ class: principle
   with the proposed draft, then use the calling skill's delete-and-recreate path.
   Never retry create against the stale empty-discovery result.
 
-## Client-side JSON parse failure
+## Ambiguous create outcome — 5xx, timeout, or JSON parse failure
 
+- A gateway error is not proof of failure: `POST /pulls/{n}/reviews` can return HTTP 502 (or time out) after the
+  review was created. Treat every 5xx/timeout like the parse failure below — re-query `GET /pulls/{n}/reviews`
+  (filter `state` and `user.login`) before any retry; found → continue from it, never create a second.
 - A successful `POST /pulls/{n}/reviews` can return a body a strict decoder
   rejects (`Invalid control character`), so capture the HTTP status separately
   from the body and never infer failure from the parse. On any parse error

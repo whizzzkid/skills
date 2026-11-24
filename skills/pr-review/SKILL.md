@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.24-185402"
+  version: "2026.11.24-194715"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -199,14 +199,14 @@ Fetch, classify stale threads, build the Phase 3/4 exclusion list via
 - **Queues:** `bot_findings_to_validate` (active bot comments → Phase 3) and exclusion list
   `(file, line_range, topic)` → prevents dupes. Re-scope bot severity: grep trigger + one hop downstream.
 - **Re-review:** prior comments by the current user exist → close the loop before new issues per
-  [references/re-review-follow-up.md](references/re-review-follow-up.md); a modified file proves an attempt, not a fix.
+  [references/re-review-follow-up.md](references/re-review-follow-up.md); a modified file proves an attempt, not a fix —
+  grep each "fixed" finding's pattern file- and sibling-wide, and dependents for fix-made contradictions.
 - **Own pending draft** (current user's `state: PENDING` review — an interrupted run or the user's own draft) → fetch
   its body + `/reviews/{id}/comments` now. Footer-marked comments are unverified candidates: re-verify in Phase 3,
   re-anchor from the current-head blob (`line: null`); never exclusion-list or re-review entries (the author never saw
   them). Unfootered comments are the user's → carry verbatim. Phase 5 recreates the union via the append path (a
-  second create 422s) — unless the draft's `commit_id` equals `PR_HEAD` and the re-verified comment set (path + body)
-  is unchanged: then skip the DELETE and reuse the draft as-is (submit it if the approve gate passes; else leave it
-  pending). (A no-op delete+recreate only adds a deniable destructive write.)
+  second create 422s) — unless `commit_id` = `PR_HEAD` and the re-verified set (path + body) is unchanged: reuse the
+  draft per that path's no-delta shortcut (a no-op delete+recreate only adds a deniable destructive write).
 
 ## Phase 3: Adversarial investigation
 
@@ -286,8 +286,8 @@ author-facing text — use "concern"/"limitation". One to two sentences.
   open`. `source: user` items → terminal only, per [Focus Argument](#focus-argument).
 
 Present a numbered summary (`1. [concern] src/auth.ts:42 — description`), then go straight to Phase 5 in the same turn —
-never ask "post as pending review?". The review stays pending (bar a passing approve gate), so the user decides at
-submit time. Own pending draft found in Phase 2 → the summary ends "Posting deletes and recreates your pending draft
+never ask "post as pending review?" — the user decides at submit time (pending bar a passing approve gate). Own
+pending draft found in Phase 2 → the summary ends "Posting deletes and recreates your pending draft
 ({k} of your comments carried verbatim)" — or "Reusing your pending draft unchanged" on the no-delta path — a
 disclosure, never a question.
 
@@ -318,7 +318,8 @@ live comments). POST denied after the DELETE landed → report the payload path 
 **HARD RULE — the POST is its own single Bash call.** Footer build, payload (Write tool), footer gate, and `open` each
 run as separate calls; never chain them with the `gh api ... --method POST`. Denied with `a hook changed this call's
 input` → retry the identical POST once ([`wk-env`](../env/README.md) Step 3.6); denied again → stop, report the payload
-path, ask the user to re-authorize or post it. Never a third attempt.
+path, ask the user to re-authorize or post it. Never a third attempt. 5xx → list pending reviews before any
+retry.
 
 **HARD RULE — distinct findings anchor at their own line** — own comment on the subject's diff line, never buried in a
 reply on an adjacent thread. Replies only continue the *same* finding.
@@ -328,8 +329,7 @@ reply on an adjacent thread. Replies only continue the *same* finding.
 substance; GitHub shows them under the review. Ban praise-adjective openers.
 
 - Never in the body: a `— <risk>` suffix, thread pointers, praise or "the rest looks right", process meta-commentary
-  (review depth, what was checked), bot/duplicate-thread bookkeeping, restated inline findings, diff narration. Review
-  depth → tell the user in the terminal.
+  (review depth, what was checked), bot/duplicate-thread bookkeeping, restated inline findings, diff narration.
 - One extra sentence each, only for: a change-wide concern with no inline anchor; a `Re:` answer to an un-anchored
   author `review_focus` item; an evidenced bot reply per [`bot-finding-validation`](references/bot-finding-validation.md);
   the auto-merge-disabled note per [Approve Flag](#approve-flag).
