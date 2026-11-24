@@ -2,7 +2,7 @@
 
 > Run a session retrospective to capture learnings and improve future sessions.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.11.23-211259`
 
 ## Invocation
 
@@ -37,6 +37,11 @@ flowchart TD
   `.learned.md` — exactly like a learning. Appending sessions to a shared daily
   file orphaned later content (distilled, never re-read). The global memory tree
   is reserved for distilled rules and preferences.
+- **HARD RULE — compute N, validate, and write in one Bash call.** The
+  [validation gate](references/validation-gate.md) takes N from the highest
+  existing index, drafts into a per-run temp dir, and writes under noclobber.
+  A split step lost `$FILE` between tool calls, so a hand-typed session number
+  plus a plain `cp` overwrote another session's undistilled file.
 - **HARD RULE: audit capture timing before reconstruction** — classify every finding
   as live or reconstructed and report both counts. Invoke missing
   [`wk-learn`](../learn/README.md) calls now; all reconstructed is an explicit

@@ -29,7 +29,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.11.23-211259"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash
@@ -105,18 +105,11 @@ already hold anything notable. Never add an entry just to record that a session 
 **HARD RULE — one write-once file per session at
 `$WK_SKILLS_HOME/learnings/retrospect/<YYYY-MM-DD>_session-<N>.md`, never
 `$HOME/.claude/memory/retro-log.md`.** Write a **new** file per session, never append to an existing session file:
-`wk-sharpen` distills a file once and renames it `.learned.md`, so appended content is orphaned. Create the directory if
-missing: `mkdir -p "$WK_SKILLS_HOME/learnings/retrospect"`.
+`wk-sharpen` distills a file once and renames it `.learned.md`, so appended content is orphaned. **Important:**
+never reuse a filename.
 
 **HARD RULE — no timestamps, no work narrative.** In-file header is `## Session-N` and nothing else — never a time of
-day, never the task/topic, never what was built. Derive N from today's existing session-file count (processed or not)
-and never reuse a filename:
-
-```bash
-DIR="$WK_SKILLS_HOME/learnings/retrospect"; DAY=$(date -u +%F)
-N=$(( $(ls "$DIR/${DAY}_session-"*.md 2>/dev/null | wc -l | tr -d ' ') + 1 ))
-FILE="$DIR/${DAY}_session-${N}.md"
-```
+day, never the task/topic, never what was built.
 
 **HARD RULE — distilled findings only, two buckets.** Each bullet is a one-sentence actionable rule, not a story. Use
 only these sections; omit either if empty (both empty → write nothing):
@@ -138,11 +131,13 @@ credentials, sensitive information. Replace with `{owner}/{repo}`, `{repo}`, `{b
 reviewer", "the PR"; anonymize a user-land path to repo-relative or `/tmp/agent/…` — never commit an absolute
 home/worktree path.
 
-Run [references/validation-gate.md](references/validation-gate.md) on the draft (fixed path
-`/tmp/retro-draft-wkretro.md`)
-after composing it, before Write. Validation fails → stop and rewrite the offending bullet. Passes → write the new
-per-session file:
-`cp "$DRAFT" "$FILE"`. Never append to an existing session file.
+**HARD RULE — compute N, validate, and write in ONE Bash call; never hand-type the session number.** Run
+[references/validation-gate.md](references/validation-gate.md) as a single invocation with the composed bullets in its
+heredoc. It derives N from the highest existing index (`.md` or `.learned.md`), validates a per-run `mktemp` draft, and
+writes under noclobber, refusing an existing target. Validation fails → stop and rewrite the offending bullet. Never
+split it across calls or use `cp`/Write for the log file. (Shell variables die between Bash calls, so a split step
+re-types the path; a plain `cp` silently replaces another session's undistilled file; a fixed shared draft path races
+concurrent sessions.)
 
 ## Step 4: Promote — distill and route globally
 
