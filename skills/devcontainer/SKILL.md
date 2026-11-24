@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.11.24-185522"
+  version: "2026.11.24-234606"
   model:
     openai: gpt-5.6-terra
 ---
@@ -52,6 +52,13 @@ See [references/config-templates.md](references/config-templates.md) for
 complete Dockerfile, docker-compose.yml, and devcontainer.json templates with
 key decisions and HARD RULEs (no manual PATH/shim wiring, no COPY mise.toml,
 no env var the app conditionally defaults).
+
+- **Important — a dev-only `environment:` override ships with a test-suite guard.** Compose env reaches every process
+  in the container regardless of app env, so an opt-in override (feature flag, config-source var) also flips the test
+  run — specs can reach the network. Unset the vars in a test support file loaded before any config read, document it,
+  and prove it with a negative control (guard removed → specs fail).
+- **Settle the branch before `devcontainer up`.** `postCreateCommand` reads the working tree live; switching branches
+  mid-install swaps the lockfile under it → re-run post-create after any switch.
 
 **HARD RULE: Never stream `devcontainer up` output when Compose interpolates a
 host credential** — some CLI versions print the resolved Compose model. Enumerate
@@ -199,6 +206,7 @@ docker compose -p "$proj" -f .devcontainer/docker-compose.yml -f <override.yml> 
 | `devcontainer exec` finds no container; hooks that shell into it fail | Stack was started by plain `docker compose`, which never sets the CLI's `devcontainer.local_folder` / `config_file` labels | Fix the build and bring it up via `devcontainer up`; port clash only: stamp both labels in a compose override; ad hoc only: `devcontainer exec --container-id <id>` |
 | Test counts / uniqueness fail on a freshly prepared test DB | `RAILS_ENV=test bin/rails db:prepare` runs `db/seeds.rb` whenever it initializes a DB (seeding defaults on for the primary config in every env) | Mirror CI's test-DB recipe (e.g. `db:drop db:create db:migrate`) or `bin/rails db:test:prepare` (purge + schema load, no seeds) |
 | An untouched spec that reads the real config file fails only inside the container | Compose exports a `CONFIG__<SECTION>__<KEY>` override, which the config library ranks above the YAML file | List names only (`env \| cut -d= -f1 \| command grep '^CONFIG__'`, never values), re-run with `env -u <VAR>`; passes → record the override in the PR test plan, not as a regression |
+| `GemNotFound` right after `postCreateCommand`'s `bundle install` | Branch switched while post-create was installing; the lockfile changed mid-install | Settle the branch first; re-run post-create after any switch |
 
 ## Post-Completion
 

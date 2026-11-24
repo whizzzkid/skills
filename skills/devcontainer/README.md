@@ -2,7 +2,7 @@
 
 > Use when creating or debugging a devcontainer for a Rails app (or any mise-managed project).
 
-**Version:** `2026.11.24-185522`
+**Version:** `2026.11.24-234606`
 
 ## Invocation
 
@@ -40,6 +40,9 @@ flowchart TD
   with an uncommitted override that resets published ports and stamps the `devcontainer.local_folder` /
   `devcontainer.config_file` labels (remap with `ports: !override` when host access is still needed), then run the
   post-create steps by hand.
+- **Guard the test suite against dev-only env overrides** — Compose `environment:` applies to every process, so an
+  opt-in override also flips the test run; unset it in a test support file and prove the guard with a negative control.
+  Settle the branch before `devcontainer up` — post-create reads the live tree, so a mid-install switch breaks the bundle.
 - **Prepare the test DB the way CI does** — `RAILS_ENV=test db:prepare` loads seeds into a fresh DB and skews
   count-based tests; use CI's recipe or `db:test:prepare`.
 - **Do not stream startup output when Compose resolves host credentials** — prefer file-backed secrets; otherwise capture under `umask 077`, print only an exact-value-redacted copy, and verify with a canary. This covers every `devcontainer up` call (retries and trace runs too); a `tail` pipe is not redaction, and a leak already in tool output is reported to the user for rotation.
