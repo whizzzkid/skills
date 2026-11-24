@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.23-195056"
+  version: "2026.11.24-185402"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -122,12 +122,9 @@ never the flag.
   disabled"). No actionable comment → approve as-is (merging is intended). Report auto-merge state + action in the
   terminal. (Approval as the last missing requirement merges in minutes, before the author reads a comment.)
 - Gate fails → post pending as usual; tell the terminal "approve requested; held as pending: {reasons}".
-- **Approve submit denied by the permission layer** (e.g. as self-approval; the `approve` token does not bind it) →
-  never retry, resubmit as `COMMENT`, or open a second review; the pending review already holds every comment. Report
-  its `html_url`, the approve payload path, and the exact `events` POST; the user submits Approve on GitHub or adds a
-  Bash allow rule (never self-edit settings). Auto mode with no `gh api` reviews allow rule in the settings files →
-  say so in the Phase 4 summary first (mirrors `wk-pr-merge`'s permission preflight). Hook-rewrite denial → the
-  one-retry POST rule.
+- **Approve submit denied by the permission layer** → never retry, resubmit as `COMMENT`, or open a second review;
+  report its `html_url`, payload path, and the exact `events` POST. Preflight and recovery:
+  [`references/permission-denials.md`](references/permission-denials.md).
 
 ## Focus Argument
 
@@ -160,7 +157,8 @@ ask for number/URL, then `gh pr checkout`.
   - Empirical claims (mutation results, test counts, gating, "fails without the fix") → replay in a detached scratch
     worktree; reading alone never confirms them. `light` caps at one targeted run per claim, else Unverified.
     Take the runner from the repo's test entrypoint (Makefile, CI step, package script); a wrong-runner failure is
-    not that run. Check counts at the head commit.
+    not that run. Check counts at the head commit over every test file in the claimed scope (a partial run's
+    shortfall is not Refuted).
   - Cited figures (counts, timestamps, CI windows, "fails in env X not Y") → re-derive from primary data (CI API,
     logs) and rerun the author's own experiment; most figures checking out never confirms the rest. Pair log events
     by matching the result line's pattern, never the next physical line (payloads span lines).
@@ -266,6 +264,8 @@ author-facing text — use "concern"/"limitation". One to two sentences.
 
 - Severity: **`concern:`** critical/security/data-loss (sparingly); **`suggestion:`** style/naming/refactoring
   (default); **`question:`** genuine uncertainty; **`praise:`** non-obvious patterns (generic → omit).
+- **Never post a lintable nit** (width, wrapping, whitespace, import order, quote style), configured or not; a missing
+  lint rule that matters → one change-wide body suggestion to add it. Never review by your own authoring rules.
 - Body: `**{severity}:** {observation}` + optional context/evidence/fix.
 - **Always flag opaque agent-made identifiers on a human surface** (posted output, docs, prompts): code-like IDs,
   batch/round numbers, "rule N" with no list defined in the repo → `suggestion:` asking for a readable name or legend.
@@ -338,7 +338,8 @@ substance; GitHub shows them under the review. Ban praise-adjective openers.
   draft (no API) keeps the shape: verdict line, then findings as an inline-comment list.
 
 **HARD RULE — open URL on every create/recreate**, whether or not the POST response parsed; parse failure → re-query for
-`html_url`, never drop the open. Trust `path`+`body`, not `line` for verification.
+`html_url`, never drop the open. `open` denied → print `html_url` in the summary; never retry. Trust `path`+`body`, not
+`line` for verification.
 
 > "Pending review with N comments — {html_url}. Submit on GitHub when ready."
 

@@ -4,7 +4,7 @@
 > to [`wk-adversarial-review`](../adversarial-review/README.md) and posts a pending
 > review for human submission.
 
-**Version:** `2026.11.23-195056`
+**Version:** `2026.11.24-185402`
 
 ## Invocation
 
@@ -81,6 +81,10 @@ flowchart TD
   config becomes a `suggestion`, one that needs unpinned external behavior a `question`.
 - **The pending-review POST is its own Bash call** — payload via the Write tool, footer gate and `open` as separate
   calls; a hook input-rewrite denial gets one retry, then a hand-off with the payload path.
+  A denied browser `open` falls back to printing the review URL; it is never retried.
+- **Lintable nits are never findings:** line width, wrapping, whitespace, import order, and quote style are a linter's
+  job, whether or not the repo runs one. A missing lint rule that matters becomes one change-wide suggestion to add it;
+  the reviewer's own authoring preferences are never review criteria.
 - **Investigation is delegated, and never re-run:** Phase 3 consumes an existing clearance record when one covers
   this HEAD, else dispatches [`wk-adversarial-review`](../adversarial-review/README.md) once; it owns the sweep
   catalog, the fresh adversarial subagent, and all `.review-playground/` validation. pr-review consumes its findings
