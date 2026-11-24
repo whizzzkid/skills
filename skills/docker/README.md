@@ -2,7 +2,7 @@
 
 > Use when working with Docker — building images, inspecting containers, debugging Dockerfile issues, verifying image tags exist, or troubleshooting Docker daemon connectivity.
 
-**Version:** `2026.11.10-204018`
+**Version:** `2026.11.24-185522`
 
 ## Invocation
 

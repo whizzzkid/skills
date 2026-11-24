@@ -2,7 +2,7 @@
 
 > Use when creating or debugging a devcontainer for a Rails app (or any mise-managed project).
 
-**Version:** `2026.11.20-201321`
+**Version:** `2026.11.24-185522`
 
 ## Invocation
 
@@ -31,7 +31,7 @@ flowchart TD
 - **`BUNDLE_PATH` and `BUNDLE_APP_CONFIG` must both be set** in the Dockerfile to `/usr/local/bundle`; without them the named `bundle-cache` volume is bypassed and gems reinstall on every restart.
 - **`trilogy` adapter does not need `libmysqlclient-dev`** — only the `mysql2` adapter links against libmysqlclient; adding it for trilogy is a common unnecessary dependency.
 - **`MISE_TRUSTED_CONFIG_PATHS: /workspace` is required** in the compose environment — the bind mount replaces the `/workspace` directory that was trusted at image build time, so trust must be re-granted at runtime.
-- **Pin the Compose project name in every teardown/rebuild command** — `devcontainer up`/VS Code create the stack under the lowercased `<basename>_devcontainer` (Compose rejects uppercase project names); a bare `docker compose -f … down` targets an empty project and silently leaves it running.
+- **Pin the Compose project name in every teardown/rebuild command** — `devcontainer up`/VS Code create the stack under the lowercased `<basename>_devcontainer` (Compose rejects uppercase project names); a bare `docker compose -f … down` targets an empty project and silently leaves it running. Prefer the `composeProjectName` that `devcontainer up` reports; the lowercased derivation is the fallback.
 - **Surface the real build error first** — `devcontainer up` hides the cause behind a generic build failure; a trace log shows it. Under Compose 5.x bake the usual cause is a filesystem entitlement for the CLI's temp features Dockerfile (prefix `BUILDX_BAKE_ENTITLEMENTS_FS=0` on the CLI call). Plain compose is a last resort only when no features are
   declared and nothing relies on `devcontainer exec` — a stack started outside the CLI lacks the labels `exec` finds
   containers by.

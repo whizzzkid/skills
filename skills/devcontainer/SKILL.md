@@ -15,7 +15,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.11.20-201321"
+  version: "2026.11.24-185522"
   model:
     openai: gpt-5.6-terra
 ---
@@ -94,6 +94,9 @@ project names, so an unlowered `-p` fails on a mixed-case worktree directory). A
 .devcontainer/docker-compose.yml down` defaults the project to the compose
 file's parent-directory basename (`devcontainer`) → targets an empty project and
 silently leaves the real stack running.
+
+- Take `-p` from `composeProjectName` in `devcontainer up`'s final JSON line when that output is at hand (the CLI's
+  own name); the lowercased derivation below is the fallback. Never a raw `basename "$PWD"` (keeps uppercase).
 
 ```bash
 proj="$(basename "$PWD" | tr '[:upper:]' '[:lower:]')_devcontainer"
