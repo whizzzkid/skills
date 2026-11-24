@@ -25,6 +25,9 @@ dispatches read-only-gathering subagents that each drive one review.
   `test -d "$GITC_ROOT/$EMPLOYER/<repo>"` per PR.
   - Skip and report any repo without a local clone. Never implicitly `git clone`
     — cloning an unfamiliar repo is a side effect the user did not request.
+  - Probe remote access once per clone (`git -C <clone> ls-remote --heads origin >/dev/null`) before
+    dispatch. A shell launched unattended may hold no SSH key; report the skip up front rather than letting
+    every worker fail at fetch.
 - **Derive concurrency from nested demand, never a fixed count.** Each review
   subagent spawns mandatory nested workers of its own, so a parent occupying the
   last free slot blocks on a child it is required to spawn and the run deadlocks

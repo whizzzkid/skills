@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.23-192700"
+  version: "2026.11.24-185231"
   model:
     openai: gpt-5.6-terra
 ---
@@ -189,7 +189,9 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     already-approved PRs and every orphan draft on them. Never a bare count or a prose run of PR numbers.
   - **Generate spans; never hand-type them.** Emit item spans from an inline generator over the compiled item list
     (e.g. a `jq` filter on stdin — no script file, per the write-scope HARD RULE): sequential `data-t`, canonical
-    handler and copy-block markup verbatim, `#` → `\#`. Same for `end` Stage 5 (hand-typed handlers and IDs drift).
+    handler and copy-block markup verbatim, `#` → `\#`, every `<`/`>` in item text → braces or a dash; assert no span
+    text holds `<` outside canonical markup before writing. Same for `end` Stage 5 (hand-typed handlers and IDs drift;
+    a literal `<word>` parses as a tag and nests every column inside the first).
   - **Mostly carry-over → transform the prior page, don't regenerate.** Edit it in place keyed by `data-t` (drop,
     replace, append, insert; new spans from the generator), then renumber from `t1` and assert uniqueness. Carried
     handler bytes must equal the canonical recipe, else regenerate that span (a drifted page propagates its drift).
