@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.19-193336"
+  version: "2026.11.25-185613"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -75,13 +75,15 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   'rm -rf "$tmp"' EXIT INT TERM`, in the same commit, never deferred to a later
   fix. An `EXIT`-only trap leaks the tempfile on Ctrl-C and on CI cancellation;
   cover `INT`/`TERM` too. Pair with the `local`-scope rule below.
-- **An EXIT trap cannot see a `local` variable.** A script-scope
-  `trap '... "$f" ...' EXIT` runs after functions return, so a `local f` set
-  inside a function is out of scope and expands empty — `${f:-}` silently
-  swallows the bug and the tempfile leaks on SIGINT/SIGTERM. Declare any var a
-  script-level trap cleans up at script scope (init to `""` before the first
-  function call), or register tempfiles into a global array the trap iterates.
-  Flag any trap referencing a variable that is `local` where it's assigned.
+- **Important — an EXIT trap cannot see a `local` variable; apply this while writing the `trap`, not at review.** A
+  script-scope `trap '... "$f" ...' EXIT` runs after functions return, so a `local f` set inside a function is out of
+  scope at trap time:
+  - Under `set -u` → the trap aborts with `f: unbound variable` *after* the output printed: correct output, non-zero
+    exit, every happy-path test fails.
+  - Without `set -u`, or behind `${f:-}` → expands empty; the tempfile silently leaks, on SIGINT/SIGTERM too.
+  - **Authoring check:** every variable a trap body names is declared at script scope (init `""`) before the first
+    function. Register the trap once at script scope; one cleanup function owns every resource (or iterates a global
+    array). Flag any trap referencing a variable that is `local` where it's assigned.
 - **Never guard with `${VAR:?msg}` when an `EXIT` trap is registered.** On bash
   3.2 (macOS default), an `EXIT` trap firing on a `:?` expansion failure resets
   `$?` to `0` before the trap body runs → the script exits `0` and the guard

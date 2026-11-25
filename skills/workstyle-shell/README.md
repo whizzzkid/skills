@@ -2,7 +2,7 @@
 
 > Enforces safe, idiomatic shell conventions in scripts and compound ad-hoc commands.
 
-**Version:** `2026.11.19-193336`
+**Version:** `2026.11.25-185613`
 
 ## Invocation
 
@@ -20,6 +20,7 @@
 - Heredoc for multi-line strings; avoid concatenated `echo` chains.
 - Named constants for magic values at the top of the script.
 - One-line comment above each function (scripts with ≥3 functions) — describe what it does and any non-obvious output format.
+- Every variable a `trap` body names is declared at script scope before the first function — checked when the trap is written; a `local` is out of scope at exit, and under `set -u` the trap aborts *after* output printed, turning a correct run into a non-zero exit.
 - No `${VAR:?msg}` guard when an `EXIT` trap is registered — bash 3.2 resets `$?` to 0 on `:?` failure; use an explicit `if [[ -z … ]]; then exit 1; fi`.
 - Probe capability, don't parse error text — branch on exit code against a known-good input, since stderr wording differs across GNU/BSD/BusyBox and fails closed on the variant it was meant to handle.
 - No PCRE shorthand (`\S`, `\d`, `\w`, `\b`) in an `awk` / POSIX-ERE pattern — the unknown escape degrades to an escaped *literal*, so the pattern stays valid, exits 0, and matches nothing; use bracket expressions like `[^[:space:]]`.
