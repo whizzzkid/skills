@@ -2,7 +2,7 @@
 
 > Use when creating git commits or pushing code. Enforces conventional commits with emoji, commit signing, and safe push behavior.
 
-**Version:** `2026.11.20-230952`
+**Version:** `2026.11.25-180113`
 
 ## Invocation
 
@@ -23,6 +23,7 @@ flowchart TD
     F -->|Yes| G[mise exec -- git push]
     F -->|No| H[git push]
     G & H -->|Rejected| I[Report rejection<br/>Ask how to proceed]
+    G & H -->|SSH agent refused| P[Retry once, then ask user<br/>to unlock or restart agent]
     G & H -->|Success| J{Open PR exists?}
     J -->|No| K[Done]
     J -->|Yes| L[PR Sync: compare title+body<br/>vs post-push branch state]
@@ -48,5 +49,8 @@ flowchart TD
   signed commit with a raw `gpgsig` header proves success. On a signing failure, a key missing from config files
   proves nothing: probe the login shell for env-delivered config (`GIT_CONFIG_PARAMETERS` / `GIT_CONFIG_COUNT`,
   presence only) and commit through it — never ask the user to edit git config.
+- **An SSH-agent refusal on push gets one retry, then a user ask** — never chained HTTPS fallbacks: a global
+  `insteadOf` rewrite silently sends an HTTPS retry back to SSH, and a userinfo URL that dodges it leaves the `gh`
+  credential helper with no password to give.
 - **`mise exec --` is required before push** in mise-managed repos — without it, git hooks (lefthook, husky) fail with exit 127 for tools like `lychee` and `shellcheck`. Never `eval "$(mise activate bash)"`; the supported single-command form is `mise exec --`.
 - **Post-CI squash offer** fires when ≥3 `fix(ci):` commits exist with a net diff under 50 lines — never auto-squashes, always asks, and requires explicit user approval for the mandatory force-push. A single trivial follow-up correcting the immediately prior commit gets an explicit `--amend` approval prompt at the fix site (auto mode blocks `--amend`), not silent accumulation.

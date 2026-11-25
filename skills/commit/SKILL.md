@@ -25,7 +25,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.20-230952"
+  version: "2026.11.25-180113"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -156,6 +156,13 @@ it produces is agent-created.
 - **Self-heal stale-bundle hook failures:** pre-push hook fails with `GemNotFound` / `Bundler::GemNotFound` /
   `Could not find gem` (stale local bundle after a base bump or rebase) → run `bundle install`, then retry the push
   once. Escalate only if `bundle install` fails or the hook fails again after it.
+- **Push auth fails on an SSH-agent refusal** (`sign_and_send_pubkey: signing failed`, `agent refused operation`,
+  `communication with agent failed`) → retry once, then stop and ask the user to unlock or restart their SSH agent.
+  Never chain transport workarounds (each fails with a new error, inviting re-diagnosis of a known fault):
+  - A global `url.<ssh>.insteadOf https://<host>/` silently rewrites an HTTPS retry back to SSH — check with
+    `git ls-remote --get-url <url>`.
+  - A userinfo URL (`https://<user>@<host>/…`) dodges the rewrite, but the `gh` credential helper answers nothing for
+    a username it does not own.
 - Regular push rejected → tell the user and ask how to proceed; never automatically force-push.
 - Push rejected non-fast-forward (remote diverged) → default to `git pull --no-rebase` (merge), then retry the regular
   push. Rebase only when the user explicitly asks for clean linear history.
