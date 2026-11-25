@@ -25,7 +25,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.25-180113"
+  version: "2026.11.25-185307"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -157,7 +157,13 @@ it produces is agent-created.
   `Could not find gem` (stale local bundle after a base bump or rebase) → run `bundle install`, then retry the push
   once. Escalate only if `bundle install` fails or the hook fails again after it.
 - **Push auth fails on an SSH-agent refusal** (`sign_and_send_pubkey: signing failed`, `agent refused operation`,
-  `communication with agent failed`) → retry once, then stop and ask the user to unlock or restart their SSH agent.
+  `communication with agent failed`) → run `ssh-add -l` first (a multi-key agent may offer another machine's key first,
+  which it cannot sign with — reads as "locked"):
+  - Several keys for the host → write this machine's public half to a temp file (`ssh-add -L | command grep '<label>'`)
+    and make the one retry `GIT_SSH_COMMAND="ssh -o IdentitiesOnly=yes -i <tmp.pub>" git push`; the agent signs with the
+    matching private key. One-shot env only — never edit `$HOME/.ssh/config` or git config.
+  - One key, or the pinned retry still refused → stop and ask the user to unlock or restart their SSH agent.
+
   Never chain transport workarounds (each fails with a new error, inviting re-diagnosis of a known fault):
   - A global `url.<ssh>.insteadOf https://<host>/` silently rewrites an HTTPS retry back to SSH — check with
     `git ls-remote --get-url <url>`.

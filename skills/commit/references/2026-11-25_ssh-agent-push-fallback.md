@@ -19,3 +19,6 @@ date: 2026-11-25
   password when no username is sent.
 - **Where:** `SKILL.md` → Pushing → Hook and verify rules, before the push-rejected rule. Related coupling of commit
   signing and push auth on one agent: `skills/sharpen/references/2026-07-28_signer-outage-spans-commit-and-push.md`.
+- **Refined (same day):** the locked-agent root cause was unverified; a multi-key agent offering another machine's key
+  first produces the same error. Run `ssh-add -l` and pin the key before asking —
+  [`2026-11-25_ssh-agent-wrong-key-first.md`](2026-11-25_ssh-agent-wrong-key-first.md).
