@@ -35,7 +35,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.24-194715"
+  version: "2026.11.25-230153"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -62,7 +62,7 @@ them below.
 
 Args parse positionally, all optional: mode → `approve` → PR number/URL → focus (the rest). Mode tokens `light` |
 `medium` | `heavy` (case-insensitive); none → `medium`. "quick"/"skim" → `light`; "deep"/"exhaustive" → `heavy` (still
-confirms). Each mode includes everything in the one above it.
+confirms).
 
 | Mode | Adds | Time box |
 |------|------|----------|
@@ -77,7 +77,7 @@ confirms). Each mode includes everything in the one above it.
     `question:`, never `concern:` (the Phase 3 proof rule still binds, scaled down).
 - **`medium`:** every phase as written. The adversarial harness must attack each changed behavior on multiple axes —
   invalid/hostile input, boundaries, ordering/concurrency, dependency failure, backward compatibility. Functional
-  review traces each changed entrypoint caller → callee; arch review dispatches whenever the detector fires.
+  review traces each changed entrypoint caller → callee.
 - **`heavy`:** **HARD RULE — confirm before heavy.** `AskUserQuestion` with the cost (wall time, local processes,
   dependency installs) before any heavy-only step; declined → `medium`. Non-interactive caller (dispatched subagent,
   loop) → run `medium`, report "heavy requested, not confirmed". Then add:
@@ -130,7 +130,7 @@ never the flag.
 
 `user_focus` = free text after the last recognized token (quotes optional); empty → none.
 
-- **Extra care, not exclusive scope** — review the full diff as usual; focus never suppresses other findings.
+- **Extra care, not exclusive scope** — focus never suppresses other findings.
 - Phase 1: split focus into `review_focus` items tagged `source: user`, ranked ahead of author asks; resolve each to
   the files/symbols it names (grep); unmatched → say so in the announce line, never guess.
 - Phase 3: pass `user_focus` verbatim to `wk-adversarial-review` as the priority target; every mode (incl. `light`)
@@ -193,7 +193,8 @@ Fetch, classify stale threads, build the Phase 3/4 exclusion list via
 `isResolved`/`isOutdated`.
 
 - **Stale when:** `position` null; file changed after `updated_at`; line content mismatches. Categorize **stale
-  (fixed)**, **stale (unclear)**, **active**; bodies referencing absent files → **stale (superseded)**.
+  (fixed)**, **stale (unclear)**, **active**; bodies referencing absent files → **stale (superseded)** — unless
+  renamed: hand verifiers the old→new path map; match threads by content, not `path`+`line`.
 - **HARD RULE:** Never resolve threads without explicit user consent. Present list, confirm, match each by
   `path`+`line`+`body`, resolve via GraphQL mutation.
 - **Queues:** `bot_findings_to_validate` (active bot comments → Phase 3) and exclusion list

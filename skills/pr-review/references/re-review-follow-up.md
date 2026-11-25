@@ -22,6 +22,10 @@ Run one mechanical check per finding at the PR head blob (`git show <PR_HEAD>:<f
 - **Fix-induced contradictions:** diff the fix delta for rules, lists, or enums it newly tightens or extends, then grep
   the dependent artifacts (cards, fixtures, docs, tests that restate it) for text it now contradicts. A contradiction
   the fix creates is part of the original finding, not a new one.
+- **Renamed paths:** the delta renames files or directories → build an old→new path map from the rename entries
+  (`git diff -M --name-status <old_head>..<PR_HEAD>`, `R` rows), hand it to every verifier, and locate each thread's
+  subject by content at its new path. A thread's `path` and `line` point at the pre-rename blob, so line matching
+  marks real fixes stale and real misses fixed.
 - Record each outcome as fixed / partial / unfixed with the grep that proves it.
 
 ## Where follow-ups go
