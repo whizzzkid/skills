@@ -7,7 +7,7 @@ description: >-
   updating skills after agent runs surfaced gaps, errors, behavioral issues, or
   simplification opportunities. Prevents embedding specific file names, line
   numbers, or project details into skill instructions.
-argument-hint: '[skill-name] [incident-file] | loop <N>mins | improve [scope]'
+argument-hint: '[skill-name] [incident-file] | loop watch [<N>mins] | loop <N>mins | improve [scope]'
 allowed-tools:
   - Agent
   - ScheduleWakeup
@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.10.16-195605"
+  version: "2026.11.25-182808"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -192,7 +192,9 @@ All five must pass before returning:
 - **Batch:** without specific incident → scan `$WK_SKILLS_HOME/learnings/skills/` severity-first, oldest mtime first.
   Sources: [`references/batch-mode-sources.md`](references/batch-mode-sources.md). Re-list before and after each fold.
   Arrivals postdating run start are unowned. Terminal state: "processed N, M unclaimed, K distilled-not-landed."
-- **Loop:** [`references/loop-mode.md`](references/loop-mode.md) — one machine-wide worker drains queue.
+- **Loop:** [`references/loop-mode.md`](references/loop-mode.md) — one machine-wide worker drains queue, gated by
+  `scripts/watch-queue.sh lock`. `loop watch` subscribes to queue file changes (one-shot background `wait`, re-armed
+  after each drain); `loop <N>mins` re-wakes on an interval.
 - **Improve:** `/wk-sharpen improve [scope]` — suite cleanup per
   [`references/improve-mode.md`](references/improve-mode.md). Phased approval required; auto mode never short-circuits.
 

@@ -112,7 +112,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-tone`](./tone/README.md) | Apply the user's voice (encouraging, energetic, humorous, intent-emoji) to messages drafted on their behalf | Auto (posting as the user) + User |
 | [`wk-calver`](./calver/README.md) | Generate CalVer version strings (YYYY.MM.DD-HHMMSS UTC) — replaces semver | Auto (on version bumps) |
 | [`wk-learn`](./learn/README.md) | Capture per-skill learnings after each run → `learnings/skills/{skill}/` | User + Model |
-| [`wk-sharpen`](./sharpen/README.md) | Distill field reports and prune skill bloat without overfitting on examples; `loop <N>mins` self-paces one fold at a time | User + Model |
+| [`wk-sharpen`](./sharpen/README.md) | Distill field reports and prune skill bloat without overfitting on examples; `loop watch` drains the queue as learnings arrive (`loop <N>mins` on an interval), one machine-wide worker | User + Model |
 | [`wk-skill`](./skill/README.md) | Scaffold a new wk-* skill from the canonical template | User + Model |
 | [`wk-env`](./env/README.md) | Diagnose env-var availability; source `$HOME/.profile`, probe the login shell, report missing vars | Auto (PreToolUse on Skill) + User |
 | [`wk-scope-guard`](./scope-guard/README.md) | PreToolUse hook — block out-of-repo searches (`find /`), warn on Edit/Write outside the project root | Auto (PreToolUse on Bash/Edit) + User |

@@ -2,13 +2,13 @@
 
 > Distill field reports and prune skill bloat without overfitting on specific examples.
 
-**Version:** `2026.10.16-195605`
+**Version:** `2026.11.25-182808`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
-| User-invocable | `/wk-sharpen <skill> [incident]`, `/wk-sharpen` (batch), `/wk-sharpen loop <N>mins`, `/wk-sharpen improve [scope]` |
+| User-invocable | `/wk-sharpen <skill> [incident]`, `/wk-sharpen` (batch), `/wk-sharpen loop watch [<N>mins]`, `/wk-sharpen loop <N>mins`, `/wk-sharpen improve [scope]` |
 | Model-invocable | automatic: after [`wk-retro`](../retro/README.md) surfaces skill gaps |
 
 ## How It Works
@@ -18,10 +18,15 @@ flowchart TD
     A{Invocation mode} -->|single| B[Read incident report]
     A -->|batch| G[Scan 4 sources]
     A -->|improve| K[Inventory all skills in scope]
-    A -->|"loop &lt;N&gt;mins"| N1["Spawn ONE background agent<br/>drains queue; writes no self-record"]
-    N1 --> N2{"Queue empty at wake?"}
-    N2 -->|"items or empty"| N3["Schedule next cycle N mins<br/>AFTER completion — never a cron"]
-    N3 --> N1
+    A -->|"loop watch"| W1["Arm one-shot watcher<br/>watch-queue.sh wait (background)"]
+    W1 -->|"ARRIVED n"| NL["Take machine-wide drain lock"]
+    W1 -->|"watcher unavailable"| N3
+    A -->|"loop &lt;N&gt;mins"| N3["Schedule next cycle N mins<br/>AFTER completion — never a cron"]
+    N3 -->|"wake, queue non-empty"| NL
+    NL -->|"acquired"| N1["Spawn ONE background agent<br/>drains queue; writes no self-record"]
+    NL -->|"held by a peer"| W1
+    N1 -->|"done: release lock, re-arm"| W1
+    N1 -->|"done: release lock, interval mode"| N3
     B --> B2[Verify reported cause against the owning source]
     B2 --> C[Read full SKILL.md]
     C --> D[Distill lesson — extract principle, strip specifics]
@@ -144,8 +149,8 @@ flowchart TD
   changes, the drift check scans the skill's own references for dispatch/spawn prompts and quoted
   self-instructions, then synchronizes each paraphrase. Link checks cannot detect prose drift.
 - **A re-scan arrival is not automatically this run's work.** An item whose mtime postdates
-  the run's start is unowned, not assigned — peer sharpen agents share the tree and there is no
-  lock, lease, or ownership marker to arbitrate a collision. Neither mtime nor commit recency
+  the run's start is unowned, not assigned — peer sharpen agents share the tree, and outside loop
+  mode's drain lock there is no lease or ownership marker to arbitrate a collision. Neither mtime nor commit recency
   can see a peer's *claim*: processed state is recorded by renaming the file, and `mv` preserves
   mtime while advancing only ctime, so the two signals agree because both are blind in the same
   direction — never as corroboration. The listing is therefore re-read immediately before each
@@ -187,6 +192,15 @@ flowchart TD
   concurrent folds over one queue. One item per cycle is not enough: [`wk-learn`](../learn/README.md) filings and peer
   sessions refill the queue faster than a single fold drains it. Empty wakes schedule the next
   interval continuously; only explicit stop, interruption, or a blocked terminal gate ends it.
+- **Watch mode** (`loop watch`) replaces the interval wake with a file-change subscriber:
+  [`scripts/watch-queue.sh`](scripts/watch-queue.sh) `wait` runs as a one-shot background task that exits only when
+  the queue holds unprocessed work, so an idle queue costs zero model wakes. It is level-triggered — events only
+  prompt a re-list, the listing decides — which makes dropped events, arrivals mid-drain, and the re-arm gap harmless.
+  It is never armed while a worker runs, so the worker's own renames cannot self-trigger. A missing watcher falls back
+  to the interval trigger.
+- **One drain per machine is enforced, not conventional.** Both triggers take an atomic `mkdir` lock in the git common
+  dir before spawning the worker and release it after; a peer session's live lock makes the watcher wait, and a lock
+  past its TTL is reclaimed from a dead session. Tests: [`tests/watch-queue.bats`](tests/watch-queue.bats).
 - **Loop workers never capture their own [`wk-learn`](../learn/README.md) or [`wk-retro`](../retro/README.md)
   output.** The dispatcher receives the terminal summary directly; otherwise the next Source 2/4 scan consumes the
   cycle's own record and the loop cannot drain.

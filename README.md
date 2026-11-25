@@ -119,7 +119,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [tone](skills/tone/) | Apply the user's voice — encouraging, energetic, humorous, intent-carrying emoji — to messages drafted on their behalf |
 | [calver](skills/calver/) | Generate CalVer version strings in YYYY.MM.DD-HHMMSS format (auto-invoked on any version bump) |
 | [learn](skills/learn/) | Post-completion learning capture — writes structured learning files for wk-sharpen distillation |
-| [sharpen](skills/sharpen/) | Distill field reports and prune skill bloat without overfitting on examples; `loop <N>mins` self-paces one fold at a time |
+| [sharpen](skills/sharpen/) | Distill field reports and prune skill bloat without overfitting on examples; `loop watch` drains the queue as learnings arrive (`loop <N>mins` on an interval), one machine-wide worker |
 | [skill](skills/skill/) | Scaffold a new wk-* skill from the canonical template, syncing both README indexes |
 | [env](skills/env/) | Diagnose env-var availability; source `$HOME/.profile`, probe the login shell, report missing vars |
 | [scope-guard](skills/scope-guard/) | PreToolUse hook that blocks out-of-repo searches and warns on Edit/Write outside the project root |
