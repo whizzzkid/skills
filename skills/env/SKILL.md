@@ -2,8 +2,9 @@
 name: wk-env
 description: >-
   Use when diagnosing environment setup issues — checks that all env vars
-  declared in a skill's frontmatter are present, sources $HOME/.profile when
-  they are not, reports what is still missing, and provides remediation. Also
+  declared in a skill's frontmatter are present, sources $HOME/.profile and
+  then probes the login shell when they are not, reports what is still
+  missing, and provides remediation. Also
   diagnoses a set-but-stale value (rotated secret) and stops the retry loop it
   causes, and auto-mode denials caused by a hook rewriting Bash input. Also
   invoked automatically by the Skill PreToolUse hook before any
@@ -21,7 +22,7 @@ group: workflows
 env-vars: []
 metadata:
   author: whizzzkid
-  version: "2026.11.04-225034"
+  version: "2026.11.25-003509"
   model:
     openai: gpt-5.6-luna
     google: gemini-2.5-flash-8b
@@ -100,24 +101,30 @@ WK_SKILLS_HOME GITHUB_ORG EMPLOYER GIT_CONFIG_PARAMETERS
 
 ## Step 3: Source `$HOME/.profile` and re-check missing vars
 
-For each `missing` or `empty` var, source `$HOME/.profile` in a diagnostic subprocess and re-check:
+For each `missing` or `empty` var, source `$HOME/.profile` in a diagnostic subprocess and re-check presence:
 
 ```bash
-bash -c "source $HOME/.profile 2>/dev/null; printenv {VAR}" 2>/dev/null \
+bash -c "source \"$HOME/.profile\" 2>/dev/null; printenv {VAR} >/dev/null" && echo set \
   || echo "<still missing after sourcing $HOME/.profile>"
 ```
 
-Still missing → try an interactive login shell (catches interactive-only config: `[[ -o interactive ]]` blocks, plugin
-managers); found → export it into the current session:
+- **Important — probe the login shell before reporting missing or asking the user where a var lives.** A user saying a
+  var is set outranks a plain check: profile chains, `[[ -o interactive ]]` blocks, and plugin managers load only in
+  login/interactive shells, which the agent's shell never sources.
+- Probe presence by exit status only — never print the value (login shells also print profile noise to stdout):
 
-```bash
-zsh -ilc "printenv {VAR}" 2>/dev/null \
-  || echo "<still missing after interactive-shell probe>"
-```
+  ```bash
+  "$SHELL" -lic '[[ -n ${{VAR}:-} ]]' >/dev/null 2>&1 && echo set \
+    || echo "<still missing after login-shell probe>"
+  ```
+
+- Found → run every command that consumes it through the same wrapper (`"$SHELL" -lic '…'`); never export it into the
+  agent's shell (state does not persist across tool calls — Hard Rule 2).
 
 Report one of: **Resolved after sourcing** (var is in `$HOME/.profile` but Claude Code was not launched from a shell
-that sources it); **Resolved after interactive-shell probe** (interactive-only config — export it and note the source);
-**Still missing** (defined nowhere in `$HOME/.profile` or interactive config — the user needs to add it).
+that sources it); **Resolved after login-shell probe** (login/interactive-only config — run consumers through the
+wrapper and note the source); **Still missing** (defined nowhere in `$HOME/.profile` or login config — the user needs to
+add it).
 
 ## Step 3.5: Diagnose a set-but-stale value
 

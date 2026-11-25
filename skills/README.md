@@ -114,7 +114,7 @@ Skills activate automatically when the agent detects a matching context, or invo
 | [`wk-learn`](./learn/README.md) | Capture per-skill learnings after each run → `learnings/skills/{skill}/` | User + Model |
 | [`wk-sharpen`](./sharpen/README.md) | Distill field reports and prune skill bloat without overfitting on examples; `loop <N>mins` self-paces one fold at a time | User + Model |
 | [`wk-skill`](./skill/README.md) | Scaffold a new wk-* skill from the canonical template | User + Model |
-| [`wk-env`](./env/README.md) | Diagnose env-var availability; source `$HOME/.profile`, report missing vars | Auto (PreToolUse on Skill) + User |
+| [`wk-env`](./env/README.md) | Diagnose env-var availability; source `$HOME/.profile`, probe the login shell, report missing vars | Auto (PreToolUse on Skill) + User |
 | [`wk-scope-guard`](./scope-guard/README.md) | PreToolUse hook — block out-of-repo searches (`find /`), warn on Edit/Write outside the project root | Auto (PreToolUse on Bash/Edit) + User |
 | [`wk-worktree-cleanup`](./worktree-cleanup/README.md) | Clean up git worktrees whose branches have been merged | User + Model |
 

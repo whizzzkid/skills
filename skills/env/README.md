@@ -3,7 +3,7 @@
 Diagnoses environment variable availability before skill execution and provides
 actionable remediation.
 
-**Version:** `2026.11.04-225034`
+**Version:** `2026.11.25-003509`
 
 ## Purpose
 
@@ -27,6 +27,8 @@ to add to `$HOME/.profile` for vars that are genuinely missing.
   (observe-only or removed), never the command.
   A sibling call denied because another call in the same response was changed is re-issued alone.
 - Source `$HOME/.profile` in a read-only subprocess to test resolution.
+- **Probe the login shell before declaring a var unset or asking the user** — `"$SHELL" -lic '[[ -n ${VAR:-} ]]'`,
+  exit status only, never printing the value; found → run each consumer through the same wrapper, never export it.
 - Exit 0 (all set), 1 (resolved after sourcing → restart), 2 (still missing →
   add to `$HOME/.profile`, or stale-in-process → restart the session).
 - Never write to global config, shell RCs, or `.env` files to "fix" a missing

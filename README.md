@@ -121,7 +121,7 @@ table is kept in sync with it by the `check-readme-index` pre-commit hook.
 | [learn](skills/learn/) | Post-completion learning capture — writes structured learning files for wk-sharpen distillation |
 | [sharpen](skills/sharpen/) | Distill field reports and prune skill bloat without overfitting on examples; `loop <N>mins` self-paces one fold at a time |
 | [skill](skills/skill/) | Scaffold a new wk-* skill from the canonical template, syncing both README indexes |
-| [env](skills/env/) | Diagnose env-var availability; source `$HOME/.profile`, report missing vars |
+| [env](skills/env/) | Diagnose env-var availability; source `$HOME/.profile`, probe the login shell, report missing vars |
 | [scope-guard](skills/scope-guard/) | PreToolUse hook that blocks out-of-repo searches and warns on Edit/Write outside the project root |
 | [worktree-cleanup](skills/worktree-cleanup/) | Clean up merged git worktrees and report unmerged ones |
 
