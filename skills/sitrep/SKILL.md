@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.24-234442"
+  version: "2026.11.25-180332"
   model:
     openai: gpt-5.6-terra
 ---
@@ -150,6 +150,9 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     `In Review`/`Blocked`/`On Deck`, past-due, merged-but-open candidates; no-activity tickets → `## 🗂 Jira backlog`.
     **Activity = user-authored change.** `updated` moves on anyone's edit: count a ticket as the user's work only when
     a changelog entry or comment in the window is authored by the user; many tickets sharing one stamp = bulk edit.
+  - **Brief exact tool names, not just keywords.** Before dispatch, load each roster connector's schemas once in main
+    (`select:<name>,…`) and give every agent the exact names it needs beside the ToolSearch keyword (a keyword search's
+    top hits can be auth stubs or omit the needed tool, yielding a false `tool_unavailable`).
   - Block handling: OAuth soft blocks degrade with CTA; `tool_unavailable` → replay in main; still toolless = missing
     connector. Agent shells may skip the user's profile: a CLI `command not found` or unset env var is retried once
     with `$HOME/.profile` sourced before it counts as a gap.

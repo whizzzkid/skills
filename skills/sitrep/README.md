@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.24-234442`
+**Version:** `2026.11.25-180332`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -76,6 +76,10 @@ reported afterwards in the response.
   progress, and unblockings without preferring terminal tracker events. A Jira
   ticket counts as the user's work only when the changelog or comment author is
   the user — an `updated` stamp moves on anyone's edit, including bulk edits.
+- **Exact tool names in briefs** — the orchestrator loads each roster connector's
+  schemas once by exact name before dispatch and hands every agent those names
+  beside the keyword hint, since a keyword search can surface only auth stubs and
+  report a false `tool_unavailable`.
 - **Unavailable gathering domain** — replay its complete prompt in the main
   context, including query windows, outputs, and dependent actions before
   compiling. Calendar fallback records the five-day interview scan plus created
