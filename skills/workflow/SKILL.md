@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.26-170857"
+  version: "2026.11.26-174213"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -172,8 +172,8 @@ Code standards:
   [`code-standards-extended`](references/code-standards-extended.md).
 - **Very important — one command per Bash call.** Never chain with `&&`, `||`, or `;`; independent commands → parallel
   calls, dependent → separate sequential calls (chains defeat per-command review, and classifiers block what they
-  cannot decompose). Pre-send check: a call with `&&`/`||`/`;` between commands is split before sending — stage,
-  commit, and push are three calls; an edit and its verify grep are two. Surface denials; never silently restructure.
+  cannot decompose). Pre-send check: split any such call before sending — stage, commit, and push are three calls; an
+  edit and its verify grep are two. Surface denials; never silently restructure.
 - **CLI flags:** [`verify-cli-flags`](references/verify-cli-flags.md). **Platform-API traps:**
   [`platform-api-traps`](references/platform-api-traps.md).
 - **Layer responsibility:** side effects in entrypoint layers only. **Two-sided flow survey:** survey caller + callee
@@ -211,11 +211,10 @@ Cover required paths: **happy** (expected flow), **sad** (failures, invalid inpu
   one shell.
 - **Never take a verdict from `$?` after a pipe** — see `wk-workstyle-shell`.
 - **Important — a "slow" build is a hang until its processes prove busy; diagnose before optimizing.** Before
-  changing flags, caching, or parallelism: list long-lived build/compiler processes with elapsed time and CPU
-  (`ps -o pid,etime,%cpu,command`); any at ~0% CPU → sample its stack (`sample <pid>` on macOS, `gdb -p`/`eu-stack`
-  on Linux) to name the wait. Pinned SDK/toolchain → check inherited header/SDK env (`CPATH`, `C_INCLUDE_PATH`,
-  `OBJC_INCLUDE_PATH`, `SDKROOT`, `DEVELOPER_DIR`) and reproduce on a minimal input with vs without it (`env -u`).
-  (A 0%-CPU process is blocked, not working; no flag fixes a lock wait or mixed-toolchain headers.)
+  changing flags, caching, or parallelism: list build processes' elapsed time and CPU; any at ~0% CPU → sample its
+  stack to name the wait; pinned SDK/toolchain → reproduce on a minimal input with vs without inherited header/SDK
+  env. Commands: [`environment-guardrails`](references/environment-guardrails.md). (A 0%-CPU process is blocked, not
+  working; no flag fixes a lock wait or mixed-toolchain headers.)
 - User-loadable artifact: [`build last`](references/2026-08-04_final-development-build.md). Generated artifacts:
   [`acceptance`](references/2026-08-01_generated-artifact-acceptance.md). Data-only change → compare published set
   membership/count before and after.
@@ -252,6 +251,9 @@ blocker. Leave app running; continue Phase 5.
   → network request counts or a window marker (a re-fetch renders the same text). "Same size/box as X" → equal
   `getBoundingClientRect()` width and height of every variant (copied padding/border/font lets content-sized
   labels differ in width; share one fixed width).
+- **Every capture the PR lists matches HEAD.** Rendered output changed → re-run one capture script for every listed
+  screenshot, overwrite, delete superseded files; never list one older than the last visual commit. (A stale image
+  outweighs any prose caveat.)
 
 **HARD RULE — lifecycle-dependent UI goes live right after its first wiring commit.** Change relies on framework
 lifecycle (persisted/permanent nodes, frame busy state, morphing, cache restore) → drive it in a real browser before
@@ -262,7 +264,7 @@ models only the lifecycle its author knew; it passed what the browser broke.)
 
 **HARD RULE — "push succeeded" / "PR created" is NOT "work complete".** After push, run `gh pr view 2>/dev/null`; no
 open PR on a feature branch → invoke `wk-pr` immediately (commit-to-default per the Phase 2 probe needs no PR). PR open
-→ start the Phase 6 CI watch in that same turn.
+→ Phase 6 CI watch, same turn.
 
 - **Repo convention:** decided by the Phase 2 pre-flight probe, never re-decided here. **Important:** follow-up
   branch → fetch, then branch from `origin/<default>`, never `FETCH_HEAD` (linked worktrees share it).
@@ -303,9 +305,9 @@ Monitor and fix CI until green, concurrently with Phase 5.5.
   phase or PR done before CI is green or a diagnosed failure is surfaced; never hand off. Long watches → background.
   **Interleave** independent tasks while polling.
 - **Wait on a background task's completion notification, never a process-match loop.** `pgrep -f`/`ps | grep`
-  matches every live command line carrying the pattern — the waiter's own shell (Linux `pgrep` skips only itself) and
-  any sibling waiter (macOS skips ancestors, not siblings) — so `until ! pgrep -f X` never exits. Must probe →
-  bracket one char (`[t]ask` for `task`) so no waiter's own text matches.
+  matches the waiter's own shell and sibling waiters, so `until ! pgrep -f X` never exits ([per-OS
+  detail](references/platform-api-traps.md)). Must probe → bracket one char (`[t]ask` for `task`) so no waiter
+  matches itself.
 - Diagnosis: [`ci-diagnosis-table`](references/ci-diagnosis-table.md). Fix ordering:
   [`ci-fix-candidate-ordering`](references/ci-fix-candidate-ordering.md).
 - Fix loop: (1) targeted fix, (2) run failing gate locally, (3) `wk-commit`, (4) push, (5) update PR, (6) re-enter. Max

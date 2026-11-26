@@ -32,6 +32,12 @@ class: principle
     (`$SSH_SIGNING_KEY`, `$GIT_CONFIG_PARAMETERS`).
   - If 1Password is locked mid-session, prompt the user to unlock; never retry
     in a loop or fall back to unsigned operations.
+- **Slow-build diagnosis commands:** list long-lived build/compiler
+  processes with `ps -o pid,etime,%cpu,command`; sample a ~0%-CPU one with
+  `sample <pid>` (macOS) or `gdb -p` / `eu-stack` (Linux). Pinned
+  SDK/toolchain → check inherited `CPATH`, `C_INCLUDE_PATH`,
+  `OBJC_INCLUDE_PATH`, `SDKROOT`, `DEVELOPER_DIR`; reproduce with and without
+  each via `env -u <VAR>`.
 - **CI:** Use [`wk-buildkite`](../../buildkite/README.md) for Buildkite; read
   actual logs, never guess.
 - **Mise-managed repos:** `GemNotFound` on `bundle exec` / `bin/rspec` is a

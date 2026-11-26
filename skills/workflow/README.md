@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.26-170857`
+**Version:** `2026.11.26-174213`
 
 ## Invocation
 
@@ -58,6 +58,8 @@ flowchart TD
   reproduction refutes the premise, and the user is asked before any edit.
 - **Lifecycle-dependent UI goes live early** — a change that leans on framework lifecycle is driven in a real browser
   right after its first wiring commit, and each browser-observed lifecycle step becomes a fake-harness regression test.
+- **Every screenshot the PR lists matches HEAD** — any commit that changes rendered output re-runs one capture script
+  for every listed screenshot and deletes superseded files, so no listed capture predates the last visual commit.
 - **No commit while a parallel agent may hold a mutant** — agents share the working tree, so before committing with
   agents possibly live, confirm they finished and diff every production file against the intended change.
 - **One command per Bash call** — no `&&`/`||`/`;` chains; independent commands run as parallel calls so each stays
