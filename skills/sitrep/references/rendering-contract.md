@@ -67,6 +67,9 @@ Sort by priority/severity, staleness, due date, then undated. Lead with 🔴
 overdue/ASAP, 🟡 due ≤3 days, or 🟢 later/no hard date; append `⏳ {N}d`
 after 7 days pending. Format due dates as `**📅 YYYY-MM-DD**`.
 
+- **Exactly one leading urgency glyph.** On carry-over, strip every leading `🔴`/`🟡`/`🟢` before prefixing the
+  recomputed one (re-prefixing a carried line stacks glyphs run over run).
+
 ## Style
 
 Keep CSS/Lua in `$EMPLOYER/sitrep-style.md`; never regenerate it daily. After

@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.25-180332"
+  version: "2026.11.26-160419"
   model:
     openai: gpt-5.6-terra
 ---
@@ -176,10 +176,13 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
 - **Stage 3 — Compile open items.** Merge agent results + carry-over; drop completed + dismissed; write survivors as
   `data-done="false"` spans. Content inventory (skip empty): Carry-over, Meeting Prep, Slack, Email, GitHub, Jira,
   Confluence. Sort/mark urgency per rendering contract.
+  - **Important: prune before writing.** Run every filter in [`references/noise-filters.md`](references/noise-filters.md)
+    (duplicates, stacked glyphs, handled, not-the-user's, FYI, lapsed, expired 21d+), register each drop, record
+    counts in Meta; never drop a still-owed artifact.
 - **Stage 4 — Write live.md.** Re-read `$LIVE_FILE`; preserve `data-done="true"` spans; prefer `Edit` over `Write`.
-  Three-column `sitrep-row`/`sitrep-col`: **col1** Calendar + Slack + Email; **col2** ASAP + GitHub Inbox +
-  Auto-Actions + Jira; **col3** Meta + Standup + This Week + Notes + Backlog. Frontmatter: `date`, `employer`,
-  `generated_with`, `generated_at`. Sequential `data-t` IDs.
+  Three-column `sitrep-row`/`sitrep-col`: **col1** Calendar + Slack + Email; **col2** Needs attention now (first) +
+  ASAP + GitHub Inbox + Auto-Actions + Jira; **col3** Meta + Standup + This Week + Notes + Backlog. Frontmatter:
+  `date`, `employer`, `generated_with`, `generated_at`. Sequential `data-t` IDs.
   - **Important: actionable means checkbox.** Every item the user must act on — each link in a link list included — is
     its own `st-item` with an `st-cb` and `data-t`; checkbox-less text is for non-actionable content only (a list of
     links is items, not presentation). Action sections sit directly under ASAP, one short line per item.
@@ -188,8 +191,13 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     `<br>`-terminated line (observed: a raw-text rewrite nested columns 2-3 inside column 1).
   - **HARD RULE — GitHub Inbox.** One col2 section lists everything on GitHub waiting on the user, one checkbox item
     per link (`st-item st-nested`, `[repo\#N: title](url) — note`): merges, review requests (allowlist vs other repos)
-    and each unsubmitted PENDING draft on an open PR (linking its review URL). Open PRs only: drop merged, closed and
+    (PENDING drafts live in Needs attention now, not repeated here). Open PRs only: drop merged, closed and
     already-approved PRs and every orphan draft on them. Never a bare count or a prose run of PR numbers.
+  - **HARD RULE — Needs attention now.** The first col2 section (above ASAP), `**🚨 Needs attention now**`, is an
+    open-checkbox list in three groups: review drafts created this run (Stage 7), pending review drafts (own PRs /
+    awaiting review, live from the Stage 2 GraphQL sweep, never carried), and items blocking others or due today
+    (moved here, not copied). Empty group → info line saying none, with the count checked. Layout and write-back:
+    [`references/needs-attention.md`](references/needs-attention.md).
   - **Generate spans; never hand-type them.** Emit item spans from an inline generator over the compiled item list
     (e.g. a `jq` filter on stdin — no script file, per the write-scope HARD RULE): sequential `data-t`, canonical
     handler and copy-block markup verbatim, `#` → `\#`, every `<`/`>` in item text → braces or a dash; assert no span
@@ -250,8 +258,10 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
   that replaces the section's placeholder line in place (never appended beside it). Pending draft only — never
   submit/approve/request changes. Re-check live state right before dispatch and again before publishing: merged, closed
   or approved → no review, no listed draft. Run `/wk-pr-review` in **light** mode; the orchestrator `open`s each posted
-  draft's review URL. Reserve slots for nested workers. Worktrees via plain `git fetch` + `git worktree add
-  --detach`, never a user alias (aliases can launch an editor per PR). Mechanics:
+  draft's review URL. **Important: write drafts back** — patch each posted draft into Needs attention now as an open
+  item, re-run the Stage 5 gate, commit and push again (the page was committed before reviews ran; a done ⚙️ launch
+  line hides the unsubmitted draft). Reserve slots for nested workers. Worktrees via plain `git fetch` +
+  `git worktree add --detach`, never a user alias (aliases can launch an editor per PR). Mechanics:
   [`references/auto-review.md`](references/auto-review.md). Then invoke `wk-learn sitrep` (own response, per end
   Stage 8); end the response with the `Connector gaps` report.
 

@@ -86,8 +86,9 @@ Each subagent:
   review returns; merged, closed or `APPROVED` → do not open or list the draft.
 - Subagents never `open` (contract). After a draft is verified `PENDING`, the orchestrator runs
   `open "<review-url>"` once per draft so the user lands on the pending review to submit or discard it.
-- Every posted draft, and every older `PENDING` draft on a still-open PR, appears as its own link in the GitHub
-  Inbox; an unopened, unlisted draft is how drafts pile up unnoticed. Drafts on merged or closed PRs are not listed.
+- Every posted draft, and every older `PENDING` draft on a still-open PR, appears as its own open checkbox in the
+  Needs attention now section ([`needs-attention.md`](needs-attention.md)), never in the GitHub Inbox; an unopened,
+  unlisted draft is how drafts pile up unnoticed. Drafts on merged or closed PRs are not listed.
 
 ## Render
 
@@ -96,4 +97,8 @@ Each subagent:
 - The page is already written when Stage 7 runs: replace the Auto-Actions
   placeholder line in place with the launched items; never append them beside
   it (a surviving placeholder contradicts the items under it).
-- Never render an auto-launched review as a passive `data-done="false"` TODO.
+- Never render the *launch* as a passive `data-done="false"` TODO; the open work is the draft line.
+- **Write the drafts back, then re-publish.** Patch each posted draft into Needs attention now group 1, re-run the
+  Stage 5 render gate, commit and push a second time — steps in
+  [`needs-attention.md` § Stage 7 write-back](needs-attention.md#stage-7-write-back). (Stage 7 runs after Stage 6's
+  commit, so without this pass the drafts it creates never reach the page.)

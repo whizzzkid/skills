@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.25-180332`
+**Version:** `2026.11.26-160419`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -21,7 +21,9 @@ no per-day live directories, and dated snapshots at close.
   org-wide and re-surfaces them until you submit or discard them. Reviews run in
   `light` mode, skip PRs already merged, closed or approved (re-checked before
   dispatch and again at publish), and each posted draft is opened for you; drafts
-  on merged or closed PRs are never listed.
+  on merged or closed PRs are never listed. Because the reviews finish after the
+  page is committed, `start` then writes each new draft back into the page as an
+  open item, re-verifies the render, and commits and pushes again.
 - `/wk-sitrep end` — optional workday close: runs 7 parallel agents, writes a
   historical snapshot to `$EMPLOYER/YYYY/MM/DD/snapshot.md` (completed
   items + notes only), then rewrites `live.md` to hold all pending work for
@@ -50,8 +52,17 @@ reported afterwards in the response.
   the correction noted.
 - **Actionable means checkbox** — every item you must act on, each link in a
   list included, is its own checkbox item; action sections (such as the
-  GitHub Inbox of merges, review requests and pending drafts on open PRs) sit
-  directly under ASAP, one short line per item. Non-actionable lines are
+  GitHub Inbox of merges and review requests) sit directly under ASAP, one
+  short line per item.
+- **Needs attention now** — the first middle-column section is a checklist of
+  review drafts created this run, older pending drafts (on your own PRs and on
+  PRs awaiting your review), and items blocking someone else or due today. It
+  is rebuilt live every run, and each item appears only there.
+- **Noise pruning** — before writing, the compiled list is filtered for
+  duplicate links, stacked urgency glyphs, already-handled or not-yours items,
+  FYI lines (demoted to info), lapsed deadlines, and carry-over idle 21+ days
+  (moved to the snapshot's expired list). Meta records the counts, and a
+  still-owed artifact is never pruned. Non-actionable lines are
   checkbox-less `st-info` spans, never raw text. The render check fails on any
   checkbox-less item that is not `st-info`.
 - **Layout-geometry render gate** — before "Live page ready", the check asserts
