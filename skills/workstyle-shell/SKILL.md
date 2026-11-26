@@ -18,7 +18,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.25-185613"
+  version: "2026.11.26-171615"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -60,15 +60,15 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   `# Returns the OS name lowercased for package lookup`). Function names lack
   type signatures/docstrings, so this is the only signal about inputs, side
   effects, and output shape. Single-/two-function scripts may skip it.
-- **Capture a non-zero exit with `|| status=$?`, never `cmd; status=$?`.** Under
+- **Capture a non-zero exit with `|| rc=$?`, never `cmd; rc=$?`.** Under
   `set -e`, the `;` separator does not suppress `errexit` — a command that exits
-  non-zero terminates the script before the `status=$?` assignment runs. Only `||`
-  suppresses `errexit` on its left operand. Initialize `status=0` first, then
-  `cmd || status=$?`. Flag any `cmd; status=$?` in a `set -e` script.
+  non-zero terminates the script before the `rc=$?` assignment runs. Only `||`
+  suppresses `errexit` on its left operand. Initialize `rc=0` first, then
+  `cmd || rc=$?`. Flag any `cmd; rc=$?` (any variable name) in a `set -e` script.
 
   ```bash
-  status=0
-  http_code=$(helper ...) || status=$?   # captures 2 instead of exiting
+  rc=0
+  http_code=$(helper ...) || rc=$?   # captures 2 instead of exiting
   ```
 
 - **Register a cleanup trap the moment you create a temp file or dir** — `trap
@@ -110,9 +110,12 @@ Manual: `/wk-workstyle-shell scan` (full working tree) · `/wk-workstyle-shell c
   critical traps (word-splitting, indirect expansion, PIPESTATUS, glob qualifiers,
   reserved variables, ANSI-C quotes inside double quotes, unquoted leading `=` words) plus bash 3.2 targeting for macOS hooks.
   Details: [`references/zsh-bash-portability.md`](references/zsh-bash-portability.md).
-  - **Important:** never name a variable `path`, `cdpath`, `fpath`, `manpath`, or `module_path` — zsh ties each to
-    its uppercase twin, so `path=$(…)` in a loop wipes `PATH` and every later command fails `command not found`. Use
-    role-specific names (`doc_path`); non-trivial loop → write a `bash` script file and run it with `bash`.
+  - **Very important:** never name a variable `path`, `cdpath`, `fpath`, `manpath`, or `module_path` — zsh ties each
+    to its uppercase twin, so `path=$(…)` in a loop wipes `PATH` and every later command fails `command not found`.
+    Never assign `status` either (zsh read-only: the assignment aborts). Use role-specific names (`doc_path`, `rc`);
+    non-trivial loop → write a `bash` script file and run it with `bash`.
+    - **Applies to every recipe you write down**, not only commands you run: a fenced block in a skill, reference, or
+      doc that an agent may execute is a zsh command. Grep the edited fence for these names before committing.
   - **Replay a foreign snippet under its own interpreter.** Verifying a CI step or another tool's script → run it
     verbatim via `bash -c` (or its declared shell), never in the agent's login shell, and swap platform-specific tools
     for the CI host's equivalent (`stat -c` vs `stat -f`). (A zsh replay of an unquoted `for e in $LIST` loops once:

@@ -36,11 +36,11 @@ clearing a command against the bash-only entries below proves nothing. Seven tra
   **Important:** Never let a composed command depend on a glob qualifier or on `nullglob`/`failglob`
   state; enumerate with `find … -print` fed through `while IFS= read -r`, which cannot
   conflate "nothing matched" with "pattern unsupported".
-- **Important:** **Lowercase `path` (and `cdpath`, `fpath`, `manpath`, `module_path`) is a zsh special tied to its uppercase twin.** In scripts and
-  compound ad-hoc commands, never use it as a loop or script variable: one
-  scalar assignment replaces the executable search path. Use role-specific names such as `doc_path`,
-  `source_path`, or `target_path`. See [zsh special
-  variables](zsh-special-path-variable.md).
+- **Very important:** **Lowercase `path` (and `cdpath`, `fpath`, `manpath`, `module_path`) is a zsh special tied to
+  its uppercase twin.** In scripts, compound ad-hoc commands, and recipes written into skill or doc fences, never use
+  it as a loop or script variable: one scalar assignment replaces the executable search path. `status` is read-only
+  under zsh, so assigning it aborts the command (verified, zsh 5.9) — capture exits in `rc`. Use role-specific names
+  such as `doc_path`, `source_path`, or `target_path`. See [zsh special variables](zsh-special-path-variable.md).
 - **ANSI-C quotes do not expand inside double quotes under zsh.** `"${x/|/$'\n'}"` inserts a real newline under
   bash but the five literal characters `$'\n'` under zsh (verified, zsh 5.9): rc 0, no stderr, and lines silently
   fuse. Assign the character to a variable first (`nl=$'\n'`, outside any double quotes) and substitute `"$nl"`, which

@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.26-164502"
+  version: "2026.11.26-171615"
   model:
     openai: gpt-5.6-terra
 ---
@@ -167,7 +167,9 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
     prefix changes `🔁 {old}→{new}`; append `⏳ {N}d` for >7 days; sort by native priority (missing → lowest).
 - **Stage 2b — Auto-transition merged-PR tickets.** `start` only, before writing `live.md`: tickets in
   `In Review`/`Ready for Review` with linked PR → check merge state; merged within 14 days → transition to `Done`.
-  Denial → block-register key, render `🔁 blocked N days` in ASAP. Render as `data-done="true"` `⚙️ Auto-Actions`.
+  Re-read each PR's merge state yourself just before transitioning, never from an agent's snapshot (PRs merge while
+  agents run). Denial → block-register key, render `🔁 blocked N days` in ASAP. Render as `data-done="true"`
+  `⚙️ Auto-Actions`.
 - **Stage 2c — Create missing interview prep blocks.** Per interview lacking prep/scorecard →
   [`wk-cal`](../cal/README.md) block-creation: 15-min prep before, 45-min scorecard after (user-stated length wins;
   scan forward on busy slots). Render a block as done only after `wk-cal`'s post-create re-list confirms duration and

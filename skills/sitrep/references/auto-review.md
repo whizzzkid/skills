@@ -66,9 +66,13 @@ Each subagent:
    ```bash
    git fetch origin "+pull/<n>/head:refs/remotes/origin/pr/<n>"
    sha=$(git rev-parse "refs/remotes/origin/pr/<n>")
-   path="worktrees/review-<n>"
-   if test -d "$path"; then git -C "$path" checkout --detach "$sha"; else git worktree add --detach "$path" "$sha"; fi
+   wt_dir="worktrees/review-<n>"
+   if test -d "$wt_dir"; then git -C "$wt_dir" checkout --detach "$sha"; else git worktree add --detach "$wt_dir" "$sha"; fi
    ```
+
+   - **Never name a recipe variable after a zsh special** (`path`, `status`, …): subagent shells may be zsh, where
+     `path=…` replaces the command search path and `status=…` aborts as read-only. Rules:
+     [`wk-workstyle-shell`](../../workstyle-shell/README.md).
 
    - **Fetch into a per-PR ref, never read `FETCH_HEAD`:** linked worktrees share it, so a parallel subagent's
      fetch can overwrite it between this fetch and the read.
