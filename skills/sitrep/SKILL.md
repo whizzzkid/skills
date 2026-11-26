@@ -50,7 +50,7 @@ license: MIT
 group: rituals
 metadata:
   author: whizzzkid
-  version: "2026.11.26-160419"
+  version: "2026.11.26-164502"
   model:
     openai: gpt-5.6-terra
 ---
@@ -176,9 +176,10 @@ toplevel may be a parent repo, so never assume they are equal. Recipes:
 - **Stage 3 — Compile open items.** Merge agent results + carry-over; drop completed + dismissed; write survivors as
   `data-done="false"` spans. Content inventory (skip empty): Carry-over, Meeting Prep, Slack, Email, GitHub, Jira,
   Confluence. Sort/mark urgency per rendering contract.
-  - **Important: prune before writing.** Run every filter in [`references/noise-filters.md`](references/noise-filters.md)
-    (duplicates, stacked glyphs, handled, not-the-user's, FYI, lapsed, expired 21d+), register each drop, record
-    counts in Meta; never drop a still-owed artifact.
+  - **Important: prevent noise at the source, prune as backstop.** Agents omit handled, not-the-user's, FYI, stale
+    and unreadable items per the contract's waiting-on-user clause; then run every filter in
+    [`references/noise-filters.md`](references/noise-filters.md) over agent output **and** carry-over, register each
+    drop, record counts in Meta; never drop a still-owed artifact.
 - **Stage 4 — Write live.md.** Re-read `$LIVE_FILE`; preserve `data-done="true"` spans; prefer `Edit` over `Write`.
   Three-column `sitrep-row`/`sitrep-col`: **col1** Calendar + Slack + Email; **col2** Needs attention now (first) +
   ASAP + GitHub Inbox + Auto-Actions + Jira; **col3** Meta + Standup + This Week + Notes + Backlog. Frontmatter:

@@ -28,6 +28,20 @@ SUBAGENT CONTRACT (mandatory):
   inference came from and tag `(inferred)`.
 - Tag each item `verified` (concrete artifact) or `claim` (single-source) — the
   orchestrator styles and conflict-detects by it.
+- RETURN ONLY WORK WAITING ON THE USER as action items (evidence/history items for an `end` snapshot are exempt):
+  - Omit an item when the source shows it is handled: the user posted the last reply, the PR merged or closed, the
+    review or form was submitted, the ticket is Done.
+  - Omit an item owned by another named person or with no ask addressed to the user ("owners not named", "nothing
+    addressed to you", team-wide asks with no named owner).
+  - Omit an item with no activity in 21+ days and no hard date, and a deadline that passed 7+ days ago with nothing
+    still owed. Never omit a still-owed artifact (unsubmitted draft, scorecard, form).
+  - Put announcements, reschedules, all-clears and "read when convenient" into a separate `fyi` list, at most 5 lines
+    and none older than 3 days; never as action items.
+  - Content you could not read → one `unread_count` per source, never an item per unreadable message.
+  - One item per canonical URL: merge every mention of the same PR, ticket, thread or mail into one line.
+  - Return no urgency glyphs (🔴/🟡/🟢); return `due` and `last_activity` dates and the orchestrator assigns urgency.
+  - Carry-over rechecks return a `status` per key: `open`, `handled`, `not_mine` or `expired`; never re-emit a
+    handled or expired item as open.
 - Return every date as ISO `YYYY-MM-DD`. Never add a weekday of your own; a
   weekday from the source goes in `source_weekday` — the orchestrator recomputes it.
 - PROBE TOOLS FIRST: your domain's MCP tools may not be inherited (subagents do NOT reliably get the orchestrator's connectors). Missing → return `tool_unavailable: true` at once; never fail item-by-item. Probe by the exact tool names in your brief (`select:<name>,…`) before any keyword search — a keyword search that returns only auth stubs or unrelated tools is not proof of absence.

@@ -1,6 +1,6 @@
 # wk-sitrep
 
-**Version:** `2026.11.26-160419`
+**Version:** `2026.11.26-164502`
 
 Unified daily ops log backed by a SilverBullet workspace. Replaces
 the former morning and evening standalone skills — no standalone HTML files,
@@ -53,18 +53,23 @@ reported afterwards in the response.
 - **Actionable means checkbox** — every item you must act on, each link in a
   list included, is its own checkbox item; action sections (such as the
   GitHub Inbox of merges and review requests) sit directly under ASAP, one
-  short line per item.
+  short line per item. Non-actionable lines are checkbox-less `st-info` spans,
+  never raw text. The render check fails on any checkbox-less item that is not
+  `st-info`.
 - **Needs attention now** — the first middle-column section is a checklist of
   review drafts created this run, older pending drafts (on your own PRs and on
   PRs awaiting your review), and items blocking someone else or due today. It
   is rebuilt live every run, and each item appears only there.
-- **Noise pruning** — before writing, the compiled list is filtered for
-  duplicate links, stacked urgency glyphs, already-handled or not-yours items,
-  FYI lines (demoted to info), lapsed deadlines, and carry-over idle 21+ days
-  (moved to the snapshot's expired list). Meta records the counts, and a
-  still-owed artifact is never pruned. Non-actionable lines are
-  checkbox-less `st-info` spans, never raw text. The render check fails on any
-  checkbox-less item that is not `st-info`.
+- **Noise prevented at the source** — gathering agents return only work
+  waiting on you: no handled, not-yours, stale (21+ days idle) or lapsed
+  items, FYI in a separate short list, unreadable content as a count, one item
+  per link, and no urgency glyphs (the orchestrator assigns them). Carry-over
+  rechecks return a status per item.
+- **Noise pruning as backstop** — before writing, agent output and carry-over
+  pass the same filter table (duplicates, stacked glyphs, handled, not-yours,
+  FYI, lapsed, expired). Every drop goes to the weekly dismissed registry so a
+  re-gather cannot resurrect it, Meta records the counts, and a still-owed
+  artifact is never pruned.
 - **Layout-geometry render gate** — before "Live page ready", the check asserts
   the three columns are direct children of the row with distinct, increasing
   left edges (containment alone passes on nested columns), and takes a

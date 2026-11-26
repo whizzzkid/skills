@@ -7,6 +7,13 @@ class: principle
 Run every filter over the compiled list (agent results plus carry-over) before Stage 4 writes the page. Each filter
 names where a dropped item goes, so nothing vanishes silently.
 
+- **This table is the backstop; prevention lives upstream.** Gathering agents already omit these classes per the
+  `RETURN ONLY WORK WAITING ON THE USER` clause in [`subagent-contract.md`](subagent-contract.md), and the
+  carry-over transform strips glyphs before re-prefixing. A filter that keeps firing on fresh agent output means the
+  contract clause was not followed — fix the brief, not the filter.
+- **Carry-over is not exempt.** Items carried from the prior page never passed this run's agents; apply every filter
+  to them using the recheck `status` the agents returned (`handled`/`not_mine`/`expired` → drop and register).
+
 | Filter | Test | Action |
 |--------|------|--------|
 | Duplicate | Same canonical URL (PR, ticket, thread, mail) appears in more than one item or section | Keep one, in the highest section (Needs attention → ASAP → GitHub Inbox → Jira → others); merge the notes |
