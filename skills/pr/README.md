@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.11.23-192400`
+**Version:** `2026.11.26-173456`
 
 ## Invocation
 
@@ -27,7 +27,8 @@ flowchart TD
     F -->|yes| FC[CI-only PR inside fork → wait green]
     F -->|no| K[gh pr create --draft --base BEST_BASE]
     FC --> K
-    K --> L[Step 3: Update PR description]
+    K --> W[Step 3: gh pr view --web — once per PR]
+    W --> L[Update PR description]
     L --> P[Step 4: wk-self-review]
     P --> Q[Address automated review feedback]
     Q --> S[gh pr ready]

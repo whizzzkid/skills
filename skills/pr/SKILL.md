@@ -37,7 +37,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.23-192400"
+  version: "2026.11.26-173456"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -168,8 +168,11 @@ EOF
 failing after 3 fix-loops, `blocked` review requiring user input, explicit user interjection. Side actions
 (Slack/Jira/docs) are continue signals, not completion.
 
-After draft creation (or pushing new commits to an existing PR), open it in the browser in the same response as
-`gh pr create` (`gh pr view --web`), then:
+After draft creation (or pushing new commits to an existing PR):
+
+- **Very important: open in browser.** `gh pr view "$PR_NUMBER" --web` is the next tool call after every
+  `gh pr create` — once per PR created, every stacked layer and sibling included — before items 1–3. Skip only in a
+  headless session. (A clause beside heavier rules gets dropped; multi-PR flows skipped it for every later PR.)
 
 1. **Sync description** — preserve metadata per Rule 1. **HARD RULE — no-ask on drift sync.** Never ask before
    syncing drift (PR body, self-review threads, Jira, docs); ask only when sync *content* is ambiguous.
