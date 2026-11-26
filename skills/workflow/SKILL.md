@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.24-234442"
+  version: "2026.11.26-170857"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -58,7 +58,7 @@ Execute without asking permission at each step. Take the first that matches:
 5. Defect diagnosed, owning file identified → edit that file now; never re-state tradeoffs.
 6. Feedback lands mid-action → finish the authorized action, then adjust.
 
-- A mandated PR lifecycle authorizes push + PR creation; ask only where publishing is genuinely optional.
+- A mandated PR lifecycle authorizes push + PR creation; ask only where publishing is optional.
 - **Interpret execution bans broadly:** "don't run {tool}" covers all heavy local ops — prefer changed-file-only
   validation.
 - **Never ask for what your inputs answer** — search plan, merged PRs, tracked config first. **Linked artifact first:**
@@ -69,7 +69,7 @@ Execute without asking permission at each step. Take the first that matches:
   tool's behavior (what it checks, passes through, or costs): grep its source or drive it once on a scratch copy;
   check plugin defaults before calling a step cheap or isolated.
 - **Announce-and-invoke same turn:** a skill counts only when its `Skill` call is in that response. Skill presence and
-  phase routing: [`references/skill-reference.md`](references/skill-reference.md).
+  phase routing: [`skill-reference`](references/skill-reference.md).
 
 **HARD RULE — needs shell? then no worktree isolation.** `isolation: "worktree"` blocks Bash, Grep, Glob —
 Read/Edit/Write only, with no runtime error. Decide at dispatch: tests, lint, build, commit, push, PR → never
@@ -99,7 +99,7 @@ Skill(wk-plan, args="<task from session context>")
 
 - Plan supplied → validate only (references resolve, order valid), then Phase 2. Optional sibling-repo work is opt-in —
   confirm before touching another repo.
-- Complex task → consult `advisor` server tool: [`references/advisor-tool.md`](references/advisor-tool.md).
+- Complex task → consult `advisor` server tool: [`advisor-tool`](references/advisor-tool.md).
 
 **HARD RULE — wait for plan approval before first Edit/Write/Bash write-action (incl. fetching/reading *for* a build).**
 No size exemption — "too small"/"obviously right" both violate. Present → approve → execute; user-supplied plan arrives
@@ -123,7 +123,7 @@ Rebase/cherry-pick conflicts → `git log --oneline -5`; base mismatches worktre
   AI-contribution policy. Record each obligation (issue-first, DCO `Signed-off-by:`, commit format, changelog, test/lint
   commands, docs/website build) and follow it; the project's rule wins over a wk-* default. Search existing issues and
   PRs (`gh issue list --repo <owner/repo> --search <terms> --state all`, same for `gh pr list`) before any work;
-  duplicate or in-flight PR → stop and ask. Details: [`references/2026-10-23_oss-upstream-contribution.md`](references/2026-10-23_oss-upstream-contribution.md).
+  duplicate or in-flight PR → stop and ask. Details: [`oss-upstream-contribution`](references/2026-10-23_oss-upstream-contribution.md).
 - **Low noise for upstream maintainers:** one focused PR, minimal diff, no drive-by refactors or reformatting, no
   self-review inline comments, no draft churn, no comments that only report progress. Batch fix-ups locally, push
   rarely. Never put internal names, tickets, data, or URLs in public issue or PR text.
@@ -150,7 +150,7 @@ Rebase/cherry-pick conflicts → `git log --oneline -5`; base mismatches worktre
 
 Edit-scope pre-flights — enumerate every affected site (callers, `replace_all` occurrences, brief identifiers, guards,
 harness reachability, contract owners, false-positive class); fix all in one pass before tests:
-[`references/edit-scope-preflights.md`](references/edit-scope-preflights.md).
+[`edit-scope-preflights`](references/edit-scope-preflights.md).
 
 - **A new step inherits only the guards that ran before it.** Step consumes an input → walk entrypoint → new call and
   list the validations that have run at that line; every bound or format assumption in code or comments cites one of
@@ -169,17 +169,17 @@ Code standards:
   read by every installer, asserted after install.
 - **Regexes:** named capture groups: `(?<year>\d{4})`.
 - **Bash:** absolute paths, no `cd`. Extended:
-  [`references/code-standards-extended.md`](references/code-standards-extended.md).
+  [`code-standards-extended`](references/code-standards-extended.md).
 - **Very important — one command per Bash call.** Never chain with `&&`, `||`, or `;`; independent commands → parallel
   calls, dependent → separate sequential calls (chains defeat per-command review, and classifiers block what they
   cannot decompose). Pre-send check: a call with `&&`/`||`/`;` between commands is split before sending — stage,
   commit, and push are three calls; an edit and its verify grep are two. Surface denials; never silently restructure.
-- **CLI flags:** [`references/verify-cli-flags.md`](references/verify-cli-flags.md). **Platform-API traps:**
-  [`references/platform-api-traps.md`](references/platform-api-traps.md).
+- **CLI flags:** [`verify-cli-flags`](references/verify-cli-flags.md). **Platform-API traps:**
+  [`platform-api-traps`](references/platform-api-traps.md).
 - **Layer responsibility:** side effects in entrypoint layers only. **Two-sided flow survey:** survey caller + callee
   before designing gates. **Identifier composition:** classify sources by semantic domain before combining into keys.
 - **HARD RULE — reuse existing config/secret resolution; never invent parallel overrides.** User names an existing
-  convention → adopt it. ([`reuse-existing-mechanism.md`](references/reuse-existing-mechanism.md))
+  convention → adopt it. ([`reuse-existing-mechanism`](references/reuse-existing-mechanism.md))
 
 ## Phase 3: Test
 
@@ -226,7 +226,7 @@ Cover required paths: **happy** (expected flow), **sad** (failures, invalid inpu
   outcome breakdown over a partial-population share; (4) one definition per concept across every view; (5) recompute
   independently before showing the user. (Render and privacy checks pass while a number reads as nonsense to a
   domain reader.)
-- Shell-script tests: [`references/shell-script-test-checks.md`](references/shell-script-test-checks.md).
+- Shell-script tests: [`shell-script-test-checks`](references/shell-script-test-checks.md).
 
 ## Phase 3.5: Refactor & Deletion-Safety Scan
 
@@ -238,7 +238,7 @@ in PR "Follow-ups"), **Skip** (no real win). Re-run tests after Apply-now.
 Deletion-safety: classify every removed line/symbol/file intentional or accidental; unexplained removal = blocker.
 Removed symbol with live callers, guard/validation/test without replacement, or file still imported (or whose
 responsibility did not move) → accidental → restore or migrate. Split unrelated cleanup into its own commit. Detail:
-[`references/deletion-safety-scan.md`](references/deletion-safety-scan.md).
+[`deletion-safety-scan`](references/deletion-safety-scan.md).
 
 ## Phase 3.6: Frontend Live Preview
 
@@ -246,8 +246,12 @@ Run only when diff changes browser-rendered UI (`.tsx/.jsx/.vue/.svelte/.html/.c
 "frontend preview: N/A". Launch via `run` skill or dev-server. Drive every changed view with Playwright; capture
 snapshots/console; platform-pinned baselines → regenerate in CI container, never local host
 ([artifacts](references/2026-08-04_linux-visual-artifacts.md)). Load failure, console error, or broken interaction →
-blocker. Restore/persistence/caching claims → assert on network request counts or a window marker, not DOM text alone
-(a re-fetch renders the same text). Leave app running; continue Phase 5.
+blocker. Leave app running; continue Phase 5.
+
+- **Assert each UI claim on its measured property, not a screenshot or DOM text alone.** Restore/persistence/caching
+  → network request counts or a window marker (a re-fetch renders the same text). "Same size/box as X" → equal
+  `getBoundingClientRect()` width and height of every variant (copied padding/border/font lets content-sized
+  labels differ in width; share one fixed width).
 
 **HARD RULE — lifecycle-dependent UI goes live right after its first wiring commit.** Change relies on framework
 lifecycle (persisted/permanent nodes, frame busy state, morphing, cache restore) → drive it in a real browser before
@@ -272,7 +276,7 @@ open PR on a feature branch → invoke `wk-pr` immediately (commit-to-default pe
 - **Post-push sync:** `wk-commit` handles PR description sync and stale comment resolution. **HARD RULE:** auto-sync
   drifted artifacts — never ask. After push, code change, or pivot: audit PR title/body, self-review, ticket, docs;
   update same turn. On pivot, resolve stale self-review threads and re-post via `wk-self-review`. Confirm only when
-  genuinely ambiguous.
+  ambiguous.
 - Before reworking a PR branch, [reconcile against actual base](references/pre-rework-base-reconcile.md).
 
 ## Phase 5.5: Adversarial Review
@@ -293,7 +297,7 @@ follow-up, never the guard.
 
 Monitor and fix CI until green, concurrently with Phase 5.5.
 
-- Do not re-run a green pre-push gate locally after pushing same SHA. `gh pr checks --watch --fail-fast` for generic;
+- Never re-run a green pre-push gate locally after pushing same SHA. `gh pr checks --watch --fail-fast` for generic;
   `wk-buildkite` for Buildkite.
 - **Important — start the CI watch in the same turn as every PR create or push, and complete it.** Never report a
   phase or PR done before CI is green or a diagnosed failure is surfaced; never hand off. Long watches → background.
@@ -302,8 +306,8 @@ Monitor and fix CI until green, concurrently with Phase 5.5.
   matches every live command line carrying the pattern — the waiter's own shell (Linux `pgrep` skips only itself) and
   any sibling waiter (macOS skips ancestors, not siblings) — so `until ! pgrep -f X` never exits. Must probe →
   bracket one char (`[t]ask` for `task`) so no waiter's own text matches.
-- Diagnosis: [`references/ci-diagnosis-table.md`](references/ci-diagnosis-table.md). Fix ordering:
-  [`references/ci-fix-candidate-ordering.md`](references/ci-fix-candidate-ordering.md).
+- Diagnosis: [`ci-diagnosis-table`](references/ci-diagnosis-table.md). Fix ordering:
+  [`ci-fix-candidate-ordering`](references/ci-fix-candidate-ordering.md).
 - Fix loop: (1) targeted fix, (2) run failing gate locally, (3) `wk-commit`, (4) push, (5) update PR, (6) re-enter. Max
   3 attempts per run; each must differ; before attempt 3, state the axis being varied. After 3, hand off.
 
@@ -321,11 +325,11 @@ retro while a post-push pass has unaddressed threads.
 Invoke `wk-docs`. Verify README, ADRs, specs, `docs/README.md`.
 
 - **Docs and website ship with the change.** Update every user-facing surface the change touches: README, `docs/`,
-  the website or docs-site source (`website/`, `site/`, `docs-site/`, a generator config such as mkdocs, Docusaurus,
-  or Hugo), CLI help/man pages, examples, and the changelog the project keeps. Build the site locally with its
-  documented command when one exists; record "website: N/A" only after confirming no site source covers the change.
+  the website/docs-site source (`website/`, `site/`, `docs-site/`, mkdocs/Docusaurus/Hugo config), CLI help/man
+  pages, examples, and the changelog the project keeps. Build the site locally with its documented command when one
+  exists; record "website: N/A" only after confirming no site source covers the change.
 - **Existing project → never bootstrap.** Upstream OSS or a repo with an established docs layout → follow its layout;
-  `wk-docs` bootstrap applies only to repos with no docs at all and that the user owns.
+  `wk-docs` bootstrap applies only to user-owned repos with no docs at all.
 
 ## Phase 8: Session Retro — NON-NEGOTIABLE
 
