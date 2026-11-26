@@ -31,7 +31,7 @@ env-vars:
   - EMPLOYER
 metadata:
   author: whizzzkid
-  version: "2026.11.25-182808"
+  version: "2026.11.26-165038"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -146,6 +146,9 @@ report diff.
 - **Sync README + docs:** bump sibling `README.md` `Version:` on every version change (unconditional); update narrative,
   Mermaid diagrams, index files when behavior changes; invoke `wk-docs` for cross-skill changes; stage with SKILL.md
   change.
+- **Insert on whole-bullet boundaries** in every edited list (`SKILL.md`, README, references): anchor from a `- ` line
+  through the line before the next `- `, then re-read the region and confirm each pre-existing bullet's text is still
+  contiguous under its own label. (A mid-bullet anchor moves a sentence into the new bullet; no hook sees it.)
 - **Drift check:** verify frontmatter description, argument-hint, allowed-tools, quick-reference table, step list,
   cross-references (both directions), examples — all match the post-edit body. Recount from source per
   [`references/recount-probe-bounds.md`](references/recount-probe-bounds.md). Fix all drift in same pass.
