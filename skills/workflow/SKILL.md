@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.26-174213"
+  version: "2026.11.26-175051"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -251,9 +251,9 @@ blocker. Leave app running; continue Phase 5.
   → network request counts or a window marker (a re-fetch renders the same text). "Same size/box as X" → equal
   `getBoundingClientRect()` width and height of every variant (copied padding/border/font lets content-sized
   labels differ in width; share one fixed width).
-- **Every capture the PR lists matches HEAD.** Rendered output changed → re-run one capture script for every listed
-  screenshot, overwrite, delete superseded files; never list one older than the last visual commit. (A stale image
-  outweighs any prose caveat.)
+- **Every capture shared (PR, docs, hand-off) matches HEAD.** Rendered output changed → re-run one capture script for
+  all, overwrite, delete superseded files, then claim the fix; never share one older than the last visual commit. (A
+  stale image outweighs any prose caveat.)
 
 **HARD RULE — lifecycle-dependent UI goes live right after its first wiring commit.** Change relies on framework
 lifecycle (persisted/permanent nodes, frame busy state, morphing, cache restore) → drive it in a real browser before
@@ -340,7 +340,7 @@ action after it is `Skill(wk-retro)`.
 
 ## Checklist
 
-Final gate before claiming complete — confirm each:
+Confirm each before claiming complete:
 
 - [ ] Atomic commits, each passes tests/CI independently; `wk-workstyle` + docs updated alongside code
 - [ ] Tests cover happy/sad/edge paths; `wk-adversarial-review` clear before merge; CI green on current HEAD
