@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.23-201950"
+  version: "2026.11.26-163507"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -163,6 +163,13 @@ done, name the artifact and the events it covers; an artifact that merely exists
 
 Step 10 — **HARD RULE — run dead last, after every Step 8 follow-up is resolved.** `{entered_merged}` → audit
 for open children before branch deletion. Removal: [`references/worktree-cleanup.md`](references/worktree-cleanup.md).
+
+- **HARD RULE — the precondition check is the authorization; never ask before removing the merged worktree.** All
+  hold → remove, then report: `git status --short` empty after throwaway-artifact cleanup; local `HEAD` equals the
+  merged PR's `headRefOid` (compare SHAs — a squash merge fails `merge-base --is-ancestor`); no open PR targets
+  `{head}`. The worktree being the session's CWD is not a failed precondition. Any fails → name it and ask. (Asking
+  for a step the skill already authorizes costs a round trip and reads as indecision.)
+
 Requires `gh` CLI + Jira MCP authenticated, `$GITHUB_ORG` for discovery.
 
 ## Post-Completion

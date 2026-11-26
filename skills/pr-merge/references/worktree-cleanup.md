@@ -1,6 +1,9 @@
 # Terminal worktree cleanup
 
 - Run only inside a linked worktree checkout; skip from repository root.
+- Never ask before removal: a clean status, local `HEAD` equal to the merged PR's `headRefOid`, and no open PR
+  targeting `{head}` together authorize it — including when the worktree is the session's current directory. Ask
+  only when one of them fails, naming which.
 - Capture the current worktree's path before chdir to main (Git refuses to remove the current worktree), then remove
   by that path — never `git wtr "{head}"`, which rebuilds `worktrees/{head}` and misses a directory whose name drifted
   from the branch name:
