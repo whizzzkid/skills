@@ -4,7 +4,7 @@
 > patch-replay for a large draft, or rebase on explicit opt-in — with conflict
 > resolution, re-validation, and remote-history-safe publishing.
 
-**Version:** 2026.11.24-234442
+**Version:** 2026.11.26-180223
 
 ## Invocation
 
@@ -67,6 +67,9 @@ stateDiagram-v2
 - **Behavior-preservation check supplements test passing:** After integration, every removed line is scanned
   for env lookups, fallback chains, rescue clauses, and guards. Tests passing proves new paths work; this
   scan proves old paths weren't silently dropped.
+- **Verification requests measure, never regenerate:** "Confirm nothing broke" re-asserts the last capture run's
+  measured properties read-only. Captures are regenerated only when a measured value changed, and existing evidence
+  is copied aside before any overwriting run.
 - **Dirty tree aborts in auto mode:** The skill requires a clean working tree. Auto mode defaults to abort
   rather than stashing changes on the user's behalf — that mutation is outside the autonomy budget.
 - **Invoked by [`wk-pr-resolve`](../pr-resolve/README.md) Step 2:** Rather than inline merge/rebase logic, [`wk-pr-resolve`](../pr-resolve/README.md) delegates

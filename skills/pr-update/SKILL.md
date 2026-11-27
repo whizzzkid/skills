@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.24-234442"
+  version: "2026.11.26-180223"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -128,6 +128,11 @@ Build + test **after** integration; pre-integration validation does not transfer
   install dependencies before the suite (else a "missing dependency" error masquerades as a regression).
 - Detect the test command from the signals in [`references/ecosystem-detection.md`](references/ecosystem-detection.md)
   (lockfile names, first hit wins, example invocations); run the suite plus type/lint checks if cheap.
+- **"Confirm nothing broke" → measure read-only; never regenerate evidence first.** Re-assert the last capture run's
+  measured properties (sizes, computed styles, state transitions, console errors) on the integrated head without
+  writing files. Regenerate captures only when a measured value changed; copy existing evidence aside before any
+  overwriting run. (A resolution that kept the branch side verbatim — `git diff --quiet "$START_SHA" HEAD -- <file>`
+  rc 0 — is not a visual fix; an interrupted overwrite destroys verified evidence.)
 
 Act on the outcome — take the first that matches:
 
