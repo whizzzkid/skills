@@ -4,8 +4,10 @@ description: >-
   Error-handling code — catch/rescue/except, error returns, raise/throw.
   Forbids silently-swallowed errors (empty catch); requires distinguishing
   operational errors (handle gracefully) from programmer errors (fail fast),
-  and a raise-to-retry path specified and tested via the code's own
-  retry/exhaustion hooks. Auto-invoked on any error path; project linter wins.
+  a raise-to-retry path specified and tested via the code's own
+  retry/exhaustion hooks, and a fail-open promise held by a call-site rescue
+  with a spec that stubs a raise. Auto-invoked on any error path; project
+  linter wins.
 argument-hint: '[scan|check <path>]'
 allowed-tools:
   - Read
@@ -19,7 +21,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.24-234230"
+  version: "2026.11.28-054738"
   internal: false
   model:
     openai: gpt-5.6-luna
@@ -46,6 +48,8 @@ Auto-invoked whenever the agent touches an error path. Trigger contexts:
 - Writes or edits a `catch`/`rescue`/`except` block.
 - Writes or edits an error return.
 - Writes code that raises or throws an exception.
+- Writes a call promising a failure never blocks its caller (fail-open,
+  best-effort, "never blocks the deploy").
 
 Manual: `/wk-workstyle-error-handling scan` (full working tree) · `/wk-workstyle-error-handling check <path>` (one file).
 
@@ -69,6 +73,20 @@ Manual: `/wk-workstyle-error-handling scan` (full working tree) · `/wk-workstyl
      never "retries until it can".
   (An unbranched class falls to the default — a short window, then the dead
   queue — while a raise-only spec stays green.)
+- **A fail-open ("never blocks the caller") promise is held by a rescue at
+  the call site, not by checking the returned result.**
+  1. Wrap the whole dependency interaction — construction, call, result
+     handling — in one rescue of the standard error base (Ruby
+     `StandardError`, Python `Exception`, JS `catch`); log what it caught.
+  2. Never rescue signals or exit (`Exception` in Ruby, `BaseException` in
+     Python) — an interrupt must still stop the process.
+  3. Never rely on the dependency's own internal rescue: a raise from its
+     constructor, or from an API renamed in a later version, escapes it.
+  4. Spec a stubbed *raise* from the dependency next to the returned-failure
+     stub, and assert the caller completes.
+  Inside that wrapper the promise outranks fail-fast for programmer errors.
+  (A result-only check and a result-only stub encode the same assumption;
+  both stay green while one raise aborts the caller.)
 
 ## Apply or Report
 

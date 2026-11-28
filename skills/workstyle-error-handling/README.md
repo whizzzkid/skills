@@ -4,13 +4,13 @@
 > split between operational errors (handle gracefully) and programmer errors
 > (fail fast).
 
-**Version:** `2026.11.24-234230`
+**Version:** `2026.11.28-054738`
 
 ## Invocation
 
 | Mode | Trigger |
 |------|---------|
-| Model-invocable | Automatic whenever the agent touches an error path — a catch/rescue/except block, an error return, or code that raises/throws |
+| Model-invocable | Automatic whenever the agent touches an error path — a catch/rescue/except block, an error return, code that raises/throws, or a fail-open ("never blocks the caller") call |
 | User-invocable | `/wk-workstyle-error-handling scan` — full tree; `/wk-workstyle-error-handling check <path>` — one file |
 
 ## Rules at a Glance
@@ -20,6 +20,9 @@
 - **HARD RULE:** a raise meant to trigger retry / dead-letter / error mapping is defined by the code's own
   class-dispatching hooks — add a branch for the new class, spec the window and exhaustion outcome, and make comments
   state the real window.
+- A fail-open ("never blocks the caller") promise is held by one call-site rescue of the standard error base around
+  construction, call, and result handling — never by result-checking or the dependency's own rescue — and a spec that
+  stubs a raise, not only a returned failure.
 
 ## Noteworthy
 

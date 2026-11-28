@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.28-054140"
+  version: "2026.11.28-054738"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -198,10 +198,10 @@ Cover required paths: **happy** (expected flow), **sad** (failures, invalid inpu
 
 - All tests pass; each commit passes independently. **Local lint before every push** — inspect hook config for every
   pre-push gate. Re-run every gate against final HEAD, not a mid-session snapshot.
-- **"Every path" invariant → termination matrix before the first push.** A fix promising no path leaves X in state Y
-  → list every way the process ends (each deliberate exit code, uncaught exception, signal, external update refused
-  once and twice, crash before vs after the success write) and test each cell before publishing. (Patching path by
-  path draws one new review finding per push.)
+- **Important — "every path" invariant → termination matrix before the first push.** A fix promising no path leaves
+  X in state Y → list every way the process ends (each deliberate exit code, uncaught exception, signal, external
+  update refused once and twice, crash before vs after the success write) and test each cell before publishing.
+  (Patching path by path draws one new review finding per push.)
 - Validate transformations with formerly-failing input. **Fix-symptom match:** verify fix targets exact reported
   symptom.
 - **Important — a fast/narrow check is never the authoritative gate; run the full gate.** Pre-commit subsets and
@@ -273,8 +273,8 @@ open PR on a feature branch → invoke `wk-pr` immediately (commit-to-default pe
   project's issue template, labels, and title convention (bug repro / feature motivation, no solution dump). Link it in
   the PR body with the closing keyword the project uses (`Fixes #<n>`). Issue-first projects → open the issue during
   the pre-flight instead and wait for a maintainer ack if the guide requires one.
-- Invoke `wk-pr` (never raw `gh pr create`) after tests and Phase 3.5/3.6 pass. Each stacked PR independently completes
-  Phases 5→6.5.
+- Invoke `wk-pr` (never raw `gh pr create`) after tests and Phase 3.5/3.6 pass. **Important:** each stacked PR
+  independently completes Phases 5→6.5.
 - **Post-push sync:** `wk-commit` handles PR description sync and stale comment resolution. **HARD RULE:** auto-sync
   drifted artifacts — never ask. After push, code change, or pivot: audit PR title/body, self-review, ticket, docs;
   update same turn. On pivot, resolve stale self-review threads and re-post via `wk-self-review`. Confirm only when
