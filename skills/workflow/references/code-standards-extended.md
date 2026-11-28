@@ -4,6 +4,9 @@ Lower-frequency, mechanical code standards relocated from `SKILL.md` Phase 2 to
 keep the body under its size ceiling. Apply each with the same authority as the
 inline standards; relocation does not lower their priority.
 
+- **Layer responsibility:** side effects in entrypoint layers only. **Two-sided flow survey:** survey caller +
+  callee before designing gates. **Identifier composition:** classify sources by semantic domain before combining
+  into keys.
 - **Bound recursive repository searches:** prefer `git grep` for tracked content.
   Otherwise exclude dependency, distribution, coverage, cache, and generated-output directories before execution.
 - **Confirm example formats before encoding:** treat a version/naming/query

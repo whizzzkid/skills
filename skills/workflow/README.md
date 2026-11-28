@@ -2,7 +2,7 @@
 
 > Master workflow for all development tasks — orchestrates every wk-* skill in prescribed order.
 
-**Version:** `2026.11.26-175051`
+**Version:** `2026.11.28-054140`
 
 ## Invocation
 
@@ -56,6 +56,8 @@ flowchart TD
   test per missing precondition.
 - **A race goes red before it is fixed** — a race/ordering bug is reproduced against the unfixed code first; a green
   reproduction refutes the premise, and the user is asked before any edit.
+- **A claimed gap cites the file** — before saying an artifact (including one the agent wrote) lacks something, the
+  agent greps it that turn and quotes the line, or labels the claim unverified.
 - **Lifecycle-dependent UI goes live early** — a change that leans on framework lifecycle is driven in a real browser
   right after its first wiring commit, and each browser-observed lifecycle step becomes a fake-harness regression test.
 - **Every shared screenshot matches HEAD** — any commit that changes rendered output re-runs one capture script for

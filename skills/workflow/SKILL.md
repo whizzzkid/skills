@@ -16,7 +16,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.26-175051"
+  version: "2026.11.28-054140"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -68,6 +68,8 @@ Execute without asking permission at each step. Take the first that matches:
   offering options** — read Y's interface before claiming "accomplish X via Y". Same for code comments on an external
   tool's behavior (what it checks, passes through, or costs): grep its source or drive it once on a scratch copy;
   check plugin defaults before calling a step cheap or isolated.
+- **Read before asserting a gap** — grep the artifact (your own included) that turn and quote the line, else label
+  the claim unverified. (Session memory of what you wrote is not the file.)
 - **Announce-and-invoke same turn:** a skill counts only when its `Skill` call is in that response. Skill presence and
   phase routing: [`skill-reference`](references/skill-reference.md).
 
@@ -176,8 +178,6 @@ Code standards:
   edit and its verify grep are two. Surface denials; never silently restructure.
 - **CLI flags:** [`verify-cli-flags`](references/verify-cli-flags.md). **Platform-API traps:**
   [`platform-api-traps`](references/platform-api-traps.md).
-- **Layer responsibility:** side effects in entrypoint layers only. **Two-sided flow survey:** survey caller + callee
-  before designing gates. **Identifier composition:** classify sources by semantic domain before combining into keys.
 - **HARD RULE — reuse existing config/secret resolution; never invent parallel overrides.** User names an existing
   convention → adopt it. ([`reuse-existing-mechanism`](references/reuse-existing-mechanism.md))
 
