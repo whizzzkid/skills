@@ -64,6 +64,10 @@ prerequisite to today's overwrite, not a separate required invocation.
   - Every brief states each window as explicit half-open bounds in the user's
     timezone: one per day from the closed day up to today (closed day, each gap
     day, today). Parts B and C query only the past-day windows, part A only today.
+  - Compute every epoch bound in the shell from the ISO date and zone
+    (`TZ=<zone> date -j -f '%Y-%m-%d %H:%M:%S' '<date> 00:00:00' +%s`) and paste
+    the printed value; tell each agent to check one bound against a known
+    message timestamp. (A hand-typed bound landed an hour off.)
   - Three-part return: **A** open now (today's `start`), **B** per-day evidence,
     one block per past-day window (closed day → snapshot + brag log; latest day
     → Yesterday), **C** carry-over status (both pages' carry-forward) — each agent gets only its domain's
