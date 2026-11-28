@@ -33,7 +33,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.11.28-052330"
+  version: "2026.11.28-054007"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -47,8 +47,9 @@ metadata:
 
 ## Pre-Flight Checks
 
-- **CLI on PATH (macOS):** `command -v docker >/dev/null 2>&1` fails → resolve below before any retry. Prepend
-  `PATH="/opt/homebrew/bin:$PATH"` in Bash invocations.
+- **CLI on PATH (macOS):** `command -v docker >/dev/null 2>&1` fails, or a wrapping tool reports `spawn docker ENOENT`
+  (even with the VM running) → resolve below before any retry. Prepend `PATH="/opt/homebrew/bin:$PATH"` in Bash
+  invocations.
   - **Installed but unlinked → locate the keg before any install.** `brew list docker` succeeds while only sibling
     helpers are linked → list the keg bin (`ls "$(brew --prefix docker)/bin"`). Prefer the non-mutating workaround:
     prefix it for the one command (`PATH="$(brew --prefix docker)/bin:$PATH" <cmd>`) and tell the user
