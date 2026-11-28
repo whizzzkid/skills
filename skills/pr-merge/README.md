@@ -5,7 +5,7 @@
 > any follow-ups and deferred action items. Merge consumes the completion
 > gate's adversarial-review clearance and never dispatches another review.
 
-**Version:** `2026.11.26-163507`
+**Version:** `2026.11.28-053200`
 
 ## Invocation
 
@@ -104,7 +104,8 @@ All five must pass; any failure blocks and reports what needs fixing:
   without a cleanup preference still prompts when the repository default is off.
 - **Worktree removal needs no confirmation** — a clean status, local HEAD equal
   to the merged PR head SHA, and no open PR targeting the branch authorize it,
-  even when the worktree is the session's current directory.
+  even when the worktree is the session's current directory. In that case removal
+  and branch delete run as one sequenced call, never in parallel.
 - **Ticket detection ignores outbound metadata** — strip only the terminal
   canonical [`wk-gh`](../gh/README.md) footer, then reject alphanumeric,
   underscore, and percent-sign adjacency so encoded fragments, timestamps,

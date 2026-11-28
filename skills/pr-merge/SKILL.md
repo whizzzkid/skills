@@ -28,7 +28,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.26-163507"
+  version: "2026.11.28-053200"
   internal: false
   model:
     claude: claude-sonnet-4-6
@@ -169,6 +169,10 @@ for open children before branch deletion. Removal: [`references/worktree-cleanup
   merged PR's `headRefOid` (compare SHAs — a squash merge fails `merge-base --is-ancestor`); no open PR targets
   `{head}`. The worktree being the session's CWD is not a failed precondition. Any fails → name it and ask. (Asking
   for a step the skill already authorizes costs a round trip and reads as indecision.)
+- **Worktree is the session CWD → run removal and branch delete as one sequenced call, never in parallel.** Use the
+  reference's single `cd "$main" && git worktree remove … && git branch -D …` chain; every later call starts with
+  `cd "$main"`. (Every Bash call starts in the session CWD; once removal deletes it, concurrent and later calls fail
+  to start whatever `-C` path they pass.)
 
 Requires `gh` CLI + Jira MCP authenticated, `$GITHUB_ORG` for discovery.
 

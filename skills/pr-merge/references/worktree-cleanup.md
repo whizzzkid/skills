@@ -14,6 +14,8 @@
   cd "$main" && git worktree remove "$wt" && git branch -D "{head}"
   ```
 
+- Send that chain as one Bash call, never split into parallel calls; after it, start every call with `cd "$main"`.
+  The removed worktree was the session CWD, so any call launched in parallel or later without the `cd` fails to start.
 - `git branch -D` force-deletes the local branch; the PR is already confirmed merged, so a branch-merged safety check
   is redundant.
 - Dirty failure → inspect `git status --short`; delete only recognizable test-runner state, `tmp/`, or coverage
