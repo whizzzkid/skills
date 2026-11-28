@@ -27,7 +27,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.26-180223"
+  version: "2026.11.28-070101"
   internal: false
   model:
     openai: gpt-5.6-terra
@@ -87,6 +87,9 @@ exit early, already up to date. Then, before Stage 2:
 **HARD RULE — merge is the default.** `< 5` ahead or ready-for-review PR → merge. `≥ 5` ahead + draft → patch-replay.
 Independently-merged parent → rebase `--onto`. User asks for linear history → rebase (explicit opt-in only). Full table
 with rationale: [`references/strategy-table.md`](references/strategy-table.md).
+
+- **`gh stack` member (`gh stack view` lists the branch) → propagate via `wk-pr`'s stack rules, not a merge.** The
+  tool's cascade rebase discards merge commits, so merge-based local history goes non-fast-forward at the next sync.
 
 ## Stage 3a: Merge strategy (default)
 
@@ -156,11 +159,18 @@ spec blocks. Surface any removed behavior with no replacement; do not push until
 
 ## Stage 6: Push and sync PR description
 
-Merge strategy → normal push. Rebase/patch-replay → `--force-with-lease`. Non-fast-forward after local integration →
-fetch, inspect, merge, re-validate.
+Merge strategy → normal push. Rebase/patch-replay → `--force-with-lease`. Non-fast-forward → capture the upstream SHA,
+fetch; still an ancestor of the remote and `git cherry @{u} HEAD` prints no `-` line → inspect, merge, re-validate;
+else the remote was rewritten → rule below.
 **HARD RULE:** after push, sync PR title/body via `wk-commit` PR Sync.
 **HARD RULE:** preserve human-ticked test-plan checkboxes verbatim during the sync.
 Push logic, remote-advance reconciliation, PR sync rules: [`references/push-and-sync.md`](references/push-and-sync.md).
+- **Remote rewritten under unpushed commits → replay only those commits onto the live tip; never merge, never
+  force-push.** (Observed: stack tooling rewrites a layer after its parent merges.) Cherry-pick
+  `<old-upstream>..HEAD` onto the live tip, push as a fast-forward, repoint the local branch.
+  `git diff --quiet <old-upstream> <live-tip>` non-zero → re-run Stage 5 before that push. Merge commit in the range or
+  a cherry-pick conflict → stop and surface. (A merge reinstates the commits the rewrite discarded; a force-push
+  discards the rewrite.) Commands: [`references/push-and-sync.md`](references/push-and-sync.md).
 - **Re-check after CI goes terminal, before any merge-ready report.** Watch CI on the integrated head in the background,
   then re-query `gh pr view --json state,mergeStateStatus`: `MERGED` → hand off to `wk-pr-merge`'s post-merge steps,
   never integrate again; `DIRTY`/`BEHIND` → loop from Stage 1 once more. (A busy base moves while CI runs, and the user

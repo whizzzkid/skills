@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.11.28-060721`
+**Version:** `2026.11.28-070101`
 
 ## Invocation
 
@@ -81,7 +81,8 @@ flowchart TD
   extension (when installed and the repo is enabled for the stacks preview), delegating branch creation, base
   chaining, linked submission, and cascading conflict recovery. Existing stacks
   are snapshotted, rebased, validated, and pushed as one unit; independent layer
-  rebases are forbidden.
+  rebases are forbidden. Parent changes propagate through `gh stack sync`, never a merge: the tool linearizes
+  layers, and a lower-layer merge can rewrite and retarget the remaining ones.
 - **Sibling PRs get an overlap check:** when one session opens two or more PRs, their changed-file sets are
   intersected before any are called independent. Overlap puts the recommended merge order and expected conflict files
   in each PR body and the hand-off, with an offer to update the later PR once the earlier merges. Overlap at the same

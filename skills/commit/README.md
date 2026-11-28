@@ -2,7 +2,7 @@
 
 > Use when creating git commits or pushing code. Enforces conventional commits with emoji, commit signing, and safe push behavior.
 
-**Version:** `2026.11.25-185307`
+**Version:** `2026.11.28-070101`
 
 ## Invocation
 
@@ -23,6 +23,9 @@ flowchart TD
     F -->|Yes| G[mise exec -- git push]
     F -->|No| H[git push]
     G & H -->|Rejected| I[Report rejection<br/>Ask how to proceed]
+    G & H -->|Non-fast-forward| Q{Old upstream still<br/>an ancestor?}
+    Q -->|Yes| R[git pull --no-rebase<br/>then regular push]
+    Q -->|No: remote rewritten| S[Replay unpushed commits<br/>per wk-pr-update]
     G & H -->|SSH agent refused| P["ssh-add -l, pin the local key<br/>via GIT_SSH_COMMAND, else ask user<br/>to unlock or restart agent"]
     G & H -->|Success| J{Open PR exists?}
     J -->|No| K[Done]
@@ -36,6 +39,10 @@ flowchart TD
 
 - **Push is part of the commit sequence**, not a separate step — every commit is followed by a push unless the user has explicitly said not to. Silent skip is a violation, and so is ending the turn with push or PR creation listed as "next". The first push of a brand-new branch with no open PR pushes without asking whenever the session is authorized — any implementation directive under [`wk-workflow`](../workflow/README.md)'s mandated PR lifecycle, a repo mandate, or an explicit publish prompt, in or out of auto mode — and confirms only in exploratory or analysis-only sessions, to avoid orphaned remote branches.
 - **Exactly one emoji per commit subject** — classifiers beat primary action emojis (`📌` beats `🔧` for a pin), and `🤖` is the canonical fallback for agent-authored or mixed-bag commits rather than stacking multiple emojis.
+- **A non-fast-forward push is classified before it is merged** — the old upstream still being an ancestor of the
+  fetched remote means it only advanced (merge it in); otherwise the remote was rewritten, e.g. by stack tooling after
+  a parent layer merged, and only the unpushed commits are replayed per
+  [`wk-pr-update`](../pr-update/README.md) — never a merge that reinstates discarded history, never a force-push.
 - **Never pipe a gate before `&& git commit`** — a pipeline's status is its last stage's, so `lint | tail -1 && git commit` commits on a failing lint; capture the gate's `$?` first.
 - **Dependent commit chains fail fast** — every grouped stage/verify/commit shell starts with `set -euo pipefail`,
   so an early failure cannot be hidden by later read-only output.

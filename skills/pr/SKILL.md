@@ -37,7 +37,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.28-060721"
+  version: "2026.11.28-070101"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -148,6 +148,9 @@ EOF
     `gh stack rebase` → verify ancestry + tests → `gh stack push` → verify every remote head, current-head CI run,
     thread, and body-cited commit.
   - **Read merge order from `baseRefName`, never `part-N` labels** — labels drift after re-parent.
+  - **`gh stack` stack → propagate parent changes with `gh stack sync`, never a merge.** Stack tooling linearizes
+    layers and can rewrite and retarget the remaining layers after a lower one merges, discarding merge commits. Push
+    rejected after such a rewrite → `wk-pr-update` Stage 6 replay rule.
   - **New layer on an open PR → branch from its head, never rebase onto it:** `git switch -c <new> origin/<pr-branch>`,
     then `git branch --unset-upstream` (a bare `git push` would hit the parent's branch). (A rebase replays every
     commit missing from the target — including base commits the parent lacks — into the stacked diff.)
@@ -162,8 +165,8 @@ EOF
   shared registries and config lists conflict even when behavior is disjoint.)
   - **Same insertion anchor (not merely the same file) → offer stacking the later PR on the earlier one** as the
     alternative: branch from its head per the new-layer rule, set `baseRefName` to the parent branch, and merge the
-    parent in once when it changes. (A same-anchor conflict is certain; stacking keeps each diff scoped and the final
-    merge one-sided.)
+    parent in once when it changes (`gh stack` stack → the sync rule above). (A same-anchor conflict is certain;
+    stacking keeps each diff scoped and the final merge one-sided.)
 - **Screenshots need a sanctioned route — ask, never improvise an upload.** `gh` cannot attach images. Plan or user
   asks for screenshots → ask the user up front how to attach them (user drag-drop, committed docs asset, approved
   host); no answer → list local screenshot paths in the body and hand attachment to the user. (Ad-hoc uploads to a

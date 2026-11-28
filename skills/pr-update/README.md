@@ -4,7 +4,7 @@
 > patch-replay for a large draft, or rebase on explicit opt-in — with conflict
 > resolution, re-validation, and remote-history-safe publishing.
 
-**Version:** 2026.11.26-180223
+**Version:** 2026.11.28-070101
 
 ## Invocation
 
@@ -38,6 +38,9 @@ stateDiagram-v2
     ReValidate --> Push: tests pass
     ReValidate --> Reset: regression + user aborts
     Push --> MergeRemote: non-fast-forward after merge
+    Push --> Replay: remote rewritten
+    Replay --> Push: tree unchanged
+    Replay --> ReValidate: tree changed
     MergeRemote --> ConflictLoop: conflicts
     MergeRemote --> ReValidate: merged cleanly
     Push --> SyncPR: success
@@ -58,6 +61,11 @@ stateDiagram-v2
 - **A remote advance after the local merge is integrated, not overwritten:**
   Fetch and inspect the remote-only commits, merge the fetched SHA, rerun the
   full validation stage, then retry a normal push.
+- **A rewritten remote gets a replay, not a merge:** when the old upstream is no
+  longer an ancestor of the fetched remote (stack tooling rewrote the layer
+  after its parent merged), only the unpushed commits are cherry-picked onto
+  the live tip and pushed as a fast-forward; a `gh stack` layer propagates
+  base changes through `gh stack sync` rather than a merge.
 - **Merge state is re-checked after CI, not assumed:** once CI on the integrated head is terminal, the PR's state
   and merge status are re-read. A busy base can make it conflicted again, and a PR merged mid-watch hands off to
   [`wk-pr-merge`](../pr-merge/README.md) instead of being integrated again.

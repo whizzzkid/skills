@@ -30,6 +30,44 @@ then align the PR with the pushed state.
   it. Conflict → Stage 4. Clean merge or resolved conflict → rerun all of Stage
   5, then retry a normal `git push`; pre-remote validation does not carry
   forward. Never switch to `--force-with-lease` to bypass the remote commits.
+  Applies only while the old upstream is still an ancestor of the fetched
+  remote and `git cherry "@{u}" HEAD` prints no `-` line; otherwise the remote
+  was rewritten → next bullet.
+- **Remote rewritten under unpushed local commits → replay only those commits
+  onto the live tip.** Stack tooling can linearize a layer onto the default
+  branch and retarget its PR after a lower layer merges; local merge commits
+  vanish and the next push is rejected. Capture the old upstream before
+  fetching, then detect and replay:
+
+  ```bash
+  OLD_UPSTREAM=$(git rev-parse "@{u}")
+  git fetch origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+  LIVE_TIP=$(git rev-parse "refs/remotes/origin/$BRANCH")
+  git merge-base --is-ancestor "$OLD_UPSTREAM" "$LIVE_TIP"  # rc 1 = rewritten
+  git cherry "$LIVE_TIP" HEAD                               # '-' line = rewritten
+  git diff --quiet "$OLD_UPSTREAM" "$LIVE_TIP"              # rc 0 = history-only
+  git rev-list --merges "$OLD_UPSTREAM..HEAD"               # non-empty → stop
+  git switch --detach "$LIVE_TIP"
+  git cherry-pick "$OLD_UPSTREAM..$BRANCH"
+  git switch -C "$BRANCH"                                   # repoint local branch
+  git push                                                  # fast-forward
+  ```
+
+  - Already fetched since the rewrite → `@{u}` is the live tip and the
+    ancestor test passes vacuously; the `git cherry` `-` line still flags it.
+    Take the old upstream from the tracking ref's reflog
+    (`git rev-parse "@{u}@{1}"`) or the SHA the last push reported.
+  - Tree diff non-zero → the rewrite also changed content: rerun all of
+    Stage 5 after the cherry-pick, before the push.
+  - Cherry-pick conflict or a merge commit in the range → `git cherry-pick
+    --abort`, `git switch "$BRANCH"`, stop and surface.
+  - Never merge the stale local history back in (reinstates the commits the
+    rewrite discarded, duplicating merged layers) and never force-push over the
+    rewritten branch (discards the tool's rebase and retarget).
+  - Branch is a `gh stack` layer → land the replay first, then propagate later
+    parent changes with `gh stack sync` per `wk-pr`'s stacking rules, not a
+    merge (its cascade rebase and `--force-with-lease` push discard merge
+    commits).
 - **Rebase or patch-replay strategy → rewritten history.** Push with a lease:
 
   ```bash

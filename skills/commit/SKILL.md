@@ -25,7 +25,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.25-185307"
+  version: "2026.11.28-070101"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -170,8 +170,13 @@ it produces is agent-created.
   - A userinfo URL (`https://<user>@<host>/…`) dodges the rewrite, but the `gh` credential helper answers nothing for
     a username it does not own.
 - Regular push rejected → tell the user and ask how to proceed; never automatically force-push.
-- Push rejected non-fast-forward (remote diverged) → default to `git pull --no-rebase` (merge), then retry the regular
-  push. Rebase only when the user explicitly asks for clean linear history.
+- Push rejected non-fast-forward (remote diverged) → capture `OLD=$(git rev-parse @{u})`, fetch, then test
+  `git merge-base --is-ancestor "$OLD" @{u}` and `git cherry @{u} HEAD`:
+  - rc 0 and no `-` line (remote only advanced) → default to `git pull --no-rebase` (merge), then retry the regular
+    push. Rebase only when the user explicitly asks for clean linear history.
+  - rc 1, or a `-` line (a local commit sits upstream under a new SHA) → remote rewritten (e.g. stack tooling rebased
+    the layer after a parent merged): never merge, never force-push; replay only the unpushed commits per
+    `wk-pr-update` Stage 6. (A merge reinstates the history the rewrite discarded.)
 - Force-push classifier-blocked after an authorized rewrite → surface the exact `git push --force-with-lease` (never
   `--force`) for one-time approval in the same response; the denial needs approval, not a hard stop. Declined → push the
   rewritten commits under a **new branch name** and repoint the PR. Never `--no-verify` or otherwise bypass the block.

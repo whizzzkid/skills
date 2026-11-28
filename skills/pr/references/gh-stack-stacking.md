@@ -41,6 +41,17 @@ gh extension list | grep -q 'github/gh-stack' \
 - The extension does NOT set the title's stack label — still append the
   `[<feature>-part-N/M]` suffix (see below) to every PR title in the stack.
 
+## After a lower layer merges
+
+- Merging lower layers can rewrite each remaining layer's remote branch as a
+  linear rebase onto the default branch and retarget its PR there. Local
+  merge commits on that layer vanish; the next regular push is rejected
+  non-fast-forward.
+- Unpushed local commits on the pre-rewrite tip → replay only those commits
+  onto the live tip per `wk-pr-update`'s push reference (never merge the stale
+  history back in, never force-push over the rewrite).
+- Propagate later parent changes with `gh stack sync`, not a merge.
+
 ## Existing-stack conflict recovery
 
 1. Import the remote stack and require a clean worktree:
