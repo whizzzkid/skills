@@ -38,7 +38,7 @@ license: MIT
 group: pull-request
 metadata:
   author: whizzzkid
-  version: "2026.11.23-194000"
+  version: "2026.11.28-055357"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-flash
@@ -118,7 +118,7 @@ PR title/body purpose section; never hand-transcribe; verify hunk boundaries if 
 objective, naming-aware, and diff-sensitive, and brief it with every stance in
 [`references/subagent-stances.md`](references/subagent-stances.md) (coverage, narrate-why, refactor, relocation,
 introduction-claim, runtime-behavior, absence-claim, intent, design-invariant, artifact-provenance,
-auth-boundary, transaction-state). `category:` values:
+auth-boundary, transaction-state, fail-safe-policy). `category:` values:
 [`references/hunt-categories.md`](references/hunt-categories.md).
 
 - **One skeptic per blocker.** After the subagent returns, dispatch a fresh skeptic per `blocker` that tries to refute
@@ -134,6 +134,19 @@ auth-boundary, transaction-state). `category:` values:
   subagent trace every open-transaction and savepoint state on it, and which caller owns the connection at that moment.
   (A framework disconnect resets transaction state, silently discarding work a rescuing savepoint still believes
   pending; happy-path recovery proves nothing about it.)
+
+- **Fail-safe / default-on-error policy → probe it past its entry point.** A diff promising a safe outcome when a
+  dependency fails (fail-open, fail-closed, "unreadable reads as off") must have the subagent check each policy on:
+  1. **Raise path:** the dependency raising, not only returning failure — hold the call site to
+     `wk-workstyle-error-handling`'s fail-open call-site rescue rule; do not restate it here.
+  2. **Repeated call:** a memoized/cached result caches failure as deliberately as success; success-only memoization
+     re-runs the failure and re-reports it on every read.
+  3. **Later call site:** every later check in the same unit of work (job, request) inherits the earlier decision, not
+     a fresh default; a mid-job "unreadable → off" drops work the start check admitted.
+  4. **Noise filter:** a trace/log/poll filter keeps errored items; dropping them hides a failing dependency's only
+     signal.
+
+  (A review that checked each policy only at its entry point cleared a design a bot then broke on three of these.)
 
 ## Step 4: Findings Format and Severity
 ```

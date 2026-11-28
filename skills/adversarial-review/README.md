@@ -2,7 +2,7 @@
 
 > Adversarial review of the current branch before it merges — **exactly one run per change**, at the completion gate (plan executed, PR published and ready). Every other skill reads the recorded verdict instead of dispatching.
 
-**Version:** `2026.11.23-194000`
+**Version:** `2026.11.28-055357`
 
 ## Invocation
 
@@ -64,7 +64,7 @@ flowchart TD
   Fix rounds validate recorded findings without re-running sweeps or a subagent.
 - **[`wk-pr-merge`](../pr-merge/README.md) is record-only** — missing clearance
   or genuinely new work returns to the completion gate; merge never dispatches.
-- **Fresh adversarial subagent** — the diff is piped directly, never hand-transcribed; the subagent stays coverage-aware, refactor-aware, relocation-aware, and introduction-claim-aware, auth-boundary-aware (background fetches on public pages are re-checked against a moved auth boundary in a no-session browser), and transaction-state-aware (a change or fix sketch that disconnects, resets, or swaps a connection is traced through every open transaction and savepoint). The brief states only environment facts proven by a command, with a
+- **Fresh adversarial subagent** — the diff is piped directly, never hand-transcribed; the subagent stays coverage-aware, refactor-aware, relocation-aware, and introduction-claim-aware, auth-boundary-aware (background fetches on public pages are re-checked against a moved auth boundary in a no-session browser), and transaction-state-aware (a change or fix sketch that disconnects, resets, or swaps a connection is traced through every open transaction and savepoint), and fail-safe-policy-aware (a promised safe outcome on dependency failure is checked on its raise path, a repeated call, every later call site in the same unit of work, and any noise filter — not only at its entry point). The brief states only environment facts proven by a command, with a
   fetch command for anything missing.
 - **Playground validation is mandatory** for any runtime-behavior claim — findings that cannot be reproduced in
   `.review-playground/` are downgraded from `blocker` to `question`. Every local run is scoped to the changed examples

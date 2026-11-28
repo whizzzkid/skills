@@ -39,3 +39,8 @@ naming-aware, and diff-sensitive.
   only the recovery path: open transaction, nested savepoint, and connection checked out by another caller. Hold the
   review's own fix sketches to the same trace; a proposed "disconnect on failure" that fires mid-transaction swaps a
   race for silent data loss.
+- **Fail-safe-policy-aware:** a promised safe outcome on dependency failure (fail-open, fail-closed, default-on-error)
+  is checked beyond its entry point — on a raised error (not only a returned failure), on a repeated call (is failure
+  cached as deliberately as success?), at every later call site in the same unit of work (does it inherit the earlier
+  decision or a fresh default?), and through any noise filter (are errored items kept?). One entry-point check clears
+  a design that breaks on each of the others.
