@@ -33,7 +33,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.11.24-185522"
+  version: "2026.11.28-052330"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -47,8 +47,13 @@ metadata:
 
 ## Pre-Flight Checks
 
-- **CLI on PATH (macOS):** `command -v docker >/dev/null 2>&1 || brew link docker`
-  Prepend `PATH="/opt/homebrew/bin:$PATH"` in Bash invocations.
+- **CLI on PATH (macOS):** `command -v docker >/dev/null 2>&1` fails → resolve below before any retry. Prepend
+  `PATH="/opt/homebrew/bin:$PATH"` in Bash invocations.
+  - **Installed but unlinked → locate the keg before any install.** `brew list docker` succeeds while only sibling
+    helpers are linked → list the keg bin (`ls "$(brew --prefix docker)/bin"`). Prefer the non-mutating workaround:
+    prefix it for the one command (`PATH="$(brew --prefix docker)/bin:$PATH" <cmd>`) and tell the user
+    `brew link docker` is the permanent fix. Never reinstall a formula the package manager reports installed. (The
+    binary is present; only the symlink is missing.)
   - **CLI absent is never a daemon fault.** Fix the CLI before any daemon check or runtime start (`docker info` fails
     the same way for both; Colima refuses to start without the CLI).
   - **Link conflict** (`brew link` fails `Could not symlink … belonging to <other formula>`) → `brew list docker` to
