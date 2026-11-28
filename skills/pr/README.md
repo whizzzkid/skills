@@ -3,7 +3,7 @@
 > Create and manage GitHub pull requests — draft creation, stacking, CI polling, self-review, and marking
 > ready — with adversarial review gating every transition.
 
-**Version:** `2026.11.26-173456`
+**Version:** `2026.11.28-053400`
 
 ## Invocation
 
@@ -82,7 +82,8 @@ flowchart TD
   rebases are forbidden.
 - **Sibling PRs get an overlap check:** when one session opens two or more PRs, their changed-file sets are
   intersected before any are called independent. Overlap puts the recommended merge order and expected conflict files
-  in each PR body and the hand-off, with an offer to update the later PR once the earlier merges.
+  in each PR body and the hand-off, with an offer to update the later PR once the earlier merges. Overlap at the same
+  insertion anchor adds the alternative of stacking the later PR on the earlier one.
 - **Screenshots are never improvised uploads:** when screenshots are requested the skill asks for an approved
   attachment route up front, or lists local paths in the body and hands attachment to the user.
 - **Source plan is linked:** Step 2 pre-flights `docs/plans/` for the implementation plan the work derives

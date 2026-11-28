@@ -37,7 +37,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.26-173456"
+  version: "2026.11.28-053400"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -156,6 +156,10 @@ EOF
   recommended merge order and the expected conflict files in each PR body and the hand-off; offer to update the later
   PR via `wk-pr-update` right after the earlier merges. (Independence is a file-overlap verdict, not a behavioral one:
   shared registries and config lists conflict even when behavior is disjoint.)
+  - **Same insertion anchor (not merely the same file) → offer stacking the later PR on the earlier one** as the
+    alternative: branch from its head per the new-layer rule, set `baseRefName` to the parent branch, and merge the
+    parent in once when it changes. (A same-anchor conflict is certain; stacking keeps each diff scoped and the final
+    merge one-sided.)
 - **Screenshots need a sanctioned route — ask, never improvise an upload.** `gh` cannot attach images. Plan or user
   asks for screenshots → ask the user up front how to attach them (user drag-drop, committed docs asset, approved
   host); no answer → list local screenshot paths in the body and hand attachment to the user. (Ad-hoc uploads to a
