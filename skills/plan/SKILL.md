@@ -24,7 +24,7 @@ license: MIT
 group: workflows
 metadata:
   author: whizzzkid
-  version: "2026.11.23-191200"
+  version: "2026.11.28-060721"
   model:
     openai: gpt-5.6-sol
     google: gemini-2.5-pro
@@ -105,7 +105,9 @@ asked; Rule of Three); **unrequested hardening/breadth** (guards for out-of-scop
 Surviving → one-line rationale; otherwise drop; uncertain → `[HUMAN-IN-LOOP]` with simplest alternative.
 
 - **Secret-ownership probe:** separate consumption from provisioning. Manual → operational prerequisite. Unknown →
-  `[HUMAN-IN-LOOP]`.
+  `[HUMAN-IN-LOOP]`. Name the platform's current secret-management surface before quoting a set-secret command; a
+  CLI copied from a generator doc or README is unverified until checked against current practice — unconfirmed →
+  ask. (Secret tooling migrates; a stale doc command sends the operator down a retired path.)
 - **Search-scope boundary:** stay inside project root. Never `find /` or `grep -r /`.
 
 ## Step 3: Draft the Plan

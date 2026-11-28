@@ -2,7 +2,7 @@
 
 > Use when planning any non-trivial task — grills for ambiguities, researches the codebase in parallel, validates from multiple personas, and produces an explicitly-numbered, agent-parallelizable plan ready for [wk-workflow](../workflow/README.md) execution.
 
-**Version:** `2026.11.23-191200`
+**Version:** `2026.11.28-060721`
 
 ## Invocation
 
@@ -78,7 +78,9 @@ Run these probes during research and validation:
 - **Tool-swap flag-parity probe** — verify replacement tool defaults and flags.
 - **Producer-audit probe** — audit upstream producers before switching from named-file lookup to directory scan.
 - **Secret-ownership probe** — establish each runtime secret's provisioning
-  owner and mode before assigning infrastructure or cross-repository work.
+  owner and mode before assigning infrastructure or cross-repository work, and
+  name the platform's current secret-management surface (or ask) before quoting
+  a set-secret command from a doc.
 
 ## Noteworthy
 

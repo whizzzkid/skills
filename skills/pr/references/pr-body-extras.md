@@ -44,3 +44,4 @@ Detect a prod-facing behavior change at composition time — the diff touches ou
 
 - Include a `## Rollout` note proactively: flag/canary/staged vs. plain release, backward-compatibility, and rollback shape.
 - Even a one-line "additive + backward-compatible, ships with the normal release, revert to roll back" satisfies a description-check bot and avoids a reactive post-create edit.
+- Stacked layer → scope the note to this merge: what it makes live and the prerequisites its code reads, never the whole stack's go-live sequence (see `SKILL.md` Step 2 → Stacking).

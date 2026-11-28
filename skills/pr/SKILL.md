@@ -37,7 +37,7 @@ env-vars:
   - WK_SKILLS_EMPLOYEE_EMAIL
 metadata:
   author: whizzzkid
-  version: "2026.11.28-053400"
+  version: "2026.11.28-060721"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -151,6 +151,10 @@ EOF
   - **New layer on an open PR → branch from its head, never rebase onto it:** `git switch -c <new> origin/<pr-branch>`,
     then `git branch --unset-upstream` (a bare `git push` would hit the parent's branch). (A rebase replays every
     commit missing from the target — including base commits the parent lacks — into the stacked diff.)
+  - **Go-live steps for a stack → derive them per merge from each layer's diff.** List what each merge makes live
+    (code path wired, flag read, job scheduled); attach each prerequisite (flag rule, secret, config, migration) to
+    the first merge whose code reads it. Secrets → `wk-plan`'s secret-ownership probe. (Early layers often only
+    initialize a dependency; ordering steps as if the stack lands at once misstates what each merge exposes.)
 - **Sibling PRs from one session → intersect changed-file sets before calling them independent.** Two or more PRs
   opened this session → intersect each one's `git diff --name-only "origin/<base>...<head>"`. Overlap → state the
   recommended merge order and the expected conflict files in each PR body and the hand-off; offer to update the later
