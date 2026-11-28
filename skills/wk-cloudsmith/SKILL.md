@@ -8,7 +8,7 @@ license: MIT
 group: tools
 metadata:
   author: whizzzkid
-  version: "2026.10.09-184159"
+  version: "2026.11.28-053819"
   model:
     openai: gpt-5.6-terra
 ---
@@ -77,6 +77,8 @@ container never receives it and the script falls back to the default.
 ## Bundler credentials for a Cloudsmith gem source
 
 Bundler ignores `CLOUDSMITH_API_KEY`; it reads credentials per gem-source **hostname**, so derive the variable name.
+The export below is for contexts handed a minted key (CI, a manually started container); a host auth failure takes the
+last bullet instead.
 
 - Name: the source hostname, periods → two underscores, uppercased, `BUNDLE_`-prefixed (`dl.cloudsmith.io` →
   `BUNDLE_DL__CLOUDSMITH__IO`). Value: `USERNAME:PASSWORD`, username the literal `token`:
@@ -89,6 +91,12 @@ Bundler ignores `CLOUDSMITH_API_KEY`; it reads credentials per gem-source **host
   variable.
 - A **manually started** container does not inherit the project's provisioning export, so `bundle install` 401s there
   while project tooling works: read that script for the exact name rather than reconstructing it.
+- **Host `bundle install` auth failure (`Bad username or password`) → run the setup tool's Bundler token group; never
+  export a personal API key as a `BUNDLE_*` override.** Setup tools split registry auth into a CLI-login group and
+  per-package-manager entitlement-token groups (`<registry>-bundler`, `-npm`, `-pip`, …); only the latter writes
+  Bundler credentials. List the doctor groups, run the Bundler token group then the install group, and confirm the
+  user Bundler config's mtime moved. (A passing login group that leaves that file untouched fixed nothing; a personal
+  key masks the unprovisioned token.)
 
 ## Org and repo naming
 

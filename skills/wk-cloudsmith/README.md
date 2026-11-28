@@ -2,7 +2,7 @@
 
 Working with the Cloudsmith package registry — upload, query, and auth patterns for raw packages.
 
-**Version:** `2026.10.09-184159`
+**Version:** `2026.11.28-053819`
 
 ## Invocation
 
@@ -18,6 +18,8 @@ Working with the Cloudsmith package registry — upload, query, and auth pattern
 - **Error body capture**: use `--fail-with-body` (curl 7.76+), not `-f`, so the response body is written on 4xx/5xx.
 - **DRY_RUN guard**: when `CLOUDSMITH_API_KEY` is absent, skip and exit 0.
 - **Tags**: comma-separated string, not an array.
+- **Host Bundler auth failure**: run the setup tool's Bundler entitlement-token group, then the install group; never
+  export a personal API key as a `BUNDLE_*` override. The CLI-login group does not write Bundler credentials.
 
 ## Integration Points
 
