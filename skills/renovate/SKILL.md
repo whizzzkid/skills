@@ -30,7 +30,7 @@ allowed-tools:
   - "mcp__claude_ai_Github-*__*"
 metadata:
   author: whizzzkid
-  version: "2026.11.20-201034"
+  version: "2026.11.28-052600"
   model:
     openai: gpt-5.6-terra
     google: gemini-2.5-flash
@@ -100,6 +100,9 @@ Branch name: `dependabot/combined-updates`, or `dependabot/combined-updates-<YYY
   - Diff the lockfile vs base: only the named packages and companions their exact pins require may move (versions or
     new platform entries). Report each transitive bump Dependabot carried that the scoped resolve does not need, and
     leave it for a later run.
+  - Bundler: drop unsuffixed native-gem entries (`<gem> (x.y.z)` with no platform) when `PLATFORMS` names only
+    arch/OS triples that already carry precompiled entries. (Dependabot resolves on the generic `ruby` platform; a
+    scoped re-resolve never adds them.)
   - Why: a grouped PR's lockfile can carry transitive majors and platform entries its title and body never name, and
     the Step 1 confirmation covers only the named bumps; Step 4's audit catches them only after they landed.
 - Regenerating inside a container (`devcontainer exec`, `docker compose exec`) → reproduce the provisioning script's
@@ -135,6 +138,11 @@ Detect the package manager from repo root:
 ## Step 4: Verify the Combined State
 
 - Run the install command for the detected package manager to confirm the lockfile is consistent.
+- **Regenerate vendored copies a bump invalidates.** Per bumped package: read the original Dependabot PR's failing CI
+  log first (it names the needed regeneration), then grep the repo for vendored copies (`vendor/<package>` dirs, files
+  whose header names it). Found → run the package's own init/regenerate command, confirm its validate command passes,
+  and commit the output with the bump. (Dependabot rewrites only the lockfile; a validator that compares a vendored
+  copy to the installed version turns CI red.)
 - **Build and test gate the PR.** Run the repo's build and test commands (`npm run build` + `npm test`,
   `bundle exec rake`, `cargo build` + `cargo test`). Red → bisect by dropping bumps one at a time to name the breaking
   upgrade; fix it or exclude that PR (it stays open, no `Closes` line), then rerun until green.
@@ -173,8 +181,8 @@ Detect the package manager from repo root:
 
 ## Step 5: Create the Combined PR
 
-Push the branch, then open the PR **as a draft** via [wk-pr](../pr/README.md) with the body from
-[`references/pr-body-template.md`](references/pr-body-template.md):
+Step 4 found a major → run Step 6's adversarial review first. Push the branch, then open the PR **as a draft** via
+[wk-pr](../pr/README.md) with the body from [`references/pr-body-template.md`](references/pr-body-template.md):
 
 ```bash
 git push -u origin dependabot/combined-updates
@@ -191,8 +199,10 @@ git push -u origin dependabot/combined-updates
 
 - **Automated external review:** skip for dependency-only updates.
 - **Adversarial review:** run when Step 4 found any major-version change (up or down, direct or transitive) — never
-  skip it then. Otherwise skip unless the combined diff contains non-lockfile, non-manifest code changes (e.g., a
-  Dependabot PR that patches application code) — pure minor/patch bumps waste review time on lockfile diffs. Detect
+  skip it then. **Run it before the push (latest: while the PR is still draft) and record the verdict in the body.**
+  (A user can enable auto-merge on the draft; it merges on green CI before any post-ready gate fires.) Otherwise
+  skip unless the combined diff contains non-lockfile, non-manifest code changes (e.g., a Dependabot PR that patches
+  application code) — pure minor/patch bumps waste review time on lockfile diffs. Detect
   code changes:
 
 ```bash

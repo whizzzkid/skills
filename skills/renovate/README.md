@@ -1,6 +1,6 @@
 # wk-renovate
 
-> **Version:** 2026.11.20-201034 · **Group:** pull-request · **Model:** sonnet
+> **Version:** 2026.11.28-052600 · **Group:** pull-request · **Model:** sonnet
 
 Land every open Dependabot PR in the current repo ("gh-deps"): a lone PR is
 approved and merged once CI is green; several are batched into a single
@@ -32,10 +32,11 @@ flowchart TD
     B2 --> C[Create combined branch from main]
     C --> D[Cherry-pick each Dependabot commit for its manifest change]
     D --> F[Re-resolve lockfile scoped to named packages, pinned to advertised versions]
-    F --> G[Build + tests must pass]
+    F --> V[Regenerate vendored copies a bump invalidates]
+    V --> G[Build + tests must pass]
     G --> G2[Audit every major-version change, up or down]
     G2 --> H{Major change or code changes beyond deps?}
-    H -- Yes --> I["Invoke [wk-adversarial-review](../adversarial-review/README.md)"]
+    H -- Yes --> I["Invoke [wk-adversarial-review](../adversarial-review/README.md) before push"]
     H -- No --> J[Skip adversarial review]
     I --> K[Open draft PR, one Closes #N line per original]
     J --> K
@@ -62,12 +63,17 @@ flowchart TD
 - **Derived artifacts regenerate against fresh isolated state** — a throwaway,
   freshly migrated DB, scoped to the bumped packages; never the shared dev DB.
 - **Adversarial review** runs when any major change exists or the diff touches
-  application code beyond manifests and lockfiles.
+  application code beyond manifests and lockfiles — before the push, never
+  after ready, because a user can auto-merge the draft on green CI.
+- **Vendored copies regenerate with the bump** — the original PR's failing CI
+  log names the regeneration; a vendored file its package's validator compares
+  to the installed version is regenerated and committed with the bump.
 - **Automated external review** is always skipped for dependency-only updates.
 - **Only advertised bumps land** — Dependabot's lockfile is never taken
   wholesale (clean pick or conflict); it is re-resolved scoped to the named
   packages and pinned to their advertised versions, and any unadvertised
-  transitive bump is reported and left for a later run.
+  transitive bump is reported and left for a later run. Unsuffixed bundler
+  native-gem platform entries Dependabot adds are dropped.
 - **Container env is not inherited** — a lockfile regen inside a container
   reproduces the provisioning script's registry-credential export in the same
   exec shell; a deterministic red is rerun with forwarded config-override vars
